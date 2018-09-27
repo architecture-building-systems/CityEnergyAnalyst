@@ -12,18 +12,18 @@ import json
 import cea.config
 import cea.globalvar
 import cea.inputlocator
-from cea.optimization.prices import Prices as Prices
-import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.prices import Prices
+from cea.optimization.slave import heating_main
+from cea.optimization.distribution import network_opt_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-import cea.optimization.master.evaluation as evaluation
-import cea.optimization.supportFn as sFn
+from cea.optimization.master import evaluation
+from cea.optimization import supportFn
 from cea.optimization.constants import *
-import cea.optimization.master.cost_model as eM
-import cea.optimization.slave.cooling_main as coolMain
-import cea.optimization.slave.slave_main as sM
-import cea.optimization.master.check as cCheck
-import cea.technologies.substation as sMain
-import cea.optimization.master.summarize_network as nM
+from cea.optimization.master import cost_model
+from cea.optimization.slave import cooling_main
+from cea.optimization.master import check
+from cea.technologies import substation
+from cea.optimization.master import summarize_network
 from cea.optimization.lca_calculations import lca_calculations
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 
@@ -83,9 +83,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         Q_heating_max_W = 0
     else:
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
@@ -107,9 +107,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         Q_cooling_max_W = 0
     else:
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
@@ -127,7 +127,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator, Q_heating_nom_W, gv)
+        check.GHPCheck(individual, locator, Q_heating_nom_W, gv)
     except:
         print "No GHP constraint check possible \n"
 
@@ -161,10 +161,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     # slave optimization of heating networks
     if config.district_heating_network:
         if DHN_barcode.count("1") > 0:
-            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  solar_features, gv,
-                                                                                                  config, prices)
+            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                               master_to_slave_vars, gv,
+                                                                                               config, prices, lca)
         else:
             slaveCO2 = 0
             slaveCosts = 0
@@ -183,8 +182,8 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
-                                                              prices, lca, config, reduced_timesteps_flag)
+        (coolCosts, coolCO2, coolPrim) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
+                                                                                       prices, lca, config, reduced_timesteps_flag)
         # if reduced_timesteps_flag:
         #     # reduced timesteps simulation for a month (May)
         #     coolCosts = coolCosts * (8760/(3624/2880))
@@ -196,7 +195,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
+    (addCosts, addCO2, addPrim) = cost_model.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices, lca)
 
@@ -619,7 +618,7 @@ def main(config):
                                                                              weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    network_features = network_opt.network_opt_main(config, locator)
+    network_features = network_opt_main.network_opt_main(config, locator)
 
     ## generate individual from config
     # heating technologies at the centralized plant

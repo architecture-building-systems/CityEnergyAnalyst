@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import cea.config
 import cea.inputlocator
-from cea.optimization.slave.electricity_main import electricity_main
+from cea.optimization.slave.electricity_main import electricity_calculations_of_all_buildings
 from cea.optimization.slave.natural_gas_main import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -44,7 +44,7 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
         Q_cooling_total_W = data_cooling['Q_total_cooling_W'].sum()
 
         if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation)):
-            data_electricity = electricity_main(generation, individual, locator, config)
+            data_electricity = electricity_calculations_of_all_buildings(generation, individual, locator, config)
         else:
             data_electricity = pd.read_csv(
                 locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation))

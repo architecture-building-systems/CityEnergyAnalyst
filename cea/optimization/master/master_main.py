@@ -2,15 +2,15 @@ from __future__ import division
 
 from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
 import random
-import cea.optimization.master.crossover as cx
-import cea.optimization.master.mutations as mut
-import cea.optimization.master.selection as sel
-import cea.optimization.supportFn as sFn
+from cea.optimization.master import crossover
+from cea.optimization.master import mutations
+from cea.optimization.master import selection
+from cea.optimization import supportFn
 import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.distribution import network_opt_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import lca_calculations
 import json
@@ -25,7 +25,7 @@ from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator
 from deap import tools
 from cea.optimization.master.generation import generate_main
-import cea.optimization.master.evaluation as evaluation
+from cea.optimization.master import evaluation
 from itertools import repeat, izip
 
 __author__ =  "Sreepathi Bhargava Krishna"
@@ -261,13 +261,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         offspring = list(pop)
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, proba, nBuildings)
+            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mut.mutFlip(mutant, proba, nBuildings)
-            mutant = mut.mutShuffle(mutant, proba, nBuildings)
-            offspring.append(mut.mutGU(mutant, proba))
+            mutant = mutations.mutFlip(mutant, proba, nBuildings)
+            mutant = mutations.mutShuffle(mutant, proba, nBuildings)
+            offspring.append(mutations.mutGU(mutant, proba))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
@@ -434,7 +434,7 @@ if __name__ == "__main__":
     nBuildings = len(building_names)
 
 
-    network_features = network_opt.network_opt_main(config, locator)
+    network_features = network_opt_main.network_opt_main(config, locator)
 
 
     non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
