@@ -13,13 +13,10 @@ from cea.optimization.distribution import network_opt_main
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import lca_calculations
-import cea.technologies.solar.solar_collector as solar_collector
-import random
-import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca"]
+__credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"

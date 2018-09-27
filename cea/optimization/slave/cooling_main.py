@@ -1,8 +1,8 @@
 """
-Lake-cooling network connected to chiller and cooling tower
+Disctrict Cooling Network Calculations.
 
 Use free cooling from Lake as long as possible (Qmax Lake from gv and HP Lake operation from slave)
-If Lake exhausted, use VCC + CT operation
+If Lake exhausted, then use other supply technologies
 
 """
 from __future__ import division
@@ -122,14 +122,14 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         Q_Lake_Array_W = [0]
 
     ### input parameters
-    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size
-    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
+    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size_W
+    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size_W
 
     T_ground_K = calculate_ground_temperature(locator, config)
 
     # sizing cold water storage tank
-    if master_to_slave_vars.Storage_cooling_size > 0:
-        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size
+    if master_to_slave_vars.Storage_cooling_size_W > 0:
+        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_w
         Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
         peak_hour = np.argmax(Q_cooling_req_W)
         area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
@@ -407,7 +407,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     for i in range(limits['number_of_VCC_backup_chillers']):
         Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
         costs_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
-    master_to_slave_vars.VCC_backup_cooling_size = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
+    master_to_slave_vars.VCC_backup_cooling_size_W = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
         Capex_a_ACH_USD, Opex_fixed_ACH_USD = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)

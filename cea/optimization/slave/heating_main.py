@@ -54,15 +54,12 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     :rtype: float, float, float, array
 
     """
-
-    MS_Var = master_to_slave_vars
-
     t = time.time()
 
     # Import data from storage optimization
     centralized_plant_data = pd.read_csv(
-        locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number,
-                                                              MS_Var.generation_number))
+        locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
+                                                              master_to_slave_vars.generation_number))
     E_aux_ch_W = np.array(centralized_plant_data['E_aux_ch_W'])
     E_aux_dech_W = np.array(centralized_plant_data['E_aux_dech_W'])
     Q_missing_W = np.array(centralized_plant_data['Q_missing_W'])
@@ -87,7 +84,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     Q_missing_copy_W = Q_missing_W.copy()
 
     # Import Temperatures from Network Summary:
-    network_data = pd.read_csv(locator.get_optimization_network_data_folder(MS_Var.network_data_file_heating))
+    network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_heating))
     tdhret_K = network_data['T_DHNf_re_K']
 
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
@@ -389,8 +386,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
                             "Wood_used_PeakBoiler_W": Wood_used_PeakBoiler_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.individual_number,
-                                                                             MS_Var.generation_number), index=False)
+    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                             master_to_slave_vars.generation_number), index=False)
 
     if master_to_slave_vars.gt_fuel == "NG":
 
@@ -480,21 +477,19 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     """
 
-    MS_Var = master_to_slave_vars
-
     # Electricity is accounted for already, no double accounting --> leave it out.
     # only CO2 / Eprim is not included in the installation part, neglected as its very small compared to operational values
     # QHPServerHeatSum, QHPpvtSum, QHPCompAirSum, QHPScSum = HP_operation_Data_sum_array
 
     # ask for type of fuel, then either us BG or NG 
-    if MS_Var.BoilerBackupType == 'BG':
+    if master_to_slave_vars.BoilerBackupType == 'BG':
         gas_to_oil_BoilerBackup_std = lca.BG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerBackup_std = lca.BG_BOILER_TO_CO2_STD
     else:
         gas_to_oil_BoilerBackup_std = lca.NG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerBackup_std = lca.NG_BOILER_TO_CO2_STD
 
-    if MS_Var.gt_fuel == 'BG':
+    if master_to_slave_vars.gt_fuel == 'BG':
         gas_to_oil_CC_std = lca.BG_CC_TO_OIL_STD
         gas_to_co2_CC_std = lca.BG_CC_TO_CO2_STD
         EL_CC_TO_CO2_STD = lca.EL_BGCC_TO_CO2_STD
@@ -505,21 +500,21 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         EL_CC_TO_CO2_STD = lca.EL_NGCC_TO_CO2_STD
         EL_CC_TO_OIL_STD = lca.EL_NGCC_TO_OIL_EQ_STD
 
-    if MS_Var.BoilerType == 'BG':
+    if master_to_slave_vars.BoilerType == 'BG':
         gas_to_oil_BoilerBase_std = lca.BG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerBase_std = lca.BG_BOILER_TO_CO2_STD
     else:
         gas_to_oil_BoilerBase_std = lca.NG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerBase_std = lca.NG_BOILER_TO_CO2_STD
 
-    if MS_Var.BoilerPeakType == 'BG':
+    if master_to_slave_vars.BoilerPeakType == 'BG':
         gas_to_oil_BoilerPeak_std = lca.BG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerPeak_std = lca.BG_BOILER_TO_CO2_STD
     else:
         gas_to_oil_BoilerPeak_std = lca.NG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerPeak_std = lca.NG_BOILER_TO_CO2_STD
 
-    if MS_Var.EL_TYPE == 'green':
+    if master_to_slave_vars.EL_TYPE == 'green':
         el_to_co2 = lca.EL_TO_CO2_GREEN
         el_to_oil_eq = lca.EL_TO_OIL_EQ_GREEN
     else:
@@ -629,8 +624,8 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "PEN_AddBoiler_MJoil": [PEN_AddBoiler_MJoil],
         "PEN_wood_MJoil": [PEN_wood_MJoil]
     })
-    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.individual_number,
-                                                                                         MS_Var.generation_number),
+    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(master_to_slave_vars.individual_number,
+                                                                                         master_to_slave_vars.generation_number),
                    sep=',')
 
     ######### Summed up results
