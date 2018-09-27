@@ -15,7 +15,7 @@ from cea.optimization.slave import cooling_main
 from cea.optimization.slave import heating_main
 from cea.optimization import supportFn
 from cea.technologies import substation
-import check as cCheck
+import check
 from cea.optimization import slave_data
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave.seasonal_storage import storage_main
@@ -123,7 +123,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator, Q_heating_nom_W, gv)
+        check.GHPCheck(individual, locator, Q_heating_nom_W, gv)
     except:
         print "No GHP constraint check possible \n"
 
@@ -351,11 +351,11 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     if individual[0] == 1 or individual[0] == 3:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+            master_to_slave_vars.Furnace_Q_max_W = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "wet"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.3, Q_MIN_SHARE * Q_heating_nom_W * 1.3)
+            master_to_slave_vars.CC_GT_SIZE_W = max(individual[1] * Q_heating_nom_W * 1.3, Q_MIN_SHARE * Q_heating_nom_W * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
             master_to_slave_vars.gt_fuel = "NG"
 
@@ -363,47 +363,47 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     if individual[0] == 2 or individual[0] == 4:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+            master_to_slave_vars.Furnace_Q_max_W = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "dry"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.5, Q_MIN_SHARE * Q_heating_nom_W * 1.5)
+            master_to_slave_vars.CC_GT_SIZE_W = max(individual[1] * Q_heating_nom_W * 1.5, Q_MIN_SHARE * Q_heating_nom_W * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.Boiler_Q_max_W = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "NG"
 
     # Base boiler BG
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.Boiler_Q_max_W = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.BoilerPeak_Q_max_W = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.BoilerPeak_Q_max_W = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
     if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
-        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPLake_maxSize_W = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # sewage - heatpump    
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # Gwound source- heatpump
     if individual[10] == 1 and GHP_ALLOWED == True:
@@ -428,25 +428,25 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # Lake Cooling
     if individual[heating_block] == 1 and LAKE_COOLING_ALLOWED is True:
         master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size = max(individual[heating_block + 1] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.Lake_cooling_size_W = max(individual[heating_block + 1] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # VCC Cooling
     if individual[heating_block + 2] == 1 and VCC_ALLOWED is True:
         master_to_slave_vars.VCC_on = 1
-        master_to_slave_vars.VCC_cooling_size = max(individual[heating_block + 3] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.VCC_cooling_size_W = max(individual[heating_block + 3] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # Absorption Chiller Cooling
     if individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True:
         master_to_slave_vars.Absorption_Chiller_on = 1
-        master_to_slave_vars.Absorption_chiller_size = max(individual[heating_block + 5] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.Absorption_chiller_size_W = max(individual[heating_block + 5] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # Storage Cooling
     if individual[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
         if (individual[heating_block + 2] == 1 and VCC_ALLOWED is True) or (individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True):
             master_to_slave_vars.storage_cooling_on = 1
-            master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
-            if master_to_slave_vars.Storage_cooling_size > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
-                master_to_slave_vars.Storage_cooling_size = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
+            master_to_slave_vars.Storage_cooling_size_W = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+            if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
+                master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     master_to_slave_vars.DCN_supplyunits = DCN_configuration
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
