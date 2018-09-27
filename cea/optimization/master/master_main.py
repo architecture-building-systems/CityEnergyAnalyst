@@ -65,8 +65,8 @@ def objective_function_wrapper(args):
     Wrap arguments because multiprocessing only accepts one argument for the function"""
     return objective_function(*args)
 
-def master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                network_features, gv, config, prices, lca):
+def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                            network_features, gv, config, prices, lca):
 
     t0 = time.clock()
 
@@ -437,5 +437,5 @@ if __name__ == "__main__":
     network_features = network_opt.network_opt_main(config, locator)
 
 
-    master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                network_features, gv, config, prices, lca)
+    non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                            network_features, gv, config, prices, lca)
