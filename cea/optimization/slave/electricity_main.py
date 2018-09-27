@@ -24,7 +24,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config):
+def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config):
 
     # Electricity Requirement of the Buildings
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -488,7 +488,7 @@ def main(config):
     individual = 10
     print("Calculating imports and exports of individual" + str(individual) + " of generation " + str(generation))
 
-    electricity_main(generation, individual, locator, config)
+    electricity_calculations_of_all_buildings(generation, individual, locator, config)
 
 
 if __name__ == '__main__':

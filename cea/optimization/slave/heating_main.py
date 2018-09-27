@@ -32,10 +32,9 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, lca, config):
+def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, config, prices, lca):
     """
-    This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
-    On the go, it saves the operation pattern
+    Computes the parameters for the heating of the complete DHN
 
     :param locator: locator class
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the

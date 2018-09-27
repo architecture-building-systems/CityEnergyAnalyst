@@ -38,7 +38,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config, reduced_timesteps_flag):
+def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config, reduced_timesteps_flag):
     """
     Computes the parameters for the cooling of the complete DCN
 

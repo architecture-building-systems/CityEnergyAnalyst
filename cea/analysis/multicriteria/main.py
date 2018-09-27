@@ -12,7 +12,7 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import lca_calculations
-from cea.optimization.slave.electricity_main import electricity_main
+from cea.optimization.slave.electricity_main import electricity_calculations_of_all_buildings
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
@@ -483,7 +483,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         lca = lca_calculations(locator, config)
 
-        data_electricity_processed = electricity_main(generation_number, individual_number, locator, config)
+        data_electricity_processed = electricity_calculations_of_all_buildings(generation_number, individual_number, locator, config)
 
 
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW

@@ -7,19 +7,19 @@ from __future__ import division
 import os
 import pandas as pd
 import numpy as np
-import cea.optimization.master.generation as generation
-import cea.optimization.master.summarize_network as nM
+from cea.optimization.master import generation
+from cea.optimization.master import summarize_network
 from cea.optimization.constants import *
-import cea.optimization.master.cost_model as eM
-import cea.optimization.slave.cooling_main as coolMain
-import cea.optimization.slave.slave_main as sM
-import cea.optimization.supportFn as sFn
-import cea.technologies.substation as sMain
+from cea.optimization.master import cost_model
+from cea.optimization.slave import cooling_main
+from cea.optimization.slave import heating_main
+from cea.optimization import supportFn
+from cea.technologies import substation
 import check as cCheck
 from cea.optimization import slave_data
-import cea.optimization.slave.electricity_main as electricity
-import cea.optimization.slave.seasonal_storage.storage_main as storage_main
-import cea.optimization.slave.natural_gas_main as natural_gas
+from cea.optimization.slave import electricity_main
+from cea.optimization.slave.seasonal_storage import storage_main
+from cea.optimization.slave import natural_gas_main
 import summarize_individual
 
 
@@ -78,12 +78,12 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
-            total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+            total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
             building_names = total_demand.Name.values
             # Run the substation and distribution routines
-            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
                                   Flag=True)
-            nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+            summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
@@ -102,13 +102,13 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
         if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
-            total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+            total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
             building_names = total_demand.Name.values
 
             # Run the substation and distribution routines
-            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
                                   Flag=True)
-            nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+            summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -165,9 +165,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
         if DHN_barcode.count("1") > 0:
 
-            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W, Q_heating_uncovered_annual_W) = sM.slave_main(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  solar_features, gv, config, prices, lca)
+            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W,
+             Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                               master_to_slave_vars, gv,
+                                                                                               config, prices, lca)
         else:
 
             GHG_heating_tonCO2 = 0
@@ -187,7 +188,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
     elif config.district_cooling_network:
         reduced_timesteps_flag = False
-        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
 
@@ -196,7 +197,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     PEN_MJoil += PEN_cooling_MJoil
 
     # District Electricity Calculations
-    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity.electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
@@ -204,12 +205,12 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
-    natural_gas.natural_gas_imports(master_to_slave_vars, locator, config)
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, config)
 
 
     # Capex Calculations
     print "Add extra costs"
-    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
                                               Q_heating_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca)
 
 
@@ -474,25 +475,25 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
     if not (DHN_barcode in DHN_network_list) and DHN_barcode.count("1") > 0:
         DHN_network_list.append(DHN_barcode)
 
-        total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+        total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
 
     if not (DCN_barcode in DCN_network_list) and DCN_barcode.count("1") > 0:
         DCN_network_list.append(DCN_barcode)
 
-        total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+        total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 def epsIndicator(frontOld, frontNew):
     """
