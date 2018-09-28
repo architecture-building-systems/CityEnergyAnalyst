@@ -357,7 +357,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     print ("Number of function evaluations = " + str(function_evals))
     t1 = time.clock()
     print (t1-t0)
-    pool.close()
+    if config.multiprocessing:
+        pool.close()
 
     return pop, logbook
 

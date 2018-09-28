@@ -656,31 +656,31 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     # is constant
     if master_to_slave_vars.Furn_Moist_type == "wet":
         Furnace_wet = master_to_slave_vars.Furnace_on
-        Furnace_wet_capacity_W = master_to_slave_vars.Furnace_Q_max
+        Furnace_wet_capacity_W = master_to_slave_vars.Furnace_Q_max_W
     elif master_to_slave_vars.Furn_Moist_type == "dry":
         Furnace_dry = master_to_slave_vars.Furnace_on
-        Furnace_dry_capacity_W = master_to_slave_vars.Furnace_Q_max
+        Furnace_dry_capacity_W = master_to_slave_vars.Furnace_Q_max_W
     if master_to_slave_vars.gt_fuel == "NG":
         CHP_NG = master_to_slave_vars.CC_on
-        CHP_NG_capacity_W = master_to_slave_vars.CC_GT_SIZE
+        CHP_NG_capacity_W = master_to_slave_vars.CC_GT_SIZE_W
         Base_boiler_NG = master_to_slave_vars.Boiler_on
-        Base_boiler_NG_capacity_W = master_to_slave_vars.Boiler_Q_max
+        Base_boiler_NG_capacity_W = master_to_slave_vars.Boiler_Q_max_W
         Peak_boiler_NG = master_to_slave_vars.BoilerPeak_on
-        Peak_boiler_NG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
-        Backup_boiler_NG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max
+        Peak_boiler_NG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max_W
+        Backup_boiler_NG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max_W
     elif master_to_slave_vars.gt_fuel == "BG":
         CHP_BG = master_to_slave_vars.CC_on
-        CHP_BG_capacity_W = master_to_slave_vars.CC_GT_SIZE
+        CHP_BG_capacity_W = master_to_slave_vars.CC_GT_SIZE_W
         Base_boiler_BG = master_to_slave_vars.Boiler_on
-        Base_boiler_BG_capacity_W = master_to_slave_vars.Boiler_Q_max
+        Base_boiler_BG_capacity_W = master_to_slave_vars.Boiler_Q_max_W
         Peak_boiler_BG = master_to_slave_vars.BoilerPeak_on
-        Peak_boiler_BG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
-        Backup_boiler_BG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max
+        Peak_boiler_BG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max_W
+        Backup_boiler_BG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max_W
 
     HP_Lake = master_to_slave_vars.HP_Lake_on
-    HP_Lake_capacity_W = master_to_slave_vars.HPLake_maxSize
+    HP_Lake_capacity_W = master_to_slave_vars.HPLake_maxSize_W
     HP_Sewage = master_to_slave_vars.HP_Sew_on
-    HP_Sewage_capacity_W = master_to_slave_vars.HPSew_maxSize
+    HP_Sewage_capacity_W = master_to_slave_vars.HPSew_maxSize_W
     GHP = master_to_slave_vars.GHP_on
     GHP_capacity_W = master_to_slave_vars.GHP_number * GHP_HMAX_SIZE
     PV = individual[N_HEAT * 2 + N_HR]
@@ -698,14 +698,14 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     SC_FP_capacity_W = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
 
     VCC = master_to_slave_vars.VCC_on
-    VCC_capacity_W = master_to_slave_vars.VCC_cooling_size
-    Backup_VCC_capacity_W = master_to_slave_vars.VCC_backup_cooling_size
+    VCC_capacity_W = master_to_slave_vars.VCC_cooling_size_W
+    Backup_VCC_capacity_W = master_to_slave_vars.VCC_backup_cooling_size_W
     Absorption_Chiller = master_to_slave_vars.Absorption_Chiller_on
-    Absorption_Chiller_capacity_W = master_to_slave_vars.Absorption_chiller_size
+    Absorption_Chiller_capacity_W = master_to_slave_vars.Absorption_chiller_size_W
     Lake_cooling = master_to_slave_vars.Lake_cooling_on
-    Lake_cooling_capacity_W = master_to_slave_vars.Lake_cooling_size
+    Lake_cooling_capacity_W = master_to_slave_vars.Lake_cooling_size_W
     storage_cooling = master_to_slave_vars.storage_cooling_on
-    storage_cooling_capacity_W = master_to_slave_vars.Storage_cooling_size
+    storage_cooling_capacity_W = master_to_slave_vars.Storage_cooling_size_W
     
     # Saving the capacities of the centralized plant based on the Slave data available for an individual
     df_installed_capacity['Furnace_wet']['Central Plant'] = Furnace_wet
