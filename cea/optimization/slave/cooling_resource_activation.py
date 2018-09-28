@@ -1,7 +1,5 @@
 from __future__ import division
 import numpy as np
-import pandas as pd
-import math
 import cea.config
 import cea.globalvar
 import cea.inputlocator
