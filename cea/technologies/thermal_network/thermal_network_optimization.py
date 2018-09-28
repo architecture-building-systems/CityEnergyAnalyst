@@ -85,7 +85,14 @@ def network_cost_calculation(newMutadedGen, network_info, config):
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
             # initialize disctionary for this individual
-            population_individual = {}
+            population_individual = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 25)))
+            population_individual.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads',
+                               'opex_dis_build',
+                               'opex_chiller', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
+                               'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
+                               'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
+                               'has_loops',
+                               'length', 'avg_diam', 'opex_CT']
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
@@ -127,13 +134,15 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             population_individual['capex_CT'] = cost_storage.ix['capex_CT'][individual_number]
             population_individual['number_of_plants'] = individual[6:].count(1.0)
             population_individual['has_loops'] = individual[5]
+            print (building_plants)
+            print (disconnected_buildings)
             population_individual['plant_buildings'] = building_plants
             population_individual['disconnected_buildings'] = disconnected_buildings
             population_individual['supplied_loads'] = load_string
             population_individual['length'] = length
             population_individual['avg_diam'] = average_diameter
             population_individual['number_of_plants'] = individual[6:].count(1.0)
-            population_individual[individual_number]['has_loops'] = individual[5]
+            population_individual['has_loops'] = individual[5]
         else:
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = network_info.populations[str(individual)]['total']
