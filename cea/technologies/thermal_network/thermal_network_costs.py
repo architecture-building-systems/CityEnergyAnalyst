@@ -444,7 +444,7 @@ def calc_Ctot_cs_district(network_info):
                                                                  network_info.locator)
 
     # initialize data storage for later output to file
-    cost_storage = pd.DataFrame(np.zeros((18, 1)))
+    cost_storage = pd.DataFrame(np.zeros((20, 1)))
     cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
                                        'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
                                        'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
