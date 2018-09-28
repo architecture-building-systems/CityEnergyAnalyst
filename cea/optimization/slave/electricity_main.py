@@ -7,13 +7,11 @@ and recalculates the imports from grid and exports to the grid
 """
 from __future__ import division
 from __future__ import print_function
-
 import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.constants import WH_TO_J
-
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

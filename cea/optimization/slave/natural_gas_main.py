@@ -14,8 +14,6 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.optimization.lca_calculations import lca_calculations
-from cea.constants import WH_TO_J
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -34,7 +32,7 @@ def natural_gas_imports(master_to_slave_vars, locator, config):
     storage_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
     date = storage_data.DATE.values
 
-    if config.district_heating_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
+    if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
         data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
         NG_used_HPSew_W = data_heating["NG_used_HPSew_W"]
         NG_used_HPLake_W = data_heating["NG_used_HPLake_W"]
