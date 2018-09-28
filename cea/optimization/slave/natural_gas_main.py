@@ -14,8 +14,6 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.optimization.lca_calculations import lca_calculations
-from cea.constants import WH_TO_J
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

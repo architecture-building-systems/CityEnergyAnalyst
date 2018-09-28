@@ -4,8 +4,6 @@ from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEA
 import random
 from cea.optimization.master import crossover
 from cea.optimization.master import mutations
-from cea.optimization.master import selection
-from cea.optimization import supportFn
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -20,8 +18,6 @@ import multiprocessing
 import time
 import numpy as np
 from deap import base
-from deap import benchmarks
-from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator
 from deap import tools
 from cea.optimization.master.generation import generate_main
