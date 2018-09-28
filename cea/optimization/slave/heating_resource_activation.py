@@ -7,9 +7,14 @@ from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.boiler import cond_boiler_op_cost
 
-
-
-
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
                              gv, prices, lca, T_ground):

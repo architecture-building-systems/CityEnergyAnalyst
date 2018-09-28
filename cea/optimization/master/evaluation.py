@@ -66,7 +66,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     Q_heating_uncovered_annual_W = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
 
     if DHN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_heating = "Network_summary_result_all.csv"
@@ -334,7 +334,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
 
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
     configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
@@ -470,7 +470,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
     :return: None
     :rtype: Nonetype
     """
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
 
     if not (DHN_barcode in DHN_network_list) and DHN_barcode.count("1") > 0:
         DHN_network_list.append(DHN_barcode)

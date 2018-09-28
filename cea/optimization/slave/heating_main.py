@@ -5,15 +5,12 @@ USING PRESET ORDER
 """
 
 from __future__ import division
-import os
 import time
-
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import ETA_AREA_TO_PEAK, HP_SEW_ALLOWED
 from cea.constants import WH_TO_J
 from cea.technologies.boiler import cond_boiler_op_cost
-from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import epwreader
@@ -73,13 +70,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
 
     E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
-
-    # Q_StorageToDHNpipe_sum = np.sum(E_aux_dech_W) + np.sum(Q_from_storage_W)
-    #
-    # HP_operation_Data_sum_array = np.sum(HPServerHeatDesignArray_kWh), \
-    #                               np.sum(HPpvt_designArray_Wh), \
-    #                               np.sum(HPCompAirDesignArray_kWh), \
-    #                               np.sum(HPScDesignArray_Wh)
 
     Q_missing_copy_W = Q_missing_W.copy()
 
