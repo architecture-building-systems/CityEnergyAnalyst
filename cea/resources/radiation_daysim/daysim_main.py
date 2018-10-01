@@ -1,9 +1,9 @@
 from __future__ import division
 import os
 import pandas as pd
-import pyliburo.py3dmodel.calculate as calculate
-from pyliburo import py3dmodel
-import pyliburo.py2radiance as py2radiance
+import py4design.py3dmodel.calculate as calculate
+from py4design import py3dmodel
+import py4design.py2radiance as py2radiance
 import json
 import shutil
 
@@ -31,7 +31,7 @@ def create_sensor_input_file(rad, chunk_n):
 def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation, normal):
     mid_pt = py3dmodel.calculate.face_midpt(occface)
     location_pt = py3dmodel.modify.move_pt(mid_pt, normal, 0.01)
-    moved_oface = py3dmodel.fetch.shape2shapetype(py3dmodel.modify.move(mid_pt, location_pt, occface))
+    moved_oface = py3dmodel.fetch.topo2topotype(py3dmodel.modify.move(mid_pt, location_pt, occface))
     if srf_type == 'roofs':
         xdim = ydim = roof_dim
     else:
