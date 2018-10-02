@@ -79,7 +79,7 @@ dependencies:
 - six=1.10.0=py27_1
 - sqlalchemy=1.2.11=py27h0c8e037_0
 - sqlite=3.20.1=vc9_2
-- ssl_match_hostname=3.5.0.1=py27_1
+- ssl_match_hostname
 - statsmodels=0.9.0=py27_0
 - tbb=2017_20170226=vc9_0
 - tornado=4.5.1=py27_0
@@ -91,7 +91,6 @@ dependencies:
 - xz=5.2.2=0
 - zlib=1.2.11=vc9_0
 - blas=1.0=mkl
-- icc_rt=2017.0.4=h97af966_0
 - libpython=2.0=py27_0
 - m2w64-binutils=2.25.1=5
 - m2w64-bzip2=1.0.6=6
@@ -121,7 +120,6 @@ dependencies:
 - mkl=2017.0.3=0
 - mkl-service=1.1.2=py27_3
 - msys2-conda-epoch=20160418=1
-- numpy=1.13.3=py27hda5cba4_3
 - scikit-learn=0.19.0=np113py27_0
 - scipy=0.19.1=np113py27_0
 - vs2008_runtime=9.00.30729.5054=0
@@ -175,7 +173,7 @@ dependencies:
   - prompt-toolkit==1.0.15
   - pycollada==0.6
   - pygments==2.2.0
-  - pyliburo==0.12
+  - py4design
   - pymc3==3.5
   - pymf==0.1.9
   - pyshp==1.2.11

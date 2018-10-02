@@ -6,17 +6,17 @@ from __future__ import print_function
 
 
 def register_scripts():
-    import cea.interfaces.cli.cli
     import cea.config
+    import cea.scripts
     import importlib
 
     config = cea.config.Configuration()
 
-    def script_wrapper(script_name):
+    def script_wrapper(cea_script):
         def script_runner(config=config, subprocess=False, **kwargs):
-            print('running script {}'.format(script_name))
-            option_list = cli_config.get('config', script_name).split()
-            module_path = cli_config.get('scripts', script_name)
+            cea_script.print_script_configuration(config)
+            option_list = cea_script.parameters
+            module_path = cea_script.module
             script_module = importlib.import_module(module_path)
             config.restrict_to(option_list)
             for section, parameter in config.matching_parameters(option_list):
@@ -26,10 +26,9 @@ def register_scripts():
                 script_module.main(config)
         return script_runner
 
-    cli_config = cea.interfaces.cli.cli.get_cli_config()
-    for script_name in sorted(cli_config.options('scripts')):
-        script_py_name = script_name.replace('-', '_')
-        globals()[script_py_name] = script_wrapper(script_name)
+    for cea_script in sorted(cea.scripts.list_scripts()):
+        script_py_name = cea_script.name.replace('-', '_')
+        globals()[script_py_name] = script_wrapper(cea_script)
 
 
 register_scripts()
