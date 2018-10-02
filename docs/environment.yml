@@ -175,8 +175,8 @@ dependencies:
   - prompt-toolkit==1.0.15
   - pycollada==0.6
   - pygments==2.2.0
-  - pyliburo==0.12
   - pymc3==3.5
+  - py4design
   - pymf==0.1.9
   - pyshp==1.2.11
   - pyside==1.2.4
