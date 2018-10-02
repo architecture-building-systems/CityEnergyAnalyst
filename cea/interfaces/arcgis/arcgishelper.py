@@ -4,9 +4,8 @@ A library module with helper functions for creating the City Energy Analyst pyth
 import os
 import subprocess
 import tempfile
-import ConfigParser
-import traceback
 import cea.config
+import cea.scripts
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
@@ -29,10 +28,26 @@ logging.basicConfig(filename=os.path.expandvars(r'%TEMP%\arcgishelper.log'),leve
                     format='%(asctime)s %(levelname)s %(message)s')
 logging.info('arcgishelper loading...')
 
+def create_cea_tool(cea_script):
+    """Create a subclass of CeaTool based on the information in the :py:param`cea_script`"""
+    name = ''.join(w.capitalize() for w in cea_script.name.split('-')) + 'Tool'
+    return type(name, (CeaTool,), {
+        '__init__': lambda self: self._init(cea_script)
+    })
+
+
 class CeaTool(object):
     """A base class for creating tools in an ArcGIS toolbox. Basically, the user just needs to subclass this,
     specify the usual ArcGIS stuff in the __init__ method as well as set `self.cea_tool` to the corresponding
-    tool name. The rest is auto-configured based on default.config and cli.config"""
+    tool name. The rest is auto-configured based on default.config and scripts.yml"""
+
+    def _init(self, cea_script):
+        """Allow initialization from the ``create_cea_tool``"""
+        self.cea_tool = cea_script.name
+        self.label = cea_script.label
+        self.description = cea_script.description
+        self.category = cea_script.category
+        self.canRunInBackground = False
 
     def getParameterInfo(self):
         """Return the list of arcgis Parameter objects for this tool. The general:weather parameter is treated
@@ -126,10 +141,7 @@ class CeaTool(object):
 
 def get_cea_parameters(config, cea_tool):
     """Return a list of cea.config.Parameter objects for each cea_parameter associated with the tool."""
-    cli_config = ConfigParser.SafeConfigParser()
-    cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
-    option_list = cli_config.get('config', cea_tool).split()
-    for _, cea_parameter in config.matching_parameters(option_list):
+    for _, cea_parameter in config.matching_parameters(cea.scripts.by_name(cea_tool).parameters):
         yield cea_parameter
 
 
