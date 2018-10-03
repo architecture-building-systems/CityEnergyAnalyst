@@ -476,7 +476,8 @@ class BuildingProperties(object):
 
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
-        return BuildingPropertiesRow(geometry=self.get_prop_geometry(building_name),
+        return BuildingPropertiesRow(name=building_name,
+                                     geometry=self.get_prop_geometry(building_name),
                                      envelope=self.get_prop_envelope(building_name),
                                      occupancy=self.get_prop_occupancy(building_name),
                                      hvac=self.get_prop_hvac(building_name),
@@ -500,11 +501,12 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, geometry, envelope, occupancy, hvac,
+    def __init__(self, name, geometry, envelope, occupancy, hvac,
                  rc_model, comfort, internal_loads, age, solar, supply, gv):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
+        self.name = name
         self.geometry = geometry
         self.architecture = EnvelopeProperties(envelope)
         self.occupancy = occupancy  # FIXME: rename to uses!

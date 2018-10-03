@@ -44,8 +44,6 @@ EFFI = 0.6  # efficiency of pumps
 FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
 TWW_SETPOINT = 60  # dhw tank set point temperature in C
 
-
-
 # PHYSICAL
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
@@ -55,3 +53,7 @@ B_F = 0.7  # it calculates the coefficient of reduction in transmittance for sur
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
 H_MS = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
 LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the floor area from ISO 13790 Eq. 9
+
+# RC-MODEL TEMPERATURE BOUNDS
+T_WARNING_LOW = -30.0
+T_WARNING_HIGH = 50.0
