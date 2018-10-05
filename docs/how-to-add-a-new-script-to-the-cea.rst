@@ -8,7 +8,7 @@ The main steps you need to take are:
 #. copy the template script and rename it
 #. update the module-level documentation and credits
 #. develop your script
-#. add your script to the ``cli.config`` file
+#. add your script to the ``scripts.yml`` file
 #. add a section to the ``default.config`` file for any parameters your script requires
 #. add an ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
 
@@ -80,65 +80,78 @@ Each script is unique. But to fit nicely into the CEA ecosystem, pay attention t
 - if you think you need to use ``os.chdir``, you're doing it wrong!
 
 
-Step 4: Add your script to the ``cli.config`` file
---------------------------------------------------
+Step 4: add your script to the ``scripts.yml`` file
+---------------------------------------------------
 
-The ``cli.config`` file (located in ``cea/interfaces/cli/``) tells the ``cea`` command line program
+The ``scripts.yml`` file (located in ``cea/``) tells the ``cea`` command line program
 
 - the name of each script in the CEA
 - the module path of the script to run
 - the list of parameters that the script accepts
+- what interfaces (arcgis, cli, dashboard, grasshopper) the script is meant to be used with
+- the category to list the script under (for arcgis and dashboard interfaces)
 
-By adding your script to the ``cli.config`` file, your script becomes executable from the command line like this::
+By adding your script to the ``scripts.yml`` file, your script becomes executable from the command line like this::
+
+    $ cea your-script-name
+
+And you can use parameters like this:
 
     $ cea your-script-name --scenario C:\reference-case-open\baseline --your-parameter 123
 
 During development of your script, you will probably not be too interested in this feature - you will probably just be
 running your script from PyCharm. Please take the time to do this anyway, since it is a *requirement for adding it to
-the ArcGIS interface* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
+the ArcGIS and dashboard interfaces* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
 
 The name of your script should be the same as the module name and the core function name from
 `Step 3: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
 
-The ``cli.config`` file has two sections: ``[scripts]`` and ``[config]``. You need to add your script to both sections,
-using the script name as the key.
+The ``scripts.yml`` file is grouped by categories and each category contains a list of scripts in that category. The
+syntax used is YAML_. The easiest way to add a new script is to copy an existing script definition.
 
-- in the ``[scripts]`` section, set the value to the module path of your script, that is, the path you would use to
-  import your script (e.g. ``cea.examples.template``)
+.. _YAML: https://en.wikipedia.org/wiki/YAML
 
-  - since all CEA scripts use the convention of having a ``main`` function that accepts a ``config`` object as it's
-    first parameter, this allows the various interfaces (command line, ArcGIS, Rhino/Grasshopper) to  invoke the script.
+Here is an example category with a script::
 
-- in the ``[config]`` section, set the value to the (whitespace separated) list of parameters that your script uses
+    Thermal networks:
 
-  - use the notation ``section:parameter`` to specify a specific parameter defined in the ``default.config`` file.
-  - use the notation ``section`` as a shorthand to specify that your script uses all the parameters from that section
-    in the ``default.config`` file.
-  - by defining the parameters used by the script, interfaces such as the command line, ArcGIS and Rhino/Grasshopper
-    "know" what parameters to offer the user for a script.
+    - name: thermal-network-matrix
+      label: Thermo-hydraulic network (branched)
+      description: Solve the thermal hydraulic network
+      interfaces: [cli, arcgis, dashboard]
+      module: cea.technologies.thermal_network.thermal_network_matrix
+      parameters: ['general:scenario', thermal-network]
 
-Here is an example of the input for the template script::
+Note that whitespace is relevant in YAML - except for the newlines, I added them to make the structure easier to
+eyeball. The name of the category is "Thermal networks" and it consists of a list of cea scripts. Each script starts
+with a bullet point (a ``-``) and then a dictionary of script properties. These are the properties to define:
 
-    [scripts]
-    template = cea.examples.template
+name
+    The script name. This is what is used to identify the script with the ``cea`` program and the other interfaces.
+    It should use dashes (``-``) instead of underscores. Note the :py:mod:`cea.api` module provides a programmatic
+    was of accessing these scripts as functions with the script names replacing the dashes with underscores (``_``).
 
-    # ...
+label
+    A label to use in user interfaces (e.g. ArcGIS or the dashboard).
 
-    [config]
-    template = general:scenario data-helper
+description
+    A description of the tool. This should be short but also contain a relevant description of the functionality.
 
+interfaces
+    A list of interfaces the script is to be used with.
 
-This specifies that the CEA has a script called ``template`` and that it can be found at ``cea/examples/template.py``.
-This script follows the CEA convention and therefore has a function called ``main`` that is defined like this::
+module
+    The fully qualified name (fqn) of the module that implements the script. This module is assumed to have a ``main``
+    function that takes one argument, a :py:class:`cea.config.Configuration` object.
 
-    def main(config):
-        # contents of the main function
-        # calls the core function
+parameters
+    A list of parameters that your script uses
 
-It also specifies that the template script uses the ``general:scenario`` parameter and all the parameters defined in
-the ``data-helper`` section of the ``default.config`` file. That means, the template script can be called like this::
-
-    $ cea template --scenario C:\reference-case-open\baseline --archetypes HVAC internal-loads
+    - use the notation ``section:parameter`` to specify a specific parameter defined in the ``default.config`` file.
+    - use the notation ``section`` as a shorthand to specify that your script uses all the parameters from that section
+      in the ``default.config`` file.
+    - by defining the parameters used by the script, interfaces such as the command line, ArcGIS and Rhino/Grasshopper
+      "know" what parameters to offer the user for a script.
 
 
 Step 5: Add a section to the ``default.config`` file for any parameters your script requires
@@ -184,27 +197,25 @@ Example::
 Step 6: Add an ArcGIS interface
 -------------------------------
 
-In order to include your script in the ArcGIS interface, you need to add a few lines to the file
-``cea/interfaces/arcgis/CityEnergyAnalyst.py``. Since the parameters to the script have already been defined above,
-You just need to create a class (call it the same as your script, but in CamelCase, adding the word ``Tool`` at the end)
-and subclassing ``cea.interfaces.arcgis.CeaTool`` and set some attributes in the ``__init__`` method. Take the
-``data-helper`` script, for example::
+In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
+in the ``scripts.yml`` file. The module :py:mod:`cea.interfaces.arcgis.CityEnergyAnalyst` creates subclasses of
+:py:class:`cea.interfaces.arcgis.arcgishelper.CeaTool` for each such script.
 
-    class DataHelperTool(CeaTool):
+Should you want to modify the behavior, you can overwrite that definition simply by adding your own implementation of
+that class. To do so, create a class with the same name as your script (the ``name`` property) by removing the dashes,
+appending "Tool" and uppercasing the first letter of each word. Example: ``multi-criteria-analysis`` would become
+``MultiCriteriaAnalysisTool`` and you would define the class like this::
+
+    class MultiCriteriaAnalysisTool(CeaTool):
         def __init__(self):
-            self.cea_tool = 'data-helper'
-            self.label = 'Data helper'
-            self.description = 'Query characteristics of buildings and systems from statistical data'
-            self.category = 'Data Management'
+            self.cea_tool = 'multi-criteria-analysis'
+            self.label = 'Multicriteria analysis'
+            self.description = 'Multicriteria analysis'
+            self.category = 'Analysis'
             self.canRunInBackground = False
 
 
-The key differences to the definition of text-book ArcGIS tools is that you:
-
-- subclass from ``CeaTool`` (this adds behaviour to automatically populate the parameters and execute the CEA script
-  when you click ``run``)
-- add the attribute ``self.cea_tool`` (setting it to the script name, use the kebab-case_ version)
-- the other properties are standard
+The tools DemandTool, RadiationDaysimTool, and HeatmapsTool are implemented in this manner and can be used as examples.
 
 .. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
     ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements
