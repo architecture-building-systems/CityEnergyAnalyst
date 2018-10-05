@@ -107,19 +107,19 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
         print 'Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds'
 
-    else:  # This loop is activated when a building has not sufficient solar potential
+    else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
-            {'PVT_walls_north_E_kWh': 0, 'PVT_walls_north_m2': 0, 'PVT_walls_north_Q_kWh': 0,
-             'PVT_walls_north_Tout_C': 0,
-             'PVT_walls_south_E_kWh': 0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0,
-             'PVT_walls_south_Tout_C': 0,
-             'PVT_walls_east_E_kWh': 0, 'PVT_walls_east_m2': 0, 'PVT_walls_east_Q_kWh': 0, 'PVT_walls_east_Tout_C': 0,
-             'PVT_walls_west_E_kWh': 0, 'PVT_walls_west_m2': 0, 'PVT_walls_west_Q_kWh': 0, 'PVT_walls_west_Tout_C': 0,
-             'PVT_roofs_top_E_kWh': 0, 'PVT_roofs_top_m2': 0, 'PVT_roofs_top_Q_kWh': 0, 'PVT_roofs_top_Tout_C': 0,
-             'Q_PVT_gen_kWh': 0, 'T_PVT_sup_C': 0, 'T_PVT_re_C': 0,
-             'mcp_PVT_kWperC': 0, 'Eaux_PVT_kWh': 0,
-             'Q_PVT_l_kWh': 0, 'E_PVT_gen_kWh': 0, 'Area_PVT_m2': 0,
-             'radiation_kWh': 0}, index=range(8760))
+            {'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
+             'PVT_walls_north_Tout_C': 0.0,
+             'PVT_walls_south_E_kWh': 0.0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0.0,
+             'PVT_walls_south_Tout_C': 0.0,
+             'PVT_walls_east_E_kWh': 0.0, 'PVT_walls_east_m2': 0.0, 'PVT_walls_east_Q_kWh': 0.0, 'PVT_walls_east_Tout_C': 0.0,
+             'PVT_walls_west_E_kWh': 0.0, 'PVT_walls_west_m2': 0.0, 'PVT_walls_west_Q_kWh': 0.0, 'PVT_walls_west_Tout_C': 0.0,
+             'PVT_roofs_top_E_kWh': 0.0, 'PVT_roofs_top_m2': 0.0, 'PVT_roofs_top_Q_kWh': 0.0, 'PVT_roofs_top_Tout_C': 0.0,
+             'Q_PVT_gen_kWh': 0.0, 'T_PVT_sup_C': 0.0, 'T_PVT_re_C': 0.0,
+             'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
+             'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'Area_PVT_m2': 0.0,
+             'radiation_kWh': 0.0}, index=range(8760))
         Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
