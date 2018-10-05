@@ -237,9 +237,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
         Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                     sheetname="Absorption_chiller",
-                                                     usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c',
-                                                              'd', 'e', 'IR_%', 'LT_yr', 'O&M_%'])
+                                                     sheetname="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[
             Absorption_chiller_cost_data['type'] == ACH_TYPE_SINGLE]
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
