@@ -466,6 +466,10 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_dict(self):
+        """Return a dictionary with weather_name -> weather_path for the builtin weather files"""
+        return {name: self.get_weather(name) for name in self.get_weather_names()}
+
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(),'weather')
 
