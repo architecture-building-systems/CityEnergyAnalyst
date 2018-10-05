@@ -147,7 +147,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     geometry_3D_surroundings = []
 
     for name in district_building_names:
-        print("Processing district building %(name)s" % locals())
+        print('Generating geometry for building %(name)s' % locals())
         height = float(district_building_records.loc[name, height_col])
         nfloors = int(district_building_records.loc[name, nfloor_col])
 
