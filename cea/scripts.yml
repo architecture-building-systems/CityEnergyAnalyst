@@ -355,6 +355,8 @@ solar-collector:
   parameters:
   - general:scenario
   - general:weather
+  - general:multiprocessing
+  - general:number-of-CPUs-to-keep-free
   - solar:date-start
   - solar:type-scpanel
   - solar:panel-on-roof

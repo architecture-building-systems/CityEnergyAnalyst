@@ -6,7 +6,6 @@ solar collectors
 """
 
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from geopandas import GeoDataFrame as gdf
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -15,12 +14,11 @@ import cea.inputlocator
 from math import *
 import time
 import os
-import fiona
+import multiprocessing
 import cea.config
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from geopandas import GeoDataFrame as gdf
 from numba import jit
 
@@ -967,6 +965,12 @@ def main(config):
     weather_data = epwreader.epw_reader(config.weather)
     date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print('reading weather data done')
+
+    # number_of_processes = config.get_number_of_processes()
+    # if number_of_processes > 1:
+    #     print("Using %i CPU's" % number_of_processes)
+    #     pool = multiprocessing.Pool(number_of_processes)
+
 
     for building_name in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building_name)
