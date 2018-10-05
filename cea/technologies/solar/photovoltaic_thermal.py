@@ -17,7 +17,7 @@ import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
     calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
-    calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network)
+    vectorize_calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network)
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -375,15 +375,15 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         TIME0 = 0
         DELT = 1  # timestep 1 hour
         delts = DELT * 3600  # convert time step in seconds
-        Tfl = np.zeros([3, 1])  # create vector to store value at previous [1] and present [2] time-steps
-        DT = np.zeros([3, 1])
-        Tabs = np.zeros([3, 1])
-        STORED = np.zeros([600, 1])
-        TflA = np.zeros([600, 1])
-        TflB = np.zeros([600, 1])
-        TabsB = np.zeros([600, 1])
-        TabsA = np.zeros([600, 1])
-        q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
+        Tfl = np.zeros(3)  # create vector to store value at previous [1] and present [2] time-steps
+        DT = np.zeros(3)
+        Tabs = np.zeros(3)
+        STORED = np.zeros(600)
+        TflA = np.zeros(600)
+        TflB = np.zeros(600)
+        TabsB = np.zeros(600)
+        TabsA = np.zeros(600)
+        q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
             #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
@@ -499,9 +499,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 # OUT[11] = q_mtherm
                 # OUT[12] = q_balance_error
         if flow < 4:
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow], pipe_lengths,
+                                                                    aperture_area_m2)  # in kW
         if flow == 3:
             q1 = supply_out_kW[0]
             q2 = supply_out_kW[1]
@@ -517,9 +517,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                                               dP2, dP3, dP4,
                                                                                               aperture_area_m2)
         if flow == 4:
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow], pipe_lengths,
+                                                                    aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
             q5 = supply_out_kW[flow]
             m5 = specific_flows_kgpers[flow]
@@ -532,9 +532,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                       aperture_area_m2, temperature_mean[flow],
                                                                       Tamb_vector_C, msc_max_kgpers)
             supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow], pipe_lengths,
+                                                                    aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW + 0.5 * auxiliary_electricity_kW[flow] - supply_losses_kW[flow]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/c
 
