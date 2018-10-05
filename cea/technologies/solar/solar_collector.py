@@ -36,7 +36,7 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, weather_data, date_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -52,8 +52,9 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     :type latitude: float
     :param longitude: longitude of the case study location
     :type longitude: float
-    :param weather_path: path to the weather data file of the case study location
-    :type weather_path: .epw
+    :param weather_data: Data frame containing the weather data in the .epw file as per config
+    :type weather_data: pandas.DataFrame
+    :param date_local: contains the localized (to timezone) dates for each timestep of the year
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_SC.csv with solar collectors heat generation potential of each building, Building_SC_sensors.csv
@@ -61,11 +62,6 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     """
 
     t0 = time.clock()
-
-    # weather data
-    weather_data = epwreader.epw_reader(weather_path)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
-    print('reading weather data done')
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
@@ -967,14 +963,20 @@ def main(config):
     panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
-    for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name=building)
-        radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata,
-                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
+    # weather data
+    weather_data = epwreader.epw_reader(config.weather)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    print('reading weather data done')
 
-    for i, building in enumerate(list_buildings_names):
-        sc_results = pd.read_csv(locator.SC_results(building, panel_type))
+    for building_name in list_buildings_names:
+        radiation = locator.get_radiation_building(building_name=building_name)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building_name)
+        calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata,
+                latitude=latitude, longitude=longitude, weather_data=weather_data, date_local=date_local,
+                building_name=building_name)
+
+    for i, building_name in enumerate(list_buildings_names):
+        sc_results = pd.read_csv(locator.SC_results(building_name, panel_type))
         if i == 0:
             df = sc_results
             temperature_sup = sc_results['T_SC_sup_C'].mean()
