@@ -34,7 +34,7 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, weather_data, date_local, building_name):
+def calc_SC(locator, config, latitude, longitude, weather_data, date_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -42,10 +42,6 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
     :param config: cea.config
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
-    :param metadata_csv: data of sensor points measuring solar insulation of each building
-    :type metadata_csv: .csv
     :param latitude: latitude of the case study location
     :type latitude: float
     :param longitude: longitude of the case study location
@@ -60,6 +56,9 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     """
 
     t0 = time.clock()
+
+    radiation_csv = locator.get_radiation_building(building_name=building_name)
+    metadata_csv = locator.get_radiation_metadata(building_name=building_name)
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
@@ -973,11 +972,8 @@ def main(config):
 
 
     for building_name in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name=building_name)
-        radiation_metadata = locator.get_radiation_metadata(building_name=building_name)
-        calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata,
-                latitude=latitude, longitude=longitude, weather_data=weather_data, date_local=date_local,
-                building_name=building_name)
+        calc_SC(locator=locator, config=config, latitude=latitude, longitude=longitude, weather_data=weather_data,
+                date_local=date_local, building_name=building_name)
 
     for i, building_name in enumerate(list_buildings_names):
         sc_results = pd.read_csv(locator.SC_results(building_name, panel_type))
