@@ -155,6 +155,19 @@ class Configuration(object):
         with open(config_file, 'w') as f:
             parser.write(f)
 
+    def get_number_of_processes(self):
+        """
+        Returns the number of processes to use for multiprocessing.
+        :param config: Configuration file.
+        :return number_of_processes: Number of processes to use.
+        """
+        import multiprocessing
+        if self.multiprocessing:
+            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            return max(1, number_of_processes)  # ensure that at least one process is being used
+        else:
+            return 1
+
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
         return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
