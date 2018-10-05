@@ -21,6 +21,7 @@ from cea.utilities import solar_equations
 from cea.technologies.solar import constants
 from geopandas import GeoDataFrame as gdf
 from numba import jit
+from itertools import izip, repeat
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,6 +34,11 @@ __status__ = "Production"
 
 
 # SC heat generation
+
+def calc_SC_wrapper(args):
+    """Wrap calc_SC to accept a tuple of args because multiprocessing.Pool.map only accepts one
+    argument for the function."""
+    return calc_SC(*args)
 
 def calc_SC(locator, config, latitude, longitude, weather_data, date_local, building_name):
     """
@@ -965,15 +971,29 @@ def main(config):
     date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print('reading weather data done')
 
-    # number_of_processes = config.get_number_of_processes()
-    # if number_of_processes > 1:
-    #     print("Using %i CPU's" % number_of_processes)
-    #     pool = multiprocessing.Pool(number_of_processes)
+    building_count = len(list_buildings_names)
+    number_of_processes = config.get_number_of_processes()
+    if number_of_processes > 1:
+        print("Using %i CPU's" % number_of_processes)
+        pool = multiprocessing.Pool(number_of_processes)
+        pool.map(calc_SC_wrapper, izip(repeat(locator, building_count),
+                                       repeat(config, building_count),
+                                       repeat(latitude, building_count),
+                                       repeat(longitude, building_count),
+                                       repeat(weather_data, building_count),
+                                       repeat(data_local, building_count),
+                                       list_buildings_names))
+        #locator, config, latitude, longitude, weather_data, date_local, building_name
+    else:
+        print("Using single process")
+        map(calc_SC_wrapper, izip(repeat(locator, building_count),
+                                       repeat(config, building_count),
+                                       repeat(latitude, building_count),
+                                       repeat(longitude, building_count),
+                                       repeat(weather_data, building_count),
+                                       repeat(data_local, building_count),
+                                       list_buildings_names))
 
-
-    for building_name in list_buildings_names:
-        calc_SC(locator=locator, config=config, latitude=latitude, longitude=longitude, weather_data=weather_data,
-                date_local=date_local, building_name=building_name)
 
     for i, building_name in enumerate(list_buildings_names):
         sc_results = pd.read_csv(locator.SC_results(building_name, panel_type))
