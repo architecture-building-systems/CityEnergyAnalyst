@@ -49,8 +49,10 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.points_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
 
+
 def calc_transmissivity(G_value):
-    return (math.sqrt(0.8402528435+0.0072522239*G_value*G_value)-0.9166530661)/0.0036261119/G_value
+    return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
+
 
 def add_rad_mat(daysim_mat_file, ageometry_table):
     file_path = daysim_mat_file
