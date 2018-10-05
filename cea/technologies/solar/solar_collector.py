@@ -25,7 +25,7 @@ from itertools import izip, repeat
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh "]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
