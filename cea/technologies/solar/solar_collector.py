@@ -981,7 +981,7 @@ def main(config):
                                        repeat(latitude, building_count),
                                        repeat(longitude, building_count),
                                        repeat(weather_data, building_count),
-                                       repeat(data_local, building_count),
+                                       repeat(date_local, building_count),
                                        list_buildings_names))
         #locator, config, latitude, longitude, weather_data, date_local, building_name
     else:
@@ -991,7 +991,7 @@ def main(config):
                                        repeat(latitude, building_count),
                                        repeat(longitude, building_count),
                                        repeat(weather_data, building_count),
-                                       repeat(data_local, building_count),
+                                       repeat(date_local, building_count),
                                        list_buildings_names))
 
 

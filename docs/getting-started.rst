@@ -3,17 +3,12 @@ Get Started with CEA
 
 This guide should get you started with the City Energy Analyst (CEA) |version|.
 
-The City Energy Analyst (CEA) is an urban building simulation platform and one of the first open-source initiatives of
-computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning
-and energy systems engineering in an integrated simulation platform. This allows to study the effects, trade-offs and synergies
-of urban design options and energy infrastructure plans.
-
-For more information visit our presentation explaining `what is CEA and what can you do with it. <https://docs.google.com/presentation/d/1ZDiMlifMhCt3e3JcIX3JdVfG8PeHl1-Shs4DVWC3U8A/edit#slide=id.gc6f73a04f_0_0>`__.
-
 .. _install-and-set-up:
 
 Install and set up
 -------------------
+
+CEA can be installed in Windows, Ubuntu and on the computer cluster of the ETH Zurich Euler. The latter is only available for students and faculty  of the ETH Zurich.
 
 :doc:`installation-on-windows`.
 
@@ -33,17 +28,10 @@ study.
 
 
 Begin with a tutorial
----------------------
+----------------------
 
-Here after you will find a list of tutorials to use CEA with the PyCharm interface.
+Check the tutorial :doc:`cea-workflow-guide` showing a step-by-step guide on how to use the full stack of tools in CEA. For a complete list of tutorial check out the section :doc:`tutorials`.
 
-:doc:`config-file-guide`.
-
-:doc:`new-project-guide`.
-
-:doc:`cea-workflow-guide`.
-
-For a complete list check out the section :doc:`tutorials`.
 
 Cite us
 -------

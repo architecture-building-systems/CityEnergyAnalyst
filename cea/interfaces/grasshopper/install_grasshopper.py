@@ -36,6 +36,7 @@ def main(_):
 
     scripts_folder = os.path.expandvars(r'%APPDATA%\McNeel\Rhinoceros\5.0\scripts')
     copy_config(scripts_folder)
+    copy_scripts(scripts_folder)
     copy_inputlocator(scripts_folder)
     copy_library(scripts_folder)
 
@@ -53,6 +54,20 @@ def copy_config(scripts_folder):
     shutil.copy(os.path.join(cea_src_folder, 'config.py'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
+
+
+def copy_scripts(scripts_folder):
+    """Copy the cea/scripts.py, cea/scripts.yml to the toolbox_folder"""
+    import cea.scripts
+    import pickle
+
+    cea_dst_folder = get_cea_dst_folder(scripts_folder)
+    cea_src_folder = os.path.dirname(cea.scripts.__file__)
+    shutil.copy(os.path.join(cea_src_folder, 'scripts.py'), cea_dst_folder)
+
+    categories_dict = cea.scripts._get_categories_dict()
+    pickle.dump(categories_dict, open(os.path.join(cea_dst_folder, 'scripts.pickle'), 'w'))
+
 
 def get_cea_dst_folder(toolbox_folder):
     cea_dst_folder = os.path.join(toolbox_folder, 'cea')
@@ -90,12 +105,6 @@ def copy_library(scripts_folder):
     lib_src_folder = os.path.dirname(__file__)
     shutil.copy(os.path.join(lib_src_folder, 'ghhelper.py'), lib_dst_folder)
 
-    # we also need access to the cli.config file (ghhelper uses this to figure out the parameters)
-    lib_cli_dst_folder = os.path.join(scripts_folder, 'cea', 'interfaces', 'cli')
-    if not os.path.exists(lib_cli_dst_folder):
-        os.makedirs(lib_cli_dst_folder)
-    shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_cli_dst_folder)
-
     # add `__init__.py` files to interfaces and arcgis folders
     import cea
     shutil.copy(os.path.join(os.path.dirname(cea.__file__), '__init__.py'), os.path.join(lib_dst_folder, '..', '..', '__init__.py'))
@@ -103,8 +112,6 @@ def copy_library(scripts_folder):
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
         f.write('')
     with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
-        f.write('')
-    with open(os.path.join(lib_cli_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
 
