@@ -129,7 +129,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     # sizing cold water storage tank
     if master_to_slave_vars.Storage_cooling_size_W > 0:
-        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_w
+        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_W
         Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
         peak_hour = np.argmax(Q_cooling_req_W)
         area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
