@@ -40,7 +40,7 @@ def sampling_main(locator, config):
     Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
 
     :param locator: pointer to location of CEA files
-    :param variables: input variables of CEA to sample. They must be 5!
+    :param variables: input variables of CEA to sample. They must be 6!
     :param building_name: name of building to calibrate
     :param building_load: name of building load to calibrate
     :return:
