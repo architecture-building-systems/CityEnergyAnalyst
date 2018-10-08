@@ -8,7 +8,7 @@ from __future__ import print_function
 import os
 import time
 from math import *
-
+from numba import jit
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -384,22 +384,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         for time in range(8760):
             #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
             c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
-            Mfl_kgpers = specific_flows_kgpers[flow][time]
-            if time < TIME0 + DELT / 2:
-                for Iseg in range(101, 501):  # 400 points with the data
-                    STORED[Iseg] = Tin_C
-            else:
-                for Iseg in range(1, Nseg):  # 400 points with the data
-                    STORED[100 + Iseg] = STORED[200 + Iseg]
-                    STORED[300 + Iseg] = STORED[400 + Iseg]
+            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
 
-            # calculate stability criteria
-            if Mfl_kgpers > 0:
-                stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
-                    C_eff_Jperm2K * aperture_area_m2)
-                if stability_criteria <= 0.5:
-                    print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
-                           + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
+
 
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb_C = Tamb_vector_C[time]
@@ -556,6 +543,27 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
               el_output_PV_kW]
 
     return result
+
+@jit(nopython=True)
+def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2):
+    Mfl_kgpers = specific_flows_kgpers[time]
+    if time < TIME0 + DELT / 2:
+        for Iseg in range(101, 501):  # 400 points with the data
+            STORED[Iseg] = Tin_C
+    else:
+        for Iseg in range(1, Nseg):  # 400 points with the data
+            STORED[100 + Iseg] = STORED[200 + Iseg]
+            STORED[300 + Iseg] = STORED[400 + Iseg]
+
+    # calculate stability criteria
+    if Mfl_kgpers > 0:
+        stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
+                C_eff_Jperm2K * aperture_area_m2)
+        if stability_criteria <= 0.5:
+            print('ERROR: stability criteria', stability_criteria, 'is not reached.',
+                  'aperture_area:', aperture_area_m2, 'mass flow:', Mfl_kgpers)
+
+    return Mfl_kgpers
 
 
 # investment and maintenance costs
