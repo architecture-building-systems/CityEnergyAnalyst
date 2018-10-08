@@ -374,7 +374,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
                                  q_rad_Wperm2, Mfl_kgpers)
             # calculate q_gain with the guess for DT[1]
-            q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout_C, aperture_area_m2, c1, c2,
+            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1, c2,
                                         Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
 
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
@@ -490,7 +490,7 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
         else:  # heat losses based on each segment's inlet and outlet temperatures.
             Tfl[1] = TflA[Iseg]
             Tabs[1] = TabsA[Iseg]
-            q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_Seg_C, Tout_C, A_seg_m2, c1, c2,
+            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_Seg_C, A_seg_m2, c1, c2,
                                         Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
             Tout_Seg_C = Tout_C
 
@@ -609,16 +609,14 @@ def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
 
 
 @jit(nopython=True)
-def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c2, Mfl, delts, Cp_waterglycol, C_eff,
+def calc_q_gain(Tfl, q_rad_Whperm2, DT, Tin, aperture_area_m2, c1, c2, Mfl, delts, Cp_waterglycol, C_eff,
                 Te):
     """
     calculate the collector heat gain through iteration including temperature dependent thermal losses of the collectors.
     :param Tfl: mean fluid temperature
-    :param Tabs: mean absorber temperature
     :param q_rad_Whperm2: absorbed radiation per aperture [Wh/m2]
     :param DT: temperature differences between collector and ambient [K]
     :param Tin: collector inlet temperature [K]
-    :param Tout: collector outlet temperature [K]
     :param aperture_area_m2: aperture area [m2]
     :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
@@ -662,12 +660,6 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
                 DT[1] = DT[2]
         xgain += 1
 
-    # TODO: redundant...
-    # qout = Mfl * Cp_waterglycol * (Tout - Tin) / aperture_area
-    # qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
-    # qbal = qgain - qout - qmtherm
-    # if abs(qbal) > 1:
-    #     qbal = qbal
     return qgain_Whperm2
 
 

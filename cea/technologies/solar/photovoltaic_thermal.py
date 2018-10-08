@@ -391,29 +391,11 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb_C = Tamb_vector_C[time]
             q_rad_Wperm2 = q_rad_vector[time]
-            Tfl[1] = 0  # mean fluid temperature
-            Tabs[1] = 0  # mean absorber temperature
-            for Iseg in range(1, Nseg + 1):
-                Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
-                Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
-
-            # first guess for Delta T
-            if Mfl_kgpers > 0:
-                Tout = Tin_C + (q_rad_Wperm2 - ((c1_pvt) + 0.5) * (Tin_C - Tamb_C)) / (
-                    Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
-                Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
-            else:
-                # if c1_pvt < 0:
-                #     print('c1_pvt: ', c1_pvt)
-                Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
-                Tfl[2] = Tout  # fluid temperature same as output
-                # if Tout > T_max_C:
-                #     print('Tout: ',Tout, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
-
-            DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
+            Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C,
+                                 aperture_area_m2, c1_pvt, q_rad_Wperm2)
 
             # calculate q_gain with the guess for DT[1]
-            q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout, aperture_area_m2, c1_pvt, c2,
+            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1_pvt, c2,
                                         Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
 
             Aseg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
@@ -422,30 +404,30 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 TflA[Iseg] = STORED[100 + Iseg]
                 TabsA[Iseg] = STORED[300 + Iseg]
                 if Iseg > 1:
-                    TinSeg = ToutSeg
+                    TinSeg = ToutSeg_C
                 else:
                     TinSeg = Tin_C
                 if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
-                    ToutSeg = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (
+                    ToutSeg_C = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (
                         C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
                                (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
                                   Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
-                    ToutSeg = ToutSeg - 273.15  # in [C]
-                    TflB[Iseg] = (TinSeg + ToutSeg) / 2
+                    ToutSeg_C = ToutSeg_C - 273.15  # in [C]
+                    TflB[Iseg] = (TinSeg + ToutSeg_C) / 2
                 else:  # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, TinSeg, Tout, Aseg_m2, c1_pvt, c2,
+                    q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, TinSeg, Aseg_m2, c1_pvt, c2,
                                                 Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
-                    ToutSeg = Tout
+                    ToutSeg_C = Tout_C
                     if Mfl_kgpers > 0:
-                        TflB[Iseg] = (TinSeg + ToutSeg) / 2
-                        ToutSeg = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
+                        TflB[Iseg] = (TinSeg + ToutSeg_C) / 2
+                        ToutSeg_C = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
                     else:
-                        TflB[Iseg] = ToutSeg
+                        TflB[Iseg] = ToutSeg_C
 
-                    # TflB[Iseg] = ToutSeg
-                    q_fluid_Wperm2 = (ToutSeg - TinSeg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
+                    # TflB[Iseg] = ToutSeg_C
+                    q_fluid_Wperm2 = (ToutSeg_C - TinSeg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
                     q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
                     q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
                     if abs(q_balance_error) > 1:
@@ -453,7 +435,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
 
             # resulting energy output
-            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (ToutSeg - Tin_C) / 1000  # [kW]
+            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (ToutSeg_C - Tin_C) / 1000  # [kW]
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -462,10 +444,10 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out[flow][time] = ToutSeg
+            temperature_out[flow][time] = ToutSeg_C
             temperature_in[flow][time] = Tin_C
             supply_out_kW[flow][time] = q_out_kW
-            temperature_mean[flow][time] = (Tin_C + ToutSeg) / 2  # Mean absorber temperature at present
+            temperature_mean[flow][time] = (Tin_C + ToutSeg_C) / 2  # Mean absorber temperature at present
 
             q_gain_Wperm2 = 0
             TavgB = 0
@@ -543,6 +525,30 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
               el_output_PV_kW]
 
     return result
+
+
+def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1_pvt,
+                q_rad_Wperm2):
+    Tfl[1] = 0  # mean fluid temperature
+    Tabs[1] = 0  # mean absorber temperature
+    for Iseg in range(1, Nseg + 1):
+        Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
+        Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
+    # first guess for Delta T
+    if Mfl_kgpers > 0:
+        Tout_C = Tin_C + (q_rad_Wperm2 - ((c1_pvt) + 0.5) * (Tin_C - Tamb_C)) / (
+                Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+        Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
+    else:
+        # if c1_pvt < 0:
+        #     print('c1_pvt: ', c1_pvt)
+        Tout_C = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
+        Tfl[2] = Tout_C  # fluid temperature same as output
+        # if Tout_C > T_max_C:
+        #     print('Tout_C: ',Tout_C, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
+    DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
+    return Tout_C
+
 
 @jit(nopython=True)
 def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2):
