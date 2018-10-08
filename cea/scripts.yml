@@ -67,7 +67,8 @@ Energy potentials:
   description: Calculate electricity & heat production from photovoltaic / thermal technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic_thermal
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel', 'solar:type-scpanel',
+  parameters: ['general:scenario', 'general:region', 'general:weather',  'solar:buildings',  'solar:type-pvpanel',
+               'solar:type-scpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                'solar:solar-window-solstice', 'solar:t-in-pvt']
 
