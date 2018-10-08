@@ -526,7 +526,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
     return result
 
-
+@jit(nopython=True)
 def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1_pvt,
                 q_rad_Wperm2):
     Tfl[1] = 0  # mean fluid temperature
