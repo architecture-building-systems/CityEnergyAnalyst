@@ -8,8 +8,7 @@ from __future__ import print_function
 import sys
 import cea.config
 import cea.inputlocator
-
-from cea.interfaces.cli.cli import get_cli_config, print_script_configuration
+import cea.scripts
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,23 +28,20 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
-
-    cli_config = get_cli_config()
-
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
     if not len(args) or args[0].lower() == '--help':
         print_help()
         sys.exit(1)
     script_name = args.pop(0)
-    option_list = cli_config.get('config', script_name).split()
-    config.restrict_to(option_list)
-    config.apply_command_line_args(args, option_list)
+    cea_script = cea.scripts.by_name(script_name)
+    config.restrict_to(cea_script.parameters)
+    config.apply_command_line_args(args, cea_script.parameters)
 
     # save the updates to the configuration file (re-running the same tool will result in the
     # same parameters being set)
     config.save(cea.config.CEA_CONFIG)
-    print_script_configuration(config, script_name, option_list)
+    cea_script.print_script_configuration(config, verb='Configuring')
 
 
 def print_help():
