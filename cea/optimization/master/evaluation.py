@@ -449,10 +449,10 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
                 master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     master_to_slave_vars.DCN_supplyunits = DCN_configuration
-    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * shareAvail, 0)
 
     return master_to_slave_vars
 
