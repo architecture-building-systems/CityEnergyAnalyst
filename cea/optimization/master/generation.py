@@ -55,11 +55,25 @@ def generate_main(nBuildings, config):
     # the order of heating technologies is CHP/Furnace, Base Boiler, Peak Boiler, HP Lake, HP Sewage, GHP
     # don't get confused with the order of activation of the technologies, that order is given in heating_resource_activation
 
+    # Allocation of Shares
+    def cuts(ind, nPlants, irank):
+        cuts = sorted(random_sample(nPlants - 1) * 0.99 + 0.009)
+        edge = [0] + cuts + [1]
+        share = [(b - a) for a, b in izip(edge, edge[1:])]
+
+        n = len(share)
+        sharetoallocate = 0
+        rank = irank
+        while sharetoallocate < n:
+            if ind[rank] > 0:
+                ind[rank + 1] = share[sharetoallocate]
+                sharetoallocate += 1
+            rank += 2
+
     if config.district_heating_network:
 
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDHN = 0
-        countSolar = 0
 
         if N_HEAT == 0:
             countDHN = 1
@@ -98,24 +112,26 @@ def generate_main(nBuildings, config):
             heating_block[index] = choice_HR
             index += 1
 
-        # Allocation of Shares
-        def cuts(ind, nPlants, irank):
-            cuts = sorted(random_sample(nPlants - 1) * 0.99 + 0.009)
-            edge = [0] + cuts + [1]
-            share = [(b - a) for a, b in izip(edge, edge[1:])]
-
-            n = len(share)
-            sharetoallocate = 0
-            rank = irank
-            while sharetoallocate < n:
-                if ind[rank] > 0:
-                    ind[rank + 1] = share[sharetoallocate]
-                    sharetoallocate += 1
-                rank += 2
-
         cuts(heating_block, countDHN, 0)
 
+        # DHN supply temperature and the number of units of AHU/ARU/SHU it is supplied to
+        if DHN_temperature_considered:
+            heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
+                    DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
+
+        heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2 + 1] = random.randint(1,
+                                                                            7)  # corresponding to number of units between 1-7
+        # 1 - AHU only
+        # 2 - ARU only
+        # 3 - SHU only
+        # 4 - AHU + ARU
+        # 5 - AHU + SHU
+        # 6 - ARU + SHU
+        # 7 - AHU + ARU + SHU
+
     # Solar units
+    countSolar = 0
+    index = N_HEAT * 2 + N_HR
     for Solar in range(N_SOLAR):
         choice_Solar = random.randint(0, 1)
         if choice_Solar == 1:
@@ -123,24 +139,9 @@ def generate_main(nBuildings, config):
         heating_block[index] = choice_Solar
         index += 2
 
-
-
     if countSolar > 0:
         cuts(heating_block, countSolar, N_HEAT * 2 + N_HR)
 
-    # DHN supply temperature and the number of units of AHU/ARU/SHU it is supplied to
-    if DHN_temperature_considered:
-        heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
-                    DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
-
-    heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
-    # 1 - AHU only
-    # 2 - ARU only
-    # 3 - SHU only
-    # 4 - AHU + ARU
-    # 5 - AHU + SHU
-    # 6 - ARU + SHU
-    # 7 - AHU + ARU + SHU
     cooling_block = [0] * (N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
