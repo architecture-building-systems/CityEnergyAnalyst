@@ -178,9 +178,9 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
     potential = pd.DataFrame(index=[range(8760)])
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
-        potential['PVT_' + panel_orientation + '_Q_kWh'] = 0
-        potential['PVT_' + panel_orientation + '_E_kWh'] = 0
-        potential['PVT_' + panel_orientation + '_m2'] = 0
+        potential['PVT_' + panel_orientation + '_Q_kWh'] = 0.0
+        potential['PVT_' + panel_orientation + '_E_kWh'] = 0.0
+        potential['PVT_' + panel_orientation + '_m2'] = 0.0
 
     # assign default number of subsdivisions for the calculation
     if panel_properties_SC['type'] == 'ET':  # ET: evacuated tubes
