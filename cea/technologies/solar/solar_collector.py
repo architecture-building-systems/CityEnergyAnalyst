@@ -505,6 +505,7 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
             q_mtherm_Whperm2 = (TflB[Iseg] - TflA[
                 Iseg]) * C_eff_Jperm2K / delts  # total heat change rate of thermal capacitance
             q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Whperm2
+            # assert abs(q_balance_error) > 1, "q_balance_error in solar-collector calculation"
         q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
     return Tout_Seg_C
 

@@ -399,6 +399,8 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                         Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
 
             Aseg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
+
+            # multi-segment calculation to avoid temperature jump at times of flow rate changes
             for Iseg in range(1, Nseg + 1):
                 # get temperatures of the previous time-step
                 TflA[Iseg] = STORED[100 + Iseg]
@@ -430,8 +432,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                     q_fluid_Wperm2 = (ToutSeg_C - TinSeg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
                     q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
                     q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
-                    if abs(q_balance_error) > 1:
-                        time = time  # re-enter the iteration when energy balance not satisfied
+                    # assert abs(q_balance_error) > 1, "q_balance_error in photovoltaic-thermal calculation"
                 q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
 
             # resulting energy output
