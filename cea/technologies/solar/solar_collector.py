@@ -68,17 +68,17 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print('calculating solar properties done')
+    print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
-    print('gathering properties of Solar collector panel')
+    print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, config)
 
-    print('filtering low potential sensor points done')
+    print('filtering low potential sensor points done for building %s' % building_name)
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -88,12 +88,12 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                       solar_properties, max_annual_radiation,
                                                                       panel_properties_SC)
-        print('calculating optimal tilt angle and separation done')
+        print('calculating optimal tilt angle and separation done for building %s' % building_name)
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print('generating groups of sensor points done')
+        print('generating groups of sensor points done for building %s' % building_name)
 
         # calculate heat production from solar collectors
         Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m,
