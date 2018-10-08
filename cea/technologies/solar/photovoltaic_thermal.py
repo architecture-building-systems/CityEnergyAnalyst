@@ -401,42 +401,12 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
             Aseg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes
-            for Iseg in range(1, Nseg + 1):
-                # get temperatures of the previous time-step
-                TflA[Iseg] = STORED[100 + Iseg]
-                TabsA[Iseg] = STORED[300 + Iseg]
-                if Iseg > 1:
-                    TinSeg = ToutSeg_C
-                else:
-                    TinSeg = Tin_C
-                if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
-                    ToutSeg_C = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (
-                        C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
-                               (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                                  Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
-                    ToutSeg_C = ToutSeg_C - 273.15  # in [C]
-                    TflB[Iseg] = (TinSeg + ToutSeg_C) / 2
-                else:  # heat losses based on each segment's inlet and outlet temperatures.
-                    Tfl[1] = TflA[Iseg]
-                    Tabs[1] = TabsA[Iseg]
-                    q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, TinSeg, Aseg_m2, c1_pvt, c2,
-                                                Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
-                    ToutSeg_C = Tout_C
-                    if Mfl_kgpers > 0:
-                        TflB[Iseg] = (TinSeg + ToutSeg_C) / 2
-                        ToutSeg_C = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
-                    else:
-                        TflB[Iseg] = ToutSeg_C
-
-                    # TflB[Iseg] = ToutSeg_C
-                    q_fluid_Wperm2 = (ToutSeg_C - TinSeg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
-                    q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
-                    q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
-                    # assert abs(q_balance_error) > 1, "q_balance_error in photovoltaic-thermal calculation"
-                q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
+            Tout_Seg_C = do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg,
+                                                     Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C,
+                                                     c1_pvt, c2, delts, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
 
             # resulting energy output
-            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (ToutSeg_C - Tin_C) / 1000  # [kW]
+            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C) / 1000  # [kW]
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -445,10 +415,10 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out[flow][time] = ToutSeg_C
+            temperature_out[flow][time] = Tout_Seg_C
             temperature_in[flow][time] = Tin_C
             supply_out_kW[flow][time] = q_out_kW
-            temperature_mean[flow][time] = (Tin_C + ToutSeg_C) / 2  # Mean absorber temperature at present
+            temperature_mean[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
 
             q_gain_Wperm2 = 0
             TavgB = 0
@@ -526,6 +496,46 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
               el_output_PV_kW]
 
     return result
+
+@jit(nopython=True)
+def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg, Nseg, STORED, Tabs,
+                                 TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1_pvt, c2, delts, q_gain_Seg,
+                                 q_gain_Wperm2, q_rad_Wperm2):
+    for Iseg in range(1, Nseg + 1):
+        # get temperatures of the previous time-step
+        TflA[Iseg] = STORED[100 + Iseg]
+        TabsA[Iseg] = STORED[300 + Iseg]
+        if Iseg > 1:
+            Tin_Seg = Tout_Seg_C
+        else:
+            Tin_Seg = Tin_C
+        if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
+            Tout_Seg_C = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg + 273.15)) / Aseg_m2 - (
+                    C_eff_Jperm2K * (Tin_Seg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
+                         (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
+                                Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
+            Tout_Seg_C = Tout_Seg_C - 273.15  # in [C]
+            TflB[Iseg] = (Tin_Seg + Tout_Seg_C) / 2
+        else:  # heat losses based on each segment's inlet and outlet temperatures.
+            Tfl[1] = TflA[Iseg]
+            Tabs[1] = TabsA[Iseg]
+            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_Seg, Aseg_m2, c1_pvt, c2,
+                                        Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
+            Tout_Seg_C = Tout_C
+            if Mfl_kgpers > 0:
+                TflB[Iseg] = (Tin_Seg + Tout_Seg_C) / 2
+                Tout_Seg_C = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
+            else:
+                TflB[Iseg] = Tout_Seg_C
+
+            # TflB[Iseg] = Tout_Seg_C
+            q_fluid_Wperm2 = (Tout_Seg_C - Tin_Seg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
+            q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
+            q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
+            # assert abs(q_balance_error) > 1, "q_balance_error in photovoltaic-thermal calculation"
+        q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
+    return Tout_Seg_C
+
 
 @jit(nopython=True)
 def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1_pvt,
