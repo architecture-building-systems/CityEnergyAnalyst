@@ -383,7 +383,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
         for time in range(8760):
             #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
-            c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
+            c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time)
             Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
 
 
@@ -474,17 +474,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
             supply_out_total_kW = supply_out_kW + 0.5 * auxiliary_electricity_kW[flow] - supply_losses_kW[flow]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/c
 
-    for x in range(8760):
-        # turn off the water circuit if total energy supply is zero
-        if supply_out_total_kW[5][x] <= 0:
-            supply_out_total_kW[5][x] = 0
-            mcp_kWperK[x] = 0
-            auxiliary_electricity_kW[5][x] = 0
-            temperature_out[5][x] = 0
-            temperature_in[5][x] = 0
-        # update pv cell temperature with temperatures of the water circuit
-        T_module_mean_C = (temperature_out[5][x] + temperature_in[5][x]) / 2
-        T_module_C[x] = T_module_mean_C if T_module_mean_C > 0 else Tcell_PV_C[x]
+    turn_off_the_water_circuit_if_total_energy_supply_is_zero(T_module_C, Tcell_PV_C, auxiliary_electricity_kW[flow],
+                                                              mcp_kWperK, supply_out_total_kW[5], temperature_in[5],
+                                                              temperature_out[5])
 
     el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom,
                                                   module_area_per_group_m2,
@@ -497,10 +489,35 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
     return result
 
+
+@jit(nopython=True)
+def calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time):
+    c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
+    return c1_pvt
+
+
+@jit(nopython=True)
+def turn_off_the_water_circuit_if_total_energy_supply_is_zero(T_module_C, Tcell_PV_C, auxiliary_electricity_kW,
+                                                              mcp_kWperK, supply_out_total_kW, temperature_in,
+                                                              temperature_out):
+    for x in range(8760):
+        # turn off the water circuit if total energy supply is zero
+        if supply_out_total_kW[x] <= 0:
+            supply_out_total_kW[x] = 0
+            mcp_kWperK[x] = 0
+            auxiliary_electricity_kW[x] = 0
+            temperature_out[x] = 0
+            temperature_in[x] = 0
+        # update pv cell temperature with temperatures of the water circuit
+        T_module_mean_C = (temperature_out[x] + temperature_in[x]) / 2
+        T_module_C[x] = T_module_mean_C if T_module_mean_C > 0 else Tcell_PV_C[x]
+
+
 @jit(nopython=True)
 def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg, Nseg, STORED, Tabs,
                                  TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1_pvt, c2, delts, q_gain_Seg,
                                  q_gain_Wperm2, q_rad_Wperm2):
+    Tout_Seg_C = 0.0  # this value will be overwritten after first iteration
     for Iseg in range(1, Nseg + 1):
         # get temperatures of the previous time-step
         TflA[Iseg] = STORED[100 + Iseg]
