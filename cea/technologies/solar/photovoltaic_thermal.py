@@ -13,7 +13,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-
+from itertools import izip, repeat
+import multiprocessing
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
     calc_absorbed_radiation_PV, calc_cell_temperature)
@@ -33,8 +34,13 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def calc_PVT_wrapper(args):
+    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
+    function"""
+    return calc_PVT(*args)
 
-def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, longitude, weather_data, date_local, building_name):
+
+def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -61,6 +67,9 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
     t0 = time.clock()
 
+    radiation_json_path = locator.get_radiation_building(building_name)
+    metadata_csv_path = locator.get_radiation_metadata(building_name)
+
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print('calculating solar properties done for building %s' % building_name)
@@ -72,7 +81,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config)
+        solar_equations.filter_low_potential(radiation_json_path, metadata_csv_path, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 
@@ -660,13 +669,28 @@ def main(config):
     date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print('reading weather data done.')
 
-    #list_buildings_names =['B022'] #for missing buildings
-    for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name=building)
-        radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        calc_PVT(locator=locator, config=config, radiation_json_path=radiation, metadata_csv_path=radiation_metadata,
-                 latitude=latitude, longitude=longitude, weather_data=weather_data, date_local=date_local,
-                 building_name=building)
+    building_count = len(list_buildings_names)
+    number_of_processes = config.get_number_of_processes()
+    if number_of_processes > 1:
+        print("Using %i CPU's" % number_of_processes)
+        pool = multiprocessing.Pool(number_of_processes)
+        pool.map(calc_PVT_wrapper, izip(repeat(locator, building_count),
+                                       repeat(config, building_count),
+                                       repeat(latitude, building_count),
+                                       repeat(longitude, building_count),
+                                       repeat(weather_data, building_count),
+                                       repeat(date_local, building_count),
+                                       list_buildings_names))
+        # locator, config, latitude, longitude, weather_data, date_local, building_name
+    else:
+        print("Using single process")
+        map(calc_PVT_wrapper, izip(repeat(locator, building_count),
+                                  repeat(config, building_count),
+                                  repeat(latitude, building_count),
+                                  repeat(longitude, building_count),
+                                  repeat(weather_data, building_count),
+                                  repeat(date_local, building_count),
+                                  list_buildings_names))
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.PVT_results(building))
