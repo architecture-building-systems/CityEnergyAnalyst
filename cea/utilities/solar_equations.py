@@ -178,15 +178,13 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config):
+def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
     #. keep sensors above min radiation
     #. eliminate points when hourly production < 50 W/m2
 
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
     :param radiation_csv: solar insulation data on all surfaces of each building
     :type radiation_csv: .csv
     :param metadata_csv: solar insulation sensor data of each building

@@ -76,7 +76,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_csv, metadata_csv, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 
