@@ -3,6 +3,7 @@ Photovoltaic thermal panels
 """
 
 from __future__ import division
+from __future__ import print_function
 
 import os
 import time
@@ -33,7 +34,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, longitude, weather_path, building_name):
+def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, longitude, weather_data, date_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -60,25 +61,20 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
     t0 = time.clock()
 
-    # weather data
-    weather_data = epwreader.epw_reader(weather_path)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
-    print 'reading weather data done'
-
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print 'calculating solar properties done'
+    print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
-    print 'gathering properties of PVT collector panel'
+    print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config)
 
-    print 'filtering low potential sensor points done'
+    print('filtering low potential sensor points done for building %s' % building_name)
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -90,12 +86,12 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
                                                                       solar_properties,
                                                                       max_annual_radiation, panel_properties_PV)
 
-        print 'calculating optimal tile angle and separation done'
+        print('calculating optimal tile angle and separation done for building %s' % building_name)
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print 'generating groups of sensor points done'
+        print('generating groups of sensor points done for building %s' % building_name)
 
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
@@ -105,7 +101,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print 'Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds'
+        print('Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds')
 
     else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
@@ -610,17 +606,25 @@ def main(config):
     print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
 
-    list_buildings_names = locator.get_zone_building_names()
+    list_buildings_names = config.solar.buildings
+    if not list_buildings_names:
+        list_buildings_names = locator.get_zone_building_names()
 
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
+
+    # weather data
+    weather_data = epwreader.epw_reader(config.weather)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    print('reading weather data done.')
 
     #list_buildings_names =['B022'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PVT(locator=locator, config=config, radiation_json_path=radiation, metadata_csv_path=radiation_metadata,
-                 latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
+                 latitude=latitude, longitude=longitude, weather_data=weather_data, date_local=date_local,
+                 building_name=building)
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.PVT_results(building))
