@@ -222,7 +222,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
         total_radiation_kWh[group] = (radiation_Wperm2['I_sol'] * module_area_per_group_m2 / 1000)
 
     potential['Area_SC_m2'] = sum(list_areas_groups)
-    potential['radiation_kWh'] = sum(total_radiation_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['Q_SC_gen_kWh'] = sum(total_Qh_output_kWh)
     potential['mcp_SC_kWperC'] = sum(total_mcp_kWperC)
     potential['Eaux_SC_kWh'] = sum(total_aux_el_kWh)

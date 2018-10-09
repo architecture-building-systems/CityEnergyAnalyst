@@ -257,7 +257,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         total_radiation_kWh[group] = hourly_radiation_Wperm2[group] * module_area_per_group_m2 / 1000
 
     potential['Area_PVT_m2'] = sum(list_groups_area)
-    potential['radiation_kWh'] = sum(total_radiation_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['E_PVT_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['Q_PVT_gen_kWh'] = sum(total_Qh_output_kWh)
     potential['mcp_PVT_kWperC'] = sum(total_mcp_kWperC)
