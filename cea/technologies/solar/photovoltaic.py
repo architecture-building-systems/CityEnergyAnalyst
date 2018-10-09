@@ -219,7 +219,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     #         potential['PV_' + panel_orientation + '_m2'] = 0
 
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
-    potential['radiation_kWh'] = sum(total_radiation_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['Area_PV_m2'] = sum(list_groups_area)
     potential['Date'] = date_local
     potential = potential.set_index('Date')

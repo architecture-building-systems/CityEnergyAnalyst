@@ -611,7 +611,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
         group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
         # calculate mean radiation among surfaces in group
-        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).as_matrix().T
+        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 
         group_count += 1
 
