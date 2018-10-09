@@ -132,15 +132,22 @@ def generate_main(nBuildings, config):
     # Solar units
     countSolar = 0
     index = N_HEAT * 2 + N_HR
-    for Solar in range(N_SOLAR):
-        choice_Solar = random.randint(0, 1)
-        if choice_Solar == 1:
-            countSolar += 1
-        heating_block[index] = choice_Solar
-        index += 2
 
-    if countSolar > 0:
-        cuts(heating_block, countSolar, N_HEAT * 2 + N_HR)
+    if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
+        heating_block[index] = random.randint(0, 1)
+        heating_block[index+1] = random.random()
+
+
+    if config.district_heating_network:
+        for Solar in range(N_SOLAR):
+            choice_Solar = random.randint(0, 1)
+            if choice_Solar == 1:
+                countSolar += 1
+            heating_block[index] = choice_Solar
+            index += 2
+
+        if countSolar > 0:
+            cuts(heating_block, countSolar, N_HEAT * 2 + N_HR)
 
     cooling_block = [0] * (N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
