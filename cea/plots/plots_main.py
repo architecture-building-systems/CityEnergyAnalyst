@@ -62,7 +62,7 @@ def plots_main(config):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running plots for the next categories = %s" % config.plots.categories)
+    print("Running plots for the following categories = %s" % config.plots.categories)
     plots_main(config)
 
 
