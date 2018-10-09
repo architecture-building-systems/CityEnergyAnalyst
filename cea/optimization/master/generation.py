@@ -135,7 +135,8 @@ def generate_main(nBuildings, config):
 
     if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
         heating_block[index] = random.randint(0, 1)
-        heating_block[index+1] = random.random()
+        if heating_block[index]:
+            heating_block[index+1] = random.random()
 
 
     if config.district_heating_network:
