@@ -554,11 +554,12 @@ def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, M
             else:
                 TflB[Iseg] = Tout_Seg_C
 
-            # TflB[Iseg] = Tout_Seg_C
-            q_fluid_Wperm2 = (Tout_Seg_C - Tin_Seg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
-            q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
-            q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
-            # assert abs(q_balance_error) > 1, "q_balance_error in photovoltaic-thermal calculation"
+            # the following lines do not perform meaningful operation, the iterations on DT are performed in calc_q_gain
+            # these lines are kept here as a reference to the original model in FORTRAN
+            # q_fluid_Wperm2 = (Tout_Seg_C - Tin_Seg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
+            # q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
+            # q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
+            # # assert abs(q_balance_error) > 1, "q_balance_error in photovoltaic-thermal calculation"
         q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
     return Tout_Seg_C
 
