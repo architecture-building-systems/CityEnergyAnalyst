@@ -21,26 +21,3 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-def list_categories():
-    """List all the categories implemented in the CEA"""
-    import cea.plots
-    for importer, modname, ispkg in pkgutil.iter_modules(cea.plots.__path__, cea.plots.__name__ + '.'):
-        module = __import__(modname, fromlist="dummy")
-        try:
-            yield PlotCategory(module.name, module.label)
-        except:
-            continue
-
-class PlotCategory(object):
-    """Contains the data of a plot category."""
-    def __init__(self, name, label):
-        self.name = name
-        self.label = label
-
-
-if __name__ == '__main__':
-    print(globals())
-    print('current module:', __path__)
-    for category in list_categories():
-        print(category.name, ':', category.label)
