@@ -40,6 +40,7 @@ def calc_SC_wrapper(args):
     argument for the function."""
     return calc_SC(*args)
 
+
 def calc_SC(locator, config, latitude, longitude, weather_data, date_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
