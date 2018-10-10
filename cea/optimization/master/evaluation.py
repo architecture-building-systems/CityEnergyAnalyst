@@ -286,6 +286,12 @@ def check_invalid(individual, nBuildings, config):
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
         valid = False
 
+    if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
+        for i in range(N_SOLAR - 1):
+            solar = i + 1
+            individual[2 * N_HEAT + N_HR + 2*solar] = 0
+            individual[2 * N_HEAT + N_HR + 2 * solar + 1] = 0
+
     heating_part = 2 * N_HEAT + N_HR + 2 * N_SOLAR + INDICES_CORRESPONDING_TO_DHN
     for i in range(N_COOL):
         if individual[heating_part + 2 * i] > 0 and individual[heating_part + 2 * i + 1] < 0.01:
