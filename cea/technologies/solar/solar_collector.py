@@ -399,6 +399,8 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             supply_out_kW[flow][time] = q_out_kW
             temperature_mean_C[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
 
+            # the following lines do not perform meaningful operation, the iteration on DT are performed in calc_q_gain
+            # these lines are kept here as a reference to the original model in FORTRAN
             # q_gain = 0
             # TavgB = 0
             # TavgA = 0
@@ -406,11 +408,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             #     q_gain = q_gain + q_gain_Seg[Iseg] * A_seg_m2  # [W]
             #     TavgA = TavgA + TflA[Iseg] / Nseg
             #     TavgB = TavgB + TflB[Iseg] / Nseg
-            #
             # # OUT[9] = q_gain/Area_a # in W/m2
-            # q_mtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
-            # q_balance_error = q_gain - q_mtherm - q_out
-
             # OUT[11] = q_mtherm
             # OUT[12] = q_balance_error
         if flow < 4:
