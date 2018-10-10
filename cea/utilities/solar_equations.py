@@ -178,15 +178,13 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config):
+def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
     #. keep sensors above min radiation
     #. eliminate points when hourly production < 50 W/m2
 
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
     :param radiation_csv: solar insulation data on all surfaces of each building
     :type radiation_csv: .csv
     :param metadata_csv: solar insulation sensor data of each building
@@ -613,7 +611,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
         group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
         # calculate mean radiation among surfaces in group
-        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).as_matrix().T
+        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 
         group_count += 1
 
