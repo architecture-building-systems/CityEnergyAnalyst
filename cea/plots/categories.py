@@ -2,16 +2,12 @@ from __future__ import division
 from __future__ import print_function
 
 """
-Organizes the plots for the CEA. The dashboard uses the package structure of cea.plots to group the plots into
-cateogories and find the implementations of the plots.
-
-Each sub-package of ``cea.plots`` is a plot category. The ``__init__.py`` file of that sub-package is expected to
-have an attribute ``label`` which is used as the user-visible label of that category.
-
-Each module contained such a sub-package is considered a plot.
-
-The module ``cea.plots.categories`` contains helper-methods for dealing with the categories.
+Lists the plots by category. See ``cea/plots/__init__.py`` for documentation on how plots are organized and
+the conventions for adding new plots.
 """
+
+import pkgutil
+import importlib
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -22,15 +18,22 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def list_categories():
     """List all the categories implemented in the CEA"""
     import cea.plots
     for importer, modname, ispkg in pkgutil.iter_modules(cea.plots.__path__, cea.plots.__name__ + '.'):
-        module = __import__(modname, fromlist="dummy")
-        try:
-            yield PlotCategory(module.name, module.label)
-        except:
+        if not ispkg:
             continue
+        print('module:', modname)
+        module = importlib.import_module(modname)
+        try:
+            yield PlotCategory(module.__name__.split('.')[-1], module.label)
+        except:
+            # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
+            # ignored
+            continue
+
 
 class PlotCategory(object):
     """Contains the data of a plot category."""
@@ -40,7 +43,5 @@ class PlotCategory(object):
 
 
 if __name__ == '__main__':
-    print(globals())
-    print('current module:', __path__)
     for category in list_categories():
         print(category.name, ':', category.label)
