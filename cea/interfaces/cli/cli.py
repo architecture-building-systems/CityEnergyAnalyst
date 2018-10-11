@@ -8,6 +8,7 @@ The rest of the command line arguments are passed to the ``cea.config.Configurat
 import sys
 import os
 import importlib
+import datetime
 import ConfigParser
 import cea.config
 import cea.scripts
@@ -29,6 +30,8 @@ def main(config=None):
     :param cea.config.Configuration config: the configuration file to use (instead of creating a new one)
     :return:
     """
+    t0 = datetime.datetime.now()
+
     if not config:
         config = cea.config.Configuration()
 
@@ -60,6 +63,7 @@ def main(config=None):
     script_module = importlib.import_module(cea_script.module)
     try:
         script_module.main(config)
+        print("Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds())
     except cea.ConfigError as config_error:
         print('ERROR: %s' % config_error)
         sys.exit(config_error.rc)

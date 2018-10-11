@@ -18,7 +18,7 @@ from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
-from cea.utilities.number_of_processes import get_number_of_processes
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -158,7 +158,7 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
 def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output, config, region):
-    number_of_processes = get_number_of_processes(config)
+    number_of_processes = config.get_number_of_processes()
     print("Using %i CPU's" % number_of_processes)
     pool = mp.Pool(number_of_processes)
     joblist = []
