@@ -55,7 +55,7 @@ def plot_main(locator, config):
     plots.all_tech_district_hourly(category)
 
 
-class Plots():
+class Plots(object):
     def __init__(self, locator, buildings, weather, config):
         """
 
