@@ -81,13 +81,13 @@ class Configuration(object):
 
     def restrict_to(self, option_list):
         """
-        Restrict the config object to only allowing parameters as defined in the `option_list` parameter.
-        `option_list` is a list of strings of the form `section` or `section:parameter` as used in the `cli.config`
-        file.
+        Restrict the config object to only allowing parameters as defined in the ``option_list`` parameter.
+        `option_list` is a list of strings of the form `section` or `section:parameter` as used in the ``scripts.yml``
+        file for the ``parameters`` attribute of a script.
 
         The purpose of this is to ensure that scripts don't use parameters that are not specified as options to the
-        scripts. This only solves half of the possible issues with `cea.config.Configuration`: the other is that
-        a script creates it's own config file somewhere down the line. This is hard to check anyway.
+        scripts. This only solves half of the possible issues with :py:class:`cea.config.Configuration`: the other is
+        that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
 
@@ -154,6 +154,19 @@ class Configuration(object):
                 parser.set(section.name, parameter.name, self.user_config.get(section.name, parameter.name))
         with open(config_file, 'w') as f:
             parser.write(f)
+
+    def get_number_of_processes(self):
+        """
+        Returns the number of processes to use for multiprocessing.
+        :param config: Configuration file.
+        :return number_of_processes: Number of processes to use.
+        """
+        import multiprocessing
+        if self.multiprocessing:
+            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            return max(1, number_of_processes)  # ensure that at least one process is being used
+        else:
+            return 1
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
@@ -388,6 +401,7 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
+        self._extensions = ['epw']
 
     def decode(self, value):
         if value in self.locator.get_weather_names():
@@ -626,6 +640,8 @@ class MultiChoiceParameter(ChoiceParameter):
 
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
+    if line is None:
+        return []
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
     return [field.strip() for field in line.split(',') if field.strip()]
