@@ -376,11 +376,6 @@ class InputLocator(object):
         return os.path.join(self.get_uncertainty_results_folder(),
                             'CheckPoint_uncertainty_' + str(generation))
 
-    def get_measurements(self):
-        """scenario/inputs/
-        Operation pattern for disconnected buildings"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-metering', )
-
     def get_optimization_disconnected_result_file(self, building_name):
         """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
         return os.path.join(self.get_optimization_disconnected_folder(),
