@@ -49,9 +49,20 @@ class PlotBase(object):
         assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
         assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
 
-        prefix = 'Building_%s' % self.buildings[0] if self.buildings and len(self.buildings) == 1 else 'District'
+        prefix = 'Building_%s' % self.buildings[0] if self.buildings and (len(self.buildings) == 1) else 'District'
         fname = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
         return self.locator.get_timeseries_plots_file(fname, self.category_path)
+
+    def remove_unused_fields(self, data, fields):
+        """
+        Helper method that, given a data frame and a list of fields in that data frame, returns the subset of those
+        fields that actually have data.
+
+        FIXME: what about columns with negative values?
+        """
+        return [field for field in fields if data[field].sum() > 0.0]
+
+
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
