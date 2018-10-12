@@ -1,10 +1,41 @@
 from __future__ import division
 from __future__ import print_function
 
+import cea.plots.demand
 import plotly.graph_objs as go
 from plotly.offline import plot
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
+
+
+class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
+    """Implement the energy-use plot"""
+    def __init__(self, config, locator, buildings):
+        super(EnergyDemandDistrictPlot, self).__init__(config, locator, buildings)
+        self.name = "Energy Demand"
+        self.analysis_fields = ["E_sys_MWhyr",
+                                "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        self.data = self.yearly_loads
+        self.layout = go.Layout(images=LOGO, title=self.title, barmode='stack',
+                                yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                                xaxis=dict(title='Building Name'), showlegend=True)
+
+    def calc_graph(self):
+        graph = []
+        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
+        data = self.data.sort_values(by='total', ascending=False)
+        for field in self.analysis_fields:
+            y = data[field]
+            name = NAMING[field]
+            total_perc = (y / data['total'] * 100).round(2).values
+            total_perc_txt = ["(%.2f %%)" % x for x in total_perc]
+            trace = go.Bar(x=data["Name"], y=y, name=name, text=total_perc_txt, orientation='v',
+                           marker=dict(color=COLOR[field]))
+            graph.append(trace)
+
+        return graph
+
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
@@ -64,3 +95,14 @@ def calc_top_three_anchor_loads(data_frame, field):
     data_frame = data_frame.sort_values(by=field, ascending=False)
     anchor_list = data_frame[:3].Name.values
     return anchor_list
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    buildings = config.plots.buildings
+
+    EnergyDemandDistrictPlot(config, locator, buildings).plot(auto_open=True)
