@@ -13,6 +13,8 @@ Each module contained such a sub-package is considered a plot.
 The module ``cea.plots.categories`` contains helper-methods for dealing with the categories.
 """
 
+from cea.plots.base import PlotBase
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
