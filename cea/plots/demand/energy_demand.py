@@ -37,7 +37,6 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
         return graph
 
 
-
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
@@ -106,3 +105,4 @@ if __name__ == '__main__':
     buildings = config.plots.buildings
 
     EnergyDemandDistrictPlot(config, locator, buildings).plot(auto_open=True)
+    EnergyDemandDistrictPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
