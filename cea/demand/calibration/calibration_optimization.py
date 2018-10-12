@@ -15,13 +15,12 @@
 
 import array
 import random
-
 import numpy
-
 from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
+import cea.inputlocator
 
 creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
 creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
@@ -46,7 +45,13 @@ toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
-def main():
+def main(config):
+    building_names = config.calibration_optimization.buildings
+    building_loads = config.calibration_optimization.loads
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    material_choices = locator.get_envelope_systems(config.region)
+    uncertainty_distributions = locator.get_uncertainty_db(config.region)
+
     random.seed(64)
 
     pop = toolbox.population(n=300)
@@ -64,4 +69,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(cea.config.Configuration())
