@@ -1,4 +1,4 @@
-__version__ = "2.7.22"
+__version__ = "2.9.0"
 
 
 class ConfigError(Exception):
@@ -9,3 +9,8 @@ class ConfigError(Exception):
 class CustomDatabaseNotFound(Exception):
     """Raised when the InputLocator can't find a user-provided database (region=='custom')"""
     rc = 101  # sys.exit(rc)
+
+
+class ScriptNotFoundException(Exception):
+    """Raised when an invalid script name is used."""
+    rc = 102  # sys.exit(rc)

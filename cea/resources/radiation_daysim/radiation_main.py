@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 Radiation engine and geometry handler for CEA
 """
@@ -8,8 +10,8 @@ import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import multiprocessing as mp
 
-import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py2radiance as py2radiance
+import py4design.py3dmodel.fetch as fetch
+import py4design.py2radiance as py2radiance
 
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
@@ -44,11 +46,13 @@ def calc_location_properties(geometry_zone_shp):
     return latitude, longitude, time_zone_num
 
 def create_radiance_srf(occface, srfname, srfmat, rad):
-    bface_pts = fetch.pyptlist_frm_occface(occface)
+    bface_pts = fetch.points_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
 
+
 def calc_transmissivity(G_value):
-    return (math.sqrt(0.8402528435+0.0072522239*G_value*G_value)-0.9166530661)/0.0036261119/G_value
+    return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
+
 
 def add_rad_mat(daysim_mat_file, ageometry_table):
     file_path = daysim_mat_file
@@ -205,12 +209,12 @@ def main(config):
                                                             input_shp=locator.get_building_architecture(),
                                                             region=region)
 
-    print "creating 3D geometry and surfaces"
+    print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                     settings)
 
-    print "Sending the scene: geometry and materials to daysim"
+    print("Sending the scene: geometry and materials to daysim")
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
     rad = py2radiance.Rad(daysim_mat, locator.get_temporary_folder())

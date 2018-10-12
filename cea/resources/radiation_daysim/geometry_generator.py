@@ -6,17 +6,21 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
-import pyliburo.py3dmodel.construct as construct
-import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py3dmodel.calculate as calculate
-from pyliburo import py3dmodel as py3dmodel
-import pyliburo.py3dmodel.modify as modify
+from __future__ import print_function
+
+import py4design.py3dmodel.construct as construct
+import py4design.py3dmodel.fetch as fetch
+import py4design.py3dmodel.calculate as calculate
+from py4design import py3dmodel as py3dmodel
+from py4design import urbangeom
+import py4design.py3dmodel.modify as modify
 import math
 
-import pyliburo.gml3dmodel as gml3dmodel
-
+import py4design.gml3dmodel as gml3dmodel
+import py4design.py3dmodel.utility as utility
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
+import OCC.TopoDS
 from geopandas import GeoDataFrame as gdf
 
 import cea.inputlocator
@@ -70,6 +74,7 @@ def identify_surfaces_type(occface_list):
 
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
+
 def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     """
     This script calculates the intersection of the building edges to the terrain,
@@ -92,11 +97,11 @@ def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
 
 def create_windows(surface, wwr, ref_pypt):
     scaler = math.sqrt(wwr)
-    return fetch.shape2shapetype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
+    return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
 
 def create_hollowed_facade(surface_facade, window):
-    b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
-    hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
+    b_facade_cmpd = fetch.topo2topotype(construct.boolean_difference(surface_facade, window))
+    hole_facade = fetch.topo_explorer(b_facade_cmpd, "face")[0]
     normal2 = py3dmodel.calculate.face_normal(hole_facade)
     hollowed_facade = construct.simple_mesh(hole_facade)
     #Clean small triangles: this is a despicable source of error
@@ -133,7 +138,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     architecture_wwr = gdf.from_file(architecture_dbf_path).set_index('Name')
 
     #make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell_frm_faces(geometry_terrain)[0]
+    terrain_shell = construct.make_shell(geometry_terrain)
     terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
     terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
@@ -142,6 +147,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     geometry_3D_surroundings = []
 
     for name in district_building_names:
+        print('Generating geometry for building %(name)s' % locals())
         height = float(district_building_records.loc[name, height_col])
         nfloors = int(district_building_records.loc[name, nfloor_col])
 
@@ -237,7 +243,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
             # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
             # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
         else:
-            facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
+            facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
             wall_list = facade_list
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                  "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
@@ -252,7 +258,11 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
-    point_list_2D = list(geometry.exterior.coords)
+    if geometry.has_z:
+        # remove elevation - we'll add it back later by intersecting with the topography
+        point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
+    else:
+        point_list_2D = geometry.exterior.coords
     point_list_3D = [(a, b, 0) for (a, b) in point_list_2D]  # add 0 elevation
 
     # creating floor surface in pythonocc
@@ -264,9 +274,10 @@ def burn_buildings(geometry, terrain_intersection_curves):
     inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
 
     # reconstruct the footprint with the elevation
-    loc_pt = fetch.occpt2pypt(inter_pt)
-    face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
+    loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
+    face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
     return face
+
 
 def calc_solid(face_footprint, range_floors, flr2flr_height):
 
@@ -284,14 +295,14 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
     # make checks to satisfy a closed geometry also called a shell
 
     vertical_shell = construct.make_loft(moved_face_list)
-    vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
+    vertical_face_list = fetch.topo_explorer(vertical_shell, "face")
     roof = moved_face_list[-1]
     footprint = moved_face_list[0]
     all_faces = []
     all_faces.append(footprint)
     all_faces.extend(vertical_face_list)
     all_faces.append(roof)
-    building_shell_list = construct.make_shell_frm_faces(all_faces)
+    building_shell_list = construct.sew_faces(all_faces)
 
     # make sure all the normals are correct (they are pointing out)
     bldg_solid = construct.make_solid(building_shell_list[0])
@@ -353,8 +364,10 @@ def raster2tin(input_terrain_raster):
 def geometry_main(locator, simplification_params):
 
     # list of faces of terrain
+    print("Reading terrain geometry")
     elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
     # transform buildings 2D to 3D and add windows
+    print("Creating 3D building surfaces")
     geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, simplification_params, height_col='height_ag',
                                                                nfloor_col="floors_ag")
 
@@ -389,7 +402,7 @@ if __name__ == '__main__':
 
     # DO this to visualize progress while debugging!:
     #normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
-    construct.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
+    utility.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
 
 
 
