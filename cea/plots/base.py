@@ -38,10 +38,9 @@ class PlotBase(object):
         if self.buildings:
             if len(self.buildings) == 1:
                 return "%s for Building %s" % (self.name, self.buildings[0])
-            else:
+            elif len(self.buildings) < len(self.locator.get_zone_building_names()):
                 return "%s for Selected Buildings" % self.name
-        else:
-            return "%s for District" % self.name
+        return "%s for District" % self.name
 
     @property
     def output_path(self):
@@ -61,8 +60,6 @@ class PlotBase(object):
         FIXME: what about columns with negative values?
         """
         return [field for field in fields if data[field].sum() > 0.0]
-
-
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
