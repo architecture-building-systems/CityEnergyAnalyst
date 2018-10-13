@@ -7,6 +7,7 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 import pandas as pd
 
+
 class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
     def __init__(self, config, locator, buildings):
         super(LoadDurationCurvePlot, self).__init__(config, locator, buildings)
