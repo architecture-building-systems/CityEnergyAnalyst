@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    buildings = config.plots.buildings
 
-    EnergyDemandDistrictPlot(config, locator, buildings).plot(auto_open=True)
+    EnergyDemandDistrictPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
+    EnergyDemandDistrictPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
     EnergyDemandDistrictPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
