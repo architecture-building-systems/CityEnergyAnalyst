@@ -8,6 +8,7 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 
 import plotly.graph_objs
 import plotly.offline
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -31,16 +32,33 @@ class PlotBase(object):
 
         self.config = config
         self.locator = locator
-        self.buildings = buildings if buildings else locator.get_zone_building_names()
+        if not buildings:
+            self.buildings = locator.get_zone_building_names()
+        self.buildings = ([b for b in buildings if
+                           b in locator.get_zone_building_names()] or locator.get_zone_building_names())
 
     @property
     def title(self):
-        if self.buildings:
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
             if len(self.buildings) == 1:
                 return "%s for Building %s" % (self.name, self.buildings[0])
-            elif len(self.buildings) < len(self.locator.get_zone_building_names()):
+            else:
                 return "%s for Selected Buildings" % self.name
         return "%s for District" % self.name
+
+    def totals_bar_plot(self):
+        """Creates a plot based on the totals data in percentages."""
+        traces = []
+        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
+        self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+        for field in self.analysis_fields:
+            y = self.data[field]
+            total_percent = (y / self.data['total'] * 100).round(2).values
+            total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
+            name = NAMING[field]
+            trace = plotly.graph_objs.Bar(x=self.data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+            traces.append(trace)
+        return traces
 
     @property
     def output_path(self):
@@ -48,7 +66,12 @@ class PlotBase(object):
         assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
         assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
 
-        prefix = 'Building_%s' % self.buildings[0] if self.buildings and (len(self.buildings) == 1) else 'District'
+        if len(self.buildings) == 1:
+            prefix = 'Building_%s' % self.buildings[0]
+        elif len(self.buildings) < len(self.locator.get_zone_building_names()):
+            prefix = 'Selected_Buildings'
+        else:
+            prefix = 'District'
         fname = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
         return self.locator.get_timeseries_plots_file(fname, self.category_path)
 
