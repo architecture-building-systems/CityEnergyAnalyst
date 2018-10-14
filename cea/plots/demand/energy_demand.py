@@ -22,19 +22,7 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
                                 xaxis=dict(title='Building Name'), showlegend=True)
 
     def calc_graph(self):
-        graph = []
-        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-        data = self.data.sort_values(by='total', ascending=False)
-        for field in self.analysis_fields:
-            y = data[field]
-            name = NAMING[field]
-            total_perc = (y / data['total'] * 100).round(2).values
-            total_perc_txt = ["(%.2f %%)" % x for x in total_perc]
-            trace = go.Bar(x=data["Name"], y=y, name=name, text=total_perc_txt, orientation='v',
-                           marker=dict(color=COLOR[field]))
-            graph.append(trace)
-
-        return graph
+        return self.totals_bar_plot()
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):

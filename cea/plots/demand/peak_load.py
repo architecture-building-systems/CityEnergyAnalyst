@@ -3,6 +3,38 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
+import cea.plots.demand
+
+
+class PeakLoadCurve(cea.plots.demand.DemandPlotBase):
+    def __init__(self, config, locator, buildings):
+        super(PeakLoadCurve, self).__init__(config, locator, buildings)
+        self.name = "Peak Load"
+        self.data = self.yearly_loads
+        self.data = self.data[self.data['Name'].isin(self.buildings)]
+        if len(self.buildings) == 1:
+            self.data = self.data.set_index("Name").ix[self.buildings[0]]
+        self.analysis_fields = ["E_sys0_kW",
+                                "Qhs_sys0_kW", "Qww_sys0_kW",
+                                "Qcs_sys0_kW", 'Qcdata_sys0_kW', 'Qcre_sys0_kW']
+        self.layout = go.Layout(title=self.title, barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
+
+    def calc_graph(self):
+        if len(self.buildings) > 1:
+            return self.totals_bar_plot()
+
+        traces = []
+        area = self.data["GFA_m2"]
+        data_frame = self.data[self.analysis_fields]
+        x = ["Absolute [kW]", "Relative [W/m2]"]
+        for field in self.analysis_fields:
+            y = [data_frame[field], data_frame[field] / area * 1000]
+            name = NAMING[field]
+            trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
+            traces.append(trace)
+        return traces
+
+
 
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):
@@ -59,3 +91,15 @@ def diversity_factor(data_frame_timeseries, data_frame_totals, analysis_fields, 
     layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Peak Load [MW]'))
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    PeakLoadCurve(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
+    PeakLoadCurve(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
+    PeakLoadCurve(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
