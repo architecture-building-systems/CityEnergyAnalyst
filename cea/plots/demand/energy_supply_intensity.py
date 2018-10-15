@@ -49,7 +49,6 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
             return traces
 
 
-
 if __name__ == '__main__':
     import cea.config
     import cea.inputlocator
