@@ -1,5 +1,5 @@
 """
-Implements the Load Duration Curve Final plot.
+Implements the Load Duration Curve Supply plot.
 """
 from __future__ import division
 from __future__ import print_function
@@ -11,7 +11,7 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 class LoadDurationCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
-    """Implement the energy-supply plot"""
+    """Implement the load-duration-curve-supply plot"""
     def __init__(self, config, locator, buildings):
         super(LoadDurationCurveSupplyPlot, self).__init__(config, locator, buildings)
         self.name = "Load Duration Curve Supply"
