@@ -9,6 +9,7 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
+import cea.plots.demand
 import cea.config
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 
@@ -31,6 +32,40 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 # layout of graph and table
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
+
+
+class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
+    def __init__(self, config, locator, buildings):
+        super(ComfortChartPlot, self).__init__(config, locator, buildings)
+        self.name = "Comfort Chart"
+        if len(self.buildings) > 1:
+            self.buildings = [self.buildings[0]]
+        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        self.analysis_fields = None
+        self.layout = create_layout(self.title)
+
+    def calc_graph(self):
+        # calculate points of comfort in different conditions
+        dict_graph = calc_data(self.data, config, locator)
+
+        # create scatter of comfort
+        traces_graph = calc_graph(dict_graph)
+
+        # create lines of constant relative humidity
+        traces_relative_humidity = create_relative_humidity_lines()
+        traces_graph.extend(traces_relative_humidity)
+
+        # add text for winter / summer comfort zones
+        trace_layout = go.Scatter(
+            x=[23, 26.5],
+            y=[3, 3],
+            text=['Winter comfort zone',
+                  'Summer comfort zone'],
+            mode='text',
+            showlegend=False
+        )
+        traces_graph.append(trace_layout)
+        return traces_graph
 
 def comfort_chart(data_frame, title, output_path, config, locator):
     """
@@ -80,16 +115,6 @@ def create_layout(title):
     :return: trace_layout, layout
     :rtype: plotly.graph_objs.trace, plotly.graph_objs.layout
     """
-
-    # LAYOUT IN JSON FOR READABILITY
-    trace_layout = go.Scatter(
-        x=[23, 26.5],
-        y=[3, 3],
-        text=['Winter comfort zone',
-              'Summer comfort zone'],
-        mode='text',
-        showlegend=False
-    )
 
     layout = {
         'images': LOGO,
@@ -149,7 +174,7 @@ def create_layout(title):
         ]
     }
 
-    return trace_layout, layout
+    return layout
 
 
 def calc_graph(dict_graph):
@@ -473,3 +498,15 @@ def calc_constant_rh_curve(t_array, rh, p):
     p_w = p_w_from_rh_p_and_ws(rh, p_ws)
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
+    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)
