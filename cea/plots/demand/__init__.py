@@ -78,9 +78,9 @@ class DemandPlotBase(cea.plots.PlotBase):
             """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
             df1[self.demand_analysis_fields] += df2[self.demand_analysis_fields]
             return df1
-        return functools.reduce(add_fields,
-                    (pd.read_csv(self.locator.get_demand_results_file(building))
-                     for building in self.buildings)).set_index('DATE')
+
+        return functools.reduce(add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
+                                             for building in self.buildings)).set_index('DATE')
 
     @property
     def yearly_loads(self):
