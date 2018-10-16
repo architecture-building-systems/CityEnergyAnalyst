@@ -27,9 +27,13 @@ label = 'Energy demand'
 class DemandPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
 
+    # cache hourly_loads results to avoid recalculating it every time
+    _cache = {}
+
     def __init__(self, config, locator, buildings):
         super(DemandPlotBase, self).__init__(config, locator, buildings)
         self.category_path = os.path.join('new_basic', 'demand')
+
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
@@ -74,13 +78,32 @@ class DemandPlotBase(cea.plots.PlotBase):
 
     @property
     def hourly_loads(self):
+        """
+        Returns the hourly loads, summed up for all the builidngs being considered by the plot.
+        Stores the result in ``self._cache`` since the reduce operation takes a lot of time.
+        """
+        m_time = os.path.getmtime(self.locator.get_total_demand())  # when was demand script last run?
+        buildings_key = ','.join(self.buildings)  # key for looking up in the cache
+        if buildings_key in self._cache:
+            # only load hourly_loads once, based on {buildings, mtime}
+            cache_mtime, result = self._cache[buildings_key]
+            if m_time == cache_mtime:
+                # cached result is still up-to-date!
+                return result
+
+        # no cached result - calculate from scratch and cache for further use
+        print('no cache found for', buildings_key, m_time)
         def add_fields(df1, df2):
             """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
             df1[self.demand_analysis_fields] += df2[self.demand_analysis_fields]
             return df1
 
-        return functools.reduce(add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
-                                             for building in self.buildings)).set_index('DATE')
+        # cache these results for later
+        result = functools.reduce(add_fields,
+                                 (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
+                                  self.buildings)).set_index('DATE')
+        self._cache[buildings_key] = (m_time, result)
+        return result
 
     @property
     def yearly_loads(self):
