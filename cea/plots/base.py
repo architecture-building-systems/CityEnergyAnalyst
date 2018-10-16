@@ -24,13 +24,15 @@ class PlotBase(object):
     """A base class for plots containing helper methods used by all plots."""
     name = None  # override this in plot subclasses!
 
+    @classmethod
+    def id(cls):
+        return cls.name.lower().replace(' ', '-')  # use for js/html etc.
+
     def __init__(self, config, locator, buildings):
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
         self.layout = None # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
-
-        self.id = self.name.lower().replace(' ', '-')  # use for js/html etc.
 
         self.config = config
         self.locator = locator
