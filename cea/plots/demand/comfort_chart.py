@@ -47,7 +47,7 @@ class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         # calculate points of comfort in different conditions
-        dict_graph = calc_data(self.data, config, locator)
+        dict_graph = calc_data(self.data, self.config, self.locator)
 
         # create scatter of comfort
         traces_graph = calc_graph(dict_graph)
@@ -502,12 +502,14 @@ def calc_constant_rh_curve(t_array, rh, p):
 
 
 if __name__ == '__main__':
-    import cea.config
-    import cea.inputlocator
+    def main():
+        import cea.config
+        import cea.inputlocator
 
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
+        config = cea.config.Configuration()
+        locator = cea.inputlocator.InputLocator(config.scenario)
 
-    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
-    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
-    ComfortChartPlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)
+        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
+        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)
+    main()

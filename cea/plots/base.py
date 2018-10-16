@@ -30,10 +30,12 @@ class PlotBase(object):
         self.layout = None # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
 
+        self.id = self.name.lower().replace(' ', '-')  # use for js/html etc.
+
         self.config = config
         self.locator = locator
         if not buildings:
-            self.buildings = locator.get_zone_building_names()
+            buildings = locator.get_zone_building_names()
         self.buildings = ([b for b in buildings if
                            b in locator.get_zone_building_names()] or locator.get_zone_building_names())
 
@@ -93,3 +95,9 @@ class PlotBase(object):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         plotly.offline.plot(fig, auto_open=auto_open, filename=self.output_path)
         print("Plotted %s to %s" % (self.name, self.output_path))
+
+    def plot_div(self):
+        """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
+        fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
+        div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+        return div
