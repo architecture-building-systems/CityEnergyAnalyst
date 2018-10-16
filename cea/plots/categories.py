@@ -10,6 +10,8 @@ import pkgutil
 import importlib
 import inspect
 import cea.plots
+import cea.config
+import cea.inputlocator
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -40,6 +42,28 @@ def list_categories():
             continue
 
 
+def is_valid_category(category):
+    """True, if category is the name (not the label) of a valid CEA plot category"""
+    return category in set(c.name for c in list_categories())
+
+
+def load_category(category_name):
+    """Returns a PlotsCategory object if is_valid_category(category), else None"""
+    for c in list_categories():
+        if c.name == category_name:
+            return c
+    return None
+
+
+def load_plot(category_name, plot_name):
+    category = load_category(category_name)
+    if category:
+        for plot in category.plots:
+            if plot.__name__ == plot_name:
+                return plot
+    return None
+
+
 class PlotCategory(object):
     """Contains the data of a plot category."""
     def __init__(self, module):
@@ -60,8 +84,13 @@ class PlotCategory(object):
 
 
 if __name__ == '__main__':
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    buildings = None
+
     for category in list_categories():
         print('category:', category.name, ':', category.label)
-        for plot in category.plots:
+        for plot_class in category.plots:
+            plot = plot_class(config, locator, buildings)
             assert plot.name, 'plot missing name: %s' % plot
-            print('plot:', plot.name)
+            print('plot:', plot.name, ' - ', plot.id)
