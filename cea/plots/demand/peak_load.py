@@ -7,9 +7,10 @@ import cea.plots.demand
 
 
 class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
+    name = "Peak Load"
+
     def __init__(self, config, locator, buildings):
         super(PeakLoadCurvePlot, self).__init__(config, locator, buildings)
-        self.name = "Peak Load"
         self.data = self.yearly_loads
         self.data = self.data[self.data['Name'].isin(self.buildings)]
         self.analysis_fields = ["E_sys0_kW",

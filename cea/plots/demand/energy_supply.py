@@ -12,9 +12,10 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 class EnergySupplyPlot(cea.plots.demand.DemandPlotBase):
     """Implement the energy-supply plot"""
+    name = "Energy Supply"
+
     def __init__(self, config, locator, buildings):
         super(EnergySupplyPlot, self).__init__(config, locator, buildings)
-        self.name = "Energy Supply"
         self.analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr', "DC_cs_MWhyr",
                                 'DC_cdata_MWhyr', 'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr',
                                 'COAL_hs_MWhyr', 'OIL_hs_MWhyr', 'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',

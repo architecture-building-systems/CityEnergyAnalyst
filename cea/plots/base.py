@@ -22,9 +22,9 @@ __status__ = "Production"
 
 class PlotBase(object):
     """A base class for plots containing helper methods used by all plots."""
+    name = None  # override this in plot subclasses!
 
     def __init__(self, config, locator, buildings):
-        self.name = None  # override this in plot subclasses!
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
         self.layout = None # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object

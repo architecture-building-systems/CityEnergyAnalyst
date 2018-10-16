@@ -9,9 +9,10 @@ import pandas as pd
 
 
 class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
+    name = "Load Duration Curve"
+
     def __init__(self, config, locator, buildings):
         super(LoadDurationCurvePlot, self).__init__(config, locator, buildings)
-        self.name = "Load Duration Curve"
         self.data = self.hourly_loads
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",

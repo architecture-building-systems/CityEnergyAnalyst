@@ -12,9 +12,10 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
     """Implement the load-curve-supply plot"""
+    name = "Load Curve Supply"
+
     def __init__(self, config, locator, buildings):
         super(LoadCurveSupplyPlot, self).__init__(config, locator, buildings)
-        self.name = "Load Curve Supply"
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data,
                                                          ["DH_hs_kWh", "DH_ww_kWh",
