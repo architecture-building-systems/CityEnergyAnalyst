@@ -49,9 +49,6 @@ class PlotCategory(object):
 
     @property
     def plots(self):
-        self._plots = None
-
-    def _list_plots(self):
         for importer, modname, ispkg in pkgutil.iter_modules(self._module.__path__, self._module.__name__ + '.'):
             if ispkg:
                 # only consider modules - not packages
@@ -62,9 +59,9 @@ class PlotCategory(object):
                     yield cls_object
 
 
-
 if __name__ == '__main__':
     for category in list_categories():
-        print(category.name, ':', category.label)
-        for plot in category._list_plots():
-            print('plot:', plot)
+        print('category:', category.name, ':', category.label)
+        for plot in category.plots:
+            assert plot.name, 'plot missing name: %s' % plot
+            print('plot:', plot.name)
