@@ -64,6 +64,16 @@ def load_plot(category_name, plot_name):
     return None
 
 
+def load_plot_by_id(category_name, plot_id):
+    """plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)"""
+    category = load_category(category_name)
+    if category:
+        for plot in category.plots:
+            if plot.id() == plot_id:
+                return plot
+    return None
+
+
 class PlotCategory(object):
     """Contains the data of a plot category."""
     def __init__(self, module):
@@ -93,4 +103,4 @@ if __name__ == '__main__':
         for plot_class in category.plots:
             plot = plot_class(config, locator, buildings)
             assert plot.name, 'plot missing name: %s' % plot
-            print('plot:', plot.name, ' - ', plot.id)
+            print('plot:', plot.name, ' - ', plot.id())
