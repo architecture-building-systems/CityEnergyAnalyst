@@ -16,7 +16,7 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                 "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
-        self.layout = go.Layout(images=LOGO, title=self.title, barmode='stack',
+        self.layout = go.Layout(barmode='stack',
                                 yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'), showlegend=True)
 
     def calc_graph(self):

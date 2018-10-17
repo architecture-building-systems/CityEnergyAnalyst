@@ -18,7 +18,7 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
                                                           'PV0_kW', 'NG_hs0_kW', 'COAL_hs0_kW', 'OIL_hs0_kW',
                                                           'WOOD_hs0_kW', 'NG_ww0_kW', 'COAL_ww0_kW', 'OIL_ww0_kW',
                                                           'WOOD_ww0_kW'])
-        self.layout = go.Layout(title=self.title, barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
+        self.layout = go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         if len(self.buildings) > 1:

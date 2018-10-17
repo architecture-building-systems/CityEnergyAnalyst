@@ -18,7 +18,7 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                 "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         self.data = self.yearly_loads
-        self.layout = go.Layout(images=LOGO, title=self.title, barmode='stack',
+        self.layout = go.Layout(barmode='stack',
                                 yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
                                 xaxis=dict(title='Building Name'), showlegend=True)
 

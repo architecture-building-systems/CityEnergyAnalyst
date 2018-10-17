@@ -118,8 +118,6 @@ def create_layout(title):
     """
 
     layout = {
-        'images': LOGO,
-        'title': title,
         'xaxis': {
             'title': 'Operative Temperature [°C]',
             'range': [5, 35],

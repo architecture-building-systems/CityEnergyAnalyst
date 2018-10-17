@@ -16,7 +16,7 @@ class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
         self.analysis_fields = ["E_sys0_kW",
                                 "Qhs_sys0_kW", "Qww_sys0_kW",
                                 "Qcs_sys0_kW", 'Qcdata_sys0_kW', 'Qcre_sys0_kW']
-        self.layout = go.Layout(title=self.title, barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
+        self.layout = go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         if len(self.buildings) > 1:

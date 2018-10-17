@@ -3,7 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import NAMING, COLOR
 
 import pandas as pd
 
@@ -17,8 +17,7 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",
                                 "Qcs_sys_kWh", 'Qcdata_sys_kWh', 'Qcre_sys_kWh']
-        self.layout = go.Layout(images=LOGO, title=self.title,
-                                xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
+        self.layout = go.Layout(xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
                                 yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]), showlegend=True)
 
     def calc_graph(self):

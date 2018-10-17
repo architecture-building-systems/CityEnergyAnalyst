@@ -21,7 +21,7 @@ class HeatingResetSchedulePlot(cea.plots.demand.DemandPlotBase):
                                 'Tcs_sys_re_scu_C', 'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C', 'Tcs_sys_sup_scu_C',
                                 'Ths_sys_re_ahu_C', 'Ths_sys_re_aru_C', 'Ths_sys_re_shu_C', 'Ths_sys_sup_ahu_C',
                                 'Ths_sys_sup_aru_C', 'Ths_sys_sup_shu_C', ]
-        self.layout = go.Layout(images=LOGO, title=self.title, xaxis=dict(title='Outdoor Temperature [C]'),
+        self.layout = go.Layout(xaxis=dict(title='Outdoor Temperature [C]'),
                                 yaxis=dict(title='HVAC System Temperature [C]'))
 
     def calc_graph(self):
