@@ -1055,6 +1055,10 @@ class InputLocator(object):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return os.path.join(self.get_neural_network_folder(), name+'.csv')
 
+    def get_dashboard_yml(self):
+        """scenario/dashboard.yml"""
+        return os.path.join(self.scenario, 'dashboard.yml')
+
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""

@@ -26,6 +26,7 @@ label = 'Energy demand'
 
 class DemandPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
+    category_name = "demand"
 
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
