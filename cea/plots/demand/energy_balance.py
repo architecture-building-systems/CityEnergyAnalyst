@@ -44,7 +44,7 @@ class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
                                 'Q_loss_sen_wind_kWh',
                                 'Q_loss_sen_vent_kWh',
                                 'Q_loss_sen_ref_kWh']
-        self.layout = go.Layout(images=LOGO, title=self.title, barmode='relative',
+        self.layout = go.Layout(barmode='relative',
                                 yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
 
     def calc_graph(self):

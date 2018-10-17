@@ -18,7 +18,7 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
                                                                      'NG_hs_MWhyr', 'COAL_hs_MWhyr', 'OIL_hs_MWhyr',
                                                                      'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
                                                                      'OIL_ww_MWhyr', 'WOOD_ww_MWhyr', ])
-        self.layout = go.Layout(images=LOGO, title=self.title, barmode='stack',
+        self.layout = go.Layout(barmode='stack',
                                 yaxis=dict(title='Energy Supply Intensity [kWh/m2.yr]'), showlegend=True)
 
     def calc_graph(self):

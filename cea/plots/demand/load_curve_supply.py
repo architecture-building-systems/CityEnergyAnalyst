@@ -7,7 +7,7 @@ from __future__ import print_function
 import cea.plots.demand
 import plotly.graph_objs as go
 
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import NAMING, COLOR
 
 
 class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
@@ -30,7 +30,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
                                                           'COAL_ww_kWh',
                                                           'OIL_ww_kWh',
                                                           'WOOD_ww_kWh'])
-        self.layout = dict(images=LOGO, title=self.title, yaxis=dict(title='Load [kW]'),
+        self.layout = dict(yaxis=dict(title='Load [kW]'),
                            yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
                 rangeselector=dict(buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
                                                  dict(count=1, label='1w', step='week', stepmode='backward'),
