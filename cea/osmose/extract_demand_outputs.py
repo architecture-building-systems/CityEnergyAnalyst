@@ -40,7 +40,7 @@ def main():
     for name in building_names:
         # read demand output
         # demand_df = pd.read_csv(path_to_demand_output(name)['csv'], usecols=(BUILDINGS_DEMANDS_COLUMNS))
-        tsd_df = pd.read_excel(path_to_demand_output(name)['xls'], usecols=(TSD_COLUMNS))
+        tsd_df = pd.read_excel(path_to_demand_output(name)['xls'])
 
         # reduce to 24 hours
         start_t = 3217
@@ -54,7 +54,8 @@ def main():
         output_df2 = pd.DataFrame()
 
         ## output to building.lua
-        reduced_tsd_df.ix[output_df.people == 0, 'm_ve_inf'] = 0
+        # de-activate inf when no occupant
+        # reduced_tsd_df.ix[output_df.people == 0, 'm_ve_inf'] = 0
         output_df1['m_ve_inf'] = reduced_tsd_df['m_ve_inf']
         ## heat gain
         calc_sensible_gains(output_df, reduced_tsd_df)
@@ -65,7 +66,7 @@ def main():
         output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['w_ext'] / 1000
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
-        output_df1.T.to_csv(path_to_osmose_project_bui(name), header=False)
+
 
         ## output to hcs
         # change units
@@ -77,18 +78,25 @@ def main():
         output_df2.loc[:, 'Vf_m3'] = floor_height_m * Af_m2[name]
         ## CO2 gain
         calc_CO2_gains(output_df, reduced_tsd_df)
+        output_df1['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
+            'v_CO2_occupant_m3pers']
         output_df2['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
         output_df2['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
         output_df2['CO2_max_ppm'] = CO2_int_max_ppm
         output_df2['m_ve_req'] = reduced_tsd_df['m_ve_required']
-        output_df2['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_int'])
+        output_df2['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
         output_df2['m_ve_min'] = np.vectorize(
             calc_m_exhaust_from_CO2)(output_df2['CO2_max_ppm'], output_df2['CO2_ext_ppm'],
-                                     reduced_tsd_df['v_CO2_occupant_m3pers'], output_df2['rho_air'])
+                                     output_df2['v_CO2_in_infil_occupant_m3pers'], output_df2['rho_air'])
+
+
 
         output_df2 = output_df2.round(4)  # osmose does not read more decimals (observation)
         # output_df2 = output_df2.drop(output_df.index[range(7)])
+
+        # write outputs
+        output_df1.T.to_csv(path_to_osmose_project_bui(name), header=False)
         output_df2.T.to_csv(path_to_osmose_project_hcs(name), header=False)
 
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
