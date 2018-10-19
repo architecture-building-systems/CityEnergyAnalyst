@@ -16,6 +16,7 @@ import cea.globalvar
 from cea.utilities.dbf import *
 from cea.demand.demand_main import demand_calculation
 from cea.demand import demand_writers
+from cea.demand.calibration.bayesian_calibrator.calibration_sampling import calc_cv_rmse
 
 creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
 creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
@@ -32,6 +33,22 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def objective_function(individual):
     return sum(individual),
+
+def objective_function(individual_number, individual, generation, simulation, measured):
+    """
+    Objective function is used to calculate the error corresponding to the individual
+    :param individual: Input individual
+    :type individual: list
+    :return: returns costs, CO2, primary energy and the master_to_slave_vars
+    """
+    print ( 'cea optimization progress: individual ' + str(individual_number) + ' and generation '+ str(generation) + '/' + str(config.optimization.ngen))
+
+    cv_rmse, rmse = calc_cv_rmse(simulation, measured)
+
+    # TODO: add evaluation function?
+
+    return cv_rmse, rmse, master_to_slave_vars, valid_individual
+
 
 
 toolbox.register("evaluate", objective_function)
