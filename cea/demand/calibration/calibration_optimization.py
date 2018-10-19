@@ -12,8 +12,9 @@ from deap import base
 from deap import creator
 from deap import tools
 import cea.inputlocator
+import cea.globalvar
 from cea.utilities.dbf import *
-from cea.demand.demand_main import properties_and_schedule, calc_demand_multiprocessing, calc_demand_singleprocessing
+from cea.demand.demand_main import demand_calculation
 from cea.demand import demand_writers
 
 creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
@@ -38,7 +39,7 @@ toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
-def create_and_run_one_individual(individual, individual_name, locator_temp):
+def create_and_run_one_individual(individual, individual_name, locator, config_temp):
     '''
     For a given individual, this function should first copy the reference case into a temp directory, then edit the
     corresponding input files with the given individual's input parameters, then run the demand.
@@ -55,22 +56,22 @@ def create_and_run_one_individual(individual, individual_name, locator_temp):
     # edited.
 
     # get temp scenario building properties path (this step is actually not necessary)
-    temp_properties_path = os.path.join(locator_temp.get_temporary_folder, 'calibration_scenario', 'inputs', 'building-properties')
+    locator_temp = cea.inputlocator.InputLocator(config_temp.scenario)
+    # temp_properties_path = os.path.join(locator_temp.get_building_properties_folder)
     # get dbf files that need to be edited
-    architecture_df = dbf_to_dataframe(os.path.join(temp_properties_path, 'architecture.dbf')).set_index('Name')
-    internal_loads_df = dbf_to_dataframe(os.path.join(temp_properties_path, 'internal_loads.dbf')).set_index('Name')
-    indoor_comfort_df = dbf_to_dataframe(os.path.join(temp_properties_path, 'indoor_comfort.dbf')).set_index('Name')
+    architecture_df = dbf_to_dataframe(locator_temp.get_building_architecture()).set_index('Name')
+    internal_loads_df = dbf_to_dataframe(locator_temp.get_building_internal()).set_index('Name')
+    indoor_comfort_df = dbf_to_dataframe(locator_temp.get_building_comfort()).set_index('Name')
     # TODO: edit the dbf's with the individual's variables
     # export edited dbf files
-    dataframe_to_dbf(architecture_df.reset_index(), os.path.join(temp_properties_path, 'architecture.dbf'))
-    dataframe_to_dbf(internal_loads_df.reset_index(), os.path.join(temp_properties_path, 'internal_loads.dbf'))
-    dataframe_to_dbf(indoor_comfort_df.reset_index(), os.path.join(temp_properties_path, 'indoor_comfort.dbf'))
+    dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
+    dataframe_to_dbf(internal_loads_df.reset_index(), locator_temp.get_building_internal())
+    dataframe_to_dbf(indoor_comfort_df.reset_index(), locator_temp.get_building_comfort())
     # calculate demand
-    # TODO: remove unnecessary demand_calculation_calibration function (see TODO below) and use normal demand function
-    demand_calculation_calibration(locator_temp)
+    demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=config_temp)
     # copy results from the given individual to the actual scenario
     # TODO: this function uses an inputlocator instance that hasn't been defined - I will fix this tomorrow
-    shutil.copy(locator_temp.get_total_demand, os.path.join(locator.get_calibration_folder, individual_name+'.csv'))
+    shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
 
 def demand_calculation_calibration(locator, gv, config):
     """
@@ -163,18 +164,22 @@ def demand_calculation_calibration(locator, gv, config):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    # get materials that need to be assigned (e.g. walls)
+
     # for each individual, the input files should be edited with the corresponding values and then passed to the
     # demand calculation. but we don't want to edit the actual case study, so instead we create a temp folder for the
     # temporary scenarios that need to be created.
     # TODO: create one temp folder per processor for multiprocessing?
-    temp_scenario_path = os.path.join(locator.get_temporary_folder(), 'calibration_scenario')
-    shutil.copytree(locator.get_project_path, temp_scenario_path)
-    locator_temp = cea.inputlocator.InputLocator(scenario=temp_scenario_path)
-    # get names of buildings to be calibrated
-    building_names = config.calibration_optimization.buildings
-    # get variables based on which the parameters should be calibrated (e.g. Ef_Wm2)
-    building_loads = config.calibration_optimization.loads
-    # get materials that need to be assigned (e.g. walls)
+    temp_config = cea.config.Configuration()
+    temp_config.scenario = os.path.join(locator.get_temporary_folder(), 'calibration_scenario')
+    # # get names of buildings to be calibrated
+    # building_names = config.calibration_optimization.buildings
+    temp_config.demand.buildings = config.calibration_optimization.buildings
+    # # get variables based on which the parameters should be calibrated (e.g. Ef_Wm2)
+    # building_loads = config.calibration_optimization.loads
+    temp_config.demand.loads = config.calibration_optimization.loads_output
+    shutil.copytree(config.scenario, temp_config.scenario)
+
     materials = config.calibration_optimization.materials
     # get internal loads that need to be calibrated (e.g. Ea_Wm2)
     internal_loads = config.calibration_optimization.internal_loads
