@@ -231,7 +231,8 @@ def calc_Cinv_furnace(Q_design_W, Q_annual_W, config, locator, technology_type):
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
+    Capex = InvC
 
     
-    return Capex_a, Opex_fixed
+    return Capex_a, Opex_fixed, Capex
 
