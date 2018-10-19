@@ -403,8 +403,9 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
                 Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Opex_fixed_HP_USD = Opex_fixed_HP_USD + Capex_a_HP_USD * Inv_OM
 
+    Capex_HP_USD = InvC
 
-    return Capex_a_HP_USD, Opex_fixed_HP_USD
+    return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
 
 def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):

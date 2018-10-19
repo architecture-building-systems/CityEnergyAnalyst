@@ -461,8 +461,9 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
+    Capex = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a, Opex_fixed, Capex
 
 
 def calc_Cinv_FC(P_design_W, locator, config, technology=0):

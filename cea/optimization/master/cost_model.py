@@ -65,6 +65,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     """
     addcosts_Capex_a = 0
     addcosts_Opex_fixed = 0
+    addcosts_Capex = 0
     addCO2 = 0
     addPrim = 0
     nBuildinNtw = 0
@@ -83,7 +84,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     Capex_a_Sewage = 0
     Capex_a_GHP = 0
     Capex_a_PV = 0
-    Capex_a_SC = 0
+    Capex_a_SC_ET = 0
+    Capex_a_SC_FP = 0
     Capex_a_PVT = 0
     Capex_a_Boiler_backup = 0
     Capex_a_HEX = 0
@@ -118,6 +120,22 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     cost_PV_disconnected = 0
     CO2_PV_disconnected = 0
     Eprim_PV_disconnected = 0
+    Capex_furnace = 0
+    Capex_CHP = 0
+    Capex_Boiler = 0
+    Capex_Boiler_peak = 0
+    Capex_Lake = 0
+    Capex_Sewage = 0
+    Capex_GHP = 0
+    Capex_PV = 0
+    Capex_SC = 0
+    Capex_PVT = 0
+    Capex_Boiler_backup = 0
+    Capex_HEX = 0
+    Capex_storage_HP = 0
+    Capex_HP_storage = 0
+    Capex_SC_ET = 0
+    Capex_SC_FP = 0
 
     if config.district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
@@ -264,24 +282,28 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     # Solar technologies
 
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
-    Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
+    Capex_a_PV, Opex_fixed_PV, Capex_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
     addcosts_Capex_a += Capex_a_PV
     addcosts_Opex_fixed += Opex_fixed_PV
+    addcosts_Capex += Capex_PV
 
     SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
-    Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
+    Capex_a_SC_ET, Opex_fixed_SC_ET, Capex_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
     addcosts_Capex_a += Capex_a_SC_ET
     addcosts_Opex_fixed += Opex_fixed_SC_ET
+    addcosts_Capex += Capex_SC_ET
 
     SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2
-    Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
+    Capex_a_SC_FP, Opex_fixed_SC_FP, Capex_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
     addcosts_Capex_a += Capex_a_SC_FP
     addcosts_Opex_fixed += Opex_fixed_SC_FP
+    addcosts_Capex += Capex_SC_FP
 
     PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT  # kW
-    Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
+    Capex_a_PVT, Opex_fixed_PVT, Capex_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
     addcosts_Capex_a += Capex_a_PVT
     addcosts_Opex_fixed += Opex_fixed_PVT
+    addcosts_Capex += Capex_PVT
 
     # Add the features for the distribution
 
@@ -302,16 +324,18 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayFurnace_W)[0])):
                 Q_annual_W += arrayFurnace_W[i][0]
 
-            Capex_a_furnace, Opex_fixed_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, config, locator, 'FU1')
+            Capex_a_furnace, Opex_fixed_furnace, Capex_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, config, locator, 'FU1')
             addcosts_Capex_a += Capex_a_furnace
             addcosts_Opex_fixed += Opex_fixed_furnace
+            addcosts_Capex += Capex_furnace
 
         # CC
         if master_to_slave_vars.CC_on == 1:
             CC_size_W = master_to_slave_vars.CC_GT_SIZE_W
-            Capex_a_CHP, Opex_fixed_CHP = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
+            Capex_a_CHP, Opex_fixed_CHP, Capex_CHP = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
             addcosts_Capex_a += Capex_a_CHP
             addcosts_Opex_fixed += Opex_fixed_CHP
+            addcosts_Capex += Capex_CHP
 
         # Boiler Base
         if master_to_slave_vars.Boiler_on == 1:
@@ -327,9 +351,10 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
 
-            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            Capex_a_Boiler, Opex_fixed_Boiler, Capex_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
             addcosts_Capex_a += Capex_a_Boiler
             addcosts_Opex_fixed += Opex_fixed_Boiler
+            addcosts_Capex += Capex_Boiler
 
         # Boiler Peak
         if master_to_slave_vars.BoilerPeak_on == 1:
@@ -344,23 +369,26 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             Q_annual_W = 0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak, Capex_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
             addcosts_Capex_a += Capex_a_Boiler_peak
             addcosts_Opex_fixed += Opex_fixed_Boiler_peak
+            addcosts_Capex += Capex_Boiler_peak
 
         # HP Lake
         if master_to_slave_vars.HP_Lake_on == 1:
             HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
-            Capex_a_Lake, Opex_fixed_Lake = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+            Capex_a_Lake, Opex_fixed_Lake, Capex_Lake = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
             addcosts_Capex_a += Capex_a_Lake
             addcosts_Opex_fixed += Opex_fixed_Lake
+            addcosts_Capex += Capex_Lake
 
         # HP Sewage
         if master_to_slave_vars.HP_Sew_on == 1:
             HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
-            Capex_a_Sewage, Opex_fixed_Sewage = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+            Capex_a_Sewage, Opex_fixed_Sewage, Capex_Sewage = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
             addcosts_Capex_a += Capex_a_Sewage
             addcosts_Opex_fixed += Opex_fixed_Sewage
+            addcosts_Capex += Capex_Sewage
 
         # GHP
         if master_to_slave_vars.GHP_on == 1:
