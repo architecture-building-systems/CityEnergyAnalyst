@@ -882,6 +882,10 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building_name}.csv"""
         return os.path.join(self.get_demand_measured_folder(), '%s.csv' % building_name)
 
+    def get_yearly_demand_measured_file(self, building_name):
+        """scenario/outputs/data/demand/{building_name}.csv"""
+        return os.path.join(self.get_demand_measured_folder(), 'Total_demand.csv')
+
     def get_calibration_cluster(self, sax_name):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         return os.path.join(self.get_calibration_clustering_clusters_folder(), '%s.csv' % sax_name)
