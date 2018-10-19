@@ -92,7 +92,7 @@ def create_temp_config_instance(config, locator):
     # building_loads = config.calibration_optimization.loads
     temp_config.demand.loads = config.calibration_optimization.loads_output
     # set demand calculation to monthly - TODO: would it make sense to use this method for hourly calibration too?
-    temp_config.demand.resolution-output = 'monthly'
+    temp_config.demand.resolution_output = 'monthly'
 
     shutil.copytree(config.scenario, temp_config.scenario)
 
