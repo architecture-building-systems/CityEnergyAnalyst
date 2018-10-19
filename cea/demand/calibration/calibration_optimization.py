@@ -73,15 +73,16 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     # TODO: this function uses an inputlocator instance that hasn't been defined - I will fix this tomorrow
     shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
 
+def create_temp_config_instance(config, locator):
+    '''
+    for each individual, the input files should be edited with the corresponding values and then passed to the
+    demand calculation. but we don't want to edit the actual case study, so instead we create a temp folder for the
+    temporary scenarios that need to be created.
 
-def main(config):
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    # get materials that need to be assigned (e.g. walls)
+    :param config:
+    :return temp_config:
+    '''
 
-    # for each individual, the input files should be edited with the corresponding values and then passed to the
-    # demand calculation. but we don't want to edit the actual case study, so instead we create a temp folder for the
-    # temporary scenarios that need to be created.
-    # TODO: create one temp folder per processor for multiprocessing?
     temp_config = cea.config.Configuration()
     temp_config.scenario = os.path.join(locator.get_temporary_folder(), 'calibration_scenario')
     # # get names of buildings to be calibrated
@@ -90,8 +91,19 @@ def main(config):
     # # get variables based on which the parameters should be calibrated (e.g. Ef_Wm2)
     # building_loads = config.calibration_optimization.loads
     temp_config.demand.loads = config.calibration_optimization.loads_output
+    # set demand calculation to monthly - TODO: would it make sense to use this method for hourly calibration too?
+    temp_config.demand.resolution-output = 'monthly'
+
     shutil.copytree(config.scenario, temp_config.scenario)
 
+    return temp_config
+
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    # TODO: create one temp folder per processor for multiprocessing?
+    temp_config = create_temp_config_instance(config, locator)
+    # get materials that need to be assigned (e.g. walls)
     materials = config.calibration_optimization.materials
     # get internal loads that need to be calibrated (e.g. Ea_Wm2)
     internal_loads = config.calibration_optimization.internal_loads
@@ -108,10 +120,12 @@ def main(config):
                         'type_wall': list(pd.read_excel(locator.get_envelope_systems, 'WALL')['code']),
                         'type_shade': list(pd.read_excel(locator.get_envelope_systems, 'SHADING')['code'])}
     ## indoor comfort and internal load variable distributions
-    # TODO: I am just choosing these three values as the only options for now, but ideally these should depend on the distribution of the uncertainties
+    # TODO: choosing these three values for now, but ideally these should depend on the uncertainty distribution
     uncertainty_distributions = locator.get_uncertainty_db(config.region)
     internal_loads_choices = pd.read_excel(uncertainty_distributions, 'INTERNAL_LOADS')[['name', 'min', 'mu', 'max']].set_index('name')
     indoor_comfort_choices = pd.read_excel(uncertainty_distributions, 'INDOOR_COMFORT')[['name', 'min', 'mu', 'max']].set_index('name')
+    # get measured data for comparison
+    demand_metering = locator.get_yearly_demand_measured_file().set_index('Name')
 
     random.seed(64)
 
