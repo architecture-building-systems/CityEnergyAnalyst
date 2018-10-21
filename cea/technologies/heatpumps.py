@@ -438,9 +438,9 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     Inv_LT = GHP_cost_data.iloc[0]['LT_yr']
     Inv_OM = GHP_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
+    InvC_GHP = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
-    Capex_a_GHP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_GHP_USD = Capex_a_GHP_USD * Inv_OM
 
     BH_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="BH")
@@ -462,14 +462,15 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     Inv_LT = BH_cost_data.iloc[0]['LT_yr']
     Inv_OM = BH_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
+    InvC_BH = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
-    Capex_a_BH_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_BH_USD = InvC_BH * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_BH_USD = Capex_a_BH_USD * Inv_OM
 
     Capex_a_GHP_total_USD = Capex_a_BH_USD + Capex_a_GHP_USD
     Opex_fixed_GHP_total_USD = Opex_fixed_BH_USD + Opex_fixed_GHP_USD
+    Capex_GHP_total_USD = InvC_BH + InvC_GHP
 
-    return Capex_a_GHP_total_USD, Opex_fixed_GHP_total_USD
+    return Capex_a_GHP_total_USD, Opex_fixed_GHP_total_USD, Capex_GHP_total_USD
 
 

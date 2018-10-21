@@ -63,9 +63,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
-    addcosts_Capex_a = 0
-    addcosts_Opex_fixed = 0
-    addcosts_Capex = 0
+    addcosts_Capex_a_USD = 0
+    addcosts_Opex_fixed_USD = 0
+    addcosts_Capex_USD = 0
     addCO2 = 0
     addPrim = 0
     nBuildinNtw = 0
@@ -76,36 +76,36 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     PrimDiscBuild = 0
     Capex_Disconnected = 0
     Opex_Disconnected = 0
-    Capex_a_furnace = 0
-    Capex_a_CHP = 0
-    Capex_a_Boiler = 0
-    Capex_a_Boiler_peak = 0
-    Capex_a_Lake = 0
-    Capex_a_Sewage = 0
-    Capex_a_GHP = 0
-    Capex_a_PV = 0
-    Capex_a_SC_ET = 0
-    Capex_a_SC_FP = 0
-    Capex_a_PVT = 0
+    Capex_a_furnace_USD = 0
+    Capex_a_CHP_USD = 0
+    Capex_a_Boiler_USD = 0
+    Capex_a_Boiler_peak_USD = 0
+    Capex_a_Lake_USD = 0
+    Capex_a_Sewage_USD = 0
+    Capex_a_GHP_USD = 0
+    Capex_a_PV_USD = 0
+    Capex_a_SC_ET_USD = 0
+    Capex_a_SC_FP_USD = 0
+    Capex_a_PVT_USD = 0
     Capex_a_Boiler_backup = 0
     Capex_a_HEX = 0
     Capex_a_storage_HP = 0
     Capex_a_HP_storage = 0
     Opex_fixed_SC = 0
-    Opex_fixed_PVT = 0
+    Opex_fixed_PVT_USD = 0
     Opex_fixed_HP_PVT = 0
-    Opex_fixed_furnace = 0
-    Opex_fixed_CHP = 0
-    Opex_fixed_Boiler = 0
-    Opex_fixed_Boiler_peak = 0
+    Opex_fixed_furnace_USD = 0
+    Opex_fixed_CHP_USD = 0
+    Opex_fixed_Boiler_USD = 0
+    Opex_fixed_Boiler_peak_USD = 0
     Opex_fixed_Boiler_backup = 0
-    Opex_fixed_Lake = 0
+    Opex_fixed_Lake_USD = 0
     Opex_fixed_wasteserver_HEX = 0
     Opex_fixed_wasteserver_HP = 0
-    Opex_fixed_PV = 0
-    Opex_fixed_GHP = 0
+    Opex_fixed_PV_USD = 0
+    Opex_fixed_GHP_USD = 0
     Opex_fixed_storage = 0
-    Opex_fixed_Sewage = 0
+    Opex_fixed_Sewage_USD = 0
     Opex_fixed_HP_storage = 0
     StorageInvC = 0
     NetworkCost = 0
@@ -120,22 +120,22 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     cost_PV_disconnected = 0
     CO2_PV_disconnected = 0
     Eprim_PV_disconnected = 0
-    Capex_furnace = 0
-    Capex_CHP = 0
-    Capex_Boiler = 0
-    Capex_Boiler_peak = 0
-    Capex_Lake = 0
-    Capex_Sewage = 0
+    Capex_furnace_USD = 0
+    Capex_CHP_USD = 0
+    Capex_Boiler_USD = 0
+    Capex_Boiler_peak_USD = 0
+    Capex_Lake_USD = 0
+    Capex_Sewage_USD = 0
     Capex_GHP = 0
-    Capex_PV = 0
+    Capex_PV_USD = 0
     Capex_SC = 0
-    Capex_PVT = 0
+    Capex_PVT_USD = 0
     Capex_Boiler_backup = 0
     Capex_HEX = 0
     Capex_storage_HP = 0
     Capex_HP_storage = 0
-    Capex_SC_ET = 0
-    Capex_SC_FP = 0
+    Capex_SC_ET_USD = 0
+    Capex_SC_FP_USD = 0
 
     if config.district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
@@ -275,35 +275,35 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             PV_barcode = PV_barcode + str(to_PV)
 
 
-    addcosts_Capex_a += CostDiscBuild
+    addcosts_Capex_a_USD += CostDiscBuild
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
 
     # Solar technologies
 
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
-    Capex_a_PV, Opex_fixed_PV, Capex_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
-    addcosts_Capex_a += Capex_a_PV
-    addcosts_Opex_fixed += Opex_fixed_PV
-    addcosts_Capex += Capex_PV
+    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
+    addcosts_Capex_a_USD += Capex_a_PV_USD
+    addcosts_Opex_fixed_USD += Opex_fixed_PV_USD
+    addcosts_Capex_USD += Capex_PV_USD
 
     SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
-    Capex_a_SC_ET, Opex_fixed_SC_ET, Capex_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
-    addcosts_Capex_a += Capex_a_SC_ET
-    addcosts_Opex_fixed += Opex_fixed_SC_ET
-    addcosts_Capex += Capex_SC_ET
+    Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
+    addcosts_Capex_a_USD += Capex_a_SC_ET_USD
+    addcosts_Opex_fixed_USD += Opex_fixed_SC_ET_USD
+    addcosts_Capex_USD += Capex_SC_ET_USD
 
     SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2
-    Capex_a_SC_FP, Opex_fixed_SC_FP, Capex_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
-    addcosts_Capex_a += Capex_a_SC_FP
-    addcosts_Opex_fixed += Opex_fixed_SC_FP
-    addcosts_Capex += Capex_SC_FP
+    Capex_a_SC_FP_USD, Opex_fixed_SC_FP_USD, Capex_SC_FP_USD = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
+    addcosts_Capex_a_USD += Capex_a_SC_FP_USD
+    addcosts_Opex_fixed_USD += Opex_fixed_SC_FP_USD
+    addcosts_Capex_USD += Capex_SC_FP_USD
 
     PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT  # kW
-    Capex_a_PVT, Opex_fixed_PVT, Capex_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
-    addcosts_Capex_a += Capex_a_PVT
-    addcosts_Opex_fixed += Opex_fixed_PVT
-    addcosts_Capex += Capex_PVT
+    Capex_a_PVT_USD, Opex_fixed_PVT_USD, Capex_PVT_USD = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
+    addcosts_Capex_a_USD += Capex_a_PVT_USD
+    addcosts_Opex_fixed_USD += Opex_fixed_PVT_USD
+    addcosts_Capex_USD += Capex_PVT_USD
 
     # Add the features for the distribution
 
@@ -324,18 +324,18 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayFurnace_W)[0])):
                 Q_annual_W += arrayFurnace_W[i][0]
 
-            Capex_a_furnace, Opex_fixed_furnace, Capex_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, config, locator, 'FU1')
-            addcosts_Capex_a += Capex_a_furnace
-            addcosts_Opex_fixed += Opex_fixed_furnace
-            addcosts_Capex += Capex_furnace
+            Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, config, locator, 'FU1')
+            addcosts_Capex_a_USD += Capex_a_furnace_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_furnace_USD
+            addcosts_Capex_USD += Capex_furnace_USD
 
         # CC
         if master_to_slave_vars.CC_on == 1:
             CC_size_W = master_to_slave_vars.CC_GT_SIZE_W
-            Capex_a_CHP, Opex_fixed_CHP, Capex_CHP = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
-            addcosts_Capex_a += Capex_a_CHP
-            addcosts_Opex_fixed += Opex_fixed_CHP
-            addcosts_Capex += Capex_CHP
+            Capex_a_CHP_USD, Opex_fixed_CHP_USD, Capex_CHP_USD = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
+            addcosts_Capex_a_USD += Capex_a_CHP_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_CHP_USD
+            addcosts_Capex_USD += Capex_CHP_USD
 
         # Boiler Base
         if master_to_slave_vars.Boiler_on == 1:
@@ -351,10 +351,10 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
 
-            Capex_a_Boiler, Opex_fixed_Boiler, Capex_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
-            addcosts_Capex_a += Capex_a_Boiler
-            addcosts_Opex_fixed += Opex_fixed_Boiler
-            addcosts_Capex += Capex_Boiler
+            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            addcosts_Capex_a_USD += Capex_a_Boiler_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_Boiler_USD
+            addcosts_Capex_USD += Capex_Boiler_USD
 
         # Boiler Peak
         if master_to_slave_vars.BoilerPeak_on == 1:
@@ -369,26 +369,26 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             Q_annual_W = 0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak, Capex_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
-            addcosts_Capex_a += Capex_a_Boiler_peak
-            addcosts_Opex_fixed += Opex_fixed_Boiler_peak
-            addcosts_Capex += Capex_Boiler_peak
+            Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            addcosts_Capex_a_USD += Capex_a_Boiler_peak_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_Boiler_peak_USD
+            addcosts_Capex_USD += Capex_Boiler_peak_USD
 
         # HP Lake
         if master_to_slave_vars.HP_Lake_on == 1:
             HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
-            Capex_a_Lake, Opex_fixed_Lake, Capex_Lake = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
-            addcosts_Capex_a += Capex_a_Lake
-            addcosts_Opex_fixed += Opex_fixed_Lake
-            addcosts_Capex += Capex_Lake
+            Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+            addcosts_Capex_a_USD += Capex_a_Lake_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_Lake_USD
+            addcosts_Capex_USD += Capex_Lake_USD
 
         # HP Sewage
         if master_to_slave_vars.HP_Sew_on == 1:
             HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
-            Capex_a_Sewage, Opex_fixed_Sewage, Capex_Sewage = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
-            addcosts_Capex_a += Capex_a_Sewage
-            addcosts_Opex_fixed += Opex_fixed_Sewage
-            addcosts_Capex += Capex_Sewage
+            Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+            addcosts_Capex_a_USD += Capex_a_Sewage_USD
+            addcosts_Opex_fixed_USD += Opex_fixed_Sewage_USD
+            addcosts_Capex_USD += Capex_Sewage_USD
 
         # GHP
         if master_to_slave_vars.GHP_on == 1:
@@ -399,16 +399,16 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             arrayGHP_W = np.array(dfGHP)
 
             GHP_Enom_W = np.amax(arrayGHP_W)
-            Capex_a_GHP, Opex_fixed_GHP = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
-            addcosts_Capex_a += Capex_a_GHP * prices.EURO_TO_CHF
-            addcosts_Opex_fixed += Opex_fixed_GHP * prices.EURO_TO_CHF
-
-
+            Capex_a_GHP_USD, Opex_fixed_GHP_USD, Capex_GHP_USD = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
+            addcosts_Capex_a_USD += Capex_a_GHP_USD * prices.EURO_TO_CHF
+            addcosts_Opex_fixed_USD += Opex_fixed_GHP_USD * prices.EURO_TO_CHF
+            addcosts_Capex_USD += Capex_GHP_USD
 
         # Back-up boiler
-        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')
-        addcosts_Capex_a += Capex_a_Boiler_backup
-        addcosts_Opex_fixed += Opex_fixed_Boiler_backup
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup, Capex_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')
+        addcosts_Capex_a_USD += Capex_a_Boiler_backup
+        addcosts_Opex_fixed_USD += Opex_fixed_Boiler_backup
+        addcosts_Capex_USD += Capex_Boiler_backup
         master_to_slave_vars.BoilerBackup_Q_max_W = Q_uncovered_design_W
 
         # Hex and HP for Heat recovery
@@ -418,9 +418,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HEX, Opex_fixed_wasteserver_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config, 'HEX1')
-            addcosts_Capex_a += (Capex_a_wasteserver_HEX)
-            addcosts_Opex_fixed += Opex_fixed_wasteserver_HEX
+            Capex_a_wasteserver_HEX, Opex_fixed_wasteserver_HEX, Capex_wasteserver_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config, 'HEX1')
+            addcosts_Capex_a_USD += (Capex_a_wasteserver_HEX)
+            addcosts_Opex_fixed_USD += Opex_fixed_wasteserver_HEX
 
             df = pd.read_csv(
                 locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
@@ -429,8 +429,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
             Capex_a_wasteserver_HP, Opex_fixed_wasteserver_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
-            addcosts_Capex_a += (Capex_a_wasteserver_HP)
-            addcosts_Opex_fixed += Opex_fixed_wasteserver_HP
+            addcosts_Capex_a_USD += (Capex_a_wasteserver_HP)
+            addcosts_Opex_fixed_USD += Opex_fixed_wasteserver_HP
 
         # Heat pump from solar to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
@@ -441,11 +441,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         Q_HP_max_SC_Wh = np.amax(array[:, 0])
         Capex_a_HP_PVT, Opex_fixed_HP_PVT = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config, 'HP2')
         Capex_a_storage_HP += (Capex_a_HP_PVT)
-        addcosts_Opex_fixed += Opex_fixed_HP_PVT
+        addcosts_Opex_fixed_USD += Opex_fixed_HP_PVT
 
         Capex_a_HP_SC, Opex_fixed_HP_SC = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config, 'HP2')
         Capex_a_storage_HP += (Capex_a_HP_SC)
-        addcosts_Opex_fixed += Opex_fixed_HP_SC
+        addcosts_Opex_fixed_USD += Opex_fixed_HP_SC
 
         # HP for storage operation for charging from solar and discharging to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
@@ -460,8 +460,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
 
         Capex_a_HP_storage, Opex_fixed_HP_storage = hp.calc_Cinv_HP(Q_HP_max_storage_W, locator, config, 'HP2')
-        addcosts_Capex_a += (Capex_a_HP_storage)
-        addcosts_Opex_fixed += Opex_fixed_HP_storage
+        addcosts_Capex_a_USD += (Capex_a_HP_storage)
+        addcosts_Opex_fixed_USD += Opex_fixed_HP_storage
 
         # Storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
@@ -469,15 +469,15 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                          usecols=["Storage_Size_m3"], nrows=1)
         StorageVol_m3 = np.array(df)[0][0]
         Capex_a_storage, Opex_fixed_storage = storage.calc_Cinv_storage(StorageVol_m3, locator, config, 'TES2')
-        addcosts_Capex_a += Capex_a_storage
-        addcosts_Opex_fixed += Opex_fixed_storage
+        addcosts_Capex_a_USD += Capex_a_storage
+        addcosts_Opex_fixed_USD += Opex_fixed_storage
 
         # Costs from distribution configuration
         if gv.ZernezFlag == 1:
             NetworkCost += network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv) * nBuildinNtw / len(buildList)
         else:
             NetworkCost += network_features.pipesCosts_DHN * nBuildinNtw / len(buildList)
-        addcosts_Capex_a += NetworkCost
+        addcosts_Capex_a_USD += NetworkCost
 
         # HEX (1 per building in ntw)
         for (index, building_name) in zip(DHN_barcode, buildList):
@@ -488,8 +488,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
                 Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
                 Capex_a_HEX_building, Opex_fixed_HEX_building = hex.calc_Cinv_HEX(Q_max_W, locator, config, 'HEX1')
-                addcosts_Capex_a += Capex_a_HEX_building
-                addcosts_Opex_fixed += Opex_fixed_HEX_building
+                addcosts_Capex_a_USD += Capex_a_HEX_building
+                addcosts_Opex_fixed_USD += Opex_fixed_HEX_building
 
         # HEX for solar
         roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
@@ -508,23 +508,23 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 
                 Q_max_SC_ET_Wh = solar_features.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
                 Capex_a_HEX_SC_ET, Opex_fixed_HEX_SC_ET = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config, 'HEX1')
-                addcosts_Capex_a += Capex_a_HEX_SC_ET
-                addcosts_Opex_fixed += Opex_fixed_HEX_SC_ET
+                addcosts_Capex_a_USD += Capex_a_HEX_SC_ET
+                addcosts_Opex_fixed_USD += Opex_fixed_HEX_SC_ET
 
                 Q_max_SC_FP_Wh = solar_features.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
                 Capex_a_HEX_SC_FP, Opex_fixed_HEX_SC_FP = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config, 'HEX1')
-                addcosts_Capex_a += Capex_a_HEX_SC_FP
-                addcosts_Opex_fixed += Opex_fixed_HEX_SC_FP
+                addcosts_Capex_a_USD += Capex_a_HEX_SC_FP
+                addcosts_Opex_fixed_USD += Opex_fixed_HEX_SC_FP
 
                 Q_max_PVT_Wh = solar_features.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
                 Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config, 'HEX1')
-                addcosts_Capex_a += Capex_a_HEX_PVT
-                addcosts_Opex_fixed += Opex_fixed_HEX_PVT
+                addcosts_Capex_a_USD += Capex_a_HEX_PVT
+                addcosts_Opex_fixed_USD += Opex_fixed_HEX_PVT
 
     # Pump operation costs
     Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, gv, locator, lca, config)
-    addcosts_Capex_a += Capex_a_pump
-    addcosts_Opex_fixed += Opex_fixed_pump
+    addcosts_Capex_a_USD += Capex_a_pump
+    addcosts_Opex_fixed_USD += Opex_fixed_pump
 
     # import gas consumption data from:
     if DHN_barcode.count("1") > 0 and config.district_heating_network:
@@ -543,47 +543,47 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     else:
         GasConnectionInvCost = 0.0
 
-    addcosts_Capex_a += GasConnectionInvCost
+    addcosts_Capex_a_USD += GasConnectionInvCost
     # Save data
     results = pd.DataFrame({
         "Capex_a_SC": [Capex_a_SC],
         "Opex_fixed_SC": [Opex_fixed_SC],
-        "Capex_a_PVT": [Capex_a_PVT],
-        "Opex_fixed_PVT": [Opex_fixed_PVT],
+        "Capex_a_PVT": [Capex_a_PVT_USD],
+        "Opex_fixed_PVT": [Opex_fixed_PVT_USD],
         "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
         "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
         "Capex_a_storage_HEX": [Capex_a_HP_storage],
         "Opex_fixed_storage_HEX": [Opex_fixed_HP_storage],
         "Capex_a_storage_HP": [Capex_a_storage_HP],
-        "Capex_a_CHP": [Capex_a_CHP],
-        "Opex_fixed_CHP": [Opex_fixed_CHP],
+        "Capex_a_CHP": [Capex_a_CHP_USD],
+        "Opex_fixed_CHP": [Opex_fixed_CHP_USD],
         "StorageInvC": [StorageInvC],
         "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
         "NetworkCost": [NetworkCost],
         "SubstHEXCost": [SubstHEXCost_capex],
-        "DHNInvestCost": [addcosts_Capex_a - CostDiscBuild],
+        "DHNInvestCost": [addcosts_Capex_a_USD - CostDiscBuild],
         "PVTHEXCost_Capex": [PVTHEXCost_Capex],
         "CostDiscBuild": [CostDiscBuild],
         "CO2DiscBuild": [CO2DiscBuild],
         "PrimDiscBuild": [PrimDiscBuild],
-        "Capex_a_furnace": [Capex_a_furnace],
-        "Opex_fixed_furnace": [Opex_fixed_furnace],
-        "Capex_a_Boiler": [Capex_a_Boiler],
-        "Opex_fixed_Boiler": [Opex_fixed_Boiler],
-        "Capex_a_Boiler_peak": [Capex_a_Boiler_peak],
-        "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak],
+        "Capex_a_furnace": [Capex_a_furnace_USD],
+        "Opex_fixed_furnace": [Opex_fixed_furnace_USD],
+        "Capex_a_Boiler": [Capex_a_Boiler_USD],
+        "Opex_fixed_Boiler": [Opex_fixed_Boiler_USD],
+        "Capex_a_Boiler_peak": [Capex_a_Boiler_peak_USD],
+        "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak_USD],
         "Capex_Disconnected": [Capex_Disconnected],
         "Opex_Disconnected": [Opex_Disconnected],
-        "Capex_a_Lake": [Capex_a_Lake],
-        "Opex_fixed_Lake":[Opex_fixed_Lake],
-        "Capex_a_Sewage": [Capex_a_Sewage],
-        "Opex_fixed_Sewage": [Opex_fixed_Sewage],
+        "Capex_a_Lake": [Capex_a_Lake_USD],
+        "Opex_fixed_Lake":[Opex_fixed_Lake_USD],
+        "Capex_a_Sewage": [Capex_a_Sewage_USD],
+        "Opex_fixed_Sewage": [Opex_fixed_Sewage_USD],
         "SCHEXCost_Capex": [SCHEXCost_Capex],
         "Capex_a_pump": [Capex_a_pump],
         "Opex_fixed_pump": [Opex_fixed_pump],
         "Opex_var_pump": [Opex_var_pump],
-        "Sum_CAPEX": [addcosts_Capex_a],
-        "Sum_OPEX_fixed": [addcosts_Opex_fixed],
+        "Sum_CAPEX": [addcosts_Capex_a_USD],
+        "Sum_OPEX_fixed": [addcosts_Opex_fixed_USD],
         "GasConnectionInvCa": [GasConnectionInvCost],
         "CO2_PV_disconnected": [CO2_PV_disconnected],
         "cost_PV_disconnected": [cost_PV_disconnected],
@@ -592,4 +592,4 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
                    sep=',')
-    return (addcosts_Capex_a + addcosts_Opex_fixed, addCO2, addPrim)
+    return (addcosts_Capex_a_USD + addcosts_Opex_fixed_USD, addCO2, addPrim)

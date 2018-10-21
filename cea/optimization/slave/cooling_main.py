@@ -206,7 +206,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    costs_USD = ntwFeat.pipesCosts_DCN
+    costs_a_USD = ntwFeat.pipesCosts_DCN
     CO2_kgCO2 = 0
     prim_MJ = 0
 
@@ -300,11 +300,11 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         reduced_prim_MJ = np.sum(prim_energy_Lake_MJ) + np.sum(prim_energy_VCC_MJ) + np.sum(prim_energy_ACH_MJ) + np.sum(
         prim_energy_VCC_backup_MJ)
 
-        costs_USD += reduced_costs_USD*(8760/(stop_t-start_t))
+        costs_a_USD += reduced_costs_USD*(8760/(stop_t-start_t))
         CO2_kgCO2 += reduced_CO2_kgCO2*(8760/(stop_t-start_t))
         prim_MJ += reduced_prim_MJ*(8760/(stop_t-start_t))
     else:
-        costs_USD += np.sum(opex_var_Lake_USD) + np.sum(opex_var_VCC_USD) + np.sum(opex_var_ACH_USD) + np.sum(opex_var_VCC_backup_USD)
+        costs_a_USD += np.sum(opex_var_Lake_USD) + np.sum(opex_var_VCC_USD) + np.sum(opex_var_ACH_USD) + np.sum(opex_var_VCC_backup_USD)
         CO2_kgCO2 += np.sum(co2_Lake_kgCO2) + np.sum(co2_Lake_kgCO2) + np.sum(co2_ACH_kgCO2) + np.sum(co2_VCC_backup_kgCO2)
         prim_MJ += np.sum(prim_energy_Lake_MJ) + np.sum(prim_energy_VCC_MJ) + np.sum(prim_energy_ACH_MJ) + np.sum(
             prim_energy_VCC_backup_MJ)
@@ -334,11 +334,11 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
             reduced_CO2_kgCO2 = np.sum(co2_CT_kgCO2)
             reduced_prim_MJ = np.sum(prim_energy_CT_MJ)
 
-            costs_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
             CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
             prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
         else:
-            costs_USD += np.sum(opex_var_CT_USD)
+            costs_a_USD += np.sum(opex_var_CT_USD)
             CO2_kgCO2 += np.sum(co2_CT_kgCO2)
             prim_MJ += np.sum(prim_energy_CT_MJ)
 
@@ -390,11 +390,11 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
             reduced_CO2_kgCO2 = np.sum(co2_CCGT_kgCO2)
             reduced_prim_MJ = np.sum(prim_energy_CCGT_MJ)
 
-            costs_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
             CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
             prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
         else:
-            costs_USD += np.sum(opex_var_CCGT_USD)
+            costs_a_USD += np.sum(opex_var_CCGT_USD)
             CO2_kgCO2 += np.sum(co2_CCGT_kgCO2)
             prim_MJ += np.sum(prim_energy_CCGT_MJ)
 
@@ -402,29 +402,29 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     for i in range(limits['number_of_VCC_chillers']):
         Capex_a_VCC_USD, Opex_fixed_VCC_USD = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
-        costs_USD += Capex_a_VCC_USD + Opex_fixed_VCC_USD
+        costs_a_USD += Capex_a_VCC_USD + Opex_fixed_VCC_USD
 
     for i in range(limits['number_of_VCC_backup_chillers']):
         Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
-        costs_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
+        costs_a_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
     master_to_slave_vars.VCC_backup_cooling_size_W = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
         Capex_a_ACH_USD, Opex_fixed_ACH_USD = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
-        costs_USD += Capex_a_ACH_USD + Opex_fixed_ACH_USD
+        costs_a_USD += Capex_a_ACH_USD + Opex_fixed_ACH_USD
 
-    Capex_a_CCGT_USD, Opex_fixed_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    costs_USD += Capex_a_CCGT_USD + Opex_fixed_CCGT_USD
+    Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
+    costs_a_USD += Capex_a_CCGT_USD + Opex_fixed_CCGT_USD
 
-    Capex_a_Tank_USD, Opex_fixed_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
-    costs_USD += Capex_a_Tank_USD + Opex_fixed_Tank_USD
+    Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_a_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
+    costs_a_USD += Capex_a_Tank_USD + Opex_fixed_Tank_USD
 
     Capex_a_CT_USD, Opex_fixed_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
 
-    costs_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
+    costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
     Capex_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
-    costs_USD += Capex_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
+    costs_a_USD += Capex_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
 
@@ -472,11 +472,11 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     calibration = calfactor_total / 50976000
 
     extraElec = (127865400 + 85243600) * calibration
-    costs_USD += extraElec * lca.ELEC_PRICE
+    costs_a_USD += extraElec * lca.ELEC_PRICE
     CO2_kgCO2 += extraElec * lca.EL_TO_CO2 * 3600E-6
     prim_MJ += extraElec * lca.EL_TO_OIL_EQ * 3600E-6
     # Converting costs into float64 to avoid longer values
-    costs_USD = np.float64(costs_USD)
+    costs_a_USD = np.float64(costs_a_USD)
     CO2_kgCO2 = np.float64(CO2_kgCO2)
     prim_MJ = np.float64(prim_MJ)
 
@@ -508,4 +508,4 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     # print ('Cooling CO2 = ' + str(CO2))
     # print ('Cooling Eprim = ' + str(prim))
 
-    return (costs_USD, CO2_kgCO2, prim_MJ)
+    return (costs_a_USD, CO2_kgCO2, prim_MJ)
