@@ -351,6 +351,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     """
     Capex_a_HP_USD = 0
     Opex_fixed_HP_USD = 0
+    Capex_HP_USD = 0
 
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
@@ -380,6 +381,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
 
             Capex_a_HP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
             Opex_fixed_HP_USD = Capex_a_HP_USD * Inv_OM
+            Capex_HP_USD = InvC
 
         else:
             number_of_chillers = int(ceil(HP_Size / max_chiller_size))
@@ -402,8 +404,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
 
                 Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Opex_fixed_HP_USD = Opex_fixed_HP_USD + Capex_a_HP_USD * Inv_OM
-
-    Capex_HP_USD = InvC
+                Capex_HP_USD = InvC
 
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 

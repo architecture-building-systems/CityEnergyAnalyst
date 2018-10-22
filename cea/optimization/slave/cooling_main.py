@@ -423,8 +423,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
-    Capex_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
-    costs_a_USD += Capex_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
+    costs_a_USD += Capex_a_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
 

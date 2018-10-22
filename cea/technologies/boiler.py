@@ -186,6 +186,7 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     """
     Capex_a_fix_Boiler_USD = 0
     Opex_a_fix_Boiler_USD = 0
+    Capex_Boiler_USD = 0
 
     if Q_design_W > 0:
 
@@ -215,6 +216,7 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
             Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
+            Capex_Boiler_USD = InvC
 
         else:
             number_of_boilers = int(ceil(Q_design_W / max_boiler_size))
@@ -236,7 +238,6 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
             Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
-
-    Capex_Boiler_USD = InvC
+            Capex_Boiler_USD = InvC
 
     return Capex_a_fix_Boiler_USD, Opex_a_fix_Boiler_USD, Capex_Boiler_USD
