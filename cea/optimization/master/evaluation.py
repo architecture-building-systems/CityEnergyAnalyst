@@ -210,7 +210,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # Capex Calculations
     print "Add extra costs"
-    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
                                               Q_heating_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca)
 
 

@@ -170,8 +170,9 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
     """
-    Capex_a = 0
-    Opex_fixed = 0
+    Capex_a_ACH_USD = 0
+    Opex_fixed_ACH_USD = 0
+    Capex_ACH_USD = 0
     if qcold_W > 0:
         Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
@@ -197,8 +198,9 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
             Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_ACH_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_ACH_USD = Capex_a_ACH_USD * Inv_OM
+            Capex_ACH_USD = InvC
         else:
             number_of_chillers = int(ceil(qcold_W / max_chiller_size))
             Q_nom_each_chiller = qcold_W / number_of_chillers
@@ -218,10 +220,11 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Capex_a = Capex_a + Capex_a1
-                Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
+                Capex_a_ACH_USD = Capex_a_ACH_USD + Capex_a1
+                Opex_fixed_ACH_USD = Opex_fixed_ACH_USD + Capex_a1 * Inv_OM
+                Capex_ACH_USD = Capex_ACH_USD + InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD
 
 
 def main(config):

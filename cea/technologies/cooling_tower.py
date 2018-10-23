@@ -124,7 +124,7 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
                 Opex_fixed_CT_USD = Opex_fixed_CT_USD + Capex_a1 * Inv_OM
                 Capex_CT_USD = Capex_CT_USD + InvC
 
-    return Capex_a_CT_USD, Opex_fixed_CT_USD
+    return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
 

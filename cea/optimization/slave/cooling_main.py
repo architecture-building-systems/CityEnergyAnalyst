@@ -67,6 +67,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     t0 = time.time()
+    DCN_barcode = master_to_slave_vars.DCN_barcode
     print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine
@@ -206,7 +207,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    costs_a_USD = ntwFeat.pipesCosts_DCN
+    network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
+    network_costs_a_USD = network_costs_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
+    costs_a_USD = network_costs_a_USD
     CO2_kgCO2 = 0
     prim_MJ = 0
 
@@ -401,25 +404,25 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     ########## Add investment costs
 
     for i in range(limits['number_of_VCC_chillers']):
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
         costs_a_USD += Capex_a_VCC_USD + Opex_fixed_VCC_USD
 
     for i in range(limits['number_of_VCC_backup_chillers']):
-        Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
+        Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD, Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
         costs_a_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
     master_to_slave_vars.VCC_backup_cooling_size_W = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
-        Capex_a_ACH_USD, Opex_fixed_ACH_USD = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
+        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
         costs_a_USD += Capex_a_ACH_USD + Opex_fixed_ACH_USD
 
     Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
     costs_a_USD += Capex_a_CCGT_USD + Opex_fixed_CCGT_USD
 
-    Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_a_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
+    Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
     costs_a_USD += Capex_a_Tank_USD + Opex_fixed_Tank_USD
 
-    Capex_a_CT_USD, Opex_fixed_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
 
     costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
@@ -493,9 +496,16 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                             "Opex_fixed_Tank_USD": [Opex_fixed_Tank_USD],
                             "Capex_a_CT_USD": [Capex_a_CT_USD],
                             "Opex_fixed_CT_USD": [Opex_fixed_CT_USD],
-                            "Capex_pump_USD": [Capex_pump_USD],
+                            "Capex_a_pump_USD": [Capex_a_pump_USD],
                             "Opex_fixed_pump_USD": [Opex_fixed_pump_USD],
-                            "Opex_var_pump_USD": [Opex_var_pump_USD]
+                            "Opex_var_pump_USD": [Opex_var_pump_USD],
+                            "Capex_VCC_USD": [Capex_VCC_USD],
+                            "Capex_VCC_backup_USD": [Capex_VCC_backup_USD],
+                            "Capex_ACH_USD": [Capex_ACH_USD],
+                            "Capex_CCGT_USD": [Capex_CCGT_USD],
+                            "Capex_Tank_USD": [Capex_Tank_USD],
+                            "Capex_CT_USD": [Capex_CT_USD],
+                            "Capex_pump_USD": [Capex_pump_USD]
                             })
 
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(master_to_slave_vars.individual_number,
