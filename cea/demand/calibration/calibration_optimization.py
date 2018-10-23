@@ -41,8 +41,9 @@ def objective_function(individual_number, individual, generation, simulation, me
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
-    print ( 'cea optimization progress: individual ' + str(individual_number) + ' and generation '+ str(generation) + '/' + str(config.optimization.ngen))
+    print ('cea optimization progress: individual ' + str(individual_number) + ' and generation '+ str(generation) + '/' + str(config.optimization.ngen))
 
+    # calculate RMSE for all 100 buildings and take maximum - minimize (total RMSE and maximum RMSE)
     cv_rmse, rmse = calc_cv_rmse(simulation, measured)
 
     # TODO: add evaluation function?
@@ -68,6 +69,7 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     '''
 
     # TODO: define individual
+    # individual = [1, 1, 1, 0.3, 1, ...]
     # At the moment, this function doesn't do anything because the individual is not yet defined (I'm not sure  what
     # type of data, etc. it will be in). Once this is clear to me, I can add the part where the input dbf files are
     # edited.
@@ -87,7 +89,6 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     # calculate demand
     demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=config_temp)
     # copy results from the given individual to the actual scenario
-    # TODO: this function uses an inputlocator instance that hasn't been defined - I will fix this tomorrow
     shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
 
 def create_temp_config_instance(config, locator):
