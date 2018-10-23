@@ -113,8 +113,6 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     '''
 
 
-    list_variables = materials + internal_loads + indoor_comfort
-
     # individual = [1, 1, 1, 0.3, 1, ...]
     # At the moment, this function doesn't do anything because the individual is not yet defined (I'm not sure  what
     # type of data, etc. it will be in). Once this is clear to me, I can add the part where the input dbf files are
@@ -128,13 +126,17 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     internal_loads_df = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
     indoor_comfort_df = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
     # edit dbf files based on individual data
+    len_variables = len(materials) + len(internal_loads) + len(indoor_comfort)
+
     for i in range(len(list_buildings)):
         for j in range(len(materials)):
-            architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len(list_variables) + j]
+            architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len_variables + j]
+        j += 1
         for k in range(len(internal_loads)):
-            internal_loads_df.loc[list_buildings[i], internal_loads[k]] *= individual[i * len(list_variables) + len(materials) + k]
+            internal_loads_df.loc[list_buildings[i], internal_loads[k]] *= individual[i * len_variables + j + k]
+        k += 1
         for l in range(len(indoor_comfort)):
-            indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len(list_variables) + len(materials) + len(internal_loads) + l]
+            indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len_variables + j + k + l]
     # export edited dbf files
     dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
     dataframe_to_dbf(internal_loads_df.reset_index(), locator_temp.get_building_internal())
