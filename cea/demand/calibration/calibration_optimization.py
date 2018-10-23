@@ -18,8 +18,8 @@ from cea.demand.demand_main import demand_calculation
 from cea.demand import demand_writers
 from cea.demand.calibration.bayesian_calibrator.calibration_sampling import calc_cv_rmse
 
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
-creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMin)
 
 toolbox = base.Toolbox()
 
@@ -50,8 +50,51 @@ def objective_function(individual_number, individual, generation, simulation, me
 
     return cv_rmse, rmse, master_to_slave_vars, valid_individual
 
+def create_individual(lower_bound, upper_bound):
+
+    # initiate the individual
+    individual = [1] * len(lower_bound)
+
+    # type_leak
+    individual[0] = random.randint(1, 6)
+
+    # type_win
+    individual[1] = random.randint(1, 7)
+
+    # type_roof
+    individual[2] = random.sample({1, 2, 4, 7}, 1)[0]
+
+    # type_wall
+    individual[3] = random.sample({1, 2, 3, 4, 6}, 1)[0]
+
+    # type_cons
+    individual[4] = random.randint(1, 3)
+
+    # Ea_Wm2
+    individual[5] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+
+    # El_Wm2
+    individual[6] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+
+    # Epro_Wm2
+    individual[7] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+
+    # Vww_lpd
+    individual[8] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+
+    # Qcpro_Wm2
+    individual[9] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
 
+    return individual
+
+lower_bound = [1, 1, 1, 1, 1, 0.8, 0.8, 0.8, 0.8, 0.8]  # corresponding to type_leak, type_win, type_roof, type_wall, type_cons, Ea_Wm2, El_Wm2, Epro_Wm2, Vww_lpd, Qcpro_Wm2
+upper_bound = [6, 7, 7, 6, 3, 1.2, 1.2, 1.2, 1.2, 1.2]
+
+toolbox.register("generate", create_individual, lower_bound, upper_bound)
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+toolbox.register("evaluate", objective_function)
 toolbox.register("evaluate", objective_function)
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
