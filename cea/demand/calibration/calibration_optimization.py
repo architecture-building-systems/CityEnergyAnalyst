@@ -101,7 +101,7 @@ toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
-def create_and_run_one_individual(individual, individual_name, locator, config_temp):
+def create_and_run_one_individual(individual, individual_name, locator, config_temp, list_buildings, materials, internal_loads, indoor_comfort):
     '''
     For a given individual, this function should first copy the reference case into a temp directory, then edit the
     corresponding input files with the given individual's input parameters, then run the demand.
@@ -112,7 +112,9 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     :return:
     '''
 
-    # TODO: define individual
+
+    list_variables = materials + internal_loads + indoor_comfort
+
     # individual = [1, 1, 1, 0.3, 1, ...]
     # At the moment, this function doesn't do anything because the individual is not yet defined (I'm not sure  what
     # type of data, etc. it will be in). Once this is clear to me, I can add the part where the input dbf files are
@@ -122,10 +124,17 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     locator_temp = cea.inputlocator.InputLocator(config_temp.scenario)
     # temp_properties_path = os.path.join(locator_temp.get_building_properties_folder)
     # get dbf files that need to be edited
-    architecture_df = dbf_to_dataframe(locator_temp.get_building_architecture()).set_index('Name')
-    internal_loads_df = dbf_to_dataframe(locator_temp.get_building_internal()).set_index('Name')
-    indoor_comfort_df = dbf_to_dataframe(locator_temp.get_building_comfort()).set_index('Name')
-    # TODO: edit the dbf's with the individual's variables
+    architecture_df = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
+    internal_loads_df = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
+    indoor_comfort_df = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
+    # edit dbf files based on individual data
+    for i in range(len(list_buildings)):
+        for j in range(len(materials)):
+            architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len(list_variables) + j]
+        for k in range(len(internal_loads)):
+            internal_loads_df.loc[list_buildings[i], internal_loads[k]] *= individual[i * len(list_variables) + len(materials) + k]
+        for l in range(len(indoor_comfort)):
+            indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len(list_variables) + len(materials) + len(internal_loads) + l]
     # export edited dbf files
     dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
     dataframe_to_dbf(internal_loads_df.reset_index(), locator_temp.get_building_internal())
@@ -171,6 +180,8 @@ def main(config):
     internal_loads = config.calibration_optimization.internal_loads
     # get indoor comfort properties that need to be calibrated (e.g. ve_lps)
     indoor_comfort = config.calibration_optimization.indoor_comfort
+    # list variables to be calibrated
+    list_variables = materials + internal_loads + indoor_comfort
     # get measured data
     building_metering = os.path.join(locator.get_demand_measured_folder, 'Yearly_demand_metering.csv')
     # get possible values the parameters to be calibrated may take, namely:
