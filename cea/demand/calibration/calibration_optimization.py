@@ -127,7 +127,6 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     indoor_comfort_df = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
     # edit dbf files based on individual data
     len_variables = len(materials) + len(internal_loads) + len(indoor_comfort)
-
     for i in range(len(list_buildings)):
         for j in range(len(materials)):
             architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len_variables + j]
