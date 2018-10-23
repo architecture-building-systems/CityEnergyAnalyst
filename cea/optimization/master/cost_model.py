@@ -138,6 +138,17 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     Capex_HP_storage = 0
     Capex_SC_ET_USD = 0
     Capex_SC_FP_USD = 0
+    Capex_PVT_USD = 0
+    Capex_Boiler_backup_USD = 0
+    Capex_HP_storage_USD = 0
+    Capex_storage_HP = 0
+    Capex_CHP_USD = 0
+    Capex_furnace_USD = 0
+    Capex_Boiler_USD = 0
+    Capex_Boiler_peak_USD = 0
+    Capex_Lake_USD = 0
+    Capex_Sewage_USD = 0
+    Capex_pump_USD = 0
 
     if config.district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
