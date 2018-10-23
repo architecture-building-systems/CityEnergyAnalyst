@@ -50,40 +50,41 @@ def objective_function(individual_number, individual, generation, simulation, me
 
     return cv_rmse, rmse, master_to_slave_vars, valid_individual
 
-def create_individual(lower_bound, upper_bound):
+def create_individual(lower_bound, upper_bound, buildings):
 
     # initiate the individual
-    individual = [1] * len(lower_bound)
+    individual = [0] * len(lower_bound) * int(buildings)
 
-    # type_leak
-    individual[0] = random.randint(1, 6)
+    for building in range(buildings):
+        # type_leak
+        individual[building * len(lower_bound) + 0] = random.randint(1, 6)
 
-    # type_win
-    individual[1] = random.randint(1, 7)
+        # type_win
+        individual[building * len(lower_bound) + 1] = random.randint(1, 7)
 
-    # type_roof
-    individual[2] = random.sample({1, 2, 4, 7}, 1)[0]
+        # type_roof
+        individual[building * len(lower_bound) + 2] = random.sample({1, 2, 4, 7}, 1)[0]
 
-    # type_wall
-    individual[3] = random.sample({1, 2, 3, 4, 6}, 1)[0]
+        # type_wall
+        individual[building * len(lower_bound) + 3] = random.sample({1, 2, 3, 4, 6}, 1)[0]
 
-    # type_cons
-    individual[4] = random.randint(1, 3)
+        # type_cons
+        individual[building * len(lower_bound) + 4] = random.randint(1, 3)
 
-    # Ea_Wm2
-    individual[5] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+        # Ea_Wm2
+        individual[building * len(lower_bound) + 5] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
-    # El_Wm2
-    individual[6] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+        # El_Wm2
+        individual[building * len(lower_bound) + 6] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
-    # Epro_Wm2
-    individual[7] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+        # Epro_Wm2
+        individual[building * len(lower_bound) + 7] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
-    # Vww_lpd
-    individual[8] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+        # Vww_lpd
+        individual[building * len(lower_bound) + 8] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
-    # Qcpro_Wm2
-    individual[9] = round(0.8 + random.randint(0, 4) * (0.1), 1)
+        # Qcpro_Wm2
+        individual[building * len(lower_bound) + 9] = round(0.8 + random.randint(0, 4) * (0.1), 1)
 
 
     return individual
@@ -189,6 +190,7 @@ def main(config):
     demand_metering = locator.get_yearly_demand_measured_file().set_index('Name')
 
     random.seed(64)
+    create_individual(lower_bound, upper_bound, 2)
 
     pop = toolbox.population(n=300)
     hof = tools.HallOfFame(1)
