@@ -32,7 +32,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
+def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
              Q_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca):
 
     """
@@ -63,6 +63,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
+    DHN_barcode = master_to_slave_vars.DHN_barcode
+    DCN_barcode = master_to_slave_vars.DCN_barcode
     addcosts_Capex_a_USD = 0
     addcosts_Opex_fixed_USD = 0
     addcosts_Capex_USD = 0
@@ -484,9 +486,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             NetworkCost_a_USD = NetworkCost_a_USD * nBuildinNtw / len(buildList)
             NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
         else:
-            NetworkCost_a_USD, NetworkCost_USD = network_features.pipesCosts_DHN
-            NetworkCost_a_USD = NetworkCost_a_USD * nBuildinNtw / len(buildList)
+            NetworkCost_USD = network_features.pipesCosts_DHN_USD
             NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
+            NetworkCost_a_USD = NetworkCost_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
         addcosts_Capex_a_USD += NetworkCost_a_USD
         addcosts_Capex_USD += NetworkCost_USD
 
@@ -604,7 +606,21 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "GasConnectionInvCa": [GasConnectionInvCost],
         "CO2_PV_disconnected": [CO2_PV_disconnected],
         "cost_PV_disconnected": [cost_PV_disconnected],
-        "Eprim_PV_disconnected": [Eprim_PV_disconnected]
+        "Eprim_PV_disconnected": [Eprim_PV_disconnected],
+        "Capex_SC_ET_USD": [Capex_SC_ET_USD],
+        "Capex_SC_FP_USD": [Capex_SC_FP_USD],
+        "Capex_PVT": [Capex_PVT_USD],
+        "Capex_Boiler_backup": [Capex_Boiler_backup_USD],
+        "Capex_storage_HEX": [Capex_HP_storage_USD],
+        "Capex_storage_HP": [Capex_storage_HP],
+        "Capex_CHP": [Capex_CHP_USD],
+        "Capex_furnace": [Capex_furnace_USD],
+        "Capex_Boiler_base": [Capex_Boiler_USD],
+        "Capex_Boiler_peak": [Capex_Boiler_peak_USD],
+        "Capex_Lake": [Capex_Lake_USD],
+        "Capex_Sewage": [Capex_Sewage_USD],
+        "Capex_pump": [Capex_pump_USD],
+
     })
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
