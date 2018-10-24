@@ -112,19 +112,13 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     :return:
     '''
 
-
-    # individual = [1, 1, 1, 0.3, 1, ...]
-    # At the moment, this function doesn't do anything because the individual is not yet defined (I'm not sure  what
-    # type of data, etc. it will be in). Once this is clear to me, I can add the part where the input dbf files are
-    # edited.
-
-    # get temp scenario building properties path (this step is actually not necessary)
     locator_temp = cea.inputlocator.InputLocator(config_temp.scenario)
-    # temp_properties_path = os.path.join(locator_temp.get_building_properties_folder)
+
     # get dbf files that need to be edited
     architecture_df = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
     internal_loads_df = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
     indoor_comfort_df = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
+
     # edit dbf files based on individual data
     len_variables = len(materials) + len(internal_loads) + len(indoor_comfort)
     for i in range(len(list_buildings)):
@@ -136,12 +130,15 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
         k += 1
         for l in range(len(indoor_comfort)):
             indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len_variables + j + k + l]
+
     # export edited dbf files
     dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
     dataframe_to_dbf(internal_loads_df.reset_index(), locator_temp.get_building_internal())
     dataframe_to_dbf(indoor_comfort_df.reset_index(), locator_temp.get_building_comfort())
+
     # calculate demand
     demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=config_temp)
+
     # copy results from the given individual to the actual scenario
     shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
 
