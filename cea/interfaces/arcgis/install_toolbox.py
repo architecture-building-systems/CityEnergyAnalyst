@@ -29,6 +29,7 @@ def main(config):
 
     copy_library(toolbox_folder, debug=config.debug)
     copy_config(toolbox_folder)
+    copy_scripts(toolbox_folder)
     copy_inputlocator(toolbox_folder)
 
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
@@ -46,18 +47,10 @@ def copy_library(toolbox_folder, debug=False):
     shutil.copy(os.path.join(lib_src_folder, 'arcgishelper.py'), lib_dst_folder)
     shutil.copy(os.path.join(lib_src_folder, 'modules.py'), lib_dst_folder)
 
-    # we also need access to the cli.config file (arcgishelper.CeaTool uses this to figure out the parameters)
-    lib_cli_dst_folder = os.path.join(toolbox_folder, 'cea', 'interfaces', 'cli')
-    if not os.path.exists(lib_cli_dst_folder):
-        os.makedirs(lib_cli_dst_folder)
-    shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_cli_dst_folder)
-
     # add `__init__.py` files to interfaces and arcgis folders
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
         f.write('')
     with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
-        f.write('')
-    with open(os.path.join(lib_cli_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
     # during development, copy this file too
@@ -67,7 +60,8 @@ def copy_library(toolbox_folder, debug=False):
 
 
 def copy_config(toolbox_folder):
-    """Copy the cea/config.py, cea/default.config and an empty __init__.py file to the toolbox_folder"""
+    """Copy the cea/config.py, cea/default.config and an empty __init__.py file to the toolbox_folder
+    """
     import cea.config
 
     cea_dst_folder = get_cea_dst_folder(toolbox_folder)
@@ -75,6 +69,20 @@ def copy_config(toolbox_folder):
     shutil.copy(os.path.join(cea_src_folder, 'config.py'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
+
+
+def copy_scripts(toolbox_folder):
+    """Copy the cea/scripts.py and the cea/scripts.pickle files to the toolbox_folder
+    """
+    import cea.scripts
+    import pickle
+
+    cea_dst_folder = get_cea_dst_folder(toolbox_folder)
+    cea_src_folder = os.path.dirname(cea.scripts.__file__)
+    shutil.copy(os.path.join(cea_src_folder, 'scripts.py'), cea_dst_folder)
+
+    categories_dict = cea.scripts._get_categories_dict()
+    pickle.dump(categories_dict, open(os.path.join(cea_dst_folder, 'scripts.pickle'), 'w'))
 
 
 def get_cea_dst_folder(toolbox_folder):

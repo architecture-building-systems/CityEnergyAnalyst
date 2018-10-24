@@ -1,7 +1,7 @@
 """
 A library of helper-functions for working with the CEA from grasshopper. Install this with ``cea install-grasshopper``.
 
-The main function used is ``run`` which runs a CEA script (as defined in the ``cli.config``)
+The main function used is ``run`` which runs a CEA script (as defined in the ``scripts.yml``)
 
 .. note:: This module is meant to be run from grasshopper, which uses an IronPython interpreter. PyCharm will have a
     hard time with some of the imports here.
@@ -13,6 +13,7 @@ import tempfile
 import ConfigParser
 
 import cea.config
+import cea.scripts
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +31,7 @@ subprocess.STARTF_USESHOWWINDOW = 1
 def run(script, args):
     """Run a script, given a config file.
 
-    :param script: a script name, as defined in the ``cli.config`` file
+    :param script: a script name, as defined in the ``scripts.yml`` file
     :type script: basestring
 
     :param args: a dictionary consisting of ``name = value`` pairs, one per line, for each parameter to override
@@ -39,7 +40,7 @@ def run(script, args):
     """
     config = cea.config.Configuration()
     parameters = {}
-    for p in get_parameters(script, config):
+    for p in get_cea_parameters(config, script):
         if p.name in args:
             parameters[p.name] = args[p.name]
         else:
@@ -73,13 +74,10 @@ def run_cli(script_name, **parameters):
         raise Exception('Tool did not run successfully')
 
 
-def get_parameters(cea_tool, config):
-    """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
-    cli_config = ConfigParser.SafeConfigParser()
-    cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
-    option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in config.matching_parameters(option_list):
-        yield parameter
+def get_cea_parameters(config, cea_tool):
+    """Return a list of cea.config.Parameter objects for each cea_parameter associated with the tool."""
+    for _, cea_parameter in config.matching_parameters(cea.scripts.by_name(cea_tool).parameters):
+        yield cea_parameter
 
 
 def get_python_exe():
