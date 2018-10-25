@@ -48,7 +48,7 @@ def objective_function(individual_number, individual, generation, simulation, me
 
     # TODO: add evaluation function?
 
-    return cv_rmse, rmse, master_to_slave_vars, valid_individual
+    return cv_rmse, rmse
 
 def create_individual(lower_bound, upper_bound, buildings):
 
