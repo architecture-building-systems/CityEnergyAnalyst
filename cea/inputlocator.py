@@ -973,6 +973,35 @@ class InputLocator(object):
     def get_multi_criteria_analysis(self, generation):
         return os.path.join(self.get_multi_criteria_results_folder(), 'gen_' + str(generation) + '_multi_criteria_analysis.csv')
 
+    #ELECTRICAL GRID
+    def get_substation_input_location(self):
+        """scenario/inputs/building-geometry/zone.shp"""
+        shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_substation_output_location(self):
+        """scenario/inputs/building-geometry/zone.shp"""
+        shapefile_path =  os.path.join(self.get_networks_folder(), 'nodes_buildings.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_streets_input_location(self):
+        """scenario/inputs/building-geometry/zone.shp"""
+        shapefile_path =  os.path.join(self.get_networks_folder(), 'streets.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_streets_output_location(self, name):
+        """scenario/inputs/building-geometry/zone.shp"""
+        shapefile_path =  os.path.join(self.get_networks_folder(), name + '.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+
+
+
+
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
