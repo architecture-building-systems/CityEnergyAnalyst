@@ -4,7 +4,7 @@ Photovoltaic
 
 from __future__ import print_function
 from __future__ import division
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import os
 import time
@@ -71,7 +71,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done')
 
@@ -219,7 +219,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     #         potential['PV_' + panel_orientation + '_m2'] = 0
 
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
-    potential['radiation_kWh'] = sum(total_radiation_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['Area_PV_m2'] = sum(list_groups_area)
     potential['Date'] = date_local
     potential = potential.set_index('Date')

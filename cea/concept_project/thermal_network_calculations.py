@@ -27,7 +27,7 @@ def thermal_network_calculations(dict_connected, config):
     print (config.scenario)
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
+    network_layout(config, locator, connected_building_names, input_path_name='streets')
     thermal_network_matrix.main(config)
 
 def main(config):

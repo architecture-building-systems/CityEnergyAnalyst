@@ -4,8 +4,7 @@ Tutorials
 Essential
 ----------
 
-These are a collection of tutorials we consider essential for newcomers.
-We suggest to take them in order for better results.
+These are a collection of tutorials we consider essential for new users. We suggest to take them in order for a better learning experience.
 
 #. How to :ref:`install-and-set-up` CEA?
 #. `How are databases classified in CEA? <https://docs.google.com/presentation/d/1ECZJNMyTH057jbrpc4QIyfrh1cWaNbR_tThuvdOqlS8/edit?usp=sharing>`__.
@@ -15,6 +14,7 @@ We suggest to take them in order for better results.
 #. :doc:`config-file-guide`.
 #. :doc:`new-project-guide`.
 #. :doc:`cea-workflow-guide`.
+#. `How to create your own input geometry? <https://cityenergyanalyst.com/creating-multiple-scenarios#create-new-geometry>`__.
 
 Advanced
 ---------
@@ -28,19 +28,19 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How does the 2000-Watt Bench-marking tool work? <https://docs.google.com/presentation/d/1z9c48-prcs-Zw48959p4d2o972MPZ6J_NOTFthlM-0I/edit?usp=sharing>`__.
 #. `How to study building retrofits in the CEA?  <https://docs.google.com/presentation/d/1UNWl_XRJzXwKqV61DpQDC_i41pKmCgzdWaDcDVu7skU/edit?usp=sharing>`__.
 #. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__.
-#. How does the Data Helper tool work?
-#. How does the Multi-Objective Optimization tool work?
-#. How does the Multi-Criteria Assessment tool work?
-#. How does the Mapping and Visualization tool work?
 
-#. How does the Bayesian Calibration tool work?
-#. How does the Block Generator tool work?
 
-Troubleshooters
-----------------
+For developers
+--------------
 
-Here we have included some tutorials we created to the end of solving some of the most typical
-issues while working with CEA.
+These are a collection of tutorials we consider essential for any new developer of CEA. We suggest to take them in order for a better learning experience.
 
-#. `How to create your own input geometry? <https://cityenergyanalyst.com/creating-multiple-scenarios#create-new-geometry>`__.
-
+#. :doc:`how-to-contribute`.
+#. :doc:`how-to-create-user-stories`.
+#. :doc:`how-to-use-github`.
+#. :doc:`how-to-name-variables`.
+#. :doc:`how-to-add-a-new-script-to-the-cea`.
+#. :doc:`how-to-test-the-cea`.
+#. :doc:`how-to-document-cea`.
+#. :doc:`how-to-create-a-new-release`.
+#. :doc:`how-to-publish-cea`.

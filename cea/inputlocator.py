@@ -486,6 +486,10 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_dict(self):
+        """Return a dictionary with weather_name -> weather_path for the builtin weather files"""
+        return {name: self.get_weather(name) for name in self.get_weather_names()}
+
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(),'weather')
 
@@ -590,7 +594,7 @@ class InputLocator(object):
 
     def check_cpg(self, shapefile_path):
         #ensures that the CPG file is the correct one
-        from cea.utilities.standarize_coordinates import ensure_cpg_file
+        from cea.utilities.standardize_coordinates import ensure_cpg_file
         ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
