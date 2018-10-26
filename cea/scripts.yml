@@ -1,392 +1,358 @@
-benchmark-graphs:
-  interfaces:
-  - cli
-  label: benchmark-graphs
-  module: cea.analysis.benchmark
-  parameters:
-  - benchmark-graphs
-compile:
-  interfaces:
-  - cli
-  label: compile
-  module: cea.utilities.compile_pyd_files
-  parameters: null
-config-editor:
-  interfaces:
-  - cli
-  label: config-editor
-  module: cea.interfaces.config_editor.config_editor
-  parameters: null
-create-new-project:
-  category: Data Management
-  description: Create a new project and scenario based on a zone Shapefile and terrain
-    DEM
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: New Project
-  module: cea.utilities.create_new_project
-  parameters:
-  - create-new-project
-dashboard:
-  interfaces:
-  - cli
-  label: dashboard
-  module: cea.interfaces.dashboard.dashboard
-  parameters: null
-data-helper:
-  category: Data Management
-  description: Query characteristics of buildings and systems from statistical data
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Data miner
-  module: cea.demand.preprocessing.data_helper
-  parameters:
-  - general:scenario
-  - data-helper
-dbf-to-excel:
-  category: Utilities
-  description: dbf => xls
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: DBF to Excel
-  module: cea.interfaces.cli.dbf_to_excel
-  parameters:
-  - dbf-tools:dbf-file
-  - dbf-tools:excel-file
-demand:
-  category: Demand forecasting
-  description: Calculate the Demand
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Demand
-  module: cea.demand.demand_main
-  parameters:
-  - general:scenario
-  - general:weather
-  - general:multiprocessing
-  - demand
-embodied-energy:
-  category: Life cycle analysis
-  description: Calculate the emissions and primary energy for building construction
-    and decommissioning
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Building construction
-  module: cea.analysis.lca.embodied
-  parameters:
-  - general:scenario
-  - embodied-energy
-emissions:
-  category: Life cycle analysis
-  description: Calculate emissions and primary energy due to building operation
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Building operation
-  module: cea.analysis.lca.operation
-  parameters:
-  - general:scenario
-  - emissions
-excel-to-dbf:
-  category: Utilities
-  description: xls => dbf
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Excel to DBF
-  module: cea.interfaces.cli.excel_to_dbf
-  parameters:
-  - dbf-tools:excel-file
-  - dbf-tools:dbf-file
-excel-to-shapefile:
-  interfaces:
-  - cli
-  label: excel-to-shapefile
-  module: cea.interfaces.cli.excel_to_shapefile
-  parameters:
-  - shapefile-tools
-extract-reference-case:
-  interfaces:
-  - cli
-  label: extract-reference-case
-  module: cea.examples.extract_reference_case
-  parameters:
-  - extract-reference-case
-heatmaps:
-  category: Visualization
-  description: Generate maps representing hot and cold spots of energy consumption
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Heatmaps
-  module: cea.plots.heatmaps
-  parameters:
-  - general:scenario
-  - heatmaps:file-to-analyze
-  - heatmaps:analysis-fields
-install-grasshopper:
-  interfaces:
-  - cli
-  label: install-grasshopper
-  module: cea.interfaces.grasshopper.install_grasshopper
-  parameters: null
-install-toolbox:
-  interfaces:
-  - cli
-  label: install-toolbox
-  module: cea.interfaces.arcgis.install_toolbox
-  parameters: null
-list-demand-graphs-fields:
-  interfaces:
-  - cli
-  label: list-demand-graphs-fields
-  module: cea.interfaces.cli.list_demand_graphs_fields
-  parameters:
-  - general:scenario
-mobility:
-  category: Life cycle analysis
-  description: Calculate emissions and primary energy due to mobility
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Urban mobility
-  module: cea.analysis.lca.mobility
-  parameters:
-  - general:scenario
-operation-costs:
-  category: Cost analysis
-  description: Calculate energy costs due to building operation
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
+Analysis:
+
+- name: multi-criteria-analysis
+  label: Multicriteria analysis
+  description: Multicriteria analysis
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.multicriteria.main
+  parameters: ['general:scenario', 'general:region', multi-criteria]
+
+
+Cost analysis:
+
+- name: operation-costs
   label: Building operation costs
-  module: cea.analysis.lca.operation_costs
-  parameters:
-  - general:scenario
-  - operation-costs
-optimization:
-  category: Optimization
-  description: Run optimization for the given scenario
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Supply system
-  module: cea.optimization.optimization_main
-  parameters:
-  - general:scenario
-  - optimization
-photovoltaic:
-  category: Energy potentials
-  description: Calculate electricity production from solar photovoltaic technologies
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Photovoltaic panels
-  module: cea.technologies.solar.photovoltaic
-  parameters:
-  - general:scenario
-  - general:weather
-  - solar:date-start
-  - solar:type-pvpanel
-  - solar:panel-on-roof
-  - solar:panel-on-wall
-  - solar:min-radiation
-  - solar:solar-window-solstice
-photovoltaic-thermal:
-  category: Energy potentials
-  description: Calculate electricity & heat production from photovoltaic / thermal
-    technologies
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
+  description: Calculate energy costs due to building operation
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.costs.operation_costs
+  parameters: ['general:scenario', 'general:region']
+
+
+Data Management:
+
+- name: create-new-project
+  label: New Project
+  description: Create a new project and scenario based on a zone Shapefile and terrain DEM
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.create_new_project
+  parameters: [create-new-project]
+
+- name: data-helper
+  label: Data helper
+  description: Query characteristics of buildings and systems from statistical data
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.data_helper
+  parameters: ['general:scenario', 'general:region', data-helper]
+
+- name: copy-default-databases
+  label: Copy default databases
+  description: Copy the default databases (archetypes) to the scenario for the selected region (does not replace existing files)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.copy_default_databases
+  parameters: ['general:scenario', 'general:region']
+
+
+Demand forecasting:
+
+- name: demand
+  label: Demand
+  description: Calculate the Demand
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.demand.demand_main
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+               'general:number-of-cpus-to-keep-free', demand]
+
+
+Energy potentials:
+
+- name: lake-potential
+  label: Lake potential
+  description: Calculate the heat extracted from the Lake
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.resources.lake_potential
+  parameters: ['general:scenario', lake]
+
+- name: photovoltaic-thermal
   label: Photovoltaic-thermal Panels
+  description: Calculate electricity & heat production from photovoltaic / thermal technologies
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic_thermal
-  parameters:
-  - general:scenario
-  - general:weather
-  - solar:date-start
-  - solar:type-pvpanel
-  - solar:type-scpanel
-  - solar:panel-on-roof
-  - solar:panel-on-wall
-  - solar:min-radiation
-  - solar:solar-window-solstice
-  - solar:t-in-pvt
-  - solar:dpl
-  - solar:fcr
-  - solar:ro
-  - solar:eff-pumping
-  - solar:k-msc-max
-radiation:
-  interfaces:
-  - cli
-  label: radiation
-  module: cea.resources.radiation_arcgis.radiation
-  parameters:
-  - general:scenario
-  - general:weather
-  - radiation
-radiation-daysim:
-  category: Energy potentials
-  description: Use Daysim to calculate solar radiation for a scenario
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Solar radiation (Daysim engine)
-  module: cea.resources.radiation_daysim.radiation_main
-  parameters:
-  - general:scenario
-  - general:weather
-  - general:multiprocessing
-  - radiation-daysim
-retrofit-potential:
-  category: Retrofit analysis
-  description: Select buildings according to specific criteria for retrofit
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Building Retrofit Potential
-  module: cea.analysis.retrofit.retrofit_potential
-  parameters:
-  - general:scenario
-  - retrofit-potential
-scenario-plots:
-  interfaces:
-  - cli
-  label: scenario-plots
-  module: cea.plots.scenario_plots
-  parameters:
-  - scenario-plots
-sensitivity-demand-analyze:
-  category: Sensitivity analysis
-  description: Analyze the results in the samples folder and write them out to an
-    Excel file.
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Analysis
-  module: cea.analysis.sensitivity.sensitivity_demand_analyze
-  parameters:
-  - sensitivity-demand:samples-folder
-  - sensitivity-demand:temporal-scale
-sensitivity-demand-samples:
-  category: Sensitivity analysis
-  description: Create samples for sensitivity analysis
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Initializer
-  module: cea.analysis.sensitivity.sensitivity_demand_samples
-  parameters:
-  - sensitivity-demand:num-samples
-  - sensitivity-demand:samples-folder
-  - sensitivity-demand:method
-  - sensitivity-demand:calc-second-order
-  - sensitivity-demand:grid-jump
-  - sensitivity-demand:num-levels
-  - sensitivity-demand:variable-groups
-sensitivity-demand-simulate:
-  category: Sensitivity analysis
-  description: Simulate demand for sensitivity analysis samples
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Sampler
-  module: cea.analysis.sensitivity.sensitivity_demand_simulate
-  parameters:
-  - general:scenario
-  - general:weather
-  - sensitivity-demand:samples-folder
-  - sensitivity-demand:simulation-folder
-  - sensitivity-demand:output-parameters
-  - sensitivity-demand:number-of-simulations
-  - sensitivity-demand:sample-index
-sewage-heat-exchanger:
-  category: Energy potentials
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'solar:buildings',  'solar:type-pvpanel',
+               'solar:type-scpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice', 'solar:t-in-pvt']
+
+- name: photovoltaic
+  label: Photovoltaic panels
+  description: Calculate electricity production from solar photovoltaic technologies
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.solar.photovoltaic
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice']
+
+- name: sewage-potential
+  label: Sewage potential
   description: Calculate the heat extracted from the sewage heat exchanger.
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Sewage heat-pump
-  module: cea.technologies.sewage_heat_exchanger
-  parameters:
-  - general:scenario
-  - sewage
-shapefile-to-excel:
-  interfaces:
-  - cli
-  label: shapefile-to-excel
-  module: cea.interfaces.cli.shapefile_to_excel
-  parameters:
-  - shapefile-tools
-solar-collector:
-  category: Energy potentials
-  description: Calculate heat production from solar collector technologies
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.resources.sewage_heat_exchanger
+  parameters: ['general:scenario', sewage]
+
+- name: solar-collector
   label: Solar collectors
+  description: Calculate heat production from solar collector technologies
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.solar_collector
-  parameters:
-  - general:scenario
-  - general:weather
-  - solar:date-start
-  - solar:type-scpanel
-  - solar:panel-on-roof
-  - solar:panel-on-wall
-  - solar:min-radiation
-  - solar:solar-window-solstice
-  - solar:t-in-sc
-  - solar:dpl
-  - solar:fcr
-  - solar:ro
-  - solar:eff-pumping
-  - solar:k-msc-max
-test:
-  category: Utilities
-  description: Run some tests on the CEA
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Test CEA
-  module: cea.tests.dodo
-  parameters:
-  - test
-thermal-network-matrix:
-  category: Thermal networks
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings']
+
+- name: radiation-daysim
+  label: Solar radiation (Daysim engine)
+  description: Use Daysim to calculate solar radiation for a scenario
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.resources.radiation_daysim.radiation_main
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', radiation-daysim]
+
+
+Life cycle analysis:
+
+- name: emissions
+  label: District emissions
+  description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.lca.main
+  parameters: ['general:scenario', 'general:region', emissions]
+
+
+Optimization:
+
+- name: optimization
+  label: Central supply system
+  description: Run optimization for the given scenario
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.optimization_main
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'thermal-network:network-type',
+               'thermal-network:network-names', 'optimization', 'decentralized']
+
+- name: decentralized
+  label: Decentralized supply system
+  description: Run decentralized building optimization
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.preprocessing.decentralized_building_main
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized']
+
+
+- name: supply-system-simulation
+  label: Supply system simulation
+  description: Simulate the performances of a single supply system configuration
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.supply.supply_system_simulation
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
+               'optimization:iscooling', 'optimization:isheating', 'thermal-network:network-type',
+               'thermal-network:network-names', 'decentralized']
+
+
+Retrofit analysis:
+
+- name: retrofit-potential
+  label: Building Retrofit Potential
+  description: Select buildings according to specific criteria for retrofit
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.retrofit.retrofit_potential
+  parameters: ['general:scenario', retrofit-potential]
+
+
+Sensitivity analysis:
+
+- name: sensitivity-demand-analyze
+  label: Analysis
+  description: Analyze the results in the samples folder and write them out to an Excel file.
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.sensitivity.sensitivity_demand_analyze
+  parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
+
+- name: sensitivity-demand-samples
+  label: Initializer
+  description: Create samples for sensitivity analysis
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.sensitivity.sensitivity_demand_samples
+  parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
+               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order', 'sensitivity-demand:grid-jump',
+               'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
+
+- name: sensitivity-demand-simulate
+  label: Sampler
+  description: Simulate demand for sensitivity analysis samples
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.analysis.sensitivity.sensitivity_demand_simulate
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+               'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
+               'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
+               'sensitivity-demand:sample-index', 'demand']
+
+
+Thermal networks:
+
+- name: network-layout
+  label: Network layout
+  description: Create a potential layout of the network with the minimum spanning tree
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.network_layout.main
+  parameters: ['general:scenario', network-layout]
+
+- name: thermal-network-matrix
+  label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
-  interfaces:
-  - cli
-  - arcgis
-  - dashboard
-  label: Branched network
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.thermal_network_matrix
-  parameters:
-  - general:scenario
-  - thermal-network
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network']
+
+
+Utilities:
+
+- name: dbf-to-excel
+  label: DBF to Excel
+  description: dbf => xls
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.interfaces.cli.dbf_to_excel
+  parameters: ['dbf-tools:dbf-file', 'dbf-tools:excel-file']
+
+- name: excel-to-dbf
+  label: Excel to DBF
+  description: xls => dbf
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.interfaces.cli.excel_to_dbf
+  parameters: ['dbf-tools:excel-file', 'dbf-tools:dbf-file']
+
+- name: test
+  label: Test CEA
+  description: Run some tests on the CEA
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.tests.dodo
+  parameters: [test]
+
+
+Visualization:
+
+- name: heatmaps
+  label: Heatmaps
+  description: Generate maps representing hot and cold spots of energy consumption
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.plots.heatmaps
+  parameters: ['general:scenario', 'heatmaps:file-to-analyze', 'heatmaps:analysis-fields']
+
+- name: plots
+  label: Plots basic
+  description: Create plots for the default energy system of an urban scenario
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.plots.plots_main
+  parameters: ['general:region', 'general:scenario', 'general:weather', plots]
+
+- name: plots-scenario-comparisons
+  label: Plots comparison
+  description: Plots comparing urban scenarios and supply system configurations
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.plots.comparisons.main
+  parameters: [plots-scenario-comparisons]
+
+- name: plots-supply-system
+  label: Plots optimization detailed
+  description: Create plots for a supply system (default or optimal) of an urban scenario
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.plots.supply_system.main
+  parameters: ['general:region', 'general:scenario', plots-supply-system]
+
+- name: plots-optimization
+  label: Plots optimization overview
+  description: Create plots for the results of the optimzation of an urban scenario
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.plots.optimization.main
+  parameters: ['general:region', 'general:scenario', plots-optimization]
+
+
+default:
+
+- name: benchmark-graphs
+  label: benchmark-graphs
+  description: benchmark-graphs
+  interfaces: [cli]
+  module: cea.analysis.benchmark
+  parameters: ['general:region', benchmark-graphs]
+
+- name: compile
+  label: compile
+  description: compile
+  interfaces: [cli]
+  module: cea.utilities.compile_pyd_files
+  parameters: []
+
+- name: config-editor
+  label: config-editor
+  description: config-editor
+  interfaces: [cli]
+  module: cea.interfaces.config_editor.config_editor
+  parameters: []
+
+- name: dashboard
+  label: dashboard
+  description: dashboard
+  interfaces: [cli]
+  module: cea.interfaces.dashboard.dashboard
+  parameters: []
+
+- name: excel-to-shapefile
+  label: excel-to-shapefile
+  description: excel-to-shapefile
+  interfaces: [cli]
+  module: cea.interfaces.cli.excel_to_shapefile
+  parameters: [shapefile-tools]
+
+- name: extract-reference-case
+  label: extract-reference-case
+  description: extract-reference-case
+  interfaces: [cli]
+  module: cea.examples.extract_reference_case
+  parameters: [extract-reference-case]
+
+- name: install-grasshopper
+  label: install-grasshopper
+  description: install-grasshopper
+  interfaces: [cli]
+  module: cea.interfaces.grasshopper.install_grasshopper
+  parameters: ['general:debug']
+
+- name: install-toolbox
+  label: install-toolbox
+  description: install-toolbox
+  interfaces: [cli]
+  module: cea.interfaces.arcgis.install_toolbox
+  parameters: ['general:debug']
+
+- name: list-demand-graphs-fields
+  label: list-demand-graphs-fields
+  description: list-demand-graphs-fields
+  interfaces: [cli]
+  module: cea.interfaces.cli.list_demand_graphs_fields
+  parameters: ['general:scenario']
+
+- name: radiation
+  label: radiation
+  description: radiation
+  interfaces: [cli]
+  module: cea.resources.radiation_arcgis.radiation
+  parameters: ['general:scenario', 'general:weather', radiation]
+
+- name: scenario-plots
+  label: scenario-plots
+  description: scenario-plots
+  interfaces: [cli]
+  module: cea.plots.scenario_plots
+  parameters: [scenario-plots]
+
+- name: shapefile-to-excel
+  label: shapefile-to-excel
+  description: shapefile-to-excel
+  interfaces: [cli]
+  module: cea.interfaces.cli.shapefile_to_excel
+  parameters: [shapefile-tools]
+
+- name: trace-inputlocator
+  label: trace-inputlocator
+  description: trace all calls to the InputLocator for a script
+  interfaces: [cli]
+  module: cea.tests.trace_inputlocator
+  parameters: ['general:scenario', trace-inputlocator]

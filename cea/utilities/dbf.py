@@ -28,7 +28,7 @@ TYPE_MAPPING = {
     np.float64: ('N', 36, 15),
     unicode: ('C', 25, 0),
     str: ('C', 25, 0),
-    np.bool_: ('L',1,0)}
+    np.bool_: ('L', 1, 0)}
 
 
 def dataframe_to_dbf(df, dbf_path, specs=None):
@@ -44,6 +44,14 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
     if specs is None:
         types = [type(df[i].iloc[0]) for i in df.columns]
         specs = [TYPE_MAPPING[t] for t in types]
+
+    # handle case of strings that are longer than 25 characters (e.g. for the "Name" column)
+    for i in range(len(specs)):
+        t, l, d = specs[i]  # type, length, decimals
+        if t == 'C':
+            l = max(l, df[df.columns[i]].apply(len).max())
+            specs[i] = t, l, d
+
     dbf = pysal.open(dbf_path, 'w', 'dbf')
     dbf.header = list(df.columns)
     dbf.field_spec = specs

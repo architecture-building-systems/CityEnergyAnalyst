@@ -1,92 +1,127 @@
 name: cea
 channels:
-- omnia
-- pythonocc
-- dlr-sc
 - oce
+- pythonocc
+- omnia
+- dlr-sc
 - conda-forge
 - defaults
-- anaconda
 dependencies:
+- backports=1.0=py_2
+- backports.functools_lru_cache=1.5=py_1
 - backports_abc=0.5=py27_0
+- boost=1.66.0=py27_vc9_1
+- boost-cpp=1.66.0=vc9_1
 - ca-certificates=2017.7.27.1=0
 - certifi=2017.7.27.1=py27_0
 - click=6.7=py27_0
 - click-plugins=1.0.3=py27_0
 - cligj=0.4.0=py27_0
-- curl>=7.49.1
+- curl=7.60.0=vc9_0
 - cycler=0.10.0=py27_0
-- descartes=1.1.0=py27_0
+- descartes=1.1.0=py_2
 - enum34=1.1.6=py27_1
 - ephem=3.7.6.0=py27_1
-- expat=2.2.5
-- fiona=1.7.11
+- et_xmlfile=1.0.1=py27_0
+- expat=2.2.5=vc9_0
+- fiona=1.7.13=py27h64536ba_3
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
-- geos=3.6.2
-- gdal=2.2.4
-- geopandas=0.3.0
+- gdal=2.2.4=py27_vc9_0
+- geopandas=0.4.0=py_1
+- geos=3.6.2=h2880e7c_2
+- geotiff=1.4.2=vc9_1
 - hdf4=4.2.12=vc9_0
-- hdf5==1.10.1
+- hdf5=1.10.1=vc9_2
 - icu=58.1=vc9_1
+- jdcal=1.4=py_1
 - jpeg=9b=vc9_0
-- kealib>=1.4.7
+- kealib=1.4.7=vc9_4
 - krb5=1.14.2=vc9_0
-- libgdal=2.2.4
+- libgdal=2.2.4=vc9_5
 - libiconv=1.14=vc9_4
-- libnetcdf>=4.4.1.1
-- libpng=1.6.34
+- libnetcdf=4.4.1.1=vc9_10
+- libpng=1.6.34=vc9_0
 - libpq=9.6.3=vc9_0
-- libpython=2.0
 - libspatialindex=1.8.5=vc9_1
-- libspatialite
-- libtiff
+- libspatialite=4.3.0a=vc9_19
+- libssh2=1.8.0=h0990ea7_2
+- libtiff=4.0.9=vc9_0
 - libxml2=2.9.4=vc9_4
-- matplotlib=2.0.2=py27_2
+- matplotlib=2.1.0=py27_0
 - munch=2.2.0=py27_0
-- openjpeg=2.3.0
-- openpyxl
-- openssl=1.0.2l=vc9_0
-- pandas=0.20.3=py27_1
+- openjpeg=2.3.0=vc9_2
+- openpyxl=2.5.6=py_0
+- openssl=1.0.2o=vc9_0
+- pandas=0.23.4=py27h39f3610_0
+- patsy=0.5.0=py_1
 - pbr=3.1.1=py27_0
 - pip=9.0.1=py27_0
 - proj4=4.9.3=vc9_4
-- psycopg2=2.7.1=py27_0
+- psycopg2=2.7.5=py27hc64555f_1
 - pyparsing=2.2.0=py27_0
 - pyproj=1.9.5.1=py27_0
 - pyqt=5.6.0=py27_4
-- pysal
+- pysal=1.14.4.post2=py27_0
 - pyscaffold=2.5.6=py27_1
 - python=2.7.13=1
 - python-dateutil=2.6.1=py27_0
 - pytz=2017.2=py27_0
 - qt=5.6.2=vc9_1
 - rtree=0.8.3=py27_0
+- seaborn=0.9.0=py_0
 - setuptools=36.2.2=py27_0
 - setuptools_scm=1.15.6=py27_0
-- shapely>=1.5.17
+- shapely=1.6.4=py27hc31c106_1
 - singledispatch=3.4.0.3=py27_0
 - sip=4.18=py27_1
 - six=1.10.0=py27_1
-- sqlalchemy=1.1.11=py27_0
-- sqlite=3.20.1
-- ssl_match_hostname=3.5.0.1=py27_1
+- sqlalchemy=1.2.11=py27h0c8e037_0
+- sqlite=3.20.1=vc9_2
+- ssl_match_hostname
+- statsmodels=0.9.0=py27_0
 - tbb=2017_20170226=vc9_0
 - tornado=4.5.1=py27_0
 - vc=9=0
 - vs2015_runtime=14.0.25420=0
 - wheel=0.29.0=py27_0
 - wincertstore=0.2=py27_0
+- xerces-c=3.2.0=vc9_0
 - xz=5.2.2=0
-- zlib>=1.2.11
+- zlib=1.2.11=vc9_0
+- blas=1.0=mkl
+- libpython=2.0=py27_0
+- m2w64-binutils=2.25.1=5
+- m2w64-bzip2=1.0.6=6
+- m2w64-crt-git=5.0.0.4636.2595836=2
+- m2w64-gcc=5.3.0=6
+- m2w64-gcc-ada=5.3.0=6
+- m2w64-gcc-fortran=5.3.0=6
+- m2w64-gcc-libgfortran=5.3.0=6
+- m2w64-gcc-libs=5.3.0=7
+- m2w64-gcc-libs-core=5.3.0=7
+- m2w64-gcc-objc=5.3.0=6
+- m2w64-gmp=6.1.0=2
+- m2w64-headers-git=5.0.0.4636.c0ad18a=2
+- m2w64-isl=0.16.1=2
+- m2w64-libiconv=1.14=6
+- m2w64-libmangle-git=5.0.0.4509.2e5a9a2=2
+- m2w64-libwinpthread-git=5.0.0.4634.697f757=2
+- m2w64-make=4.1.2351.a80a8b8=2
+- m2w64-mpc=1.0.3=3
+- m2w64-mpfr=3.1.4=4
+- m2w64-pkg-config=0.29.1=2
+- m2w64-toolchain=5.3.0=7
+- m2w64-tools-git=5.0.0.4592.90b8472=2
+- m2w64-windows-default-manifest=6.4=3
+- m2w64-winpthreads-git=5.0.0.4634.697f757=2
+- m2w64-zlib=1.2.8=10
 - mkl=2017.0.3=0
-- mkl-service
-- m2w64-toolchain
-- numpy=1.13.1=py27_0
-- seaborn
-- scikit-learn>=0.18.2
-- scipy>=0.19.1
+- mkl-service=1.1.2=py27_3
+- msys2-conda-epoch=20160418=1
+- scikit-learn=0.19.0=np113py27_0
+- scipy=0.19.1=np113py27_0
 - vs2008_runtime=9.00.30729.5054=0
 - freeimageplus=3.17.0=vc9_0
 - gl2ps=1.3.8=vc9_0
@@ -99,55 +134,74 @@ dependencies:
   - astral==1.4
   - babel==2.4.0
   - backports-abc==0.5
+  - backports.functools-lru-cache==1.5
+  - backports.shutil-get-terminal-size==1.0.0
   - backports.ssl-match-hostname==3.5.0.1
   - chardet==3.0.4
   - cloudpickle==0.3.1
   - colorama==0.3.9
   - configparser==3.5.0
-  - deap>=1.0.1
+  - deap==1.2.2
   - decorator==4.1.2
   - docutils==0.14
   - doit==0.29.0
+  - et-xmlfile==1.0.1
   - flask==1.0.2
+  - funcsigs==1.0.2
   - h5py==2.7.1
-  - htmlPy
+  - htmlpy==2.0.3
   - idna==2.5
   - imagesize==0.7.1
+  - ipython==5.8.0
   - ipython-genutils==0.2.0
-  - jinja2
+  - itsdangerous==0.24
+  - jinja2==2.10
+  - joblib==0.12.2
   - jsonschema==2.6.0
   - jupyter-core==4.3.0
   - lxml==3.8.0
-  - markupsafe
-  - mock
+  - markupsafe==1.0
+  - mock==2.0.0
+  - mpmath==1.0.0
   - nbformat==4.4.0
   - networkx==2.1
+  - numba
+  - packaging==17.1
+  - pathlib2==2.3.2
+  - pickleshare==0.7.4
   - pkginfo==1.4.1
   - plotly==2.5.1
-  - pycollada==0.5
+  - prompt-toolkit==1.0.15
+  - pycollada==0.6
   - pygments==2.2.0
-  - pyliburo==0.1a12
-  - pymc3
+  - py4design
+  - pymc3==3.5
   - pymf==0.1.9
   - pyshp==1.2.11
-  - PySide
+  - pyside==1.2.4
+  - pyyaml==3.13
   - requests==2.18.3
   - requests-toolbelt==0.8.0
   - salib==1.0.3
+  - scandir==1.9.0
   - setuptools-scm==1.15.6
   - simpledbf==0.2.6
+  - simplegeneric==0.8.1
   - snowballstemmer==1.2.1
-  - sphinx
-  - sphinxcontrib-websupport
+  - sphinx==1.7.8
+  - sphinxcontrib-websupport==1.1.0
   - sympy==1.1.1
+  - theano==1.0.2
   - timezonefinder==2.1.0
   - tqdm==4.15.0
   - traitlets==4.3.2
   - twine==1.9.1
   - typing==3.6.2
   - urllib3==1.22
-  - utm
+  - utm==0.4.2
+  - wcwidth==0.1.7
+  - werkzeug==0.14.1
+  - win-unicode-console==0.5
   - xlrd==1.0.0
   - xlwt==1.2.0
-  - pyyaml
 
