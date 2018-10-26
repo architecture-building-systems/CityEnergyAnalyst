@@ -12,7 +12,7 @@ from concept_parameters import *
 # ============================
 
 
-def initial_network():
+def initial_network(config, locator):
     """
     Initiate data of main problem
 
@@ -29,8 +29,8 @@ def initial_network():
     :rtype: dictionary
     """
     
-    gia.calc_substation_location()
-    points_on_line, tranches = gia.connect_building_to_grid()
+    gia.calc_substation_location(config, locator)
+    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
     points_on_line_processed = gia.process_network(points_on_line)
     dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
     return points_on_line_processed, tranches, dict_length, dict_path
@@ -349,7 +349,7 @@ def one_linetype_rule(m, i, j):
     return number_of_linetypes <= 1
 
 
-def main(dict_connected):
+def main(dict_connected, config, locator):
     """
     Main function of electric grid optimization tool. Generates pyomo model of grid problem
 
@@ -365,7 +365,7 @@ def main(dict_connected):
     # ===========================================
 
     # Street network and Buildings
-    points_on_line, tranches, dict_length, dict_path = initial_network()
+    points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
     # Line Parameters
     df_line_parameter = pd.read_csv(LOCATOR + '\\electric_line_data.csv')

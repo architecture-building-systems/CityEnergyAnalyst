@@ -14,20 +14,21 @@ def thermal_network_calculations(dict_connected, config):
     # Solve the electrical grid problem, and decide on the best electrical line types and lengths. It is an optimization
     # problem for a fixed demand
     # ============================
-    m = electrical_grid_calculations(dict_connected)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    m = electrical_grid_calculations(dict_connected, config, locator)
 
     electrical_grid_file_name = 'grid'
-    thermal_network_file_name = 'thermal_network_1'
+    thermal_network_file_name = 'streets'
 
     # ============================
     # Create shape file of the thermal network based on the buildings connected, which is further processed
     # ============================
-    process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name)
+    process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator)
 
     print (config.scenario)
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names, input_path_name='streets')
+    network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
     thermal_network_matrix.main(config)
 
 def main(config):

@@ -8,10 +8,10 @@ import networkx as nx
 from concept_parameters import *
 
 
-def calc_substation_location():
+def calc_substation_location(config, locator):
     #import/ export paths
-    input_buildings_shp = LOCATOR + SCENARIO +'inputs\\building-geometry\\zone.shp'
-    output_substations_shp = LOCATOR + SCENARIO + 'inputs\\networks\\nodes_buildings.shp'
+    input_buildings_shp = locator.get_substation_input_location()
+    output_substations_shp = locator.get_substation_output_location()
 
     poly = gdf.from_file(input_buildings_shp)
     poly = poly.to_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
@@ -35,10 +35,10 @@ def calc_substation_location():
     return points, poly
 
 
-def connect_building_to_grid():
+def connect_building_to_grid(config, locator):
     #import/ export paths
-    input_substations_shp = LOCATOR + SCENARIO + 'inputs\\networks\\nodes_buildings.shp'
-    input_streets_shp = LOCATOR + SCENARIO + 'inputs\\networks\\streets.shp'
+    input_substations_shp = locator.get_substation_output_location()
+    input_streets_shp = locator.get_streets_input_location()
 
     # Import data
     building_points = gdf.from_file(input_substations_shp)
@@ -120,8 +120,11 @@ def connect_building_to_grid():
     tranches['Length'] = 0
 
     for idx, tranch in tranches.iterrows():
+        print (idx)
+        print (tranch)
         tranches.loc[idx, 'Name'] = 'tranch' + str(idx)
         tranches.loc[idx, 'Length'] = tranch.values[0].length
+        print (tranch.values[0].boundary)
 
         startnode = tranch.values[0].boundary[0]
         endnode = tranch.values[0].boundary[1]

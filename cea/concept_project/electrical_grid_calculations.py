@@ -5,12 +5,12 @@ import time
 from concept_parameters import *
 import process_results
 
-def electrical_grid_calculations(dict_connected):
+def electrical_grid_calculations(dict_connected, config, locator):
     # ============================
     # Solve Problem
     # ============================
 
-    m = pyomo_multi_linetype.main(dict_connected)
+    m = pyomo_multi_linetype.main(dict_connected, config, locator)
     opt = SolverFactory('cplex',
                         # executable='/opt/ibm/ILOG/CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex' # LINUX
                         )  # Create a solver

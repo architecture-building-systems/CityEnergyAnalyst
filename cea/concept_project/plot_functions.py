@@ -3,9 +3,9 @@ import get_initial_network as gia
 import re
 
 
-def initial_network():
-    gia.calc_substation_location()
-    points_on_line, tranches = gia.connect_building_to_grid()
+def initial_network(config, locator):
+    gia.calc_substation_location(config, locator)
+    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
     points_on_line_processed = gia.process_network(points_on_line)
     dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
 

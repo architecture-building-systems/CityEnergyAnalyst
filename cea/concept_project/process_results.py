@@ -10,7 +10,7 @@ from cea.utilities.standarize_coordinates import get_projected_coordinate_system
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 
 
-def initial_network():
+def initial_network(config, locator):
     """
     Initiate data of main problem
 
@@ -27,8 +27,8 @@ def initial_network():
     :rtype: dictionary
     """
 
-    gia.calc_substation_location()
-    points_on_line, tranches = gia.connect_building_to_grid()
+    gia.calc_substation_location(config, locator)
+    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
     points_on_line_processed = gia.process_network(points_on_line)
     dict_length, dict_path = gia.create_length_complete_dict(points_on_line_processed, tranches)
 
@@ -162,7 +162,7 @@ def find_thermal_nerwork_path(m, points_on_line, set_grid, dict_length):
     return set_thermal_network
 
 
-def connect_building_to_street(m, points_on_line, list_geo_thermal_network):
+def connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator):
     """
     Connect centroid of every THERMAL consumer building to thermal network
 
@@ -177,7 +177,7 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network):
     :rtype: list(float, float)
     """
 
-    building_centroids, poly = gia.calc_substation_location()
+    building_centroids, poly = gia.calc_substation_location(config, locator)
 
     dict_connected = m.dict_connected.values()
 
@@ -201,7 +201,7 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network):
     return list_geo_thermal_network
 
 
-def write_shp(list_geotranch, name='grid'):
+def write_shp(config, locator, list_geotranch, name='grid'):
     """
     Write grid.shp and thermal_network.shp on base of list of coordinate data
 
@@ -214,8 +214,8 @@ def write_shp(list_geotranch, name='grid'):
     :rtype: Nonetype
     """
 
-    input_street_shp = LOCATOR + SCENARIO + 'inputs\\networks\\streets.shp'
-    output_path_shp = LOCATOR + SCENARIO + 'inputs\\networks\\' + name + '.shp'
+    input_street_shp = locator.get_streets_input_location()
+    output_path_shp = locator.get_streets_output_location(name)
 
     geometry = [shapely.geometry.LineString(json.loads(g)) for g in list_geotranch]
 
@@ -227,7 +227,7 @@ def write_shp(list_geotranch, name='grid'):
     gdf.to_file(output_path_shp, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name):
+def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator):
     """
     This function converts the results of the grid optimization and generates a thermal network. Grid and thermal
     network are written as shp files to folder \\inputs\\networks\\
@@ -240,7 +240,7 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     """
 
     # Initiate data of main problem
-    points_on_line, tranches, dict_length, dict_path = initial_network()
+    points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
     # Find path of edges on STREET network between ELECTRIC consumer and plant node
     set_grid = find_gridpath(m, dict_path)
@@ -255,8 +255,8 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     list_geo_thermal_network = set_to_list_geo(set_thermal_network, points_on_line)
 
     # Connect centroid of every THERMAL consumer building to thermal network
-    list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network)
+    list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator)
 
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
-    write_shp(list_geo_grid, name=electrical_grid_file_name)
-    write_shp(list_geo_thermal_network, name=thermal_network_file_name)
+    write_shp(config, locator, list_geo_grid, name=electrical_grid_file_name)
+    write_shp(config, locator, list_geo_thermal_network, name=thermal_network_file_name)
