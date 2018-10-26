@@ -47,14 +47,14 @@ x = range(200)
 y = range(200)
 
 for i in range(len(x)): # equation to generate data
-    y[i] = 5 * x[i]**2 + 6*x[i] + 4
+    y[i] = 5 * x[i]**2 + 6*np.log(x[i] + 1) + 4
 
 
 def evalOneMax(individual): # objective function
     z = range(200)
 
     for i in range(len(x)):
-        z[i] = individual[0] * x[i]**2 + individual[1]*x[i] + individual[2]
+        z[i] = individual[0] * x[i]**2 + individual[1]*np.log(x[i] + 1) + individual[2]
 
     sum_ind = 0
     for i in range(len(z)):
