@@ -11,7 +11,7 @@ import cea.config
 import cea.inputlocator
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
