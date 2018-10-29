@@ -27,14 +27,13 @@ label = 'Energy demand'
 class DemandPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "demand"
+    category_path = os.path.join('new_basic', 'demand')
 
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
-    def __init__(self, config, locator, buildings):
-        super(DemandPlotBase, self).__init__(config, locator, buildings)
-        self.category_path = os.path.join('new_basic', 'demand')
-
+    def __init__(self, config, locator, **parameters):
+        super(DemandPlotBase, self).__init__(config, locator, **parameters)
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
