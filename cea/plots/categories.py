@@ -101,7 +101,7 @@ if __name__ == '__main__':
     for category in list_categories():
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
-            plot = plot_class(config, locator, buildings)
+            plot = plot_class(config, locator, **{'buildings': buildings})
             assert plot.name, 'plot missing name: %s' % plot
             assert plot.category_name == category.name
             print('plot:', plot.name, ' - ', plot.id())
