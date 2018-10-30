@@ -19,14 +19,25 @@ __status__ = "Production"
 
 
 class EnergySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
+    name = "Energy System Map"
+
     def __init__(self, config, locator, **parameters):
         super(EnergySystemMapPlot, self).__init__(config, locator, **parameters)
+        if not hasattr(self, 'individual'):
+            self.individual = config.plots_supply_system.individual
+        if not hasattr(self, 'generation'):
+            self.generation = config.plots_supply_system.generation
 
     def plot(self, auto_open=False):
         super(EnergySystemMapPlot, self).plot(auto_open)
 
     def plot_div(self):
         return super(EnergySystemMapPlot, self).plot_div()
+
+    @property
+    def title(self):
+        return 'Energy system map for individual {individual} in generation {generation}'.format(
+            individual=self.individual, generation=self.generation)
 
 
 def main(config):

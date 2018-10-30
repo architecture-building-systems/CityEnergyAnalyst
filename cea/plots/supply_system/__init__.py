@@ -26,7 +26,7 @@ label = 'Supply System'
 
 class SupplySystemPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "supply-system"
+    category_name = "supply_system"
     category_path = os.path.join('new_basic', category_name)
 
     # cache hourly_loads results to avoid recalculating it every time
