@@ -1063,9 +1063,8 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-
-
-
+    def get_electric_line_data(self):
+        return os.path.join(self.get_networks_folder(), 'electric_line_data.csv')
 
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
