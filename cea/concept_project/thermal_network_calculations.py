@@ -47,7 +47,6 @@ def main(config):
     #                   }
 
     t0 = time.clock()
-    thermal_network_costs.main(config)
     thermal_network_calculations(dict_connected, config)
     print 'main() succeeded'
     print 'total time: ', time.clock() - t0

@@ -149,8 +149,8 @@ def connect_building_to_grid(config, locator):
     return points_on_line, tranches
 
 
-def process_network(points_on_line):
-    building_path = LOCATOR + SCENARIO + '\\outputs\\data\\demand\\Total_demand.csv'
+def process_network(points_on_line, config, locator):
+    building_path = locator.get_total_demand()
     building_prop = pd.read_csv(building_path)
     # building_prop = building_prop[['Name', 'GRID0_kW']]
     building_prop.rename(columns={'Name': 'Building'}, inplace=True)

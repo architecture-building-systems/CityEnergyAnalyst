@@ -29,7 +29,7 @@ def initial_network(config, locator):
 
     gia.calc_substation_location(config, locator)
     points_on_line, tranches = gia.connect_building_to_grid(config, locator)
-    points_on_line_processed = gia.process_network(points_on_line)
+    points_on_line_processed = gia.process_network(points_on_line, config, locator)
     dict_length, dict_path = gia.create_length_complete_dict(points_on_line_processed, tranches)
 
     return points_on_line_processed, tranches, dict_length, dict_path

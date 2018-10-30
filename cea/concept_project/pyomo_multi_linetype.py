@@ -31,7 +31,7 @@ def initial_network(config, locator):
     
     gia.calc_substation_location(config, locator)
     points_on_line, tranches = gia.connect_building_to_grid(config, locator)
-    points_on_line_processed = gia.process_network(points_on_line)
+    points_on_line_processed = gia.process_network(points_on_line, config, locator)
     dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
     return points_on_line_processed, tranches, dict_length, dict_path
 
@@ -368,7 +368,7 @@ def main(dict_connected, config, locator):
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
     # Line Parameters
-    df_line_parameter = pd.read_csv(LOCATOR + '\\electric_line_data.csv')
+    df_line_parameter = pd.read_csv(locator.get_electric_line_data())
     dict_line_tech = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
