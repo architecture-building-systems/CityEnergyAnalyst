@@ -8,6 +8,7 @@ import cea.config
 
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network import thermal_network_matrix
+from cea.technologies.thermal_network import thermal_network_costs
 
 def thermal_network_calculations(dict_connected, config):
     # ============================
@@ -30,6 +31,7 @@ def thermal_network_calculations(dict_connected, config):
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
     thermal_network_matrix.main(config)
+    thermal_network_costs.main(config)
 
 def main(config):
 
@@ -45,6 +47,7 @@ def main(config):
     #                   }
 
     t0 = time.clock()
+    thermal_network_costs.main(config)
     thermal_network_calculations(dict_connected, config)
     print 'main() succeeded'
     print 'total time: ', time.clock() - t0
