@@ -27,16 +27,25 @@ label = 'Supply System'
 class SupplySystemPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "supply_system"
-    category_path = os.path.join('new_basic', category_name)
 
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
     def __init__(self, config, locator, **parameters):
         super(SupplySystemPlotBase, self).__init__(config, locator, **parameters)
-        self.category_path = os.path.join('new_basic', 'supply-system')
+
+        self.category_path = "new-optimization-detailed"
+
+        # add default attributes from config file if not set in `parameters`
+        if not hasattr(self, 'individual'):
+            self.individual = config.plots_supply_system.individual
+        if not hasattr(self, 'generation'):
+            self.generation = config.plots_supply_system.generation
+        if not hasattr(self, 'network_type'):
+            self.network_type = config.plots_supply_system.network_type
 
     @property
     def output_path(self):
         """Overriding output_path to include the individual and generation parameters"""
-        return self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
+        return self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', self.category_path)
