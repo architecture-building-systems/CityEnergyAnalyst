@@ -229,9 +229,9 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         # Total CAPEX calculations
         # Absorption Chiller
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
-                                  usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
-                                           'LT_yr', 'O&M_%'])
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller")
+        Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+            ['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%', 'LT_yr', 'O&M_%']]
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == 'double']
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
         Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
