@@ -21,6 +21,7 @@ __status__ = "Production"
 
 events_file = r'C:\Users\User\Documents\MATSim\zurich_10pct\output_events.xml'
 facilities_file = r'C:\Users\User\Documents\MATSim\zurich_10pct\zurich_facilities.xml'
+zone_df = gpd.read_file(r'C:\Users\User\Documents\GitHub\cea-reference-case\reference-case-zurich\baseline\inputs\building-geometry\zone.shp')
 
 events_tree = ET.parse(events_file)
 facilities_tree = ET.parse(facilities_file)
@@ -52,7 +53,7 @@ for facility in facilities_root:
             facilities_out.append(facility.get('id'))
 coordinate_multi_point = MultiPoint(coordinates_list)
 # facilities_subset.set_index('id', inplace=True).to_csv(r'C:\Users\User\Documents\MATSim\zurich_10pct\zurich_facilities.csv')
-zone_df = gpd.read_file(r'C:\Users\User\Documents\GitHub\cea-reference-case\reference-case-zurich\baseline\inputs\building-geometry\zone.shp')
+
 facilities_zone = pd.DataFrame(data=None, columns=['id', 'x', 'y', 'Name', 'descriptio', 'geometry'])
 # i = 0
 # coordinates_list = []
