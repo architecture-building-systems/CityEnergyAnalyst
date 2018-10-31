@@ -104,4 +104,4 @@ if __name__ == '__main__':
             plot = plot_class(config, locator, **{'buildings': buildings})
             assert plot.name, 'plot missing name: %s' % plot
             assert plot.category_name == category.name
-            print('plot:', plot.name, ' - ', plot.id())
+            print('plot:', plot.name, '/', plot.id(), '/', plot.title)
