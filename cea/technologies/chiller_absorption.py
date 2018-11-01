@@ -161,7 +161,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
 
 # Investment costs
 
-def calc_Cinv(qcold_W, locator, ACH_type, config):
+def calc_Cinv_ACH(qcold_W, locator, ACH_type, config):
     """
     Annualized investment costs for the vapor compressor chiller
     :type qcold_W : float
