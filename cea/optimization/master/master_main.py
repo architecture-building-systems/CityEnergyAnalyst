@@ -307,6 +307,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             halloffame.extend(selection)
             halloffame = toolbox.select(halloffame, halloffame_size)
 
+        halloffame_fitness = []
         for ind in halloffame:
             halloffame_fitness.append(ind.fitness.values)
 
