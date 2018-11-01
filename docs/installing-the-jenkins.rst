@@ -74,7 +74,7 @@ Installation of a tunnel to the Jenkins server
 This guide assumes you're running the Jenkins on a Windows PC inside a corporate network. We use the `ngrok`_ service
 to tunnel webhooks triggered by GitHub back to the Jenkins server.
 
-.. _ngrok.io: https://ngrok.com
+.. _ngrok: https://ngrok.com
 
 - download ngrok for Windows (https://ngrok.com/download)
 - extract ``ngrok.exe`` to ``%PROGRAMDATA%\ceajenkins\ngrok.exe``
