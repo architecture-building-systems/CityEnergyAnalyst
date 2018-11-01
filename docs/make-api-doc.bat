@@ -1,4 +1,4 @@
-@ECHO OFF
+ECHO OFF
 
 echo.
 echo Removing old rst files.

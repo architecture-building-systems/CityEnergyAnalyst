@@ -6,4 +6,5 @@ dependencies:
 - numpy
 - pandas
 - pyaml
-
+- pip:
+  - py4design
