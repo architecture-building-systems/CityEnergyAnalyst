@@ -177,10 +177,6 @@ def create_and_run_individual(individual, locator, temp_config, building_name, m
     # calculate demand
     totals, time_series = demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=temp_config)
 
-    # # copy results from the given individual to the actual scenario
-    # shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
-    #
-    #
     return totals.loc[temp_config.demand.buildings, temp_config.demand.loads]
 
 def create_temp_config_instance(config, locator):
