@@ -100,7 +100,7 @@ running your script from PyCharm. Please take the time to do this anyway, since 
 the ArcGIS and dashboard interfaces* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
 
 The name of your script should be the same as the module name and the core function name from
-`Step 3: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
+`Step 2: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
 
 The ``scripts.yml`` file is grouped by categories and each category contains a list of scripts in that category. The
 syntax used is YAML_. The easiest way to add a new script is to copy an existing script definition.
