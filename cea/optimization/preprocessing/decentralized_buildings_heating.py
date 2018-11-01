@@ -211,12 +211,12 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
-        InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
-        InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
+        Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
+        InvCosts[0][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
+        InvCosts[1][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
 
-        Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, locator, config)
-        InvCosts[2][0] = Capex_a_FC + Opex_FC
+        Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom, locator, config)
+        InvCosts[2][0] = Capex_a_FC_USD + Opex_fixed_FC_USD
 
         for i in range(10):
             result[3 + i][0] = i / 10
@@ -224,13 +224,13 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
 
             QnomBoiler = i / 10 * Qnom
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
+            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
 
-            InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
+            InvCosts[3 + i][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
 
-            Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
-            InvCaGHP = Capex_a_GHP + Opex_GHP
-            InvCosts[3 + i][0] += InvCaGHP * prices.EURO_TO_CHF
+            Capex_a_GHP_USD, Opex_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
+            InvCaGHP = Capex_a_GHP_USD + Opex_fixed_GHP_USD
+            InvCosts[3 + i][0] += InvCaGHP
 
         # Best configuration
         Best = np.zeros((13, 1))
