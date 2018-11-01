@@ -31,10 +31,10 @@ toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.att
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
-def objective_function(individual):
-    return sum(individual),
+# def objective_function(individual):
+#     return sum(individual),
 
-def objective_function(individual_number, individual, generation, simulation, measured):
+def objective_function(config, individual_number, individual, generation, simulation, measured):
     """
     Objective function is used to calculate the error corresponding to the individual
     :param individual: Input individual
@@ -101,7 +101,48 @@ toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
-def create_and_run_one_individual(individual, individual_name, locator, config_temp, list_buildings, materials, internal_loads, indoor_comfort):
+# def create_and_run_one_individual(individual, individual_name, locator, temp_config, list_buildings, materials, internal_loads, indoor_comfort):
+#     '''
+#     For a given individual, this function should first copy the reference case into a temp directory, then edit the
+#     corresponding input files with the given individual's input parameters, then run the demand.
+#
+#     :param individual:
+#     :param individual_name:
+#     :param locator_temp:
+#     :return:
+#     '''
+#
+#     locator_temp = cea.inputlocator.InputLocator(temp_config.scenario)
+#
+#     # get dbf files that need to be edited
+#     architecture_df = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
+#     internal_loads_df = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
+#     indoor_comfort_df = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
+#
+#     # edit dbf files based on individual data
+#     len_variables = len(materials) + len(internal_loads) + len(indoor_comfort)
+#     for i in range(len(list_buildings)):
+#         for j in range(len(materials)):
+#             architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len_variables + j]
+#         j += 1
+#         for k in range(len(internal_loads)):
+#             internal_loads_df.loc[list_buildings[i], internal_loads[k]] *= individual[i * len_variables + j + k]
+#         k += 1
+#         for l in range(len(indoor_comfort)):
+#             indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len_variables + j + k + l]
+#
+#     # export edited dbf files
+#     dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
+#     dataframe_to_dbf(internal_loads_df.reset_index(), locator_temp.get_building_internal())
+#     dataframe_to_dbf(indoor_comfort_df.reset_index(), locator_temp.get_building_comfort())
+#
+#     # calculate demand
+#     demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=temp_config)
+#
+#     # copy results from the given individual to the actual scenario
+#     shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
+
+def create_and_run_individual(individual, locator, temp_config, building_name, materials, internal_loads, indoor_comfort):
     '''
     For a given individual, this function should first copy the reference case into a temp directory, then edit the
     corresponding input files with the given individual's input parameters, then run the demand.
@@ -112,7 +153,7 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     :return:
     '''
 
-    locator_temp = cea.inputlocator.InputLocator(config_temp.scenario)
+    locator_temp = cea.inputlocator.InputLocator(temp_config.scenario)
 
     # get dbf files that need to be edited
     architecture_df = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
@@ -121,15 +162,12 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
 
     # edit dbf files based on individual data
     len_variables = len(materials) + len(internal_loads) + len(indoor_comfort)
-    for i in range(len(list_buildings)):
-        for j in range(len(materials)):
-            architecture_df.loc[list_buildings[i], materials[j]] = 'T'+individual[i * len_variables + j]
-        j += 1
-        for k in range(len(internal_loads)):
-            internal_loads_df.loc[list_buildings[i], internal_loads[k]] *= individual[i * len_variables + j + k]
-        k += 1
-        for l in range(len(indoor_comfort)):
-            indoor_comfort_df.loc[list_buildings[i], indoor_comfort[l]] *= individual[i * len_variables + j + k + l]
+    for j in range(len(materials)):
+        architecture_df.loc[building_name, materials[j]] = 'T'+individual[j]
+    for k in range(len(internal_loads)):
+        internal_loads_df.loc[building_name, internal_loads[k]] *= individual[len(materials) + k]
+    for l in range(len(indoor_comfort)):
+        indoor_comfort_df.loc[building_name, indoor_comfort[l]] *= individual[len(materials) + len(internal_loads) + l]
 
     # export edited dbf files
     dataframe_to_dbf(architecture_df.reset_index(), locator_temp.get_building_architecture())
@@ -137,10 +175,13 @@ def create_and_run_one_individual(individual, individual_name, locator, config_t
     dataframe_to_dbf(indoor_comfort_df.reset_index(), locator_temp.get_building_comfort())
 
     # calculate demand
-    demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=config_temp)
+    totals, time_series = demand_calculation(locator=locator_temp, gv=cea.globalvar.GlobalVariables(), config=temp_config)
 
-    # copy results from the given individual to the actual scenario
-    shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
+    # # copy results from the given individual to the actual scenario
+    # shutil.copy(locator_temp.get_total_demand(), os.path.join(locator.get_calibration_folder(), individual_name+'.csv'))
+    #
+    #
+    return totals.loc[temp_config.demand.buildings, temp_config.demand.loads]
 
 def create_temp_config_instance(config, locator):
     '''
@@ -167,11 +208,13 @@ def create_temp_config_instance(config, locator):
 
     return temp_config
 
+def get_calibration_variables(config):
+    '''
+    Get variables that will be calibrated from config file.
 
-def main(config):
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    # TODO: create one temp folder per processor for multiprocessing?
-    temp_config = create_temp_config_instance(config, locator)
+    :param config:
+    :return:
+    '''
     # get materials that need to be assigned (e.g. walls)
     materials = config.calibration_optimization.materials
     # get internal loads that need to be calibrated (e.g. Ea_Wm2)
@@ -180,23 +223,55 @@ def main(config):
     indoor_comfort = config.calibration_optimization.indoor_comfort
     # list variables to be calibrated
     list_variables = materials + internal_loads + indoor_comfort
-    # get measured data
-    building_metering = os.path.join(locator.get_demand_measured_folder, 'Yearly_demand_metering.csv')
-    # get possible values the parameters to be calibrated may take, namely:
-    ## type of material (e.g. type_win = 'T1')
+
+    return materials, internal_loads, indoor_comfort, list_variables
+
+def get_variable_choices(locator, config):
+    '''
+    Get possible values the parameters to be calibrated may take
+    '''
+    # get type of material (e.g. type_win = 'T1')
     material_choices = {'type_cons': list(pd.read_excel(locator.get_envelope_systems, 'CONSTRUCTION')['code']),
                         'type_leak': list(pd.read_excel(locator.get_envelope_systems, 'LEAKAGE')['code']),
                         'type_win': list(pd.read_excel(locator.get_envelope_systems, 'WINDOW')['code']),
                         'type_roof': list(pd.read_excel(locator.get_envelope_systems, 'ROOF')['code']),
                         'type_wall': list(pd.read_excel(locator.get_envelope_systems, 'WALL')['code']),
                         'type_shade': list(pd.read_excel(locator.get_envelope_systems, 'SHADING')['code'])}
-    ## indoor comfort and internal load variable distributions
+    # get indoor comfort and internal load variable distributions
     # TODO: choosing these three values for now, but ideally these should depend on the uncertainty distribution
     uncertainty_distributions = locator.get_uncertainty_db(config.region)
-    internal_loads_choices = pd.read_excel(uncertainty_distributions, 'INTERNAL_LOADS')[['name', 'min', 'mu', 'max']].set_index('name')
-    indoor_comfort_choices = pd.read_excel(uncertainty_distributions, 'INDOOR_COMFORT')[['name', 'min', 'mu', 'max']].set_index('name')
-    # get measured data for comparison
-    demand_metering = locator.get_yearly_demand_measured_file().set_index('Name')
+    internal_loads_choices = pd.read_excel(uncertainty_distributions, 'INTERNAL_LOADS')[
+        ['name', 'min', 'mu', 'max']].set_index('name')
+    indoor_comfort_choices = pd.read_excel(uncertainty_distributions, 'INDOOR_COMFORT')[
+        ['name', 'min', 'mu', 'max']].set_index('name')
+
+    return material_choices, internal_loads_choices, indoor_comfort_choices
+
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    # TODO: create one temp folder per processor for multiprocessing?
+    temp_config = create_temp_config_instance(config, locator)
+    # get variables that need to be calibrated
+    materials, internal_loads, indoor_comfort, list_variables = get_calibration_variables(config)
+    # get possible values variables may take
+    material_choices, internal_loads_choices, indoor_comfort_choices = get_variable_choices(locator, config)
+    # get measured data
+    building_metering = locator.get_yearly_demand_measured_file().set_index('Name')
+    # run calibration for each single building
+    for building in config.calibration_optimization.buildings:
+        temp_config.demand.loads = [load for load in config.calibration_optimization.loads_output if
+                                    not np.isnan(building_metering.loc[building, load])]
+        temp_config.demand.buildings = building
+        measured = building_metering.loc[building, temp_config.demand.loads]
+
+        # generate individual
+        # TODO: Bhargav, this is all you :)
+        # run demand calculation
+        simulation = create_and_run_individual(individual, locator, temp_config, building, materials, internal_loads,
+                                               indoor_comfort)
+        # calculate objective function
+        cv_rmse, rmse = objective_function(config, individual_number, individual, generation, simulation, measured)
 
     random.seed(64)
     create_individual(lower_bound, upper_bound, 2)
