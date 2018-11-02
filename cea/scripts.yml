@@ -125,7 +125,7 @@ Optimization:
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:district-heating-network',
-               'general:district-cooling-network' 'thermal-network:network-type', 'thermal-network:network-names',
+               'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
                'optimization', 'decentralized']
 
 - name: decentralized
