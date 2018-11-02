@@ -1,3 +1,5 @@
+:orphan:
+
 How to add a new script
 =======================
 

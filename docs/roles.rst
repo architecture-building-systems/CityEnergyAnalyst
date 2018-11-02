@@ -1,4 +1,6 @@
-# Roles and Responsabilities 
+:orphan:
+
+# Roles and Responsabilities
 ============================
 
 This is a guide of roles and responsabilities in CEA. We use this to more formally coordinate our work. To check who is currently holding each position, we invite you to check www.cityenergyanalyst.com for more information.
