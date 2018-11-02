@@ -8,6 +8,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy
+from numba import jit
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
@@ -556,7 +557,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
 
 
 # Heat exchanger model
-
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -626,6 +627,7 @@ def calc_plate_HEX(NTU, cr):
     return eff
 
 
+@jit(nopython=True)
 def calc_shell_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a tube-shell heat exchanger according to the NTU method of
@@ -677,6 +679,7 @@ def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
     return np.float(tavg)
 
 
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -702,7 +705,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 
     """
 
-    if Q > 0:
+    if Q > 0.0:
         dT_primary = tco - tci if tco != tci else 0.0001  # to avoid errors with temperature changes < 0.001
         eff = [0.1, 0]
         Flag = False
