@@ -557,8 +557,31 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     return tho, ch, Area_HEX_heating
 
 
+@jit(nopython=True)
+def calc_plate_HEX(NTU, cr):
+    """
+    This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
+    AShRAE 90.1
+
+    :param NTU: number of transfer units
+    :param cr: ratio between min and max capacity mass flow rates
+
+    :return:
+        - eff: efficiency of heat exchange
+
+    """
+    efficiency = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    return efficiency
+
+
+@jit('boolean(float64, float64)', nopython=True)
+def efficiencies_not_converged(current_efficiency, next_efficiency):
+    tolerance = 0.00000001
+    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
+
+
 # Heat exchanger model
-#@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -579,20 +602,21 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
 
     if ch_kWperK > 0 and thi_K != tho_K:
-        current_efficiency, next_efficiency = (0.1, 0.0)
+        current_efficiency = 0.1
+        next_efficiency = 0.0
         cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
         tco_K = 273.0  # actual value calculated in iteration
         while efficiencies_not_converged(current_efficiency, next_efficiency):
-            if cmin_kWperK < 0.0:
-                raise ValueError('cmin is negative!!!', 'Q:', Q_cooling_W, 'UA:', UA, 'thi:', thi_K, 'tho:', tho_K, 'tci:', tci_K,
-                                 'ch:', ch_kWperK)
-            elif cmin_kWperK < ch_kWperK:
+            assert not (cmin_kWperK < 0.0), "substation.calc_HEX_cooling: cmin is negative!!"
+
+            if cmin_kWperK < ch_kWperK:
                 cc_kWperK = cmin_kWperK
                 cmax_kWperK = ch_kWperK
             else:
                 cc_kWperK = cmin_kWperK
                 cmax_kWperK = cc_kWperK
                 cmin_kWperK = ch_kWperK
+
             cr = cmin_kWperK / cmax_kWperK
             NTU = UA / cmin_kWperK
             next_efficiency = calc_plate_HEX(NTU, cr)
@@ -607,24 +631,8 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         cc_kWperK = 0.0
     return np.float(tco_C), np.float(cc_kWperK)
 
-def efficiencies_not_converged(current_efficiency, next_efficiency, tolerance = 0.00000001):
-    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
 
 
-def calc_plate_HEX(NTU, cr):
-    """
-    This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
-    AShRAE 90.1
-
-    :param NTU: number of transfer units
-    :param cr: ratio between min and max capacity mass flow rates
-
-    :return:
-        - eff: efficiency of heat exchange
-
-    """
-    efficiency = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
-    return efficiency
 
 
 @jit(nopython=True)
