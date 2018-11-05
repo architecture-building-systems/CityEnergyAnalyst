@@ -558,57 +558,57 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
 
 # Heat exchanger model
 @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
-def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
+def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a plate heat exchanger.
     Method : Number of Transfer Units (NTU)
 
-    :param Q: cooling load
+    :param Q_cooling_W: cooling load
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
         heat exchanger
-    :param thi: inlet temperature of primary side
-    :param tho: outlet temperature of primary side
-    :param tci: inlet temperature of secondary side
-    :param ch: capacity mass flow rate primary side
+    :param thi_K: inlet temperature of primary side
+    :param tho_K: outlet temperature of primary side
+    :param tci_K: inlet temperature of secondary side
+    :param ch_kWperK: capacity mass flow rate primary side
     :return:
         - ``tco``, out temperature of secondary side (district cooling network)
         - ``cc``, capacity mass flow rate secondary side
 
     """
 
-    if ch > 0 and thi != tho:
-        eff = [0.1, 0]
+    if ch_kWperK > 0 and thi_K != tho_K:
+        efficiency = [0.1, 0]
         Flag = False
-        tol = 0.00000001
-        while abs((eff[0] - eff[1]) / eff[0]) > tol:
+        tolerance = 0.00000001
+        while abs((efficiency[0] - efficiency[1]) / efficiency[0]) > tolerance:
             if Flag == True:
-                eff[0] = eff[1]
+                efficiency[0] = efficiency[1]
             else:
-                cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
-            if cmin < 0:
-                raise ValueError('cmin is negative!!!', 'Q:', Q, 'UA:', UA, 'thi:', thi, 'tho:', tho, 'tci:', tci,
-                                 'ch:', ch)
-            elif cmin < ch:
-                cc = cmin
-                cmax = ch
+                cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * efficiency[0])
+            if cmin_kWperK < 0:
+                raise ValueError('cmin is negative!!!', 'Q:', Q_cooling_W, 'UA:', UA, 'thi:', thi_K, 'tho:', tho_K, 'tci:', tci_K,
+                                 'ch:', ch_kWperK)
+            elif cmin_kWperK < ch_kWperK:
+                cc_kWperK = cmin_kWperK
+                cmax_kWperK = ch_kWperK
             else:
-                cc = cmin
-                cmax = cc
-                cmin = ch
-            cr = cmin / cmax
-            NTU = UA / cmin
-            eff[1] = calc_plate_HEX(NTU, cr)
-            cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
-            tco = tci + eff[1] * cmin * (thi - tci) / cc
+                cc_kWperK = cmin_kWperK
+                cmax_kWperK = cc_kWperK
+                cmin_kWperK = ch_kWperK
+            cr = cmin_kWperK / cmax_kWperK
+            NTU = UA / cmin_kWperK
+            efficiency[1] = calc_plate_HEX(NTU, cr)
+            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * efficiency[1])
+            tco_K = tci_K + efficiency[1] * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
             Flag = True
 
-        cc = Q / abs(tci - tco)
-        tco = tco - 273
+        cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
+        tco_C = tco_K - 273
     else:
-        tco = 0
-        cc = 0
-    return np.float(tco), np.float(cc)
+        tco_C = 0
+        cc_kWperK = 0
+    return np.float(tco_C), np.float(cc_kWperK)
 
 
 def calc_plate_HEX(NTU, cr):
@@ -623,8 +623,8 @@ def calc_plate_HEX(NTU, cr):
         - eff: efficiency of heat exchange
 
     """
-    eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
-    return eff
+    efficiency = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    return efficiency
 
 
 @jit(nopython=True)
@@ -640,9 +640,9 @@ def calc_shell_HEX(NTU, cr):
         - eff: efficiency of heat exchange
 
     """
-    eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
+    efficiency = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
         (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
-    return eff
+    return efficiency
 
 
 def calc_DH_HEX_mix(Q1, Q2, t1, m1, t2, m2):
