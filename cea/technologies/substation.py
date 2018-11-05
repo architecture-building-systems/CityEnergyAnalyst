@@ -558,7 +558,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
 
 
 # Heat exchanger model
-@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+#@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -579,15 +579,11 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
 
     if ch_kWperK > 0 and thi_K != tho_K:
-        efficiency = [0.1, 0]
-        Flag = False
-        tolerance = 0.00000001
-        while abs((efficiency[0] - efficiency[1]) / efficiency[0]) > tolerance:
-            if Flag == True:
-                efficiency[0] = efficiency[1]
-            else:
-                cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * efficiency[0])
-            if cmin_kWperK < 0:
+        current_efficiency, next_efficiency = (0.1, 0.0)
+        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+        tco_K = 273.0  # actual value calculated in iteration
+        while efficiencies_not_converged(current_efficiency, next_efficiency):
+            if cmin_kWperK < 0.0:
                 raise ValueError('cmin is negative!!!', 'Q:', Q_cooling_W, 'UA:', UA, 'thi:', thi_K, 'tho:', tho_K, 'tci:', tci_K,
                                  'ch:', ch_kWperK)
             elif cmin_kWperK < ch_kWperK:
@@ -599,17 +595,20 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
                 cmin_kWperK = ch_kWperK
             cr = cmin_kWperK / cmax_kWperK
             NTU = UA / cmin_kWperK
-            efficiency[1] = calc_plate_HEX(NTU, cr)
-            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * efficiency[1])
-            tco_K = tci_K + efficiency[1] * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
-            Flag = True
+            next_efficiency = calc_plate_HEX(NTU, cr)
+            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * next_efficiency)
+            tco_K = tci_K + next_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
+            current_efficiency = next_efficiency
 
         cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
-        tco_C = tco_K - 273
+        tco_C = tco_K - 273.0
     else:
-        tco_C = 0
-        cc_kWperK = 0
+        tco_C = 0.0
+        cc_kWperK = 0.0
     return np.float(tco_C), np.float(cc_kWperK)
+
+def efficiencies_not_converged(current_efficiency, next_efficiency, tolerance = 0.00000001):
+    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
 
 
 def calc_plate_HEX(NTU, cr):
@@ -863,17 +862,10 @@ def main(config):
     """
     run the whole network summary routine
     """
-    import cea.globalvar
     import cea.inputlocator as inputlocator
 
-    gv = cea.globalvar.GlobalVariables()
-
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = pd.read_csv(locator.get_total_demand())['Name']
 
     substation_main(locator, total_demand, total_demand['Name'], heating_configuration=7, cooling_configuration=7,
                     Flag=False)
