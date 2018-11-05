@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from numba import jit
+import cea.config
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
@@ -858,7 +859,7 @@ def calc_DH_return(t_0, t_1):
 # Test
 # ============================
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole network summary routine
     """
@@ -881,4 +882,4 @@ def run_as_script(scenario_path=None):
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
