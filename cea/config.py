@@ -312,7 +312,7 @@ class Parameter(object):
 
     def get(self):
         """Return the value from the config file"""
-        encoded_value = self.config.user_config.get(self.section.name, self.name)
+        encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
         try:
             return self.decode(encoded_value)
@@ -618,6 +618,27 @@ class ChoiceParameter(Parameter):
             return self.config.default_config.get(self.section.name, self.name)
 
 
+class ScenarioNameParameter(Parameter):
+    """A parameter that can be set to a scenario-name"""
+    typename = 'ScenarioNameParameter'
+
+
+class ScenarioParameter(Parameter):
+    """This parameter type is special in that it is read-only"""
+    def get_raw(self):
+        return "{general:project}/{general:scenario-name}"
+
+    def set(self, value):
+        """Update the {general:project} and {general:scenario-name} parameters"""
+        project, scenario_name = os.path.split(value)
+        self.config.user_config.set('general', 'project', project)
+        self.config.user_config.set('general', 'scenario-name', scenario_name)
+
+    def decode(self, value):
+        """Make sure the path is nicely formatted"""
+        return os.path.normpath(value)
+
+
 class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
     typename = 'MultiChoiceParameter'
@@ -650,8 +671,6 @@ def parse_string_to_list(line):
 def main():
     """Run some tests on the configuration module"""
     config = Configuration()
-    print(config.plots.scenarios)
-    print(config.general.scenario)
     print(config.general.multiprocessing)
     # print(config.demand.heating_season_start)
     print(config.scenario)
@@ -660,8 +679,10 @@ def main():
     print(config.heatmaps.file_to_analyze)
     # make sure the config can be pickled (for multiprocessing)
     config.scenario = r'C:\reference-case-zurich'
+    print(config.project, config.scenario_name, config.scenario)
     import pickle
     config = pickle.loads(pickle.dumps(config))
+    print(config.scenario)
     assert config.scenario == r'C:\reference-case-zurich'
     print('reference case: %s' % config.scenario)
     # config = pickle.loads(pickle.dumps(config))

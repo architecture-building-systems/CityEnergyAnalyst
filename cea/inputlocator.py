@@ -1056,8 +1056,14 @@ class InputLocator(object):
         return os.path.join(self.get_neural_network_folder(), name+'.csv')
 
     def get_dashboard_yml(self):
-        """scenario/dashboard.yml"""
-        return os.path.join(self.scenario, 'dashboard.yml')
+        """<project>/dashboard.yml"""
+
+        if not os.path.exists(dashboard_yml):
+            # create a default dashboard_yml file for this scenario
+            import yaml
+            import cea.plots
+            dashboard = yaml.load(os.path.join(os.path.dirname(cea.plots.__file__), 'default_dashboard.yml'))
+        return dashboard_yml
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
