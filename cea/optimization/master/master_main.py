@@ -186,8 +186,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
 
         with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
-            cp = dict(population=pop, generation=0, networkList=DHN_network_list, testedPop=[],
-                      population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
+            cp = dict(nsga_selected_population=pop, generation=0, DHN_List=DHN_network_list, DCN_list = DCN_network_list, tested_population=[],
+                      tested_population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
     else:
@@ -323,8 +323,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(population=pop, generation=g, networkList=DHN_network_list, testedPop=invalid_ind,
-                          population_fitness=fitnesses, epsIndicator=epsInd,
+                cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
+                          tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
@@ -344,8 +344,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
-        cp = dict(population=pop, generation=g, networkList=DHN_network_list, testedPop=invalid_ind,
-                  population_fitness=fitnesses, epsIndicator=epsInd,
+        cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
+                  tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                   euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)
