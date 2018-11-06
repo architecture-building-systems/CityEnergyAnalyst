@@ -72,6 +72,7 @@ MOCK_MODULES = ['COLOR',
                 'matplotlib.pyplot',
                 'networkx',
                 'numba',
+                'numba.pycc',
                 'pandas',
                 'pandas.util',
                 'pandas.util.testing',
@@ -90,6 +91,7 @@ MOCK_MODULES = ['COLOR',
                 'py4design.py3dmodel.modify',
                 'py4design.pycitygml',
                 'py4design.shp2citygml',
+                'py4design.py3dmodel.utility',
                 'pyproj',
                 'pysal',
                 'pyshp',
@@ -104,8 +106,7 @@ MOCK_MODULES = ['COLOR',
                 'timezonefinder',
                 'vtk',
                 'xlrd',
-                'xlwt',
-                'yaml']
+                'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -166,7 +167,8 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.utilities.compile_pyd_files*'  # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
+                    'modules/cea.optimization.individual_evaluation*',
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.

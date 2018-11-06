@@ -41,6 +41,14 @@ cea.plots.4D\_plots\_ArcGIS.radiation\_4D\_plot module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.4D\_plots\_ArcGIS.radiation\_total module
+---------------------------------------------------
+
+.. automodule:: cea.plots.4D_plots_ArcGIS.radiation_total
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.4D\_plots\_ArcGIS.sc\_4D\_plot module
 -----------------------------------------------
 
