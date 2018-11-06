@@ -28,7 +28,7 @@ cea.plots.demand.energy\_balance module
 cea.plots.demand.energy\_demand module
 --------------------------------------
 
-.. automodule:: cea.plots.demand.energy_use
+.. automodule:: cea.plots.demand.energy_demand
     :members:
     :undoc-members:
     :show-inheritance:
