@@ -44,7 +44,7 @@ cea.optimization.master.evaluation module
 cea.optimization.master.master\_main module
 -------------------------------------------
 
-.. automodule:: cea.optimization.master.master_main
+.. automodule:: cea.optimization.master.non_dominated_sorting_genetic_algorithm
     :members:
     :undoc-members:
     :show-inheritance:

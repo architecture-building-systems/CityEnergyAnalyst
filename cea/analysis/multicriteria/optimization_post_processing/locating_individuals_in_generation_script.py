@@ -150,7 +150,7 @@ def preprocessing_generations_data(locator, generations):
                                   }).set_index("Name")
 
     individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                           individual] for individual in data['population']]
+                           individual] for individual in data['testedPop']]
     def_individual_barcode = pd.DataFrame({'Name': individual_names,
                                            'individual_barcode': individual_barcode}).set_index("Name")
 
@@ -166,33 +166,9 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_ton': emissions_ton_HOF,
                                   'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
-    # get dataframe with capacity installed per individual
-    for i, individual in enumerate(individual_names):
-        dict_capacities = data['capacities'][i]
-        dict_network = data['disconnected_capacities'][i]["network"]
-        list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
-        for building, dict_disconnected in enumerate(list_dict_disc_capacities):
-            if building == 0:
-                df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
-            else:
-                df_disc_capacities = df_disc_capacities.append(
-                    pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
-        df_disc_capacities = df_disc_capacities.set_index('building_name')
-        dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict()  # series with sum of capacities
-
-        if i == 0:
-            df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
-            df_capacities = pd.DataFrame(dict_capacities, index=[individual])
-            df_network = pd.DataFrame({"network": dict_network}, index=[individual])
-        else:
-            df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
-            df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
-            df_disc_capacities_final = df_disc_capacities_final.append(
-                pd.DataFrame(dict_disc_capacities, index=[individual]))
 
     data_processed.append(
-        {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
-         'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
+        {'population': df_population, 'halloffame': df_halloffame,
          'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
          'individual_barcode': def_individual_barcode})
 
