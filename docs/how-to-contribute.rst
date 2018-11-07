@@ -78,7 +78,7 @@ Your are entitled to claim a CEA T-shirt after this to cea@arch.ethz.ch
 Additional steps
 ----------------
 
-There are two more additional steps that are undertaken only when the CEA team besides to make a new release and publish!
+There are two more additional steps that are undertaken only when the CEA team decides to make a new release and publish!
 
 
 #. :doc:`how-to-create-a-new-release`.
