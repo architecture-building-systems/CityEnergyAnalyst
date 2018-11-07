@@ -9,15 +9,14 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-import cea.optimization.distribution.network_opt_main as network_opt
-import cea.optimization.master.master_main as master
+from cea.optimization.distribution import network_opt_main
+from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import lca_calculations
-import cea.technologies.solar.solar_collector as solar_collector
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca"]
+__credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -53,18 +52,18 @@ def moo_optimization(locator, weather_file, gv, config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print "PRE-PROCESSING"
-    extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
+    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
                                                                              prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
-    network_features = network_opt.network_opt_main(config, locator)
+    network_features = network_opt_main.network_opt_main(config, locator)
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
-    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                  network_features, gv, config, prices, lca)
+    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                   network_features, gv, config, prices, lca)
 
 
 # ============================
@@ -90,7 +89,7 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if config.optimization.isheating:
+        if config.district_heating_network:
             if not os.path.exists(locator.PVT_totals()):
                 raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 

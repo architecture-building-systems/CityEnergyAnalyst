@@ -17,6 +17,14 @@ cea.plots.thermal\_networks.Supply\_Return\_Outdoor module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.thermal\_networks.annual\_energy\_consumption module
+--------------------------------------------------------------
+
+.. automodule:: cea.plots.thermal_networks.annual_energy_consumption
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.thermal\_networks.energy\_loss\_bar module
 ----------------------------------------------------
 

@@ -8,6 +8,8 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy
+from numba import jit
+import cea.config
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
@@ -555,61 +557,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     return tho, ch, Area_HEX_heating
 
 
-# Heat exchanger model
-
-def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
-    """
-    This function calculates the mass flow rate, temperature of return (secondary side)
-    and heat exchanger area for a plate heat exchanger.
-    Method : Number of Transfer Units (NTU)
-
-    :param Q: cooling load
-    :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-        heat exchanger
-    :param thi: inlet temperature of primary side
-    :param tho: outlet temperature of primary side
-    :param tci: inlet temperature of secondary side
-    :param ch: capacity mass flow rate primary side
-    :return:
-        - ``tco``, out temperature of secondary side (district cooling network)
-        - ``cc``, capacity mass flow rate secondary side
-
-    """
-
-    if ch > 0 and thi != tho:
-        eff = [0.1, 0]
-        Flag = False
-        tol = 0.00000001
-        while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
-                eff[0] = eff[1]
-            else:
-                cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
-            if cmin < 0:
-                raise ValueError('cmin is negative!!!', 'Q:', Q, 'UA:', UA, 'thi:', thi, 'tho:', tho, 'tci:', tci,
-                                 'ch:', ch)
-            elif cmin < ch:
-                cc = cmin
-                cmax = ch
-            else:
-                cc = cmin
-                cmax = cc
-                cmin = ch
-            cr = cmin / cmax
-            NTU = UA / cmin
-            eff[1] = calc_plate_HEX(NTU, cr)
-            cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
-            tco = tci + eff[1] * cmin * (thi - tci) / cc
-            Flag = True
-
-        cc = Q / abs(tci - tco)
-        tco = tco - 273
-    else:
-        tco = 0
-        cc = 0
-    return np.float(tco), np.float(cc)
-
-
+@jit(nopython=True)
 def calc_plate_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
@@ -622,10 +570,72 @@ def calc_plate_HEX(NTU, cr):
         - eff: efficiency of heat exchange
 
     """
-    eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
-    return eff
+    efficiency = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    return efficiency
 
 
+@jit('boolean(float64, float64)', nopython=True)
+def efficiencies_not_converged(current_efficiency, next_efficiency):
+    tolerance = 0.00000001
+    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
+
+
+# Heat exchanger model
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
+    """
+    This function calculates the mass flow rate, temperature of return (secondary side)
+    and heat exchanger area for a plate heat exchanger.
+    Method : Number of Transfer Units (NTU)
+
+    :param Q_cooling_W: cooling load
+    :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
+        heat exchanger
+    :param thi_K: inlet temperature of primary side
+    :param tho_K: outlet temperature of primary side
+    :param tci_K: inlet temperature of secondary side
+    :param ch_kWperK: capacity mass flow rate primary side
+    :return:
+        - ``tco``, out temperature of secondary side (district cooling network)
+        - ``cc``, capacity mass flow rate secondary side
+
+    """
+
+    if ch_kWperK > 0 and thi_K != tho_K:
+        current_efficiency = 0.1
+        next_efficiency = 0.0
+        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+        tco_K = 273.0  # actual value calculated in iteration
+        while efficiencies_not_converged(current_efficiency, next_efficiency):
+            assert not (cmin_kWperK < 0.0), "substation.calc_HEX_cooling: cmin is negative!!"
+
+            if cmin_kWperK < ch_kWperK:
+                cc_kWperK = cmin_kWperK
+                cmax_kWperK = ch_kWperK
+            else:
+                cc_kWperK = cmin_kWperK
+                cmax_kWperK = cc_kWperK
+                cmin_kWperK = ch_kWperK
+
+            cr = cmin_kWperK / cmax_kWperK
+            NTU = UA / cmin_kWperK
+            next_efficiency = calc_plate_HEX(NTU, cr)
+            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * next_efficiency)
+            tco_K = tci_K + next_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
+            current_efficiency = next_efficiency
+
+        cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
+        tco_C = tco_K - 273.0
+    else:
+        tco_C = 0.0
+        cc_kWperK = 0.0
+    return np.float(tco_C), np.float(cc_kWperK)
+
+
+
+
+
+@jit(nopython=True)
 def calc_shell_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a tube-shell heat exchanger according to the NTU method of
@@ -638,9 +648,9 @@ def calc_shell_HEX(NTU, cr):
         - eff: efficiency of heat exchange
 
     """
-    eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
+    efficiency = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
         (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
-    return eff
+    return efficiency
 
 
 def calc_DH_HEX_mix(Q1, Q2, t1, m1, t2, m2):
@@ -677,6 +687,7 @@ def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
     return np.float(tavg)
 
 
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -702,7 +713,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 
     """
 
-    if Q > 0:
+    if Q > 0.0:
         dT_primary = tco - tci if tco != tci else 0.0001  # to avoid errors with temperature changes < 0.001
         eff = [0.1, 0]
         Flag = False
@@ -855,21 +866,14 @@ def calc_DH_return(t_0, t_1):
 # Test
 # ============================
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole network summary routine
     """
-    import cea.globalvar
     import cea.inputlocator as inputlocator
 
-    gv = cea.globalvar.GlobalVariables()
-
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = pd.read_csv(locator.get_total_demand())['Name']
 
     substation_main(locator, total_demand, total_demand['Name'], heating_configuration=7, cooling_configuration=7,
                     Flag=False)
@@ -878,4 +882,4 @@ def run_as_script(scenario_path=None):
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

@@ -58,8 +58,9 @@ def calc_Cinv_DX(Q_design_W):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    Capex_a = 0
-    Opex_fixed = 0
+    Capex_a_DX_USD = 0
+    Opex_fixed_DX_USD = 0
+    Capex_DX_USD = 0
 
     if Q_design_W > 0:
 
@@ -68,7 +69,8 @@ def calc_Cinv_DX(Q_design_W):
         Inv_LT = 25
         Inv_OM = 5 / 100
 
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+        Capex_a_DX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed_DX_USD = Capex_a_DX_USD * Inv_OM
+        Capex_DX_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD
