@@ -113,13 +113,13 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
         ELEC_PRICE = lca.ELEC_PRICE
 
 
-    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
-    C_boil_per_Wh = 1 / eta_boiler * GAS_PRICE + BOILER_P_AUX * ELEC_PRICE
+    Opex_var_Boiler_USD = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  USD-2015 / Wh - cost of thermal energy
+    Opex_var_Boiler_per_Wh_USD = 1 / eta_boiler * GAS_PRICE + BOILER_P_AUX * ELEC_PRICE
     E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
 
     Q_primary_W = Q_therm_W / eta_boiler
 
-    return C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W
+    return Opex_var_Boiler_USD, Opex_var_Boiler_per_Wh_USD, Q_primary_W, E_aux_Boiler_req_W
 
 
 def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
@@ -184,8 +184,9 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    Capex_a = 0
-    Opex_fixed = 0
+    Capex_a_fix_Boiler_USD = 0
+    Opex_a_fix_Boiler_USD = 0
+    Capex_Boiler_USD = 0
 
     if Q_design_W > 0:
 
@@ -213,8 +214,9 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
+            Capex_Boiler_USD = InvC
 
         else:
             number_of_boilers = int(ceil(Q_design_W / max_boiler_size))
@@ -234,8 +236,8 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
+            Capex_Boiler_USD = InvC
 
-
-    return Capex_a, Opex_fixed
+    return Capex_a_fix_Boiler_USD, Opex_a_fix_Boiler_USD, Capex_Boiler_USD

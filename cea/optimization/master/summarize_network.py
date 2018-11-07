@@ -225,7 +225,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
         if T_DCN_space_cooling_and_refrigeration_sup_K[i] > T_DCN_space_cooling_and_refrigeration_re_K[i]:
             print (i)
 
-
     date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
     results = pd.DataFrame({"DATE": date,
                             "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,

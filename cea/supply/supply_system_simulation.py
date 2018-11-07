@@ -12,23 +12,20 @@ import json
 import cea.config
 import cea.globalvar
 import cea.inputlocator
-from cea.optimization.prices import Prices as Prices
-import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.prices import Prices
+from cea.optimization.slave import heating_main
+from cea.optimization.distribution import network_opt_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-import cea.optimization.master.evaluation as evaluation
-import cea.optimization.supportFn as sFn
+from cea.optimization.master import evaluation
+from cea.optimization import supportFn
 from cea.optimization.constants import *
-import cea.optimization.master.cost_model as eM
-import cea.optimization.slave.cooling_main as coolMain
-import cea.optimization.slave.slave_main as sM
-import cea.optimization.master.check as cCheck
-import cea.technologies.substation as sMain
-import cea.optimization.master.summarize_network as nM
+from cea.optimization.master import cost_model
+from cea.optimization.slave import cooling_main
+from cea.optimization.master import check
+from cea.technologies import substation
+from cea.optimization.master import summarize_network
 from cea.optimization.lca_calculations import lca_calculations
-from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import \
-    electricity_import_and_exports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -86,9 +83,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         Q_heating_max_W = 0
     else:
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
@@ -110,9 +107,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         Q_cooling_max_W = 0
     else:
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
@@ -130,7 +127,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator, Q_heating_nom_W, gv)
+        check.GHPCheck(individual, locator, Q_heating_nom_W, gv)
     except:
         print "No GHP constraint check possible \n"
 
@@ -162,12 +159,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
     # slave optimization of heating networks
-    if config.optimization.isheating:
+    if config.district_heating_network:
         if DHN_barcode.count("1") > 0:
-            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  solar_features, gv,
-                                                                                                  config, prices)
+            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                               master_to_slave_vars, gv,
+                                                                                               config, prices, lca)
         else:
             slaveCO2 = 0
             slaveCosts = 0
@@ -184,10 +180,10 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     # slave optimization of cooling networks
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
+    elif config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
-                                                              prices, lca, config, reduced_timesteps_flag)
+        (coolCosts, coolCO2, coolPrim) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
+                                                                                       prices, lca, config, reduced_timesteps_flag)
         # if reduced_timesteps_flag:
         #     # reduced timesteps simulation for a month (May)
         #     coolCosts = coolCosts * (8760/(3624/2880))
@@ -199,7 +195,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
+    (addCosts, addCO2, addPrim) = cost_model.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices, lca)
 
@@ -405,13 +401,13 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     CO2DiscBuild_BEST = 0
     PrimDiscBuild_BEST = 0
 
-    if config.optimization.isheating:
+    if config.district_heating_network:
         raise ValueError('This function only works for heating case at the moment.')
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -432,7 +428,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -447,7 +443,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -462,7 +458,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -477,7 +473,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -492,7 +488,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -507,7 +503,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -529,7 +525,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # for decentralized buildings
                 if config.supply_system_simulation.decentralized_systems == 'Vapor Compression Chiller':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["VCC to AHU_ARU_SCU Share"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -537,7 +533,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
                 elif config.supply_system_simulation.decentralized_systems == 'Mini-split Unit':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["DX to AHU_ARU_SCU Share"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -545,7 +541,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
                 elif config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["single effect ACH to AHU_ARU_SCU Share (ET)"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -585,7 +581,7 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if config.optimization.isheating:
+        if config.district_heating_network:
             if not os.path.exists(locator.PVT_totals()):
                 raise ValueError(
                     "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
@@ -622,7 +618,7 @@ def main(config):
                                                                              weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    network_features = network_opt.network_opt_main(config, locator)
+    network_features = network_opt_main.network_opt_main(config, locator)
 
     ## generate individual from config
     # heating technologies at the centralized plant

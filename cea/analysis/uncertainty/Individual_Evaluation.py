@@ -68,8 +68,7 @@ def individual_evaluation(generation, level, size, variable_groups):
                                                                                      weather_file, gv)
     network_features = network_opt.network_opt_main()
     def objective_function(ind):
-        (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                                        network_features, gv)
+        (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, solarFeat, network_features, gv,,
         # print (costs, CO2, prim)
         return (costs, CO2, prim)
 
