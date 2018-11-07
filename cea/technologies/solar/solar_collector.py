@@ -930,10 +930,11 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
 
     InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_SC_USD = Capex_a_SC_USD * Inv_OM
+    Capex_SC_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_SC_USD, Opex_fixed_SC_USD, Capex_SC_USD
 
 
 def main(config):
