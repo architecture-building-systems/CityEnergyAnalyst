@@ -36,7 +36,7 @@ def calc_Cinv_network_linear(LengthNetwork, gV):
     InvC = LengthNetwork * gV.PipeCostPerMeterInv
     InvCa = InvC * gV.PipeInterestRate * (1+ gV.PipeInterestRate) ** gV.PipeLifeTime / ((1+gV.PipeInterestRate) ** gV.PipeLifeTime - 1)
 
-    return InvCa
+    return InvCa, InvC
 
 # Pumping Cost
 

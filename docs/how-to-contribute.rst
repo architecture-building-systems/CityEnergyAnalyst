@@ -15,7 +15,7 @@ The main steps you need to take are:
 
 
 Step 1. Create a User Story/Issue
------------------------------------------------------------
+---------------------------------
 
 If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement. We call these features User Stories. 
 
@@ -31,7 +31,7 @@ Check this guide for more details on how to do it.: :doc:`how-to-use-github`.
 
 
 Step 3. Get acquainted with variable names
---------------------------------------------
+------------------------------------------
 
 If you have not done it yet, take some time to get acquainted with variable names in CEA. This would make easier for you to understand and develop consistent code.
 
@@ -66,7 +66,7 @@ Check this guide for more details on how to do it: :doc:`how-to-create-a-pull-re
 
 
 Step 7. Claim your CEA T-shirt!
------------------------------
+-------------------------------
 
 What happens after that? We will check the code, and if all is correct we will proceed to merge your User Story/ Github Branch into the CEA main core.
 
