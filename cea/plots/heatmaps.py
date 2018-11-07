@@ -42,10 +42,9 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
     arcpy.CheckOutExtension("Spatial")
 
     # figure out folder for the results based on file to analyze
-    file_to_analyze = os.path.realpath(file_to_analyze)
-    if file_to_analyze == os.path.realpath(locator.get_total_demand()):
+    if locator.are_equal(file_to_analyze, locator.get_total_demand()):
         path_results = locator.get_heatmaps_demand_folder()
-    elif os.path.dirname(file_to_analyze) == os.path.realpath(locator.get_lca_emissions_results_folder()):
+    elif locator.are_equal(os.path.dirname(file_to_analyze), locator.get_lca_emissions_results_folder()):
         path_results = locator.get_heatmaps_emission_folder()
     else:
         raise ValueError(
@@ -68,9 +67,12 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
     tempfile_csv = locator.get_temporary_file('data.csv')
     file_to_analyse_df.to_csv(tempfile_csv)
 
+    print('Copying rows from tempfile_csv={tempfile_csv} to out_table={tempfile_db}'.format(
+        tempfile_csv=tempfile_csv, tempfile_db=tempfile_db))
+    if os.path.exists(tempfile_db):
+        os.remove(tempfile_db)
+    arcpy.CopyRows_management(tempfile_csv, out_table=tempfile_db)
 
-    arcpy.CopyRows_management(tempfile_csv, out_table=tempfile_db, config_keyword="")
-    
     arcpy.FeatureToPoint_management(locator.get_zone_geometry(), tempfile, "CENTROID")
     arcpy.MakeFeatureLayer_management(tempfile, "lyr", "#", "#")
 
