@@ -72,7 +72,7 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
 
         # run cea demand
         config.demand.override_variables=True
-        demand_main.demand_calculation(locator, gv, config )
+        demand_main.demand_calculation(locator, config)
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                     gv, nn_delay, climatic_variables, config.region,
                                                                     year, use_daysim_radiation, use_stochastic_occupancy)

@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, gv, config):
+def demand_calculation(locator, config):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -45,9 +45,6 @@ def demand_calculation(locator, gv, config):
 
     :param weather_path: A path to the EnergyPlus weather data file (.epw)
     :type weather_path: str
-
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
 
     :param use_dynamic_infiltration_calculation: Set this to ``True`` if the (slower) dynamic infiltration
         calculation method (:py:func:`cea.demand.ventilation_air_flows_detailed.calc_air_flows`) should be used instead
@@ -99,12 +96,12 @@ def demand_calculation(locator, gv, config):
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
-        calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
+        calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output, config, region)
     else:
-        calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
+        calc_demand_singleprocessing(building_properties, date, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output, region)
@@ -141,7 +138,7 @@ def properties_and_schedule(locator, region, year, use_daysim_radiation, overrid
     return building_properties, schedules_dict, date
 
 
-def calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
+def calc_demand_singleprocessing(building_properties, date, locator, list_building_names, usage_schedules,
                                  weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output, region):
@@ -155,7 +152,7 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
+def calc_demand_multiprocessing(building_properties, date, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output, config, region):
     number_of_processes = config.get_number_of_processes()
@@ -192,7 +189,7 @@ def main(config):
     if not radiation_files_exist(config, locator):
         raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
 
-    demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
+    demand_calculation(locator=locator, config=config)
 
 
 def radiation_files_exist(config, locator):
