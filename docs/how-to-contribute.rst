@@ -5,7 +5,7 @@ This is a guide on how to expand CEA and become an official contributor!
 
 The main steps you need to take are:
 
-#. Create an User Story or issue in Github.
+#. Create an User Story or a Bug in Github.
 #. Create branch and learn how to use Github.
 #. get acquainted with variable naming.
 #. create your contribution.
@@ -14,12 +14,18 @@ The main steps you need to take are:
 #. Claim your CEA T-shirt!
 
 
-Step 1. Create a User Story/Issue
----------------------------------
+Step 1. Create a User Story or report a Bug
+--------------------------------------------
 
-If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement. We call these features User Stories. 
+If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement.
 
-Check this guide for more details on how to do it.: :doc:`how-to-create-user-stories`.
+New features are called **User Stories**.
+
+Problems we called **Bugs**
+
+Check this guide for more details on how to create **User Stories**: :doc:`how-to-create-user-stories`.
+
+Check this guide for more details on how to report a **Bug**: :doc:`how-to-report-bugs`.
 
 
 Step 2. Create a Github branch for your User story/issue
