@@ -28,10 +28,10 @@ Check this guide for more details on how to create **User Stories**: :doc:`how-t
 Check this guide for more details on how to report a **Bug**: :doc:`how-to-report-bugs`.
 
 
-Step 2. Create a Github branch for your User story/issue
---------------------------------------------------------
+Step 2. Create a Github branch for your User story or Bug
+----------------------------------------------------------
 
-At CEA we create something called Branches for each User Story we would like to complete.  
+At CEA we create something called Branches for each User Story or Bug we would like to complete.
 
 Check this guide for more details on how to do it.: :doc:`how-to-use-github`.
 
