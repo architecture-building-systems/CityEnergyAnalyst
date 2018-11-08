@@ -31,7 +31,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year, gv, weather_path):
+def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,weather_path):
     """
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
@@ -47,7 +47,6 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     :param year: year of calculation
     :type year: int
     :param gv: global context and constants
-    :type gv: cea.globalvar.GlobalVariables
     :param weather_path: path to the weather file
     :type weather_path: str
     :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
@@ -90,7 +89,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
                              '--latitude', latitude,
                              '--observers-path', observers_path,
                              '--arcgis_db', path_arcgis_db)
-    gv.log('complete raw radiation files')
+    print('complete raw radiation files')
 
     sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
     run_script_in_subprocess('calculate_sunny_hours_of_year',
@@ -98,7 +97,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
                              '--sunrise-pickle', sunrise_pickle,
                              '--sunny-hours-pickle', sunny_hours_pickle)
 
-    gv.log('complete transformation radiation files')
+    print('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
     radiation_pickle_path = locator.get_temporary_file('radiation.pickle')
@@ -121,7 +120,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     run_script_in_subprocess('calculate_incident_radiation',
                              '--radiation-pickle', radiation_pickle_path,
                              '--radiation-csv', locator.get_radiation())
-    gv.log('done')
+    print('done')
 
 
 def simplify_building_geometries(locator, simple_context_shp, simple_cq_shp):
@@ -429,7 +428,6 @@ def main(config):
     print('Running radiation with longitude = %s' % config.radiation.longitude)
     print('Running radiation with year = %s' % config.radiation.year)
 
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather_path = config.weather
 
@@ -445,7 +443,7 @@ def main(config):
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=latitude, longitude=longitude, year=config.radiation.year, gv=gv,
+                             latitude=latitude, longitude=longitude, year=config.radiation.year,
                              weather_path=weather_path)
 
 
