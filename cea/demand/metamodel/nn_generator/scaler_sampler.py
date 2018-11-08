@@ -98,7 +98,7 @@ def run_as_script(config):
     year = weather_data['year'][0]
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     sampling_scaler(locator=locator, random_variables=config.neural_network.random_variables,
                     target_parameters=config.neural_network.target_parameters,

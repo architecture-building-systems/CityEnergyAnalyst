@@ -87,7 +87,7 @@ def demand_calculation(locator, gv, config):
     year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation,
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation,
                                                                         override_variables)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
@@ -124,13 +124,13 @@ def demand_calculation(locator, gv, config):
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
 
-def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, override_variables=False):
+def properties_and_schedule(locator, region, year, use_daysim_radiation, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     # building properties model
 
-    building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region, override_variables)
+    building_properties = BuildingProperties(locator, use_daysim_radiation, region, override_variables)
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.columns)
@@ -148,7 +148,7 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
+        thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator,
                                          use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
                                          format_output, region)
@@ -166,7 +166,7 @@ def calc_demand_multiprocessing(building_properties, date, gv, locator, list_bui
     for building in list_building_names:
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, usage_schedules, date, gv, locator,
+                               [building, bpr, weather_data, usage_schedules, date, locator,
                                 use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
                                 format_output, region])
