@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import division
+
 """
 Classes of building properties
 """
@@ -56,7 +59,7 @@ class BuildingProperties(object):
         """
 
         self.gv = gv
-        gv.log("read input files")
+        print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
@@ -100,7 +103,7 @@ class BuildingProperties(object):
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
         # TODO: maybe mergin branch i9 with CItyGML could help with this
-        gv.log("done")
+        print("done")
 
         # save resulting data
         self._prop_supply_systems = prop_supply_systems

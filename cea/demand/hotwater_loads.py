@@ -243,7 +243,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
         circ_ls = (twws - tamb) * Y * Lcww_dis * (Qww / Qww_0)
 
         # Distribtution circuit losses
-        dis_ls = calc_disls(tamb, Qww, V, twws, Lsww_dis, Y, gv)
+        dis_ls = calc_disls(tamb, Qww, V, twws, Lsww_dis, Y)
 
         Qww_d_ls_r = circ_ls + dis_ls
     else:
@@ -277,14 +277,14 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
         d_circ_ls = (twws - tamb) * Y * (Lvww_c) * (Qww / Qww_0)
 
         # Distribution losses
-        d_dis_ls = calc_disls(tamb, Qww, V, twws, Lvww_dis, Y, gv)
+        d_dis_ls = calc_disls(tamb, Qww, V, twws, Lvww_dis, Y)
         Qww_d_ls_nr = d_dis_ls + d_circ_ls
     else:
         Qww_d_ls_nr = 0
     return Qww_d_ls_nr
 
 
-def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
+def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y):
     """
     Calculates distribution losses in Wh according to Fonseca & Schlueter (2015) Eq. 24, which is in turn based
     on Annex A of ISO EN 15316 with pipe mass m_p,dis = 0.
@@ -297,22 +297,21 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
     :param p: water density kg/m3
     :param cpw: heat capacity of water in kJ/kgK
     :param Y: linear trasmissivity coefficient of piping in distribution network in W/m*K
-    :param gv: globalvar.py
 
     :return losses: recoverable/non-recoverable losses due to distribution of DHW
     """
     if Vww > 0:
         TR = 3600 / ((Vww / 1000) / FLOWTAP)  # Thermal response of insulated piping
-        if TR > 3600: TR = 3600
+        if TR > 3600:
+            TR = 3600
         try:
             exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
         except ZeroDivisionError:
-            gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
-                   twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V)
+            print('twws: {twws:.2f}, tamb: {tamb:.2f}, p: {p:.2f}, cpw: {cpw:.2f}, V: {V:.2f}'.format(
+                twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V))
             raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
-
         losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER / 3.6  # in Wh
     else:
         losses = 0

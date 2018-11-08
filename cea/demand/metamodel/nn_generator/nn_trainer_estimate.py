@@ -147,7 +147,7 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     #   open multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
-    gv.log("Using %i CPU's" % mp.cpu_count())
+    print("Using {cpu_count} CPU's".format(cpu_count=mp.cpu_count()))
     #   creat an empty job list to be filled later
     joblist = []
     #   create one job for each data preparation task i.e. each building

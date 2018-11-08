@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import division
+
 """
 Clustering
 This script clusters typical days for a building
@@ -90,10 +93,10 @@ def clustering_sax(locator, data, word_size, alphabet_size, gv):
     # print names of clusters
     pd.DataFrame({"SAX":means.columns.values}).to_csv(locator.get_calibration_cluster('clusters_sax'), index=False)
 
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    print('done - time elapsed: {time_elapsed:.2f} seconds'.format(time_elapsed=time.clock() - t0))
 
 def optimization_clustering_main(locator, data, start_generation, number_individuals,
-                                 number_generations, building_name, gv):
+                                 number_generations, building_name):
     t0 = time.clock()
 
     # set optimization problem for wordzise and alpha number
@@ -101,7 +104,7 @@ def optimization_clustering_main(locator, data, start_generation, number_individ
                      NGEN=number_generations, MU=number_individuals, CXPB=0.9, start_gen=start_generation,
                      building_name=building_name)
 
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    print('done - time elapsed: {time_elapsed:.2f} seconds'.format(time_elapsed=time.clock() - t0))
 
 
 def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
@@ -168,7 +171,7 @@ def run_as_script():
             number_generations = 50
             optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                          number_individuals=number_individuals, number_generations=number_generations,
-                                         building_name=name, gv=gv)
+                                         building_name=name)
     if multicriteria:
         for i,name in enumerate(building_names):
             generation = 50
