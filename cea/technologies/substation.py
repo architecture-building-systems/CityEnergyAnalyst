@@ -606,7 +606,6 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         - ``cc``, capacity mass flow rate secondary side
 
     """
-
     if ch_kWperK > 0 and not isclose(thi_K, tho_K):
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
