@@ -37,6 +37,7 @@ These are a collection of tutorials we consider essential for any new developer 
 
 #. :doc:`how-to-contribute`.
 #. :doc:`how-to-create-user-stories`.
+#. :doc:`how-to-report-bugs`.
 #. :doc:`how-to-use-github`.
 #. :doc:`how-to-name-variables`.
 #. :doc:`how-to-add-a-new-script-to-the-cea`.
