@@ -27,9 +27,10 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df):
 
     # Rule 1. Floors above ground cannot be less than 1 or negative.
     rule1_1 = zone_df['floors_ag'].where(zone_df['floors_ag'] < 1).any()
-    if rule1_1:
-        raise Exception('one of more buildings have less than one floor above ground. This is not possible'
-                        'to simulate in CEA at the moment. Please verify your Zone or District shapefile file')
+    rule1_2 = zone_df['height_ag'].where(zone_df['height_ag'] < 1).any()
+    if rule1_1 or rule1_2:
+        raise Exception('one of more buildings have less than one floor above ground or the height above ground is less than 1 meter.'
+                        ' This is not possible to simulate in CEA at the moment. Please verify your Zone or District shapefile file')
 
     # Rule 2. Where floor height is less than 1m on average above ground.
     zone_df['rule2'] = zone_df['height_ag'] / zone_df['floors_ag']
