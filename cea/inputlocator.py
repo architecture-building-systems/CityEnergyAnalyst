@@ -1066,6 +1066,7 @@ class InputLocator(object):
         path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
         return path_a == path_b
 
+
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
