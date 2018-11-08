@@ -73,7 +73,7 @@ def calc_water_temperature(T_ambient_C, depth_m):
     return Tg  # in C
 
 
-def calc_Qww_sys(bpr, tsd, gv):
+def calc_Qww_sys(bpr, tsd):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -100,9 +100,9 @@ def calc_Qww_sys(bpr, tsd, gv):
     # distribution and circulation losses
     V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
     Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd['Qww'].copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
-                                                 V_dist_pipes_m3,Tww_sup_0_C, gv)
+                                                 V_dist_pipes_m3,Tww_sup_0_C)
     Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
-                                                   V_dist_pipes_m3,Tww_sup_0_C, T_ext_C, gv)
+                                                   V_dist_pipes_m3,Tww_sup_0_C, T_ext_C)
     # storage losses
     Tww_tank_C, tsd['Qww_sys'] = calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
                                                             Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
@@ -234,7 +234,7 @@ def calc_Qwwf(bpr, tsd):
     return tsd
 
 
-def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
+def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws):
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = Tair
@@ -251,7 +251,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
     return Qww_d_ls_r
 
 
-def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
+def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te):
     """
 
     :param tair:
@@ -263,7 +263,6 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
     :param V:
     :param twws:
     :param te:
-    :param gv:
     :return:
     """
     # TODO: documentation

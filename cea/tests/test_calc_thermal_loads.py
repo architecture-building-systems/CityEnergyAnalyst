@@ -45,8 +45,8 @@ class TestCalcThermalLoads(unittest.TestCase):
         cea.datamanagement.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True, True, True)
 
         use_daysim_radiation = cls.gv.config.demand.use_daysim_radiation
-        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.gv, cls.locator, cls.region,
-                                                                                 year, use_daysim_radiation)
+        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.locator, cls.region,
+                                                                                         year, use_daysim_radiation)
 
         cls.use_dynamic_infiltration_calculation = cls.gv.config.demand.use_dynamic_infiltration_calculation
         cls.use_stochastic_occupancy = cls.gv.config.demand.use_stochastic_occupancy
@@ -58,8 +58,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
-        result = calc_thermal_loads('B01', bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
-                                    self.locator, self.use_stochastic_occupancy,
+        result = calc_thermal_loads('B01', bpr, self.weather_data, self.usage_schedules, self.date, self.locator, self.use_stochastic_occupancy,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
                                     self.format_output, self.region)
@@ -109,7 +108,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
                             massflows_output, temperatures_output, format_output, region):
-    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
                        massflows_output, temperatures_output, format_output, region)
     df = pd.read_csv(locator.get_demand_results_file(building, format_output))
