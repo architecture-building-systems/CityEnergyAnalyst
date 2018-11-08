@@ -575,13 +575,13 @@ def calc_plate_HEX(NTU, cr):
 
 
 @jit('boolean(float64, float64)', nopython=True)
-def efficiencies_not_converged(current_efficiency, next_efficiency):
+def efficiencies_not_converged(previous_efficiency, current_efficiency):
     tolerance = 0.00000001
-    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
+    return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
 
 # Heat exchanger model
-@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+# @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -601,28 +601,33 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
 
     """
 
-    if ch_kWperK > 0 and thi_K != tho_K:
-        current_efficiency = 0.1
-        next_efficiency = 0.0
-        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+    if ch_kWperK > 0 and not np.isclose(thi_K, tho_K):
+        previous_efficiency = 0.1
+        current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
+
+        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * previous_efficiency)
         tco_K = 273.0  # actual value calculated in iteration
-        while efficiencies_not_converged(current_efficiency, next_efficiency):
+        while efficiencies_not_converged(previous_efficiency, current_efficiency):
             assert not (cmin_kWperK < 0.0), "substation.calc_HEX_cooling: cmin is negative!!"
 
+            cc_kWperK = cmin_kWperK
             if cmin_kWperK < ch_kWperK:
-                cc_kWperK = cmin_kWperK
                 cmax_kWperK = ch_kWperK
             else:
-                cc_kWperK = cmin_kWperK
                 cmax_kWperK = cc_kWperK
                 cmin_kWperK = ch_kWperK
 
             cr = cmin_kWperK / cmax_kWperK
             NTU = UA / cmin_kWperK
-            next_efficiency = calc_plate_HEX(NTU, cr)
-            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * next_efficiency)
-            tco_K = tci_K + next_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
-            current_efficiency = next_efficiency
+
+            previous_efficiency = current_efficiency
+            current_efficiency = calc_plate_HEX(NTU, cr)
+
+            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+            tco_K = tci_K + current_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
+
+            # previous_efficiency = current_efficiency
+            # current_efficiency = calculate_next_efficiency
 
         cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
         tco_C = tco_K - 273.0
