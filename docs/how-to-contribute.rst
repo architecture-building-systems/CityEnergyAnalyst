@@ -21,7 +21,7 @@ If you decide to contribute to CEA is because you might have already an problem/
 
 New features are called **User Stories**.
 
-Problems we called **Bugs**
+Problems are called **Bugs**
 
 Check this guide for more details on how to create **User Stories**: :doc:`how-to-create-user-stories`.
 
@@ -33,7 +33,7 @@ Step 2. Create a Github branch for your User story or Bug
 
 At CEA we create something called Branches for each User Story or Bug we would like to complete.
 
-Check this guide for more details on how to do it.: :doc:`how-to-use-github`.
+Check this guide for more details on how to do it: :doc:`how-to-use-github`.
 
 
 Step 3. Get acquainted with variable names
