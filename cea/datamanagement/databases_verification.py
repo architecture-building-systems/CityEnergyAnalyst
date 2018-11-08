@@ -62,6 +62,3 @@ def verify_input_age(age_df):
 
     # Verification 1. verify if all the column names are correct
     assert_columns_names(age_df, COLUMNS_ZONE_AGE)
-
-    # Verification 2.
-
