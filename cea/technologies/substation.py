@@ -579,9 +579,15 @@ def efficiencies_not_converged(previous_efficiency, current_efficiency):
     tolerance = 0.00000001
     return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
+@jit('boolean(float64, float64)', nopython=True)
+def isclose(a, b):
+    """adapted from here: https://stackoverflow.com/a/33024979/2260"""
+    rel_tol = 1e-09
+    abs_tol = 0.0
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 # Heat exchanger model
-# @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -601,7 +607,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
 
     """
 
-    if ch_kWperK > 0 and not np.isclose(thi_K, tho_K):
+    if ch_kWperK > 0 and not isclose(thi_K, tho_K):
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
 
