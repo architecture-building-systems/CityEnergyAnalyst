@@ -713,21 +713,25 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
         dT_primary = tco_K - tci_K if tco_K != tci_K else 0.0001  # to avoid errors with temperature changes < 0.001
         current_efficiency = 0.1
         next_efficiency = 0
-        cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
-        tho_K = 273.0  # actual value calculated in iteration
+        Flag = False
+        cmin = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
+
         while efficiencies_not_converged(current_efficiency, next_efficiency):
-            if cmin_kWperK < cc_kWperK:
-                ch_kWperK = cmin_kWperK
-                cmax_kWperK = cc_kWperK
+            # if Flag == True:
+            #     current_efficiency = next_efficiency
+            if cmin < cc_kWperK:
+                ch_kWperK = cmin
+                cmax = cc_kWperK
             else:
-                ch_kWperK = cmin_kWperK
-                cmax_kWperK = cmin_kWperK
-                cmin_kWperK = cc_kWperK
-            cr = cmin_kWperK / cmax_kWperK
-            NTU = UA / cmin_kWperK
+                ch_kWperK = cmin
+                cmax = cmin
+                cmin = cc_kWperK
+            cr = cmin / cmax
+            NTU = UA / cmin
             next_efficiency = calc_shell_HEX(NTU, cr)
-            cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * next_efficiency)
-            tho_K = thi_K - next_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
+            cmin = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * next_efficiency)
+            tho_K = thi_K - next_efficiency * cmin * (thi_K - tci_K) / ch_kWperK
+            Flag = True
             current_efficiency = next_efficiency
 
         tho_C = tho_K - 273
