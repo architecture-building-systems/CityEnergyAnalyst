@@ -12,6 +12,7 @@ import multiprocessing as mp
 
 import py4design.py3dmodel.fetch as fetch
 import py4design.py2radiance as py2radiance
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
 
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
@@ -198,17 +199,20 @@ def main(config):
 
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-
     settings = config.radiation_daysim
     region = config.region
+
+    print("verifying geometry files")
+    print(locator.get_zone_geometry())
+    verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
+    verify_input_geometry_district(gpdf.from_file(locator.get_district_geometry()))
+
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture(),
                                                             region=region)
-
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
