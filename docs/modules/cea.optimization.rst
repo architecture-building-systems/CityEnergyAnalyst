@@ -16,6 +16,8 @@ Subpackages
     cea.optimization.preprocessing
     cea.optimization.slave
 
+.. skipping: cea.optimization.individual_evaluation
+
 Submodules
 ----------
 
@@ -23,6 +25,14 @@ cea.optimization.constants module
 ---------------------------------
 
 .. automodule:: cea.optimization.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.lca\_calculations module
+-----------------------------------------
+
+.. automodule:: cea.optimization.lca_calculations
     :members:
     :undoc-members:
     :show-inheritance:

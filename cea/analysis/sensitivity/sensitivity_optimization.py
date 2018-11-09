@@ -86,7 +86,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
                 for ind in pop:
                     newInd = toolbox.clone(ind)
                     newpop.append(newInd)
-                    (costs, CO2, prim) = eI.evaluation_main(newInd, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, obj)
+                    (costs, CO2, prim) = eI.evaluation_main(newInd, buildList, locator, solarFeat, ntwFeat, obj,,
                     newInd.fitness.values = (costs, CO2, prim)
 
             index += 1

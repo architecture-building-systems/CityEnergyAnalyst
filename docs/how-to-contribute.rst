@@ -5,7 +5,7 @@ This is a guide on how to expand CEA and become an official contributor!
 
 The main steps you need to take are:
 
-#. Create an User Story or issue in Github.
+#. Create an User Story or a Bug in Github.
 #. Create branch and learn how to use Github.
 #. get acquainted with variable naming.
 #. create your contribution.
@@ -14,24 +14,30 @@ The main steps you need to take are:
 #. Claim your CEA T-shirt!
 
 
-Step 1. Create a User Story/Issue
------------------------------------------------------------
+Step 1. Create a User Story or report a Bug
+--------------------------------------------
 
-If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement. We call these features User Stories. 
+If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement.
 
-Check this guide for more details on how to do it.: :doc:`how-to-create-user-stories`.
+New features are called **User Stories**.
+
+Problems are called **Bugs**
+
+Check this guide for more details on how to create **User Stories**: :doc:`how-to-create-user-stories`.
+
+Check this guide for more details on how to report a **Bug**: :doc:`how-to-report-bugs`.
 
 
-Step 2. Create a Github branch for your User story/issue
---------------------------------------------------------
+Step 2. Create a Github branch for your User story or Bug
+----------------------------------------------------------
 
-At CEA we create something called Branches for each User Story we would like to complete.  
+At CEA we create something called Branches for each User Story or Bug we would like to complete.
 
-Check this guide for more details on how to do it.: :doc:`how-to-use-github`.
+Check this guide for more details on how to do it: :doc:`how-to-use-github`.
 
 
 Step 3. Get acquainted with variable names
---------------------------------------------
+------------------------------------------
 
 If you have not done it yet, take some time to get acquainted with variable names in CEA. This would make easier for you to understand and develop consistent code.
 
@@ -66,7 +72,7 @@ Check this guide for more details on how to do it: :doc:`how-to-create-a-pull-re
 
 
 Step 7. Claim your CEA T-shirt!
------------------------------
+-------------------------------
 
 What happens after that? We will check the code, and if all is correct we will proceed to merge your User Story/ Github Branch into the CEA main core.
 
@@ -78,7 +84,7 @@ Your are entitled to claim a CEA T-shirt after this to cea@arch.ethz.ch
 Additional steps
 ----------------
 
-There are two more additional steps that are undertaken only when the CEA team besides to make a new release and publish!
+There are two more additional steps that are undertaken only when the CEA team decides to make a new release and publish!
 
 
 #. :doc:`how-to-create-a-new-release`.

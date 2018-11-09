@@ -19,6 +19,7 @@ Subpackages
     cea.plots.optimization
     cea.plots.solar_potential
     cea.plots.solar_technology_potentials
+    cea.plots.supply_system
     cea.plots.thermal_networks
 
 Submodules
