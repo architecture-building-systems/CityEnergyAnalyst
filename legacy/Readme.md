@@ -10,3 +10,8 @@ using CityGML as a main format for data exchange. But the format is just heavy a
 3. retrofit: it contains a series of functions that helps users to define which buildings have a high retrofit potential.
 The method is quite limited. It is just based on a threshold of consumption, but it does not include any notion of costs or
 emissions. It was created as a requirement by a partner company. The use of the tool was never used again.
+
+4. heatmaps: it contains a script to create a heatmap of energy consumption with the results of CEA. It turns out that these
+heatmaps can be strongly misleading when we talk about energy consumption at the building and district scales.
+We do not recommend their use anymore, beyond a cool visualziation method. Heatmaps can be created in ArcGIS or QGIS, we recommend
+people interested in them, to use CEA outputs and those tools for this. But please handle with care.
