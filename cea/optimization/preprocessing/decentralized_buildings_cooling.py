@@ -2058,7 +2058,6 @@ def main(config):
     from cea.optimization.prices import Prices as Prices
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
 
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
