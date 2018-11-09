@@ -71,3 +71,13 @@ def verify_input_age(age_df):
 
     # Verification 1. verify if all the column names are correct
     assert_columns_names(age_df, COLUMNS_ZONE_AGE)
+
+def verify_input_terrain(terrain_raster):
+
+    # Verification 1. verify that we can create the geometry
+    if terrain_raster == None:
+        raise Exception("Yout input terrain file is corrupted. Please verify that you have a non-null raster,"
+                         "and that the grid of it be at least 5 X 5 meters, smaller grid sizes will drastically"
+                         "make the solar radiation engine slow")
+
+

@@ -14,7 +14,7 @@ from osgeo import gdal
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district, \
-    verify_input_occupancy, verify_input_age, COLUMNS_ZONE_OCCUPANCY, COLUMNS_ZONE_AGE
+    verify_input_occupancy, verify_input_age, verify_input_terrain, COLUMNS_ZONE_OCCUPANCY, COLUMNS_ZONE_AGE
 from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
 
@@ -41,10 +41,13 @@ def create_new_project(locator, config):
     zone, lat, lon = shapefile_to_WSG_and_UTM(zone_geometry_path)
     # verify if input file is correct for CEA, if not an exception will be released
     verify_input_geometry_zone(zone)
+    zone.to_file(locator.get_zone_geometry())
+
+
     # apply coordinate system of terrain into zone and save zone to disk.
     terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-    zone.to_file(locator.get_zone_geometry())
     driver = gdal.GetDriverByName('GTiff')
+    verify_input_terrain(driver, locator.get_terrain(), terrain)
     driver.CreateCopy(locator.get_terrain(), terrain)
 
     # now create the district file if it does not exist
