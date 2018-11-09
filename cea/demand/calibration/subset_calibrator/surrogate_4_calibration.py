@@ -52,7 +52,7 @@ def simulate_demand_sample(locator, building_name, output_parameters):
     #weather_path = 'C:\CEAforArcGIS\cea\databases\weather\Zurich.epw'
 
     #calculate demand timeseries for buidling an calculate cvrms
-    demand_main.demand_calculation(locator, weather_path, gv)
+    demand_main.demand_calculation(locator, gv)
     output_folder=locator.get_demand_results_folder()
     file_path=os.path.join(output_folder, "%(building_name)s.xls" % locals())
     #file_path=locator.get_demand_results_file(building_name)
