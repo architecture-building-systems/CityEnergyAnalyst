@@ -40,10 +40,10 @@ def calc_connectivity_network(path_arcgis_db, path_streets_shp, path_connection_
     Finallines = path_arcgis_db + "\\" + "final_line"
 
     arcpy.CopyFeatures_management(path_connection_point_buildings_shp, memorybuildings)
-    arcpy.Near_analysis(memorybuildings, path_streets_shp, location=True, angle=True)
-    arcpy.MakeXYEventLayer_management(memorybuildings, "NEAR_X", "NEAR_Y", "Line_Points_Layer", spatialReference)
+    arcpy.Near_analysis(memorybuildings, path_streets_shp, location=True, angle=True) # find the closest point on the street to a buildings
+    arcpy.MakeXYEventLayer_management(memorybuildings, "NEAR_X", "NEAR_Y", "Line_Points_Layer", spatialReference) # make that point into a node
     arcpy.FeatureClassToFeatureClass_conversion("Line_Points_Layer", path_arcgis_db, "Line_points")
-    arcpy.Append_management(path_arcgis_db + '\\' + "Line_points", memorybuildings, "No_Test")
+    arcpy.Append_management(path_arcgis_db + '\\' + "Line_points", memorybuildings, "No_Test") # combine all nodes into one layer
     arcpy.MakeFeatureLayer_management(memorybuildings, "POINTS_layer")
     arcpy.env.workspace = path_arcgis_db
     arcpy.PointsToLine_management(memorybuildings, Newlines, "Name", "#", "NO_CLOSE")

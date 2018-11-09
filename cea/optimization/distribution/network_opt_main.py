@@ -22,8 +22,8 @@ class network_opt_main(object):
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
     def __init__(self, config, locator):
-        self.pipesCosts_DHN = 0     # CHF
-        self.pipesCosts_DCN = 0     # CHF
+        self.pipesCosts_DHN_USD = 0     # USD-2015
+        self.pipesCosts_DCN_USD = 0     # USD-2015
         self.DeltaP_DHN = np.zeros(8760)         # Pa
         self.DeltaP_DCN = np.zeros(8760)        # Pa
         self.thermallosses_DHN = 0
@@ -67,6 +67,6 @@ class network_opt_main(object):
                 pipe_cost = pipe_cost + (piping_cost_data.iloc[0]['Investment']) * pipe_length[i]
 
             if config.thermal_network.network_type == 'DH':
-                self.pipesCosts_DHN = self.pipesCosts_DHN + pipe_cost
+                self.pipesCosts_DHN_USD = self.pipesCosts_DHN_USD + pipe_cost
             if config.thermal_network.network_type == 'DC':
-                self.pipesCosts_DCN = self.pipesCosts_DCN + pipe_cost
+                self.pipesCosts_DCN_USD = self.pipesCosts_DCN_USD + pipe_cost
