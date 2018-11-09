@@ -82,7 +82,7 @@ def main(config):
     region = config.region
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     eval_nn_performance(locator, random_variables, target_parameters, list_building_names, gv,
                         config=config, nn_delay=config.neural_network.nn_delay,
