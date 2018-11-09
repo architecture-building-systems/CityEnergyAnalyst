@@ -1,20 +1,23 @@
-import pyliburo.py3dmodel.construct as construct
-import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py3dmodel.calculate as calculate
-import pyliburo.py3dmodel.modify as modify
-import pyliburo.pycitygml as pycitygml
-import pyliburo.gml3dmodel as gml3dmodel
-import pyliburo.shp2citygml as shp2citygml
+from __future__ import print_function
+from __future__ import division
+
+import py4design.py3dmodel.construct as construct
+import py4design.py3dmodel.fetch as fetch
+import py4design.py3dmodel.calculate as calculate
+import py4design.py3dmodel.modify as modify
+import py4design.pycitygml as pycitygml
+import py4design.gml3dmodel as gml3dmodel
 
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
-import shapefile
 import cea.globalvar
 import cea.inputlocator
 import numpy as np
 import gdal
 import time
+
+import cea.config
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -63,7 +66,7 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
     zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
 
     #make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
+    terrain_shell = construct.sew_faces(tin_occface_list)[0]
     terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
     terrain_intersection_curves.Load(terrain_shell, 1e-6)
     bsolid_list = []
@@ -97,9 +100,9 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         #project the face_midpt to the terrain and get the elevation
         inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
 
-        loc_pt = fetch.occpt2pypt(inter_pt)
+        loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
         #reconstruct the footprint with the elevation
-        face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
+        face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
 
         moved_face_list = []
         for floor_counter in range_floors:
@@ -113,21 +116,21 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
 
         #loft all the faces and form a solid
         vertical_shell = construct.make_loft(moved_face_list)
-        vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
+        vertical_face_list = fetch.topo_explorer(vertical_shell, "face")
         roof = moved_face_list[-1]
         footprint = moved_face_list[0]
         all_faces = []
         all_faces.append(footprint)
         all_faces.extend(vertical_face_list)
         all_faces.append(roof)
-        bldg_shell_list = construct.make_shell_frm_faces(all_faces)
+        bldg_shell_list = construct.sew_faces(all_faces)
 
         # make sure all the normals are correct (they are pointing out)
         if bldg_shell_list:
             bldg_solid = construct.make_solid(bldg_shell_list[0])
             bldg_solid = modify.fix_close_solid(bldg_solid)
             bsolid_list.append(bldg_solid)
-            occface_list = fetch.geom_explorer(bldg_solid, "face")
+            occface_list = fetch.topo_explorer(bldg_solid, "face")
             geometry_list = gml3dmodel.write_gml_srf_member(occface_list)
             citygml_writer.add_building("lod1", name,geometry_list)
 
@@ -175,25 +178,20 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
     # write to citygml
     citygml_writer.write(output_folder)
 
-if __name__ == '__main__':
 
+def main(config):
     # import modules
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
-
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # local variables
     output_folder = locator.get_building_geometry_citygml()
-    district_shp = locator.get_district()
+    district_shp = locator.get_district_geometry()
     zone_shp = locator.get_zone_geometry()
     input_terrain_raster = locator.get_terrain()
-
     # run routine City GML LOD 1
     time1 = time.time()
     create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    print "CityGml creation finished in ", (time.time() - time1) / 60.0, " mins"
+    print("CityGml creation finished in", (time.time() - time1) / 60.0, "mins")
 
 
-
-
-
+if __name__ == '__main__':
+    main(cea.config.Configuration())
