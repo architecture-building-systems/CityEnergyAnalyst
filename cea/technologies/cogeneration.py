@@ -28,7 +28,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca, config):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -76,19 +76,34 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca):
     range_el_output_from_GT_W = np.linspace(GT_size_W * GT_MIN_PART_LOAD, GT_size_W, it_len)
 
     # calculate the operation data at different electricity load
-    for i in range(len(range_el_output_from_GT_W)):
-        el_output_from_GT_W = range_el_output_from_GT_W[i]
+    if config.detailed_electricity_pricing:
+        for i in range(len(range_el_output_from_GT_W)):
+            el_output_from_GT_W = range_el_output_from_GT_W[i]
 
-        # combine cycle operation
-        CC_operation = calc_CC_operation(el_output_from_GT_W, GT_size_W, fuel_type, T_sup_K)
-        range_el_output_CC_W[i] = CC_operation['el_output_W']  # Electricity output from the combined cycle
-        range_q_output_CC_W[i] = CC_operation['q_output_ST_W']  # Thermal output from the combined cycle
-        range_eta_el_CC[i] = CC_operation['eta_el']  # el. efficiency
-        range_eta_thermal_CC[i] = CC_operation['eta_thermal']  # thermal efficiency
+            # combine cycle operation
+            CC_operation = calc_CC_operation(el_output_from_GT_W, GT_size_W, fuel_type, T_sup_K)
+            range_el_output_CC_W[i] = CC_operation['el_output_W']  # Electricity output from the combined cycle
+            range_q_output_CC_W[i] = CC_operation['q_output_ST_W']  # Thermal output from the combined cycle
+            range_eta_el_CC[i] = CC_operation['eta_el']  # el. efficiency
+            range_eta_thermal_CC[i] = CC_operation['eta_thermal']  # thermal efficiency
 
-        range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
-        range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * lca.ELEC_PRICE) / range_q_output_CC_W[i]
+            range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
+            range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
+                i] * lca.ELEC_PRICE[i]) / range_q_output_CC_W[i]
+    else:
+        for i in range(len(range_el_output_from_GT_W)):
+            el_output_from_GT_W = range_el_output_from_GT_W[i]
+
+            # combine cycle operation
+            CC_operation = calc_CC_operation(el_output_from_GT_W, GT_size_W, fuel_type, T_sup_K)
+            range_el_output_CC_W[i] = CC_operation['el_output_W']  # Electricity output from the combined cycle
+            range_q_output_CC_W[i] = CC_operation['q_output_ST_W']  # Thermal output from the combined cycle
+            range_eta_el_CC[i] = CC_operation['eta_el']  # el. efficiency
+            range_eta_thermal_CC[i] = CC_operation['eta_thermal']  # thermal efficiency
+
+            range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
+            range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
+                i] * lca.ELEC_PRICE) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
