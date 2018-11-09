@@ -17,7 +17,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                             gv, prices, lca, T_ground):
+                             gv, prices, lca, T_ground, config):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -151,7 +151,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
             if (master_to_slave_vars.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
                 CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
-                                                prices, lca)  # create cost information
+                                                prices, lca, config)  # create cost information
                 Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
                 cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
                 q_output_CC_min_W = CC_op_cost_data['q_output_min_W']

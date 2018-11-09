@@ -22,7 +22,7 @@ class lca_calculations(object):
         config.restricted_to = None  # FIXME: remove this later
         heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="HEATING")
         cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="COOLING")
-        electricity_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="ELECTRICITY")
+        electricity_costs = pd.read_excel(locator.get_electricity_costs(config.region), sheetname="ELECTRICITY")
         dhw_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="DHW")
         resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="RESOURCES")
 
@@ -122,6 +122,19 @@ class lca_calculations(object):
             self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['PEN']  # MJ_oil / MJ_final
             self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
 
+        if config.detailed_electricity_pricing:
+            if config.region == 'CH':
+                self.ELEC_PRICE = electricity_costs['cost']
+                self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                    'PEN']  # MJ_oil / MJ_final
+                self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                    'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
+            elif config.region == 'SIN':
+                self.ELEC_PRICE = electricity_costs['cost']
+                self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                    'PEN']  # MJ_oil / MJ_final
+                self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                    'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
 
         self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['PEN']  # MJ_oil / MJ_final
         self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['CO2'] # kg_CO2 / MJ_final
