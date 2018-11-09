@@ -130,7 +130,7 @@ def simulate_demand_sample(locator, config, output_parameters):
     config.demand.format_output = "csv"
 
     # force simulation to be sequential
-    totals, time_series = demand_main.demand_calculation(locator, gv, config)
+    totals, time_series = demand_main.demand_calculation(locator, config)
     return totals[output_parameters], time_series
 
 

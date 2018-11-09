@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import division
+
 """
 Clustering
 This script clusters typical days for a building
@@ -14,6 +17,7 @@ import time
 
 import pandas as pd
 
+import cea.config
 from cea.analysis.clustering.sax.sax import SAX
 from cea.analysis.clustering.sax.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
@@ -30,11 +34,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def clustering_sax(locator, data, word_size, alphabet_size, gv):
+def clustering_sax(locator, data, word_size, alphabet_size):
     """
     Function to cluster different days of the year following the SAX method (see class for more info)
     :param locator: locator class
-    :param gv: global variables class
     :param word_size: estimated word size, after optimization
     :param alphabet_size: estimated alphabet size. after optimization
     :param building_name: building name to make the cluster of its time series
@@ -57,7 +60,7 @@ def clustering_sax(locator, data, word_size, alphabet_size, gv):
     # calculate dict with data per hour for the whole year and create groups per pattern
     hours_of_day = range(data[0].size)
     days_of_year = range(len(data))
-    print 'the days of the year evaluated are:', len(data)
+    print('the days of the year evaluated are:', len(data))
     list_of_timeseries_transposed = [list(x) for x in zip(*data)]
     dict_data = dict((group, x) for group, x in zip(hours_of_day, list_of_timeseries_transposed))
     dict_data.update({'clustering': sax, 'day': days_of_year})
@@ -90,10 +93,10 @@ def clustering_sax(locator, data, word_size, alphabet_size, gv):
     # print names of clusters
     pd.DataFrame({"SAX":means.columns.values}).to_csv(locator.get_calibration_cluster('clusters_sax'), index=False)
 
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    print('done - time elapsed: {time_elapsed:.2f} seconds'.format(time_elapsed=time.clock() - t0))
 
 def optimization_clustering_main(locator, data, start_generation, number_individuals,
-                                 number_generations, building_name, gv):
+                                 number_generations, building_name):
     t0 = time.clock()
 
     # set optimization problem for wordzise and alpha number
@@ -101,7 +104,7 @@ def optimization_clustering_main(locator, data, start_generation, number_individ
                      NGEN=number_generations, MU=number_individuals, CXPB=0.9, start_gen=start_generation,
                      building_name=building_name)
 
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    print('done - time elapsed: {time_elapsed:.2f} seconds'.format(time_elapsed=time.clock() - t0))
 
 
 def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
@@ -130,7 +133,7 @@ def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
         data = pd.read_csv(locator.get_demand_measured_file(building_name),
                            usecols=['DATE', building_load], index_col='DATE')
     else:
-        print 'Error: Make sure you select type equal to either "measured" or "simulated'
+        print('Error: Make sure you select type equal to either "measured" or "simulated')
 
     data.set_index(pd.to_datetime(data.index), inplace=True)
 
@@ -141,12 +144,9 @@ def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
 
     return list_of_timeseries
 
-def run_as_script():
-    import cea.globalvar as gv
+def main(config):
     import cea.inputlocator as inputlocator
-    gv = gv.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = inputlocator.InputLocator(scenario=config.scenario)
 
     #Options
     optimize = False
@@ -168,23 +168,22 @@ def run_as_script():
             number_generations = 50
             optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                          number_individuals=number_individuals, number_generations=number_generations,
-                                         building_name=name, gv=gv)
+                                         building_name=name)
     if multicriteria:
-        for i,name in enumerate(building_names):
-            generation = 50
-            weight_fitness1 = 100 # accurracy
-            weight_fitness2 = 100 # complexity
-            weight_fitness3 = 70 # compression
-            what_to_plot = "paretofrontier"
-            output_path = locator.get_calibration_cluster_mcda(generation)
-
+        generation = 50
+        weight_fitness1 = 100  # accurracy
+        weight_fitness2 = 100  # complexity
+        weight_fitness3 = 70  # compression
+        what_to_plot = "paretofrontier"
+        output_path = locator.get_calibration_cluster_mcda(generation)
+        for i, name in enumerate(building_names):
             # read_checkpoint
             input_path = locator.get_calibration_cluster_opt_checkpoint(generation, name)
             result = mcda_cluster_main(input_path=input_path, what_to_plot=what_to_plot,
                                        weight_fitness1=weight_fitness1, weight_fitness2=weight_fitness2,
                                        weight_fitness3=weight_fitness3)
             result["name"] = name
-            if i ==0:
+            if i == 0:
                result_final = pd.DataFrame(result).T
             else:
                result_final = result_final.append(pd.DataFrame(result).T, ignore_index=True)
@@ -228,7 +227,7 @@ def run_as_script():
         word_size = 4
         alphabet_size = 17
 
-        clustering_sax(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
+        clustering_sax(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size)
 
         if cluster_plot:
             show_benchmark = True
@@ -268,4 +267,4 @@ def run_as_script():
                  show_legend=show_legend)  # , show_benchmark=show_benchmark)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
