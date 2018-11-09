@@ -693,7 +693,7 @@ def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
     return np.float(tavg)
 
 
-# @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -720,7 +720,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     """
 
     if Q_heating_W > 0.0:
-        dT_primary = tco_K - tci_K if tco_K != tci_K else 0.0001  # to avoid errors with temperature changes < 0.001
+        dT_primary = tco_K - tci_K if not isclose(tco_K, tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
         cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * previous_efficiency)
