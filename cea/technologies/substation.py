@@ -693,7 +693,7 @@ def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
     return np.float(tavg)
 
 
-@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+# @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
 def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
