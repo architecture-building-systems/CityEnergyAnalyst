@@ -18,7 +18,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     weather_path = config.weather()
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    building_properties, schedules_dict, date = properties_and_schedule(locator)
     list_building_names = building_properties.list_building_names()
     run_nn_resume_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 
