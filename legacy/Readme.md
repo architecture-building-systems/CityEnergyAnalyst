@@ -4,6 +4,9 @@ This folder stores Features of CEA that we no longer support.
 insolation for every hour of the year in buildings in CEA. It was great, but it did not consider reflections of the terrain
 and it was quite slow. The feature was replaced for Radiation_Daysim, which is more powerful and detailed.
 
-2. create_gml: it contans a series of functions that allow to translate CEA shapefiles into CityGML files. We had the thought on 
+2. citygml_converter: it contans a series of functions that allow to translate CEA shapefiles into CityGML files. We had the thought on 
 using CityGML as a main format for data exchange. But the format is just heavy and cumbersome to use for the moment.
 
+3. retrofit: it contains a series of functions that helps users to define which buildings have a high retrofit potential.
+The method is quite limited. It is just based on a threshold of consumption, but it does not include any notion of costs or
+emissions. It was created as a requirement by a partner company. The use of the tool was never used again.
