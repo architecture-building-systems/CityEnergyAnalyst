@@ -229,8 +229,9 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
             PEN_HPSolarandHeatRecovery_MJoil) + np.sum(PEN_Lake_MJoil) + np.sum(PEN_VCC_MJoil) + np.sum(
             PEN_VCC_backup_MJoil) + np.sum(PEN_ACH_MJoil) + np.sum(PEN_CT_MJoil)
 
-        costs_electricity_USD += np.sum(total_electricity_demand_W) * lca.ELEC_PRICE - (
-                    np.sum(E_from_CHP_W) + np.sum(E_from_PV_W) + np.sum(E_from_PVT_W)) * lca.ELEC_PRICE
+        for hour in range(len(total_electricity_demand_W)):
+            costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (
+                    E_from_CHP_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
     if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
 
@@ -394,9 +395,9 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
             PEN_AddBoiler_MJoil) + np.sum(PEN_BaseBoiler_MJoil) + np.sum(PEN_PeakBoiler_MJoil) + np.sum(
             PEN_GHP_MJoil) + np.sum(PEN_HPLake_MJoil) + np.sum(PEN_HPSew_MJoil)
 
-        costs_electricity_USD += np.sum(total_electricity_demand_W) * lca.ELEC_PRICE - (
-                    np.sum(E_from_CHP_W) + np.sum(E_from_Furnace_W) + np.sum(E_from_PV_W) + np.sum(
-                E_from_PVT_W)) * lca.ELEC_PRICE
+        for hour in range(len(total_electricity_demand_W)):
+            costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (
+                        E_from_CHP_W[hour] + E_from_Furnace_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
     if master_to_slave_vars.DHN_barcode.count("1") == 0 or master_to_slave_vars.DHN_barcode.count("1") == 0:
 
@@ -475,8 +476,8 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         PEN_electricity_MJoil += np.sum(PEN_from_heat_used_SC_and_PVT_MJoil) + np.sum(PEN_saved_from_electricity_sold_Solar_MJoil) + np.sum(
             PEN_HPSolarandHeatRecovery_MJoil)
 
-        costs_electricity_USD += np.sum(total_electricity_demand_W) * lca.ELEC_PRICE - (np.sum(E_from_PV_W) + np.sum(
-                E_from_PVT_W)) * lca.ELEC_PRICE
+        for hour in range(len(total_electricity_demand_W)):
+            costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
     return costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil
 
