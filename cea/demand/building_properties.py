@@ -362,9 +362,15 @@ class BuildingProperties(object):
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
             # do this in case the daysim radiation file did not included window
             if 'windows' in geometry_data.TYPE.values:
-                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
-                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                if 'walls' in geometry_data.TYPE.values:
+                    envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                else:
+                    envelope.ix[building_name, 'Awall'] = 0.0 #when window to wall ration is 1, there are no walls.
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+
             else:
                 multiplier_win = 0.25 * (
                         envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
@@ -385,7 +391,7 @@ class BuildingProperties(object):
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
+        df['surface_volume'] = (df['Awin'] + df['Awall'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
 
