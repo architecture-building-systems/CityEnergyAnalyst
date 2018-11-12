@@ -304,7 +304,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     if Q_CT_nom_W > 0:
         for hour in range(2906, 3649):
             wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT[hour] = (wdot_CT) * lca.ELEC_PRICE
+            opex_var_CT[hour] = (wdot_CT) * lca.ELEC_PRICE[hour]
             co2_CT[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CT[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
 

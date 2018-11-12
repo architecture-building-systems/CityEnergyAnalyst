@@ -20,30 +20,30 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits, hour):
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_W'], limits['number_of_VCC_chillers'])
     # unpack outputs
-    opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE
+    opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     co2_VCC_kgCO2perhr = VCC_operation['wdot_W'] * lca.EL_TO_CO2 * 3600E-6
     prim_energy_VCC_MJperhr = VCC_operation['wdot_W'] * lca.EL_TO_OIL_EQ * 3600E-6
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
-    E_used_VCC_W = opex_var_VCC_USD / lca.ELEC_PRICE
+    E_used_VCC_W = opex_var_VCC_USD / lca.ELEC_PRICE[hour]
     return opex_var_VCC_USD, co2_VCC_kgCO2perhr, prim_energy_VCC_MJperhr, Qc_CT_VCC_W, E_used_VCC_W
 
-def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits):
+def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits, hour):
     mdot_VCC_kgpers = Qc_from_VCC_backup_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_backup_W'], limits['number_of_VCC_backup_chillers'])
     # unpack outputs
-    opex_var_VCC_backup_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE
+    opex_var_VCC_backup_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     co2_VCC_backup_kgCO2perhr = VCC_operation['wdot_W'] * lca.EL_TO_CO2 * 3600E-6
     prim_energy_VCC_backup_MJperhr = VCC_operation['wdot_W'] * lca.EL_TO_OIL_EQ * 3600E-6
     Qc_CT_VCC_backup_W = VCC_operation['q_cw_W']
-    E_used_VCC_backup_W = opex_var_VCC_backup_USD / lca.ELEC_PRICE
+    E_used_VCC_backup_W = opex_var_VCC_backup_USD / lca.ELEC_PRICE[hour]
     return opex_var_VCC_backup_USD, co2_VCC_backup_kgCO2perhr, prim_energy_VCC_backup_MJperhr, Qc_CT_VCC_backup_W, E_used_VCC_backup_W
 
 
-def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits):
+def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits, hour):
     ACH_type = 'double'
     opex_var_ACH_USD = 0
     co2_ACH_kgCO2perhr = 0
@@ -62,7 +62,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
                                                              ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, Qc_from_ACH_W,
                                                              locator, config)
-        opex_var_ACH_USD = (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+        opex_var_ACH_USD = (ACH_operation['wdot_W']) * lca.ELEC_PRICE[hour]
         co2_ACH_kgCO2perhr = (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
         prim_energy_ACH_MJperhr = (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
         Qc_CT_ACH_W = ACH_operation['q_cw_W']
@@ -80,25 +80,25 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
                                                                  ACH_T_IN_FROM_CHP,
                                                                  T_ground_K, ACH_type, limits['Qnom_ACH_W'], locator, config)
             if type(ACH_operation['wdot_W']) is int:
-                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE[hour]
                 co2_ACH_kgCO2perhr = co2_ACH_kgCO2perhr + (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
                 prim_energy_ACH_MJperhr = prim_energy_ACH_MJperhr + (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
             else:
-                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE[hour]
                 co2_ACH_kgCO2perhr = co2_ACH_kgCO2perhr + (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
                 prim_energy_ACH_MJperhr = prim_energy_ACH_MJperhr + (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
 
-    E_used_ACH_W = opex_var_ACH_USD / lca.ELEC_PRICE
+    E_used_ACH_W = opex_var_ACH_USD / lca.ELEC_PRICE[hour]
 
     return opex_var_ACH_USD, co2_ACH_kgCO2perhr, prim_energy_ACH_MJperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W
 
 
 def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_resource_potentials, T_ground_K, prices, lca,
-                               master_to_slave_variables, config, Q_cooling_req, locator):
+                               master_to_slave_variables, config, Q_cooling_req, locator, hour):
     """
 
     :param DCN_cooling:
@@ -174,7 +174,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # Delta P from linearization after distribution optimization
         deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
         calfactor_output = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
-        opex_var_Lake_USD = deltaP * (mdot_DCN_kgpers / 1000) * lca.ELEC_PRICE / PUMP_ETA
+        opex_var_Lake_USD = deltaP * (mdot_DCN_kgpers / 1000) * lca.ELEC_PRICE[hour] / PUMP_ETA
         co2_output_Lake_kgCO2 = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_CO2 / PUMP_ETA * 0.0036
         prim_output_Lake_MJ = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_OIL_EQ / PUMP_ETA * 0.0036
         E_used_Lake_W = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
@@ -214,7 +214,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate ACH
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var_ACH_USDperhr, co2_ACH_kgCO2perhr, prim_energy_ACH_MJperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W = calc_chiller_absorption_operation(
-            Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits)
+            Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits, hour)
         opex_var_ACH_USD.append(opex_var_ACH_USDperhr)
         co2_ACH_kgCO2.append(co2_ACH_kgCO2perhr)
         prim_energy_ACH_MJ.append(prim_energy_ACH_MJperhr)
@@ -227,7 +227,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate VCC
         Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
         opex_var_VCC_USDperhr, co2_VCC_kgCO2perhr, prim_energy_VCC_MJperhr, Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
-                                                                     T_DCN_sup_K, prices, lca, limits)
+                                                                     T_DCN_sup_K, prices, lca, limits, hour)
         opex_var_VCC_USD.append(opex_var_VCC_USDperhr)
         co2_VCC_kgCO2.append(co2_VCC_kgCO2perhr)
         prim_energy_VCC_MJ.append(prim_energy_VCC_MJperhr)
@@ -239,7 +239,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate back-up VCC
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var_VCC_backup_USDperhr, co2_VCC_backup_kgCO2perhr, prim_energy_VCC_backup_MJperhr, Qc_CT_VCC_backup_W, E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
-                                                                     T_DCN_sup_K, prices, lca, limits)
+                                                                     T_DCN_sup_K, prices, lca, limits, hour)
         opex_var_VCC_backup_USD.append(opex_var_VCC_backup_USDperhr)
         co2_VCC_backup_kgCO2.append(co2_VCC_backup_kgCO2perhr)
         prim_energy_VCC_backup_MJ.append(prim_energy_VCC_backup_MJperhr)
@@ -259,7 +259,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0:  # activate VCC to charge the tank
             Qc_from_VCC_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
             opex_var_VCC_USDperhr, co2_VCC_kgCO2perhr, prim_energy_VCC_MJperhr, Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W, T_chiller_in_K,
-                                                                         T_chiller_out_K, prices, lca, limits)
+                                                                         T_chiller_out_K, prices, lca, limits, hour)
             opex_var_VCC_USD.append(opex_var_VCC_USDperhr)
             co2_VCC_kgCO2.append(co2_VCC_kgCO2perhr)
             prim_energy_VCC_MJ.append(prim_energy_VCC_MJperhr)
@@ -269,7 +269,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0:  # activate ACH to charge the tank
             Qc_from_ACH_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
             opex_var_ACH_USDperhr, co2_ACH_kgCO2perhr, prim_energy_MJperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W = calc_chiller_absorption_operation(
-                Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits)
+                Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits, hour)
             opex_var_ACH_USD.append(opex_var_ACH_USDperhr)
             co2_ACH_kgCO2.append(co2_ACH_kgCO2perhr)
             prim_energy_ACH_MJ.append(prim_energy_MJperhr)

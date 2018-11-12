@@ -268,7 +268,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         Qc_CT_W, Qh_CHP_ACH_W, \
         cooling_resource_potentials = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
                                                                  limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator)
+                                                                 T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator, hour)
 
         print (hour)
         # save results for each time-step
@@ -327,7 +327,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     if Q_CT_nom_W > 0:
         for hour in timesteps:
             wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE
+            opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE[hour]
             co2_CT_kgCO2[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CT_MJ[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
             E_used_CT_W[hour] = wdot_CT
@@ -383,7 +383,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                 E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(
                     Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
 
-            opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE
+            opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE[hour]
             co2_CCGT_kgCO2[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CCGT_MJ[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
             NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
@@ -475,7 +475,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     calibration = calfactor_total / 50976000
 
     extraElec = (127865400 + 85243600) * calibration
-    costs_a_USD += extraElec * lca.ELEC_PRICE
+    costs_a_USD += extraElec * lca.ELEC_PRICE.mean()
     CO2_kgCO2 += extraElec * lca.EL_TO_CO2 * 3600E-6
     prim_MJ += extraElec * lca.EL_TO_OIL_EQ * 3600E-6
     # Converting costs into float64 to avoid longer values
