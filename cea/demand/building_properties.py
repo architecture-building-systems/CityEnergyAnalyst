@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import division
+
 """
 Classes of building properties
 """
@@ -32,15 +35,12 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, gv, use_daysim_radiation, region, override_variables=False):
+    def __init__(self, locator, use_daysim_radiation, region, override_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
-
-        :param gv: contains the context (constants and models) for the calculation
-        :type gv: cea.globalvar.GlobalVariables
 
         :param use_daysim_radiation: from config
         :type use_daysim_radiation: bool
@@ -55,8 +55,7 @@ class BuildingProperties(object):
         :rtype: BuildingProperties
         """
 
-        self.gv = gv
-        gv.log("read input files")
+        print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
@@ -100,7 +99,7 @@ class BuildingProperties(object):
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
         # TODO: maybe mergin branch i9 with CItyGML could help with this
-        gv.log("done")
+        print("done")
 
         # save resulting data
         self._prop_supply_systems = prop_supply_systems
@@ -277,7 +276,8 @@ class BuildingProperties(object):
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
                     hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
                 df.loc[building, 'Hs'] = 0
-                print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
+                print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
+                    building=building))
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * E_S  # conditioned area only those for electricity
         df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
@@ -485,7 +485,7 @@ class BuildingProperties(object):
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
-                                     supply=self.get_prop_supply_systems(building_name), gv=self.gv)
+                                     supply=self.get_prop_supply_systems(building_name))
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -501,7 +501,7 @@ class BuildingPropertiesRow(object):
     read-only."""
 
     def __init__(self, geometry, envelope, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, supply, gv):
+                 rc_model, comfort, internal_loads, age, solar, supply):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
@@ -645,7 +645,7 @@ class BuildingPropertiesRow(object):
         elif 1985 <= self.age['built'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
             if self.age['HVAC'] == self.age['built']:
-                print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
+                print('Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0')
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
