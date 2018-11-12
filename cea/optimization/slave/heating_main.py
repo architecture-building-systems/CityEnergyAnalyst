@@ -275,7 +275,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
-                                                         master_to_slave_vars.EL_TYPE, gv, prices, lca)
+                                                         master_to_slave_vars.EL_TYPE, prices, lca, hour)
             Opex_var_BackupBoiler_USD[hour], Opex_var_BackupBoiler_per_Wh_USD, Q_BackupBoiler_W[
                 hour], E_BackupBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_BackupBoiler_req_W[hour] = E_BackupBoiler_req_W_hour

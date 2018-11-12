@@ -5,6 +5,7 @@ furnaces
 from __future__ import division
 import pandas as pd
 from math import log
+from cea.optimization.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -107,7 +108,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 # operation costs
 
-def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv):
+def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca, hour):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
@@ -156,7 +157,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
         if Q_design_W < Q_th_load_W:
             Q_th_load_W = Q_design_W - 1
 
-        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
+        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE)
 
         eta_therm_real, eta_el, Q_aux_W = Furnace_eff
 
@@ -170,14 +171,14 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
     Q_th_load_W = Q_therm_W
 
     if MOIST_TYPE == "dry":
-        C_furn_therm = Q_prim_W * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
+        C_furn_therm = Q_prim_W * FURNACE_FUEL_COST_DRY #  [CHF / Wh] fuel cost of thermal energy
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W)* lca.ELEC_PRICE[hour] #  [CHF / Wh] cost gain by selling el. to the grid.
         C_furn = C_furn_therm - C_furn_el_sold
         C_furn_per_Wh = C_furn / Q_th_load_W
 
     else:
-        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * gv.Furn_FuelCost_wet
-        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * gv.ELEC_PRICE
+        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * FURNACE_FUEL_COST_WET
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[hour]
         C_furn = C_furn_therm - C_furn_el_sold
         C_furn_per_Wh = C_furn / Q_th_load_W # in CHF / Wh
 

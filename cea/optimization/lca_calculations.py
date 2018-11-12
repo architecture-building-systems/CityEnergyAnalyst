@@ -121,7 +121,7 @@ class lca_calculations(object):
                 self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                     'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
             elif config.region == 'SIN':
-                self.ELEC_PRICE = electricity_costs['cost']
+                self.ELEC_PRICE = electricity_costs['cost'].values
                 self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                     'PEN']  # MJ_oil / MJ_final
                 self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
@@ -136,15 +136,18 @@ class lca_calculations(object):
                 self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                     'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
             elif config.region == 'SIN':
-                self.ELEC_PRICE = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                       'costs_kWh'] / 1000
+                self.ELEC_PRICE = np.ones(8760) * average_electricity_price
                 self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                     'PEN']  # MJ_oil / MJ_final
                 self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                     'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
 
-        self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['PEN']  # MJ_oil / MJ_final
-        self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0]['CO2'] # kg_CO2 / MJ_final
+        average_gree_electricity_cost = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['costs_kWh']  # MJ_oil / MJ_final
+        self.ELEC_PRICE_GREEN = np.ones(8760) * average_gree_electricity_cost
+        self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['PEN']  # MJ_oil / MJ_final
+        self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['CO2'] # kg_CO2 / MJ_final
 
         self.EL_NGCC_TO_OIL_EQ_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['PEN'] * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final
         self.EL_NGCC_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
