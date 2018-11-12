@@ -2,6 +2,20 @@ Credits
 =======
 The credits section is structured following the number of additions to CEA made by each contributor at the date of release.
 
+  - Version 2.9.0
+    * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
+    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+    * [Sreepathi Bhargava Krishna](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/sreepathi-bhargava-krishna.html)
+    * [Shanshan Hsieh](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/shanshan-hsieh.html)
+    * [Martín Mosteiro Romero](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/martin-mosteiro-romero.html)
+    * [Gabriel Happle](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/gabriel-happle.html)
+    * [Jack Hawthorne](https://github.com/Jack-Hawthorne)
+    * [Zhongming Shi](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/zhongming-shi.html)
+    * [Bo Lie Ong](https://github.com/ongbolie)
+    * [Kian Wee Chen](http://censam.mit.edu/people/Pages/Kian%20Wee%20CHEN.aspx)
+    * [Amr Elesawy](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/amr-elesawy.html)
+    * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
+
   - Version 2.7
     * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
     * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
