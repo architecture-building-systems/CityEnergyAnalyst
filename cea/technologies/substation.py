@@ -575,10 +575,16 @@ def calc_plate_HEX(NTU, cr):
 
 
 @jit('boolean(float64, float64)', nopython=True)
-def efficiencies_not_converged(current_efficiency, next_efficiency):
+def efficiencies_not_converged(previous_efficiency, current_efficiency):
     tolerance = 0.00000001
-    return abs((current_efficiency - next_efficiency) / current_efficiency) > tolerance
+    return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
+@jit('boolean(float64, float64)', nopython=True)
+def isclose(a, b):
+    """adapted from here: https://stackoverflow.com/a/33024979/2260"""
+    rel_tol = 1e-09
+    abs_tol = 0.0
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 # Heat exchanger model
 @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
@@ -600,29 +606,33 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         - ``cc``, capacity mass flow rate secondary side
 
     """
+    if ch_kWperK > 0 and not isclose(thi_K, tho_K):
+        previous_efficiency = 0.1
+        current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
 
-    if ch_kWperK > 0 and thi_K != tho_K:
-        current_efficiency = 0.1
-        next_efficiency = 0.0
-        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+        cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * previous_efficiency)
         tco_K = 273.0  # actual value calculated in iteration
-        while efficiencies_not_converged(current_efficiency, next_efficiency):
+        while efficiencies_not_converged(previous_efficiency, current_efficiency):
             assert not (cmin_kWperK < 0.0), "substation.calc_HEX_cooling: cmin is negative!!"
 
+            cc_kWperK = cmin_kWperK
             if cmin_kWperK < ch_kWperK:
-                cc_kWperK = cmin_kWperK
                 cmax_kWperK = ch_kWperK
             else:
-                cc_kWperK = cmin_kWperK
                 cmax_kWperK = cc_kWperK
                 cmin_kWperK = ch_kWperK
 
             cr = cmin_kWperK / cmax_kWperK
             NTU = UA / cmin_kWperK
-            next_efficiency = calc_plate_HEX(NTU, cr)
-            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * next_efficiency)
-            tco_K = tci_K + next_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
-            current_efficiency = next_efficiency
+
+            previous_efficiency = current_efficiency
+            current_efficiency = calc_plate_HEX(NTU, cr)
+
+            cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * current_efficiency)
+            tco_K = tci_K + current_efficiency * cmin_kWperK * (thi_K - tci_K) / cc_kWperK
+
+            # previous_efficiency = current_efficiency
+            # current_efficiency = calculate_next_efficiency
 
         cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
         tco_C = tco_K - 273.0
@@ -630,10 +640,6 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         tco_C = 0.0
         cc_kWperK = 0.0
     return np.float(tco_C), np.float(cc_kWperK)
-
-
-
-
 
 @jit(nopython=True)
 def calc_shell_HEX(NTU, cr):
@@ -688,24 +694,24 @@ def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
 
 
 @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
-def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
+def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a shell-tube pleat exchanger in the heating case.
     Method of Number of Transfer Units (NTU)
 
-    :param Q: load
+    :param Q_heating_W: load
 
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
         heat exchanger
 
-    :param thi: in temperature of secondary side
+    :param thi_K: in temperature of secondary side
 
-    :param tco: out temperature of primary side
+    :param tco_K: out temperature of primary side
 
-    :param tci: in temperature of primary side
+    :param tci_K: in temperature of primary side
 
-    :param cc: capacity mass flow rate primary side
+    :param cc_kWperK: capacity mass flow rate primary side
 
     :return:
         - ``tho``, out temperature of secondary side (district cooling network)
@@ -713,35 +719,32 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 
     """
 
-    if Q > 0.0:
-        dT_primary = tco - tci if tco != tci else 0.0001  # to avoid errors with temperature changes < 0.001
-        eff = [0.1, 0]
-        Flag = False
-        tol = 0.00000001
-        while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
-                eff[0] = eff[1]
-            else:
-                cmin = cc * (dT_primary) / ((thi - tci) * eff[0])
-            if cmin < cc:
-                ch = cmin
-                cmax = cc
-            else:
-                ch = cmin
-                cmax = cmin
-                cmin = cc
-            cr = cmin / cmax
-            NTU = UA / cmin
-            eff[1] = calc_shell_HEX(NTU, cr)
-            cmin = cc * (dT_primary) / ((thi - tci) * eff[1])
-            tho = thi - eff[1] * cmin * (thi - tci) / ch
-            Flag = True
+    if Q_heating_W > 0.0:
+        dT_primary = tco_K - tci_K if not isclose(tco_K, tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
+        previous_efficiency = 0.1
+        current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
+        cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * previous_efficiency)
 
-        tho = tho - 273
+        while efficiencies_not_converged(previous_efficiency, current_efficiency):
+            if cmin_kWperK < cc_kWperK:
+                ch_kWperK = cmin_kWperK
+                cmax_kWperK = cc_kWperK
+            else:
+                ch_kWperK = cmin_kWperK
+                cmax_kWperK = cmin_kWperK
+                cmin_kWperK = cc_kWperK
+            cr = cmin_kWperK / cmax_kWperK
+            NTU = UA / cmin_kWperK
+            previous_efficiency = current_efficiency
+            current_efficiency = calc_shell_HEX(NTU, cr)
+            cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
+            tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
+
+        tho_C = tho_K - 273
     else:
-        tho = 0
-        ch = 0
-    return np.float(tho), np.float(ch)
+        tho_C = 0
+        ch_kWperK = 0
+    return np.float(tho_C), np.float(ch_kWperK)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):

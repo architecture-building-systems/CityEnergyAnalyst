@@ -213,7 +213,7 @@ appending "Tool" and uppercasing the first letter of each word. Example: ``multi
             self.canRunInBackground = False
 
 
-The tools DemandTool, RadiationDaysimTool, and HeatmapsTool are implemented in this manner and can be used as examples.
+The tools DemandTool and RadiationDaysimTool are implemented in this manner and can be used as examples.
 
 .. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
     ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements

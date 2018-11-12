@@ -231,7 +231,6 @@ def main(config):
     """
     run the whole preprocessing routine
     """
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     mdot_chw_kgpers = 35
     T_chw_sup_K = 7 + 273.0
