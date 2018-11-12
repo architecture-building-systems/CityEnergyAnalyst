@@ -171,13 +171,13 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                                                config, prices, lca)
         else:
 
-            GHG_heating_tonCO2 = 0
-            costs_heating_USD = 0
-            PEN_heating_MJoil = 0
+            GHG_heating_tonCO2 = 0.0
+            costs_heating_USD = 0.0
+            PEN_heating_MJoil = 0.0
     else:
-        GHG_heating_tonCO2 = 0
-        costs_heating_USD = 0
-        PEN_heating_MJoil = 0
+        GHG_heating_tonCO2 = 0.0
+        costs_heating_USD = 0.0
+        PEN_heating_MJoil = 0.0
 
     costs_USD += costs_heating_USD
     GHG_tonCO2 += GHG_heating_tonCO2
@@ -185,12 +185,12 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # District Cooling Calculations
     if gv.ZernezFlag == 1:
-        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
     elif config.district_cooling_network:
         reduced_timesteps_flag = False
         (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
-        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
 
     costs_USD += costs_cooling_USD
     GHG_tonCO2 += GHG_cooling_tonCO2
