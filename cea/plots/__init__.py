@@ -53,8 +53,8 @@ def default_dashboard(config):
     return Dashboard(config, {'name': 'Default Dashboard',
                               'plots': [{'plot': 'energy-balance',
                                          'category': 'demand',
-                                         'scenario': config.scenario,
-                                         'parameters': {'buildings': []}}]})
+                                         'parameters': {'buildings': [],
+                                                        'scenario-name': config.scenario_name}}]})
 
 
 class Dashboard(object):
@@ -80,7 +80,7 @@ def load_plot(config, plot_definition):
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
     parameters = plot_definition['parameters']
     locator = cea.inputlocator.InputLocator(scenario=scenario)
-    return plot_class(config, locator, **parameters)
+    return plot_class(config, locator, parameters)
 
 
 def write_default_dashboard(dashboard_yml, scenario_name):

@@ -10,8 +10,8 @@ import cea.plots.demand
 class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Load Curve"
 
-    def __init__(self, config, locator, parameters):
-        super(LoadCurvePlot, self).__init__(config, locator, parameters)
+    def __init__(self, config, parameters):
+        super(LoadCurvePlot, self).__init__(config, parameters)
         self.data = self.hourly_loads
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",

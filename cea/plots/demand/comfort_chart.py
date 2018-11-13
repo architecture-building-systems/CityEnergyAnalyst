@@ -37,8 +37,8 @@ XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
     name = "Comfort Chart"
 
-    def __init__(self, config, locator, parameters):
-        super(ComfortChartPlot, self).__init__(config, locator, parameters)
+    def __init__(self, config, parameters):
+        super(ComfortChartPlot, self).__init__(config, parameters)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]

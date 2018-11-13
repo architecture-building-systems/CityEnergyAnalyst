@@ -10,8 +10,8 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
     name = "Energy Use Intensity"
 
-    def __init__(self, config, locator, parameters):
-        super(EnergyUseIntensityPlot, self).__init__(config, locator, parameters)
+    def __init__(self, config, parameters):
+        super(EnergyUseIntensityPlot, self).__init__(config, parameters)
         self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",

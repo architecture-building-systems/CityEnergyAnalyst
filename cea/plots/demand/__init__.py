@@ -5,6 +5,7 @@ import functools
 import cea.plots
 import pandas as pd
 import os
+import cea.inputlocator
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
@@ -32,11 +33,22 @@ class DemandPlotBase(cea.plots.PlotBase):
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
-    def __init__(self, config, locator, parameters):
-        super(DemandPlotBase, self).__init__(config, locator, parameters)
+    def __init__(self, config, parameters):
+        super(DemandPlotBase, self).__init__(config, parameters)
 
         # all plots in this category use the buildings parameter. make it easier to access
-        self.buildings = self.parameters['buildings']
+        # handle special case of buildings... (only allow buildings for the scenario in question)
+
+        scenario = os.path.join(config.project, parameters['scenario-name'])
+        self.locator = cea.inputlocator.InputLocator(scenario)
+        if 'buildings' in self.parameters:
+            zone_building_names = self.locator.get_zone_building_names()
+            if not self.parameters['buildings']:
+                self.parameters['buildings'] = zone_building_names
+            self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
+                                             b in zone_building_names]
+                                            or zone_building_names)
+            self.buildings = self.parameters['buildings']
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
