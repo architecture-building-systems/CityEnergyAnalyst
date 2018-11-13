@@ -42,6 +42,7 @@ def read_dashboards(config):
         with open(dashboard_yml, 'r') as f:
             return [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
     except (IOError, TypeError):
+        # problems reading the dashboard_yml file - instead, create a default set of dashboards.
         dashboards = [default_dashboard(config)]
         with open(dashboard_yml, 'w') as f:
             yaml.dump([d.to_dict() for d in dashboards], f)
@@ -76,25 +77,14 @@ def load_plot(config, plot_definition):
     print('load_plot', config.scenario, plot_definition)
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
-    scenario = plot_definition['scenario']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
     parameters = plot_definition['parameters']
-    locator = cea.inputlocator.InputLocator(scenario=scenario)
-    return plot_class(config, locator, parameters)
-
-
-def write_default_dashboard(dashboard_yml, scenario_name):
-    """Write out a default dashboard configuration to the path located by ``dashboard_yml``"""
-    dashboard = [
-        {'name': 'Default Dashboard',
-         'scenario': scenario_name,
-         'plot': 'energy-balance',
-         'category': 'demand'}
-    ]
+    return plot_class(config, parameters)
 
 
 def main(config):
-    """Test the dashboard functionality"""
+    """Test the dashboard functionality. Run it twice, because the dashboard.yml might have been created as a result"""
+    print(read_dashboards(config))
     print(read_dashboards(config))
 
 
