@@ -12,8 +12,8 @@ import cea.plots.demand
 class HeatingResetSchedulePlot(cea.plots.demand.DemandPlotBase):
     name = "Heating Reset Schedule"
 
-    def __init__(self, config, locator, **parameters):
-        super(HeatingResetSchedulePlot, self).__init__(config, locator, **parameters)
+    def __init__(self, config, locator, parameters):
+        super(HeatingResetSchedulePlot, self).__init__(config, locator, parameters)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]

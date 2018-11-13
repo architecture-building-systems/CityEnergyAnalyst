@@ -12,8 +12,8 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
     """Implement the energy-use plot"""
     name = "Energy Demand"
 
-    def __init__(self, config, locator, **parameters):
-        super(EnergyDemandDistrictPlot, self).__init__(config, locator, **parameters)
+    def __init__(self, config, locator, parameters):
+        super(EnergyDemandDistrictPlot, self).__init__(config, locator, parameters)
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                 "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']

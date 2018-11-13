@@ -14,6 +14,7 @@ The module ``cea.plots.categories`` contains helper-methods for dealing with the
 """
 
 import os
+import yaml
 import cea.config
 import cea.inputlocator
 from cea.plots.base import PlotBase
@@ -35,18 +36,25 @@ def read_dashboards(config):
     dashboard.yml file located in the project_path (parent folder of the scenario). If no such file is
     found, a default one is returned (but not written to disk).
     """
-    project_path, scenario_name = os.path.split(config.scenario)
-    dashboard_yml = os.path.join(project_path, '..', 'dashboard.yml')
-    if not os.path.exists(dashboard_yml):
-        # create a default dashboard_yml file for this scenario
-        return [Dashboard(config, {'name': 'Default Dashboard',
-                                   'plots': [{'plot': 'energy-balance',
-                                              'category': 'demand',
-                                              'scenario': config.scenario,
-                                              'parameters': {'buildings': []}}]})]
-    else:
-        import yaml
-        return [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(dashboard_yml)]
+    dashboard_yml = os.path.join(config.project, 'dashboard.yml')
+
+    try:
+        with open(dashboard_yml, 'r') as f:
+            return [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
+    except (IOError, TypeError):
+        dashboards = [default_dashboard(config)]
+        with open(dashboard_yml, 'w') as f:
+            yaml.dump([d.to_dict() for d in dashboards], f)
+        return dashboards
+
+
+def default_dashboard(config):
+    """Return a default Dashboard"""
+    return Dashboard(config, {'name': 'Default Dashboard',
+                              'plots': [{'plot': 'energy-balance',
+                                         'category': 'demand',
+                                         'scenario': config.scenario,
+                                         'parameters': {'buildings': []}}]})
 
 
 class Dashboard(object):
@@ -54,6 +62,13 @@ class Dashboard(object):
     def __init__(self, config, dashboard_dict):
         self.name = dashboard_dict['name']
         self.plots = [load_plot(config, plot_dict) for plot_dict in dashboard_dict['plots']]
+
+    def to_dict(self):
+        """Return a dict representation for storing in yaml"""
+        return {'name': self.name,
+                'plots': [{'plot': p.id(),
+                           'category': p.category_name,
+                           'parameters': p.parameters} for p in self.plots]}
 
 
 def load_plot(config, plot_definition):
