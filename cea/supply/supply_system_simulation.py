@@ -251,10 +251,10 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     total_electricity_demand_W = total_electricity_demand_W.add(E_for_hot_water_demand_W)
     # Electricity of Energy Systems
     lca = lca_calculations(locator, config)
-    E_VCC_W = data_cooling['Opex_var_VCC'] / lca.ELEC_PRICE
-    E_VCC_backup_W = data_cooling['Opex_var_VCC_backup'] / lca.ELEC_PRICE
-    E_ACH_W = data_cooling['Opex_var_ACH'] / lca.ELEC_PRICE
-    E_CT_W = abs(data_cooling['Opex_var_CT']) / lca.ELEC_PRICE
+    E_VCC_W = data_cooling['Opex_var_VCC'] / lca.ELEC_PRICE.mean()
+    E_VCC_backup_W = data_cooling['Opex_var_VCC_backup'] / lca.ELEC_PRICE.mean()
+    E_ACH_W = data_cooling['Opex_var_ACH'] / lca.ELEC_PRICE.mean()
+    E_CT_W = abs(data_cooling['Opex_var_CT']) / lca.ELEC_PRICE.mean()
     total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_W)
     total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_backup_W)
     total_electricity_demand_W = total_electricity_demand_W.add(E_ACH_W)
@@ -318,11 +318,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     if reduced_timesteps_flag:
         reduced_el_costs = (
-            (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+            (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean())
         electricity_costs = reduced_el_costs * (8760 / (stop_t - start_t))
     else:
         electricity_costs = (
-        (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+        (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean())
 
     # emission from data
     data_emissions = pd.read_csv(
