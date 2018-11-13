@@ -9,6 +9,9 @@ import ephem
 import datetime
 import collections
 from math import *
+import pytz
+from timezonefinder import TimezoneFinder
+
 #from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
 
 __author__ = "Jimeno A. Fonseca"
@@ -87,13 +90,12 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
-def cal_date_local_from_weather_file(weather_data, config):
-    # read from config
-    if config.region == 'SIN':
-        timezone = 'Singapore'
-    elif config.region == 'CH':
-        timezone = 'Etc/GMT+2'
-    else: raise ValueError('Please specify the timezone of the region.')
+def calc_date_local_from_weather_file(weather_data, latitude, longitude):
+    # get the time zone
+    tf = TimezoneFinder()
+    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
+    time = pytz.timezone(time_zone).localize(datetime.datetime(2011,1,1)).strftime('%z')
+    timezone = 'Etc/GMT'+time[0]+time[2]
 
     # read date from the weather file
     year = weather_data['year'][0]
