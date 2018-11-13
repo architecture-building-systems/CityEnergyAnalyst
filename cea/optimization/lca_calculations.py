@@ -44,7 +44,7 @@ class lca_calculations(object):
         self.SOLARCOLLECTORS_TO_OIL = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'CO2']  # MJ_oil / MJ_useful
 
-        if config.region == 'CH':
+        if pd.read_excel(locator.get_archetypes_system_controls(config.region))['has-cooling-season'].item():
             # HEATING
             self.BG_BACKUPBOILER_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
             self.SMALL_GHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0]['CO2']   # kg_CO2 / MJ_useful
