@@ -32,8 +32,11 @@ class DemandPlotBase(cea.plots.PlotBase):
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
-    def __init__(self, config, locator, **parameters):
-        super(DemandPlotBase, self).__init__(config, locator, **parameters)
+    def __init__(self, config, locator, parameters):
+        super(DemandPlotBase, self).__init__(config, locator, parameters)
+
+        # all plots in this category use the buildings parameter. make it easier to access
+        self.buildings = self.parameters['buildings']
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
@@ -83,7 +86,7 @@ class DemandPlotBase(cea.plots.PlotBase):
         Stores the result in ``self._cache`` since the reduce operation takes a lot of time.
         """
         m_time = os.path.getmtime(self.locator.get_total_demand())  # when was demand script last run?
-        buildings_key = ','.join(self.buildings)  # key for looking up in the cache
+        buildings_key = ','.join(self.parameters['buildings'])  # key for looking up in the cache
         if buildings_key in self._cache:
             # only load hourly_loads once, based on {buildings, mtime}
             cache_mtime, result = self._cache[buildings_key]
@@ -101,7 +104,7 @@ class DemandPlotBase(cea.plots.PlotBase):
         # cache these results for later
         result = functools.reduce(add_fields,
                                  (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
-                                  self.buildings)).set_index('DATE')
+                                  self.parameters['buildings'])).set_index('DATE')
         self._cache[buildings_key] = (m_time, result)
         return result
 

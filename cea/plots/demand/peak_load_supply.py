@@ -9,8 +9,8 @@ import cea.plots.demand
 class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
     name = "Peak Load Supply"
 
-    def __init__(self, config, locator, **parameters):
-        super(PeakLoadSupplyPlot, self).__init__(config, locator, **parameters)
+    def __init__(self, config, locator, parameters):
+        super(PeakLoadSupplyPlot, self).__init__(config, locator, parameters)
         self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data,
                                                          ["DH_hs0_kW", "DH_ww0_kW", 'SOLAR_ww0_kW', 'SOLAR_hs0_kW',
