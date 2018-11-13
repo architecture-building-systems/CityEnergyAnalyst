@@ -158,12 +158,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     Q_coldsource_PeakBoiler_W = np.zeros(8760)
 
     Q_excess_W = np.zeros(8760)
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
-                                                              'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
-
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
+                                                         'windspd_ms', 'skytemp_C']]
     ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(8760):
