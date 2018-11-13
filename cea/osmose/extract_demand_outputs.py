@@ -29,6 +29,11 @@ v_CO2_Lpers = 0.0048  # [L/s/person]
 rho_CO2_kgperm3 = 1.98  # [kg/m3]
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_int_max_ppm = 800 / 1e6  # [m3 CO2/m3]
+Pair_Pa = 101325
+Ra_JperkgK = 286.9
+Rw_JperkgK = 461.5
+rh_max = 65  # %
+rh_min = 55  # %
 
 
 def main():
@@ -67,7 +72,6 @@ def main():
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
 
-
         ## output to hcs
         # change units
         output_df2['T_ext'] = reduced_tsd_df['T_ext']
@@ -89,8 +93,14 @@ def main():
         output_df2['m_ve_min'] = np.vectorize(
             calc_m_exhaust_from_CO2)(output_df2['CO2_max_ppm'], output_df2['CO2_ext_ppm'],
                                      output_df2['v_CO2_in_infil_occupant_m3pers'], output_df2['rho_air'])
-
-
+        output_df2['rh_max'] = rh_max
+        output_df2['rh_min'] = rh_min
+        output_df2['w_max'] = np.vectorize(calc_w_from_rh)(output_df2['rh_max'], reduced_tsd_df['T_int'])
+        output_df2['w_min'] = np.vectorize(calc_w_from_rh)(output_df2['rh_min'], reduced_tsd_df['T_int'])
+        output_df2['m_w_max'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_df2['w_max'],
+                                                              output_df2['Vf_m3'])
+        output_df2['m_w_min'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_df2['w_min'],
+                                                              output_df2['Vf_m3'])
 
         output_df2 = output_df2.round(4)  # osmose does not read more decimals (observation)
         # output_df2 = output_df2.drop(output_df.index[range(7)])
@@ -136,6 +146,28 @@ def calc_sensible_gains(output_df, reduced_tsd_df):
     reduced_tsd_df['Q_gain_total_kWh'] = reduced_tsd_df['Q_gain_rad_kWh'] + reduced_tsd_df['Q_gain_env_kWh'] + \
                                          reduced_tsd_df[
                                              'Q_gain_int_kWh'] + reduced_tsd_df['Q_gain_occ_kWh']
+
+
+def calc_m_w_in_air(Troom_C, w_gperkg, Vf_m3):
+    Troom_K = Troom_C + 273.15
+    w_kgperkg = w_gperkg / 1000
+    rho_ma_kgperm3 = calc_moist_air_density(Troom_K, w_kgperkg)
+    m_dry_air_kg = calc_m_dry_air(Vf_m3, rho_ma_kgperm3, w_kgperkg)
+    m_w_kgpers = m_dry_air_kg * w_kgperkg / 3600
+    return m_w_kgpers
+
+
+def calc_m_dry_air(Vf_m3, rho_ma_kgperm3, w_kgperkg):
+    m_moist_air_kg = Vf_m3 * rho_ma_kgperm3
+    m_dry_air_kg = m_moist_air_kg / (1 + w_kgperkg)
+    return m_dry_air_kg
+
+
+def calc_moist_air_density(Troom_K, w_kgperkg):
+    term1 = (Pair_Pa / (Ra_JperkgK * Troom_K)) * (1 + w_kgperkg)
+    term2 = (1 + w_kgperkg * Rw_JperkgK / Ra_JperkgK)
+    rho_ma_kgperm3 = term1 / term2
+    return rho_ma_kgperm3
 
 
 def calc_co2_from_occupants(occupants):
