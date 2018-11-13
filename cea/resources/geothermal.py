@@ -33,7 +33,7 @@ def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
     material_properties = pd.read_excel(locator.get_thermal_networks(config.region), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
     material_properties = material_properties.set_index(material_properties['material'].values)
     heat_capacity_soil = material_properties.ix['Soil','Cp_JkgK']   # _[A. Kecebas et al., 2011]
-    conductivity_soil = material_properties.ix['Soil','lamda_WmK']  # _[A. Kecebas et al., 2011]
+    conductivity_soil = material_properties.ix['Soil','lambda_WmK']  # _[A. Kecebas et al., 2011]
     density_soil = material_properties.ix['Soil','rho_kgm3']   # _[A. Kecebas et al., 2011]
 
 
