@@ -95,13 +95,14 @@ class PlotCategory(object):
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
     buildings = None
 
     for category in list_categories():
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
-            plot = plot_class(config, locator, **{'buildings': buildings})
+            print('plot_class:', plot_class)
+            plot = plot_class(config, parameters={'scenario-name': config.scenario_name,
+                                                  'buildings': buildings})
             assert plot.name, 'plot missing name: %s' % plot
             assert plot.category_name == category.name
             print('plot:', plot.name, '/', plot.id(), '/', plot.title)

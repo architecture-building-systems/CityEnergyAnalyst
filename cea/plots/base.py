@@ -28,21 +28,14 @@ class PlotBase(object):
     def id(cls):
         return cls.name.lower().replace(' ', '-')  # use for js/html etc.
 
-    def __init__(self, config, locator, parameters):
+    def __init__(self, config, parameters):
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
         self.layout = None  # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
 
         self.config = config
-        self.locator = locator
         self.parameters = parameters
-
-        # handle special case of buildings... (only allow buildings for the scenario in question)
-        if 'buildings' in self.parameters:
-            self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
-                                             b in locator.get_zone_building_names()]
-                                            or locator.get_zone_building_names())
 
     @property
     def title(self):
