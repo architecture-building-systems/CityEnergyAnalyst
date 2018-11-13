@@ -1,16 +1,17 @@
-Contributing
-=============
+:orphan:
+
+How to add a new script
+=======================
 
 So you want to extend the CEA? This guide will get you up and running!
 
 The main steps you need to take are:
 
-#. copy the template script and rename it
-#. update the module-level documentation and credits
-#. develop your script
+#. start with a script template.
+#. develop your script.
 #. add your script to the ``scripts.yml`` file
 #. add a section to the ``default.config`` file for any parameters your script requires
-#. add an ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
+#. add an automated ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
 
 
 Step 1: Start with a template
@@ -37,10 +38,7 @@ The other parameters are much more dependant on the requirements of your script.
 than a few parameters, consider just passing in the ``config`` variable instead, as long parameter lists in functions
 can make your code hard to read.
 
-Step 2: Give it a purpose and an author
-----------------------------------------
-
-While you're at it:
+While you're at it give it a Purpose and an Author!:
 
 - update the module-level documentation (at the top of the script) to reflect the _what_ and the _why_ of your script, including references to
   literature
@@ -52,7 +50,7 @@ While you're at it:
   - ``__copyright__`` (update the year of the copyright for this script)
 
 
-Step 3: Develop your script
+Step 2: Develop your script
 ----------------------------
 
 Each script is unique. But to fit nicely into the CEA ecosystem, pay attention to the following points:
@@ -80,7 +78,7 @@ Each script is unique. But to fit nicely into the CEA ecosystem, pay attention t
 - if you think you need to use ``os.chdir``, you're doing it wrong!
 
 
-Step 4: add your script to the ``scripts.yml`` file
+Step 3: add your script to the ``scripts.yml`` file
 ---------------------------------------------------
 
 The ``scripts.yml`` file (located in ``cea/``) tells the ``cea`` command line program
@@ -104,7 +102,7 @@ running your script from PyCharm. Please take the time to do this anyway, since 
 the ArcGIS and dashboard interfaces* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
 
 The name of your script should be the same as the module name and the core function name from
-`Step 3: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
+`Step 2: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
 
 The ``scripts.yml`` file is grouped by categories and each category contains a list of scripts in that category. The
 syntax used is YAML_. The easiest way to add a new script is to copy an existing script definition.
@@ -154,7 +152,7 @@ parameters
       "know" what parameters to offer the user for a script.
 
 
-Step 5: Add a section to the ``default.config`` file for any parameters your script requires
+Step 4: Add a section to the ``default.config`` file for any parameters your script requires
 --------------------------------------------------------------------------------------------
 
 The file ``default.config`` (found in the ``cea`` folder) specifies the list of parameters the user can set for the CEA.
@@ -194,7 +192,7 @@ Example::
 .. _kebab-case: http://wiki.c2.com/?KebabCase
 .. _snake_case: https://en.wikipedia.org/wiki/Snake_case
 
-Step 6: Add an ArcGIS interface
+Step 5: Add an ArcGIS interface
 -------------------------------
 
 In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
@@ -215,7 +213,7 @@ appending "Tool" and uppercasing the first letter of each word. Example: ``multi
             self.canRunInBackground = False
 
 
-The tools DemandTool, RadiationDaysimTool, and HeatmapsTool are implemented in this manner and can be used as examples.
+The tools DemandTool and RadiationDaysimTool are implemented in this manner and can be used as examples.
 
 .. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
     ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements

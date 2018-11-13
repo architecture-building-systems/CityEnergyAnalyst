@@ -258,30 +258,6 @@ def task_run_emissions_mobility():
         }
 
 
-def task_run_heatmaps():
-    """run the heat maps script for each reference case"""
-    try:
-        from cea.interfaces.arcgis.modules import arcpy
-    except ImportError:
-        # do not require ArcGIS to be installed, but skip testing the heatmaps
-        # module if it isn't installed.
-        return
-    import cea.plots.heatmaps
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-        yield {
-            'name': 'run_heatmaps:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
-            'actions': [(cea.plots.heatmaps.main, [], {
-                'config': config
-            })],
-        }
-
-
 def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
     import cea.plots.old.scenario_plots
@@ -338,41 +314,41 @@ def task_run_sensitivity():
     }
 
 
-# def task_run_calibration():
-#     """run the calibration_sampling for the included reference case"""
-#     def run_calibration():
-#         import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
-#         import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
-#         import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
-#
-#         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-#         locator = cea.inputlocator.ReferenceCaseOpenLocator()
-#
-#         config.scenario = locator.scenario
-#         config.single_calibration.building = 'B01'
-#         config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
-#         config.single_calibration.load = 'E_sys'
-#         config.single_calibration.samples = 10
-#         config.single_calibration.show_plots = False
-#         config.single_calibration.iterations = 2000
-#
-#         # run calibration_sampling
-#         calibration_sampling.sampling_main(locator=locator, config=config)
-#
-#         # run calibration_gaussian_emulator
-#         calibration_gaussian_emulator.gaussian_emulator(locator=locator, config=config)
-#
-#         # run calibration_main
-#         calibration_main.calibration_main(locator=locator, config=config)
-#
-#         # make sure the files were created
-#         # FIXME: @JIMENOFONSECA - what files do I need to check? (this has changed)
-#
-#
-#     return {
-#         'name': 'run_calibration',
-#         'actions': [(run_calibration, [], {})],
-#     }
+def task_run_calibration():
+    """run the calibration_sampling for the included reference case"""
+    def run_calibration():
+        import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
+        import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
+        import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+
+        config.scenario = locator.scenario
+        config.single_calibration.building = 'B01'
+        config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
+        config.single_calibration.load = 'E_sys'
+        config.single_calibration.samples = 10
+        config.single_calibration.show_plots = False
+        config.single_calibration.iterations = 2000
+
+        # run calibration_sampling
+        calibration_sampling.sampling_main(locator=locator, config=config)
+
+        # run calibration_gaussian_emulator
+        calibration_gaussian_emulator.gaussian_emulator(locator=locator, config=config)
+
+        # run calibration_main
+        calibration_main.calibration_main(locator=locator, config=config)
+
+        # make sure the files were created
+        # FIXME: @JIMENOFONSECA - what files do I need to check? (this has changed)
+
+
+    return {
+        'name': 'run_calibration',
+        'actions': [(run_calibration, [], {})],
+    }
 
 
 def task_run_thermal_network_matrix():

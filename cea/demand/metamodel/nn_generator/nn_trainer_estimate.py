@@ -143,11 +143,11 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
 
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     #   open multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
-    gv.log("Using %i CPU's" % mp.cpu_count())
+    print("Using {cpu_count} CPU's".format(cpu_count=mp.cpu_count()))
     #   creat an empty job list to be filled later
     joblist = []
     #   create one job for each data preparation task i.e. each building
@@ -238,7 +238,7 @@ def main(config):
     region = config.region
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     climatic_variables = config.neural_network.climatic_variables
     weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]

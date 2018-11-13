@@ -71,7 +71,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done')
 
@@ -219,7 +219,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     #         potential['PV_' + panel_orientation + '_m2'] = 0
 
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
-    potential['radiation_kWh'] = sum(total_radiation_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['Area_PV_m2'] = sum(list_groups_area)
     potential['Date'] = date_local
     potential = potential.set_index('Date')
@@ -712,10 +712,11 @@ def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_PV_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_PV_USD = Capex_a_PV_USD * Inv_OM
+    Capex_PV_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD
 
 
 # remuneration scheme

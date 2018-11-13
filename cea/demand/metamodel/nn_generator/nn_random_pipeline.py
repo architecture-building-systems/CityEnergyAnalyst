@@ -76,7 +76,7 @@ def main(config):
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
     weather_path = config.weather
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)

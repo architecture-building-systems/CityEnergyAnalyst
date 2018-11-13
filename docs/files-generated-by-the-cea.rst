@@ -362,7 +362,7 @@ For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActiva
              times, the files are constantly replaced with new ones.
 
 :Origin:     All the files in this folder are created in the script
-             ``CityEnergyAnalyst\cea\optimization\master\master_main.py``
+             ``CityEnergyAnalyst\cea\optimization\master\non_dominated_sorting_genetic_algorithm.py``
 
 Each of these files have the following fields:
 

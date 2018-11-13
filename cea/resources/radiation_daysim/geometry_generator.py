@@ -6,6 +6,9 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
+from __future__ import division
+from __future__ import print_function
+
 import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
 import py4design.py3dmodel.calculate as calculate
@@ -71,6 +74,7 @@ def identify_surfaces_type(occface_list):
             footprint_list.append(f)
 
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
+
 
 def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     """
@@ -255,7 +259,11 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
-    point_list_2D = list(geometry.exterior.coords)
+    if geometry.has_z:
+        # remove elevation - we'll add it back later by intersecting with the topography
+        point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
+    else:
+        point_list_2D = geometry.exterior.coords
     point_list_3D = [(a, b, 0) for (a, b) in point_list_2D]  # add 0 elevation
 
     # creating floor surface in pythonocc
@@ -357,8 +365,10 @@ def raster2tin(input_terrain_raster):
 def geometry_main(locator, simplification_params):
 
     # list of faces of terrain
+    print("Reading terrain geometry")
     elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
     # transform buildings 2D to 3D and add windows
+    print("Creating 3D building surfaces")
     geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, simplification_params, height_col='height_ag',
                                                                nfloor_col="floors_ag")
 

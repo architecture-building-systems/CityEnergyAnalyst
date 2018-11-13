@@ -67,7 +67,9 @@ Energy potentials:
   description: Calculate electricity & heat production from photovoltaic / thermal technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic_thermal
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel', 'solar:type-scpanel',
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'solar:buildings',  'solar:type-pvpanel',
+               'solar:type-scpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                'solar:solar-window-solstice', 'solar:t-in-pvt']
 
@@ -92,9 +94,10 @@ Energy potentials:
   description: Calculate heat production from solar collector technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.solar_collector
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-scpanel',
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
-               'solar:solar-window-solstice', 'solar:t-in-sc']
+               'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings']
 
 - name: radiation-daysim
   label: Solar radiation (Daysim engine)
@@ -121,8 +124,9 @@ Optimization:
   description: Run optimization for the given scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'thermal-network:network-type',
-               'thermal-network:network-names', 'optimization', 'decentralized']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:district-heating-network',
+               'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
+               'optimization', 'decentralized']
 
 - name: decentralized
   label: Decentralized supply system
@@ -140,17 +144,6 @@ Optimization:
   parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
                'optimization:iscooling', 'optimization:isheating', 'thermal-network:network-type',
                'thermal-network:network-names', 'decentralized']
-
-
-Retrofit analysis:
-
-- name: retrofit-potential
-  label: Building Retrofit Potential
-  description: Select buildings according to specific criteria for retrofit
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.retrofit.retrofit_potential
-  parameters: ['general:scenario', retrofit-potential]
-
 
 Sensitivity analysis:
 
@@ -224,13 +217,6 @@ Utilities:
 
 
 Visualization:
-
-- name: heatmaps
-  label: Heatmaps
-  description: Generate maps representing hot and cold spots of energy consumption
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.plots.heatmaps
-  parameters: ['general:scenario', 'heatmaps:file-to-analyze', 'heatmaps:analysis-fields']
 
 - name: plots
   label: Plots basic
@@ -325,13 +311,6 @@ default:
   interfaces: [cli]
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
-
-- name: radiation
-  label: radiation
-  description: radiation
-  interfaces: [cli]
-  module: cea.resources.radiation_arcgis.radiation
-  parameters: ['general:scenario', 'general:weather', radiation]
 
 - name: scenario-plots
   label: scenario-plots
