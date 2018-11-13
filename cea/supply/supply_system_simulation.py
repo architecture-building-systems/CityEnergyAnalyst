@@ -70,8 +70,8 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual,
-                                                                                               building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
+                                                                                                     building_names)
 
     # read the total loads from buildings connected to thermal networks
     if DHN_barcode.count("1") == gv.num_tot_buildings:
