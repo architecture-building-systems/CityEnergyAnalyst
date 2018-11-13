@@ -44,7 +44,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     try:
         time_utc = time.tz_convert('UTC')
     except ValueError:
-        raise ('Unkonw time zone from the case study.')
+        raise ('Unknown time zone from the case study.')
 
     sun_coords = pd.DataFrame(index=time)
 
