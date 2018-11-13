@@ -58,7 +58,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    date_local = solar_equations.calc_date_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 
     # solar properties
