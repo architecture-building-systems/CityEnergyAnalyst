@@ -28,6 +28,7 @@ from cea.technologies import substation
 from cea.optimization.master import summarize_network
 from cea.optimization.lca_calculations import lca_calculations
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+from cea.optimization.slave import natural_gas_main
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -65,11 +66,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     individual = evaluation.check_invalid(individual, len(building_names), config)
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = 0.0
-    CO2 = extra_CO2
-    prim = extra_primary_energy
-    QUncoveredDesign = 0.0
-    QUncoveredAnnual = 0.0
+    costs_USD = 0.0
+    GHG_tonCO2 = extra_CO2
+    PEN_MJoil = extra_primary_energy
+    Q_uncovered_design_W = 0.0
+    Q_uncovered_annual_W = 0.0
 
     # Create the string representation of the individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
@@ -82,7 +83,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         Q_heating_max_W = Q_DHNf_W.max()
     elif DHN_barcode.count("1") == 0:
         network_file_name_heating = "Network_summary_result_all.csv"
-        Q_heating_max_W = 0
+        Q_heating_max_W = 0.0
     else:
         # Run the substation and distribution routines
         substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
@@ -160,34 +161,37 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
-    storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
+    costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
 
+    costs_USD += costs_storage_USD
+    GHG_tonCO2 += GHG_storage_tonCO2
+    PEN_MJoil += PEN_storage_MJoil
 
     # slave optimization of heating networks
     if config.district_heating_network:
         if DHN_barcode.count("1") > 0:
-            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = heating_main.heating_calculations_of_DH_buildings(locator,
+            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_uncovered_design_W, Q_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars, gv,
                                                                                                config, prices, lca)
         else:
-            slaveCO2 = 0.0
-            slaveCosts = 0.0
-            slavePrim = 0.0
+            GHG_heating_tonCO2 = 0.0
+            costs_heating_USD = 0.0
+            PEN_heating_MJoil = 0.0
     else:
-        slaveCO2 = 0.0
-        slaveCosts = 0.0
-        slavePrim = 0.0
+        GHG_heating_tonCO2 = 0.0
+        costs_heating_USD = 0.0
+        PEN_heating_MJoil = 0.0
 
-    costs += slaveCosts
-    CO2 += slaveCO2
-    prim += slavePrim
+    costs_USD += costs_heating_USD
+    GHG_tonCO2 += GHG_heating_tonCO2
+    PEN_MJoil += PEN_heating_MJoil
 
     # slave optimization of cooling networks
     if gv.ZernezFlag == 1:
-        coolCosts, coolCO2, coolPrim = 0.0, 0.0, 0.0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
     elif config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
-        (coolCosts, coolCO2, coolPrim) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
                                                                                        prices, lca, config, reduced_timesteps_flag)
         # if reduced_timesteps_flag:
         #     # reduced timesteps simulation for a month (May)
@@ -196,87 +200,30 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         #     coolPrim = coolPrim * (8760/(3624/2880))
         #     # FIXME: check results
     else:
-        coolCosts, coolCO2, coolPrim = 0.0, 0.0, 0.0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
 
     # District Electricity Calculations
-    electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
 
+    costs_USD += costs_electricity_USD
+    GHG_tonCO2 += GHG_electricity_tonCO2
+    PEN_MJoil += PEN_electricity_MJoil
+
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, config)
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
-    (addCosts, addCO2, addPrim) = cost_model.addCosts(building_names, locator, master_to_slave_vars,
-                                              QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator, master_to_slave_vars,
+                                              Q_uncovered_design_W, Q_uncovered_annual_W, solar_features, network_features, gv,
                                               config, prices, lca)
 
-    # recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
-    Cost_diff, CO2_diff, Prim_diff = calc_decentralized_building_costs(config, locator, master_to_slave_vars,
-                                                                       DHN_barcode, DCN_barcode, building_names)
-    addCosts = addCosts + Cost_diff
-    addCO2 = addCO2 + CO2_diff
-    addPrim = addPrim + Prim_diff
+    costs_USD += costs_additional_USD
+    GHG_tonCO2 += GHG_additional_tonCO2
+    PEN_MJoil += PEN_additional_MJoil
 
-    # add Capex and Opex of PV
-    data_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, GENERATION_NUMBER)))
-
-    total_area_for_pv = data_electricity['Area_PV_m2'].max()
-    # remove the area installed with solar collectors
-    sc_installed_area = 0
-    if config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
-        for (index, building_name) in zip(DCN_barcode, building_names):
-            if index == "0":
-                sc_installed_area = sc_installed_area + pd.read_csv(locator.PV_results(building_name))[
-                    'Area_PV_m2'].max()
-    pv_installed_area = total_area_for_pv - sc_installed_area
-    Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
-    pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
-
-    # electricity calculations
-    data_network_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, GENERATION_NUMBER)))
-
-    data_cooling = pd.read_csv(
-        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, GENERATION_NUMBER)))
-
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
-    total_electricity_demand_W = data_network_electricity['E_total_req_W']
-
-    # Electricity of Energy Systems
-    lca = lca_calculations(locator, config)
-
-    # modify simulation timesteps
-    if reduced_timesteps_flag == False:
-        start_t = 0
-        stop_t = 8760
-    else:
-        # timesteps in May
-        start_t = 2880
-        stop_t = 3624
-    timesteps = range(start_t, stop_t)
-
-    if reduced_timesteps_flag:
-        reduced_el_costs = (
-            (data_network_electricity['E_GRID_directload_W'].sum() + data_network_electricity['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
-        electricity_costs = reduced_el_costs * (8760 / (stop_t - start_t))
-    else:
-        electricity_costs = (
-                (data_network_electricity['E_GRID_directload_W'].sum() + data_network_electricity[
-                    'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
-
-    # emission from data
-    data_emissions = pd.read_csv(
-        os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, GENERATION_NUMBER)))
-    update_PV_emission = abs(2 * data_emissions['CO2_PV_disconnected']).values[0]  # kg-CO2
-    update_PV_primary = abs(2 * data_emissions['Eprim_PV_disconnected']).values[0]  # MJ oil-eq
-
-    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV
-    CO2 = CO2 + addCO2 + coolCO2 - update_PV_emission
-    prim = prim + addPrim + coolPrim - update_PV_primary
-    # Converting costs into float64 to avoid longer values
-    costs = (np.float64(costs) / 1e6).round(2)  # $ to Mio$
-    CO2 = (np.float64(CO2) / 1e6).round(2)  # kg to kilo-ton
-    prim = (np.float64(prim) / 1e6).round(2)  # MJ to TJ
+    costs_USD = (np.float64(costs_USD) / 1e6).round(2)  # $ to Mio$
+    GHG_tonCO2 = (np.float64(GHG_tonCO2) / 1e6).round(2)  # kg to kilo-ton
+    PEN_MJoil = (np.float64(PEN_MJoil) / 1e6).round(2)  # MJ to TJ
 
     # add electricity costs corresponding to
 
@@ -286,12 +233,12 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
 
 
-    print ('Total annualized costs [USD$(2015) Mio/yr] = ' + str(costs))
-    print ('Green house gas emission [kton-CO2/yr] = ' + str(CO2))
-    print ('Primary energy [TJ-oil-eq/yr] = ' + str(prim))
+    print ('Total annualized costs [USD$(2015) Mio/yr] = ' + str(costs_USD))
+    print ('Green house gas emission [kton-CO2/yr] = ' + str(GHG_tonCO2))
+    print ('Primary energy [TJ-oil-eq/yr] = ' + str(PEN_MJoil))
 
-    results = {'TAC_Mio_per_yr': [costs.round(2)], 'CO2_kton_per_yr': [CO2.round(2)],
-               'Primary_Energy_TJ_per_yr': [prim.round(2)]}
+    results = {'TAC_Mio_per_yr': [costs_USD.round(2)], 'CO2_kton_per_yr': [GHG_tonCO2.round(2)],
+               'Primary_Energy_TJ_per_yr': [PEN_MJoil.round(2)]}
     results_df = pd.DataFrame(results)
     results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),
                                 'ind_' + str(individual_number) + '_results.csv')
@@ -315,7 +262,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
                   euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)
 
-    return costs, CO2, prim, master_to_slave_vars, individual
+    return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
 
 def calc_individual_number(locator):
