@@ -16,10 +16,12 @@ from cea.optimization.prices import Prices
 from cea.optimization.slave import heating_main
 from cea.optimization.distribution import network_opt_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
+from cea.optimization.slave.seasonal_storage import storage_main
 from cea.optimization.master import evaluation
 from cea.optimization import supportFn
 from cea.optimization.constants import *
 from cea.optimization.master import cost_model
+from cea.optimization.slave import electricity_main
 from cea.optimization.slave import cooling_main
 from cea.optimization.master import check
 from cea.technologies import substation
@@ -63,11 +65,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     individual = evaluation.check_invalid(individual, len(building_names), config)
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = 0
+    costs = 0.0
     CO2 = extra_CO2
     prim = extra_primary_energy
-    QUncoveredDesign = 0
-    QUncoveredAnnual = 0
+    QUncoveredDesign = 0.0
+    QUncoveredAnnual = 0.0
 
     # Create the string representation of the individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
@@ -158,6 +160,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
+    storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
+
+
     # slave optimization of heating networks
     if config.district_heating_network:
         if DHN_barcode.count("1") > 0:
@@ -165,13 +170,13 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
                                                                                                master_to_slave_vars, gv,
                                                                                                config, prices, lca)
         else:
-            slaveCO2 = 0
-            slaveCosts = 0
-            slavePrim = 0
+            slaveCO2 = 0.0
+            slaveCosts = 0.0
+            slavePrim = 0.0
     else:
-        slaveCO2 = 0
-        slaveCosts = 0
-        slavePrim = 0
+        slaveCO2 = 0.0
+        slaveCosts = 0.0
+        slavePrim = 0.0
 
     costs += slaveCosts
     CO2 += slaveCO2
@@ -179,7 +184,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # slave optimization of cooling networks
     if gv.ZernezFlag == 1:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
+        coolCosts, coolCO2, coolPrim = 0.0, 0.0, 0.0
     elif config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (coolCosts, coolCO2, coolPrim) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
@@ -191,11 +196,15 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         #     coolPrim = coolPrim * (8760/(3624/2880))
         #     # FIXME: check results
     else:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
+        coolCosts, coolCO2, coolPrim = 0.0, 0.0, 0.0
+
+    # District Electricity Calculations
+    electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
-    (addCosts, addCO2, addPrim) = cost_model.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
+    (addCosts, addCO2, addPrim) = cost_model.addCosts(building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices, lca)
 
@@ -232,41 +241,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     total_electricity_demand_W = data_network_electricity['E_total_req_W']
-    E_decentralized_appliances_W = np.zeros(8760)
 
-    for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand from the decentralized buildings
-        if i is '0':
-            building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                          usecols=['E_sys_kWh'])
-            E_decentralized_appliances_W += building_demand['E_sys_kWh'] * 1000
-
-    total_electricity_demand_W = total_electricity_demand_W.add(E_decentralized_appliances_W)
-    E_for_hot_water_demand_W = np.zeros(8760)
-
-    for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand for hot water from all buildings
-        building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                      usecols=['E_ww_kWh'])
-        E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
-
-    total_electricity_demand_W = total_electricity_demand_W.add(E_for_hot_water_demand_W)
     # Electricity of Energy Systems
     lca = lca_calculations(locator, config)
-    E_VCC_W = data_cooling['Opex_var_VCC'] / lca.ELEC_PRICE
-    E_VCC_backup_W = data_cooling['Opex_var_VCC_backup'] / lca.ELEC_PRICE
-    E_ACH_W = data_cooling['Opex_var_ACH'] / lca.ELEC_PRICE
-    E_CT_W = abs(data_cooling['Opex_var_CT']) / lca.ELEC_PRICE
-    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_W)
-    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_backup_W)
-    total_electricity_demand_W = total_electricity_demand_W.add(E_ACH_W)
-    total_electricity_demand_W = total_electricity_demand_W.add(E_CT_W)
-    E_from_CHP_W = data_network_electricity['E_CHP_to_directload_W'] + data_network_electricity['E_CHP_to_grid_W']
-    E_from_PV_W = data_network_electricity['E_PV_to_directload_W'] + data_network_electricity['E_PV_to_grid_W']
-
-    E_CHP_to_directload_W = np.zeros(8760)
-    E_CHP_to_grid_W = np.zeros(8760)
-    E_PV_to_directload_W = np.zeros(8760)
-    E_PV_to_grid_W = np.zeros(8760)
-    E_from_grid_W = np.zeros(8760)
 
     # modify simulation timesteps
     if reduced_timesteps_flag == False:
@@ -278,51 +255,14 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         stop_t = 3624
     timesteps = range(start_t, stop_t)
 
-    for hour in timesteps:
-        E_hour_W = total_electricity_demand_W[hour]
-        if E_hour_W > 0:
-            if E_from_PV_W[hour] > E_hour_W:
-                E_PV_to_directload_W[hour] = E_hour_W
-                E_PV_to_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
-                E_hour_W = 0
-            else:
-                E_hour_W = E_hour_W - E_from_PV_W[hour]
-                E_PV_to_directload_W[hour] = E_from_PV_W[hour]
-
-            if E_from_CHP_W[hour] > E_hour_W:
-                E_CHP_to_directload_W[hour] = E_hour_W
-                E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
-                E_hour_W = 0
-            else:
-                E_hour_W = E_hour_W - E_from_CHP_W[hour]
-                E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
-
-            E_from_grid_W[hour] = E_hour_W
-
-    date = data_network_electricity.DATE.values
-
-    results = pd.DataFrame({"DATE": date,
-                            "E_total_req_W": total_electricity_demand_W,
-                            "E_from_grid_W": E_from_grid_W,
-                            "E_VCC_W": E_VCC_W,
-                            "E_VCC_backup_W": E_VCC_backup_W,
-                            "E_ACH_W": E_ACH_W,
-                            "E_CT_W": E_CT_W,
-                            "E_PV_to_directload_W": E_PV_to_directload_W,
-                            "E_CHP_to_directload_W": E_CHP_to_directload_W,
-                            "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                            "E_PV_to_grid_W": E_PV_to_grid_W,
-                            "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
-                            "E_decentralized_appliances_W": E_decentralized_appliances_W,
-                            "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W})  # let's keep this negative so it is something exported, we can use it in the graphs of likelihood
-
     if reduced_timesteps_flag:
         reduced_el_costs = (
-            (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+            (data_network_electricity['E_GRID_directload_W'].sum() + data_network_electricity['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
         electricity_costs = reduced_el_costs * (8760 / (stop_t - start_t))
     else:
         electricity_costs = (
-        (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+                (data_network_electricity['E_GRID_directload_W'].sum() + data_network_electricity[
+                    'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
 
     # emission from data
     data_emissions = pd.read_csv(
@@ -402,7 +342,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     PrimDiscBuild_BEST = 0
 
     if config.district_heating_network:
-        raise ValueError('This function only works for heating case at the moment.')
+        raise ValueError('This function only works for cooling case at the moment.')
     if config.district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
