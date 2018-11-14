@@ -1001,15 +1001,6 @@ class InputLocator(object):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
         return os.path.join(self.get_plots_folder(''), 'Benchmark_scenarios.pdf')
 
-    # HEATMAPS
-    def get_heatmaps_demand_folder(self):
-        """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.get_plots_folder('heatmaps'))
-
-    def get_heatmaps_emission_folder(self):
-        """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.get_plots_folder('heatmaps'))
-
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
