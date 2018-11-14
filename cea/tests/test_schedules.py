@@ -61,7 +61,7 @@ class TestScheduleCreation(unittest.TestCase):
         locator = ReferenceCaseOpenLocator()
         date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
-        building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+        building_properties = BuildingProperties(locator, False, 'CH', False)
         bpr = building_properties['B01']
         list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
@@ -119,7 +119,7 @@ def create_test_data():
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
-    building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+    building_properties = BuildingProperties(locator, False, 'CH', False)
     bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
