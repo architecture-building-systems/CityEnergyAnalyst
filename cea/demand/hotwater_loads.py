@@ -73,7 +73,7 @@ def calc_water_temperature(T_ambient_C, depth_m):
     return Tg  # in C
 
 
-def calc_Qww_sys(bpr, tsd, gv):
+def calc_Qww_sys(bpr, tsd):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -100,9 +100,9 @@ def calc_Qww_sys(bpr, tsd, gv):
     # distribution and circulation losses
     V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
     Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd['Qww'].copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
-                                                 V_dist_pipes_m3,Tww_sup_0_C, gv)
+                                                 V_dist_pipes_m3,Tww_sup_0_C)
     Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
-                                                   V_dist_pipes_m3,Tww_sup_0_C, T_ext_C, gv)
+                                                   V_dist_pipes_m3,Tww_sup_0_C, T_ext_C)
     # storage losses
     Tww_tank_C, tsd['Qww_sys'] = calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
                                                             Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
@@ -234,7 +234,7 @@ def calc_Qwwf(bpr, tsd):
     return tsd
 
 
-def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
+def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws):
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = Tair
@@ -243,7 +243,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
         circ_ls = (twws - tamb) * Y * Lcww_dis * (Qww / Qww_0)
 
         # Distribtution circuit losses
-        dis_ls = calc_disls(tamb, Qww, V, twws, Lsww_dis, Y, gv)
+        dis_ls = calc_disls(tamb, Qww, V, twws, Lsww_dis, Y)
 
         Qww_d_ls_r = circ_ls + dis_ls
     else:
@@ -251,7 +251,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
     return Qww_d_ls_r
 
 
-def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
+def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te):
     """
 
     :param tair:
@@ -263,7 +263,6 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
     :param V:
     :param twws:
     :param te:
-    :param gv:
     :return:
     """
     # TODO: documentation
@@ -277,14 +276,14 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, twws, te, gv):
         d_circ_ls = (twws - tamb) * Y * (Lvww_c) * (Qww / Qww_0)
 
         # Distribution losses
-        d_dis_ls = calc_disls(tamb, Qww, V, twws, Lvww_dis, Y, gv)
+        d_dis_ls = calc_disls(tamb, Qww, V, twws, Lvww_dis, Y)
         Qww_d_ls_nr = d_dis_ls + d_circ_ls
     else:
         Qww_d_ls_nr = 0
     return Qww_d_ls_nr
 
 
-def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
+def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y):
     """
     Calculates distribution losses in Wh according to Fonseca & Schlueter (2015) Eq. 24, which is in turn based
     on Annex A of ISO EN 15316 with pipe mass m_p,dis = 0.
@@ -297,22 +296,21 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
     :param p: water density kg/m3
     :param cpw: heat capacity of water in kJ/kgK
     :param Y: linear trasmissivity coefficient of piping in distribution network in W/m*K
-    :param gv: globalvar.py
 
     :return losses: recoverable/non-recoverable losses due to distribution of DHW
     """
     if Vww > 0:
         TR = 3600 / ((Vww / 1000) / FLOWTAP)  # Thermal response of insulated piping
-        if TR > 3600: TR = 3600
+        if TR > 3600:
+            TR = 3600
         try:
             exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
         except ZeroDivisionError:
-            gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
-                   twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V)
+            print('twws: {twws:.2f}, tamb: {tamb:.2f}, p: {p:.2f}, cpw: {cpw:.2f}, V: {V:.2f}'.format(
+                twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V))
             raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
-
         losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER / 3.6  # in Wh
     else:
         losses = 0

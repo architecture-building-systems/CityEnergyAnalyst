@@ -121,7 +121,7 @@ class GlobalVariables(object):
         will be updated with the current datetime."""
         if self.testing:
             from cea.utilities import reporting
-            reporting.full_report_to_xls(tsd, output_folder, basename, self)
+            reporting.full_report_to_xls(tsd, output_folder, basename)
 
     def log(self, msg, **kwargs):
         print msg % kwargs
