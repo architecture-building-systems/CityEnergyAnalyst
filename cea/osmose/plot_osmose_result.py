@@ -23,6 +23,8 @@ def main():
 
         ## plot electricity usage
         plot_electricity_usage(building, results, tech)
+        electricity_df = set_up_electricity_df(tech, results, building)
+        plot_electricity_usages(building, electricity_df, results, tech)
 
         ## plot water balance
         humidity_df = set_up_humidity_df(tech, results)
@@ -32,19 +34,32 @@ def main():
         heat_df = set_up_heat_df(tech, results)
         plot_heat_balance(building, heat_df, results, tech)
 
-        # ## heat usage
-        # fig, ax = plt.subplots()
-        # q_bui_float = pd.to_numeric(results['q_bui'])
-        # ax.plot(x_ticks, q_bui_float, '-o', label='q_bui')
-        # ax.legend(loc='lower right')
-        # ax.set(xlabel='Time [hr]', ylabel='Electricity Usage [Wh/m2]', xlim=(1, 24))
-        # ax.set_xticks(x_ticks)
-        # ax.grid(True)
-        # fig.savefig(path_to_el_usage_fig(building, tech))
-        # # plt.show()
-
     print el_use_sum
     return
+
+
+def set_up_electricity_df(tech, results, building):
+    electricity_df = pd.DataFrame()
+    electricity_df['el_aux_lcu'] = results['el_lcu_fan'] * 1000 / Af_m2[building]
+    electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
+    if tech == 'HCS_LD':
+        total_el_aux_oau = results['el_oau_in_fan'] + results['el_oau_out_fan']
+        electricity_df['el_hp_oau'] = results['el_LDHP'] * 1000 / Af_m2[building]
+    else:
+        total_el_aux_oau = results['el_oau_in1_fan'] + results['el_oau_in2_fan'] + results['el_oau_in3_fan'] + results[
+            'el_oau_out_fan']
+        electricity_chi_oau = 0
+        for i in range(3):
+            for j in range(10):
+                tag_name = 'el_oau_chi' + str(i + 1) + '_' + str(j + 1)
+                electricity_chi_oau = electricity_chi_oau + results[tag_name]
+        electricity_df['el_chi_oau'] = electricity_chi_oau * 1000 / Af_m2[building]
+
+    electricity_df['el_aux_oau'] = total_el_aux_oau * 1000 / Af_m2[building]
+    electricity_df['el_chi_ht'] = results['el_chi_ht'] * 1000 / Af_m2[building]
+    electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
+    electricity_df['el_ct'] = results['el_ct'] * 1000 / Af_m2[building]
+    return electricity_df
 
 
 def set_up_heat_df(tech, results):
@@ -71,7 +86,7 @@ def set_up_humidity_df(tech, results):
         total_oau_removed = results['w_oau_out'] - results['w_oau_in']
     else:
         total_oau_removed = results['w_oau_out'] - (
-                    results['w_oau_in_1'] + results['w_oau_in_2'] + results['w_oau_in_3'])
+                results['w_oau_in_1'] + results['w_oau_in_2'] + results['w_oau_in_3'])
     total_oau_removed[total_oau_removed < 0] = 0
     humidity_df['m_w_oau_removed'] = total_oau_removed
     humidity_df['m_w_stored'] = results['w_sto_charge']
@@ -171,6 +186,33 @@ def plot_electricity_usage(building, results, tech):
     # plt.show()
 
 
+def plot_electricity_usages(building, electricity_df, results, tech):
+    fig, ax = plt.subplots()
+    x_ticks = results.index.values
+    bar_width = 0.5
+    opacity = 1
+    colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
+    # initialize the vertical-offset for the stacked bar chart
+    y_offset = np.zeros(electricity_df.shape[0])
+    # plot bars
+    for c in range(len(electricity_df.columns)):
+        column = electricity_df.columns[c]
+        ax.bar(x_ticks, electricity_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
+               label=column)
+        y_offset = y_offset + electricity_df[column]
+    ax.set(xlabel='Time [hr]', ylabel='Electricity Use [kW]', xlim=(1, 24), ylim=(0, 30))
+    ax.legend(loc='upper left')
+    # plot line
+    ax1 = ax.twinx()
+    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2[building])
+    ax1.plot(x_ticks, total_el_float, '-o', label='total electricity use')
+    ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
+    ax.legend(loc='upper right')
+    # plot layout
+    fig.savefig(path_to_el_usages_fig(building, tech))
+    # plt.show()
+
+
 def plot_supply_temperature_humidity(building, operation_df, tech):
     # plot
     fig, ax = plt.subplots()
@@ -207,6 +249,12 @@ def path_to_OAU_supply_fig(building, tech):
 def path_to_el_usage_fig(building, tech):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
     path_to_file = os.path.join(path_to_folder, '%s_%s_el_usage.png' % (building, tech))
+    return path_to_file
+
+
+def path_to_el_usages_fig(building, tech):
+    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
+    path_to_file = os.path.join(path_to_folder, '%s_%s_el_usages.png' % (building, tech))
     return path_to_file
 
 
