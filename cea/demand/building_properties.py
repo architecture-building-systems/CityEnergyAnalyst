@@ -274,8 +274,8 @@ class BuildingProperties(object):
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
-                df.loc[building, 'Hs'] = 0
+                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0.0:
+                df.loc[building, 'Hs'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
@@ -362,9 +362,15 @@ class BuildingProperties(object):
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
             # do this in case the daysim radiation file did not included window
             if 'windows' in geometry_data.TYPE.values:
-                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
-                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                if 'walls' in geometry_data.TYPE.values:
+                    envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                else:
+                    envelope.ix[building_name, 'Awall'] = 0.0 #when window to wall ration is 1, there are no walls.
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+
             else:
                 multiplier_win = 0.25 * (
                         envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
@@ -385,7 +391,7 @@ class BuildingProperties(object):
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
+        df['surface_volume'] = (df['Awin'] + df['Awall'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
 
@@ -467,9 +473,9 @@ class BuildingProperties(object):
 
         """
 
-        if cm == 0:
-            return 0
-        elif 0 < cm <= 165000.0:
+        if cm == 0.0:
+            return 0.0
+        elif 0.0 < cm <= 165000.0:
             return 2.5
         else:
             return 3.2
