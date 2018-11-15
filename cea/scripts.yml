@@ -142,19 +142,8 @@ Optimization:
   interfaces: [cli, arcgis, dashboard]
   module: cea.supply.supply_system_simulation
   parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
-               'optimization:iscooling', 'optimization:isheating', 'thermal-network:network-type',
-               'thermal-network:network-names', 'decentralized']
-
-
-Retrofit analysis:
-
-- name: retrofit-potential
-  label: Building Retrofit Potential
-  description: Select buildings according to specific criteria for retrofit
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.retrofit.retrofit_potential
-  parameters: ['general:scenario', retrofit-potential]
-
+               'general:district-heating-network', 'general:district-cooling-network',
+               'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
 Sensitivity analysis:
 
@@ -228,13 +217,6 @@ Utilities:
 
 
 Visualization:
-
-- name: heatmaps
-  label: Heatmaps
-  description: Generate maps representing hot and cold spots of energy consumption
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.plots.heatmaps
-  parameters: ['general:scenario', 'heatmaps:file-to-analyze', 'heatmaps:analysis-fields']
 
 - name: plots
   label: Plots basic
@@ -329,13 +311,6 @@ default:
   interfaces: [cli]
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
-
-- name: radiation
-  label: radiation
-  description: radiation
-  interfaces: [cli]
-  module: cea.resources.radiation_arcgis.radiation
-  parameters: ['general:scenario', 'general:weather', radiation]
 
 - name: scenario-plots
   label: scenario-plots

@@ -27,7 +27,7 @@ list of commands available::
 
     SCRIPT can be one of: benchmark-graphs, compile, data-helper,
         dbf-to-excel, demand, demand-graphs, embodied-energy, emissions,
-        excel-to-dbf, extract-reference-case, heatmaps, install-toolbox,
+        excel-to-dbf, extract-reference-case, install-toolbox,
         latitude, list-demand-graphs-fields, locate, longitude, mobility,
         operation-costs, photovoltaic, photovoltaic-thermal, radiation,
         radiation-daysim, read-config, read-config-section,
