@@ -12,8 +12,6 @@ from math import *
 import pytz
 from timezonefinder import TimezoneFinder
 
-#from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -23,8 +21,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-# import ephem library
 
 def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     # observer
@@ -93,9 +89,7 @@ SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 
 def calc_date_local_from_weather_file(weather_data, latitude, longitude):
     # get the time zone
     tf = TimezoneFinder()
-    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
-    time = pytz.timezone(time_zone).localize(datetime.datetime(2011,1,1)).strftime('%z')
-    timezone = 'Etc/GMT'+time[0]+time[2]
+    timezone = tf.timezone_at(lng=longitude, lat=latitude)
 
     # read date from the weather file
     year = weather_data['year'][0]
