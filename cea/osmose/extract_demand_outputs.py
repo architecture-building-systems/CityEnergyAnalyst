@@ -48,7 +48,7 @@ def main():
         tsd_df = pd.read_excel(path_to_demand_output(name)['xls'])
 
         # reduce to 24 hours
-        start_t = 3217
+        start_t = 3217  # 5/15: 3217, 7/30-8/5: 5040-5063
         timesteps = 24
         end_t = (start_t + timesteps)
         # reduced_demand_df = demand_df[start_t:end_t]

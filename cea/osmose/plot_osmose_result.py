@@ -4,8 +4,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
-TECHS = ['HCS_ER0']
+TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
+# TECHS = ['HCS_ER0']
 Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
 
 
@@ -40,8 +40,10 @@ def main():
 
 def set_up_electricity_df(tech, results, building):
     electricity_df = pd.DataFrame()
+    #lcu
+    electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
     electricity_df['el_aux_lcu'] = results['el_lcu_fan'] * 1000 / Af_m2[building]
-    electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
+    #oau
     if tech == 'HCS_LD':
         total_el_aux_oau = results['el_oau_in_fan'] + results['el_oau_out_fan']
         electricity_df['el_hp_oau'] = results['el_LDHP'] * 1000 / Af_m2[building]
@@ -54,11 +56,31 @@ def set_up_electricity_df(tech, results, building):
                 tag_name = 'el_oau_chi' + str(i + 1) + '_' + str(j + 1)
                 electricity_chi_oau = electricity_chi_oau + results[tag_name]
         electricity_df['el_chi_oau'] = electricity_chi_oau * 1000 / Af_m2[building]
-
     electricity_df['el_aux_oau'] = total_el_aux_oau * 1000 / Af_m2[building]
+    #scu
     electricity_df['el_chi_ht'] = results['el_chi_ht'] * 1000 / Af_m2[building]
-    electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
+    electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
+    #ct
     electricity_df['el_ct'] = results['el_ct'] * 1000 / Af_m2[building]
+    #statistics
+    el_stats_df = electricity_df.copy()
+    #el_stats_df = el_stats_df.append(el_stats_df.sum(), ignore_index=True)
+    total_df = pd.DataFrame(el_stats_df.sum()).T
+    el_stats_df = el_stats_df.append(total_df).reset_index().drop(columns='index')
+    el_stats_df['el_total'] = el_stats_df.sum(axis=1)
+    el_stats_df['scu'] = el_stats_df['el_chi_ht']/el_stats_df['el_total']*100
+    el_stats_df['scu_aux'] = el_stats_df['el_aux_scu']/el_stats_df['el_total']*100
+    el_stats_df['lcu'] = el_stats_df['el_chi_lt'] / el_stats_df['el_total']*100
+    el_stats_df['lcu_aux'] = el_stats_df['el_aux_lcu']/el_stats_df['el_total']*100
+    if tech == 'HCS_LD':
+        el_stats_df['oau'] = el_stats_df['el_hp_oau'] / el_stats_df['el_total']*100
+        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau']/el_stats_df['el_total']*100
+    else:
+        el_stats_df['oau'] = el_stats_df['el_chi_oau'] / el_stats_df['el_total']*100
+        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau']/el_stats_df['el_total']*100
+
+    el_stats_df['ct'] = el_stats_df['el_ct']/ el_stats_df['el_total']*100
+    el_stats_df.to_csv(path_to_elec_csv(building,tech))
     return electricity_df
 
 
@@ -191,7 +213,11 @@ def plot_electricity_usages(building, electricity_df, results, tech):
     x_ticks = results.index.values
     bar_width = 0.5
     opacity = 1
-    colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
+    # colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
+    colors = [(0.4, 0.76078, 0.647059, 1), (0.5, 0.8078, 0.647059, 1),
+              (0.65098, 0.847059, 0.32941, 1), (0.8, 0.9, 0.32941, 1),
+              (0.70196078, 0.70196078, 0.70196078, 1), (0.70196078, 0.73196078, 0.8, 1),
+              (0.5, 0.5, 0.7, 1)]
     # initialize the vertical-offset for the stacked bar chart
     y_offset = np.zeros(electricity_df.shape[0])
     # plot bars
@@ -205,7 +231,7 @@ def plot_electricity_usages(building, electricity_df, results, tech):
     # plot line
     ax1 = ax.twinx()
     total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2[building])
-    ax1.plot(x_ticks, total_el_float, '-o', label='total electricity use')
+    ax1.plot(x_ticks, total_el_float, '-o', markersize=5, label='total electricity use', color='steelblue')
     ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
     ax.legend(loc='upper right')
     # plot layout
@@ -267,6 +293,11 @@ def path_to_water_flow_fig(building, tech):
 def path_to_heat_fig(building, tech):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
     path_to_file = os.path.join(path_to_folder, '%s_%s_heat.png' % (building, tech))
+    return path_to_file
+
+def path_to_elec_csv(building, tech):
+    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
+    path_to_file = os.path.join(path_to_folder, '%s_%s_el.csv' % (building, tech))
     return path_to_file
 
 
