@@ -23,9 +23,9 @@ New features are called **User Stories**.
 
 Problems are called **Bugs**
 
-Check this guide for more details on how to create **User Stories**: :doc:`how-to-create-user-stories`.
+Check this guide for more details on how to create :doc:`how-to-create-user-stories`.
 
-Check this guide for more details on how to report a **Bug**: :doc:`how-to-report-bugs`.
+Check this guide for more details on :doc:`how-to-report-bugs`.
 
 
 Step 2. Create a Github branch for your User story or Bug
