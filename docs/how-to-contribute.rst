@@ -23,9 +23,9 @@ New features are called **User Stories**.
 
 Problems are called **Bugs**
 
-Check this guide for more details on how to create **User Stories**: :doc:`how-to-create-user-stories`.
+Check this guide for more details on how to create :doc:`how-to-create-user-stories`.
 
-Check this guide for more details on how to report a **Bug**: :doc:`how-to-report-bugs`.
+Check this guide for more details on :doc:`how-to-report-bugs`.
 
 
 Step 2. Create a Github branch for your User story or Bug
@@ -47,9 +47,11 @@ Check this guide for more details: :doc:`how-to-name-variables`.
 Step 4. Create your contribution
 --------------------------------
 
-Go ahead and start coding! For this make sure to use one of our template scripts. This could help to maintain an homogenous structure, and help us to give you credits for your work.
+Go ahead and start coding! For this make sure to use one of our template scripts and follow the documentation guide. This could help to maintain an homogenous structure, and help us to give you credits for your work.
 
 Check this guide for more details: :doc:`how-to-add-a-new-script-to-the-cea`.
+
+Check this guide for adding documentation :doc:`how-to-document-cea`.
 
 
 Step 5. Test
