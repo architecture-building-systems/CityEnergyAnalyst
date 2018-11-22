@@ -5,6 +5,7 @@ import functools
 import cea.plots
 import pandas as pd
 import os
+import cea.config
 import cea.inputlocator
 
 """
@@ -29,6 +30,12 @@ class DemandPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "demand"
     category_path = os.path.join('new_basic', 'demand')
+
+    # default parameters for plots in this category - override if your plot differs
+    expected_parameters = {
+        'buildings': 'plots:buildings',
+        'scenario-name': 'general:scenario-name',
+    }
 
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
