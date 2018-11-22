@@ -173,6 +173,11 @@ class Configuration(object):
         else:
             return 1
 
+    def get(self, fqname):
+        """Given a string of the form "section:parameter", return the value of that parameter"""
+        section, parameter = fqname.split(':')
+        return self.sections[section].parameters[parameter].get()
+
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
         return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
@@ -711,6 +716,8 @@ def main():
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)
     print(config.scenario_plots.scenarios)
+    print(config.get('general:region'))
+    print(config.get('plots:buildings'))
 
 
 if __name__ == '__main__':

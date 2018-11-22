@@ -36,17 +36,26 @@ def read_dashboards(config):
     dashboard.yml file located in the project_path (parent folder of the scenario). If no such file is
     found, a default one is returned (but not written to disk).
     """
-    dashboard_yml = os.path.join(config.project, 'dashboard.yml')
-
     try:
-        with open(dashboard_yml, 'r') as f:
+        with open(dashboard_yml_path(config), 'r') as f:
             return [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
     except (IOError, TypeError):
         # problems reading the dashboard_yml file - instead, create a default set of dashboards.
         dashboards = [default_dashboard(config)]
-        with open(dashboard_yml, 'w') as f:
-            yaml.dump([d.to_dict() for d in dashboards], f)
+        write_dashboards(config, dashboards)
         return dashboards
+
+
+def write_dashboards(config, dashboards):
+    """Write a list of Dashboard objects to disk"""
+    with open(dashboard_yml_path(config), 'w') as f:
+        yaml.dump([d.to_dict() for d in dashboards], f)
+
+
+def dashboard_yml_path(config):
+    """The path to the dashboard_yml file"""
+    dashboard_yml = os.path.join(config.project, 'dashboard.yml')
+    return dashboard_yml
 
 
 def default_dashboard(config):
@@ -58,11 +67,30 @@ def default_dashboard(config):
                                                         'scenario-name': config.scenario_name}}]})
 
 
+def new_dashboard(config):
+    """
+    Append a new dashboard to the dashboard configuration and write it back to disk.
+    Returns the index of the new dashboard in the dashboards list.
+    """
+    dashboards = read_dashboards(config)
+    dashboards.append(default_dashboard(config))
+    write_dashboards(config, dashboards)
+    return len(dashboards) - 1
+
+
 class Dashboard(object):
     """Implements a dashboard - an editable collection of configured plots."""
     def __init__(self, config, dashboard_dict):
+        self.config = config
         self.name = dashboard_dict['name']
         self.plots = [load_plot(config, plot_dict) for plot_dict in dashboard_dict['plots']]
+
+    def add_plot(self, category, plot_id):
+        """Add a new plot to the dashboard"""
+        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
+        parameters = plot_class.get_default_parameters(self.config)
+        plot = plot_class(self.config, parameters)
+        self.plots.append(plot)
 
     def to_dict(self):
         """Return a dict representation for storing in yaml"""

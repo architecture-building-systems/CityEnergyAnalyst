@@ -22,7 +22,12 @@ __status__ = "Production"
 
 class PlotBase(object):
     """A base class for plots containing helper methods used by all plots."""
-    name = None  # override this in plot subclasses!
+
+    # override these in plot subclasses!
+    name = None  # a label to name the plot
+    category_name = None  # name of the category this plot belongs to (can be inherited from category base plot)
+    category_path = None  # a relative path for outputting the plot to (FIXME: maybe we remove this later on)
+    expected_parameters = {}  # maps parameter-name -> "section:parameter"
 
     @classmethod
     def id(cls):
@@ -36,6 +41,13 @@ class PlotBase(object):
 
         self.config = config
         self.parameters = parameters
+
+        for parameter_name in parameters:
+            assert parameter_name in self.expected_parameters, "Unexpected parameter {}, expected {}".format(
+                parameter_name, self.expected_parameters.keys()
+            )
+        for parameter_name in self.expected_parameters:
+            assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     @property
     def title(self):
@@ -99,3 +111,11 @@ class PlotBase(object):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
+
+    @classmethod
+    def get_default_parameters(cls, config):
+        """Return a dictionary of parameters taken by using the values in the config file"""
+        return {
+            k: config.get(v)
+            for k, v in cls.expected_parameters.items()
+        }
