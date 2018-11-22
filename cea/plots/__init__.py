@@ -92,6 +92,10 @@ class Dashboard(object):
         plot = plot_class(self.config, parameters)
         self.plots.append(plot)
 
+    def remove_plot(self, plot_index):
+        """Remove a plot by index"""
+        self.plots.pop(plot_index)
+
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
         return {'name': self.name,
