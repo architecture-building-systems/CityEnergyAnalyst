@@ -67,7 +67,7 @@ Step 6. Create a Pull request
 
 Now it is time to ask other developer of CEA to review your code and put it inside the core of CEA. For this we will be creating a Pull Request in Github
 
-Check this guide for more details on how to do it: :doc:`how-to-create-a-pull-request`.
+Check this guide for more details on how to do it: :doc:`how-to-use-github`.
 
 
 
