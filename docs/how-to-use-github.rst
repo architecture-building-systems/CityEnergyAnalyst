@@ -31,7 +31,8 @@ Zenhub will then create the issue and assign an identification number.
 Github Desktop Workflow
 -----------------------
 `Github desktop <https://desktop.github.com/>`_ is a handy user interface for tracking and merging local alterations to the remote repository.
- For more information and visual walk-through, please check out the `Github desktop guides <https://help.github.com/desktop/guides/>`_.
+
+For more information and visual walk-through, please check out the `Github desktop guides <https://help.github.com/desktop/guides/>`_.
 
 When addressing an issue raised in Zenhub, it is important to note the following processes:
 
@@ -74,15 +75,25 @@ Git push
 
 How to create a pull request
 ----------------------------
-#. Open the `remote repository <https://github.com/architecture-building-systems/CityEnergyAnalyst>`_ in your browser.
-#. Click the ``pull requests`` tab.
-#. Select ``New Pull Request``.
+If you're happy with your contribution to CEA, it's ready to merge with the master branch, also known as a pull request!
 
-..image:: images\pullrequest1.jpeg
+1. Open the `remote repository <https://github.com/architecture-building-systems/CityEnergyAnalyst>`_ in your browser.
+2. Click the ``pull requests`` tab.
+3. Select ``New Pull Request``.
 
+.. image:: pullrequest1.png
+    :align: center
 
-#. Complete a final review of the changes.
-#. Click ``Create pull request``.
-#. Ensure the request is linked to the Zenhub issue.
-#. Add a reviewer and any other comments.
-#. Admins will check your code and if deemed functional, they will merge with the master.
+4. Select the branch you have been working on and review your changes.
+
+.. image:: pullrequest2.png
+    :align: center
+
+5. Click ``Create pull request``.
+6. Ensure the request is linked to the Zenhub issue and add a reviewer and any other comments.
+
+.. image:: pullrequest3.png
+    :align: center
+
+7. Click ``Create pull request``.
+8. Admins will check your code and if deemed functional, they will merge with the master.
