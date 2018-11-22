@@ -30,8 +30,10 @@ Zenhub will then create the issue and assign an identification number.
 
 Github Desktop Workflow
 -----------------------
-Github desktop is a handy user interface for tracking and merging local alterations to the remote repository. When addressing an
-issue raised in Zenhub, it is important to note the following processes:
+`Github desktop <https://desktop.github.com/>`_ is a handy user interface for tracking and merging local alterations to the remote repository.
+ For more information and visual walk-through, please check out the `Github desktop guides <https://help.github.com/desktop/guides/>`_.
+
+When addressing an issue raised in Zenhub, it is important to note the following processes:
 
 Git pull and branching
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -53,9 +55,9 @@ Git pull and branching
 #. Ensure all changes are tested for functionality.
 #. Save alterations once completed.
 
+
 Git commit
 ^^^^^^^^^^
-
 #. Return to Github desktop.
 #. Review all changes in the Changes tab on the left hand side.
 #. In the bottom left corner, write a brief summary of your changes followed by a description of what has been changed and why.
@@ -63,15 +65,22 @@ Git commit
 	- git commit: committing tracks and saves any changes or new files created locally.
 #. Repeat processes until you are ready to merge with the master repository.
 
-Git push and pull request
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Git push
+^^^^^^^^^
 
 #. When ready to update team members with your changes, ensure latest changes are committed.
 #. Select ``Push origin``.
 	- git push: pushes your local commits to the remote repository. Note: branches and commits will be available to others only once pushed to the origin.
-#. Open the remote repository in your browser.
+
+How to create a pull request
+----------------------------
+#. Open the `remote repository <https://github.com/architecture-building-systems/CityEnergyAnalyst>`_ in your browser.
 #. Click the ``pull requests`` tab.
 #. Select ``New Pull Request``.
+
+..image:: images\pullrequest1.jpeg
+
+
 #. Complete a final review of the changes.
 #. Click ``Create pull request``.
 #. Ensure the request is linked to the Zenhub issue.
