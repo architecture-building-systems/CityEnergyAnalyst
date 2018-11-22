@@ -21,7 +21,7 @@ The most common tool for documenting methods and functions within Python code is
 within the ``""" Three Quotation Marks """`` will be parsed by Sphinx when rendering the API documentation, with ``# Python comments``
 ignored.
 
-Example::
+Module Documentation Standard Example::
 
     """
     Title of module without section denotation
@@ -43,7 +43,7 @@ Example::
 
         """
 
-     # these comments are ignored
+     # these comments are ignored by Sphinx
 
 
 You can check if your documentation will render as intended using the `Online Sphinx Editor <https://livesphinx.herokuapp.com/>`_.
@@ -51,7 +51,7 @@ Bear in mind, some documentation strings will still malfunction but it's a great
 
 Sphinx Tools
 ------------
-Once you are ready to generate the API for your new or altered module, a couple of tools exist to assist you. You can call these
+Once you are ready to generate the API for your new or altered module, a couple of tools exist to assist you. You can run these
 from anaconda prompt within the docs repository: ``CityEnergyAnalyst\docs``. Please ensure you have activated the cea virtual
 environment by calling ``activate cea``.
 
@@ -63,14 +63,14 @@ This batch file runs sphinx-build_ , stopping the build when the
 first error is encountered. This tool is great for de-bugging documentation builds, allowing you to check and fix errors one by one.
 
 .. _sphinx-build: http://www.sphinx-doc.org/en/master/man/sphinx-build.html
+
 make-api-doc
 ^^^^^^^^^^^^
 This batch file will delete all the existing auto-generated module documentation, i.e. ``cea*.rst`` files, within the
 ``CityEnergyAnalyst\docs\modules`` repository. Then, it will run the `sphinx-apidoc <http://www.sphinx-doc.org/en/master/man/sphinx-apidoc.html>`_
 function, rebuilding the documentation for all modules in the ``CityEnergyAnalyst\cea`` repository.
 
-Note, the following paths/modules are currently excluded due to module import errors. This is mostly likely an issue of the global cea
-virtual environment missing modules imported by the following::
+Note, the following paths/modules are currently excluded due to module import errors::
 
     ../cea/databases*^
     ../cea/analysis/clustering*^
@@ -86,20 +86,20 @@ virtual environment missing modules imported by the following::
     ../cea/tests/test_dbf*^
     ../cea/utilities/compile_pyd_files*^
 
-    TO DO: Update cea VE to include missing modules.
-
-
-
+    TO DO: Check/update cea VE to include missing modules.
 
 make clean
 ^^^^^^^^^^
-This extension of the make batch removes the contents of the ``CityEnergyAnalyst\docs\build`` repository,
-containing all the html files and toctrees generated from previous sphinx-build_. This tool should be run in conjunction with
+This extension of the make.bat removes the contents of the ``CityEnergyAnalyst\docs\build`` repository,
+containing all the html files and `TOC trees <http://www.sphinx-doc.org/en/1.5.1/markup/toctree.html>`_ generated
+from previous sphinx-build_. This tool should be run in conjunction with
 make-api-doc when major changes to documentation occur, such as the addition of new modules.
 
 make html
 ^^^^^^^^^
-This extension of the make batch runs sphinx-build_ to create html files from each of the rst files within the docs repository.
-This tool will generate html files from any new rst files created since the last build, skipping pre-existing rst/html files.
+This extension of the make batch runs sphinx-build_ to generate html files in the ``CityEnergyAnalyst\docs\_build``
+from each of the rst files within the ``CityEnergyAnalyst\docs`` and ``CityEnergyAnalyst\docs\modules`` repositories.
+This tool will generate html files from any new rst files created since the last build,
+skipping pre-existing rst and corresponding html files.
 
 
