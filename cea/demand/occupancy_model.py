@@ -240,9 +240,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
             # for all other schedules, the database schedule is normalized by the schedule for people and then 
             # multiplied by the number of people from the stochastic calculation
-            if occupants_in_current_use == 0:
-                print 'zero!'
-            else:
+            if occupants_in_current_use > 0:
                 current_stochastic_schedule /= occupants_in_current_use
             unoccupied_times = np.array([i == 0 for i in archetype_schedules[num][schedule_codes['people']]])
             normalized_schedule = make_normalized_stochastic_schedule(current_stochastic_schedule,
