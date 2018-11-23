@@ -115,10 +115,10 @@ def demand_calculation(locator, config):
     else:
         raise Exception('error')
 
-    return totals, time_series
-
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
+
+    return totals, time_series
 
 
 def properties_and_schedule(locator, region, year, use_daysim_radiation, override_variables=False):
