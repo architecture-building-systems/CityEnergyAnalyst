@@ -38,20 +38,21 @@ When addressing an issue raised in Zenhub, it is important to note the following
 
 Git pull and branching
 ^^^^^^^^^^^^^^^^^^^^^^
+For more detailed information see the `creating a branch guide <https://help.github.com/desktop/guides/contributing-to-projects/creating-a-branch-for-your-work/>`_
 
 #. Open Github Desktop
 #. Click pull origin if working on a clean branch (no uncommitted local changes).
-	- git fetch: fetches any commits from the target branch and stores them in your local respository.
+	- git fetch: fetches any commits from the target branch and stores them in your local repository.
 	- git merge: integrates fetched commits into your working branch and files.
 	- git pull: performs a git fetch and git merge. Pulling integrates any fetched commits into your current working branch, which can create merge conflicts.
 #.  If altering an existing branch:
 	- Select current branch and search for the issue number assigned by Zenhub.
     If creating a new branch:
-	- Press Ctrl+Shift+N (or current branch>new branch from the drop down list).
+	- Press Ctrl+Shift+N (or current branch > new branch from the drop down list).
 	- Name the new branch based on the following format ``issue#-issue-name-lower-case-hyphenated``
 	    e.g. ``107-documentation-needs-updating``
 #. Click Repository from the drop down menu.
-#. Select ``Open in command prompt`` or ``Show in explorer`` depending on preference.
+#. Select ``Open in command prompt`` OR ``Show in explorer`` OR use your preferred text editor (e.g. Pycharm) depending on preference.
 #. Open and perform necessary modifications or additions to scripts or files.
 #. Ensure all changes are tested for functionality.
 #. Save alterations once completed.
@@ -59,6 +60,8 @@ Git pull and branching
 
 Git commit
 ^^^^^^^^^^
+For more information see the `committing and reviewing changes guide <https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/>`_.
+
 #. Return to Github desktop.
 #. Review all changes in the Changes tab on the left hand side.
 #. In the bottom left corner, write a brief summary of your changes followed by a description of what has been changed and why.
@@ -68,6 +71,7 @@ Git commit
 
 Git push
 ^^^^^^^^^
+For more information see the `pushing your changes guide <https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/>`_.
 
 #. When ready to update team members with your changes, ensure latest changes are committed.
 #. Select ``Push origin``.
@@ -77,8 +81,10 @@ How to create a pull request
 ----------------------------
 If you're happy with your contribution to CEA, it's ready to merge with the master branch, also known as a pull request!
 
-1. Open the `remote repository <https://github.com/architecture-building-systems/CityEnergyAnalyst>`_ in your browser.
-2. Click the ``pull requests`` tab.
+1. Open the `remote repository <https://github.com/architecture-building-systems/CityEnergyAnalyst>`_
+in your browser OR in Github Desktop under `branch <https://help.github.com/desktop/guides/contributing-to-projects/creating-a-pull-request/>`_.
+
+2. If you're using your browser click the ``pull requests`` tab.
 3. Select ``New Pull Request``.
 
 .. image:: pullrequest1.png
