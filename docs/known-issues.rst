@@ -37,8 +37,9 @@ The table below contains a number of common issues that may arise while Installi
 
       C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll
       TO
-      C:\Users\your_name\Anaconda2\envs\cea\Library\bin"
+      C:\Users\your_name\Anaconda2\envs\cea\Library\bin
 
+     "
     "Update", "daysim_main.py", "Error when running daysim_main.py::
 
         .wea weather file cannot be found
@@ -51,8 +52,9 @@ The table below contains a number of common issues that may arise while Installi
 
     it is read as::
 
-        C:\Users\MisterT~1\AppData\Local\Temp"
+        C:\Users\MisterT~1\AppData\Local\Temp
 
+    "
 Report a new issue
 ------------------
 
