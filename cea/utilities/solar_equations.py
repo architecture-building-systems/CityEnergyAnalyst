@@ -91,16 +91,38 @@ def calc_date_local_from_weather_file(weather_data, latitude, longitude):
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
 
-    # get the time zone
-    tf = TimezoneFinder()
-    time = pytz.timezone(tf.timezone_at(lng=longitude, lat=latitude)).localize(datetime.datetime(year, 1, 1)).strftime(
-        '%z')
-    timezone = 'Etc/GMT'+time[0]+time[2]
+    # get local time zone
+    time_zone = get_local_time_zone(latitude, longitude)
 
     # convert to local time zone
-    date_local = date.tz_localize(tz=timezone)
+    date_local = date.tz_localize(tz=time_zone)
 
     return date_local
+
+def get_local_time_zone(latitude, longitude):
+    '''
+    This function gets the time zone at a given latitude and longitude in 'Etc/GMT' format.
+    This time zone format is used in order to avoid issues caused by Daylight Saving Time (DST) (i.e., redundant or
+    missing times in regions that use DST).
+    However, note that 'Etc/GMT' uses a counter intuitive sign convention, where West of GMT is POSITIVE, not negative.
+    So, for example, the time zone for Zurich will be returned as 'Etc/GMT-1'.
+
+    :param latitude: Latitude at the project location
+    :param longitude: Longitude at the project location
+    '''
+
+    # get the time zone at the given coordinates
+    tf = TimezoneFinder()
+    time = pytz.timezone(tf.timezone_at(lng=longitude, lat=latitude)).localize(
+        datetime.datetime(2011, 1, 1)).strftime('%z')
+
+    # invert sign and return in 'Etc/GMT' format
+    if time[0] == '-':
+        time_zone = 'Etc/GMT+' + time[2]
+    else:
+        time_zone = 'Etc/GMT-' + time[2]
+
+    return time_zone
 
 def calc_sun_properties(latitude, longitude, weather_data, date_local, config):
     solar_window_solstice = config.solar.solar_window_solstice
