@@ -9,8 +9,8 @@ import ephem
 import datetime
 import collections
 from math import *
-import pytz
 from timezonefinder import TimezoneFinder
+import pytz
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -87,13 +87,17 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 # solar properties
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
 def calc_date_local_from_weather_file(weather_data, latitude, longitude):
-    # get the time zone
-    tf = TimezoneFinder()
-    timezone = tf.timezone_at(lng=longitude, lat=latitude)
-
     # read date from the weather file
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+
+    # get the time zone
+    tf = TimezoneFinder()
+    time = pytz.timezone(tf.timezone_at(lng=longitude, lat=latitude)).localize(datetime.datetime(year, 1, 1)).strftime(
+        '%z')
+    timezone = 'Etc/GMT'+time[0]+time[2]
+
+    # convert to local time zone
     date_local = date.tz_localize(tz=timezone)
 
     return date_local
