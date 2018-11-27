@@ -198,11 +198,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             pop = toolbox.population(n=config.optimization.initialind)
             for i in xrange(len(pop)):
                 for j in xrange(len(pop[i])):
-                    pop[i][j] = cp['population'][i][j]
+                    pop[i][j] = cp['nsga_selected_population'][i][j]
             DHN_network_list = DHN_network_list
             DCN_network_list = DCN_network_list
-            epsInd = cp["epsIndicator"]
-
 
             for ind in pop:
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
