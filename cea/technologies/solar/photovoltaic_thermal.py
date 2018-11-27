@@ -668,7 +668,7 @@ def main(config):
 
     # weather data
     weather_data = epwreader.epw_reader(config.weather)
-    date_local = solar_equations.calc_date_local_from_weather_file(weather_data, latitude, longitude)
+    date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done.')
 
     building_count = len(list_buildings_names)

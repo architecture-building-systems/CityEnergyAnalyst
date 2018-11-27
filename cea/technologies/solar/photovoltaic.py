@@ -58,11 +58,11 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    date_local = solar_equations.calc_date_local_from_weather_file(weather_data, latitude, longitude)
+    datetime_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
@@ -87,7 +87,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, panel_properties_PV)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential

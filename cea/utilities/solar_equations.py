@@ -36,16 +36,16 @@ def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     return obs, sun
 
 
-def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
+def pyephem(datetime_local, latitude, longitude, altitude=0, pressure=101325,
             temperature=12):
     # Written by Will Holmgren (@wholmgren), University of Arizona, 2014
 
     try:
-        time_utc = time.tz_convert('UTC')
+        datetime_utc = datetime_local.tz_convert('UTC')
     except ValueError:
         raise ('Unknown time zone from the case study.')
 
-    sun_coords = pd.DataFrame(index=time)
+    sun_coords = pd.DataFrame(index=datetime_local)
 
     obs, sun = _ephem_setup(latitude, longitude, altitude,
                             pressure, temperature)
@@ -54,7 +54,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     # this is the pressure and temperature corrected apparent alt/az.
     alts = []
     azis = []
-    for thetime in time_utc:
+    for thetime in datetime_utc:
         obs.date = ephem.Date(thetime)
         sun.compute(obs)
         alts.append(sun.alt)
@@ -67,7 +67,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     obs.pressure = 0
     alts = []
     azis = []
-    for thetime in time_utc:
+    for thetime in datetime_utc:
         obs.date = ephem.Date(thetime)
         sun.compute(obs)
         alts.append(sun.alt)
@@ -86,20 +86,20 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
-def calc_date_local_from_weather_file(weather_data, latitude, longitude):
+def calc_datetime_local_from_weather_file(weather_data, latitude, longitude):
     # read date from the weather file
     year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+    datetime = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
 
     # get local time zone
-    time_zone = get_local_time_zone(latitude, longitude)
+    etc_timezone = get_local_etc_timezone(latitude, longitude)
 
     # convert to local time zone
-    date_local = date.tz_localize(tz=time_zone)
+    datetime_local = datetime.tz_localize(tz=etc_timezone)
 
-    return date_local
+    return datetime_local
 
-def get_local_time_zone(latitude, longitude):
+def get_local_etc_timezone(latitude, longitude):
     '''
     This function gets the time zone at a given latitude and longitude in 'Etc/GMT' format.
     This time zone format is used in order to avoid issues caused by Daylight Saving Time (DST) (i.e., redundant or
@@ -124,19 +124,19 @@ def get_local_time_zone(latitude, longitude):
 
     return time_zone
 
-def calc_sun_properties(latitude, longitude, weather_data, date_local, config):
+def calc_sun_properties(latitude, longitude, weather_data, datetime_local, config):
     solar_window_solstice = config.solar.solar_window_solstice
-    hour_date = date_local.hour
-    min_date = date_local.minute
-    day_date = date_local.dayofyear
+    hour_date = datetime_local.hour
+    min_date = datetime_local.minute
+    day_date = datetime_local.dayofyear
     worst_hour = calc_worst_hour(latitude, weather_data, solar_window_solstice)
 
     # solar elevation, azimuth and values for the 9-3pm period of no shading on the solar solstice
-    sun_coords = pyephem(date_local, latitude, longitude)
+    sun_coords = pyephem(datetime_local, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
-    worst_sh = sun_coords['elevation'].loc[date_local[worst_hour]]
-    worst_Az = sun_coords['azimuth'].loc[date_local[worst_hour]]
+    worst_sh = sun_coords['elevation'].loc[datetime_local[worst_hour]]
+    worst_Az = sun_coords['azimuth'].loc[datetime_local[worst_hour]]
 
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
