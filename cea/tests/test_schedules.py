@@ -49,7 +49,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
             architecture_DB=architecture_DB,
             list_uses=['SERVERROOM', 'PARKING']),
-            [0.5, 0.2])
+            ([0.5, 0.2], [0.5, 0.2], [0.5, 0.2]))
 
 
 class TestScheduleCreation(unittest.TestCase):
