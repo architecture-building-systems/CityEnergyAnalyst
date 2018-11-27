@@ -280,7 +280,7 @@ class BuildingProperties(object):
                     building=building))
         df['NFA_m2'] = df['GFA_m2'] * df['Ns']  # net floor area: all occupied areas in the building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
-        df['Aef'] = df['NFA_m2'] * E_S  # electrified area: share of net floor area that is also electrified
+        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
         df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
 
         if 'Cm_Af' in self.get_overrides_columns():
