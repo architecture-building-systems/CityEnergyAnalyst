@@ -16,7 +16,7 @@ __status__ = "Production"
 
 # DEFAULT BUILDING GEOMETRY
 H_F = 3  # average height per floor in m
-E_S = 0.9  # franction of NFA that has electricity in every building
+E_S = 0.9  # fraction of GFA that has electricity in every building
 D = 20  # in mm the diameter of the pipe to calculate losses
 
 # SOLAR
