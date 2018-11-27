@@ -43,14 +43,13 @@ class TestBuildingPreprocessing(unittest.TestCase):
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
-        test_results = correct_archetype_areas(prop_architecture_df=pd.DataFrame(
-            data=[['B1', 0.5, 0.5, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 1000, 1920, 'R']],
-            columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
-                                               architecture_DB=architecture_DB, list_uses=['SERVERROOM', 'PARKING'])
-        self.assertAlmostEqual(test_results[0], 0.5)
-        self.assertAlmostEqual(test_results[1], 0.2)
-
-
+        self.assertEqual(correct_archetype_areas(
+            prop_architecture_df=pd.DataFrame(
+                data=[['B1', 0.5, 0.5, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 1000, 1920, 'R']],
+                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
+            architecture_DB=architecture_DB,
+            list_uses=['SERVERROOM', 'PARKING']),
+            [0.5, 0.2])
 
 
 class TestScheduleCreation(unittest.TestCase):
