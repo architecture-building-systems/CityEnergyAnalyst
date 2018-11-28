@@ -12,6 +12,7 @@ from cea.resources.sewage_heat_exchanger import main as sewage_potential_main
 from cea.resources.lake_potential import main as lake_potential_main
 from cea.technologies.thermal_network.thermal_network_matrix import main as thermal_network_main
 from cea.technologies.thermal_network.network_layout.main import main as thermal_network_layout
+from cea.supply.supply_system_simulation import main as supply_system_simulation
 
 # get global variables
 gv = cea.globalvar.GlobalVariables()
@@ -44,7 +45,6 @@ lake_potential_main(config_CH)
 # run thermal network calculation
 config_CH.thermal_network.network_type = 'DH'
 thermal_network_main(config_CH)
-# set
 # set optimization parameters in config file and run optimization
 config_CH.optimization.initialind = 2
 config_CH.optimization.ngen = 2
@@ -81,9 +81,15 @@ sewage_potential_main(config_SG)
 lake_potential_main(config_SG)
 # create thermal network layout
 thermal_network_layout(config_SG)
-# run thermal network calculation
+# set thermal network type and run thermal network calculation
 config_SG.thermal_network.network_type = 'DC'
 thermal_network_main(config_SG)
+# set decentralized system simulation parameters and run decentralized system simulation
+config_SG.supply_system_simulation.centralized_vcc = 0.0
+config_SG.supply_system_simulation.centralized_ach = 0.0
+config_SG.supply_system_simulation.centralized_storage = 0.0
+config_SG.supply_system_simulation.dc_connected_buildings = ''
+supply_system_simulation(config_SG)
 # set optimization parameters in config file and run optimization
 config_SG.optimization.initialind = 2
 config_SG.optimization.ngen = 2
