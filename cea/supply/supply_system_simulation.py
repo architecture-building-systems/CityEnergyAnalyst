@@ -1,6 +1,7 @@
 """
-This tool simulates the performances of one supply system configuration (equivalent to one individual in the optimization).
-The users can decide the cooling system configuration at the centralized and decentralized locations, as well as the buildings that are connected to the cooling network.
+This tool simulates the performances of one supply system configuration (equivalent to one individual in the
+optimization). The users can decide the cooling system configuration at the centralized and decentralized locations, as
+well as the buildings that are connected to the cooling network.
 """
 
 from __future__ import division
