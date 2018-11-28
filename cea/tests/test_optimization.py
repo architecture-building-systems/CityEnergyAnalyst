@@ -1,7 +1,6 @@
 import cea.config
 import cea.inputlocator
 import cea.globalvar
-from cea.optimization.optimization_main import main as optimization_main
 from cea.datamanagement.data_helper import data_helper
 from cea. demand.demand_main import demand_calculation
 from cea.resources.radiation_daysim.radiation_main import main as radiation_main
@@ -13,6 +12,7 @@ from cea.resources.lake_potential import main as lake_potential_main
 from cea.technologies.thermal_network.thermal_network_matrix import main as thermal_network_main
 from cea.technologies.thermal_network.network_layout.main import main as thermal_network_layout
 from cea.supply.supply_system_simulation import main as supply_system_simulation
+from cea.optimization.optimization_main import main as optimization_main
 
 # get global variables
 gv = cea.globalvar.GlobalVariables()
