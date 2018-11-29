@@ -25,6 +25,7 @@ config_CH = cea.config.Configuration()
 config_CH.scenario = locator_CH.scenario
 config_CH.weather = locator_CH.weather_path
 config_CH.region = 'CH'
+config_CH.multiprocessing = False
 # run data helper
 data_helper(locator_CH, config_CH, prop_architecture_flag=True, prop_hvac_flag=True, prop_comfort_flag=True,
             prop_internal_loads_flag=True, prop_supply_systems_flag=True, prop_restrictions_flag=True)
@@ -62,6 +63,7 @@ config_SG = cea.config.Configuration()
 config_SG.scenario = locator_SG.scenario
 config_SG.weather = locator_SG.weather_path
 config_SG.region = 'SG'
+config_SG.multiprocessing = False
 # run data helper
 data_helper(locator_SG, config_SG, prop_architecture_flag=True, prop_hvac_flag=True, prop_comfort_flag=True,
             prop_internal_loads_flag=True, prop_supply_systems_flag=True, prop_restrictions_flag=True)
