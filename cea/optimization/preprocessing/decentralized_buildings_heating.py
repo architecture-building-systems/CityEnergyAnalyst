@@ -21,10 +21,10 @@ import cea.technologies.substation as substation
 
 def disconnected_buildings_heating_main(locator, building_names, config, prices, lca):
     """
-    Computes the parameters for the operation of disconnected buildings
-    output results in csv files.
+    Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
-    each technology. it is a classical combinatorial problem.
+    each technology. It is a classical combinatorial problem.
+
     :param locator: locator class
     :param building_names: list with names of buildings
     :type locator: class
