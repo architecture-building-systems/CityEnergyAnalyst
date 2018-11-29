@@ -6,47 +6,18 @@ before posting. We appreciate your contribution!
 
 The table below contains a number of common issues that may arise while Installing or using CEA:
 
-.. csv-table:: Known Issues
+.. csv-table::
     :header: "Issue #", "Regarding", "Description"
-    :widths: 12, 20, 40
+    :widths: 8, 15, 40
 
     "`1577 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1577>`_", "ArcGIS < 10.6", "Internet Explorer Script Error:
     An error has occurred in the script of this page. Do you want to continue running scripts on this page?"
-
     "`1704 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1704>`_", "Installation", "Error during installation via
     command line: Import Error: no module named arcpy"
-    "Update", "Fiona/GDAL", "After the installation you experience an error::
+    "`1708 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1708>`_", "Fiona/GDAL", "Error after installation via command line
+    ImportError: DLL load failed: The specified module could not be found."
+    "`1709 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1709>`_", "daysim_main.py", "Error when running daysim_main.py: .wea weather file cannot be found"
 
-        ImportError: DLL load failed: The specified module could not be found.
-
-    Try copying::
-
-        C:\Users\your_name\Anaconda2\envs\cea\proj.dll
-        TO
-        C:\Users\your_name\Anaconda2\envs\cea\Library\bin
-
-    OR::
-
-      C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll
-      TO
-      C:\Users\your_name\Anaconda2\envs\cea\Library\bin
-
-     "
-    "Update", "daysim_main.py", "Error when running daysim_main.py::
-
-        .wea weather file cannot be found
-
-    In the subfiles inputlocator.py/tempfile.py, the environment variable is not correctly read if the username
-    contains a space.
-    If the original path for the TEMP environment variable is::
-
-        C:\Users\Mister Tester\AppData\Local\Temp
-
-    it is read as::
-
-        C:\Users\MisterT~1\AppData\Local\Temp
-
-    "
 Report a new issue
 ------------------
 
