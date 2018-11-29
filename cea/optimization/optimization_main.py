@@ -41,6 +41,7 @@ def moo_optimization(locator, weather_file, gv, config):
         - lake water potential: run cea/resources/lake_potential.py
         - thermal network simulation: run cea/technologies/thermal_network/thermal_network_matrix.py
           if no network is currently present in the case study, consider running network_layout/main.py first
+        - decentralized building simulation: run cea/optimization/preprocessing/decentralized_building_main.py
 
     :param locator: path to input locator
     :param weather_file: path to weather file
