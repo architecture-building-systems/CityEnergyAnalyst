@@ -12,17 +12,9 @@ The table below contains a number of common issues that may arise while Installi
 
     "`1577 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1577>`_", "ArcGIS < 10.6", "Internet Explorer Script Error:
     An error has occurred in the script of this page. Do you want to continue running scripts on this page?"
-    "Update", "ArcGIS", "During the ``cea install-toolbox`` you get this error::
 
-        ImportError: no module named arcpy
-
-    Check your home directory for a file called ``cea_arcgis.pth`` containing these three lines::
-
-        C:\Program Files (x86)\ArcGIS\Desktop10.5\bin64
-        C:\Program Files (x86)\ArcGIS\Desktop10.5\arcpy
-        C:\Program Files (x86)\ArcGIS\Desktop10.5\Scripts
-
-    Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals."
+    "`1704 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1704>`_", "Installation", "Error during installation via
+    command line: Import Error: no module named arcpy"
     "Update", "Fiona/GDAL", "After the installation you experience an error::
 
         ImportError: DLL load failed: The specified module could not be found.
