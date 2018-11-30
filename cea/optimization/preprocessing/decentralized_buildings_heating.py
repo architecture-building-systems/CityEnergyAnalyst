@@ -55,11 +55,9 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         :param mdot: mass flow
         :param TsupDH: supply temeperature
         :param Tret: return temperature
-        :param gv: global variables class
         :type mdot: float
         :type TsupDH: float
         :type Tret: float
-        :type gv: class
         :return: Qload: load of the distribution
         :rtype: float
         """

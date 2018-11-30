@@ -70,7 +70,7 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
     demand_main.demand_calculation(locator, config)
 
     #   prepare the inputs for feeding into the neural network
-    urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv,
+    urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                 nn_delay, climatic_variables, region, year,
                                                                 use_daysim_radiation,use_stochastic_occupancy)
 

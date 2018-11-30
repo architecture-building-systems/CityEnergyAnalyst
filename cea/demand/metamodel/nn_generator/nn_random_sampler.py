@@ -83,7 +83,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
         config.demand.override_variables = True
         demand_main.demand_calculation(locator, config)
         #   prepare the inputs for feeding into the neural network
-        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv,
+        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                     nn_delay, climatic_variables, region, year,use_daysim_radiation)
         #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
         urban_input_matrix, urban_taget_matrix = input_dropout(urban_input_matrix, urban_taget_matrix)
