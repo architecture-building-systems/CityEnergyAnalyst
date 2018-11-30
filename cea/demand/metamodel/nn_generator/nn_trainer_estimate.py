@@ -109,7 +109,7 @@ def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
     return NN_input_ready
 
 
-def input_estimate_prepare_multi_processing(building_name, gv, locator, climatic_variables, region, year,
+def input_estimate_prepare_multi_processing(building_name, locator, climatic_variables, region, year,
                                             use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
                                             building_properties, schedules_dict, date):
     '''
@@ -123,7 +123,7 @@ def input_estimate_prepare_multi_processing(building_name, gv, locator, climatic
 
 
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, region, year,
                    use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
                    building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
