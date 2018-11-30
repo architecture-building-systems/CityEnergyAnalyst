@@ -199,7 +199,7 @@ Utilities:
   description: dbf => xls => DBF
   interfaces: [cli, arcgis, dashboard]
   module: cea.utilities.dbf
-  parameters: ['dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
+  parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
 - name: test
   label: Test CEA
