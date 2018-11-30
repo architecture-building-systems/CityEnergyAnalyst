@@ -120,8 +120,6 @@ def simulate_demand_sample(locator, config, output_parameters):
     :rtype: pandas.DataFrame
     """
 
-    gv = cea.globalvar.GlobalVariables()
-
     # MODIFY CONFIG FILE TO RUN THE DEMAND FOR ONLY SPECIFIC QUANTITIES
     config.demand.resolution_output = "monthly"
     config.multiprocessing = False
