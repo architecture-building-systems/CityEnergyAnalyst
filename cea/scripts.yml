@@ -194,19 +194,12 @@ Thermal networks:
 
 Utilities:
 
-- name: dbf-to-excel
-  label: DBF to Excel
-  description: dbf => xls
+- name: dbf-to-excel-to-dbf
+  label: DBF to Excel to DBF
+  description: dbf => xls => DBF
   interfaces: [cli, arcgis, dashboard]
-  module: cea.interfaces.cli.dbf_to_excel
-  parameters: ['dbf-tools:dbf-file', 'dbf-tools:excel-file']
-
-- name: excel-to-dbf
-  label: Excel to DBF
-  description: xls => dbf
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.interfaces.cli.excel_to_dbf
-  parameters: ['dbf-tools:excel-file', 'dbf-tools:dbf-file']
+  module: cea.utilities.dbf
+  parameters: ['dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
 - name: test
   label: Test CEA
