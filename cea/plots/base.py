@@ -6,8 +6,10 @@ Implements base classes to derive plot classes from. The code in py:mod:`cea.plo
 py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category.
 """
 
+import os
 import plotly.graph_objs
 import plotly.offline
+import cea.inputlocator
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Daren Thomas"
@@ -33,30 +35,28 @@ class PlotBase(object):
     def id(cls):
         return cls.name.lower().replace(' ', '-')  # use for js/html etc.
 
-    def __init__(self, config, parameters):
+    def __init__(self, project, parameters):
+        self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
         self.layout = None  # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
 
-        self.config = config
         self.parameters = parameters
 
-        for parameter_name in parameters:
-            assert parameter_name in self.expected_parameters, "Unexpected parameter {}, expected {}".format(
-                parameter_name, self.expected_parameters.keys()
-            )
         for parameter_name in self.expected_parameters:
             assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     @property
+    def locator(self):
+        """
+        :return: cea.inputlocator.InputLocator
+        """
+        return cea.inputlocator.InputLocator(os.path.join(self.project, self.parameters['scenario-name']))
+
+    @property
     def title(self):
-        if set(self.buildings) != set(self.locator.get_zone_building_names()):
-            if len(self.buildings) == 1:
-                return "%s for Building %s" % (self.name, self.buildings[0])
-            else:
-                return "%s for Selected Buildings" % self.name
-        return "%s for District" % self.name
+        raise NotImplementedError('Subclasses need to implement self.title')
 
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
@@ -74,18 +74,8 @@ class PlotBase(object):
 
     @property
     def output_path(self):
-        """The output path to use for the """
-        assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
-        assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
-
-        if len(self.buildings) == 1:
-            prefix = 'Building_%s' % self.buildings[0]
-        elif len(self.buildings) < len(self.locator.get_zone_building_names()):
-            prefix = 'Selected_Buildings'
-        else:
-            prefix = 'District'
-        fname = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
-        return self.locator.get_timeseries_plots_file(fname, self.category_path)
+        """The output path to use for the plot"""
+        raise NotImplementedError('Subclasses need to implement self.output_path')
 
     def remove_unused_fields(self, data, fields):
         """
