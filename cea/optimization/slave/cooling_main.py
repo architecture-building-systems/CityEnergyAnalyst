@@ -1,7 +1,7 @@
 """
 Disctrict Cooling Network Calculations.
 
-Use free cooling from Lake as long as possible (Qmax Lake from gv and HP Lake operation from slave)
+Use free cooling from Lake as long as possible ( HP Lake operation from slave)
 If Lake exhausted, then use other supply technologies
 
 """
@@ -38,17 +38,15 @@ __status__ = "Production"
 
 # technical model
 
-def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config, reduced_timesteps_flag):
+def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, prices, lca, config, reduced_timesteps_flag):
     """
     Computes the parameters for the cooling of the complete DCN
 
     :param locator: path to res folder
     :param ntwFeat: network features
-    :param gv: global variables
     :param prices: Prices imported from the database
     :type locator: string
     :type ntwFeat: class
-    :type gv: class
     :type prices: class
     :return: costs, co2, prim
     :rtype: tuple
