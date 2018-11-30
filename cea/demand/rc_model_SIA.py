@@ -2,8 +2,8 @@
 
 
 from __future__ import division
-
 import numpy as np
+from cea.demand import constants
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,6 +19,10 @@ RC model calculations according to sia 2044
 
 Merkblatt 2044 Kilimatisierte Gebauede - Standard-Berechnungsverfahren fuer den Leistungs-und Energiebedarf
 '''
+
+# import constants
+T_WARNING_LOW = constants.T_WARNING_LOW
+T_WARNING_HIGH = constants.T_WARNING_HIGH
 
 # TODO: documentation
 
@@ -607,6 +611,16 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
         = _calc_rc_model_temperatures(Ea, El, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
+
+    if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
+            or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:
+        raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
+                        " The results were Tint = {}, theta_c = {}, theta_m = {},"
+                        " Check building geometry and internal loads! Building might be too small in size or"
+                        " architecture parameter Hs = {} might be too small for this geometry. Current bounds of range"
+                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs,
+                                                                                   T_WARNING_LOW, T_WARNING_HIGH))
+
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
                      'theta_ec': theta_ec, 'theta_em': theta_em, 'h_ea': h_ea, 'h_ec': h_ec, 'h_em': h_em,
                      'h_op_m': h_op_m}
