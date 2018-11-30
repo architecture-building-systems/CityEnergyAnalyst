@@ -207,8 +207,10 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
+    PipeLifeTime = 40.0  # years, Data from A&W
+    PipeInterestRate = 0.05  # 5% interest rate
     network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
-    network_costs_a_USD = network_costs_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
+    network_costs_a_USD = network_costs_USD * PipeInterestRate * (1+ PipeInterestRate) ** PipeLifeTime / ((1+PipeInterestRate) ** PipeLifeTime - 1)
     costs_a_USD = network_costs_a_USD
     CO2_kgCO2 = 0
     prim_MJ = 0
@@ -426,7 +428,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, locator, lca, config)
     costs_a_USD += Capex_a_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
