@@ -88,7 +88,6 @@ def xls_to_dbf(input_file, output_path, output_file_name):
 
 def dbf_to_xls(input_file, output_path, output_file_name):
     df = dbf_to_dataframe(input_file)
-    df.to_excel(index=False)
     df.to_excel(os.path.join(output_path, output_file_name+".xlsx"), index=False)
 
 

@@ -51,7 +51,7 @@ cea.optimization.slave.least\_cost module
 cea.optimization.slave.slave\_main module
 -----------------------------------------
 
-.. automodule:: cea.optimization.slave.heating_calculations_of_DH_buildings
+.. automodule:: cea.optimization.slave.heating_main
     :members:
     :undoc-members:
     :show-inheritance:

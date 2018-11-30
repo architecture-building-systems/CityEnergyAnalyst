@@ -14,7 +14,6 @@ Subpackages
     cea.analysis.costs
     cea.analysis.lca
     cea.analysis.multicriteria
-    cea.analysis.retrofit
     cea.analysis.sensitivity
     cea.analysis.uncertainty
 
