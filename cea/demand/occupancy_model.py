@@ -200,7 +200,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
     # define schedules and codes
     occupant_schedules = ['ve', 'Qs', 'X']
-    electricity_schedules = ['Ea', 'El', 'Ere', 'Ed']
+    electricity_schedules = ['Ea', 'El', 'Qcre', 'Ed']
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
     # schedule_codes define which archetypal schedule should be used for the given schedule
@@ -240,7 +240,8 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
             # for all other schedules, the database schedule is normalized by the schedule for people and then 
             # multiplied by the number of people from the stochastic calculation
-            current_stochastic_schedule /= occupants_in_current_use
+            if occupants_in_current_use > 0:
+                current_stochastic_schedule /= occupants_in_current_use
             unoccupied_times = np.array([i == 0 for i in archetype_schedules[num][schedule_codes['people']]])
             normalized_schedule = make_normalized_stochastic_schedule(current_stochastic_schedule,
                                                                       archetype_schedules[num][
