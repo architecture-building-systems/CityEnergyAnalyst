@@ -625,34 +625,3 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     PEN_used_MJoil = (PEN_HP_MJoil + PEN_gas_MJoil + PEN_wood_MJoil)
 
     return GHG_emitted_tonCO2, PEN_used_MJoil
-
-
-def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
-    """
-    This function estimates the amount of solar installed for a certain configuration
-    based on the number of buildings connected to the grid.
-
-    :param fNameTotalCSV: name of the csv file
-    :param nBuildingsConnected: number of the buildings connected to the grid
-    :param gv: global variables
-    :type fNameTotalCSV: string
-    :type nBuildingsConnected: int
-    :type gv: class
-    :return: PeakPowerAvgkW
-    :rtype: float
-    """
-    solar_results = pd.read_csv(fNameTotalCSV, nBuildingsConnected)
-    AreaAllowed = np.array(solar_results['Af'])
-    nFloors = np.array(solar_results['Floors'])
-
-    AreaRoof = np.zeros(nBuildingsConnected)
-
-    for building in range(nBuildingsConnected):
-        AreaRoof[building] = AreaAllowed[building] / (nFloors[building] * 0.9)
-
-    PeakPowerAvgkW = np.sum(AreaRoof) * gv.eta_area_to_peak / nBuildingsConnected
-
-    if nBuildingsConnected == 0:
-        PeakPowerAvgkW = 0
-
-    return PeakPowerAvgkW

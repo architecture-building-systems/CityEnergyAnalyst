@@ -268,7 +268,7 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
         Es = 0
         for use in list_uses:
             # if the use is present in the building, find the building archetype properties for that use
-            if prop_architecture_df[use][building] > 0:
+            if prop_architecture_df[use][building] > 0.0:
                 # get archetype code for the current occupancy type
                 current_use_code = use + str(prop_architecture_df['year_start'][building]) + \
                                    str(prop_architecture_df['year_end'][building]) + \
@@ -357,14 +357,14 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                     if use in properties_df.columns:
                         column_total += properties_df[use][building] * occupant_densities[use] * indexed_DB[column][use]
                         people_total += properties_df[use][building] * occupant_densities[use]
-                if people_total > 0:
+                if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
             for building in properties_df.index:
-                average = 0
+                average = 0.0
                 for use in list_uses:
                     average += properties_df[use][building] * indexed_DB[column][use]
                 properties_df.loc[building, column] = average
