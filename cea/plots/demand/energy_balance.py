@@ -13,11 +13,11 @@ import numpy as np
 class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
     name = "Energy balance"
 
-    def __init__(self, config, parameters):
-        super(EnergyBalancePlot, self).__init__(config, parameters)
+    def __init__(self, project, parameters):
+        super(EnergyBalancePlot, self).__init__(project, parameters)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
-        gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
+        gfa_m2 = self. yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.data = calc_monthly_energy_balance(self.data, gfa_m2)
         self.analysis_fields = ['I_sol_kWh',

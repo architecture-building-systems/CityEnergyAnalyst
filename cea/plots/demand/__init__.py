@@ -29,7 +29,6 @@ label = 'Energy demand'
 class DemandPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "demand"
-    category_path = os.path.join('new_basic', 'demand')
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
@@ -40,22 +39,20 @@ class DemandPlotBase(cea.plots.PlotBase):
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
-    def __init__(self, config, parameters):
-        super(DemandPlotBase, self).__init__(config, parameters)
+    def __init__(self, project, parameters):
+        super(DemandPlotBase, self).__init__(project, parameters)
+
+        self.category_path = os.path.join('new_basic', 'demand')
 
         # all plots in this category use the buildings parameter. make it easier to access
         # handle special case of buildings... (only allow buildings for the scenario in question)
-
-        scenario = os.path.join(config.project, parameters['scenario-name'])
-        self.locator = cea.inputlocator.InputLocator(scenario)
-        if 'buildings' in self.parameters:
-            zone_building_names = self.locator.get_zone_building_names()
-            if not self.parameters['buildings']:
-                self.parameters['buildings'] = zone_building_names
-            self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
-                                             b in zone_building_names]
-                                            or zone_building_names)
-            self.buildings = self.parameters['buildings']
+        zone_building_names = self.locator.get_zone_building_names()
+        if not self.parameters['buildings']:
+            self.parameters['buildings'] = zone_building_names
+        self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
+                                         b in zone_building_names]
+                                        or zone_building_names)
+        self.buildings = self.parameters['buildings']
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
@@ -105,7 +102,7 @@ class DemandPlotBase(cea.plots.PlotBase):
         Stores the result in ``self._cache`` since the reduce operation takes a lot of time.
         """
         m_time = os.path.getmtime(self.locator.get_total_demand())  # when was demand script last run?
-        buildings_key = ','.join(self.parameters['buildings'])  # key for looking up in the cache
+        buildings_key = ','.join(self.buildings)  # key for looking up in the cache
         if buildings_key in self._cache:
             # only load hourly_loads once, based on {buildings, mtime}
             cache_mtime, result = self._cache[buildings_key]
@@ -123,10 +120,35 @@ class DemandPlotBase(cea.plots.PlotBase):
         # cache these results for later
         result = functools.reduce(add_fields,
                                  (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
-                                  self.parameters['buildings'])).set_index('DATE')
+                                  self.buildings)).set_index('DATE')
         self._cache[buildings_key] = (m_time, result)
         return result
 
     @property
     def yearly_loads(self):
         return pd.read_csv(self.locator.get_total_demand())
+
+    @property
+    def title(self):
+        """Override the version in PlotBase"""
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
+            if len(self.buildings) == 1:
+                return "%s for Building %s" % (self.name, self.buildings[0])
+            else:
+                return "%s for Selected Buildings" % self.name
+        return "%s for District" % self.name
+
+    @property
+    def output_path(self):
+        """The output path to use for the demand plots"""
+        assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
+        assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
+
+        if len(self.buildings) == 1:
+            prefix = 'Building_%s' % self.buildings[0]
+        elif len(self.buildings) < len(self.locator.get_zone_building_names()):
+            prefix = 'Selected_Buildings'
+        else:
+            prefix = 'District'
+        fname = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
+        return self.locator.get_timeseries_plots_file(fname, self.category_path)

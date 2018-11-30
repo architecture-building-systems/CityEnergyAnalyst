@@ -83,6 +83,10 @@ class PlotCategory(object):
 
     @property
     def plots(self):
+        """
+
+        :return: Generator[PlotBase]
+        """
         for importer, modname, ispkg in pkgutil.iter_modules(self._module.__path__, self._module.__name__ + '.'):
             if ispkg:
                 # only consider modules - not packages
@@ -101,8 +105,14 @@ if __name__ == '__main__':
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
             print('plot_class:', plot_class)
-            plot = plot_class(config, parameters={'scenario-name': config.scenario_name,
-                                                  'buildings': buildings})
+            plot = plot_class(config.project, parameters={
+                'scenario-name': config.scenario_name,
+                'buildings': buildings,
+                'region': config.region,
+            })
             assert plot.name, 'plot missing name: %s' % plot
             assert plot.category_name == category.name
             print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+
+            # plot the plot!
+            plot.plot()

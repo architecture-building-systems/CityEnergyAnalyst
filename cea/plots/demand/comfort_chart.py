@@ -37,8 +37,11 @@ XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
     name = "Comfort Chart"
 
-    def __init__(self, config, parameters):
-        super(ComfortChartPlot, self).__init__(config, parameters)
+    expected_parameters = dict(cea.plots.demand.DemandPlotBase.expected_parameters,
+                               region='general:region')
+
+    def __init__(self, project, parameters):
+        super(ComfortChartPlot, self).__init__(project, parameters)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
@@ -47,7 +50,7 @@ class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         # calculate points of comfort in different conditions
-        dict_graph = calc_data(self.data, self.config, self.locator)
+        dict_graph = calc_data(self.data, self.parameters['region'], self.locator)
 
         # create scatter of comfort
         traces_graph = calc_graph(dict_graph)
@@ -82,7 +85,7 @@ def comfort_chart(data_frame, title, output_path, config, locator):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame, config, locator)
+    dict_graph = calc_data(data_frame, config.region, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -230,7 +233,7 @@ def create_relative_humidity_lines():
     return traces
 
 
-def calc_data(data_frame, config, locator):
+def calc_data(data_frame, region, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -250,7 +253,7 @@ def calc_data(data_frame, config, locator):
     """
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(config.region),
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region),
                                                  true_values=['True', 'TRUE', 'true'],
                                                  false_values=['False', 'FALSE', 'false', u'FALSE'],
                                                  dtype={'has-heating-season': bool,
