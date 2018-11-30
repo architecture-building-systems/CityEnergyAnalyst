@@ -1,10 +1,8 @@
 Known issues
 ============
-CEA uses Github Issues to document new ideas for user interaction or technical `bugs <https://github.com/architecture-building-systems/CityEnergyAnalyst/labels/bug>`_.
-Please read the :doc:`how-to-contribute` guide and review the `open issues <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen+>`_
-before posting. We appreciate your contribution!
+CEA uses Github Issues to document new ideas as well as issues and `bugs <https://github.com/architecture-building-systems/CityEnergyAnalyst/labels/bug>`_.
 
-The table below contains a number of common issues that may arise while Installing or using CEA:
+The table below contains a number of the most common issues:
 
 .. csv-table::
     :header: "Issue #", "Regarding", "Description"
@@ -22,5 +20,10 @@ Report a new issue
 ------------------
 
 For any problems please `post a new issue here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__.
+
+Please read the :doc:`how-to-report-bugs` guide and review the `open issues <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen+>`_
+before posting.
+
 We have a turn-over time of a couple of days.
 
+We appreciate your contribution!
