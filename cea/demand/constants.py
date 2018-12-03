@@ -22,7 +22,7 @@ D = 20  # in mm the diameter of the pipe to calculate losses
 # SOLAR
 RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
 F_F = 0.2  # Frame area faction coefficient
-F_F_SIN = 0.1  # Frame area faction coefficient for Singapore [assumption]
+F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
 
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery

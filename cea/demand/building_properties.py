@@ -19,7 +19,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 H_F = constants.H_F
 E_S = constants.E_S
 F_F = constants.F_F
-F_F_SIN = constants.F_F_SIN
+F_F_SG = constants.F_F_SG
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -894,8 +894,8 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
     # load gv
     thermal_resistance_surface = RSE
-    if region in {'SIN'}:
-        window_frame_fraction = F_F_SIN
+    if region in {'SG'}:
+        window_frame_fraction = F_F_SG
     else:
         window_frame_fraction = F_F
 
