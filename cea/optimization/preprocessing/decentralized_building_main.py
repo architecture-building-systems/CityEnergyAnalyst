@@ -32,12 +32,13 @@ def disconnected_building_main(locator, building_names, config, prices, lca):
     :rtype: tuple
     """
     controls = pd.read_excel(locator.get_archetypes_system_controls(config.region))
-    if controls['has-cooling-season'].item():
-        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
-    elif controls['has-heating-season'].item():
-        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices, lca)
+    if controls['has-cooling-season'].item() or controls['has-heating-season'].item():
+        if controls['has-cooling-season'].item():
+            decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
+        if controls['has-heating-season'].item():
+            decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices, lca)
     else:
-        raise ValueError("the case study has neither a heating nor a cooling season")
+        raise ValueError("The case study has neither a heating nor a cooling season, please specify in system_controls.xlsx")
 
     print "Run decentralized model for buildings"
 
