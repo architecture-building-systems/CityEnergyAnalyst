@@ -278,8 +278,9 @@ class BuildingProperties(object):
                 df.loc[building, 'Hs'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
-        df['Aef'] = df['GFA_m2'] * E_S  # conditioned area only those for electricity
+        df['NFA_m2'] = df['GFA_m2'] * df['Ns']  # net floor area: all occupied areas in the building
+        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
+        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
         df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
 
         if 'Cm_Af' in self.get_overrides_columns():
@@ -303,10 +304,9 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup',
-                  'Aop_bel',
-                  'footprint']
+        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',  'HD', 'Aroof',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'NFA_m2', 'surface_volume', 'Aop_sup',
+                  'Aop_bel', 'footprint']
         result = df[fields]
 
         return result
@@ -482,7 +482,8 @@ class BuildingProperties(object):
 
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
-        return BuildingPropertiesRow(geometry=self.get_prop_geometry(building_name),
+        return BuildingPropertiesRow(name=building_name,
+                                     geometry=self.get_prop_geometry(building_name),
                                      envelope=self.get_prop_envelope(building_name),
                                      occupancy=self.get_prop_occupancy(building_name),
                                      hvac=self.get_prop_hvac(building_name),
@@ -506,11 +507,13 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, geometry, envelope, occupancy, hvac,
+
+    def __init__(self, name, geometry, envelope, occupancy, hvac,
                  rc_model, comfort, internal_loads, age, solar, supply):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
+        self.name = name
         self.geometry = geometry
         self.architecture = EnvelopeProperties(envelope)
         self.occupancy = occupancy  # FIXME: rename to uses!
@@ -666,7 +669,7 @@ class EnvelopeProperties(object):
 
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof', u'Hs', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
+                 u'U_roof', u'Hs', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
@@ -680,6 +683,8 @@ class EnvelopeProperties(object):
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
         self.Hs = envelope['Hs']
+        self.Ns = envelope['Ns']
+        self.Es = envelope['Es']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -858,21 +863,18 @@ def get_envelope_properties(locator, prop_architecture, region):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_construction = ['Name', 'Cm_Af', 'void_deck']
+    fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
-    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
+    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
-    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall],
-                                               on='Name').merge(df_win[fields_win],
-                                                                on='Name').merge(df_shading[fields_shading],
-                                                                                 on='Name').merge(
-        df_construction[fields_construction],
-        on='Name').merge(df_leakage[fields_leakage],
-                         on='Name')
+    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
+                                                                                      on='Name').merge(
+        df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
+        df_leakage[fields_leakage], on='Name')
 
     return envelope_prop
 

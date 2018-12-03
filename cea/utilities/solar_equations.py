@@ -211,8 +211,6 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     :type radiation_csv: .csv
     :param metadata_csv: solar insulation sensor data of each building
     :type metadata_csv: .csv
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
     :return max_annual_radiation: yearly horizontal radiation [Wh/m2/year]
     :rtype max_annual_radiation: float
     :return annual_radiation_threshold: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
