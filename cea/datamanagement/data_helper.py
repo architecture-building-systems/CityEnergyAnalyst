@@ -214,7 +214,7 @@ def calc_category(archetype_DB, age, field, type):
                                              (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
                                              (archetype_DB['standard'] == type)].Code.values[0])
             except IndexError:
-                # raise warnings for e.g. using CH case study with SIN construction
+                # raise warnings for e.g. using CH case study with SG construction
                 warnings.warn(
                     'Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
                 category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \

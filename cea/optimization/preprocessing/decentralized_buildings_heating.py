@@ -43,7 +43,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         'Area']
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
