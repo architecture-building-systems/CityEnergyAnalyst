@@ -76,7 +76,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
 
-    # dataframe with jonned data for categories
+    # dataframe with joined data for categories
     categories_df = building_occupancy_df.merge(building_age_df, on='Name')
 
     # get properties about the construction and architecture
@@ -91,10 +91,10 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
         prop_architecture_df = get_prop_architecture(categories_df, architecture_DB, list_uses)
 
-        # write to shapefile
+        # write to dbf file
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
 
-        fields = ['Name', 'Hs', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+        fields = ['Name', 'Hs', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                   'type_cons', 'type_leak', 'type_roof', 'type_wall', 'type_win', 'type_shade']
 
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
@@ -214,7 +214,7 @@ def calc_category(archetype_DB, age, field, type):
                                              (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
                                              (archetype_DB['standard'] == type)].Code.values[0])
             except IndexError:
-                # raise warnings for e.g. using CH case study with SIN construction
+                # raise warnings for e.g. using CH case study with SG construction
                 warnings.warn(
                     'Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
                 category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
@@ -260,12 +260,15 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
         return last + current * share_of_use
 
     Hs_list = []
-
+    Ns_list = []
+    Es_list = []
     for building in prop_architecture_df.index:
         Hs = 0
+        Ns = 0
+        Es = 0
         for use in list_uses:
             # if the use is present in the building, find the building archetype properties for that use
-            if prop_architecture_df[use][building] > 0:
+            if prop_architecture_df[use][building] > 0.0:
                 # get archetype code for the current occupancy type
                 current_use_code = use + str(prop_architecture_df['year_start'][building]) + \
                                    str(prop_architecture_df['year_end'][building]) + \
@@ -273,9 +276,13 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
                 # recalculate heated floor area as an average of the archetype value for each occupancy type in the
                 # building
                 Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
+                Ns = calc_average(Ns, indexed_DB['Ns'][current_use_code], prop_architecture_df[use][building])
+                Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
         Hs_list.append(Hs)
+        Ns_list.append(Ns)
+        Es_list.append(Es)
 
-    return Hs_list
+    return Hs_list, Ns_list, Es_list
 
 
 def get_prop_architecture(categories_df, architecture_DB, list_uses):
@@ -311,7 +318,8 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
                                                                                                               axis=1)
 
     # adjust share of floor space that is heated ('Hs') for multiuse buildings
-    prop_architecture_df['Hs'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
+    prop_architecture_df['Hs'], prop_architecture_df['Ns'], prop_architecture_df['Es'] = correct_archetype_areas(
+        prop_architecture_df, architecture_DB, list_uses)
 
     return prop_architecture_df
 
@@ -349,14 +357,14 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                     if use in properties_df.columns:
                         column_total += properties_df[use][building] * occupant_densities[use] * indexed_DB[column][use]
                         people_total += properties_df[use][building] * occupant_densities[use]
-                if people_total > 0:
+                if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
             for building in properties_df.index:
-                average = 0
+                average = 0.0
                 for use in list_uses:
                     average += properties_df[use][building] * indexed_DB[column][use]
                 properties_df.loc[building, column] = average

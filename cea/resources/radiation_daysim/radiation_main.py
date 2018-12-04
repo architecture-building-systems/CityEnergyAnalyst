@@ -8,18 +8,12 @@ import pandas as pd
 import time
 import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
-import multiprocessing as mp
-
 import py4design.py3dmodel.fetch as fetch
 import py4design.py2radiance as py2radiance
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
-
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
-
-import fiona
-import pytz, datetime
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -30,21 +24,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-def calc_location_properties(geometry_zone_shp):
-
-    from timezonefinder import TimezoneFinder
-    with fiona.open(geometry_zone_shp) as shp:
-        latitude = round(shp.crs['lat_0'],3)
-        longitude = round(shp.crs['lon_0'],3)
-
-    # get the time zone name
-    tf = TimezoneFinder()
-    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
-    time = pytz.timezone(time_zone).localize(datetime.datetime(2011,1,1)).strftime('%z')
-    time_zone_num = int(time[:3])
-
-    return latitude, longitude, time_zone_num
 
 def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.points_frm_occface(occface)
