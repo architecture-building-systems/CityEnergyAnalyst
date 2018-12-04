@@ -188,7 +188,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
     elif config.district_cooling_network:
         reduced_timesteps_flag = False
-        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, prices, lca, config, reduced_timesteps_flag)
     else:
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
 

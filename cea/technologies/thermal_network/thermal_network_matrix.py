@@ -711,7 +711,7 @@ def calculate_ground_temperature(locator, config):
     weather_file = config.weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
+    T_ground_K = geothermal.calc_ground_temperature(locator, config, T_ambient_C.values, network_depth_m)
     return T_ground_K
 
 
@@ -2867,9 +2867,9 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     material_properties = pd.read_excel(locator.get_thermal_networks(region), sheetname=['MATERIAL PROPERTIES'])[
         'MATERIAL PROPERTIES']
     material_properties = material_properties.set_index(material_properties['material'].values)
-    conductivity_pipe = material_properties.ix['Steel', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
-    conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
-    conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
+    conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
+    conductivity_insulation = material_properties.ix['PUR', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
+    conductivity_ground = material_properties.ix['Soil', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = NETWORK_DEPTH  # [m]
     extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 

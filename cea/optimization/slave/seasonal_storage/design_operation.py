@@ -110,7 +110,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_SCandPVT_gen_Wh = np.zeros(8760)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
                                                               'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(len(Q_SCandPVT_gen_Wh)):
         Q_SCandPVT_gen_Wh[hour] = Q_SC_ET_gen_Wh[hour] + Q_SC_FP_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
