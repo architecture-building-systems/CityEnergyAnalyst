@@ -271,7 +271,7 @@ def objective_function(network_info):
         thermal_network_matrix.main(network_info.config)
 
     ## Cost calculations
-    Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district (network_info)
+    Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)
 
 
     return Capex_total, Opex_total, Costs_total, cost_storage

@@ -152,7 +152,7 @@ def calc_Ctot_cooling_plants(network_info):
 
         if plant_heat_peak_kW > 0:  # we have non 0 demand
             peak_demand_W = plant_heat_peak_kW * 1000  # convert to W
-            print 'Calculating cost of heat production at plant number: ', plant_number
+            print 'Calculating cost of heat production at plant number: ', (plant_number + 1)
             if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                 # calculates operation costs with yearly approximation
 
@@ -535,7 +535,7 @@ def calc_network_size(network_info):
     return float(length_m), float(average_diameter_m)
 
 
-def main(config, locator, gv):
+def main(config):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:
@@ -543,6 +543,9 @@ def main(config, locator, gv):
     """
 
     # initialize key variables
+    # initialize key variables
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     network_info = Thermal_Network(locator, config, network_type, gv)
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
@@ -564,7 +567,7 @@ def main(config, locator, gv):
     network_info.disconnected_buildings_index = disconnected_buildings_index
 
     # calculate total network costs
-    Capex_total, Opex_total, Costs_total, cost_storage = calc_Ctot_cs_district(network_info, locator, config)
+    Capex_total, Opex_total, Costs_total, cost_storage = calc_Ctot_cs_district(network_info)
 
     # calculate network total length and average diameter
     length_m, average_diameter_m = calc_network_size(network_info)
