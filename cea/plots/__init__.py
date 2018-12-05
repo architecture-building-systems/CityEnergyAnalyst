@@ -83,7 +83,7 @@ class Dashboard(object):
     def __init__(self, config, dashboard_dict):
         self.config = config
         self.name = dashboard_dict['name']
-        self.plots = [load_plot(config, plot_dict) for plot_dict in dashboard_dict['plots']]
+        self.plots = [load_plot(config.project, plot_dict) for plot_dict in dashboard_dict['plots']]
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
@@ -104,14 +104,14 @@ class Dashboard(object):
                            'parameters': p.parameters} for p in self.plots]}
 
 
-def load_plot(config, plot_definition):
+def load_plot(project, plot_definition):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
-    print('load_plot', config.scenario, plot_definition)
+    print('load_plot', project, plot_definition)
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
     parameters = plot_definition['parameters']
-    return plot_class(config, parameters)
+    return plot_class(project, parameters)
 
 
 def main(config):
