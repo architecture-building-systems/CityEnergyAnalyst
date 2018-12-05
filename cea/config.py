@@ -175,8 +175,12 @@ class Configuration(object):
 
     def get(self, fqname):
         """Given a string of the form "section:parameter", return the value of that parameter"""
+        return self.get_parameter(fqname).get()
+
+    def get_parameter(self, fqname):
+        """Given a string of the form "section:parameter", return the parameter object"""
         section, parameter = fqname.split(':')
-        return self.sections[section].parameters[parameter].get()
+        return self.sections[section].parameters[parameter]
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
