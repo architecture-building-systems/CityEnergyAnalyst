@@ -47,9 +47,9 @@ def main():
         # demand_df = pd.read_csv(path_to_demand_output(name)['csv'], usecols=(BUILDINGS_DEMANDS_COLUMNS))
         tsd_df = pd.read_excel(path_to_demand_output(name)['xls'])
 
-        # reduce to 24 hours
-        start_t = 3217  # 5/15: 3217, 7/30-8/5: 5040-5063
-        timesteps = 24
+        # reduce to 24 or 168 hours
+        start_t = 5040  # 5/15: 3217, Average Annual 7/30-8/5: 5040-5207
+        timesteps = 168  # 168 (week)
         end_t = (start_t + timesteps)
         # reduced_demand_df = demand_df[start_t:end_t]
         reduced_tsd_df = tsd_df[start_t:end_t]
@@ -75,7 +75,7 @@ def main():
         ## output to hcs
         # change units
         output_df2['T_ext'] = reduced_tsd_df['T_ext']
-        output_df2['rh_ext'] = reduced_tsd_df['rh_ext'] / 100
+        output_df2['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_df2['w_ext'] = reduced_tsd_df['w_ext']
         ## building size
         output_df2.loc[:, 'Af_m2'] = Af_m2[name]
@@ -192,8 +192,11 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
     return m_exhaust_kgpers
 
 
+##  Paths (TODO: connected with cea.config and inputLocator)
+
+
 def path_to_demand_output(building_name):
-    case = 'WTP_CBD_m'
+    case = 'WTP_CBD_m_WP1_OFF'
     path_to_file = {}
     path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
     path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
