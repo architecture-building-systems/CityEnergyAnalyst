@@ -28,7 +28,7 @@ The objective of this step is to collect the minimum set of inputs needed for a 
 
 
 Step 2. Create new project tool
-—-------------------------------
+-------------------------------
 
 CEA holds a particular folder structure in order to do calls between scripts and tools. In addition, CEA uses an specific Geographic Coordinate System (WSG84) and specific Projected Coordinate System (UTM). We have created a tool to standardise your input data with ease.
 
