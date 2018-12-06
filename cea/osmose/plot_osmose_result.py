@@ -4,8 +4,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
-# TECHS = ['HCS_ER0']
+# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
+TECHS = ['HCS_coil']
 Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
 
 
@@ -40,10 +40,10 @@ def main():
 
 def set_up_electricity_df(tech, results, building):
     electricity_df = pd.DataFrame()
-    #lcu
+    # lcu
     electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
     electricity_df['el_aux_lcu'] = results['el_lcu_fan'] * 1000 / Af_m2[building]
-    #oau
+    # oau
     if tech == 'HCS_LD':
         total_el_aux_oau = results['el_oau_in_fan'] + results['el_oau_out_fan']
         electricity_df['el_hp_oau'] = results['el_LDHP'] * 1000 / Af_m2[building]
@@ -57,30 +57,31 @@ def set_up_electricity_df(tech, results, building):
                 electricity_chi_oau = electricity_chi_oau + results[tag_name]
         electricity_df['el_chi_oau'] = electricity_chi_oau * 1000 / Af_m2[building]
     electricity_df['el_aux_oau'] = total_el_aux_oau * 1000 / Af_m2[building]
-    #scu
+    # scu
     electricity_df['el_chi_ht'] = results['el_chi_ht'] * 1000 / Af_m2[building]
     electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
-    #ct
+    # ct
     electricity_df['el_ct'] = results['el_ct'] * 1000 / Af_m2[building]
-    #statistics
+
+    # statistics
     el_stats_df = electricity_df.copy()
-    #el_stats_df = el_stats_df.append(el_stats_df.sum(), ignore_index=True)
+    # el_stats_df = el_stats_df.append(el_stats_df.sum(), ignore_index=True)
     total_df = pd.DataFrame(el_stats_df.sum()).T
     el_stats_df = el_stats_df.append(total_df).reset_index().drop(columns='index')
     el_stats_df['el_total'] = el_stats_df.sum(axis=1)
-    el_stats_df['scu'] = el_stats_df['el_chi_ht']/el_stats_df['el_total']*100
-    el_stats_df['scu_aux'] = el_stats_df['el_aux_scu']/el_stats_df['el_total']*100
-    el_stats_df['lcu'] = el_stats_df['el_chi_lt'] / el_stats_df['el_total']*100
-    el_stats_df['lcu_aux'] = el_stats_df['el_aux_lcu']/el_stats_df['el_total']*100
+    el_stats_df['scu'] = el_stats_df['el_chi_ht'] / el_stats_df['el_total'] * 100
+    el_stats_df['scu_aux'] = el_stats_df['el_aux_scu'] / el_stats_df['el_total'] * 100
+    el_stats_df['lcu'] = el_stats_df['el_chi_lt'] / el_stats_df['el_total'] * 100
+    el_stats_df['lcu_aux'] = el_stats_df['el_aux_lcu'] / el_stats_df['el_total'] * 100
     if tech == 'HCS_LD':
-        el_stats_df['oau'] = el_stats_df['el_hp_oau'] / el_stats_df['el_total']*100
-        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau']/el_stats_df['el_total']*100
+        el_stats_df['oau'] = el_stats_df['el_hp_oau'] / el_stats_df['el_total'] * 100
+        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau'] / el_stats_df['el_total'] * 100
     else:
-        el_stats_df['oau'] = el_stats_df['el_chi_oau'] / el_stats_df['el_total']*100
-        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau']/el_stats_df['el_total']*100
+        el_stats_df['oau'] = el_stats_df['el_chi_oau'] / el_stats_df['el_total'] * 100
+        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau'] / el_stats_df['el_total'] * 100
 
-    el_stats_df['ct'] = el_stats_df['el_ct']/ el_stats_df['el_total']*100
-    el_stats_df.to_csv(path_to_elec_csv(building,tech))
+    el_stats_df['ct'] = el_stats_df['el_ct'] / el_stats_df['el_total'] * 100
+    el_stats_df.to_csv(path_to_elec_csv(building, tech))
     return electricity_df
 
 
@@ -142,8 +143,14 @@ def set_up_operation_df(tech, results):
 
 
 def plot_heat_balance(building, heat_df, results, tech):
-    fig, ax = plt.subplots()
+    # extract parameters
+    time_steps = results.shape[0] - 1
     x_ticks = results.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
     bar_width = 0.5
     opacity = 1
     colors = plt.cm.Set2(np.linspace(0, 1, len(heat_df.columns)))
@@ -155,22 +162,30 @@ def plot_heat_balance(building, heat_df, results, tech):
         ax.bar(x_ticks, heat_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + heat_df[column]
-    ax.set(xlabel='Time [hr]', ylabel='Sensible heat [kWh]', xlim=(1, 24), ylim=(0, 2000))
+    ax.set(xlabel='Time [hr]', ylabel='Sensible heat [kWh]', xlim=(1, time_steps), ylim=(0, 2000))
     ax.legend(loc='upper left')
     # plot line
     ax1 = ax.twinx()
     q_bui_float = pd.to_numeric(results['q_bui'])
-    ax1.plot(x_ticks, q_bui_float, '-o', label='sensible heat gain')
+    ax1.plot(x_ticks, q_bui_float, '-o', linewidth=2, markersize=4, label='sensible heat gain')
     ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
     ax1.legend(loc='upper right')
+    ax1.set_xticks(x_ticks_shown)
+    # plt.show()
     # plot layout
     fig.savefig(path_to_heat_fig(building, tech))
-    # plt.show()
+
 
 
 def plot_water_balance(building, humidity_df, results, tech):
-    fig, ax = plt.subplots()
+    # extract parameters
+    time_steps = results.shape[0] - 1
     x_ticks = results.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
     bar_width = 0.5
     opacity = 1
     colors = plt.cm.Set2(np.linspace(0, 1, len(humidity_df.columns)))
@@ -182,35 +197,49 @@ def plot_water_balance(building, humidity_df, results, tech):
         ax.bar(x_ticks, humidity_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + humidity_df[column]
-    ax.set(xlabel='Time [hr]', ylabel='Water flow [kg/s]', xlim=(1, 24), ylim=(0, 0.3))
+    ax.set(xlabel='Time [hr]', ylabel='Water flow [kg/s]', xlim=(1, time_steps), ylim=(0, 0.3))
     ax.legend(loc='upper left')
     # plot line
     ax1 = ax.twinx()
     w_bui_float = pd.to_numeric(results['w_bui'])
-    ax1.plot(x_ticks, w_bui_float, '-o', label='water gain')
+    ax1.plot(x_ticks, w_bui_float, '-o', linewidth=2, markersize=4, label='water gain')
     ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
+    ax1.set_xticks(x_ticks_shown)
     ax.legend(loc='upper right')
+    # plt.show()
     # plot layout
     fig.savefig(path_to_water_flow_fig(building, tech))
-    # plt.show()
+
 
 
 def plot_electricity_usage(building, results, tech):
     results['el_per_Af'] = results['SU_elec'] * 1000 / Af_m2[building]
+    # extract parameters
+    time_steps = results.shape[0] - 1
     x_ticks = results.index.values
-    fig, ax = plt.subplots()
-    ax.plot(x_ticks, results['el_per_Af'], '-o', label='el_used')
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
+    ax.plot(x_ticks, results['el_per_Af'], '-o', linewidth=2, markersize=4, label='el_used')
     ax.legend(loc='lower right')
-    ax.set(xlabel='Time [hr]', ylabel='Electricity Usage [Wh/m2]', xlim=(1, 24), ylim=(0, 30))
-    ax.set_xticks(x_ticks)
+    ax.set(xlabel='Time [hr]', ylabel='Electricity Usage [Wh/m2]', xlim=(1, time_steps), ylim=(0, 35))
+    ax.set_xticks(x_ticks_shown)
     ax.grid(True)
     fig.savefig(path_to_el_usage_fig(building, tech))
     # plt.show()
 
 
 def plot_electricity_usages(building, electricity_df, results, tech):
-    fig, ax = plt.subplots()
+    # extract parameters
+    time_steps = results.shape[0] - 1
     x_ticks = results.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
     bar_width = 0.5
     opacity = 1
     # colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
@@ -226,30 +255,35 @@ def plot_electricity_usages(building, electricity_df, results, tech):
         ax.bar(x_ticks, electricity_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + electricity_df[column]
-    ax.set(xlabel='Time [hr]', ylabel='Electricity Use [kW]', xlim=(1, 24), ylim=(0, 30))
+    ax.set(xlabel='Time [hr]', ylabel='Electricity Use [kW]', xlim=(1, time_steps), ylim=(0, 35))
+    ax.set_xticks(x_ticks_shown)
     ax.legend(loc='upper left')
     # plot line
     ax1 = ax.twinx()
     total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2[building])
-    ax1.plot(x_ticks, total_el_float, '-o', markersize=5, label='total electricity use', color='steelblue')
+    ax1.plot(x_ticks, total_el_float, '-o', linewidth=2, markersize=4, label='total electricity use', color='steelblue')
     ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
     ax.legend(loc='upper right')
+    # plt.show()
     # plot layout
     fig.savefig(path_to_el_usages_fig(building, tech))
-    # plt.show()
 
 
 def plot_supply_temperature_humidity(building, operation_df, tech):
     # plot
-    fig, ax = plt.subplots()
+    time_steps = operation_df.shape[0]
+    fig_size = (6.6, 5) if time_steps <= 24 else (15.4, 5)
+    fig, ax = plt.subplots(figsize=fig_size)
     x_ticks = operation_df.index.values
-    line1, = ax.plot(x_ticks, operation_df['T_SA'], '-o', linewidth=2,
+    x_ticks_shown = operation_df.index.values if time_steps <= 24 else np.arange(0, time_steps, 12)
+    time_steps = operation_df.shape[0]
+    line1, = ax.plot(x_ticks, operation_df['T_SA'], '-o', linewidth=2, markersize=4,
                      label='T,supply,OAU')
-    line2, = ax.plot(x_ticks, operation_df['w_SA'], '-o', label='w,supply,OAU')
+    line2, = ax.plot(x_ticks, operation_df['w_SA'], '-o', linewidth=2, markersize=4, label='w,supply,OAU')
     ax.legend(loc='lower right')
-    ax.set_xticks(x_ticks)
+    ax.set_xticks(x_ticks_shown)
     ax.grid(True)
-    plt.xlim(1, 24)
+    plt.xlim(1, time_steps)
     plt.ylim(0, 25)
     plt.xlabel('Time [hr]')
     plt.ylabel('Temperature [C] ; Humidity Ratio [g/kg d.a.]')
@@ -271,6 +305,15 @@ def path_to_OAU_supply_fig(building, tech):
     path_to_file = os.path.join(path_to_folder, '%s_%s_OAU_supply.png' % (building, tech))
     return path_to_file
 
+## auxiliary functions
+def set_xtick_shown(x_ticks, time_steps):
+    x_ticks_shown = x_ticks if time_steps <= 24 else np.arange(0, time_steps, 12)
+    return x_ticks_shown
+
+
+def set_figsize(time_steps):
+    fig_size = (6.6, 5) if time_steps <= 24 else (15.4, 5)
+    return fig_size
 
 def path_to_el_usage_fig(building, tech):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
@@ -294,6 +337,7 @@ def path_to_heat_fig(building, tech):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
     path_to_file = os.path.join(path_to_folder, '%s_%s_heat.png' % (building, tech))
     return path_to_file
+
 
 def path_to_elec_csv(building, tech):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
