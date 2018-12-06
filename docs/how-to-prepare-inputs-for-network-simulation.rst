@@ -12,7 +12,7 @@ Example network
 ---------------
 .. image:: network_shapefiles.png
     :align: center
-    :width: 300px
+    :width: 200px
 
 
 Edges.shp
