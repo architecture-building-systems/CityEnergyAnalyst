@@ -58,7 +58,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     individual = check_invalid(individual, len(building_names), config)
 
 
-    # Initialize objective functions costs, CO2 and primary energy
+# Initialize objective functions costs, CO2 and primary energy
     costs_USD = 0
     GHG_tonCO2 = 0
     PEN_MJoil = 0
@@ -275,7 +275,7 @@ def check_invalid(individual, nBuildings, config):
     sharePlants = 0
     for i in range(N_HEAT):
         sharePlants += individual[2 * i + 1]
-    if abs(sharePlants - 1) > 1E-3:
+    if sharePlants > 1.0 and config.district_heating_network:
         valid = False
 
     shareSolar = 0
@@ -283,7 +283,7 @@ def check_invalid(individual, nBuildings, config):
     for i in range(N_SOLAR):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
-    if nSol > 0 and abs(shareSolar - 1) > 1E-3:
+    if nSol > 0.0 and shareSolar > 1.0:
         valid = False
 
     if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
@@ -308,7 +308,7 @@ def check_invalid(individual, nBuildings, config):
     sharePlants = 0
     for i in range(N_COOL):
         sharePlants += individual[heating_part + 2 * i + 1]
-    if abs(sharePlants - 1) > 1E-3:
+    if sharePlants > 1.0 and config.district_cooling_network:
         valid = False
 
     if not valid:
