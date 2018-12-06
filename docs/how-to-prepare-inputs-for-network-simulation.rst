@@ -38,4 +38,4 @@ Nodes.shp
 
 Where to store the file?
 ------------------------
-The two shape files (``nodes.shp`` & ``edges.shp``) should be kept in either **DH** (heating network) or **DC** (cooling network) folder under this path: ``case study\inputs\networks``.
+The two shape files (``nodes.shp`` & ``edges.shp``) should be kept in either a **DH** (heating network) or **DC** (cooling network) folder under this path: ``your case study\inputs\networks``.
