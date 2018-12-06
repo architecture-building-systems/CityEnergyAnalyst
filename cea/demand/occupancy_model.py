@@ -179,7 +179,7 @@ def calc_process_schedules(schedules, archetype_schedules, bpr):
     # refrigeration schedule is only defined for cool room archetype
     schedules['Qcre'] = np.array(archetype_schedules['COOLROOM'][1]) * bpr.rc_model['Aef']
     # data center schedule is only defined for server room archetype
-    schedules['Ed'] = np.array(archetype_schedules['SERVERROOM'][1] * bpr.rc_model['Aef'])
+    schedules['Ed'] = np.array(archetype_schedules['SERVERROOM'][1]) * bpr.rc_model['Aef']
 
     return schedules
 
