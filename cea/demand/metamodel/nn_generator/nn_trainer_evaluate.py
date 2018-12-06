@@ -62,11 +62,11 @@ def get_nn_performance(model, scalerT, scalerX, urban_input_matrix, urban_taget_
     return urban_input_matrix, urban_taget_matrix
 
 
-def eval_nn_performance(locator, random_variables, target_parameters, list_building_names, gv,
+def eval_nn_performance(locator, random_variables, target_parameters, list_building_names,
                         config, nn_delay, climatic_variables, region, year, use_daysim_radiation,
                         use_stochastic_occupancy):
     urban_input_matrix, urban_taget_matrix = sampling_single(locator, random_variables, target_parameters,
-                                                             list_building_names, gv, config,
+                                                             list_building_names, config,
                                                              nn_delay, climatic_variables, region, year,
                                                              use_daysim_radiation,use_stochastic_occupancy)
     model, scalerT, scalerX = nn_model_collector(locator)
@@ -74,7 +74,6 @@ def eval_nn_performance(locator, random_variables, target_parameters, list_build
 
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
@@ -82,9 +81,9 @@ def main(config):
     region = config.region
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
-    eval_nn_performance(locator, random_variables, target_parameters, list_building_names, gv,
+    eval_nn_performance(locator, random_variables, target_parameters, list_building_names,
                         config=config, nn_delay=config.neural_network.nn_delay,
                         climatic_variables=config.neural_network.climatic_variables, region=config.region,
                         year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,

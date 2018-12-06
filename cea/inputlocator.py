@@ -124,17 +124,17 @@ class InputLocator(object):
     def get_optimization_slave_electricity_activation_pattern_processed(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_multi_criteria_results_folder(), 'gen' + str(gen_num) +
-                            '_ind%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
+                            '_ind_%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
 
-    def get_optimization_slave_natural_gas_imports(self, ind_num, gen_num, category):
+    def get_optimization_slave_natural_gas_imports(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
-                            '_ind%(ind_num)s_Natural_Gas_Imports.csv' % locals())
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Natural_Gas_Imports.csv' % locals())
 
     def get_optimization_slave_energy_mix_based_on_technologies(self, ind_num, gen_num, category):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
-                            '_ind%(ind_num)s_yearly_energy_mix_based_on_technologies.csv' % locals())
+                            '_ind_%(ind_num)s_yearly_energy_mix_based_on_technologies.csv' % locals())
 
     def get_address_of_individuals_of_a_generation(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -155,6 +155,11 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_heating_InvestmentCostDetailed.csv' % locals())
+
+    def get_optimization_slave_detailed_capacity_of_individual(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_detailed_capacity.csv' % locals())
 
     def get_optimization_slave_investment_cost_detailed_cooling(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -177,22 +182,22 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_Storage_Sizing_Parameters.csv' % locals())
 
-    def get_optimization_disconnected_folder_disc_op_summary_cooling(self):
+    def get_optimization_decentralized_folder_disc_op_summary_cooling(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_cooling.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_cooling.csv')
 
-    def get_optimization_disconnected_folder_disc_op_summary_heating(self):
+    def get_optimization_decentralized_folder_disc_op_summary_heating(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_heating.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_heating.csv')
 
-    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname, configuration):
+    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
-        return os.path.join(self.get_optimization_disconnected_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
 
-    def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
+    def get_optimization_decentralized_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -351,10 +356,10 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "totals")
 
-    def get_optimization_disconnected_folder(self):
-        """scenario/outputs/data/optimization/disconnected
-        Operation pattern for disconnected buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "disconnected")
+    def get_optimization_decentralized_folder(self):
+        """scenario/outputs/data/optimization/decentralized
+        Operation pattern for decentralized buildings"""
+        return self._ensure_folder(self.get_optimization_results_folder(), "decentralized")
 
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -378,17 +383,17 @@ class InputLocator(object):
 
     def get_measurements(self):
         """scenario/inputs/
-        Operation pattern for disconnected buildings"""
+        Operation pattern for decentralized buildings"""
         return self._ensure_folder(self.scenario, 'inputs', 'building-metering', )
 
-    def get_optimization_disconnected_result_file(self, building_name):
-        """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
-        return os.path.join(self.get_optimization_disconnected_folder(),
+    def get_optimization_decentralized_result_file(self, building_name):
+        """scenario/outputs/data/optimization/decentralized/DiscOp_${building_name}_result.csv"""
+        return os.path.join(self.get_optimization_decentralized_folder(),
                             "DiscOp_%(building_name)s_result.csv" % locals())
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
-        Substation results for disconnected buildings"""
+        Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
     def get_optimization_substations_results_file(self, building_name):
@@ -401,7 +406,7 @@ class InputLocator(object):
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax
-        Clustering results for disconnected buildings"""
+        Clustering results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "clustering_sax")
 
     # optimization
@@ -465,6 +470,10 @@ class InputLocator(object):
         """Return a list of all installed epw files in the system"""
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
+
+    def get_weather_dict(self):
+        """Return a dictionary with weather_name -> weather_path for the builtin weather files"""
+        return {name: self.get_weather(name) for name in self.get_weather_names()}
 
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(),'weather')
@@ -573,7 +582,7 @@ class InputLocator(object):
 
     def check_cpg(self, shapefile_path):
         #ensures that the CPG file is the correct one
-        from cea.utilities.standarize_coordinates import ensure_cpg_file
+        from cea.utilities.standardize_coordinates import ensure_cpg_file
         ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
@@ -995,15 +1004,6 @@ class InputLocator(object):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
         return os.path.join(self.get_plots_folder(''), 'Benchmark_scenarios.pdf')
 
-    # HEATMAPS
-    def get_heatmaps_demand_folder(self):
-        """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.get_plots_folder('heatmaps'))
-
-    def get_heatmaps_emission_folder(self):
-        """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.get_plots_folder('heatmaps'))
-
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
@@ -1053,6 +1053,13 @@ class InputLocator(object):
     def get_result_building_NN(self, name):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return os.path.join(self.get_neural_network_folder(), name+'.csv')
+
+    def are_equal(self, path_a, path_b):
+        """Checks to see if two paths are equal"""
+        path_a = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_a))))
+        path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
+        return path_a == path_b
+
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case

@@ -16,13 +16,13 @@ __status__ = "Production"
 
 # DEFAULT BUILDING GEOMETRY
 H_F = 3  # average height per floor in m
-E_S = 0.9  # franction of GFA that has electricity in every building
+E_S = 0.9  # fraction of GFA that has electricity in every building
 D = 20  # in mm the diameter of the pipe to calculate losses
 
 # SOLAR
 RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
 F_F = 0.2  # Frame area faction coefficient
-F_F_SIN = 0.1  # Frame area faction coefficient for Singapore [assumption]
+F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
 
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
@@ -44,16 +44,16 @@ EFFI = 0.6  # efficiency of pumps
 FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
 TWW_SETPOINT = 60  # dhw tank set point temperature in C
 
-
-
 # PHYSICAL
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
-
-C_P_A = 1.008  # specific heat capacity of air in KJ/kgK
 
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
 H_MS = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
 LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the floor area from ISO 13790 Eq. 9
+
+# RC-MODEL TEMPERATURE BOUNDS
+T_WARNING_LOW = -30.0
+T_WARNING_HIGH = 50.0
