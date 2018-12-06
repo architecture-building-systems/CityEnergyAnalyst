@@ -9,7 +9,8 @@ import ephem
 import datetime
 import collections
 from math import *
-#from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
+from timezonefinder import TimezoneFinder
+import pytz
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -20,8 +21,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-# import ephem library
 
 def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     # observer
@@ -37,16 +36,16 @@ def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     return obs, sun
 
 
-def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
+def pyephem(datetime_local, latitude, longitude, altitude=0, pressure=101325,
             temperature=12):
     # Written by Will Holmgren (@wholmgren), University of Arizona, 2014
 
     try:
-        time_utc = time.tz_convert('UTC')
+        datetime_utc = datetime_local.tz_convert('UTC')
     except ValueError:
-        raise ('Unkonw time zone from the case study.')
+        raise ('Unknown time zone from the case study.')
 
-    sun_coords = pd.DataFrame(index=time)
+    sun_coords = pd.DataFrame(index=datetime_local)
 
     obs, sun = _ephem_setup(latitude, longitude, altitude,
                             pressure, temperature)
@@ -55,7 +54,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     # this is the pressure and temperature corrected apparent alt/az.
     alts = []
     azis = []
-    for thetime in time_utc:
+    for thetime in datetime_utc:
         obs.date = ephem.Date(thetime)
         sun.compute(obs)
         alts.append(sun.alt)
@@ -68,7 +67,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     obs.pressure = 0
     alts = []
     azis = []
-    for thetime in time_utc:
+    for thetime in datetime_utc:
         obs.date = ephem.Date(thetime)
         sun.compute(obs)
         alts.append(sun.alt)
@@ -87,34 +86,57 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
-def cal_date_local_from_weather_file(weather_data, config):
-    # read from config
-    if config.region == 'SIN':
-        timezone = 'Singapore'
-    elif config.region == 'CH':
-        timezone = 'Etc/GMT+2'
-    else: raise ValueError('Please specify the timezone of the region.')
-
+def calc_datetime_local_from_weather_file(weather_data, latitude, longitude):
     # read date from the weather file
     year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
-    date_local = date.tz_localize(tz=timezone)
+    datetime = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
 
-    return date_local
+    # get local time zone
+    etc_timezone = get_local_etc_timezone(latitude, longitude)
 
-def calc_sun_properties(latitude, longitude, weather_data, date_local, config):
+    # convert to local time zone
+    datetime_local = datetime.tz_localize(tz=etc_timezone)
+
+    return datetime_local
+
+def get_local_etc_timezone(latitude, longitude):
+    '''
+    This function gets the time zone at a given latitude and longitude in 'Etc/GMT' format.
+    This time zone format is used in order to avoid issues caused by Daylight Saving Time (DST) (i.e., redundant or
+    missing times in regions that use DST).
+    However, note that 'Etc/GMT' uses a counter intuitive sign convention, where West of GMT is POSITIVE, not negative.
+    So, for example, the time zone for Zurich will be returned as 'Etc/GMT-1'.
+
+    :param latitude: Latitude at the project location
+    :param longitude: Longitude at the project location
+    '''
+
+    # get the time zone at the given coordinates
+    tf = TimezoneFinder()
+    time = pytz.timezone(tf.timezone_at(lng=longitude, lat=latitude)).localize(
+        datetime.datetime(2011, 1, 1)).strftime('%z')
+
+    # invert sign and return in 'Etc/GMT' format
+    if time[0] == '-':
+        time_zone = 'Etc/GMT+' + time[2]
+    else:
+        time_zone = 'Etc/GMT-' + time[2]
+
+    return time_zone
+
+def calc_sun_properties(latitude, longitude, weather_data, datetime_local, config):
     solar_window_solstice = config.solar.solar_window_solstice
-    hour_date = date_local.hour
-    min_date = date_local.minute
-    day_date = date_local.dayofyear
+    hour_date = datetime_local.hour
+    min_date = datetime_local.minute
+    day_date = datetime_local.dayofyear
     worst_hour = calc_worst_hour(latitude, weather_data, solar_window_solstice)
 
-    # solar elevation, azuimuth and values for the 9-3pm period of no shading on the solar solstice
-    sun_coords = pyephem(date_local, latitude, longitude)
+    # solar elevation, azimuth and values for the 9-3pm period of no shading on the solar solstice
+    sun_coords = pyephem(datetime_local, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
-    worst_sh = sun_coords['elevation'].loc[date_local[worst_hour]]
-    worst_Az = sun_coords['azimuth'].loc[date_local[worst_hour]]
+    worst_sh = sun_coords['elevation'].loc[datetime_local[worst_hour]]
+    worst_Az = sun_coords['azimuth'].loc[datetime_local[worst_hour]]
 
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
@@ -178,21 +200,17 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config):
+def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
     #. keep sensors above min radiation
     #. eliminate points when hourly production < 50 W/m2
 
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
     :param radiation_csv: solar insulation data on all surfaces of each building
     :type radiation_csv: .csv
     :param metadata_csv: solar insulation sensor data of each building
     :type metadata_csv: .csv
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
     :return max_annual_radiation: yearly horizontal radiation [Wh/m2/year]
     :rtype max_annual_radiation: float
     :return annual_radiation_threshold: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
@@ -613,7 +631,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
         group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
         # calculate mean radiation among surfaces in group
-        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).as_matrix().T
+        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 
         group_count += 1
 

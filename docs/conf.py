@@ -72,6 +72,7 @@ MOCK_MODULES = ['COLOR',
                 'matplotlib.pyplot',
                 'networkx',
                 'numba',
+                'numba.pycc',
                 'pandas',
                 'pandas.util',
                 'pandas.util.testing',
@@ -80,16 +81,17 @@ MOCK_MODULES = ['COLOR',
                 'plotly.offline',
                 'pyDOE',
                 'pycollada',
-                'pyliburo',
-                'pyliburo.gml3dmodel',
-                'pyliburo.py2radiance',
-                'pyliburo.py3dmodel',
-                'pyliburo.py3dmodel.calculate',
-                'pyliburo.py3dmodel.construct',
-                'pyliburo.py3dmodel.fetch',
-                'pyliburo.py3dmodel.modify',
-                'pyliburo.pycitygml',
-                'pyliburo.shp2citygml',
+                'py4design',
+                'py4design.gml3dmodel',
+                'py4design.py2radiance',
+                'py4design.py3dmodel',
+                'py4design.py3dmodel.calculate',
+                'py4design.py3dmodel.construct',
+                'py4design.py3dmodel.fetch',
+                'py4design.py3dmodel.modify',
+                'py4design.pycitygml',
+                'py4design.shp2citygml',
+                'py4design.py3dmodel.utility',
                 'pyproj',
                 'pysal',
                 'pyshp',
@@ -104,8 +106,7 @@ MOCK_MODULES = ['COLOR',
                 'timezonefinder',
                 'vtk',
                 'xlrd',
-                'xlwt',
-                'yaml']
+                'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -166,7 +167,8 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.utilities.compile_pyd_files*'  # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
+                    'modules/cea.optimization.individual_evaluation*',
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.

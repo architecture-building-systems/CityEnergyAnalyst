@@ -73,6 +73,14 @@ cea.technologies.cooling\_tower module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.direct\_expansion\_units module
+------------------------------------------------
+
+.. automodule:: cea.technologies.direct_expansion_units
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.furnace module
 -------------------------------
 
@@ -105,14 +113,6 @@ cea.technologies.heatpumps module
     :undoc-members:
     :show-inheritance:
 
-cea.technologies.lake\_potential module
----------------------------------------
-
-.. automodule:: cea.technologies.lake_potential
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.technologies.pumps module
 -----------------------------
 
@@ -125,14 +125,6 @@ cea.technologies.radiators module
 ---------------------------------
 
 .. automodule:: cea.technologies.radiators
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.technologies.sewage\_heat\_exchanger module
------------------------------------------------
-
-.. automodule:: cea.resources.sewage_heat_exchanger
     :members:
     :undoc-members:
     :show-inheritance:

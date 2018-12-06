@@ -1,8 +1,8 @@
 """
-Lake-cooling network connected to chiller and cooling tower
+Disctrict Cooling Network Calculations.
 
-Use free cooling from Lake as long as possible (Qmax Lake from gv and HP Lake operation from slave)
-If Lake exhausted, use VCC + CT operation
+Use free cooling from Lake as long as possible ( HP Lake operation from slave)
+If Lake exhausted, then use other supply technologies
 
 """
 from __future__ import division
@@ -38,17 +38,15 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config, reduced_timesteps_flag):
+def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, prices, lca, config, reduced_timesteps_flag):
     """
     Computes the parameters for the cooling of the complete DCN
 
     :param locator: path to res folder
     :param ntwFeat: network features
-    :param gv: global variables
     :param prices: Prices imported from the database
     :type locator: string
     :type ntwFeat: class
-    :type gv: class
     :type prices: class
     :return: costs, co2, prim
     :rtype: tuple
@@ -67,6 +65,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     t0 = time.time()
+    DCN_barcode = master_to_slave_vars.DCN_barcode
     print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine
@@ -108,7 +107,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
-    if config.optimization.isheating:
+    if config.district_heating_network:
         try:
             dfSlave = pd.read_csv(
                 locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
@@ -122,14 +121,14 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
         Q_Lake_Array_W = [0]
 
     ### input parameters
-    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size
-    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
+    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size_W
+    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size_W
 
     T_ground_K = calculate_ground_temperature(locator, config)
 
     # sizing cold water storage tank
-    if master_to_slave_vars.Storage_cooling_size > 0:
-        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size
+    if master_to_slave_vars.Storage_cooling_size_W > 0:
+        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_W
         Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
         peak_hour = np.argmax(Q_cooling_req_W)
         area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
@@ -150,10 +149,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                 sheetname="Absorption_chiller",
-                                                 usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e',
-                                                          'IR_%',
-                                                          'LT_yr', 'O&M_%'])
+                                                 sheetname="Absorption_chiller")
     Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
     max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
@@ -209,9 +205,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    costs = ntwFeat.pipesCosts_DCN
-    CO2 = 0
-    prim = 0
+    PipeLifeTime = 40.0  # years, Data from A&W
+    PipeInterestRate = 0.05  # 5% interest rate
+    network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
+    network_costs_a_USD = network_costs_USD * PipeInterestRate * (1+ PipeInterestRate) ** PipeLifeTime / ((1+PipeInterestRate) ** PipeLifeTime - 1)
+    costs_a_USD = network_costs_a_USD
+    CO2_kgCO2 = 0
+    prim_MJ = 0
 
     nBuild = int(np.shape(arrayData)[0])
     if reduced_timesteps_flag == False:
@@ -236,24 +236,30 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     Qh_from_CCGT_W = np.zeros(8760)
     E_gen_CCGT_W = np.zeros(8760)
 
-    opex_var_Lake = np.zeros(8760)
-    opex_var_VCC = np.zeros(8760)
-    opex_var_ACH = np.zeros(8760)
-    opex_var_VCC_backup = np.zeros(8760)
-    opex_var_CCGT = np.zeros(8760)
-    opex_var_CT = np.zeros(8760)
-    co2_Lake = np.zeros(8760)
-    co2_VCC = np.zeros(8760)
-    co2_ACH = np.zeros(8760)
-    co2_VCC_backup = np.zeros(8760)
-    co2_CCGT = np.zeros(8760)
-    co2_CT = np.zeros(8760)
-    prim_energy_Lake = np.zeros(8760)
-    prim_energy_VCC = np.zeros(8760)
-    prim_energy_ACH = np.zeros(8760)
-    prim_energy_VCC_backup = np.zeros(8760)
-    prim_energy_CCGT = np.zeros(8760)
-    prim_energy_CT = np.zeros(8760)
+    opex_var_Lake_USD = np.zeros(8760)
+    opex_var_VCC_USD = np.zeros(8760)
+    opex_var_ACH_USD = np.zeros(8760)
+    opex_var_VCC_backup_USD = np.zeros(8760)
+    opex_var_CCGT_USD = np.zeros(8760)
+    opex_var_CT_USD = np.zeros(8760)
+    E_used_Lake_W = np.zeros(8760)
+    E_used_VCC_W = np.zeros(8760)
+    E_used_VCC_backup_W = np.zeros(8760)
+    E_used_ACH_W = np.zeros(8760)
+    E_used_CT_W = np.zeros(8760)
+    co2_Lake_kgCO2 = np.zeros(8760)
+    co2_VCC_kgCO2 = np.zeros(8760)
+    co2_ACH_kgCO2 = np.zeros(8760)
+    co2_VCC_backup_kgCO2 = np.zeros(8760)
+    co2_CCGT_kgCO2 = np.zeros(8760)
+    co2_CT_kgCO2 = np.zeros(8760)
+    prim_energy_Lake_MJ = np.zeros(8760)
+    prim_energy_VCC_MJ = np.zeros(8760)
+    prim_energy_ACH_MJ = np.zeros(8760)
+    prim_energy_VCC_backup_MJ = np.zeros(8760)
+    prim_energy_CCGT_MJ = np.zeros(8760)
+    prim_energy_CT_MJ = np.zeros(8760)
+    NG_used_CCGT_W = np.zeros(8760)
     calfactor_total = 0
 
     for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
@@ -266,18 +272,22 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
 
         print (hour)
         # save results for each time-step
-        opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
-        opex_var_VCC[hour] = performance_indicators_output['Opex_var_VCC']
-        opex_var_ACH[hour] = performance_indicators_output['Opex_var_ACH']
-        opex_var_VCC_backup[hour] = performance_indicators_output['Opex_var_VCC_backup']
-        co2_Lake[hour] = performance_indicators_output['CO2_Lake']
-        co2_VCC[hour] = performance_indicators_output['CO2_VCC']
-        co2_ACH[hour] = performance_indicators_output['CO2_ACH']
-        co2_VCC_backup[hour] = performance_indicators_output['CO2_VCC_backup']
-        prim_energy_Lake[hour] = performance_indicators_output['Primary_Energy_Lake']
-        prim_energy_VCC[hour] = performance_indicators_output['Primary_Energy_VCC']
-        prim_energy_ACH[hour] = performance_indicators_output['Primary_Energy_ACH']
-        prim_energy_VCC_backup[hour] = performance_indicators_output['Primary_Energy_VCC_backup']
+        opex_var_Lake_USD[hour] = performance_indicators_output['Opex_var_Lake_USD']
+        opex_var_VCC_USD[hour] = performance_indicators_output['Opex_var_VCC_USD']
+        opex_var_ACH_USD[hour] = performance_indicators_output['Opex_var_ACH_USD']
+        opex_var_VCC_backup_USD[hour] = performance_indicators_output['Opex_var_VCC_backup_USD']
+        E_used_Lake_W[hour] = performance_indicators_output['E_used_Lake_W']
+        E_used_VCC_W[hour] = performance_indicators_output['E_used_VCC_W']
+        E_used_VCC_backup_W[hour] = performance_indicators_output['E_used_VCC_backup_W']
+        E_used_ACH_W[hour] = performance_indicators_output['E_used_ACH_W']
+        co2_Lake_kgCO2[hour] = performance_indicators_output['CO2_Lake_kgCO2']
+        co2_VCC_kgCO2[hour] = performance_indicators_output['CO2_VCC_kgCO2']
+        co2_ACH_kgCO2[hour] = performance_indicators_output['CO2_ACH_kgCO2']
+        co2_VCC_backup_kgCO2[hour] = performance_indicators_output['CO2_VCC_backup_kgCO2']
+        prim_energy_Lake_MJ[hour] = performance_indicators_output['Primary_Energy_Lake_MJ']
+        prim_energy_VCC_MJ[hour] = performance_indicators_output['Primary_Energy_VCC_MJ']
+        prim_energy_ACH_MJ[hour] = performance_indicators_output['Primary_Energy_ACH_MJ']
+        prim_energy_VCC_backup_MJ[hour] = performance_indicators_output['Primary_Energy_VCC_backup_MJ']
         calfactor_buildings[hour] = calfactor_output
         Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
         Qc_from_storage_tank_W[hour] = Qc_supply_to_DCN['Qc_from_Tank_W']
@@ -288,19 +298,19 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
     if reduced_timesteps_flag:
-        reduced_costs = np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
-        reduced_CO2 = np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
-        reduced_prim = np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
-        prim_energy_VCC_backup)
+        reduced_costs_USD = np.sum(opex_var_Lake_USD) + np.sum(opex_var_VCC_USD) + np.sum(opex_var_ACH_USD) + np.sum(opex_var_VCC_backup_USD)
+        reduced_CO2_kgCO2 = np.sum(co2_Lake_kgCO2) + np.sum(co2_Lake_kgCO2) + np.sum(co2_ACH_kgCO2) + np.sum(co2_VCC_backup_kgCO2)
+        reduced_prim_MJ = np.sum(prim_energy_Lake_MJ) + np.sum(prim_energy_VCC_MJ) + np.sum(prim_energy_ACH_MJ) + np.sum(
+        prim_energy_VCC_backup_MJ)
 
-        costs += reduced_costs*(8760/(stop_t-start_t))
-        CO2 += reduced_CO2*(8760/(stop_t-start_t))
-        prim += reduced_prim*(8760/(stop_t-start_t))
+        costs_a_USD += reduced_costs_USD*(8760/(stop_t-start_t))
+        CO2_kgCO2 += reduced_CO2_kgCO2*(8760/(stop_t-start_t))
+        prim_MJ += reduced_prim_MJ*(8760/(stop_t-start_t))
     else:
-        costs += np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
-        CO2 += np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
-        prim += np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
-            prim_energy_VCC_backup)
+        costs_a_USD += np.sum(opex_var_Lake_USD) + np.sum(opex_var_VCC_USD) + np.sum(opex_var_ACH_USD) + np.sum(opex_var_VCC_backup_USD)
+        CO2_kgCO2 += np.sum(co2_Lake_kgCO2) + np.sum(co2_Lake_kgCO2) + np.sum(co2_ACH_kgCO2) + np.sum(co2_VCC_backup_kgCO2)
+        prim_MJ += np.sum(prim_energy_Lake_MJ) + np.sum(prim_energy_VCC_MJ) + np.sum(prim_energy_ACH_MJ) + np.sum(
+            prim_energy_VCC_backup_MJ)
 
 
     calfactor_total += np.sum(calfactor_buildings)
@@ -317,22 +327,23 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     if Q_CT_nom_W > 0:
         for hour in timesteps:
             wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT[hour] = (wdot_CT) * lca.ELEC_PRICE
-            co2_CT[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
-            prim_energy_CT[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
+            opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE
+            co2_CT_kgCO2[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
+            prim_energy_CT_MJ[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
+            E_used_CT_W[hour] = wdot_CT
 
         if reduced_timesteps_flag:
-            reduced_costs = np.sum(opex_var_CT)
-            reduced_CO2 = np.sum(co2_CT)
-            reduced_prim = np.sum(prim_energy_CT)
+            reduced_costs_USD = np.sum(opex_var_CT_USD)
+            reduced_CO2_kgCO2 = np.sum(co2_CT_kgCO2)
+            reduced_prim_MJ = np.sum(prim_energy_CT_MJ)
 
-            costs += reduced_costs * (8760 / (stop_t - start_t))
-            CO2 += reduced_CO2 * (8760 / (stop_t - start_t))
-            prim += reduced_prim * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
+            CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
+            prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
         else:
-            costs += np.sum(opex_var_CT)
-            CO2 += np.sum(co2_CT)
-            prim += np.sum(prim_energy_CT)
+            costs_a_USD += np.sum(opex_var_CT_USD)
+            CO2_kgCO2 += np.sum(co2_CT_kgCO2)
+            prim_MJ += np.sum(prim_energy_CT_MJ)
 
     ########## Operation of the CCGT
     if Qh_req_from_CCGT_max_W > 0:
@@ -372,73 +383,81 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                 E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(
                     Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
 
-            opex_var_CCGT[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE
-            co2_CCGT[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
-            prim_energy_CCGT[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
+            opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE
+            co2_CCGT_kgCO2[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
+            prim_energy_CCGT_MJ[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
+            NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
 
         if reduced_timesteps_flag:
-            reduced_costs = np.sum(opex_var_CCGT)
-            reduced_CO2 = np.sum(co2_CCGT)
-            reduced_prim = np.sum(prim_energy_CCGT)
+            reduced_costs_USD = np.sum(opex_var_CCGT_USD)
+            reduced_CO2_kgCO2 = np.sum(co2_CCGT_kgCO2)
+            reduced_prim_MJ = np.sum(prim_energy_CCGT_MJ)
 
-            costs += reduced_costs * (8760 / (stop_t - start_t))
-            CO2 += reduced_CO2 * (8760 / (stop_t - start_t))
-            prim += reduced_prim * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
+            CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
+            prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
         else:
-            costs += np.sum(opex_var_CCGT)
-            CO2 += np.sum(co2_CCGT)
-            prim += np.sum(prim_energy_CCGT)
+            costs_a_USD += np.sum(opex_var_CCGT_USD)
+            CO2_kgCO2 += np.sum(co2_CCGT_kgCO2)
+            prim_MJ += np.sum(prim_energy_CCGT_MJ)
 
     ########## Add investment costs
 
     for i in range(limits['number_of_VCC_chillers']):
-        Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
-        costs += Capex_a_VCC + Opex_fixed_VCC
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
+        costs_a_USD += Capex_a_VCC_USD + Opex_fixed_VCC_USD
 
     for i in range(limits['number_of_VCC_backup_chillers']):
-        Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
-        costs += Capex_a_VCC_backup + Opex_fixed_VCC_backup
+        Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD, Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
+        costs_a_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
+    master_to_slave_vars.VCC_backup_cooling_size_W = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
-        Capex_a_ACH, Opex_fixed_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
-        costs += Capex_a_ACH + Opex_fixed_ACH
+        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
+        costs_a_USD += Capex_a_ACH_USD + Opex_fixed_ACH_USD
 
-    Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    costs += Capex_a_CCGT + Opex_fixed_CCGT
+    Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
+    costs_a_USD += Capex_a_CCGT_USD + Opex_fixed_CCGT_USD
 
-    Capex_a_Tank, Opex_fixed_Tank = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
-    costs += Capex_a_Tank + Opex_fixed_Tank
+    Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
+    costs_a_USD += Capex_a_Tank_USD + Opex_fixed_Tank_USD
 
-    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
 
-    costs += Capex_a_CT + Opex_fixed_CT
+    costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
-    Capex_pump, Opex_fixed_pump, Opex_var_pump = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
-    costs += Capex_pump + Opex_fixed_pump + Opex_var_pump
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, locator, lca, config)
+    costs_a_USD += Capex_a_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
 
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
-                            "Opex_var_Lake": opex_var_Lake,
-                            "Opex_var_VCC": opex_var_VCC,
-                            "Opex_var_ACH": opex_var_ACH,
-                            "Opex_var_VCC_backup": opex_var_VCC_backup,
-                            "Opex_var_CT": opex_var_CT,
-                            "Opex_var_CCGT": opex_var_CCGT,
-                            "CO2_from_using_Lake": co2_Lake,
-                            "CO2_from_using_VCC": co2_VCC,
-                            "CO2_from_using_ACH": co2_ACH,
-                            "CO2_from_using_VCC_backup": co2_VCC_backup,
-                            "CO2_from_using_CT": co2_CT,
-                            "CO2_from_using_CCGT": co2_CCGT,
-                            "Primary_Energy_from_Lake": prim_energy_Lake,
-                            "Primary_Energy_from_VCC": prim_energy_VCC,
-                            "Primary_Energy_from_ACH": prim_energy_ACH,
-                            "Primary_Energy_from_VCC_backup": prim_energy_VCC_backup,
-                            "Primary_Energy_from_CT": prim_energy_CT,
-                            "Primary_Energy_from_CCGT": prim_energy_CCGT,
+                            "Opex_var_Lake_USD": opex_var_Lake_USD,
+                            "Opex_var_VCC_USD": opex_var_VCC_USD,
+                            "Opex_var_ACH_USD": opex_var_ACH_USD,
+                            "Opex_var_VCC_backup_USD": opex_var_VCC_backup_USD,
+                            "Opex_var_CT_USD": opex_var_CT_USD,
+                            "Opex_var_CCGT_USD": opex_var_CCGT_USD,
+                            "E_used_Lake_W": E_used_Lake_W,
+                            "E_used_VCC_W": E_used_VCC_W,
+                            "E_used_VCC_backup_W": E_used_VCC_backup_W,
+                            "E_used_ACH_W": E_used_ACH_W,
+                            "E_used_CT_W": E_used_CT_W,
+                            "NG_used_CCGT_W": NG_used_CCGT_W,
+                            "CO2_from_using_Lake": co2_Lake_kgCO2,
+                            "CO2_from_using_VCC": co2_VCC_kgCO2,
+                            "CO2_from_using_ACH": co2_ACH_kgCO2,
+                            "CO2_from_using_VCC_backup": co2_VCC_backup_kgCO2,
+                            "CO2_from_using_CT": co2_CT_kgCO2,
+                            "CO2_from_using_CCGT": co2_CCGT_kgCO2,
+                            "Primary_Energy_from_Lake": prim_energy_Lake_MJ,
+                            "Primary_Energy_from_VCC": prim_energy_VCC_MJ,
+                            "Primary_Energy_from_ACH": prim_energy_ACH_MJ,
+                            "Primary_Energy_from_VCC_backup": prim_energy_VCC_backup_MJ,
+                            "Primary_Energy_from_CT": prim_energy_CT_MJ,
+                            "Primary_Energy_from_CCGT": prim_energy_CCGT_MJ,
                             "Q_from_Lake_W": Qc_from_Lake_W,
                             "Q_from_VCC_W": Qc_from_VCC_W,
                             "Q_from_ACH_W": Qc_from_ACH_W,
@@ -456,30 +475,37 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     calibration = calfactor_total / 50976000
 
     extraElec = (127865400 + 85243600) * calibration
-    costs += extraElec * lca.ELEC_PRICE
-    CO2 += extraElec * lca.EL_TO_CO2 * 3600E-6
-    prim += extraElec * lca.EL_TO_OIL_EQ * 3600E-6
+    costs_a_USD += extraElec * lca.ELEC_PRICE
+    CO2_kgCO2 += extraElec * lca.EL_TO_CO2 * 3600E-6
+    prim_MJ += extraElec * lca.EL_TO_OIL_EQ * 3600E-6
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs)
-    CO2 = np.float64(CO2)
-    prim = np.float64(prim)
+    costs_a_USD = np.float64(costs_a_USD)
+    CO2_kgCO2 = np.float64(CO2_kgCO2)
+    prim_MJ = np.float64(prim_MJ)
 
     # Capex_a and Opex_fixed
-    results = pd.DataFrame({"Capex_a_VCC": [Capex_a_VCC],
-                            "Opex_fixed_VCC": [Opex_fixed_VCC],
-                            "Capex_a_VCC_backup": [Capex_a_VCC_backup],
-                            "Opex_fixed_VCC_backup": [Opex_fixed_VCC_backup],
-                            "Capex_a_ACH": [Capex_a_ACH],
-                            "Opex_fixed_ACH": [Opex_fixed_ACH],
-                            "Capex_a_CCGT": [Capex_a_CCGT],
-                            "Opex_fixed_CCGT": [Opex_fixed_CCGT],
-                            "Capex_a_Tank": [Capex_a_Tank],
-                            "Opex_fixed_Tank": [Opex_fixed_Tank],
-                            "Capex_a_CT": [Capex_a_CT],
-                            "Opex_fixed_CT": [Opex_fixed_CT],
-                            "Capex_pump": [Capex_pump],
-                            "Opex_fixed_pump": [Opex_fixed_pump],
-                            "Opex_var_pump": [Opex_var_pump]
+    results = pd.DataFrame({"Capex_a_VCC_USD": [Capex_a_VCC_USD],
+                            "Opex_fixed_VCC_USD": [Opex_fixed_VCC_USD],
+                            "Capex_a_VCC_backup_USD": [Capex_a_VCC_backup_USD],
+                            "Opex_fixed_VCC_backup_USD": [Opex_fixed_VCC_backup_USD],
+                            "Capex_a_ACH_USD": [Capex_a_ACH_USD],
+                            "Opex_fixed_ACH_USD": [Opex_fixed_ACH_USD],
+                            "Capex_a_CCGT_USD": [Capex_a_CCGT_USD],
+                            "Opex_fixed_CCGT_USD": [Opex_fixed_CCGT_USD],
+                            "Capex_a_Tank_USD": [Capex_a_Tank_USD],
+                            "Opex_fixed_Tank_USD": [Opex_fixed_Tank_USD],
+                            "Capex_a_CT_USD": [Capex_a_CT_USD],
+                            "Opex_fixed_CT_USD": [Opex_fixed_CT_USD],
+                            "Capex_a_pump_USD": [Capex_a_pump_USD],
+                            "Opex_fixed_pump_USD": [Opex_fixed_pump_USD],
+                            "Opex_var_pump_USD": [Opex_var_pump_USD],
+                            "Capex_VCC_USD": [Capex_VCC_USD],
+                            "Capex_VCC_backup_USD": [Capex_VCC_backup_USD],
+                            "Capex_ACH_USD": [Capex_ACH_USD],
+                            "Capex_CCGT_USD": [Capex_CCGT_USD],
+                            "Capex_Tank_USD": [Capex_Tank_USD],
+                            "Capex_CT_USD": [Capex_CT_USD],
+                            "Capex_pump_USD": [Capex_pump_USD]
                             })
 
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(master_to_slave_vars.individual_number,
@@ -492,4 +518,4 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     # print ('Cooling CO2 = ' + str(CO2))
     # print ('Cooling Eprim = ' + str(prim))
 
-    return (costs, CO2, prim)
+    return (costs_a_USD, CO2_kgCO2, prim_MJ)

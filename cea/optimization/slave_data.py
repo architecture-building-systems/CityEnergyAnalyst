@@ -26,6 +26,8 @@ class SlaveData(object):
         self.number_of_buildings_connected_cooling = 0
         self.total_csv_name_heating = ""
         self.total_csv_name_cooling = ""
+        self.DCN_barcode = ""
+        self.DHN_barcode = ""
         self.individual_number = ""
         self.generation_number = ""
         self.total_buildings = 0
@@ -43,41 +45,43 @@ class SlaveData(object):
         self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
 
         # Sewage Heat Pump
-        self.HPSew_maxSize = 0
+        self.HPSew_maxSize_W = 0.0
 
         # Lake Heat Pump
-        self.HPLake_maxSize = 0
+        self.HPLake_maxSize_W = 0.0
 
         # Furnace
-        self.Furnace_Q_max = 0
+        self.Furnace_Q_max_W = 0.0
         self.Furn_Moist_type = "wet"  # gV.Furn_Moist_type # set the moisture content of wood chips, either "dry" or "wet"
 
         # GAS TURBINE VARIABLES
         # self.gt_size = 1.0E6 # in Watt
-        self.CC_GT_SIZE = 0
+        self.CC_GT_SIZE_W = 0.0
         self.gt_fuel = "NG"
 
         # Boiler - Thermal output power!
 
         # add BG / NG Story for both peak and normal boilers
-        self.Boiler_Q_max = 0
-        self.BoilerPeak_Q_max = 0
+        self.Boiler_Q_max_W = 0.0
+        self.BoilerPeak_Q_max_W = 0.0
+        self.BoilerBackup_Q_max_W = 0.0
         self.BoilerType = "NG"  # Choose "NG" or "BG"
         self.BoilerPeakType = "NG"  # Choose "NG" or "BG"
         self.BoilerBackupType = "NG"  # Choose "NG" or "BG"
 
         # Cooling Technologies
         # Lake Cooling
-        self.Lake_cooling_size = 0
+        self.Lake_cooling_size_W = 0.0
 
         # Absorption Chiller
-        self.Absorption_chiller_size = 0
+        self.Absorption_chiller_size_W = 0.0
 
         # VCC Cooling
-        self.VCC_cooling_size = 0
+        self.VCC_cooling_size_W = 0.0
+        self.VCC_backup_cooling_size_W = 0.0
 
         # Storage Cooling
-        self.Storage_cooling_size = 0
+        self.Storage_cooling_size_W = 0.0
 
         # Cooling Tower :
         # self.CT_Qdesign = 0
@@ -125,12 +129,12 @@ class SlaveData(object):
         self.WasteServersHeatRecovery = 0  # server heat
         self.WasteCompressorHeatRecovery = 0
         self.storage_heating_on = 0
-        self.DHN_temperature = 0  # Supply temperature of the DHN in degree C
+        self.DHN_temperature = 0.0  # Supply temperature of the DHN in degree C
         self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
 
         self.VCC_on = 0
         self.Absorption_Chiller_on = 0
         self.Lake_cooling_on = 0
         self.storage_cooling_on = 0
-        self.DCN_temperature = 0  # Supply temperature of the DCN in degree C
+        self.DCN_temperature = 0.0  # Supply temperature of the DCN in degree C
         self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.

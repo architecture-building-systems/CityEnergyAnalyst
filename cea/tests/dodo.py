@@ -258,30 +258,6 @@ def task_run_emissions_mobility():
         }
 
 
-def task_run_heatmaps():
-    """run the heat maps script for each reference case"""
-    try:
-        from cea.interfaces.arcgis.modules import arcpy
-    except ImportError:
-        # do not require ArcGIS to be installed, but skip testing the heatmaps
-        # module if it isn't installed.
-        return
-    import cea.plots.heatmaps
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-        yield {
-            'name': 'run_heatmaps:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
-            'actions': [(cea.plots.heatmaps.main, [], {
-                'config': config
-            })],
-        }
-
-
 def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
     import cea.plots.old.scenario_plots

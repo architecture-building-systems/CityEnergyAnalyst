@@ -115,7 +115,7 @@ dependencies:
   - plotly==2.0.7
   - pycollada
   - pygments==2.2.0
-  - pyliburo==0.1a12
+  - py4design
   - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11

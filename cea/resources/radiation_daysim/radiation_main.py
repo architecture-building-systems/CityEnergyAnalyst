@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 Radiation engine and geometry handler for CEA
 """
@@ -6,17 +8,12 @@ import pandas as pd
 import time
 import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
-import multiprocessing as mp
-
-import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py2radiance as py2radiance
-
+import py4design.py3dmodel.fetch as fetch
+import py4design.py2radiance as py2radiance
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
-
-import fiona
-import pytz, datetime
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -28,27 +25,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_location_properties(geometry_zone_shp):
-
-    from timezonefinder import TimezoneFinder
-    with fiona.open(geometry_zone_shp) as shp:
-        latitude = round(shp.crs['lat_0'],3)
-        longitude = round(shp.crs['lon_0'],3)
-
-    # get the time zone name
-    tf = TimezoneFinder()
-    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
-    time = pytz.timezone(time_zone).localize(datetime.datetime(2011,1,1)).strftime('%z')
-    time_zone_num = int(time[:3])
-
-    return latitude, longitude, time_zone_num
-
 def create_radiance_srf(occface, srfname, srfmat, rad):
-    bface_pts = fetch.pyptlist_frm_occface(occface)
+    bface_pts = fetch.points_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
 
+
 def calc_transmissivity(G_value):
-    return (math.sqrt(0.8402528435+0.0072522239*G_value*G_value)-0.9166530661)/0.0036261119/G_value
+    return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
+
 
 def add_rad_mat(daysim_mat_file, ageometry_table):
     file_path = daysim_mat_file
@@ -194,23 +178,26 @@ def main(config):
 
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-
     settings = config.radiation_daysim
     region = config.region
+
+    print("verifying geometry files")
+    print(locator.get_zone_geometry())
+    verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
+    verify_input_geometry_district(gpdf.from_file(locator.get_district_geometry()))
+
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture(),
                                                             region=region)
-
-    print "creating 3D geometry and surfaces"
+    print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                     settings)
 
-    print "Sending the scene: geometry and materials to daysim"
+    print("Sending the scene: geometry and materials to daysim")
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
     rad = py2radiance.Rad(daysim_mat, locator.get_temporary_folder())
