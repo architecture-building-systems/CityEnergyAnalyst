@@ -12,8 +12,7 @@ Example network
 ---------------
 .. image:: network_shapefiles.png
     :align: center
-    :width: 210px
-    :height: 178px
+    :width: 300
 
 
 Edges.shp
@@ -34,7 +33,7 @@ Nodes.shp
 - **Shape**: Point (Geometry Type)
 - **Name (String)**: Node number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``""NODE""&[FID]``).
 - **Building (String)**: Building number as specified in ``zone.shp``, or else **NONE**.
-- **Type (String)**: specify **CONSUMER** and **PLANT** nodes, the rest is NONE.
+- **Type (String)**: specify **CONSUMER** and **PLANT** nodes, the rest is **NONE**.
 
 
 Where to store the file?
