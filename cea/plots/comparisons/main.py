@@ -42,7 +42,7 @@ def plots_main(config):
         raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
 
     # local variables
-    # TODO: We need to create the plots and integrate the case whne none generations/ individuals etc,
+    # TODO: We need to create the plots and integrate the case when none generations/ individuals etc,
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
     scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios

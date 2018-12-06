@@ -31,12 +31,14 @@ def disconnected_building_main(locator, building_names, config, prices, lca):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
-    if config.region == 'SIN':
-        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
-    elif config.region == 'CH':
-        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices, lca)
+    controls = pd.read_excel(locator.get_archetypes_system_controls(config.region))
+    if controls['has-cooling-season'].item() or controls['has-heating-season'].item():
+        if controls['has-cooling-season'].item():
+            decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
+        if controls['has-heating-season'].item():
+            decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices, lca)
     else:
-        raise ValueError("the region is not specified correctly")
+        raise ValueError("The case study has neither a heating nor a cooling season, please specify in system_controls.xlsx")
 
     print "Run decentralized model for buildings"
 

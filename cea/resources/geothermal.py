@@ -15,7 +15,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_ground_temperature(locator, T_ambient_C, depth_m):
+def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
 
@@ -30,11 +30,11 @@ def calc_ground_temperature(locator, T_ambient_C, depth_m):
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """
-    material_properties = pd.read_excel(locator.get_thermal_networks('CH'), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
-    material_properties = material_properties.set_index(material_properties['material'].values)
-    heat_capacity_soil = material_properties.ix['Soil','Cp_JkgK']   # _[A. Kecebas et al., 2011]
-    conductivity_soil = material_properties.ix['Soil','lamda_WmK']  # _[A. Kecebas et al., 2011]
-    density_soil = material_properties.ix['Soil','rho_kgm3']   # _[A. Kecebas et al., 2011]
+    material_properties = pd.read_excel(locator.get_thermal_networks(config.region),
+                                        sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES'].set_index('material')
+    heat_capacity_soil = material_properties.loc['Soil','Cp_JkgK']   # _[A. Kecebas et al., 2011]
+    conductivity_soil = material_properties.loc['Soil','lambda_WmK']  # _[A. Kecebas et al., 2011]
+    density_soil = material_properties.loc['Soil','rho_kgm3']   # _[A. Kecebas et al., 2011]
 
 
     T_max = max(T_ambient_C) + 273.15 # to K
