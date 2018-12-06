@@ -2,7 +2,7 @@ How to Prepare Inputs for Thermal Network Simulation
 ====================================================
 
 The thermal network tool in CEA simulates thermal and hydraulic losses from network operation.
-To run the simulation, two input files are required (case study>inputs>networks):
+To run the simulation, two input files are required:
     - ``edges.shp`` specifies the locations of pipes (edges). Each edge is a *straight* polyline and each end of the edge is connected to a node.
     - ``nodes.shp`` specifies the locations of nodes, which represents the consumers, producers, intersections of streets, and connection points to consumers.
 
@@ -12,7 +12,7 @@ Example network
 ---------------
 .. image:: network_shapefiles.png
     :align: center
-    :width: 300
+    :width: 250
 
 
 Edges.shp
@@ -38,4 +38,4 @@ Nodes.shp
 
 Where to store the file?
 ------------------------
-The two shape files (``nodes.shp`` & ``edges.shp``)
+The two shape files (``nodes.shp`` & ``edges.shp``) should be kept in either **DH** (heating network) or **DC** (cooling network) folder under this path: ``case study\inputs\networks``.
