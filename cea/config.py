@@ -639,6 +639,9 @@ class ScenarioNameParameter(Parameter):
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is read-only"""
+    
+    typename = 'ScenarioParameter'
+
     def get_raw(self):
         return "{general:project}/{general:scenario-name}"
 
