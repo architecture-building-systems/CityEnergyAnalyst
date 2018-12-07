@@ -584,6 +584,8 @@ class InputLocator(object):
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
+        if not os.path.exists(self.get_zone_geometry()):
+            return []
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return [b.encode('utf-8') for b in zone_building_names]
