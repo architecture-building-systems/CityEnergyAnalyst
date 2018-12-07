@@ -632,14 +632,29 @@ class ChoiceParameter(Parameter):
             return self.config.default_config.get(self.section.name, self.name)
 
 
-class ScenarioNameParameter(Parameter):
+class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
     typename = 'ScenarioNameParameter'
 
+    def initialize(self, parser):
+        pass
+
+    def encode(self, value):
+        """Make sure the scenario folder exists"""
+        if not os.path.exists(os.path.join(self.config.project, value)):
+            return self._choices[0]
+        return str(value)
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list of scenarios in the project
+        return [folder for folder in os.listdir(self.config.project)
+                if os.path.isdir(os.path.join(self.config.project, folder))]
+
 
 class ScenarioParameter(Parameter):
-    """This parameter type is special in that it is read-only"""
-    
+    """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
+
     typename = 'ScenarioParameter'
 
     def get_raw(self):
@@ -648,8 +663,8 @@ class ScenarioParameter(Parameter):
     def set(self, value):
         """Update the {general:project} and {general:scenario-name} parameters"""
         project, scenario_name = os.path.split(value)
-        self.config.user_config.set('general', 'project', project)
-        self.config.user_config.set('general', 'scenario-name', scenario_name)
+        self.config.project = project
+        self.config.scenario_name = scenario_name
 
     def decode(self, value):
         """Make sure the path is nicely formatted"""
@@ -694,12 +709,12 @@ def main():
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
     # make sure the config can be pickled (for multiprocessing)
-    config.scenario = r'C:\reference-case-zurich'
+    config.scenario = r'C:\reference-case-open'
     print(config.project, config.scenario_name, config.scenario)
     import pickle
     config = pickle.loads(pickle.dumps(config))
     print(config.scenario)
-    assert config.scenario == r'C:\reference-case-zurich'
+    assert config.scenario == r'C:\reference-case-open'
     print('reference case: %s' % config.scenario)
     # config = pickle.loads(pickle.dumps(config))
     # test overriding
@@ -725,6 +740,7 @@ def main():
     print(config.scenario_plots.scenarios)
     print(config.get('general:region'))
     print(config.get('plots:buildings'))
+    print(config.get_parameter('general:scenario-name')._choices)
 
 
 if __name__ == '__main__':
