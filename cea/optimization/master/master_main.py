@@ -255,13 +255,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         offspring = list(pop)
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings)
+            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings, config)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mutations.mutFlip(mutant, proba, nBuildings)
-            mutant = mutations.mutShuffle(mutant, proba, nBuildings)
-            offspring.append(mutations.mutGU(mutant, proba))
+            mutant = mutations.mutFlip(mutant, proba, nBuildings, config)
+            mutant = mutations.mutShuffle(mutant, proba, nBuildings, config)
+            offspring.append(mutations.mutGU(mutant, proba, config))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 

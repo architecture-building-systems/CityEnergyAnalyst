@@ -10,7 +10,7 @@ from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, N_COOL, INDICES_CO
 toolbox = base.Toolbox()
 
 
-def cxUniform(ind1, ind2, proba, nBuildings):
+def cxUniform(ind1, ind2, proba, nBuildings, config):
     """
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
@@ -56,9 +56,15 @@ def cxUniform(ind1, ind2, proba, nBuildings):
             swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
 
     # Swap DHN and DCN, connected buildings
-    for i in range(2*nBuildings):
-        if random.random() < proba:
-            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
+    if config.district_cooling_network:
+        for i in range(nBuildings):
+            if random.random() < proba:
+                swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
+
+    if config.district_cooling_network:
+        for i in range(nBuildings):
+            if random.random() < proba:
+                swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings + i)
 
     del child1.fitness.values
     del child2.fitness.values
