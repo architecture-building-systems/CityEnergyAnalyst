@@ -17,9 +17,6 @@ class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
         super(EnergyBalancePlot, self).__init__(project, parameters)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
-        gfa_m2 = self. yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
-        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
-        self.data = calc_monthly_energy_balance(self.data, gfa_m2)
         self.analysis_fields = ['I_sol_kWh',
                                 'Qhs_tot_sen_kWh',
                                 'Qhs_loss_sen_kWh',
@@ -48,6 +45,9 @@ class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
                                 yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
 
     def calc_graph(self):
+        gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
+        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        self.data = calc_monthly_energy_balance(self.data, gfa_m2)
         traces = []
         for field in self.analysis_fields:
             y = self.data[field]

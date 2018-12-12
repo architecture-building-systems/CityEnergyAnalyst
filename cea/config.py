@@ -544,11 +544,6 @@ class SubfoldersParameter(ListParameter):
             return []
 
 
-class BuildingsParameter(ListParameter):
-    """A list of buildings in the zone"""
-    typename = 'BuildingsParameter'
-
-
 class StringParameter(Parameter):
     typename = 'StringParameter'
 
@@ -689,6 +684,21 @@ class MultiChoiceParameter(ChoiceParameter):
                 raise cea.ConfigError(
                     'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
         return choices
+
+
+class BuildingsParameter(MultiChoiceParameter):
+    """A list of buildings in the zone"""
+    typename = 'BuildingsParameter'
+
+    def initialize(self, parser):
+        # skip the default MultiChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        return locator.get_zone_building_names()
 
 
 def parse_string_to_list(line):
