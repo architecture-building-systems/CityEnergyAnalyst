@@ -30,6 +30,7 @@ def moo_optimization(locator, weather_file, gv, config):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case
     study. It requires that the energy demand, technology potential and thermal networks are simulated, as follows:
+
         - energy demand simulation: run cea/demand/demand_main.py
         - PV potential: run cea/technologies/solar/photovoltaic.py
         - PVT potential: run cea/technologies/solar/photovoltaic_thermal.py

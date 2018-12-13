@@ -17,7 +17,6 @@ sphinx-apidoc -f -M -T -o modules ../cea^
  ../cea/demand/calibration/bayesian_calibrator*^
  ../cea/demand/calibration/subset_calibrator*^
  ../cea/interfaces/dashboard*^
- ../cea/optimization/slave/test*^
  ../cea/resources/radiation_daysim/plot_points*^
  ../cea/technologies/cogeneration*^
  ../cea/technologies/thermal_network/network_layout*^
