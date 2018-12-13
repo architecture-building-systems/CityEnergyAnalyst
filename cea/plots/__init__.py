@@ -38,7 +38,10 @@ def read_dashboards(config):
     """
     try:
         with open(dashboard_yml_path(config), 'r') as f:
-            return [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
+            dashboards = [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
+            if not dashboards:
+                dashboards = [default_dashboard(config)]
+            return dashboards
     except (IOError, TypeError):
         # problems reading the dashboard_yml file - instead, create a default set of dashboards.
         dashboards = [default_dashboard(config)]
