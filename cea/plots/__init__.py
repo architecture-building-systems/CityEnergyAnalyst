@@ -78,6 +78,13 @@ def new_dashboard(config):
     return len(dashboards) - 1
 
 
+def delete_dashboard(config, dashboard_index):
+    """Remove the dashboard with that index from the dashboard configuration file"""
+    dashboards = read_dashboards(config)
+    dashboards.pop(dashboard_index)
+    write_dashboards(config, dashboards)
+
+
 class Dashboard(object):
     """Implements a dashboard - an editable collection of configured plots."""
     def __init__(self, config, dashboard_dict):
