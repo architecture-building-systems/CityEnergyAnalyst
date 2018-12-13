@@ -12,11 +12,10 @@ Subpackages
 .. toctree::
 
     cea.optimization.distribution
+    cea.optimization.individual_evaluation
     cea.optimization.master
     cea.optimization.preprocessing
     cea.optimization.slave
-
-.. skipping: cea.optimization.individual_evaluation
 
 Submodules
 ----------
