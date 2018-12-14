@@ -47,7 +47,7 @@ dependencies:
 - libspatialindex=1.8.5=vc9_1
 - libspatialite=4.3.0a=vc9_19
 - libssh2=1.8.0=h0990ea7_2
-- libtiff=4.0.9=vc9_0
+- libtiff=4.0.9
 - libxml2=2.9.4=vc9_4
 - matplotlib=2.1.0=py27_0
 - munch=2.2.0=py27_0

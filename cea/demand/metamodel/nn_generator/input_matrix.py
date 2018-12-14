@@ -55,16 +55,16 @@ def input_prepare_multi_processing(building_name, locator, target_parameters, nn
 
 
 def prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay):
-    '''
+    """
     this function adds a time-delay to the inputs
     :param raw_nn_inputs_D: hourly building properties with dynamic characteristics throughout the year,
-            these parameters require delay (e.g. climatic parameters, internal gains)
+    these parameters require delay (e.g. climatic parameters, internal gains)
     :param raw_nn_inputs_S: houtly building properties with static characteristics throughout the year,
-            these parameters DO NOT require delay (e.g. geometry characteristic, thermal characteristics of the envelope)
+    these parameters DO NOT require delay (e.g. geometry characteristic, thermal characteristics of the envelope)
     :param raw_nn_targets: hourly demand data (targets)
     :param nn_delay: number of intended delays (can be accessed from 'nn_settings.py')
     :return: array of hourly input and target values for a single building associated with delay (NN_input_ready, NN_target_ready)
-    '''
+    """
     input1=raw_nn_inputs_D
     target1=raw_nn_targets
     #   input matrix shape
