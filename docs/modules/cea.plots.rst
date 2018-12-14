@@ -25,14 +25,6 @@ Subpackages
 Submodules
 ----------
 
-cea.plots.heatmaps module
--------------------------
-
-.. automodule:: cea.plots.heatmaps
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.plots.plots\_main module
 ----------------------------
 
