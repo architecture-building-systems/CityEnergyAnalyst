@@ -3,9 +3,11 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from extract_demand_outputs import calc_m_dry_air
+from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
-TECHS = ['HCS_coil']
+TECHS = ['HCS_3for2']
 # TECHS = ['HCS_LD']
 # TECHS = ['HCS_coil', 'HCS_LD']
 PATH_TO_RESULT_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
@@ -29,6 +31,10 @@ def main():
         humidity_df = set_up_humidity_df(tech, results)
         plot_water_balance(building, humidity_df, results, tech)
 
+        ## plot humidity level (storage)
+        hu_store_df = set_up_hu_store_df(results)
+        plot_hu_store(building, hu_store_df, tech)
+
         ## plot heat balance
         heat_df = set_up_heat_df(tech, results)
         plot_heat_balance(building, heat_df, results, tech)
@@ -42,6 +48,19 @@ def main():
     print el_use_sum
     return
 
+def set_up_hu_store_df(results):
+    hu_store_df = pd.DataFrame()
+    hu_store_df['humidity_ratio'] = results['hu_storage']*3600/results['M_dryair']*1000 # g/kg d.a.
+    hu_store_df['relative_humidity'] = np.vectorize(calc_RH_from_w)(hu_store_df['humidity_ratio'], results['T_RA'])*100
+    return hu_store_df
+
+def calc_RH_from_w(w_gperkg, T_C):
+    T_K = 273.15 + T_C
+    C_gKperJ = 2.16679
+    P_ws_Pa = p_ws_from_t(T_C) # T in Celcius
+    rho_air_kgperm3 = 1.19 # kg/m3
+    rh = w_gperkg*rho_air_kgperm3*T_K/(C_gKperJ*P_ws_Pa)
+    return rh
 
 def set_up_electricity_df(tech, results):
     electricity_df = pd.DataFrame()
@@ -156,7 +175,7 @@ def calc_cooling_energy(results):
     cooling_df['qc_sys_lat_oau'] = results.filter(like='oau_Qc_total').sum(axis=1) - results.filter(like='oau_Qc_sen').sum(axis=1)
 
     # check validity of results
-    if cooling_df.min().min() < 0:
+    if cooling_df.min().min() < -1e3:
         columns = np.unique(np.where(cooling_df < 0)[1])
         names = []
         for i in columns:
@@ -233,7 +252,7 @@ def set_up_operation_df(tech, results):
 
 def plot_heat_balance(building, heat_df, results, tech):
     # extract parameters
-    time_steps = results.shape[0] - 1
+    time_steps = results.shape[0]
     x_ticks = results.index.values
     fig_size = set_figsize(time_steps)
     x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
@@ -267,10 +286,32 @@ def plot_heat_balance(building, heat_df, results, tech):
     # plot layout
     fig.savefig(path_to_save_fig(building, tech, 'heat'))
 
+def plot_hu_store(building, hu_store_df, tech):
+    # extract parameters
+    time_steps = hu_store_df.shape[0]
+    x_ticks = hu_store_df.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    line1, = ax.plot(x_ticks, hu_store_df['humidity_ratio'], '-o', linewidth=2, markersize=4,
+                      label='humidity ratio')
+    line2, = ax.plot(x_ticks, hu_store_df['relative_humidity'], '-o', linewidth=2, markersize=4, label='%RH')
+    ax.legend(loc='upper right')
+    ax.set_xticks(x_ticks_shown)
+    ax.grid(True)
+    ax.set(xlim=(1, time_steps), ylim=(1,80))
+    plt.xlabel('Time [hr]', fontsize=14)
+    plt.ylabel('%RH [-] ; Humidity Ratio [g/kg d.a.]', fontsize=14)
+    plt.title(building + '_' + tech, fontsize=14)
+    # plt.show()
+    fig.savefig(path_to_save_fig(building, tech, 'hu_store'))
+    plt.close(fig)
+    return np.nan
 
 def plot_water_balance(building, humidity_df, results, tech):
     # extract parameters
-    time_steps = results.shape[0] - 1
+    time_steps = results.shape[0]
     x_ticks = results.index.values
     fig_size = set_figsize(time_steps)
     x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
