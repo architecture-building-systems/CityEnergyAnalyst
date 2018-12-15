@@ -33,14 +33,15 @@ Pair_Pa = 101325
 Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 rh_max = 65  # %
-rh_min = 55  # %
+rh_min = 40  # %
 
 
 def main():
-    building_names = ['B001', 'B002', 'B007']  # , 'B002', 'B007']
-    Ve_lps = {'B001': 18.24, 'B002': 15.6, 'B007': 13.53}
-    Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
+    building_names = ['B002'] #, 'B002', 'B007']  # , 'B002', 'B007']
     SS553_lps_m2 = 0.6
+
+    # read total demand
+    total_demand_df = pd.read_csv(path_to_total_demand()).set_index('Name')
 
     for name in building_names:
         # read demand output
@@ -48,15 +49,15 @@ def main():
         tsd_df = pd.read_excel(path_to_demand_output(name)['xls'])
 
         # reduce to 24 or 168 hours
-        start_t = 5040  # 5/15: 3217, Average Annual 7/30-8/5: 5040-5207
-        timesteps = 168  # 168 (week)
+        start_t = 3240  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
+        timesteps = 24  # 168 (week)
         end_t = (start_t + timesteps)
         # reduced_demand_df = demand_df[start_t:end_t]
         reduced_tsd_df = tsd_df[start_t:end_t]
         reduced_tsd_df = reduced_tsd_df.reset_index()
         output_df = reduced_tsd_df
         output_df1 = pd.DataFrame()
-        output_df2 = pd.DataFrame()
+        output_hcs = pd.DataFrame()
 
         ## output to building.lua
         # de-activate inf when no occupant
@@ -72,42 +73,58 @@ def main():
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
 
-        ## output to hcs
+        ## output to hcs_out
         # change units
-        output_df2['T_ext'] = reduced_tsd_df['T_ext']
-        output_df2['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
-        output_df2['w_ext'] = reduced_tsd_df['w_ext']
+        output_hcs['T_ext'] = reduced_tsd_df['T_ext']
+        output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
+        output_hcs['w_ext'] = reduced_tsd_df['w_ext']
         ## building size
-        output_df2.loc[:, 'Af_m2'] = Af_m2[name]
-        output_df2.loc[:, 'Vf_m3'] = floor_height_m * Af_m2[name]
+        output_hcs.loc[:, 'Af_m2'] = total_demand_df['Af_m2'][name]
+        output_hcs.loc[:, 'Vf_m3'] = floor_height_m * total_demand_df['Af_m2'][name]
         ## CO2 gain
         calc_CO2_gains(output_df, reduced_tsd_df)
         output_df1['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
-        output_df2['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
+        output_hcs['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
-        output_df2['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
-        output_df2['CO2_max_ppm'] = CO2_int_max_ppm
-        output_df2['m_ve_req'] = reduced_tsd_df['m_ve_required']
-        output_df2['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
-        output_df2['m_ve_min'] = np.vectorize(
-            calc_m_exhaust_from_CO2)(output_df2['CO2_max_ppm'], output_df2['CO2_ext_ppm'],
-                                     output_df2['v_CO2_in_infil_occupant_m3pers'], output_df2['rho_air'])
-        output_df2['rh_max'] = rh_max
-        output_df2['rh_min'] = rh_min
-        output_df2['w_max'] = np.vectorize(calc_w_from_rh)(output_df2['rh_max'], reduced_tsd_df['T_int'])
-        output_df2['w_min'] = np.vectorize(calc_w_from_rh)(output_df2['rh_min'], reduced_tsd_df['T_int'])
-        output_df2['m_w_max'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_df2['w_max'],
-                                                              output_df2['Vf_m3'])
-        output_df2['m_w_min'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_df2['w_min'],
-                                                              output_df2['Vf_m3'])
+        output_hcs['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
+        output_hcs['CO2_max_ppm'] = CO2_int_max_ppm
+        output_hcs['m_ve_req'] = reduced_tsd_df['m_ve_required']
+        output_hcs['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
+        output_hcs['m_ve_min'] = np.vectorize(
+            calc_m_exhaust_from_CO2)(output_hcs['CO2_max_ppm'], output_hcs['CO2_ext_ppm'],
+                                     output_hcs['v_CO2_in_infil_occupant_m3pers'], output_hcs['rho_air'])
+        output_hcs['rh_max'] = rh_max
+        output_hcs['rh_min'] = rh_min
+        output_hcs['w_max'] = np.vectorize(calc_w_from_rh)(output_hcs['rh_max'], reduced_tsd_df['T_int'])
+        output_hcs['w_min'] = np.vectorize(calc_w_from_rh)(output_hcs['rh_min'], reduced_tsd_df['T_int'])
+        output_hcs['m_w_max'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_hcs['w_max'],
+                                                              output_hcs['Vf_m3'])
+        output_hcs['m_w_min'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_hcs['w_min'],
+                                                              output_hcs['Vf_m3'])
 
-        output_df2 = output_df2.round(4)  # osmose does not read more decimals (observation)
-        # output_df2 = output_df2.drop(output_df.index[range(7)])
+        output_hcs = output_hcs.round(4)  # osmose does not read more decimals (observation)
+        # output_hcs = output_hcs.drop(output_df.index[range(7)])
 
         # write outputs
         output_df1.T.to_csv(path_to_osmose_project_bui(name), header=False)
-        output_df2.T.to_csv(path_to_osmose_project_hcs(name), header=False)
+        output_hcs.T.to_csv(path_to_osmose_project_hcs(name, 'hcs'), header=False)
+
+        # a set of off coil temperatures for oau
+        T_low_C = 10
+        T_high_C = 16
+        T_OAU_offcoil = np.arange(T_low_C, T_high_C, 2.2)
+        output_hcs_dict = {}
+        for i in range(T_OAU_offcoil.size):
+            # output hcs_in
+            output_hcs_dict[i] = output_hcs
+            output_hcs_dict[i]['T_OAU_offcoil'] = T_OAU_offcoil[i]
+            file_name_extension = 'hcs_in' + str(i + 1)
+            output_hcs_dict[i].T.to_csv(path_to_osmose_project_hcs(name, file_name_extension), header=False)
+            # output input_T1
+            input_T_df = pd.DataFrame()
+            input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
+            input_T_df.T.to_csv(path_to_osmose_project_inputT(str(i + 1)), header=False)
 
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
 
@@ -194,13 +211,18 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
 
 ##  Paths (TODO: connected with cea.config and inputLocator)
 
-
+CASE = 'WTP_CBD_m_WP1_OFF'
 def path_to_demand_output(building_name):
-    case = 'WTP_CBD_m_WP1_OFF'
     path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
+    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % CASE
     path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
     path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
+    return path_to_file
+
+def path_to_total_demand():
+    path_to_file = {}
+    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % CASE
+    path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
     return path_to_file
 
 
@@ -211,10 +233,16 @@ def path_to_osmose_project_bui(building_name):
     return path_to_file
 
 
-def path_to_osmose_project_hcs(building_name):
+def path_to_osmose_project_hcs(building_name, extension):
     format = 'csv'
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
-    path_to_file = os.path.join(path_to_folder, '%s_from_cea_1.%s' % (building_name, format))
+    path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
+    return path_to_file
+
+def path_to_osmose_project_inputT(number):
+    format = 'csv'
+    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
+    path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
 

@@ -4,9 +4,12 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
+# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
+TECHS = ['HCS_coil']
 # TECHS = ['HCS_LD']
 # TECHS = ['HCS_coil', 'HCS_LD']
+PATH_TO_RESULT_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
+
 Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
 
 
@@ -22,11 +25,6 @@ def main():
         operation_df = set_up_operation_df(tech, results)
         plot_supply_temperature_humidity(building, operation_df, tech)
 
-        ## plot electricity usage
-        plot_electricity_usage(building, results, tech)
-        electricity_df = set_up_electricity_df(tech, results, building)
-        plot_electricity_usages(building, electricity_df, results, tech)
-
         ## plot water balance
         humidity_df = set_up_humidity_df(tech, results)
         plot_water_balance(building, humidity_df, results, tech)
@@ -35,58 +33,139 @@ def main():
         heat_df = set_up_heat_df(tech, results)
         plot_heat_balance(building, heat_df, results, tech)
 
+        ## plot electricity usage
+        plot_electricity_usage(building, results, tech)
+        electricity_df = set_up_electricity_df(tech, results)
+        calc_el_stats(building, electricity_df, results, tech)
+        plot_electricity_usages(building, electricity_df, results, tech)
+
     print el_use_sum
     return
 
 
-def set_up_electricity_df(tech, results, building):
+def set_up_electricity_df(tech, results):
     electricity_df = pd.DataFrame()
     # lcu
-    electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
-    electricity_df['el_aux_lcu'] = results['el_lcu_fan'] * 1000 / Af_m2[building]
+    electricity_df['el_chi_lt'] = results['el_chi_lt']
+    electricity_df['el_aux_lcu'] = results['el_lcu_fan']
     # oau
     if tech == 'HCS_LD':
-        total_el_aux_oau = results['el_oau_in_fan'] + results['el_oau_out_fan']
-        electricity_df['el_hp_oau'] = results['el_LDHP'] * 1000 / Af_m2[building]
+        electricity_df['el_aux_oau'] = results['el_oau_in_fan'] + results['el_oau_out_fan']
+        electricity_df['el_hp_oau'] = results['el_LDHP']
     else:
-        total_el_aux_oau = results['el_oau_in1_fan'] + results['el_oau_in2_fan'] + results['el_oau_in3_fan'] + results[
-            'el_oau_out_fan']
-        electricity_chi_oau = 0
-        for i in range(3):
-            for j in range(10):
-                tag_name = 'el_oau_chi' + str(i + 1) + '_' + str(j + 1)
-                electricity_chi_oau = electricity_chi_oau + results[tag_name]
-        electricity_df['el_chi_oau'] = electricity_chi_oau * 1000 / Af_m2[building]
-    electricity_df['el_aux_oau'] = total_el_aux_oau * 1000 / Af_m2[building]
+        electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan']
+        electricity_df['el_chi_oau'] = results.filter(like='el_oau_chi').sum(axis=1)
 
     # scu
-    electricity_df['el_chi_ht'] = results['el_chi_ht'] * 1000 / Af_m2[building]
-    electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
+    electricity_df['el_chi_ht'] = results['el_chi_ht']
+    electricity_df['el_aux_scu'] = results['el_scu_pump']
     # ct
-    electricity_df['el_ct'] = results['el_ct'] * 1000 / Af_m2[building]
+    electricity_df['el_ct'] = results['el_ct']
 
-    # statistics
-    el_stats_df = electricity_df.copy()
-    # el_stats_df = el_stats_df.append(el_stats_df.sum(), ignore_index=True)
-    total_df = pd.DataFrame(el_stats_df.sum()).T
-    el_stats_df = el_stats_df.append(total_df).reset_index().drop(columns='index')
-    el_stats_df['el_total'] = el_stats_df.sum(axis=1)
-    el_stats_df['scu'] = el_stats_df['el_chi_ht'] / el_stats_df['el_total'] * 100
-    el_stats_df['scu_aux'] = el_stats_df['el_aux_scu'] / el_stats_df['el_total'] * 100
-    el_stats_df['lcu'] = el_stats_df['el_chi_lt'] / el_stats_df['el_total'] * 100
-    el_stats_df['lcu_aux'] = el_stats_df['el_aux_lcu'] / el_stats_df['el_total'] * 100
+    return electricity_df
+
+# def set_up_electricity_per_area_df(tech, results, building):
+#     electricity_df = pd.DataFrame()
+#     # lcu
+#     electricity_df['el_chi_lt'] = results['el_chi_lt'] * 1000 / Af_m2[building]
+#     electricity_df['el_aux_lcu'] = results['el_lcu_fan'] * 1000 / Af_m2[building]
+#     # oau
+#     if tech == 'HCS_LD':
+#         total_el_aux_oau = results['el_oau_in_fan'] + results['el_oau_out_fan']
+#         electricity_df['el_hp_oau'] = results['el_LDHP'] * 1000 / Af_m2[building]
+#     else:
+#         total_el_aux_oau = results['el_oau_in1_fan'] + results['el_oau_in2_fan'] + results['el_oau_in3_fan'] + results[
+#             'el_oau_out_fan']
+#         electricity_chi_oau = 0
+#         for i in range(3):
+#             for j in range(10):
+#                 tag_name = 'el_oau_chi' + str(i + 1) + '_' + str(j + 1)
+#                 electricity_chi_oau = electricity_chi_oau + results[tag_name]
+#         electricity_df['el_chi_oau'] = electricity_chi_oau * 1000 / Af_m2[building]
+#     electricity_df['el_aux_oau'] = total_el_aux_oau * 1000 / Af_m2[building]
+#
+#     # scu
+#     electricity_df['el_chi_ht'] = results['el_chi_ht'] * 1000 / Af_m2[building]
+#     electricity_df['el_aux_scu'] = results['el_scu_pump'] * 1000 / Af_m2[building]
+#     # ct
+#     electricity_df['el_ct'] = results['el_ct'] * 1000 / Af_m2[building]
+#
+#     return electricity_df
+
+
+def calc_el_stats(building, electricity_df, results, tech):
+    output_df = electricity_df.copy()
+    # calculate electricity used in each technology
+    output_df['el_total'] = output_df.sum(axis=1)
+    output_df['el_scu'] = output_df['el_aux_scu'] + output_df['el_chi_ht']
+    output_df['el_lcu'] = output_df['el_aux_lcu'] + output_df['el_chi_lt']
+    output_df['el_oau'] = output_df['el_aux_oau'] + output_df['el_chi_oau']
+    # calculate total cooling energy produced
+    cooling_df = calc_cooling_energy(results)
+    output_df['qc_bui_sen_total'] = cooling_df.filter(like='qc_bui_sen').sum(axis=1)
+    output_df['qc_bui_lat_total'] = cooling_df.filter(like='qc_bui_lat').sum(axis=1)
+    output_df['qc_sys_scu'] = cooling_df['qc_sys_sen_scu']
+    output_df['qc_sys_lcu'] = cooling_df['qc_sys_sen_lcu'] + cooling_df['qc_sys_lat_lcu']
+    output_df['qc_sys_oau'] = cooling_df['qc_sys_sen_oau'] + cooling_df['qc_sys_lat_oau']
+    output_df['qc_sys_sen_total'] = cooling_df.filter(like='qc_sys_sen').sum(axis=1)
+    output_df['qc_sys_lat_total'] = cooling_df.filter(like='qc_sys_lat').sum(axis=1)
+
+    # add total row in the bottom
+    total_df = pd.DataFrame(output_df.sum()).T
+    output_df = output_df.append(total_df).reset_index().drop(columns='index')
+
+    # calculate values from column operations
+    output_df['qc_bui_total'] = output_df['qc_bui_sen_total'] + output_df['qc_bui_lat_total']
+    output_df['cop_cooling'] = output_df['qc_bui_total']/output_df['el_total']
+    output_df['qc_sys_total'] = output_df['qc_sys_sen_total'] + output_df['qc_sys_lat_total']
+    output_df['cop_system'] = output_df['qc_sys_total']/output_df['el_total']
+    # output_df['cop_scu'] = output_df['qc_sys_scu']/output_df['el_scu']
+    # output_df['cop_lcu'] = output_df['qc_sys_lcu']/output_df['el_lcu']
+    # output_df['cop_oau'] = output_df['qc_sys_oau']/output_df['el_oau']
+
+    # calculate the percentage used by each component
+    output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
+    output_df['scu_aux'] = output_df['el_aux_scu'] / output_df['el_total'] * 100
+    output_df['lcu'] = output_df['el_chi_lt'] / output_df['el_total'] * 100
+    output_df['lcu_aux'] = output_df['el_aux_lcu'] / output_df['el_total'] * 100
     if tech == 'HCS_LD':
-        el_stats_df['oau'] = el_stats_df['el_hp_oau'] / el_stats_df['el_total'] * 100
-        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau'] / el_stats_df['el_total'] * 100
+        output_df['oau'] = output_df['el_hp_oau'] / output_df['el_total'] * 100
+        output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
     else:
-        el_stats_df['oau'] = el_stats_df['el_chi_oau'] / el_stats_df['el_total'] * 100
-        el_stats_df['oau_aux'] = el_stats_df['el_aux_oau'] / el_stats_df['el_total'] * 100
-
-    el_stats_df['ct'] = el_stats_df['el_ct'] / el_stats_df['el_total'] * 100
+        output_df['oau'] = output_df['el_chi_oau'] / output_df['el_total'] * 100
+        output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
+    output_df['ct'] = output_df['el_ct'] / output_df['el_total'] * 100
 
     # export results
-    el_stats_df.to_csv(path_to_elec_csv(building, tech))
-    return electricity_df
+    output_df.to_csv(path_to_elec_csv(building, tech))
+    return np.nan
+
+
+def calc_cooling_energy(results):
+    cooling_df = pd.DataFrame()
+    cooling_df['qc_bui_sen_scu'] = results['q_scu_sen']
+    cooling_df['qc_bui_sen_lcu'] = results['q_lcu_sen']
+    cooling_df['qc_bui_sen_oau'] = results.filter(like='oau_Qc_bui_sen').sum(axis=1)
+    cooling_df['qc_bui_lat_lcu'] = results['q_coi_lcu'] - results['q_lcu_sen']
+    cooling_df['qc_bui_lat_oau'] = results.filter(like='oau_Qc_bui_total').sum(axis=1) - results.filter(like='oau_Qc_bui_sen').sum(axis=1)
+
+    cooling_df['qc_sys_sen_scu'] = results['q_coi_scu']
+    cooling_df['qc_sys_sen_lcu'] = results['q_lcu_sen']
+    cooling_df['qc_sys_sen_oau'] = results.filter(like='oau_Qc_sen').sum(axis=1)
+    cooling_df['qc_sys_lat_lcu'] = results['q_coi_lcu'] - results['q_lcu_sen']
+    cooling_df['qc_sys_lat_oau'] = results.filter(like='oau_Qc_total').sum(axis=1) - results.filter(like='oau_Qc_sen').sum(axis=1)
+
+    # check validity of results
+    if cooling_df.min().min() < 0:
+        columns = np.unique(np.where(cooling_df < 0)[1])
+        names = []
+        for i in columns:
+            names.append(cooling_df.columns[i])
+        raise ValueError('Check cooling results from osmose: ',' ,'.join(names))
+    if (abs(results['q_scu_sen']-results['q_coi_scu'])<1e3).all() == False:
+        raise ValueError('Check SCU heat balance')
+
+    return cooling_df
 
 
 def set_up_heat_df(tech, results):
@@ -186,7 +265,7 @@ def plot_heat_balance(building, heat_df, results, tech):
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     # plot layout
-    fig.savefig(path_to_heat_fig(building, tech))
+    fig.savefig(path_to_save_fig(building, tech, 'heat'))
 
 
 def plot_water_balance(building, humidity_df, results, tech):
@@ -223,7 +302,7 @@ def plot_water_balance(building, humidity_df, results, tech):
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     # plot layout
-    fig.savefig(path_to_water_flow_fig(building, tech))
+    fig.savefig(path_to_save_fig(building, tech, 'water_flow'))
 
 
 def plot_electricity_usage(building, results, tech):
@@ -245,9 +324,10 @@ def plot_electricity_usage(building, results, tech):
     ax.grid(True)
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
-    fig.savefig(path_to_el_usage_fig(building, tech))
+    fig.savefig(path_to_save_fig(building, tech, 'el_usage'))
 
 def plot_electricity_usages(building, electricity_df, results, tech):
+    electricity_per_area_df = electricity_df * 1000 / Af_m2[building]
     # extract parameters
     time_steps = results.shape[0] - 1
     x_ticks = results.index.values
@@ -264,13 +344,13 @@ def plot_electricity_usages(building, electricity_df, results, tech):
               (0.70196078, 0.70196078, 0.70196078, 1), (0.70196078, 0.73196078, 0.8, 1),
               (0.5, 0.5, 0.7, 1)]
     # initialize the vertical-offset for the stacked bar chart
-    y_offset = np.zeros(electricity_df.shape[0])
+    y_offset = np.zeros(electricity_per_area_df.shape[0])
     # plot bars
-    for c in range(len(electricity_df.columns)):
-        column = electricity_df.columns[c]
-        ax.bar(x_ticks, electricity_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
+    for c in range(len(electricity_per_area_df.columns)):
+        column = electricity_per_area_df.columns[c]
+        ax.bar(x_ticks, electricity_per_area_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
-        y_offset = y_offset + electricity_df[column]
+        y_offset = y_offset + electricity_per_area_df[column]
     ax.set(xlabel='Time [hr]', ylabel='Electricity Use [kW]', xlim=(1, time_steps), ylim=(0, 35))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
@@ -285,7 +365,7 @@ def plot_electricity_usages(building, electricity_df, results, tech):
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     # plot layout
-    fig.savefig(path_to_el_usages_fig(building, tech))
+    fig.savefig(path_to_save_fig(building, tech, 'el_usages'))
 
 
 def plot_supply_temperature_humidity(building, operation_df, tech):
@@ -319,7 +399,7 @@ def plot_supply_temperature_humidity(building, operation_df, tech):
         plt.ylabel('Temperature [C] ; Humidity Ratio [g/kg d.a.]', fontsize=14)
         plt.title(building + '_' + tech, fontsize=14)
         # plt.show()
-        fig.savefig(path_to_OAU_supply_fig(building, tech))
+        fig.savefig(path_to_save_fig(building, tech, 'OAU_supply'))
     else:
         # T, w lines
         fig, ax1 = plt.subplots(figsize=fig_size)
@@ -335,23 +415,9 @@ def plot_supply_temperature_humidity(building, operation_df, tech):
         plt.ylim(0, 25)
         plt.title(building + '_' + tech, fontsize=14)
         # plt.show()
-        fig.savefig(path_to_OAU_supply_fig(building, tech))
+        fig.savefig(path_to_save_fig(building, tech, 'OAU_supply'))
     plt.close(fig)
     return np.nan
-
-
-def path_to_osmose_results(building, tech):
-    format = 'csv'
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_outputs.%s' % (tech, format))
-    return path_to_file
-
-
-def path_to_OAU_supply_fig(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_%s_OAU_supply.png' % (building, tech))
-    return path_to_file
-
 
 ## auxiliary functions
 def set_xtick_shown(x_ticks, time_steps):
@@ -364,33 +430,23 @@ def set_figsize(time_steps):
     fig_size = (6.6, 5) if time_steps <= 24 else (15.4, 5)
     return fig_size
 
+## paths
 
-def path_to_el_usage_fig(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_%s_el_usage.png' % (building, tech))
+# PATH_TO_RESULT_FOLDER = 'C:\\OSMOSE_projects\\hcs_windows\\results\\'
+
+def path_to_osmose_results(building, tech):
+    format = 'csv'
+    path_to_folder = PATH_TO_RESULT_FOLDER + building
+    path_to_file = os.path.join(path_to_folder, '%s_outputs.%s' % (tech, format))
     return path_to_file
 
-
-def path_to_el_usages_fig(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_%s_el_usages.png' % (building, tech))
+def path_to_save_fig(building, tech, fig_type):
+    path_to_folder = PATH_TO_RESULT_FOLDER + building
+    path_to_file = os.path.join(path_to_folder, '%s_%s_%s.png' % (building, tech, fig_type))
     return path_to_file
-
-
-def path_to_water_flow_fig(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_%s_water.png' % (building, tech))
-    return path_to_file
-
-
-def path_to_heat_fig(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
-    path_to_file = os.path.join(path_to_folder, '%s_%s_heat.png' % (building, tech))
-    return path_to_file
-
 
 def path_to_elec_csv(building, tech):
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\results\\' + building
+    path_to_folder = PATH_TO_RESULT_FOLDER + building
     path_to_file = os.path.join(path_to_folder, '%s_%s_el.csv' % (building, tech))
     return path_to_file
 
