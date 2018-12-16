@@ -22,7 +22,6 @@ sphinx-apidoc -f -M -T -o modules ../cea^
  ../cea/technologies/cogeneration*^
  ../cea/technologies/thermal_network/network_layout*^
  ../cea/optimization/master/generation*^
- ../cea/tests/test_dbf*^
  ../cea/utilities/compile_pyd_files*^
 
 
