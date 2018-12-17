@@ -1,0 +1,95 @@
+<div class="left_col scroll-view">
+  <div class="navbar nav_title" style="border: 0;">
+    <a href="/" class="site_title"><img src="/static/images/cea-logo.png" height="30px" />
+      <span asdfstyle="font-size: 0.8em">City Energy Analyst</span></a>
+  </div>
+
+  <div class="clearfix"></div>
+
+  <br />
+
+  <!-- sidebar menu -->
+  <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+    <div class="menu_section">
+      <h3>City Energy Analyst</h3>
+      <ul class="nav side-menu">
+        <li><a><i class="fa fa-bar-chart"></i> Dashboard <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            {% for dashboard in dashboards %}
+                <li><a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=loop.index0) }}">{{ dashboard.name }}</a></li>
+            {% endfor %}
+            <li><a href="{{ url_for('plots_blueprint.route_new_dashboard') }}"><i>add new dashboard</i></a></li>
+          </ul>
+        </li>
+        <li><a><i class="fa fa-map-marker"></i> Project <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="/project/show">Project data</a></li>
+          </ul>
+        </li>
+        <li><a><i class="fa fa-building-o"></i> Inputs <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="/inputs/table/zone">Zone</a></li>
+            <li><a href="/inputs/table/district">District</a></li>
+            <li><a href="/inputs/table/age">Age</a></li>
+            <li><a href="/inputs/table/occupancy">Occupancy</a></li>
+            <li><a href="/inputs/table/internal-loads">Internal Loads</a></li>
+            <li><a href="/inputs/table/supply-systems">Supply Systems</a></li>
+            <li><a href="/inputs/table/architecture">Architecture</a></li>
+            <li><a href="/inputs/table/restrictions">Restrictions</a></li>
+          </ul>
+        </li>
+
+        <li><a><i class="fa fa-cog"></i> Tools <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            {% for tool_category in tools.keys()|sort %}
+            <li><a href="#">{{tool_category}} <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                {% for tool in tools[tool_category] %}
+                <li><a href="/tools/{{tool.name}}">{{tool.label}}</a></li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="menu_section">
+      <h3>Documentation</h3>
+      <ul class="nav side-menu">
+        <li>
+          <a href="http://city-energy-analyst.readthedocs.io/en/latest/" target="_blank">
+            <i class="fa fa-book"></i> Manual <span class="fa fa-link"></span>
+          </a>
+        </li>
+        <li><a><i class="fa fa-info"></i>Help <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="https://github.com/architecture-building-systems/cityenergyanalyst/issues/new"
+                   target="_blank">Report an issue</a></li>
+            <li><a href="https://city-energy-analyst.readthedocs.io/en/latest/known-issues.html"
+                   target="_blank">Known issues</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- /sidebar menu -->
+
+  <!-- /menu footer buttons -->
+  <div class="sidebar-footer hidden-small">
+    <a data-toggle="tooltip" data-placement="top" title="Settings">
+      <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+    </a>
+    <a data-toggle="tooltip" data-placement="top" title="FullScreen">
+      <span class="glyphicon glyphicon-fullscreen" aria-hidden="true"></span>
+    </a>
+    <a data-toggle="tooltip" data-placement="top" title="Lock">
+      <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+    </a>
+    <a data-toggle="tooltip" data-placement="top" title="Logout" href="login">
+      <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+    </a>
+  </div>
+  <!-- /menu footer buttons -->
+</div>

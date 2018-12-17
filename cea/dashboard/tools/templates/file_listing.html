@@ -1,0 +1,42 @@
+<!-- a navigation list for the modal file dialog -->
+<div class="modal-header">
+  <button type="button" class="close cea-file-dialog-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+  </button>
+  <h4 class="modal-title" id="cea-file-dialog-title">{{title}}</h4>
+</div>
+<div class="modal-body">
+
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      {% for folder in breadcrumbs %}
+      <li class="breadcrumb-item {% if loop.last %}active{% endif %}" aria-current="page">
+        <a href="#" onclick="file_dialog_navigate_to('{{fqname}}', '{{breadcrumbs|join_paths(loop.index)|escapejs}}', '.')">{{folder}}</a></li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <ul class="cea-file-listing">
+    <li><a href="#" onclick="file_dialog_navigate_to('{{fqname}}', '{{current_folder|escapejs}}', '..')">
+      <i class="fa fa-level-up">&nbsp;</i>..</a>
+    </li>
+
+    {% for folder in folders %}
+    <li><a href="#" onclick="file_dialog_navigate_to('{{fqname}}', '{{current_folder|escapejs}}', '{{folder|escapejs}}')">
+      <i class="fa fa-folder-o">&nbsp;</i>{{folder}}</a>
+    </li>
+    {% endfor %}
+
+    {% for file in files %}
+    <li><a href="#" onclick="select_file(this)"  data-save-file-path="{{current_folder|join_path(file)}}">
+      <i class="fa fa-file-o">&nbsp;</i>{{file}}</a></li>
+    {% endfor %}
+  </ul>
+
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+  <button id="cea-file-dialog-select-button" data-save-target="{{parameter_name}}"
+          type="button" class="btn btn-default"
+          data-dismiss="modal" disabled onclick="save_file_name($(this).data('save-target'))">Select
+  </button>
+</div>

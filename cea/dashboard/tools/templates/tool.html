@@ -1,0 +1,129 @@
+{% extends "base_site.html" %}
+
+{% block title %}cea {{script}}{% endblock title %}
+
+{% import 'input_macros.html' as input_macros %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+{% endblock stylesheets %}
+
+{% block content %}
+  <div class="right_col" role="main">
+
+
+    <!-- show the dialog with the script output -->
+    <div class="modal fade" id="cea-console-output" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+            </button>
+            <h4 class="modal-title" id="myModalLabel">{{ script }} - output</h4>
+          </div>
+          <div class="modal-body">
+            <pre id="cea-console-output-body"></pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default cea-modal-close" data-dismiss="modal" disabled>Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="cea-save-config-modal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="myModalLabel">Saving script configuration</h4>
+          </div>
+          <div class="modal-body">
+            Saving script configuration
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- show the open file dialog -->
+    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+        <!-- see template file_listing.html for contents -->
+
+        </div>
+      </div>
+    </div>
+
+    <!-- show the open folder dialog -->
+    <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <!-- see template folder_listing.html for contents -->
+
+        </div>
+      </div>
+    </div>
+
+
+    <div class="">
+        <div class="page-title">
+          <div class="title_left">
+            <h3>{{ script.category }}</h3>
+          </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+              <div class="x_title">
+                <h2>{{ script.label }}</h2>
+                <div class="clearfix"></div>
+              </div>
+              <div class="x_content">
+
+                <!-- show the parameters for running -->
+                <div id="div-parameters-{{ script.name }}" class="d-block">
+                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left">
+                    {% for parameter in parameters %}
+                    {{ input_macros.input(parameter, weather_dict) }}
+                    {% endfor %}
+                  </form>
+                </div>
+
+
+                <!-- show buttons -->
+                <div class="form-group">
+                  <div class="ln_solid"></div>
+                  <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                    <button id='run-{{ script.name }}' type="button" value="Run" class="btn btn-success"
+                              onclick="cea_run('{{ script.name }}')">Run {{ script.name }}
+                    </button>
+
+                    <button id='save-config' type="button" value="Save" class="btn btn-default"
+                            onclick="cea_save_config('{{ script.name}}')">Save configuration
+                    </button>
+
+                    <a id='restore-defaults' class="btn btn-default" role="button" href="restore-defaults/{{ script.name}}">Restore defaults</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+    <script src="{{ url_for('.static', filename='tools.js') }}"></script>
+{% endblock javascripts %}
