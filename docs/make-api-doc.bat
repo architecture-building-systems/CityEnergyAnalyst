@@ -13,7 +13,7 @@ echo.
 
 sphinx-apidoc -f -M -T -o modules ../cea^
  ../cea/databases*^
- ../cea/demand/metamodel*^
+ ../cea/analysis/clustering*^
  ../cea/demand/calibration/bayesian_calibrator*^
  ../cea/demand/calibration/subset_calibrator*^
  ../cea/interfaces/dashboard*^
