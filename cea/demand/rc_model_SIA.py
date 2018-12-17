@@ -199,10 +199,10 @@ def calc_phi_i_p(Qs): # _Wp, people):
     return Qs # phi_i_p
 
 
-def calc_phi_i_a(Eaf, Epro):
+def calc_phi_i_a(Eaf, Epro, Qcpro):
     # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen()
     # TODO make function and dynamic, check factor
-    phi_i_a = 0.9 * (Eaf + Epro)
+    phi_i_a = 0.9 * Eaf + (Epro - Qcpro)
     return phi_i_a
 
 
@@ -593,6 +593,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     El = tsd['El'][t]
     Ea = tsd['Ea'][t]
     Epro = tsd['Epro'][t]
+    Qcpro = tsd['Qcpro_sys'][t]
     people = tsd['people'][t]
     I_sol = tsd['I_sol_and_I_rad'][t]
     T_ext = tsd['T_ext'][t]
@@ -608,9 +609,8 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
-        = _calc_rc_model_temperatures(Ea, El, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
-                                                                     m_ve_mech, m_ve_window, phi_hc_cv,
-                                                                     phi_hc_r, theta_m_t_1, theta_ve_mech)
+        = _calc_rc_model_temperatures(Ea, El, Epro, Qcpro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m,
+                                      m_ve_inf, m_ve_mech, m_ve_window, phi_hc_cv, phi_hc_r, theta_m_t_1, theta_ve_mech)
 
     if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
             or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:
@@ -627,7 +627,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     return rc_model_temp
 
 
-def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m,
+def _calc_rc_model_temperatures(Eaf, Elf, Epro, Qcpro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m,
                                 m_ve_inf_simple, m_ve_mech, m_ve_window, phi_hc_cv, phi_hc_r, theta_m_t_1,
                                 theta_ve_mech):
     # numba_cc compatible calculation
@@ -642,7 +642,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext,
     f_im = calc_f_im(a_t=a_t, a_m=a_m)
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
     phi_i_l = calc_phi_i_l(Elf=Elf)
-    phi_i_a = calc_phi_i_a(Eaf=Eaf, Epro=Epro) # include processes
+    phi_i_a = calc_phi_i_a(Eaf=Eaf, Epro=Epro, Qcpro=Qcpro) # include processes
     phi_i_p = calc_phi_i_p(Qs=Qs) # , people=people)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
     phi_a = calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol)

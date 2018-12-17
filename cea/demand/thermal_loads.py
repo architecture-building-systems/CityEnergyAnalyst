@@ -178,7 +178,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 def calc_QH_sys_QC_sys(tsd):
 
     tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
-    tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys']
+    tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys'] + tsd['Qcpro_sys']
 
     return tsd
 

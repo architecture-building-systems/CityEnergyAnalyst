@@ -52,7 +52,7 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qhpro_sys',
+                              'Qcs_dis_ls', 'Qhpro_sys', 'Qcpro_sys',
                               'QH_sys', 'QC_sys']
 
         else:
@@ -89,7 +89,7 @@ class DemandWriter(object):
         else:
             self.temperature_vars = temperatures
 
-        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2' 'people0']
+        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2', 'people0']
 
     def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)

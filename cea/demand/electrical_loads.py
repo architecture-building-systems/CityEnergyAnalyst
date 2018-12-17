@@ -59,6 +59,8 @@ def calc_Eal_Epro(tsd, bpr, schedules):
     else:
         tsd['Epro'] = np.zeros(8760)
 
+    tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
+
     return tsd
 
 def calc_E_sys(tsd):
@@ -66,7 +68,7 @@ def calc_E_sys(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro']  + tsd['Eaux'] #assuming a small loss
+    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] #assuming a small loss
 
     return tsd
 
