@@ -35,20 +35,6 @@ Installation
 #. Type ``pip install -e .[dev]`` and press ENTER (mind the dot '.' included in this command!).
 #. Type ``cea install-toolbox`` and press ENTER.
 
-Installation of the Dashboard interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#. Open GitHub Desktop from the start menu.
-#. Press Ctrl+Shift+O (clone repository) and select the URL tab.
-#. Paste the cea-dashboard GitHub address: https://github.com/architecture-building-systems/cea-dashboard
-#. Click Clone.
-#. Open Anaconda prompt (terminal console) from the start menu.
-#. Type ``cd Documents\GitHub\cea-dashboard`` and press ENTER.
-#. Type ``activate cea`` and press ENTER.
-#. Type ``pip install -e .`` and press ENTER (mind the dot '.' included in this command!).
-
-You can launch the Dashboard interface by typing ``cea dashboard`` in the Anaconda prompt after ``activate cea``.
-
 Configuration of Pycharm
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
