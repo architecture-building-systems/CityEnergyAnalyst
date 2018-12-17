@@ -626,7 +626,15 @@ def schedule_maker(region, dates, locator, list_uses):
     occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, Qcre_Wm2, \
     Ed_Wm2 = ([] for i in range(12))
 
-    for use in list_uses:
+    updated_list_uses = []
+    if 'INDUSTRIAL' not in list_uses:
+        updated_list_uses.append('INDUSTRIAL')
+    if 'COOLROOM' not in list_uses:
+        updated_list_uses.append('COOLROOM')
+    if 'SERVERROOM' not in list_uses:
+        updated_list_uses.append('SERVERROOM')
+
+    for use in list_uses + updated_list_uses:
         # read from archetypes_schedules and properties
         archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use).T
 
