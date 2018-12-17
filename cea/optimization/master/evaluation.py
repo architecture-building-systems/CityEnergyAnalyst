@@ -55,6 +55,9 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     """
     # Check the consistency of the individual or create a new one
+    individual = [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0.099980388,	1,	0.11731576,	0,
+                  0.070684776,	0,	0.352002566,	0,	0,	0,	0,	1,	0.113051052,	1,	0.420176305,	1,
+                  0.466772643,	0,	7,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	1,	0,	0,	0,	0,	0,	1]
     individual = check_invalid(individual, len(building_names), config)
 
 
@@ -160,6 +163,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 += GHG_storage_tonCO2
     PEN_MJoil += PEN_storage_MJoil
 
+    print ('costs_storage_USD = ' + str(costs_storage_USD))
+    print ('GHG_storage_tonCO2 = ' + str(GHG_storage_tonCO2))
+    print ('PEN_storage_MJoil = ' + str(PEN_storage_MJoil))
+
     # District Heating Calculations
     if config.district_heating_network:
 
@@ -183,6 +190,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 += GHG_heating_tonCO2
     PEN_MJoil += PEN_heating_MJoil
 
+    print ('costs_heating_USD = ' + str(costs_heating_USD))
+    print ('GHG_heating_tonCO2 = ' + str(GHG_heating_tonCO2))
+    print ('PEN_heating_MJoil = ' + str(PEN_heating_MJoil))
+
     # District Cooling Calculations
     if gv.ZernezFlag == 1:
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
@@ -196,12 +207,20 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 += GHG_cooling_tonCO2
     PEN_MJoil += PEN_cooling_MJoil
 
+    print ('costs_cooling_USD = ' + str(costs_cooling_USD))
+    print ('GHG_cooling_tonCO2 = ' + str(GHG_cooling_tonCO2))
+    print ('PEN_cooling_MJoil = ' + str(PEN_cooling_MJoil))
+
     # District Electricity Calculations
     (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
     PEN_MJoil += PEN_electricity_MJoil
+
+    print ('costs_electricity_USD = ' + str(costs_electricity_USD))
+    print ('GHG_electricity_tonCO2 = ' + str(GHG_electricity_tonCO2))
+    print ('PEN_electricity_MJoil = ' + str(PEN_electricity_MJoil))
 
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
@@ -218,7 +237,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 += GHG_additional_tonCO2
     PEN_MJoil += PEN_additional_MJoil
 
-    summarize_individual.summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config)
+    print ('costs_additional_USD = ' + str(costs_additional_USD))
+    print ('GHG_additional_tonCO2 = ' + str(GHG_additional_tonCO2))
+    print ('PEN_additional_MJoil = ' + str(PEN_additional_MJoil))
+
+    # summarize_individual.summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config)
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
