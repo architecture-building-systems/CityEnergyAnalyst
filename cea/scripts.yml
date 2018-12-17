@@ -267,7 +267,7 @@ default:
   label: dashboard
   description: dashboard
   interfaces: [cli]
-  module: cea.interfaces.dashboard.dashboard
+  module: cea.dashboard.dashboard
   parameters: []
 
 - name: excel-to-shapefile
