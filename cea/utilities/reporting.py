@@ -7,9 +7,7 @@ import os
 from plotly.offline import plot
 import plotly.graph_objs as go
 
-from cea.demand.thermal_loads import TSD_KEYS_HEATING_LOADS, TSD_KEYS_HEATING_TEMP, TSD_KEYS_RC_TEMP, \
-    TSD_KEYS_COOLING_LOADS, TSD_KEYS_MOISTURE, TSD_KEYS_VENTILATION_FLOWS, TSD_KEYS_COOLING_SUPPLY_TEMP, \
-    TSD_KEYS_COOLING_SUPPLY_FLOWS
+
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -40,18 +38,25 @@ def full_report_to_xls(tsd, output_folder, basename):
     writer.close()
 
     # quick visualization
-    quick_visualization_tsd(tsd, output_folder, basename)
+    # UNCOMMENT THE NEXT LINE TO PRODUCE QUICK VISUALIZATIONS WITH PLOTLY OF THE DEMAND CALCULATION IN BUILDINGS
+    # quick_visualization_tsd(tsd, output_folder, basename)
 
 
 def quick_visualization_tsd(tsd, output_folder, building_name):
 
-    plot_heat_load = False
-    plot_heat_temp = False
+    # import keys
+    from cea.demand.thermal_loads import TSD_KEYS_HEATING_LOADS, TSD_KEYS_HEATING_TEMP, TSD_KEYS_RC_TEMP, \
+        TSD_KEYS_COOLING_LOADS, TSD_KEYS_MOISTURE, TSD_KEYS_VENTILATION_FLOWS, TSD_KEYS_COOLING_SUPPLY_TEMP, \
+        TSD_KEYS_COOLING_SUPPLY_FLOWS
+
+    # set to True to produce plotly graphs of selected variables
+    plot_heat_load = True
+    plot_heat_temp = True
     plot_cool_load = True
     plot_cool_moisture = True
     plot_cool_air = True
     plot_cool_sup = True
-    auto_open = False
+    auto_open = True
 
     if plot_heat_load:
         filename = os.path.join(output_folder, "heat-load-{}.html").format(building_name)
