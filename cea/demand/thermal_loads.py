@@ -13,7 +13,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
 
-import cea.utilities
+from cea.utilities import reporting
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
@@ -179,7 +179,7 @@ def write_results(bpr, building_name, date, format_output, loads_output, locator
 
     # write report & quick visualization
     # (NOTE: uncomment to write full report for debugging purposes)
-    # cea.utilities.reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+    reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):
