@@ -26,6 +26,7 @@ def load_plots_data():
 
 
 def main(config):
+    config.restricted_to = None  # allow access to the whole config file
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'DEBUG': True,
                              'SECRET_KEY': 'secret'})
