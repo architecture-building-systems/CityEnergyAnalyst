@@ -179,7 +179,7 @@ def write_results(bpr, building_name, date, format_output, loads_output, locator
 
     # write report & quick visualization
     # (NOTE: uncomment to write full report for debugging purposes)
-    reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+    # reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):
