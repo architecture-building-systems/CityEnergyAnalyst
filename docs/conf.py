@@ -76,6 +76,7 @@ MOCK_MODULES = ['COLOR',
                 'numba',
                 'numba.pycc',
                 'pandas',
+                'pandas.testing',
                 'pandas.util',
                 'pandas.util.testing',
                 'plotly',
@@ -167,11 +168,11 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                    'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
-                    'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
-                    'modules/cea.optimization.individual_evaluation*',
+exclude_patterns = ['_build',
+                    'Thumbs.db',
+                    '.DS_Store',
+                    'modules/cea.databases*',  # databases doesn't contain any modules
+                    'modules/cea.optimization.individual_evaluation*'
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
