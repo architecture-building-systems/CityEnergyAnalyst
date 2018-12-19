@@ -36,12 +36,22 @@ Rw_JperkgK = 461.5
 
 RH_max = 70  # %
 RH_min = 40  # %
-CASE = 'WTP_CBD_m_WP1_RES'
-START_t = 3240  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
-TIMESTEPS = 24  # 168 (week)
+CASE = 'WTP_CBD_m_WP1_RET'
+START_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
+TIMESTEPS = 168  # 168 (week)
+# T_offcoil
+T_low_C = 8.1
+T_high_C = 14.1
+T_interval = 0.65 #0.5
+# T_low_C = 14.5
+# T_high_C = 18
+# T_interval = 0.65 #0.5
+
+
+
 
 def main():
-    building_names = ['B001', 'B002', 'B007']  # , 'B002', 'B007']
+    building_names = ['B001', 'B002', 'B007']
     SS553_lps_m2 = 0.6
 
     # read total demand
@@ -68,6 +78,7 @@ def main():
         ## heat gain
         calc_sensible_gains(output_df, reduced_tsd_df)
         output_df1['Q_gain_total_kWh'] = reduced_tsd_df['Q_gain_total_kWh']
+        output_df1['Q_gain_occ_kWh'] = reduced_tsd_df['Q_gain_occ_kWh']
         ## humidity gain
         output_df1['w_gain_occ_kgpers'] = reduced_tsd_df['w_int']
         # output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['w_ext'] / 1000
@@ -78,7 +89,12 @@ def main():
         ## output to hcs_out
         # change units
         output_hcs['T_ext'] = reduced_tsd_df['T_ext']
+        output_hcs['T_ext_wb'] = reduced_tsd_df['T_ext_wetbulb']
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
+        if ('OFF' in CASE) or ('RET' in CASE):
+            output_hcs['w_RA'] = 10.2
+        elif 'RES' in CASE:
+            output_hcs['w_RA'] = 13
         output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_tsd_df['rh_ext'],
                                                                reduced_tsd_df['T_ext'])  # g/kg d.a.
@@ -113,9 +129,7 @@ def main():
         # output_hcs = output_hcs.drop(output_df.index[range(7)])
 
         # a set of off coil temperatures for oau
-        T_low_C = 10
-        T_high_C = 16
-        T_OAU_offcoil = np.arange(T_low_C, T_high_C, 2.2)
+        T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
         output_hcs_dict = {}
         output_hcs_copy = output_hcs.copy()
         for i in range(T_OAU_offcoil.size):
