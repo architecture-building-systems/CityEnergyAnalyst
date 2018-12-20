@@ -28,7 +28,7 @@ dependencies:
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
-- gdal=2.2.4=py27_vc9_0
+- gdal>=2.2.4
 - geopandas=0.4.0=py_1
 - geos=3.6.2=h2880e7c_2
 - geotiff=1.4.2=vc9_1
@@ -39,7 +39,7 @@ dependencies:
 - jpeg=9b=vc9_0
 - kealib=1.4.7=vc9_4
 - krb5=1.14.2=vc9_0
-- libgdal=2.2.4=vc9_5
+- libgdal>=2.2.4
 - libiconv=1.14=vc9_4
 - libnetcdf=4.4.1.1=vc9_10
 - libpng=1.6.34=vc9_0
@@ -47,7 +47,7 @@ dependencies:
 - libspatialindex=1.8.5=vc9_1
 - libspatialite=4.3.0a=vc9_19
 - libssh2=1.8.0=h0990ea7_2
-- libtiff=4.0.9=vc9_0
+- libtiff=4.0.9
 - libxml2=2.9.4=vc9_4
 - matplotlib=2.1.0=py27_0
 - munch=2.2.0=py27_0
