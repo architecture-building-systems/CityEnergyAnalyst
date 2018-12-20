@@ -37,8 +37,8 @@ Rw_JperkgK = 461.5
 RH_max = 70  # %
 RH_min = 40  # %
 CASE = 'WTP_CBD_m_WP1_RET'
-START_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
-TIMESTEPS = 168  # 168 (week)
+START_t = 3240  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
+TIMESTEPS = 24  # 168 (week)
 # T_offcoil
 T_low_C = 8.1
 T_high_C = 14.1

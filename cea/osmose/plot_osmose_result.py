@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from extract_demand_outputs import calc_m_dry_air
 from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 
-# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_coil'] #, 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']#, 'HCS_ER0']
+TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
+#TECHS = ['HCS_3for2'] #, 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']#, 'HCS_ER0']
 # TECHS = ['HCS_LD']
 # TECHS = ['HCS_coil', 'HCS_LD']
 PATH_TO_RESULT_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
@@ -20,7 +20,7 @@ Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
 def main():
     el_use_sum = {}
     for tech in TECHS:
-        building = 'B002'
+        building = 'B007'
         results = pd.read_csv(path_to_osmose_results(building, tech),header=None).T.reset_index()
         results = results.rename(columns=results.iloc[0])[1:]
         el_use_sum[tech] = results['SU_elec'].sum()
@@ -61,12 +61,17 @@ def analysis_chilled_water_usage(results, tech):
     T_interval = 0.65  # 0.5
     T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
     count_chiller_usage = chiller_usage[chiller_usage > 0]
-    total_count = count_chiller_usage.sum()
+    total_count = float(count_chiller_usage.sum())
     chiller_in_use = count_chiller_usage.keys()
     T_chillers = {}
+    chiller_occurance = {'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0}
     for chiller in chiller_in_use:
         chiller_number = int(chiller.split('chi')[1].split('_')[0])
-        T_chillers[T_OAU_offcoil[chiller_number - 1]] = (count_chiller_usage[chiller]/total_count).round(3)
+        if chiller_occurance[str(chiller_number)] == 0:
+            T_chillers[T_OAU_offcoil[chiller_number - 1]] = ((count_chiller_usage[chiller]/total_count)*100)
+        else:
+            T_chillers[T_OAU_offcoil[chiller_number - 1]] = T_chillers[T_OAU_offcoil[chiller_number - 1]] + ((count_chiller_usage[chiller] / total_count) * 100)
+        chiller_occurance[str(chiller_number)] += 1
     T_chillers_df = pd.DataFrame(T_chillers, index=[tech])
     return T_chillers_df
 

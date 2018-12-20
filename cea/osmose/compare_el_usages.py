@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 
 PATH_TO_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
-
+#PATH_TO_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\results_1219\\'
 
 def main():
     building = 'B007'
@@ -54,16 +54,19 @@ def plot_chiller_temperatures(chiller_df, building):
     X = np.arange(chiller_df.columns.size)
     fig, ax = plt.subplots()
     width = 0.00
+    # colors = {'HCS_3for2': '#C97A64', 'HCS_coil': '#4E9DA3', 'HCS_ER0': '#E2BB56', 'HCS_IEHX': '#889164'}
+    colors = {'HCS_3for2': '#C96A50', 'HCS_coil': '#3E9AA3', 'HCS_ER0': '#E2B43F', 'HCS_IEHX': '#51443D'}
     for i in range(chiller_df.index.size):
-        ax.bar(X + width, chiller_df.loc[chiller_df.index[i]][:], width=0.25, label=chiller_df.index[i])
-        width = width + 0.25
+        color = colors[chiller_df.index[i]]
+        ax.bar(X + width, chiller_df.loc[chiller_df.index[i]][:], width=0.15, label=chiller_df.index[i], color = color)
+        width = width + 0.15
     #ax.bar(X + 0.25, chiller_df.loc[chiller_df.index[1]][:], width=0.25, label=chiller_df.index[1])
     ax.legend(loc='upper right')
     ax.set_xticks(X + width / 2)
     ax.set_xticklabels(tuple(chiller_df.columns))
     #ax.set_xticks(chiller_df.columns)
-    ax.set(xlabel='Temperature [C]', ylabel='Frequency', ylim=(0, 1))
-    #plt.show()
+    ax.set(xlabel='Temperature [C]', ylabel='Frequency [%]', ylim=(0, 100))
+    # plt.show()
     fig.savefig(path_to_save_chiller_t(building))
     return np.nan
 
