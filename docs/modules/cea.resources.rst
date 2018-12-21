@@ -11,7 +11,6 @@ Subpackages
 
 .. toctree::
 
-    cea.resources.radiation_arcgis
     cea.resources.radiation_daysim
 
 Submodules

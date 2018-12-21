@@ -28,6 +28,7 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How does the 2000-Watt Bench-marking tool work? <https://docs.google.com/presentation/d/1z9c48-prcs-Zw48959p4d2o972MPZ6J_NOTFthlM-0I/edit?usp=sharing>`__.
 #. `How to study building retrofits in the CEA?  <https://docs.google.com/presentation/d/1UNWl_XRJzXwKqV61DpQDC_i41pKmCgzdWaDcDVu7skU/edit?usp=sharing>`__.
 #. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__.
+#. :doc:`how-to-prepare-inputs-for-network-simulation`.
 
 
 For developers
