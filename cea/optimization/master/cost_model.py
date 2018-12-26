@@ -492,14 +492,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         addcosts_Capex_USD += Capex_storage_USD
 
         # Costs from distribution configuration
-        if gv.ZernezFlag == 1:
-            NetworkCost_a_USD, NetworkCost_USD = network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv)
-            NetworkCost_a_USD = NetworkCost_a_USD * nBuildinNtw / len(buildList)
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-        else:
-            NetworkCost_USD = network_features.pipesCosts_DHN_USD
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-            NetworkCost_a_USD = NetworkCost_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
+        NetworkCost_USD = network_features.pipesCosts_DHN_USD
+        NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
+        NetworkCost_a_USD = NetworkCost_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
         addcosts_Capex_a_USD += NetworkCost_a_USD
         addcosts_Capex_USD += NetworkCost_USD
 

@@ -55,9 +55,6 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     """
     # Check the consistency of the individual or create a new one
-    individual = [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0.099980388,	1,	0.11731576,	0,
-                  0.070684776,	0,	0.352002566,	0,	0,	0,	0,	1,	0.113051052,	1,	0.420176305,	1,
-                  0.466772643,	0,	7,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	1,	0,	0,	0,	0,	0,	1]
     individual = check_invalid(individual, len(building_names), config)
 
 
@@ -195,13 +192,13 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print ('PEN_heating_MJoil = ' + str(PEN_heating_MJoil))
 
     # District Cooling Calculations
-    if gv.ZernezFlag == 1:
-        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
-    elif config.district_cooling_network:
+    if config.district_cooling_network:
         reduced_timesteps_flag = False
         (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
-        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
+        costs_cooling_USD = 0.0
+        GHG_cooling_tonCO2 = 0.0
+        PEN_cooling_MJoil = 0.0
 
     costs_USD += costs_cooling_USD
     GHG_tonCO2 += GHG_cooling_tonCO2
