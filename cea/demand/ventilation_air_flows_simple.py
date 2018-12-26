@@ -206,7 +206,7 @@ def calc_m_ve_required(bpr, tsd, region):
 
     m_ve_required_people = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
 
-    if region in {'SIN'}:
+    if region in {'SG'}:
         # 0.6 l/s/m2 minimum ventilation rate according to Singapore standard SS 553
         # [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
         m_ve_required_min = 0.6 * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s

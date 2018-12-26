@@ -158,13 +158,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     Q_coldsource_PeakBoiler_W = np.zeros(8760)
 
     Q_excess_W = np.zeros(8760)
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
-                                                              'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
-
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
+                                                         'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(8760):
         Q_therm_req_W = Q_missing_W[hour]
@@ -625,34 +621,3 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     PEN_used_MJoil = (PEN_HP_MJoil + PEN_gas_MJoil + PEN_wood_MJoil)
 
     return GHG_emitted_tonCO2, PEN_used_MJoil
-
-
-def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
-    """
-    This function estimates the amount of solar installed for a certain configuration
-    based on the number of buildings connected to the grid.
-
-    :param fNameTotalCSV: name of the csv file
-    :param nBuildingsConnected: number of the buildings connected to the grid
-    :param gv: global variables
-    :type fNameTotalCSV: string
-    :type nBuildingsConnected: int
-    :type gv: class
-    :return: PeakPowerAvgkW
-    :rtype: float
-    """
-    solar_results = pd.read_csv(fNameTotalCSV, nBuildingsConnected)
-    AreaAllowed = np.array(solar_results['Af'])
-    nFloors = np.array(solar_results['Floors'])
-
-    AreaRoof = np.zeros(nBuildingsConnected)
-
-    for building in range(nBuildingsConnected):
-        AreaRoof[building] = AreaAllowed[building] / (nFloors[building] * 0.9)
-
-    PeakPowerAvgkW = np.sum(AreaRoof) * gv.eta_area_to_peak / nBuildingsConnected
-
-    if nBuildingsConnected == 0:
-        PeakPowerAvgkW = 0
-
-    return PeakPowerAvgkW

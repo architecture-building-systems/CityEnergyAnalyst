@@ -503,7 +503,6 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
 
     :return:
         - tco = out temperature of secondary side (district cooling network)
