@@ -116,7 +116,6 @@ FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Woo
 FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
 FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant
 
-ZERNEZ_FLAG = False
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
