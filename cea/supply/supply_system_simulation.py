@@ -1,6 +1,7 @@
 """
-This tool simulates the performances of one supply system configuration (equivalent to one individual in the optimization).
-The users can decide the cooling system configuration at the centralized and decentralized locations, as well as the buildings that are connected to the cooling network.
+This tool simulates the performances of one supply system configuration (equivalent to one individual in the
+optimization). The users can decide the cooling system configuration at the centralized and decentralized locations, as
+well as the buildings that are connected to the cooling network.
 """
 
 from __future__ import division
@@ -189,7 +190,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     # slave optimization of cooling networks
     if config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
-        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, gv,
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features,
                                                                                        prices, lca, config, reduced_timesteps_flag)
         # if reduced_timesteps_flag:
         #     # reduced timesteps simulation for a month (May)

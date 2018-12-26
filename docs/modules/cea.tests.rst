@@ -49,6 +49,14 @@ cea.tests.test\_config module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_dbf module
+--------------------------
+
+.. automodule:: cea.tests.test_dbf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.test\_inputlocator module
 -----------------------------------
 
@@ -69,14 +77,6 @@ cea.tests.test\_schedules module
 --------------------------------
 
 .. automodule:: cea.tests.test_schedules
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.tests.test\_sensible\_loads module
---------------------------------------
-
-.. automodule:: cea.tests.test_sensible_loads
     :members:
     :undoc-members:
     :show-inheritance:

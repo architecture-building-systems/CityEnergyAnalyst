@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
+def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, config):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context

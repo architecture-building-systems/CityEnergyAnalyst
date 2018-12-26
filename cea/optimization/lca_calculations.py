@@ -45,7 +45,7 @@ class lca_calculations(object):
         self.SOLARCOLLECTORS_TO_OIL = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'CO2']  # MJ_oil / MJ_useful
 
-        if config.region == 'CH':
+        if pd.read_excel(locator.get_archetypes_system_controls(config.region))['has-heating-season'].item():
             # HEATING
             self.BG_BACKUPBOILER_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
             self.SMALL_GHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0]['CO2']   # kg_CO2 / MJ_useful
@@ -114,18 +114,11 @@ class lca_calculations(object):
         self.EL_PV_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['CO2']  # kg_CO2 / MJ_final
 
         if config.detailed_electricity_pricing:
-            if config.region == 'CH':
-                self.ELEC_PRICE = electricity_costs['cost'].values
-                self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                    'PEN']  # MJ_oil / MJ_final
-                self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                    'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
-            elif config.region == 'SIN':
-                self.ELEC_PRICE = electricity_costs['cost'].values
-                self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                    'PEN']  # MJ_oil / MJ_final
-                self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                    'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
+            self.ELEC_PRICE = electricity_costs['cost'].values
+            self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                'PEN']  # MJ_oil / MJ_final
+            self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                   'costs_kWh'] / 1000
@@ -143,5 +136,6 @@ class lca_calculations(object):
 
         self.EL_NGCC_TO_OIL_EQ_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['PEN'] * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final
         self.EL_NGCC_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
+
         self.NG_CC_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # kg_CO2 / MJ_useful
         self.NG_CC_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # MJ_oil / MJ_useful
