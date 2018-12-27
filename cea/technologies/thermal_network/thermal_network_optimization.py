@@ -84,15 +84,9 @@ def network_cost_calculation(newMutadedGen, network_info, config):
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
-            # initialize disctionary for this individual
+            # initialize a dataframe for this individual
             population_individual = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 25)))
-            population_individual.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads',
-                               'opex_dis_build',
-                               'opex_chiller', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
-                               'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
-                               'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
-                               'has_loops',
-                               'length', 'avg_diam', 'opex_CT']
+            population_individual.columns = outputs.columns
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
@@ -219,14 +213,14 @@ def objective_function(network_info):
     """
     Calculates the cost of the given individual by generating a network and simulating it.
     :param network_info: Object storing network information.
-    :return: total cost, opex and capex of my individual
+    :return: total cost, opex and capex of the given individual
     """
     # convert indices into building names of plant buildings and disconnected buildings
     plant_building_names = []
     disconnected_building_names = []
-    for building in network_info.plant_building_index:  # translate building indexes to names
+    # translate building indexes to names
+    for building in network_info.plant_building_index:
         plant_building_names.append(network_info.building_names[building])
-    # translate disconnected building indexes to building names
     for building in network_info.disconnected_buildings_index:
         disconnected_building_names.append(network_info.building_names[building])
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
@@ -503,7 +497,7 @@ def generateInitialPopulation(network_info):
     initialPop = []
     while len(
             initialPop) < network_info.config.thermal_network_optimization.number_of_individuals:  # assure we have the correct amount of individuals
-        # generate list of where our plants are
+        # list of where our plants are
         if network_info.config.thermal_network_optimization.optimize_building_connections:
             # if this option is set, we are optimizing which buildings to connect, so we need to disconnect some buildings
             new_plants = disconnect_buildings(network_info)
@@ -515,8 +509,8 @@ def generateInitialPopulation(network_info):
                 for index, building_name in enumerate(network_info.building_names):
                     if str(building) == str(building_name):
                         new_plants[index] = 2.0
-        # add plants to our network
         new_plants = generate_plants(network_info, new_plants)
+        # network layout: loop or branch
         if network_info.config.thermal_network_optimization.optimize_loop_branch:
             # we are optimizing if we have a loop or not, set randomly to eithre 0 or 1
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
@@ -525,21 +519,22 @@ def generateInitialPopulation(network_info):
                 loop_no_loop_binary = 1.0  # we have a loop
             else:  # branched networks only
                 loop_no_loop_binary = 0.0
-        # list of integers indicaitong which loads are connected, 0 is disconnected, 1 is connected
+        # list of integers indicating which loads are connected, 0 is disconnected, 1 is connected
         # for DH: ahu, aru, shu, ww, 0.0
         # for DC: ahu, aru, scu, data, re
         load_type = [0.0, 0.0, 0.0, 0.0, 0.0]
         if network_info.config.thermal_network_optimization.optimize_network_loads:
             # we are optimizing which to connect
-            for i in range(
-                    3):  # only the first three since currently the network simulation only allows disconnected loads of AHU, ARU, SCU
-                load_type[i] = float(np.random.random_integers(low=0,
-                                                               high=1))  # create a random list of 0 or 1, indicating if heat load is supplied by network or not
-            if network_info.config.thermal_network_optimization.use_rule_based_approximation == True:  # apply rule based approcimation to network loads, AHU and ARU supplied together always
+            for i in range(3):  # FIXME: hard-coded, sice the network simulation only allows disconnected loads of AHU, ARU, SCU
+                # create a random list of 0 or 1, indicating if heat load is supplied by network or not
+                load_type[i] = float(np.random.random_integers(low=0, high=1))
+            if network_info.config.thermal_network_optimization.use_rule_based_approximation == True:
+                # apply rule based approximation: AHU and ARU supplied together if connected to networks
                 load_type[1] = load_type[0]  # supply both of ahu and aru or none of the two
         # create individual, but together the load type, network type (branch/loop) and plant locations and connected buildings
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
-        if new_individual not in initialPop:  # add individual to list, avoid duplicates
+        # add individual to list, avoid duplicates
+        if new_individual not in initialPop:
             initialPop.append(new_individual)
     return list(initialPop)
 
@@ -769,7 +764,7 @@ def main(config):
     """
     runs an optimization calculation for the plant location in the thermal network.
     """
-    # output configuration information
+    ## output configuration information
     print('Running thermal_network optimization for scenario %s' % config.scenario)
     print 'Number of individuals: ', config.thermal_network_optimization.number_of_individuals
     print 'Number of generations: ', config.thermal_network_optimization.number_of_generations
@@ -790,34 +785,33 @@ def main(config):
         config.thermal_network_optimization.network_name = ""
     # initialize timer
     start = time.time()
-    # intitalize key variables
+    ## initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     # overwrite config network_layout network type to make it match the network type, since we need to generate and simulate networks in this optimization
     config.network_layout.network_type = network_type
-    # initialize object
+    ## initialize object
     network_info = Network_info(locator, config, network_type, gv)
     # read in basic information and save to object, e.g. building demand, names, total number of buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     network_info.building_names = total_demand.Name.values
     network_info.number_of_buildings_in_district = total_demand.Name.count()
 
-    # list of possible plant location sites
+    # list possible plant location sites
     if not config.thermal_network_optimization.possible_plant_sites:
         # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
         config.thermal_network_optimization.possible_plant_sites = network_info.building_names
 
-    # initialize data storage for later output to file
+    ## initialize data storage for later output to file
     network_info.cost_storage = pd.DataFrame(
         np.zeros((18, config.thermal_network_optimization.number_of_individuals)))
     network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_plant', 'opex_pump', 'opex_dis_loads',
-                                       'opex_dis_build', 'opex_chiller', 'opex_hex', 'capex_hex',
-                                       'capex_network',
+                                       'opex_dis_build', 'opex_chiller', 'opex_hex', 'capex_hex', 'capex_network',
                                        'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
                                        'capex_CT', 'length', 'avg_diam']
 
-    # create initial population
+    ## create initial population
     print 'Creating initial population.'
     newMutadedGen = generateInitialPopulation(network_info)
     # iterate through number of generations
