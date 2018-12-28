@@ -545,7 +545,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
     # Pump operation costs
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, gv, locator, lca, config)
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, config)
     addcosts_Capex_a_USD += Capex_a_pump_USD
     addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
     addcosts_Capex_USD += Capex_pump_USD
