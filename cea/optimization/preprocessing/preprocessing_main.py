@@ -61,7 +61,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # geothermal
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = gv.NetworkDepth # [m]
-    gv.ground_temperature = geothermal.calc_ground_temperature(locator, T_ambient.values, network_depth_m)
+    gv.ground_temperature = geothermal.calc_ground_temperature(locator, config, T_ambient.values, network_depth_m)
 
     # solar
     print "Solar features extraction"
@@ -119,7 +119,7 @@ class SolarFeatures(object):
         A_PVT_m2 = np.zeros(8760)
         A_SC_FP_m2 = np.zeros(8760)
         A_SC_ET_m2 = np.zeros(8760)
-        if config.optimization.isheating:
+        if config.district_heating_network:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
                 building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
@@ -144,20 +144,26 @@ class SolarFeatures(object):
             self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
             self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
             self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
-        elif config.optimization.iscooling:
+        elif config.district_cooling_network:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
                 building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
                 building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
                 E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+                E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
+                Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
                 Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
                 Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
                 A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+                A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
                 A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
                 A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
 
             self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
             self.A_PV_m2 = A_PV_m2.values.max()
+            self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
+            self.A_PVT_m2 = A_PVT_m2.values.max()
             self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
             self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
             self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000

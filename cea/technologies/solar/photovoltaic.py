@@ -58,11 +58,11 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    datetime_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
@@ -87,7 +87,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, panel_properties_PV)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -505,8 +505,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
                                                          sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
-    result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
-                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol)
+    result = np.vectorize(solar_equations.calc_categoriesroof)(sensors_metadata_clean.surface_azimuth,
+                                                               sensors_metadata_clean.B,
+                                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol)
     sensors_metadata_clean['CATteta_z'] = result[0]
     sensors_metadata_clean['CATB'] = result[1]
     sensors_metadata_clean['CATGB'] = result[2]
@@ -712,10 +713,11 @@ def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_PV_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_PV_USD = Capex_a_PV_USD * Inv_OM
+    Capex_PV_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD
 
 
 # remuneration scheme

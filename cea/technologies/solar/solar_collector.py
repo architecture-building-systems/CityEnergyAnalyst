@@ -930,10 +930,11 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
 
     InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_SC_USD = Capex_a_SC_USD * Inv_OM
+    Capex_SC_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_SC_USD, Opex_fixed_SC_USD, Capex_SC_USD
 
 
 def main(config):
@@ -961,7 +962,7 @@ def main(config):
 
     # weather data
     weather_data = epwreader.epw_reader(config.weather)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 
     building_count = len(list_buildings_names)

@@ -1,16 +1,17 @@
 from __future__ import print_function
 from __future__ import division
 
+
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 
-This code is based on a script by Clayton Miller in 2014 and further work by Jimeno A. Fonseca in 2016.
 """
 
 import pysal
 import numpy as np
 import pandas as pd
 import os
+import cea.config
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -79,48 +80,30 @@ def dbf_to_dataframe(dbf_path, index=None, cols=False, include_index=False):
         return pd.DataFrame(data)
 
 
-def xls_to_dbf(input_path, output_path):
-    if not (input_path.endswith('.xls') or input_path.endswith('.xlsx')):
-        raise ValueError('Excel input file should have *.xls or *.xlsx extension')
-
-    if not os.path.exists(input_path):
-        raise ValueError('Excel input file does not exist')
-
-    if not output_path.endswith('.dbf'):
-        raise ValueError('DBF output file should have *.dbf extension')
-
-    df = pd.read_excel(input_path)
-    dataframe_to_dbf(df, output_path)
+def xls_to_dbf(input_file, output_path, output_file_name):
+    df = pd.read_excel(input_file)
+    output_file = os.path.join(output_path, output_file_name+".dbf")
+    dataframe_to_dbf(df, output_file)
 
 
-def dbf_to_xls(input_path, output_path):
-    if not input_path.endswith('.dbf'):  # check if the extension of the input is dbf
-        raise ValueError('DBF input file should have *.dbf extension')
-
-    if not os.path.exists(input_path):
-        raise ValueError('DBF input file does not exist')
-
-    if not output_path.endswith('.xls'):  # check if the extension of the input is xls
-        raise ValueError('Excel output file should have *.xls extension')
-
-    df = dbf_to_dataframe(input_path)
-    df.to_excel(output_path)
+def dbf_to_xls(input_file, output_path, output_file_name):
+    df = dbf_to_dataframe(input_file)
+    df.to_excel(os.path.join(output_path, output_file_name+".xlsx"), index=False)
 
 
-def run_as_script(input_path, output_path):
-    if input_path.endswith('.dbf'):
-        dbf_to_xls(input_path=input_path, output_path=output_path)
-    elif input_path.endswith('.xls'):
-        xls_to_dbf(input_path=input_path, output_path=output_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    input_file = config.dbf_tools.input_file
+    output_file_name = config.dbf_tools.output_file_name
+    output_path = config.dbf_tools.output_path
+
+    if input_file.endswith('.dbf'):
+        dbf_to_xls(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
+    elif input_file.endswith('.xls') or input_file.endswith('.xlsx'):
+        xls_to_dbf(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
     else:
         print('input file type not supported')
 
-
 if __name__ == '__main__':
-    import argparse
+    main(cea.config.Configuration())
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input-path')
-    parser.add_argument('--output-path')
-    args = parser.parse_args()
-    run_as_script(input_path=args.input_path, output_path=args.output_path)

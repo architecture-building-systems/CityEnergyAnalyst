@@ -96,8 +96,9 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    Capex_a = 0
-    Opex_fixed = 0
+    Capex_a_burner_USD = 0
+    Opex_fixed_burner_USD = 0
+    Capex_burner_USD = 0
 
     if Q_design_W > 0:
 
@@ -125,8 +126,9 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_burner_USD = Capex_a_burner_USD * Inv_OM
+            Capex_burner_USD = InvC
 
         else:
             number_of_boilers = int(ceil(Q_design_W / max_boiler_size))
@@ -146,8 +148,9 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_burner_USD = Capex_a_burner_USD * Inv_OM
+            Capex_burner_USD = InvC
 
 
-    return Capex_a, Opex_fixed
+    return Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD

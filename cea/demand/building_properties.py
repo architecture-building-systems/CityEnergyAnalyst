@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import division
+
 """
 Classes of building properties
 """
@@ -16,7 +19,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 H_F = constants.H_F
 E_S = constants.E_S
 F_F = constants.F_F
-F_F_SIN = constants.F_F_SIN
+F_F_SG = constants.F_F_SG
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -32,15 +35,12 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, gv, use_daysim_radiation, region, override_variables=False):
+    def __init__(self, locator, use_daysim_radiation, region, override_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
-
-        :param gv: contains the context (constants and models) for the calculation
-        :type gv: cea.globalvar.GlobalVariables
 
         :param use_daysim_radiation: from config
         :type use_daysim_radiation: bool
@@ -55,8 +55,7 @@ class BuildingProperties(object):
         :rtype: BuildingProperties
         """
 
-        self.gv = gv
-        gv.log("read input files")
+        print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
@@ -100,7 +99,7 @@ class BuildingProperties(object):
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
         # TODO: maybe mergin branch i9 with CItyGML could help with this
-        gv.log("done")
+        print("done")
 
         # save resulting data
         self._prop_supply_systems = prop_supply_systems
@@ -275,11 +274,13 @@ class BuildingProperties(object):
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
-                df.loc[building, 'Hs'] = 0
-                print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
-        df['Aef'] = df['GFA_m2'] * E_S  # conditioned area only those for electricity
+                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0.0:
+                df.loc[building, 'Hs'] = 0.0
+                print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
+                    building=building))
+        df['NFA_m2'] = df['GFA_m2'] * df['Ns']  # net floor area: all occupied areas in the building
+        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
+        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
         df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
 
         if 'Cm_Af' in self.get_overrides_columns():
@@ -303,10 +304,9 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup',
-                  'Aop_bel',
-                  'footprint']
+        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',  'HD', 'Aroof',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'NFA_m2', 'surface_volume', 'Aop_sup',
+                  'Aop_bel', 'footprint']
         result = df[fields]
 
         return result
@@ -362,9 +362,15 @@ class BuildingProperties(object):
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
             # do this in case the daysim radiation file did not included window
             if 'windows' in geometry_data.TYPE.values:
-                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
-                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                if 'walls' in geometry_data.TYPE.values:
+                    envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+                else:
+                    envelope.ix[building_name, 'Awall'] = 0.0 #when window to wall ration is 1, there are no walls.
+                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+
             else:
                 multiplier_win = 0.25 * (
                         envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
@@ -385,7 +391,7 @@ class BuildingProperties(object):
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
+        df['surface_volume'] = (df['Awin'] + df['Awall'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
 
@@ -467,16 +473,17 @@ class BuildingProperties(object):
 
         """
 
-        if cm == 0:
-            return 0
-        elif 0 < cm <= 165000.0:
+        if cm == 0.0:
+            return 0.0
+        elif 0.0 < cm <= 165000.0:
             return 2.5
         else:
             return 3.2
 
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
-        return BuildingPropertiesRow(geometry=self.get_prop_geometry(building_name),
+        return BuildingPropertiesRow(name=building_name,
+                                     geometry=self.get_prop_geometry(building_name),
                                      envelope=self.get_prop_envelope(building_name),
                                      occupancy=self.get_prop_occupancy(building_name),
                                      hvac=self.get_prop_hvac(building_name),
@@ -485,7 +492,7 @@ class BuildingProperties(object):
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
-                                     supply=self.get_prop_supply_systems(building_name), gv=self.gv)
+                                     supply=self.get_prop_supply_systems(building_name))
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -500,11 +507,13 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, geometry, envelope, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, supply, gv):
+
+    def __init__(self, name, geometry, envelope, occupancy, hvac,
+                 rc_model, comfort, internal_loads, age, solar, supply):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
+        self.name = name
         self.geometry = geometry
         self.architecture = EnvelopeProperties(envelope)
         self.occupancy = occupancy  # FIXME: rename to uses!
@@ -645,7 +654,7 @@ class BuildingPropertiesRow(object):
         elif 1985 <= self.age['built'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
             if self.age['HVAC'] == self.age['built']:
-                print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
+                print('Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0')
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
@@ -660,7 +669,7 @@ class EnvelopeProperties(object):
 
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof', u'Hs', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
+                 u'U_roof', u'Hs', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
@@ -674,6 +683,8 @@ class EnvelopeProperties(object):
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
         self.Hs = envelope['Hs']
+        self.Ns = envelope['Ns']
+        self.Es = envelope['Es']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -852,21 +863,18 @@ def get_envelope_properties(locator, prop_architecture, region):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_construction = ['Name', 'Cm_Af', 'void_deck']
+    fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
-    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
+    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
-    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall],
-                                               on='Name').merge(df_win[fields_win],
-                                                                on='Name').merge(df_shading[fields_shading],
-                                                                                 on='Name').merge(
-        df_construction[fields_construction],
-        on='Name').merge(df_leakage[fields_leakage],
-                         on='Name')
+    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
+                                                                                      on='Name').merge(
+        df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
+        df_leakage[fields_leakage], on='Name')
 
     return envelope_prop
 
@@ -886,8 +894,8 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
     # load gv
     thermal_resistance_surface = RSE
-    if region in {'SIN'}:
-        window_frame_fraction = F_F_SIN
+    if region in {'SG'}:
+        window_frame_fraction = F_F_SG
     else:
         window_frame_fraction = F_F
 

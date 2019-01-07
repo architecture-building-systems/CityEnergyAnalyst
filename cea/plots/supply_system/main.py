@@ -14,11 +14,11 @@ import cea.inputlocator
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.optimization.slave.electricity_main import electricity_calculations_of_all_buildings
 from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 
-from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.optimization.slave.natural_gas_main import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
 from cea.optimization.lca_calculations import lca_calculations
@@ -27,8 +27,6 @@ from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.supply_system.map_chart import map_chart
 from cea.plots.supply_system.pie_chart_import_exports import pie_chart
 from cea.plots.supply_system.bar_chart_costs import bar_chart_costs
-from cea.optimization.constants import SIZING_MARGIN
-from math import ceil
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -353,7 +351,7 @@ class Plots():
         column_names_decentralized = []
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
+                locator.get_optimization_decentralized_folder_building_result_heating(building_names[0]))
             df_heating_costs = pd.read_csv(data_dispatch_path)
             column_names = df_heating_costs.columns.values
             column_names = column_names[1:]
@@ -366,7 +364,7 @@ class Plots():
 
         elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
+                locator.get_optimization_decentralized_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
             df_cooling_costs = pd.read_csv(data_dispatch_path)
             column_names = df_cooling_costs.columns.values
             for i in building_names:
@@ -394,7 +392,7 @@ class Plots():
             for i in building_names:  # DHN
                 if df_decentralized[str(i) + ' DHN'].values[0] == 0:
                     data_dispatch_path = os.path.join(
-                        locator.get_optimization_disconnected_folder_building_result_heating(i))
+                        locator.get_optimization_decentralized_folder_building_result_heating(i))
                     df_heating_costs = pd.read_csv(data_dispatch_path)
                     df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
                     for j in range(len(column_names)):
@@ -406,7 +404,7 @@ class Plots():
             for i in building_names:  # DCN
                 if df_decentralized[str(i) + ' DCN'].values[0] == 0:
                     data_dispatch_path = os.path.join(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
                     df_cooling_costs = pd.read_csv(data_dispatch_path)
                     df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
                     for j in range(len(column_names)):
@@ -430,7 +428,7 @@ class Plots():
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        data_imports_exports_electricity_W = electricity_import_and_exports(generation_pointer, individual_pointer, locator, config)
+        data_imports_exports_electricity_W = electricity_calculations_of_all_buildings(generation_pointer, individual_pointer, locator, config)
         data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
