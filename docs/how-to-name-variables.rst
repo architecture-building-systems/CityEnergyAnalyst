@@ -5,6 +5,7 @@ Variable Naming in CEA
 :Date: 07-01-2019
 
 **Demand Side Load Nomenclature**
+=================================
 
 The variables that fall under this classification follow the syntax provided below:
 
@@ -73,6 +74,7 @@ The different values these parameters can take are enlisted below. The list is n
 
 
 **Supply Side Load Nomenclature**
+=================================
 
 The variables that fall under this classification follow the syntax provided below:
 
@@ -165,6 +167,7 @@ The different values these parameters can take are enlisted below. The list is n
 
 
 **Supply Side Cost Nomenclature**
+==================================
 
 The variables that fall under this classification follow the syntax provided below:
 
@@ -241,6 +244,7 @@ The different values these parameters can take are enlisted below. The list is n
 
 
 **Supply Side Fuel Nomenclature**
+=================================
 
 The variables that fall under this classification follow the syntax provided below:
 
@@ -254,6 +258,7 @@ The different values these parameters can take are enlisted below. The list is n
 ``Wood_used_Furnace_W``     :   Wood used by Furnace (in Watts)
 
 **Supply Side Emissions Nomenclature**
+======================================
 
 **(LCA TYPE)_(GENERATION UNIT)_(UNITS)**
 
