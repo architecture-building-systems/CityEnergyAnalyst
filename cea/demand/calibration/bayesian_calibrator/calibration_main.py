@@ -11,6 +11,10 @@ J. Fonseca  script development          27.10.16
 
 from __future__ import division
 
+# see https://github.com/Theano/Theano/issues/6568 for reasoning behind the following two lines
+import os
+os.environ["MKL_THREADING_LAYER"] = "GNU"
+
 import pymc3 as pm
 import seaborn as sns
 import theano.tensor as tt
@@ -74,8 +78,7 @@ def calibration_main(locator, config):
             min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
             arguments_norm = min_max_scaler.fit_transform(arguments)
             globals()['var' + str(i + 1)] = pm.Triangular('var' + str(i + 1), lower=arguments_norm[0][0],
-                                                          c=arguments_norm[1][0],
-                                                          upper=arguments_norm[2][0])
+                                                          upper=arguments_norm[1][0], c=arguments_norm[2][0])
 
         # DECLARE OBJECTIVE FUNCTION
         mu = pm.Deterministic('mu', predict_y(var1, var2, var3, var4, var5, var6))

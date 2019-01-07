@@ -73,6 +73,14 @@ cea.optimization.master.selection module
     :undoc-members:
     :show-inheritance:
 
+cea.optimization.master.summarize\_individual module
+----------------------------------------------------
+
+.. automodule:: cea.optimization.master.summarize_individual
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.master.summarize\_network module
 -------------------------------------------------
 

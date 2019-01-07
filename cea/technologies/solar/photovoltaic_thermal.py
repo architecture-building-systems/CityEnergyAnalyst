@@ -642,8 +642,9 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
+    Capex = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a, Opex_fixed, Capex
 
 
 def main(config):
@@ -667,7 +668,7 @@ def main(config):
 
     # weather data
     weather_data = epwreader.epw_reader(config.weather)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
+    date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done.')
 
     building_count = len(list_buildings_names)

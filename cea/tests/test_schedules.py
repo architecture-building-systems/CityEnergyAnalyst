@@ -1,6 +1,6 @@
 """
 This module contains unit tests for the schedules used by the CEA. The schedule code is tested against data in the
-file `test_schedules.conf` that can be created by running this file. Note, however, that this will overwrite the
+file `test_schedules.config` that can be created by running this file. Note, however, that this will overwrite the
 test data - you should only do this if you are sure that the new data is correct.
 """
 
@@ -49,7 +49,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
             architecture_DB=architecture_DB,
             list_uses=['SERVERROOM', 'PARKING']),
-            [0.5, 0.2])
+            ([0.5, 0.2], [0.5, 0.2], [0.5, 0.2]))
 
 
 class TestScheduleCreation(unittest.TestCase):
@@ -61,7 +61,7 @@ class TestScheduleCreation(unittest.TestCase):
         locator = ReferenceCaseOpenLocator()
         date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
-        building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+        building_properties = BuildingProperties(locator, False, 'CH', False)
         bpr = building_properties['B01']
         list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
@@ -105,13 +105,13 @@ def calculate_test_mixed_use_archetype_values_results(locator):
 def create_test_data():
     """Create test data to compare against - run this the first time you make changes that affect the results. Note,
     this will overwrite the previous test data."""
-    config = ConfigParser.SafeConfigParser()
-    config.read(get_test_config_path())
-    if not config.has_section('test_mixed_use_archetype_values'):
-        config.add_section('test_mixed_use_archetype_values')
+    test_config = ConfigParser.SafeConfigParser()
+    test_config.read(get_test_config_path())
+    if not test_config.has_section('test_mixed_use_archetype_values'):
+        test_config.add_section('test_mixed_use_archetype_values')
     locator = ReferenceCaseOpenLocator()
     expected_results = calculate_test_mixed_use_archetype_values_results(locator)
-    config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
+    test_config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
     gv = GlobalVariables()
@@ -119,7 +119,7 @@ def create_test_data():
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
-    building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+    building_properties = BuildingProperties(locator, False, 'CH', False)
     bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
@@ -129,13 +129,13 @@ def create_test_data():
     stochastic_occupancy = config.demand.use_stochastic_occupancy
     calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                           stochastic_occupancy)
-    if not config.has_section('test_mixed_use_schedules'):
-        config.add_section('test_mixed_use_schedules')
-    config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
+    if not test_config.has_section('test_mixed_use_schedules'):
+        test_config.add_section('test_mixed_use_schedules')
+    test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
         {schedule: calculated_schedules[schedule][REFERENCE_TIME] for schedule in calculated_schedules.keys()}))
 
     with open(get_test_config_path(), 'w') as f:
-        config.write(f)
+        test_config.write(f)
 
 
 if __name__ == '__main__':

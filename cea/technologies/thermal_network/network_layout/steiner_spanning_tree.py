@@ -227,39 +227,39 @@ def building_node_from_name(building_name, nodes_df):
 
 
 def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
-    # find closest node
-    copy_of_new_mst_nodes = new_mst_nodes.copy()
-    building_coordinates = building_anchor.geometry.values[0].coords
-    x1 = building_coordinates[0][0]
-    y1 = building_coordinates[0][1]
-    delta = 10E24  # big number
-    for node in copy_of_new_mst_nodes.iterrows():
-        if node[1]['Type'] == 'NONE':
-            x2 = node[1].geometry.coords[0][0]
-            y2 = node[1].geometry.coords[0][1]
-            distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-            if 0 < distance < delta:
-                delta = distance
-                node_id = node[1].Name
+   # find closest node
+   copy_of_new_mst_nodes = new_mst_nodes.copy()
+   building_coordinates = building_anchor.geometry.values[0].coords
+   x1 = building_coordinates[0][0]
+   y1 = building_coordinates[0][1]
+   delta = 10E24  # big number
+   for node in copy_of_new_mst_nodes.iterrows():
+       if node[1]['Type'] == 'NONE':
+           x2 = node[1].geometry.coords[0][0]
+           y2 = node[1].geometry.coords[0][1]
+           distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+           if 0 < distance < delta:
+               delta = distance
+               node_id = node[1].Name
 
-    # create copy of selected node and add to list of all nodes
-    copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
-    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
-    selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
-    selected_node["Type"] = "PLANT"
-    new_mst_nodes = new_mst_nodes.append(selected_node)
-    new_mst_nodes.reset_index(inplace=True, drop=True)
+   # create copy of selected node and add to list of all nodes
+   copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
+   selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
+   selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
+   selected_node["Type"] = "PLANT"
+   new_mst_nodes = new_mst_nodes.append(selected_node)
+   new_mst_nodes.reset_index(inplace=True, drop=True)
 
-    # create new edge
-    point1 = (selected_node.geometry.x, selected_node.geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
-              new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
-    line = LineString((point1, point2))
-    mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                  "Name": "PIPE" + str(mst_edges.Name.count())
-                                  }, ignore_index=True)
-    mst_edges.reset_index(inplace=True, drop=True)
-    return new_mst_nodes, mst_edges
+   # create new edge
+   point1 = (selected_node.geometry.x, selected_node.geometry.y)
+   point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
+             new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
+   line = LineString((point1, point2))
+   mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                 "Name": "PIPE" + str(mst_edges.Name.count())
+                                 }, ignore_index=True)
+   mst_edges.reset_index(inplace=True, drop=True)
+   return new_mst_nodes, mst_edges
 
 
 def main(config):

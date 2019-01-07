@@ -7,36 +7,34 @@ from __future__ import division
 import os
 import pandas as pd
 import numpy as np
-import cea.optimization.master.generation as generation
-import cea.optimization.master.summarize_network as nM
+from cea.optimization.master import generation
+from cea.optimization.master import summarize_network
 from cea.optimization.constants import *
-import cea.optimization.master.cost_model as eM
-import cea.optimization.slave.cooling_main as coolMain
-import cea.optimization.slave.slave_main as sM
-import cea.optimization.supportFn as sFn
-import cea.technologies.substation as sMain
-import check as cCheck
+from cea.optimization.master import cost_model
+from cea.optimization.slave import cooling_main
+from cea.optimization.slave import heating_main
+from cea.optimization import supportFn
+from cea.technologies import substation
+import check
 from cea.optimization import slave_data
+from cea.optimization.slave import electricity_main
+from cea.optimization.slave.seasonal_storage import storage_main
+from cea.optimization.slave import natural_gas_main
+import summarize_individual
 
 
 # +++++++++++++++++++++++++++++++++++++
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, config, prices, lca, ind_num, gen):
+def evaluation_main(individual, building_names, locator, solar_features, network_features, gv, config, prices, lca,
+                    ind_num, gen):
     """
     This function evaluates an individual
 
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
-    :param extraCosts: costs calculated before optimization of specific energy services
-     (process heat and electricity)
-    :param extraCO2: green house gas emissions calculated before optimization of specific energy services
-     (process heat and electricity)
-    :param extraPrim: primary energy calculated before optimization ofr specific energy services
-     (process heat and electricity)
     :param solar_features: solar features call to class
     :param network_features: network features call to class
     :param gv: global variables class
@@ -46,9 +44,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :type individual: list
     :type building_names: list
     :type locator: string
-    :type extraCosts: float
-    :type extraCO2: float
-    :type extraPrim: float
     :type solar_features: class
     :type network_features: class
     :type gv: class
@@ -64,14 +59,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = extraCosts
-    CO2 = extraCO2
-    prim = extraPrim
-    QUncoveredDesign = 0
-    QUncoveredAnnual = 0
+    costs_USD = 0
+    GHG_tonCO2 = 0
+    PEN_MJoil = 0
+    Q_heating_uncovered_design_W = 0
+    Q_heating_uncovered_annual_W = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
 
     if DHN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_heating = "Network_summary_result_all.csv"
@@ -83,12 +78,12 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
-            total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+            total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
             building_names = total_demand.Name.values
             # Run the substation and distribution routines
-            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
                                   Flag=True)
-            nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+            summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
@@ -107,13 +102,13 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
         if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
-            total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+            total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
             building_names = total_demand.Name.values
 
             # Run the substation and distribution routines
-            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
                                   Flag=True)
-            nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+            summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -128,7 +123,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator, Q_heating_nom_W, gv)
+        check.GHPCheck(individual, locator, Q_heating_nom_W, gv)
     except:
         print "No GHP constraint check possible \n"
 
@@ -137,6 +132,8 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
+    master_to_slave_vars.DHN_barcode = DHN_barcode
+    master_to_slave_vars.DCN_barcode = DCN_barcode
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
         if DHN_barcode.count("0") == 0:
@@ -156,53 +153,86 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
-    if config.optimization.isheating:
+    # Thermal Storage Calculations; Run storage optimization
+    costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
+
+    costs_USD += costs_storage_USD
+    GHG_tonCO2 += GHG_storage_tonCO2
+    PEN_MJoil += PEN_storage_MJoil
+
+    # District Heating Calculations
+    if config.district_heating_network:
 
         if DHN_barcode.count("1") > 0:
 
-            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  solar_features, gv, config, prices, lca)
+            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W,
+             Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                               master_to_slave_vars, gv,
+                                                                                               config, prices, lca)
         else:
 
-            slaveCO2 = 0
-            slaveCosts = 0
-            slavePrim = 0
+            GHG_heating_tonCO2 = 0
+            costs_heating_USD = 0
+            PEN_heating_MJoil = 0
     else:
-        slaveCO2 = 0
-        slaveCosts = 0
-        slavePrim = 0
+        GHG_heating_tonCO2 = 0
+        costs_heating_USD = 0
+        PEN_heating_MJoil = 0
 
-    costs += slaveCosts
-    CO2 += slaveCO2
-    prim += slavePrim
+    costs_USD += costs_heating_USD
+    GHG_tonCO2 += GHG_heating_tonCO2
+    PEN_MJoil += PEN_heating_MJoil
 
+    # District Cooling Calculations
     if gv.ZernezFlag == 1:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling:
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
+    elif config.district_cooling_network:
         reduced_timesteps_flag = False
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, prices, lca, config, reduced_timesteps_flag)
     else:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
 
+    costs_USD += costs_cooling_USD
+    GHG_tonCO2 += GHG_cooling_tonCO2
+    PEN_MJoil += PEN_cooling_MJoil
+
+    # District Electricity Calculations
+    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+
+    costs_USD += costs_electricity_USD
+    GHG_tonCO2 += GHG_electricity_tonCO2
+    PEN_MJoil += PEN_electricity_MJoil
+
+    # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
+    # This is to save the files for further processing and plots
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, config)
+
+
+    # Capex Calculations
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices, lca)
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
+                                              Q_heating_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca)
 
 
-    costs += addCosts + coolCosts
-    CO2 += addCO2 + coolCO2
-    prim += addPrim + coolPrim
+    costs_USD += costs_additional_USD
+    GHG_tonCO2 += GHG_additional_tonCO2
+    PEN_MJoil += PEN_additional_MJoil
+
+    summarize_individual.summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config)
+
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs)
-    CO2 = np.float64(CO2)
-    prim = np.float64(prim)
+    costs_USD = np.float64(costs_USD)
+    GHG_tonCO2 = np.float64(GHG_tonCO2)
+    PEN_MJoil = np.float64(PEN_MJoil)
 
-    print ('Total costs = ' + str(costs))
-    print ('Total CO2 = ' + str(CO2))
-    print ('Total prim = ' + str(prim))
+    print ('Total costs = ' + str(costs_USD))
+    print ('Total CO2 = ' + str(GHG_tonCO2))
+    print ('Total prim = ' + str(PEN_MJoil))
 
-    return costs, CO2, prim, master_to_slave_vars, individual
+    # Saving capacity details of the individual
+
+
+    return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions
@@ -256,6 +286,12 @@ def check_invalid(individual, nBuildings, config):
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
         valid = False
 
+    if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
+        for i in range(N_SOLAR - 1):
+            solar = i + 1
+            individual[2 * N_HEAT + N_HR + 2*solar] = 0
+            individual[2 * N_HEAT + N_HR + 2 * solar + 1] = 0
+
     heating_part = 2 * N_HEAT + N_HR + 2 * N_SOLAR + INDICES_CORRESPONDING_TO_DHN
     for i in range(N_COOL):
         if individual[heating_part + 2 * i] > 0 and individual[heating_part + 2 * i + 1] < 0.01:
@@ -304,7 +340,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
 
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
     configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
@@ -321,11 +357,11 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     if individual[0] == 1 or individual[0] == 3:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+            master_to_slave_vars.Furnace_Q_max_W = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "wet"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.3, Q_MIN_SHARE * Q_heating_nom_W * 1.3)
+            master_to_slave_vars.CC_GT_SIZE_W = max(individual[1] * Q_heating_nom_W * 1.3, Q_MIN_SHARE * Q_heating_nom_W * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
             master_to_slave_vars.gt_fuel = "NG"
 
@@ -333,47 +369,47 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     if individual[0] == 2 or individual[0] == 4:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+            master_to_slave_vars.Furnace_Q_max_W = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "dry"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.5, Q_MIN_SHARE * Q_heating_nom_W * 1.5)
+            master_to_slave_vars.CC_GT_SIZE_W = max(individual[1] * Q_heating_nom_W * 1.5, Q_MIN_SHARE * Q_heating_nom_W * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.Boiler_Q_max_W = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "NG"
 
     # Base boiler BG
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.Boiler_Q_max_W = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.BoilerPeak_Q_max_W = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.BoilerPeak_Q_max_W = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
     if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
-        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPLake_maxSize_W = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # sewage - heatpump    
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # Gwound source- heatpump
     if individual[10] == 1 and GHP_ALLOWED == True:
@@ -398,31 +434,31 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # Lake Cooling
     if individual[heating_block] == 1 and LAKE_COOLING_ALLOWED is True:
         master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size = max(individual[heating_block + 1] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.Lake_cooling_size_W = max(individual[heating_block + 1] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # VCC Cooling
     if individual[heating_block + 2] == 1 and VCC_ALLOWED is True:
         master_to_slave_vars.VCC_on = 1
-        master_to_slave_vars.VCC_cooling_size = max(individual[heating_block + 3] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.VCC_cooling_size_W = max(individual[heating_block + 3] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # Absorption Chiller Cooling
     if individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True:
         master_to_slave_vars.Absorption_Chiller_on = 1
-        master_to_slave_vars.Absorption_chiller_size = max(individual[heating_block + 5] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        master_to_slave_vars.Absorption_chiller_size_W = max(individual[heating_block + 5] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     # Storage Cooling
     if individual[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
         if (individual[heating_block + 2] == 1 and VCC_ALLOWED is True) or (individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True):
             master_to_slave_vars.storage_cooling_on = 1
-            master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
-            if master_to_slave_vars.Storage_cooling_size > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
-                master_to_slave_vars.Storage_cooling_size = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
+            master_to_slave_vars.Storage_cooling_size_W = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+            if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
+                master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     master_to_slave_vars.DCN_supplyunits = DCN_configuration
-    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 8] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * shareAvail, 0)
 
     return master_to_slave_vars
 
@@ -440,30 +476,30 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
     :return: None
     :rtype: Nonetype
     """
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
 
     if not (DHN_barcode in DHN_network_list) and DHN_barcode.count("1") > 0:
         DHN_network_list.append(DHN_barcode)
 
-        total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+        total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
 
     if not (DCN_barcode in DCN_network_list) and DCN_barcode.count("1") > 0:
         DCN_network_list.append(DCN_barcode)
 
-        total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+        total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+        summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 def epsIndicator(frontOld, frontNew):
     """

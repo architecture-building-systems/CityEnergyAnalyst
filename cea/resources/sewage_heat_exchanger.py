@@ -28,7 +28,6 @@ def calc_sewage_heat_exchanger(locator, config):
     :param locator: an InputLocator instance set to the scenario to work on
     :param Length_HEX_available: HEX length available
     :type Length_HEX_available: float
-    :param gv: globalvar.py
 
     Save the results to `SWP.csv`
     """

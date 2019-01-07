@@ -5,10 +5,10 @@ import json
 
 import pandas as pd
 
+import cea.config
+import cea.inputlocator
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.globalvar import GlobalVariables
-from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
 
@@ -26,40 +26,35 @@ class TestCalcThermalLoads(unittest.TestCase):
         import zipfile
         import tempfile
         import cea.examples
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-        archive.extractall(tempfile.gettempdir())
-        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
-        cls.locator = InputLocator(reference_case)
-        cls.gv = GlobalVariables()
-        cls.gv.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         weather_path = cls.locator.get_weather('Zug')
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         year = cls.weather_data['year'][0]
-        cls.region = cls.gv.config.region
+        cls.region = cls.config.region
         cls.test_config = ConfigParser.SafeConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # run properties script
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True, True, True)
+        cea.datamanagement.data_helper.data_helper(cls.locator, cls.config, True, True, True, True, True, True)
 
-        use_daysim_radiation = cls.gv.config.demand.use_daysim_radiation
-        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.gv, cls.locator, cls.region,
-                                                                                 year, use_daysim_radiation)
+        use_daysim_radiation = cls.config.demand.use_daysim_radiation
+        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.locator, cls.region,
+                                                                                         year, use_daysim_radiation)
 
-        cls.use_dynamic_infiltration_calculation = cls.gv.config.demand.use_dynamic_infiltration_calculation
-        cls.use_stochastic_occupancy = cls.gv.config.demand.use_stochastic_occupancy
-        cls.resolution_output = cls.gv.config.demand.resolution_output
-        cls.loads_output = cls.gv.config.demand.loads_output
-        cls.massflows_output = cls.gv.config.demand.massflows_output
-        cls.temperatures_output = cls.gv.config.demand.temperatures_output
-        cls.format_output = cls.gv.config.demand.format_output
+        cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
+        cls.use_stochastic_occupancy = cls.config.demand.use_stochastic_occupancy
+        cls.resolution_output = cls.config.demand.resolution_output
+        cls.loads_output = cls.config.demand.loads_output
+        cls.massflows_output = cls.config.demand.massflows_output
+        cls.temperatures_output = cls.config.demand.temperatures_output
+        cls.format_output = cls.config.demand.format_output
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
-        result = calc_thermal_loads('B01', bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
-                                    self.locator, self.use_stochastic_occupancy,
+        result = calc_thermal_loads('B01', bpr, self.weather_data, self.usage_schedules, self.date, self.locator, self.use_stochastic_occupancy,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
                                     self.format_output, self.region)
@@ -86,12 +81,12 @@ class TestCalcThermalLoads(unittest.TestCase):
         for building in buildings.keys():
             bpr = self.building_properties[building]
             b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
-                                                          self.date, self.gv, self.locator,
-                                                          self.use_stochastic_occupancy,
-                                                          self.use_dynamic_infiltration_calculation,
-                                                          self.resolution_output, self.loads_output,
-                                                          self.massflows_output, self.temperatures_output,
-                                                          self.format_output, self.region)
+                                                                               self.date, self.locator,
+                                                                               self.use_stochastic_occupancy,
+                                                                               self.use_dynamic_infiltration_calculation,
+                                                                               self.resolution_output, self.loads_output,
+                                                                               self.massflows_output, self.temperatures_output,
+                                                                               self.format_output, self.region)
             expected_qhs_sys_kwh = buildings[b][0]
             expected_qcs_sys_kwh = buildings[b][1]
             expected_qww_sys_kwh = buildings[b][2]
@@ -106,10 +101,10 @@ class TestCalcThermalLoads(unittest.TestCase):
                                    places=3)
 
 
-def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
                             massflows_output, temperatures_output, format_output, region):
-    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
                        massflows_output, temperatures_output, format_output, region)
     df = pd.read_csv(locator.get_demand_results_file(building, format_output))

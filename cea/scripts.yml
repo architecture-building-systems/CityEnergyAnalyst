@@ -124,8 +124,9 @@ Optimization:
   description: Run optimization for the given scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'thermal-network:network-type',
-               'thermal-network:network-names', 'optimization', 'decentralized']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:district-heating-network',
+               'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
+               'optimization', 'decentralized']
 
 - name: decentralized
   label: Decentralized supply system
@@ -141,19 +142,8 @@ Optimization:
   interfaces: [cli, arcgis, dashboard]
   module: cea.supply.supply_system_simulation
   parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
-               'optimization:iscooling', 'optimization:isheating', 'thermal-network:network-type',
-               'thermal-network:network-names', 'decentralized']
-
-
-Retrofit analysis:
-
-- name: retrofit-potential
-  label: Building Retrofit Potential
-  description: Select buildings according to specific criteria for retrofit
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.retrofit.retrofit_potential
-  parameters: ['general:scenario', retrofit-potential]
-
+               'general:district-heating-network', 'general:district-cooling-network',
+               'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
 Sensitivity analysis:
 
@@ -204,19 +194,12 @@ Thermal networks:
 
 Utilities:
 
-- name: dbf-to-excel
-  label: DBF to Excel
-  description: dbf => xls
+- name: dbf-to-excel-to-dbf
+  label: DBF to Excel to DBF
+  description: dbf => xls => DBF
   interfaces: [cli, arcgis, dashboard]
-  module: cea.interfaces.cli.dbf_to_excel
-  parameters: ['dbf-tools:dbf-file', 'dbf-tools:excel-file']
-
-- name: excel-to-dbf
-  label: Excel to DBF
-  description: xls => dbf
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.interfaces.cli.excel_to_dbf
-  parameters: ['dbf-tools:excel-file', 'dbf-tools:dbf-file']
+  module: cea.utilities.dbf
+  parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
 - name: test
   label: Test CEA
@@ -227,13 +210,6 @@ Utilities:
 
 
 Visualization:
-
-- name: heatmaps
-  label: Heatmaps
-  description: Generate maps representing hot and cold spots of energy consumption
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.plots.heatmaps
-  parameters: ['general:scenario', 'heatmaps:file-to-analyze', 'heatmaps:analysis-fields']
 
 - name: plots
   label: Plots basic
@@ -328,13 +304,6 @@ default:
   interfaces: [cli]
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
-
-- name: radiation
-  label: radiation
-  description: radiation
-  interfaces: [cli]
-  module: cea.resources.radiation_arcgis.radiation
-  parameters: ['general:scenario', 'general:weather', radiation]
 
 - name: scenario-plots
   label: scenario-plots

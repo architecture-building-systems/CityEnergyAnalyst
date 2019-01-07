@@ -63,6 +63,7 @@ MOCK_MODULES = ['COLOR',
                 'keras',
                 'keras.layers',
                 'keras.models',
+                'keras.callbacks',
                 'lxml',
                 'matplotlib',
                 'matplotlib.backends',
@@ -71,8 +72,11 @@ MOCK_MODULES = ['COLOR',
                 'matplotlib.collections',
                 'matplotlib.pyplot',
                 'networkx',
+                'networkx.algorithms.approximation.steinertree',
                 'numba',
+                'numba.pycc',
                 'pandas',
+                'pandas.testing',
                 'pandas.util',
                 'pandas.util.testing',
                 'plotly',
@@ -90,6 +94,7 @@ MOCK_MODULES = ['COLOR',
                 'py4design.py3dmodel.modify',
                 'py4design.pycitygml',
                 'py4design.shp2citygml',
+                'py4design.py3dmodel.utility',
                 'pyproj',
                 'pysal',
                 'pyshp',
@@ -98,14 +103,14 @@ MOCK_MODULES = ['COLOR',
                 'scikit-learn',
                 'seaborn',
                 'shapely',
+                'shapely.geometry',
                 'simpledbf',
                 'tensorflow',
                 'tensorflow.py.keras',
                 'timezonefinder',
                 'vtk',
                 'xlrd',
-                'xlwt',
-                'yaml']
+                'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -166,7 +171,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.utilities.compile_pyd_files*'  # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.

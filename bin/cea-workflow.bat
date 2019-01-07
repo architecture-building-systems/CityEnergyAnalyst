@@ -101,7 +101,7 @@ echo %date% %time% decentralized end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem optimization
 echo %date% %time% optimization begin >> %CEA-SCENARIO%\cea-workflow.log
-cea optimization --individualind 2 --ngen 2
+cea optimization --initialind 2 --ngen 2
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% optimization end >> %CEA-SCENARIO%\cea-workflow.log
 

@@ -72,9 +72,9 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
 
         # run cea demand
         config.demand.override_variables=True
-        demand_main.demand_calculation(locator, gv, config )
+        demand_main.demand_calculation(locator, config)
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
-                                                                    gv, nn_delay, climatic_variables, config.region,
+                                                                    nn_delay, climatic_variables, config.region,
                                                                     year, use_daysim_radiation, use_stochastic_occupancy)
 
         scaler_inout_path = locator.get_minmaxscaler_folder()
@@ -98,7 +98,7 @@ def run_as_script(config):
     year = weather_data['year'][0]
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     sampling_scaler(locator=locator, random_variables=config.neural_network.random_variables,
                     target_parameters=config.neural_network.target_parameters,

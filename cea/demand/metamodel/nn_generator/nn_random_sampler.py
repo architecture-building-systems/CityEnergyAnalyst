@@ -42,7 +42,7 @@ def input_dropout(urban_input_matrix, urban_taget_matrix):
     return urban_input_matrix, urban_taget_matrix
 
 
-def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv, multiprocessing,
+def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, multiprocessing,
                   config, nn_delay, climatic_variables, region, year,use_daysim_radiation):
     '''
     this function creates a number of random samples for the entire district (city)
@@ -51,7 +51,6 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
     :param target_parameters: a list containing the name of desirable outputs (can be accessed from 'nn_settings.py')
     :param list_building_names: a list containing the name of desired buildings
     :param weather_path: weather path
-    :param gv: global variables
     :return: -
     '''
 
@@ -81,9 +80,9 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
 
         #   run cea demand
         config.demand.override_variables = True
-        demand_main.demand_calculation(locator, gv, config)
+        demand_main.demand_calculation(locator, config)
         #   prepare the inputs for feeding into the neural network
-        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv,
+        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                     nn_delay, climatic_variables, region, year,use_daysim_radiation)
         #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
         urban_input_matrix, urban_taget_matrix = input_dropout(urban_input_matrix, urban_taget_matrix)
@@ -102,13 +101,12 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
 
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     settings = config.demand
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    building_properties, schedules_dict, date = properties_and_schedule(locator)
     list_building_names = building_properties.list_building_names()
     weather_path = config.weather
-    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
+    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path,
                   multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
                   climatic_variables=config.neural_network.climatic_variables, region = config.region,
                   year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation)

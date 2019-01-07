@@ -15,5 +15,4 @@ Subpackages
     cea.interfaces.cli
     cea.interfaces.config_editor
     cea.interfaces.grasshopper
-    cea.interfaces.launcher
 

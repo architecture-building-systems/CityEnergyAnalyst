@@ -41,14 +41,6 @@ cea.utilities.latin\_hypercube module
     :undoc-members:
     :show-inheritance:
 
-cea.utilities.number\_of\_processes module
-------------------------------------------
-
-.. automodule:: cea.utilities.number_of_processes
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.utilities.physics module
 ----------------------------
 
@@ -73,10 +65,10 @@ cea.utilities.solar\_equations module
     :undoc-members:
     :show-inheritance:
 
-cea.utilities.standarize\_coordinates module
---------------------------------------------
+cea.utilities.standardize\_coordinates module
+---------------------------------------------
 
-.. automodule:: cea.utilities.standarize_coordinates
+.. automodule:: cea.utilities.standardize_coordinates
     :members:
     :undoc-members:
     :show-inheritance:
