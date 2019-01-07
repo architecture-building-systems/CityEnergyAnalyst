@@ -8,7 +8,7 @@ Variable Naming in CEA
 
 The variables that fall under this classification follow the syntax provided below:
 
-(LOAD TYPE)(LOAD)_(LOSSES)_(UNITS)
+**(LOAD TYPE)(LOAD)_(LOSSES)_(UNITS)**
 
 **Load Type:**
 
@@ -74,7 +74,7 @@ The variables that fall under this classification follow the syntax provided bel
 
 The variables that fall under this classification follow the syntax provided below:
 
-(LOAD TYPE)(LOAD)_(GENERATION UNIT)_(LOAD DIRECTION)_(UNITS)
+**(LOAD TYPE)(LOAD)_(GENERATION UNIT)_(LOAD DIRECTION)_(UNITS)**
 
 **Load Type:**
 
@@ -163,7 +163,7 @@ The variables that fall under this classification follow the syntax provided bel
 
 The variables that fall under this classification follow the syntax provided below:
 
-(COSTS TYPE 1)_(COSTS TYPE 2)_(COSTS TYPE 3)_(GENERATION UNIT)_(UNITS)
+**(COSTS TYPE 1)_(COSTS TYPE 2)_(COSTS TYPE 3)_(GENERATION UNIT)_(UNITS)**
 
 
 **Costs Type 1**
@@ -237,7 +237,7 @@ The variables that fall under this classification follow the syntax provided bel
 
 The variables that fall under this classification follow the syntax provided below:
 
-(FUEL TYPE)_(GENERATION UNIT)_(UNITS)
+**(FUEL TYPE)_(GENERATION UNIT)_(UNITS)**
 
 ``NG_used_HPSew_W``         :   Natural gas used by sewage heat pump (in Watts)
 
@@ -245,7 +245,7 @@ The variables that fall under this classification follow the syntax provided bel
 
 **Supply Side Emissions Nomenclature**
 
-(LCA TYPE)_(GENERATION UNIT)_(UNITS)
+**(LCA TYPE)_(GENERATION UNIT)_(UNITS)**
 
 **LCA Type**
 
