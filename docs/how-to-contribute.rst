@@ -1,5 +1,5 @@
 Contributing
-=============
+============
 
 This is a guide on how to expand CEA and become an official contributor!
 
@@ -12,7 +12,6 @@ The main steps you need to take are:
 #. test your creation.
 #. Create a pull request on Github.
 #. Claim your CEA T-shirt!
-
 
 Step 1. Create a User Story or report a Bug
 --------------------------------------------
@@ -78,9 +77,9 @@ Step 7. Claim your CEA T-shirt!
 
 What happens after that? We will check the code, and if all is correct we will proceed to merge your User Story/ Github Branch into the CEA main core.
 
-AND THAT IS ALL! if your work has been merged, give yourself an applause. You have just made part of the growing network of developers of CEA. 
+AND THAT IS ALL! if your work has been merged, give yourself an applause. You have just made part of the growing network of developers of CEA.
 
-Your are entitled to claim a CEA T-shirt after this to cea@arch.ethz.ch 
+Your are entitled to claim a CEA T-shirt after this to cea@arch.ethz.ch
 
 
 Additional steps
