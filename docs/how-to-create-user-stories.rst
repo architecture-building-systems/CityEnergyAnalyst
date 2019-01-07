@@ -1,45 +1,45 @@
-:orphan:
-
 User Stories
 ============
 
-User stories define WHAT, WHY and for WHOM we aim to solve a new bug or implement a new feature.
+User stories define WHAT (need), WHY (reason) and for WHOM (User persona) we aim to solve a new bug or implement a new feature.
 This helps our Project Owner to better prioritize issues around CEA.
 
 We have a standard yet simple way to define these user stories. This guide walks you through defining your first user story.
 
-Step 1. define a USER
----------------------
+Step 1. define a user persona
+------------------------------
 
-At CEA we differentiate four (4) potential USERs for creating an user story. These are key groups of users we want CEA to serve.
-The first step in creating a new story is to select a end-user from the following list.
+At CEA we differentiate four (4) potential USERs for creating an user story. These are key groups of users we want CEA to serve and are defined as
+user personas. The first step in creating a new story is to select a User Persona from the following list:
 
-#. Researcher or Contributor: A member of the CEA research team or network of contributors.
+#. Researcher: A member of the CEA research team or network of contributors.
 #. Student or Practitioner: An active user of CEA.
 
-Step 2. define the NEED
------------------------
+For more information about the goals and priorities of the different user personas check: :doc:`user-personas`
 
-Think about the NEED you have. Is it about a problem/bug or rather about a new feature you want to be implemented?
-It is important that you think about the NEED from the point of view of the USER (first person).
+Step 2. define its needs
+--------------------------
 
-Step 3. define the WHY
-----------------------
+Think about the NEED this user persona has. Is it about a problem/bug or rather about a new feature you want to be implemented?
+It is important that you think about the NEED from the point of view of the user persona.
 
-Now think about why the USER needs that NEED.
+Step 3. define a reason
+-------------------------
+
+Now think about why the user persona needs that.
 
 Step 4. put the story together
 ------------------------------
 
 Now put it all together using the following template:
 
-**As a** USER **I want to** NEED **so I can** WHY
+**As a** USER PERSONA **I want to** NEED **so I can** REASON
 
 Here is an example:
 
-:USER: Researcher
+:USER PERSONA: Researcher
 :NEED: know how to define user stories
-:WHY: add new bugs and features to the pipeline of CEA
+:REASON: add new bugs and features to the pipeline of CEA
 
 The result will be the title of your user story:
 
@@ -47,9 +47,9 @@ The result will be the title of your user story:
 
 One more example:
 
-:USER: Student
+:USER PERSONA: Student
 :NEED: understand how the dynamic tool works
-:WHY: use CEA more effectively
+:REASON: use CEA more effectively
 
 The result will be the title of your user story:
 
