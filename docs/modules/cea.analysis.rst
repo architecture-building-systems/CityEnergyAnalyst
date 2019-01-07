@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cea.analysis.clustering
     cea.analysis.costs
     cea.analysis.lca
     cea.analysis.multicriteria

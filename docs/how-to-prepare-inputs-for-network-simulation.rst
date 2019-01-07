@@ -5,8 +5,9 @@ How to Prepare Inputs for Thermal Network Simulation
 
 The thermal network tool in CEA simulates thermal and hydraulic losses from network operation.
 To run the simulation, two input files are required:
-    - ``edges.shp`` specifies the locations of pipes (edges). Each edge is a *straight* polyline and each end of the edge is connected to a node.
-    - ``nodes.shp`` specifies the locations of nodes, which represents the consumers, producers, intersections of streets, and connection points to consumers.
+
+- ``edges.shp`` specifies the locations of pipes (edges). Each edge is a *straight* polyline and each end of the edge is connected to a node.
+- ``nodes.shp`` specifies the locations of nodes, which represents the consumers, producers, intersections of streets, and connection points to consumers.
 
 These files can be generated with the **Network Layout Tool** (cea>technologies>thermal_network>network_layout>main.py) or defined by users, in the later case, the users have to construct the two shape files in the following format:
 
