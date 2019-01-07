@@ -4,6 +4,9 @@ from pyomo.environ import *
 import time
 from concept_parameters import *
 import process_results
+import cea.globalvar
+import cea.inputlocator
+import cea.config
 
 def electrical_grid_calculations(dict_connected, config, locator):
     # ============================
@@ -55,6 +58,8 @@ if __name__ == '__main__':
 #                   }
 
     t0 = time.clock()
-    electrical_grid_calculations(dict_connected)
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    electrical_grid_calculations(dict_connected, config, locator)
     print 'main() succeeded'
     print 'total time: ', time.clock() - t0
