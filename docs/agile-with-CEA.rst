@@ -9,3 +9,4 @@ Being Agile with CEA
    user-personas
    how-to-create-user-stories.rst
    activities
+   communication
