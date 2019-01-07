@@ -10,6 +10,8 @@ The variables that fall under this classification follow the syntax provided bel
 
 **(LOAD TYPE)(LOAD)_(LOSSES)_(UNITS)**
 
+The different values these parameters can take are enlisted below. The list is not exhaustive but will serve as a guide
+
 **Load Type:**
 
 +----+------------+
@@ -75,6 +77,9 @@ The variables that fall under this classification follow the syntax provided bel
 The variables that fall under this classification follow the syntax provided below:
 
 **(LOAD TYPE)(LOAD)_(GENERATION UNIT)_(LOAD DIRECTION)_(UNITS)**
+
+The different values these parameters can take are enlisted below. The list is not exhaustive but will serve as a guide
+
 
 **Load Type:**
 
@@ -165,6 +170,8 @@ The variables that fall under this classification follow the syntax provided bel
 
 **(COSTS TYPE 1)_(COSTS TYPE 2)_(COSTS TYPE 3)_(GENERATION UNIT)_(UNITS)**
 
+The different values these parameters can take are enlisted below. The list is not exhaustive but will serve as a guide
+
 
 **Costs Type 1**
 
@@ -238,6 +245,9 @@ The variables that fall under this classification follow the syntax provided bel
 The variables that fall under this classification follow the syntax provided below:
 
 **(FUEL TYPE)_(GENERATION UNIT)_(UNITS)**
+
+The different values these parameters can take are enlisted below. The list is not exhaustive but will serve as a guide
+
 
 ``NG_used_HPSew_W``         :   Natural gas used by sewage heat pump (in Watts)
 
