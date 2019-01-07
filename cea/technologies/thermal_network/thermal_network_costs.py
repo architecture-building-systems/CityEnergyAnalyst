@@ -15,7 +15,7 @@ import cea.technologies.cooling_tower as CTModel
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import lca_calculations
 from cea.constants import HOURS_IN_YEAR
-from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
+from cea.technologies.heat_exchangers import calc_Cinv_HEX
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
