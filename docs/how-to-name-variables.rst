@@ -9,6 +9,8 @@ Variable Naming in CEA
 
 **Demand Side Load Nomenclature**
 
+The variables that fall under this classification follow the syntax provided below:
+
 (LOAD TYPE)(LOAD)_(LOSSES)_(UNITS)
 
 **Load Type:**
@@ -72,6 +74,8 @@ Variable Naming in CEA
 
 
 **Supply Side Load Nomenclature**
+
+The variables that fall under this classification follow the syntax provided below:
 
 (LOAD TYPE)(LOAD)_(GENERATION UNIT)_(LOAD DIRECTION)_(UNITS)
 
@@ -160,6 +164,8 @@ Variable Naming in CEA
 
 **Supply Side Cost Nomenclature**
 
+The variables that fall under this classification follow the syntax provided below:
+
 (COSTS TYPE 1)_(COSTS TYPE 2)_(COSTS TYPE 3)_(GENERATION UNIT)_(UNITS)
 
 
@@ -231,6 +237,8 @@ Variable Naming in CEA
 
 
 **Supply Side Fuel Nomenclature**
+
+The variables that fall under this classification follow the syntax provided below:
 
 (FUEL TYPE)_(GENERATION UNIT)_(UNITS)
 
