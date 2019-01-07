@@ -33,4 +33,12 @@ cea.datamanagement.data\_helper module
     :undoc-members:
     :show-inheritance:
 
+cea.datamanagement.databases\_verification module
+-------------------------------------------------
+
+.. automodule:: cea.datamanagement.databases_verification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 

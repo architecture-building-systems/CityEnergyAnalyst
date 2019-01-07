@@ -349,11 +349,14 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
     Modeled after:
-        Approach A (NREL Approach):
-            http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
-            and
-            NREL : p.5  of [M. Zolot et al., 2004]_
-        Approach B (Empiric Approach): [Iain Staffell]_
+
+        - **Approach A (NREL Approach)**:
+          http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
+          and
+          NREL : p.5  of [M. Zolot et al., 2004]_
+
+        - **Approach B (Empiric Approach)**: [Iain Staffell]_
+
     :type Q_load_W : float
     :param Q_load_W: Load at each time step
     :type Q_design_W : float
@@ -366,6 +369,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     :returns eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
     :rtype Q_fuel : float
     :returns Q_fuel: Heat demand from fuel (in Watt)
+
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf
