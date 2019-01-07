@@ -70,22 +70,21 @@ def network_cost_calculation(newMutadedGen, network_info, config):
     # initialize datastorage and counter
     population_performance = {}
     individual_number = 0
-    # prepare datastorage for outputs
-    outputs = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 25)))
-    outputs.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                       'opex_chiller', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
-                       'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
-                       'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops',
-                       'length', 'avg_diam', 'opex_CT']
-    cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
-                    'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
-                    'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam', 'opex_CT']
+    # prepare data storage for outputs # TODO: redundant?
+    # TODO[SH]: remove hardcoded value '24'
+    outputs = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 24)))
+    outputs.columns = ['individual', 'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
+                       'has_loops'] + network_info.cost_storage.index.tolist()
+    # TODO: remove
+    # cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
+    #                 'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
+    #                 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam', 'opex_CT']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
             # initialize a dataframe for this individual
-            population_individual = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 25)))
+            population_individual = pd.DataFrame(np.zeros((1,24)))
             population_individual.columns = outputs.columns
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
@@ -112,48 +111,46 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             population_individual['total'] = total_cost
             population_individual['capex'] = capex
             population_individual['opex'] = opex
-            population_individual['opex_plant'] = cost_storage.ix['opex_plant'][individual_number]
-            population_individual['opex_pump'] = cost_storage.ix['opex_pump'][individual_number]
-            population_individual['opex_hex'] = cost_storage.ix['opex_hex'][individual_number]
-            population_individual['opex_dis_loads'] = cost_storage.ix['opex_dis_loads'][individual_number]
-            population_individual['opex_dis_build'] = cost_storage.ix['opex_dis_build'][individual_number]
-            population_individual['opex_chiller'] = cost_storage.ix['opex_chiller'][individual_number]
-            population_individual['opex_CT'] = cost_storage.ix['opex_CT'][individual_number]
-            population_individual['capex_network'] = cost_storage.ix['capex_network'][individual_number]
-            population_individual['capex_pump'] = cost_storage.ix['capex_pump'][individual_number]
-            population_individual['capex_hex'] = cost_storage.ix['capex_hex'][individual_number]
-            population_individual['capex_dis_loads'] = cost_storage.ix['capex_dis_loads'][individual_number]
-            population_individual['capex_dis_build'] = cost_storage.ix['capex_dis_build'][individual_number]
-            population_individual['capex_chiller'] = cost_storage.ix['capex_chiller'][individual_number]
-            population_individual['capex_CT'] = cost_storage.ix['capex_CT'][individual_number]
+            population_individual['opex_plant'] = cost_storage.ix['opex_plant'][0]
+            population_individual['opex_pump'] = cost_storage.ix['opex_pump'][0]
+            population_individual['opex_hex'] = cost_storage.ix['opex_hex'][0]
+            population_individual['opex_dis_loads'] = cost_storage.ix['opex_dis_loads'][0]
+            population_individual['opex_dis_build'] = cost_storage.ix['opex_dis_build'][0]
+            population_individual['opex_chiller'] = cost_storage.ix['opex_chiller'][0]
+            # population_individual['opex_CT'] = cost_storage.ix['opex_CT'][0]
+            population_individual['capex_network'] = cost_storage.ix['capex_network'][0]
+            population_individual['capex_pump'] = cost_storage.ix['capex_pump'][0]
+            population_individual['capex_hex'] = cost_storage.ix['capex_hex'][0]
+            population_individual['capex_dis_loads'] = cost_storage.ix['capex_dis_loads'][0]
+            population_individual['capex_dis_build'] = cost_storage.ix['capex_dis_build'][0]
+            population_individual['capex_chiller'] = cost_storage.ix['capex_chiller'][0]
+            # population_individual['capex_CT'] = cost_storage.ix['capex_CT'][individual_number]
             population_individual['number_of_plants'] = individual[6:].count(1.0)
             population_individual['has_loops'] = individual[5]
-            print (building_plants)
-            print (disconnected_buildings)
-            population_individual['plant_buildings'] = building_plants
-            population_individual['disconnected_buildings'] = disconnected_buildings
-            population_individual['supplied_loads'] = load_string
+            population_individual['plant_buildings'] = building_plants[0]
+            population_individual['disconnected_buildings'] = disconnected_buildings if disconnected_buildings != [] else 0
+            population_individual['supplied_loads'] = ', '.join(load_string)
             population_individual['length'] = length
             population_individual['avg_diam'] = average_diameter
             population_individual['number_of_plants'] = individual[6:].count(1.0)
             population_individual['has_loops'] = individual[5]
         else:
+            #TODO[SH]: test this part
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = network_info.populations[str(individual)]['total']
             while total_cost in population_performance.keys():  # make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
                 total_cost = total_cost + 0.01
             population_performance[total_cost] = individual
 
-
         population_individual.to_csv(
-            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual))
-
-        for column in cost_columns:
-            outputs.ix[individual_number][column] = population_individual[column]
+            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
+                                                                                  individual))
+        for column in network_info.cost_storage.index.tolist():
+            #TODO[SH]: check outputs.csv
+            outputs.ix[individual_number][column] = population_individual[column][0]
         # iterate to next individual
         individual_number += 1
-
-    outputs.to_csv(network_info.config.get_optimization_network_generation_individuals_results_file(
+    outputs.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(
         config.network_layout.network_type, network_info.generation_number))
     network_info.generation_number += 1
     # return individuals of this generation sorted from lowest cost to highest
@@ -168,7 +165,7 @@ def translate_individual(network_info, individual):
     """
     # find which buildings have plants in this individual
     network_info.plant_building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
-    # find diconnected buildings
+    # find disconnected buildings
     network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == 2]
     # output information on individual to be evaluated, translate individual
     print 'Individual: ', individual
@@ -266,7 +263,6 @@ def objective_function(network_info):
 
     ## Cost calculations
     Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)
-
 
     return Capex_total, Opex_total, Costs_total, cost_storage
 

@@ -444,15 +444,22 @@ def calc_Ctot_cs_district(network_info):
                                                                  network_info.locator)
 
     # initialize data storage for later output to file
-    cost_storage = pd.DataFrame(np.zeros((20, 1)))
+    # cost_storage = pd.DataFrame(np.zeros((20, 1)))
+    # cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
+    #                                    'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
+    #                                    'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
+    #                                    'capex_chiller', 'capex_CT', 'length', 'avg_diam',
+    #                                    'opex_chiller', 'opex_CT']
+    cost_storage = pd.DataFrame(np.zeros((18, 1)))
     cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
                                        'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
                                        'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
-                                       'capex_chiller', 'capex_CT', 'length', 'avg_diam',
-                                       'opex_chiller', 'opex_CT']
-    Capex_total = 0
-    Opex_total = 0
-    Costs_total = 0
+                                       'capex_chiller', 'length', 'avg_diam',
+                                       'opex_chiller']
+    # TODO: delete
+    # Capex_total = 0
+    # Opex_total = 0
+    # Costs_total = 0
     ## calculate Network costs
     # Network pipes
     Capex_a_netw = calc_Capex_a_network_pipes(network_info)
@@ -487,14 +494,15 @@ def calc_Ctot_cs_district(network_info):
     cost_storage.ix['capex_dis_loads'][0] = Capex_a_dis_loads
     cost_storage.ix['capex_dis_build'][0] = Capex_a_dis_buildings
     cost_storage.ix['capex_chiller'][0] = Capex_a_chiller
-    cost_storage.ix['capex_CT'][0] = Capex_a_CT
+    # cost_storage.ix['capex_CT'][0] = Capex_a_CT
     cost_storage.ix['opex_plant'][0] = Opex_a_chiller + Opex_a_CT
     cost_storage.ix['opex_pump'][0] = Opex_tot_pump
     cost_storage.ix['opex_hex'][0] = Opex_fixed_hex
     cost_storage.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
     cost_storage.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
     cost_storage.ix['opex_chiller'][0] = Opex_a_chiller
-    cost_storage.ix['opex_CT'][0] = Opex_a_CT
+    # cost_storage.ix['opex_CT'][0] = Opex_a_CT
+    print cost_storage
 
     return Capex_total, Opex_total, Costs_total, cost_storage
 
@@ -582,6 +590,7 @@ def main(config):
     else:
         annual_demand_district_MWh = total_demand['Qhs_sys_MWhyr'].sum()
 
+
     # write outputs
     cost_output = {}
     cost_output['total_annual_cost'] = round(cost_storage.ix['total'][0], 2)
@@ -600,7 +609,7 @@ def main(config):
     cost_output['capex_pumps'] = round(cost_storage.ix['capex_pump'][0], 2)
     cost_output['capex_hex'] = round(cost_storage.ix['capex_hex'][0], 2)
     cost_output['capex_chiller'] = round(cost_storage.ix['capex_chiller'][0], 2)
-    cost_output['capex_CT'] = round(cost_storage.ix['capex_CT'][0], 2)
+    # cost_output['capex_CT'] = round(cost_storage.ix['capex_CT'][0], 2)
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
