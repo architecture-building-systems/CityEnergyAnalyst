@@ -549,10 +549,13 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     network_info = Thermal_Network(locator, config, network_type, gv)
+    print('\n NOTE: This function is only designed to output costs of a "centralized network" '
+          'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
     print('Running thermal network cost calculation with weather file %s' % config.weather)
     print('Running thermal network cost calculation for region %s' % config.region)
     print('Network costs of %s:' % network_type)
+
 
     ## read in basic information and save to object, e.g. building demand, names, total number of buildings
 
@@ -566,6 +569,8 @@ def main(config):
     for building in disconnected_buildings_list:
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))
     network_info.disconnected_buildings_index = disconnected_buildings_index
+    if disconnected_buildings_index != []:
+        raise ValueError('Disconnected buildings are specified in cea.config, please remove it! (see NOTE above)')
 
     # calculate total network costs
     Capex_total, Opex_total, Costs_total, cost_storage_df = calc_Ctot_cs_district(network_info)
