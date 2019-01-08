@@ -39,7 +39,7 @@ class Thermal_Network(object):
         self.network_type = network_type
         self.network_name = config.thermal_network_optimization.network_name
         # initialize optimization storage variables and dictionaries
-        self.cost_info = ['capex', 'opex', 'total', 'el',
+        self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
                           'capex_chiller', 'capex_CT', 'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_hex',
                           'capex_network', 'length', 'avg_diam']
@@ -368,15 +368,13 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
     ## Calculate disconnected heat load costs
     dis_opex = 0.0
     dis_capex = 0.0
-    supplied_systems = []
     if len(network_info.disconnected_buildings_index) > 0:  # we have disconnected buildings
         # Make sure files to read in exist
         for building_index, building in enumerate(network_info.building_names):  # iterate through all buildings
             Opex_var_system = 0.0
             if building_index in network_info.disconnected_buildings_index:  # disconnected building
                 # Read in demand of building
-                building_demand = pd.read_csv(
-                    network_info.locator.get_demand_results_file(building))
+                building_demand = pd.read_csv(network_info.locator.get_demand_results_file(building))
                 # sum up demand of all loads
                 demand_hourly_kWh = building_demand['Qcs_sys_scu_kWh'].abs() + \
                                     building_demand['Qcs_sys_ahu_kWh'].abs() + \
@@ -392,7 +390,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                     COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
                                                                             centralized=False)
                     # calculate cost of producing cooling
-                    Opex_var_system += demand_annual_kWh / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
+                    Opex_var_system = demand_annual_kWh / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
                     # calculate chiller heat rejection via CT
                     Q_peak_CT_kW = calc_CT_load_from_chiller_load(COP_chiller, peak_demand_kW)
                 else:
@@ -496,7 +494,7 @@ def calc_Ctot_cs_district(network_info):
     cost_storage_df.ix['opex_hex'][0] = Opex_fixed_hex
     cost_storage_df.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
     cost_storage_df.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
-    cost_storage_df.ix['el'][0] = el_MWh
+    cost_storage_df.ix['el_network_MWh'][0] = el_MWh
 
     return Capex_total, Opex_total, Costs_total, cost_storage_df
 
