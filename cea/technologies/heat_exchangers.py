@@ -2,7 +2,6 @@
 heat exchangers
 """
 
-
 from __future__ import division
 from math import log, ceil
 import pandas as pd
@@ -71,25 +70,10 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
 def calc_Cinv_HEX_hisaka(network_info):
     """
-    Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
-
-    :type Q_design_W : float
-    :param Q_design_W: Design Load of Boiler
-
-    :param gv: globalvar.py
-
-    :rtype InvC_return : float
-    :returns InvC_return: total investment Cost in [CHF]
-
-    :rtype InvCa : float
-    :returns InvCa: annualized investment costs in [CHF/a]
-
+    Calculates costs of all substation heat exchangers in a network.
+    Used in thermal_network_optimization.
     """
-    # read in nodes list
-    all_nodes = pd.read_csv(network_info.locator.get_optimization_network_node_list_file(network_info.network_type,
-                                                                                         network_info.network_name))
-
-    # read in cost values from database
+    ## read in cost values from database
     HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(network_info.config.region),
                                sheetname='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
@@ -101,49 +85,55 @@ def calc_Cinv_HEX_hisaka(network_info):
     Inv_LT = HEX_prices['LT_yr']['District substation heat exchanger']
     Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
 
+    ## list node id of all substations
+    # read in nodes list
+    all_nodes = pd.read_csv(network_info.locator.get_optimization_network_node_list_file(network_info.network_type,
+                                                                                         network_info.network_name))
     Capex_a = 0
     Opex_a_fixed = 0
-    InvC = 0
-    node_id_list = []
-    #iterate through all buildings
+    substation_node_id_list = []
+    # add buildings to node id list
     for building in network_info.building_names:
-        cost = 0
         # check if building is connected to network
         if building not in network_info.building_names[network_info.disconnected_buildings_index]:
             # add HEX cost
-            node_id = int(np.where(all_nodes['Building']==building)[0])
-            node_id_list.append(all_nodes['Name'][node_id])
+            node_id = int(np.where(all_nodes['Building'] == building)[0])
+            substation_node_id_list.append(all_nodes['Name'][node_id])
     # add plants to node id list
-    plant_id_list = np.where(all_nodes['Type']=='Plant')[0]
+    plant_id_list = np.where(all_nodes['Type'] == 'Plant')[0]
     # find plant nodes
     for plant_id in plant_id_list:
-        node_id_list.append('NODE'+str(plant_id))
-    # read in mass flows
-    for node_id in node_id_list:
+        substation_node_id_list.append('NODE' + str(plant_id))
+
+    ## calculate costs of hex at substations
+    for node_id in substation_node_id_list:
         # read in node mass flows
-        node_flows = pd.read_csv(network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
+        node_flows = pd.read_csv(
+            network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
         # find design condition node mcp
         node_flow = max(node_flows[node_id])
         if node_flow > 0:
             # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-            # capacity for the corresponding technology from the database
-            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+            # capacity for the corresponding technology from the database # TODO: add minimum capacity to cost function
+
             # Split into several HEXs if flows are too high
             if node_flow <= MAX_NODE_FLOW:
-                cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+                mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+                Capex_substation_hex = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
             else:
                 # we need to split into several HEXs
-                cost = 0
+                Capex_substation_hex = 0
                 number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
                 nodeflow_nom = node_flow / number_of_HEXs
                 mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
                 for i in range(number_of_HEXs):
-                    ## calculate HEX losses
-                    cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+                    Capex_substation_hex = Capex_substation_hex + (a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub))
 
-            InvC = cost
+            Capex_a_substation_hex = Capex_substation_hex * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_substation_hex = Capex_a_substation_hex * Inv_OM
 
-            Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_a_fixed = Opex_a_fixed + Capex_a * Inv_OM
+            # aggregate all substation costs in a network
+            Capex_a = Capex_a + Capex_a_substation_hex
+            Opex_a_fixed = Opex_a_fixed + Opex_fixed_substation_hex
 
     return Capex_a, Opex_a_fixed
