@@ -73,7 +73,7 @@ def calc_Capex_a_network_pipes(network_info):
         InvC = network_info.network_features.pipesCosts_DCN
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
-    Inv_LT = 20
+    Inv_LT = 25 #TODO: find reference
     Capex_a_netw = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     return Capex_a_netw
 
@@ -471,7 +471,7 @@ def calc_Ctot_cs_district(network_info):
     Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(network_info)
     # calculate electricity consumption
     el_price_per_Wh = network_info.prices.ELEC_PRICE
-    el_MWh = (Opex_var_pump + Opex_var_plant) / el_price_per_Wh / 1e6 
+    el_MWh = (Opex_var_pump + Opex_var_plant) / el_price_per_Wh / 1e6
 
     # store results
     Capex_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
