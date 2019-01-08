@@ -19,6 +19,7 @@ def thermal_network_calculations(dict_connected, config):
     copy_tree(locator.get_networks_folder(), locator.get_electric_networks_folder()) # resetting the streets layout to the scenario default
 
     m = electrical_grid_calculations(dict_connected, config, locator)
+    print ('abc')
 
     electrical_grid_file_name = 'grid'
     thermal_network_file_name = 'streets'
