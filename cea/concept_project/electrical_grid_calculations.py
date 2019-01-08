@@ -30,12 +30,12 @@ def electrical_grid_calculations(dict_connected, config, locator):
     #     instance = create_model(parameter)
     #     opt.solve(instance)
 
-    m.display()  # Display the results
+    # m.display()  # Display the results
 
     # Print objective function values
-    for cost_type in [m.var_costs.values()][0]:
-        print cost_type, cost_type.value
-    print '\n'
+    # for cost_type in [m.var_costs.values()][0]:
+    #     print cost_type, cost_type.value
+    # print '\n'
 
     # pf.plot_network_on_street(m)
     # pf.plot_complete(m)

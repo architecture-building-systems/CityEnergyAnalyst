@@ -10,7 +10,7 @@ from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network import thermal_network_matrix
 from cea.technologies.thermal_network import thermal_network_costs
 
-def thermal_network_calculations(dict_connected, config):
+def thermal_network_calculations(dict_connected, config, network_number):
     # ============================
     # Solve the electrical grid problem, and decide on the best electrical line types and lengths. It is an optimization
     # problem for a fixed demand
@@ -32,8 +32,8 @@ def thermal_network_calculations(dict_connected, config):
     print (config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
-    # thermal_network_matrix.main(config)
-    thermal_network_costs.main(config)
+    thermal_network_matrix.main(config)
+    thermal_network_costs.main(config, network_number)
 
 def main(config):
 
@@ -47,8 +47,10 @@ def main(config):
     #                   }
 
     t0 = time.clock()
+    network_number = 0
     for i in range(2):
-        thermal_network_calculations(dict_connected[i], config)
+        network_number = network_number + i
+        thermal_network_calculations(dict_connected[i], config, network_number)
     print 'main() succeeded'
     print 'total time: ', time.clock() - t0
 

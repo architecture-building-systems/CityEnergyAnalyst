@@ -120,11 +120,11 @@ def connect_building_to_grid(config, locator):
     tranches['Length'] = 0
 
     for idx, tranch in tranches.iterrows():
-        print (idx)
-        print (tranch)
+        # print (idx)
+        # print (tranch)
         tranches.loc[idx, 'Name'] = 'tranch' + str(idx)
         tranches.loc[idx, 'Length'] = tranch.values[0].length
-        print (tranch.values[0].boundary)
+        # print (tranch.values[0].boundary)
 
         startnode = tranch.values[0].boundary[0]
         endnode = tranch.values[0].boundary[1]

@@ -467,7 +467,7 @@ def find_cooling_systems_string(disconnected_systems):
     return system_string
 
 
-def main(config):
+def main(config, network_number):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:
@@ -479,10 +479,10 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     network_info = Thermal_Network(locator, config, network_type, gv)
-    print('Running thermal network cost calculation for scenario %s' % config.scenario)
-    print('Running thermal network cost calculation with weather file %s' % config.weather)
-    print('Running thermal network cost calculation for region %s' % config.region)
-    print('Network costs of %s:' % network_type)
+    # print('Running thermal network cost calculation for scenario %s' % config.scenario)
+    # print('Running thermal network cost calculation with weather file %s' % config.weather)
+    # print('Running thermal network cost calculation for region %s' % config.region)
+    # print('Network costs of %s:' % network_type)
 
     ## read in basic information and save to object, e.g. building demand, names, total number of buildings
 
@@ -528,9 +528,9 @@ def main(config):
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
-    cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
+    cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type, network_number))
     return
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main(cea.config.Configuration(), 0)
