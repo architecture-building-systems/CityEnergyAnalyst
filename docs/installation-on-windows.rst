@@ -19,8 +19,10 @@ Prerequisites
 * Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__.
    OR your own favorite editor.
 * Download and install `Daysim <https://daysim.ning.com/page/download>`__.
-* Download and install `ArcGIS 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
-* Within ArcGIS, install the `"Background Geoprocessing" tool <https://desktop.arcgis.com/en/arcmap/10.3/main/analyze/a-quick-tour-of-geoprocessing.htm#ESRI_SECTION1_48C874EF90C641F6AAEAED0281B116FC>`_.
+* Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
+    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in *Products: All Products*.
+    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
+* Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
 
     .. note:: ArcGIS (with Background Geoprocessing) is required to run the thermal network layout script.
         Otherwise, ArcGIS is only used for visualisation purposes.
@@ -45,7 +47,7 @@ Configuration of Pycharm
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CEA (/Documents).
-#. Open *File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter*.
+#. Open ``File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter``.
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add.
 #. Click ``Conda Environment`` from the left hand list and select existing environment.
 #. Point to the location of your conda environment. It should look something like
