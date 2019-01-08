@@ -70,10 +70,10 @@ def network_cost_calculation(newMutadedGen, network_info, config):
     # initialize datastorage and counter
     population_performance = {}
     individual_number = 0
-    # prepare data storage for outputs # TODO: redundant?
+    # prepare data storage for generation_outputs_df # TODO: redundant?
     # TODO[SH]: remove hardcoded value '24'
-    outputs = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 24)))
-    outputs.columns = ['individual', 'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
+    generation_outputs_df = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 24)))
+    generation_outputs_df.columns = ['individual', 'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                        'has_loops'] + network_info.cost_storage.index.tolist()
     # TODO: remove
     # cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
@@ -84,12 +84,12 @@ def network_cost_calculation(newMutadedGen, network_info, config):
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
             # initialize a dataframe for this individual
-            population_individual = pd.DataFrame(np.zeros((1,24)))
-            population_individual.columns = outputs.columns
+            individual_outputs_df = pd.DataFrame(np.zeros((1,24)))
+            individual_outputs_df.columns = generation_outputs_df.columns
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
-            Capex_total, Opex_total, Costs_total, cost_storage = objective_function(network_info)
+            Capex_total, Opex_total, Costs_total, cost_storage_df = objective_function(network_info)
 
             # write result costs values to file
             total_cost = Costs_total
@@ -101,56 +101,63 @@ def network_cost_calculation(newMutadedGen, network_info, config):
 
             # save total cost to dictionary
             population_performance[total_cost] = individual
+            print 'population performance', population_performance
 
             # store all values
             if network_info.config.thermal_network.network_type == 'DH':
-                load_string = network_info.config.thermal_network.substation_heating_systems
+                list_of_supplied_loads = network_info.config.thermal_network.substation_heating_systems
             else:
-                load_string = network_info.config.thermal_network.substation_cooling_systems
+                list_of_supplied_loads = network_info.config.thermal_network.substation_cooling_systems
             # store values
-            population_individual['total'] = total_cost
-            population_individual['capex'] = capex
-            population_individual['opex'] = opex
-            population_individual['opex_plant'] = cost_storage.ix['opex_plant'][0]
-            population_individual['opex_pump'] = cost_storage.ix['opex_pump'][0]
-            population_individual['opex_hex'] = cost_storage.ix['opex_hex'][0]
-            population_individual['opex_dis_loads'] = cost_storage.ix['opex_dis_loads'][0]
-            population_individual['opex_dis_build'] = cost_storage.ix['opex_dis_build'][0]
-            population_individual['opex_chiller'] = cost_storage.ix['opex_chiller'][0]
-            # population_individual['opex_CT'] = cost_storage.ix['opex_CT'][0]
-            population_individual['capex_network'] = cost_storage.ix['capex_network'][0]
-            population_individual['capex_pump'] = cost_storage.ix['capex_pump'][0]
-            population_individual['capex_hex'] = cost_storage.ix['capex_hex'][0]
-            population_individual['capex_dis_loads'] = cost_storage.ix['capex_dis_loads'][0]
-            population_individual['capex_dis_build'] = cost_storage.ix['capex_dis_build'][0]
-            population_individual['capex_chiller'] = cost_storage.ix['capex_chiller'][0]
-            # population_individual['capex_CT'] = cost_storage.ix['capex_CT'][individual_number]
-            population_individual['number_of_plants'] = individual[6:].count(1.0)
-            population_individual['has_loops'] = individual[5]
-            population_individual['plant_buildings'] = building_plants[0]
-            population_individual['disconnected_buildings'] = disconnected_buildings if disconnected_buildings != [] else 0
-            population_individual['supplied_loads'] = ', '.join(load_string)
-            population_individual['length'] = length
-            population_individual['avg_diam'] = average_diameter
-            population_individual['number_of_plants'] = individual[6:].count(1.0)
-            population_individual['has_loops'] = individual[5]
+            individual_outputs_df['total'] = total_cost
+            individual_outputs_df['capex'] = capex
+            individual_outputs_df['opex'] = opex
+            individual_outputs_df['opex_plant'] = cost_storage_df.ix['opex_plant'][0]
+            individual_outputs_df['opex_pump'] = cost_storage_df.ix['opex_pump'][0]
+            individual_outputs_df['opex_hex'] = cost_storage_df.ix['opex_hex'][0]
+            individual_outputs_df['opex_dis_loads'] = cost_storage_df.ix['opex_dis_loads'][0]
+            individual_outputs_df['opex_dis_build'] = cost_storage_df.ix['opex_dis_build'][0]
+            individual_outputs_df['opex_chiller'] = cost_storage_df.ix['opex_chiller'][0]
+            # individual_outputs_df['opex_CT'] = cost_storage_df.ix['opex_CT'][0]
+            individual_outputs_df['capex_network'] = cost_storage_df.ix['capex_network'][0]
+            individual_outputs_df['capex_pump'] = cost_storage_df.ix['capex_pump'][0]
+            individual_outputs_df['capex_hex'] = cost_storage_df.ix['capex_hex'][0]
+            individual_outputs_df['capex_dis_loads'] = cost_storage_df.ix['capex_dis_loads'][0]
+            individual_outputs_df['capex_dis_build'] = cost_storage_df.ix['capex_dis_build'][0]
+            individual_outputs_df['capex_chiller'] = cost_storage_df.ix['capex_chiller'][0]
+            # individual_outputs_df['capex_CT'] = cost_storage_df.ix['capex_CT'][individual_number]
+            individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
+            individual_outputs_df['has_loops'] = individual[5]
+            individual_outputs_df['plant_buildings'] = building_plants[0]
+            individual_outputs_df['disconnected_buildings'] = disconnected_buildings if disconnected_buildings != [] else 0
+            individual_outputs_df['supplied_loads'] = ', '.join(list_of_supplied_loads)
+            individual_outputs_df['length'] = length
+            individual_outputs_df['avg_diam'] = average_diameter
+            individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
+            individual_outputs_df['has_loops'] = individual[5]
+            # save results of an unique individual
+            individual_outputs_df.to_csv(
+                network_info.locator.get_optimization_network_individual_results_file(
+                    config.network_layout.network_type,
+                    individual))
+            # add unique individual and its total costs to the populations
+            network_info.populations[str(individual)] = total_cost
         else:
-            #TODO[SH]: test this part
-            # we have previously evaluated this individual so we can just read in the total cost
-            total_cost = network_info.populations[str(individual)]['total']
+            # read total cost of the individual that has been evaluated
+            individual_outputs_df = pd.read_csv(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual))
+            total_cost = individual_outputs_df['total'][0]
             while total_cost in population_performance.keys():  # make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
                 total_cost = total_cost + 0.01
             population_performance[total_cost] = individual
+            if str(individual) not in network_info.populations.keys():
+                network_info.populations[str(individual)] = total_cost
 
-        population_individual.to_csv(
-            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
-                                                                                  individual))
-        for column in network_info.cost_storage.index.tolist():
-            #TODO[SH]: check outputs.csv
-            outputs.ix[individual_number][column] = population_individual[column][0]
+        for column in generation_outputs_df.columns:
+            #TODO[SH]: check generation_outputs_df.csv, no indivi
+            generation_outputs_df.ix[individual_number][column] = individual_outputs_df[column][0]
         # iterate to next individual
         individual_number += 1
-    outputs.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(
+    generation_outputs_df.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(
         config.network_layout.network_type, network_info.generation_number))
     network_info.generation_number += 1
     # return individuals of this generation sorted from lowest cost to highest
@@ -826,8 +833,9 @@ def main(config):
             newMutadedGen = mutateGeneration(newGen, network_info)
             print 'Finished mutation.'
 
-    # write values into storage dataframe and ouput results
+    # write values into storage dataframe and output results
     # setup data frame with generations, individual, opex, capex and total cost
+    # FIXME[SH]: redundant??? line 839-893, ask Bhargav
     network_info.all_individuals = pd.DataFrame(np.zeros((
         len(network_info.populations.keys()), 24)))
     network_info.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump',
@@ -836,7 +844,7 @@ def main(config):
                                             'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
                                             'capex_CT', 'capex_hex',
                                             'total', 'plant'
-                                                     '_buildings',
+                                                     'buildings',
                                             'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                                             'has_loops', 'length', 'avg_diam']
     cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump',
