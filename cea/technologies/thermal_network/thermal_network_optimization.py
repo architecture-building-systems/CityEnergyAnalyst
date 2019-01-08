@@ -41,7 +41,7 @@ class Network_info(object):
         self.network_type = network_type
         self.network_name = config.thermal_network_optimization.network_name
         # initialize optimization storage variables and dictionaries
-        self.cost_info = ['capex', 'opex', 'total', 'el',
+        self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
                           'capex_chiller', 'capex_CT', 'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_hex',
                           'capex_network', 'length', 'avg_diam']
@@ -112,7 +112,7 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             individual_outputs_df['total'] = total_cost
             individual_outputs_df['capex'] = capex
             individual_outputs_df['opex'] = opex
-            individual_outputs_df['el_MWh'] = cost_storage_df.ix['el'][0]
+            individual_outputs_df['el_network_MWh'] = cost_storage_df.ix['el_network_MWh'][0]
             individual_outputs_df['opex_plant'] = cost_storage_df.ix['opex_plant'][0]
             individual_outputs_df['opex_pump'] = cost_storage_df.ix['opex_pump'][0]
             individual_outputs_df['opex_hex'] = cost_storage_df.ix['opex_hex'][0]
@@ -128,8 +128,8 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             individual_outputs_df['individual'] = str(individual)
             individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
             individual_outputs_df['has_loops'] = individual[5]
-            individual_outputs_df['plant_buildings'] = building_plants[0]
-            individual_outputs_df['disconnected_buildings'] = disconnected_buildings if disconnected_buildings != [] else 0
+            individual_outputs_df['plant_buildings'] = str(building_plants)
+            individual_outputs_df['disconnected_buildings'] = str(disconnected_buildings) if disconnected_buildings != [] else 0
             individual_outputs_df['supplied_loads'] = ', '.join(list_of_supplied_loads)
             individual_outputs_df['length'] = length
             individual_outputs_df['avg_diam'] = average_diameter
