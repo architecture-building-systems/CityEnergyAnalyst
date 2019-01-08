@@ -15,7 +15,7 @@ import cea.technologies.cooling_tower as CTModel
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import lca_calculations
 from cea.constants import HOURS_IN_YEAR
-from cea.technologies.heat_exchangers import calc_Cinv_HEX
+from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -62,9 +62,9 @@ class Thermal_Network(object):
 def calc_Capex_a_network_pipes(network_info):
     ''' Calculates network piping costs'''
     if network_info.network_type == 'DH':
-        InvC = network_info.network_features.pipesCosts_DHN
+        InvC = network_info.network_features.pipesCosts_DHN_USD
     else:
-        InvC = network_info.network_features.pipesCosts_DCN
+        InvC = network_info.network_features.pipesCosts_DCN_USD
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
     Inv_LT = 20
@@ -96,11 +96,11 @@ def calc_Ctot_network_pump(network_info):
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
-    Capex_a, Opex_fixed = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a_pump, Opex_fixed_pump, Capex_pump = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
                                                network_info.locator, 'PU1')  # investment of Machinery
-    Opex_a_tot = Opex_var + Opex_fixed
+    Opex_a_tot_pump = Opex_var + Opex_fixed_pump
 
-    return Capex_a, Opex_a_tot
+    return Capex_a_pump, Opex_a_tot_pump
 
 
 def calc_Ctot_cooling_plants(network_info):
@@ -135,9 +135,9 @@ def calc_Ctot_cooling_plants(network_info):
             plant_heat_peak_kW = plant_heat_peak_kW_list[0]
         plant_heat_yearly_kWh = plant_heat_sum_kWh_list[plant_number]
         print 'Annual plant heat production:', round(plant_heat_yearly_kWh, 0), '[kWh]'
-        Capex_chiller = 0
+        Capex_a_chiller = 0
         Opex_fixed_chiller = 0
-        Capex_CT = 0
+        Capex_a_CT = 0
         Opex_fixed_CT = 0
         if plant_heat_peak_kW > 0:  # we have non 0 demand
             peak_demand_W = plant_heat_peak_kW * 1000  # convert to W
@@ -172,14 +172,14 @@ def calc_Ctot_cooling_plants(network_info):
                                                    peak_demand_W) * network_info.prices.ELEC_PRICE
 
             # calculate equipment cost of chiller and cooling tower
-            Capex_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
+            Capex_a_chiller, Opex_fixed_chiller, Capex_chiller = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                                        network_info.config, 'CH1')
-            Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
+            Capex_a_CT, Opex_fixed_CT, Capex_CT = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
                                                            network_info.config, 'CT1')
         # sum over all plants
-        Capex_a_chiller += Capex_chiller
+        Capex_a_chiller += Capex_a_chiller
         Opex_a_chiller += Opex_fixed_chiller
-        Capex_a_CT += Capex_CT
+        Capex_a_CT += Capex_a_CT
         Opex_a_CT += Opex_fixed_CT + Opex_var_CT
 
     return Opex_var_chiller, Opex_a_CT, Opex_a_chiller, Capex_a_CT, Capex_a_chiller
@@ -402,7 +402,7 @@ def calc_Ctot_cs_district(network_info):
     Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_cs_disconnected_buildings(
         network_info)
     # calculate costs of HEX at connected buildings
-    Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(network_info)
+    Capex_a_hex, Opex_fixed_hex, Capex_hex = calc_Cinv_HEX_hisaka(network_info)
     # store results
     network_info.cost_storage.ix['capex'][
         network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \

@@ -158,6 +158,43 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
 
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
 
+def calc_VCC_COP(config, load_types, centralized=True):
+    """	
+    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of	
+    auxiliary power demand for centralized and decentralized systems.	
+     Clark D (CUNDALL). Chiller energy efficiency 2013.	
+     :param load_types:	
+    :param centralized:	
+    :return:	
+    """
+    if centralized == True:
+        g_value = G_VALUE_CENTRALIZED
+    else:
+        g_value = G_VALUE_DECENTRALIZED
+    T_evap = 10000000  # some high enough value
+    for load_type in load_types:  # find minimum evap temperature of supplied loads
+        if load_type == 'ahu':
+            T_evap = min(T_evap, T_EVAP_AHU)
+        elif load_type == 'aru':
+            T_evap = min(T_evap, T_EVAP_ARU)
+        elif load_type == 'scu':
+            T_evap = min(T_evap, T_EVAP_SCU)
+        else:
+            print 'Undefined cooling load_type for chiller COP calculation.'
+    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+        T_evap = T_evap - DT_NETWORK_CENTRALIZED  # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+    # read weather data for condeser temperature calculation
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
+    # calculate condenser temperature with static approach temperature assumptions
+    T_cond = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+    # calculate chiller COP
+    cop_chiller = g_value * T_evap / (T_cond - T_evap)
+    # calculate system COP with pumping power of auxiliaries
+    if centralized == True:
+        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
+    else:
+        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
+    return cop_system
 
 def main():
     Qc_W = 3.5
