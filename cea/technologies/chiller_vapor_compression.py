@@ -181,7 +181,8 @@ def calc_VCC_COP(config, load_types, centralized=True):
         else:
             print 'Undefined cooling load_type for chiller COP calculation.'
     if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
-        T_evap = T_evap - DT_NETWORK_CENTRALIZED  # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        T_evap = T_evap - DT_NETWORK_CENTRALIZED
     # read weather data for condeser temperature calculation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
     # calculate condenser temperature with static approach temperature assumptions
