@@ -444,14 +444,14 @@ def calc_Ctot_cs_district(network_info):
                                                                  network_info.locator)
 
     # initialize data storage for later output to file
-    # cost_storage = pd.DataFrame(np.zeros((20, 1)))
-    # cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
+    # cost_storage_df = pd.DataFrame(np.zeros((20, 1)))
+    # cost_storage_df.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
     #                                    'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
     #                                    'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
     #                                    'capex_chiller', 'capex_CT', 'length', 'avg_diam',
     #                                    'opex_chiller', 'opex_CT']
-    cost_storage = pd.DataFrame(np.zeros((18, 1)))
-    cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
+    cost_storage_df = pd.DataFrame(np.zeros((18, 1)))
+    cost_storage_df.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
                                        'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
                                        'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
                                        'capex_chiller', 'length', 'avg_diam',
@@ -488,23 +488,22 @@ def calc_Ctot_cs_district(network_info):
     Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                                           Opex_tot_pump + Opex_a_CT + Ctot_dis_loads + Ctot_dis_buildings + \
                                           Opex_fixed_hex
-    cost_storage.ix['capex_network'][0] = Capex_a_netw
-    cost_storage.ix['capex_pump'][0] = Capex_a_pump
-    cost_storage.ix['capex_hex'][0] = Capex_a_hex
-    cost_storage.ix['capex_dis_loads'][0] = Capex_a_dis_loads
-    cost_storage.ix['capex_dis_build'][0] = Capex_a_dis_buildings
-    cost_storage.ix['capex_chiller'][0] = Capex_a_chiller
-    # cost_storage.ix['capex_CT'][0] = Capex_a_CT
-    cost_storage.ix['opex_plant'][0] = Opex_a_chiller + Opex_a_CT
-    cost_storage.ix['opex_pump'][0] = Opex_tot_pump
-    cost_storage.ix['opex_hex'][0] = Opex_fixed_hex
-    cost_storage.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
-    cost_storage.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
-    cost_storage.ix['opex_chiller'][0] = Opex_a_chiller
-    # cost_storage.ix['opex_CT'][0] = Opex_a_CT
-    print cost_storage
+    cost_storage_df.ix['capex_network'][0] = Capex_a_netw
+    cost_storage_df.ix['capex_pump'][0] = Capex_a_pump
+    cost_storage_df.ix['capex_hex'][0] = Capex_a_hex
+    cost_storage_df.ix['capex_dis_loads'][0] = Capex_a_dis_loads
+    cost_storage_df.ix['capex_dis_build'][0] = Capex_a_dis_buildings
+    cost_storage_df.ix['capex_chiller'][0] = Capex_a_chiller
+    # cost_storage_df.ix['capex_CT'][0] = Capex_a_CT
+    cost_storage_df.ix['opex_plant'][0] = Opex_a_chiller + Opex_a_CT
+    cost_storage_df.ix['opex_pump'][0] = Opex_tot_pump
+    cost_storage_df.ix['opex_hex'][0] = Opex_fixed_hex
+    cost_storage_df.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
+    cost_storage_df.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
+    cost_storage_df.ix['opex_chiller'][0] = Opex_a_chiller
+    # cost_storage_df.ix['opex_CT'][0] = Opex_a_CT
 
-    return Capex_total, Opex_total, Costs_total, cost_storage
+    return Capex_total, Opex_total, Costs_total, cost_storage_df
 
 
 def find_cooling_systems_string(disconnected_systems):
@@ -575,7 +574,7 @@ def main(config):
     network_info.disconnected_buildings_index = disconnected_buildings_index
 
     # calculate total network costs
-    Capex_total, Opex_total, Costs_total, cost_storage = calc_Ctot_cs_district(network_info)
+    Capex_total, Opex_total, Costs_total, cost_storage_df = calc_Ctot_cs_district(network_info)
 
     # calculate network total length and average diameter
     length_m, average_diameter_m = calc_network_size(network_info)
@@ -593,23 +592,23 @@ def main(config):
 
     # write outputs
     cost_output = {}
-    cost_output['total_annual_cost'] = round(cost_storage.ix['total'][0], 2)
-    cost_output['annual_opex'] = round(cost_storage.ix['opex'][0], 2)
-    cost_output['annual_capex'] = round(cost_storage.ix['capex'][0], 2)
+    cost_output['total_annual_cost'] = round(cost_storage_df.ix['total'][0], 2)
+    cost_output['annual_opex'] = round(cost_storage_df.ix['opex'][0], 2)
+    cost_output['annual_capex'] = round(cost_storage_df.ix['capex'][0], 2)
     cost_output['total_cost_per_MWh'] = round(cost_output['total_annual_cost'] / annual_demand_district_MWh, 2)
     cost_output['opex_per_MWh'] = round(cost_output['annual_opex'] / annual_demand_district_MWh, 2)
     cost_output['capex_per_MWh'] = round(cost_output['annual_capex'] / annual_demand_district_MWh, 2)
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
-    cost_output['opex_plant'] = round(cost_storage.ix['opex_plant'], 2)
-    cost_output['opex_pump'] = round(cost_storage.ix['opex_pump'][0], 2)
-    cost_output['opex_hex'] = round(cost_storage.ix['opex_hex'][0], 2)
-    cost_output['capex_network'] = round(cost_storage.ix['capex_network'][0], 2)
-    cost_output['capex_pumps'] = round(cost_storage.ix['capex_pump'][0], 2)
-    cost_output['capex_hex'] = round(cost_storage.ix['capex_hex'][0], 2)
-    cost_output['capex_chiller'] = round(cost_storage.ix['capex_chiller'][0], 2)
-    # cost_output['capex_CT'] = round(cost_storage.ix['capex_CT'][0], 2)
+    cost_output['opex_plant'] = round(cost_storage_df.ix['opex_plant'], 2)
+    cost_output['opex_pump'] = round(cost_storage_df.ix['opex_pump'][0], 2)
+    cost_output['opex_hex'] = round(cost_storage_df.ix['opex_hex'][0], 2)
+    cost_output['capex_network'] = round(cost_storage_df.ix['capex_network'][0], 2)
+    cost_output['capex_pumps'] = round(cost_storage_df.ix['capex_pump'][0], 2)
+    cost_output['capex_hex'] = round(cost_storage_df.ix['capex_hex'][0], 2)
+    cost_output['capex_chiller'] = round(cost_storage_df.ix['capex_chiller'][0], 2)
+    # cost_output['capex_CT'] = round(cost_storage_df.ix['capex_CT'][0], 2)
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
