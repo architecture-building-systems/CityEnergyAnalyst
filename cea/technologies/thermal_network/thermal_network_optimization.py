@@ -836,11 +836,12 @@ def main(config):
             network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
                                                                                   individual), index_col=None, header=0)
         all_individuals_list.append(individual_df.as_matrix())
-    all_individuals_array = np.vstack(all_individuals_list) 
+    all_individuals_array = np.vstack(all_individuals_list)
     all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
     all_individuals_df.columns = network_info.generation_info + network_info.cost_info
     all_individuals_df = all_individuals_df.sort_values(by=['total'])
-    all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type))
+    all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
+                              index=False)
 
     print('thermal_network_optimization_main() succeeded')
     print('total time: ', time.time() - start)
