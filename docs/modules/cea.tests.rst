@@ -49,6 +49,14 @@ cea.tests.test\_config module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_dbf module
+--------------------------
+
+.. automodule:: cea.tests.test_dbf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.test\_inputlocator module
 -----------------------------------
 

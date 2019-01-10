@@ -13,7 +13,7 @@ Scope: Define what user stories should go in the next block of work (sprint). Th
 Attendees: Scrum Master, Product Owner, Product Sponsor, and Development Team.
 
 Daily stand-up
--------------
+--------------
 
 Duration: 15 min.
 Frequency: daily

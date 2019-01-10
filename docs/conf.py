@@ -31,6 +31,9 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
+    def __getitem__(self):
+        return self
+
 
 
 MOCK_MODULES = ['COLOR',
@@ -72,7 +75,10 @@ MOCK_MODULES = ['COLOR',
                 'matplotlib.collections',
                 'matplotlib.pyplot',
                 'networkx',
+                'networkx.algorithms',
+                'networkx.algorithms.approximation',
                 'networkx.algorithms.approximation.steinertree',
+                'networkx.algorithms.approximation.steinertree.steiner_tree',
                 'numba',
                 'numba.pycc',
                 'pandas',
