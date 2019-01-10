@@ -828,64 +828,19 @@ def main(config):
             newMutadedGen = mutateGeneration(newGen, network_info)
             print 'Finished mutation.'
 
-    # write values into storage dataframe and output results
-    # setup data frame with generations, individual, opex, capex and total cost
-
-    populations_df = pd.DataFrame.from_dict(network_info.populations, orient='index')
-    populations_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type))
-
-    # FIXME[SH]: redundant??? line 839-893, ask Bhargav
-    # network_info.all_individuals = pd.DataFrame(np.zeros((
-    #     len(network_info.populations.keys()), 24)))
-    # network_info.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump',
-    #                                         'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
-    #                                         'opex_hex', 'capex_network',
-    #                                         'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
-    #                                         'capex_CT', 'capex_hex',
-    #                                         'total', 'plant'
-    #                                                  'buildings',
-    #                                         'number_of_plants', 'supplied_loads', 'disconnected_buildings',
-    #                                         'has_loops', 'length', 'avg_diam']
-    # row_number = 0
-    # for individual in network_info.populations.keys():
-    #     for column in network_info.cost_info:
-    #         if column != 'individual':
-    #             network_info.all_individuals.ix[row_number][column] = \
-    #                 network_info.populations[str(individual)][column]
-    #     row_number += 1
-    # # the following is a tedious workaround necessary to write string values into the dataframe and to csv..
-    # # todo: improve this
-    # row_number = 0
-    # for individual in network_info.populations.keys():
-    #     network_info.all_individuals.ix[row_number]['individual'] = row_number
-    #     network_info.all_individuals.ix[row_number]['plant_buildings'] = row_number + 100.0
-    #     network_info.all_individuals.ix[row_number]['disconnected_buildings'] = row_number + 200.0
-    #     network_info.all_individuals.ix[row_number]['supplied_loads'] = row_number + 300.0
-    #     row_number += 1
-    # row_number = 0
-    # network_info.all_individuals['individual'] = \
-    #     network_info.all_individuals['individual'].astype(str)
-    # network_info.all_individuals['plant_buildings'] = \
-    #     network_info.all_individuals['plant_buildings'].astype(str)
-    # network_info.all_individuals['disconnected_buildings'] = \
-    #     network_info.all_individuals['disconnected_buildings'].astype(str)
-    # network_info.all_individuals['supplied_loads'] = \
-    #     network_info.all_individuals['supplied_loads'].astype(str)
-    # for individual in network_info.populations.keys():
-    #     network_info.all_individuals.replace(str(float(row_number + 100)),
-    #                                          ''.join(network_info.populations[str(individual)][
-    #                                                      'plant_buildings']), inplace=True)
-    #     network_info.all_individuals.replace(str(float(row_number + 200)),
-    #                                          ''.join(network_info.populations[str(individual)][
-    #                                                      'disconnected_buildings']), inplace=True)
-    #     network_info.all_individuals.replace(str(float(row_number + 300)),
-    #                                          ''.join(network_info.populations[str(individual)][
-    #                                                      'supplied_loads']), inplace=True)
-    #     network_info.all_individuals.replace(str(float(row_number)), str(individual), inplace=True)
-    #     row_number += 1
-    #
-    # network_info.all_individuals.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
-    #     index='False')
+    # write values into all_individuals_list and output results
+    all_individuals_list = []
+    for individual in network_info.populations.keys():
+        # read results from each individual
+        individual_df = pd.read_csv(
+            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
+                                                                                  individual), index_col=None, header=0)
+        all_individuals_list.append(individual_df.as_matrix())
+    all_individuals_array = np.vstack(all_individuals_list) 
+    all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
+    all_individuals_df.columns = network_info.generation_info + network_info.cost_info
+    all_individuals_df = all_individuals_df.sort_values(by=['total'])
+    all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type))
 
     print('thermal_network_optimization_main() succeeded')
     print('total time: ', time.time() - start)
