@@ -31,10 +31,6 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-    def __getitem__(self):
-        return self
-
-
 
 MOCK_MODULES = ['COLOR',
                 'SALib',
