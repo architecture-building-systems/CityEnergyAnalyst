@@ -1,5 +1,3 @@
-:orphan:
-
 How to do analyses with CEA?
 ==============================
 
