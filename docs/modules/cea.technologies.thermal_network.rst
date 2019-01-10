@@ -6,13 +6,6 @@ cea.technologies.thermal\_network package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.technologies.thermal_network.network_layout
-
 Submodules
 ----------
 
