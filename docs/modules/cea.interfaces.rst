@@ -14,5 +14,6 @@ Subpackages
     cea.interfaces.arcgis
     cea.interfaces.cli
     cea.interfaces.config_editor
+    cea.interfaces.dashboard
     cea.interfaces.grasshopper
 
