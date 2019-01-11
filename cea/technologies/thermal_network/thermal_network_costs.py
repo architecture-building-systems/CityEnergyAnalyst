@@ -467,7 +467,7 @@ def find_cooling_systems_string(disconnected_systems):
     return system_string
 
 
-def main(config, network_number):
+def main(network, config, network_number):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:
