@@ -4,6 +4,14 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):
     # CREATE FIRST PAGE WITH TIMESERIES

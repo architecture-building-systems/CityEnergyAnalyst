@@ -6,6 +6,16 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
+__author__ = "Bhargava Srepathi"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Bhargava Srepathi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)

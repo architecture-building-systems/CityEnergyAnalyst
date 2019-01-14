@@ -7,6 +7,14 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from cea.plots.variable_naming import COLOR
 
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
     # iterate through all input data, make sure we have positive data. Except for edge node matrix which ahs to retain -1 values

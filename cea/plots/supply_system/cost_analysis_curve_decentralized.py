@@ -6,6 +6,14 @@ import pandas as pd
 import numpy as np
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
+__author__ = "Bhargava Srepathi"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Bhargava Srepathi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def cost_analysis_curve_decentralized(data_frame, locator, generation, individual, config, output_path):
     analysis_fields_cost_decentralized_heating = ["BoilerBG Share", "BoilerNG Share", "FC Share", "GHP Share",

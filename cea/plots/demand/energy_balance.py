@@ -9,6 +9,14 @@ from cea.plots.variable_naming import LOGO, COLOR
 import pandas as pd
 import numpy as np
 
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle","Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def energy_balance(data_frame, analysis_fields, normalize_value, title, output_path):
     # Calculate Energy Balance
