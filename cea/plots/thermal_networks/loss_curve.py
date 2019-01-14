@@ -6,6 +6,14 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def loss_curve(data_frame, analysis_fields, title, output_path):
     traces = []

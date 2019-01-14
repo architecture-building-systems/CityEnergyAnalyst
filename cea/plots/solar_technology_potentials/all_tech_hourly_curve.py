@@ -5,6 +5,14 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
+__author__ = "Shanshan Hsieh"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Shanshan Hsieh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output_path):
     traces = []

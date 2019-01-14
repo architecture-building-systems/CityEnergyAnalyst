@@ -21,9 +21,9 @@ from cea.plots.thermal_networks.network_plot import network_plot
 from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
 from cea.plots.thermal_networks.annual_energy_consumption import annual_energy_consumption_plot
 
-__author__ = "Lennart Rogenhofer, Jimeno A. Fonseca, Shanshan Hsieh"
+__author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Lennart Rogenhofer", "Jimeno A. Fonseca", "Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"

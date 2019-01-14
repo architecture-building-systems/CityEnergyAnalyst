@@ -6,6 +6,15 @@ from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 import math
 
+__author__ = "Shanshan Hsieh"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Shanshan Hsieh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
                              sc_et_analysis_fields, title,

@@ -11,9 +11,9 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, NAMING
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Bhargava Srepathi"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Bhargava Srepathi"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
