@@ -771,6 +771,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
+    def PV_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_buildings.csv')
+
     def PV_network(self, network):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
@@ -788,6 +792,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'SC_%s_total.csv' % panel_type)
 
+    def SC_total_buildings(self, panel_type):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'SC_%s_total_buildings.csv' % panel_type)
+
     def SC_metadata_results(self, building_name, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building_name, panel_type))
@@ -799,6 +807,10 @@ class InputLocator(object):
     def PVT_totals(self):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
+
+    def PVT_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
 
     def PVT_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
