@@ -244,6 +244,10 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     # Convert set of (startnode, endnode) to a list of coordinate data of each node
     list_geo_grid = set_to_list_geo(set_grid, points_on_line)
 
+    print ('list geo grid')
+
+    print (list_geo_grid)
+
     # Find path of edges on GRID network between THERMAL consumer and plant node
     set_thermal_network = find_thermal_network_path(m, points_on_line, set_grid, dict_length, dict_connected)
 
@@ -252,6 +256,10 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
 
     # Connect centroid of every THERMAL consumer building to thermal network
     list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator, dict_connected)
+
+    print ('list_geo_thermal_network')
+
+    print (list_geo_thermal_network)
 
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
     write_shp(config, locator, list_geo_grid, name=electrical_grid_file_name)
