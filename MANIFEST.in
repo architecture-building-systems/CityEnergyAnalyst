@@ -1,3 +1,4 @@
+include cea/scripts.yml
 include cea/databases/weather/*.epw
 include cea/databases/archetypes/*.xlsx
 include cea/databases/benchmarks/benchmark_2000W.xls
