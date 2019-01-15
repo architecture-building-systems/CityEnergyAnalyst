@@ -1,4 +1,4 @@
-name: cea2
+name: cea
 channels:
   - defaults
 dependencies:
