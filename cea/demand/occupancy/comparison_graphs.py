@@ -2,109 +2,65 @@ import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.plotly as py
+import plotly.graph_objs as go
+from plotly.offline import plot
 
-path_to_scenarios = r'C:\reference-case-open'
+path_to_scenarios = r'C:\Users\User\Downloads\reference-case-ETH-Mahshid'
+scenarios = ['0_archetypes', '1_visual', '2_manual_calibration_orig', '2_manual_calibration', '3_hybrid']
+measurement_filename = 'Total_demand_metering_summarized_v5.xls'
+# columns_to_plot = ['QH_sys_MWhyr', 'Qhs_sys_MWhyr', 'Qww_sys_MWhyr', 'Qhpro_sys_MWhyr',
+#                    'QC_sys_MWhyr', 'Qcs_sys_MWhyr', 'Qcre_sys_MWhyr', 'Qcpro_sys_MWhyr', 'Qcdata_MWhyr',
+#                    'E_sys_MWhyr', 'Eal_sys_MWhyr', 'Epro_sys_MWhyr']
+columns_to_plot = ['QH_sys_MWhyr', 'QC_sys_MWhyr', 'Qcs_sys_MWhyr', 'E_sys_MWhyr', 'Qcre_sys_MWhyr', 'Qcdata_sys_MWhyr']
+                   # 'Qhpro_sys_MWhyr']
+list_buildings = ['B153767', 'B302006694', 'B302006646', 'B302007056a', 'B302006839', 'B302049656', 'B302007086',
+                  'B302007412', 'B153701', 'B302006827', 'B302023104', 'B302049659', 'B302007081', 'B302007064',
+                  'B153766', 'B3169932', 'B302007073', 'B302007089', 'B302023103', 'B302049650', 'B302049632',
+                  'B302007868', 'B302007317', 'B302007331', 'B302049821', 'B302007876', 'B9011701', 'B3169989',
+                  'B302007529', 'B302007869', 'B2367084', 'B302007864', 'B153690', 'B302007056', 'B9011838',
+                  'B302034660a', 'B302034660b', 'B302034660c', 'B140577a', 'B140577b', 'B140577c']
 
-# columns_to_plot = [column for column in list(pd.read_csv(
-#     os.path.join(path_to_scenarios, 'zurich_baseline\deterministic\outputs\data\demand\Total_demand.csv')).columns) if
-#                    column not in ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Ecaf_MWhyr', 'Ecaf0_kW', 'Q_cool_ref_MWhyr',
-#                                   'q_cs_lat_peop_MWhyr', 'q_cs_lat_peop0_kW', 'Qcs_sen0_kW', 'Qhsf_lat_MWhyr',
-#                                   'Qhsf_lat_kW']]
-
-columns_to_plot_yearly = ['people0', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qhsf_MWhyr', 'Qhsf0_kW', 'Eauxf_ve_MWhyr',
-                          'Eauxf_ve0_kW', 'Qcsf_lat_MWhyr', 'Qcsf_lat0_kW', 'Qgain_pers_MWhyr', 'Qgain_pers0_kW',
-                          'Qgain_vent_MWhyr', 'Qgain_vent0_kW']
-columns_to_plot_hourly = ['people', 'Qcsf_kWh', 'Qhsf_kWh', 'Eauxf_ve_kWh', 'Qcsf_lat_kWh']
-
-scenarios = ['baseline', 'masterplan', 'dynamic']
-cases = ['deterministic', 'stochastic']
-
-which_plots = {'bar': True,
-               'vs': True,
-               'hourly': True}
-
-# which_hourly = ['people', 'Qcsf_kWh', 'Eauxf_ve_kWh']
-columns_to_plot = columns_to_plot_yearly
-which_hourly = columns_to_plot_hourly
-
+dataframe_dict = {}
+dataframe_dict['measured'] = pd.read_excel(os.path.join(path_to_scenarios, 'building-metering',
+                                                        measurement_filename)).set_index('Name')
 for scenario in scenarios:
-    baseline_df = pd.read_csv(os.path.join(path_to_scenarios, 'zurich_'+scenario,
-                                           'deterministic\outputs\data\demand\Total_demand.csv')).set_index('Name')
-    stochastic_df = pd.read_csv(os.path.join(path_to_scenarios, 'zurich_'+scenario,
-                                             'stochastic\outputs\data\demand\Total_demand.csv')).set_index('Name')
-    for column in columns_to_plot:
-        if which_plots['bar']:
-            if column != 'people0':
-                unit = column.split('_')[len(column.split('_')) - 1]
-            else:
-                unit = 'people'
-            # data to plot
-            n_groups = len(baseline_df.index)
-            baseline = baseline_df[column]
-            stochastic = stochastic_df[column]
+    dataframe_dict[scenario] = pd.read_csv(os.path.join(path_to_scenarios, scenario,
+                                                        'outputs\data\demand\Total_demand.csv')).set_index('Name')
 
-            # create plot
-            fig, ax = plt.subplots()
-            index = np.arange(n_groups)
-            bar_width = 0.35
-            opacity = 0.8
+min_error = pd.DataFrame(data=1e6 * np.ones([len(list_buildings), len(columns_to_plot)]), index=list_buildings,
+                         columns=columns_to_plot)
+min_error_labels = pd.DataFrame(data=None, index=list_buildings, columns=columns_to_plot)
 
-            rects1 = plt.bar(index, baseline, bar_width,
-                             alpha=opacity,
-                             color='b',
-                             label='baseline')
+for column in columns_to_plot:
+    data = []
+    for scenario in dataframe_dict.keys():
+        data.append(go.Bar(x=list_buildings, y=dataframe_dict[scenario].loc[list_buildings, column], name=scenario))
+    layout = go.Layout(barmode='group')
+    fig = go.Figure(data=data, layout=layout)
+    plot(fig, auto_open=False, filename=os.path.join(path_to_scenarios, 'comparison-graphs', column+'.html'))
 
-            rects2 = plt.bar(index + bar_width, stochastic, bar_width,
-                             alpha=opacity,
-                             color='g',
-                             label='stochastic')
-
-            plt.xlabel('Building')
-            plt.ylabel(unit)
-            plt.title(column)
-            plt.xticks(index + bar_width, (baseline_df.index))
-            plt.legend()
-
-            plt.tight_layout()
-            plt.savefig(os.path.join(path_to_scenarios,'zurich_'+scenario,'comparison', column + '.png'))
-            plt.close()
-
-        if which_plots['vs']:
-            # create point plot
-            plt.plot(baseline, stochastic, 'o')
-            if max(abs(baseline)) > max(baseline):
-                plt.plot([0, -max(abs(baseline))], [0, -max(abs(baseline))], 'k--')
-            else:
-                plt.plot([0, max(baseline)], [0, max(baseline)], 'k--')
-            plt.title(column)
-            plt.savefig(os.path.join(path_to_scenarios,'zurich_'+scenario,'comparison', column + '_points.png'))
-            plt.close()
-
-if which_plots['hourly']:
+    data2 = []
+    data3 = []
+    data4 = []
+    measured_data = dataframe_dict['measured'].loc[list_buildings, column]
     for scenario in scenarios:
-        for measurement in which_hourly:
-            comparison_path = os.path.join(path_to_scenarios, 'zurich_' + scenario, 'comparison', measurement)
-            if not os.path.exists(comparison_path):
-                os.makedirs(comparison_path)
+        error_data = np.abs((dataframe_dict[scenario].loc[list_buildings, column] - measured_data) / measured_data)
+        error_data_2 = error_data * dataframe_dict[scenario].loc[list_buildings, column]
+        data2.append(go.Bar(x=list_buildings, y=error_data, name=scenario))
+        data3.append(go.Bar(x=list_buildings, y=error_data_2, name=scenario))
+        for i in range(len(list_buildings)):
+            if error_data[i] < min_error.loc[list_buildings[i], column]:
+                min_error.loc[list_buildings[i], column] = error_data[i]
+                min_error_labels.loc[list_buildings[i], column] = scenario
 
-            data = pd.DataFrame(data=None, columns=cases, index=range(8760))
-            if measurement != 'people':
-                unit = measurement.split('_')[len(measurement.split('_')) - 1]
-            else:
-                unit = 'people'
+    layout2 = go.Layout(barmode='group')
+    layout3 = go.Layout(barmode='group')
+    fig2 = go.Figure(data=data2, layout=layout2)
+    fig3 = go.Figure(data=data3, layout=layout3)
+    plot(fig2, auto_open=False, filename=os.path.join(path_to_scenarios, 'comparison-graphs', column+'_error.html'))
+    plot(fig3, auto_open=False,
+         filename=os.path.join(path_to_scenarios, 'comparison-graphs', column+'_normalized_error.html'))
 
-            for file in os.listdir(
-                    os.path.join(path_to_scenarios, 'zurich_' + scenario, 'deterministic', 'outputs\data\demand')):
-                if file != 'Total_demand.csv':
-                    building_file = os.path.splitext(file)[0]
-                    for case in cases:
-                        current_data = pd.read_csv(
-                            os.path.join(path_to_scenarios, 'zurich_' + scenario, case, 'outputs\data\demand', file))
-                        data[case] = current_data[measurement]
-
-                    plt.plot(data)
-                    plt.title(measurement)
-                    plt.ylabel(unit)
-                    plt.legend(cases)
-                    plt.savefig(os.path.join(comparison_path, building_file + '.png'))
-                    plt.close()
+min_error.to_csv(r'C:\Users\User\Downloads\reference-case-ETH-Mahshid\min_error.csv')
+min_error_labels.to_csv(r'C:\Users\User\Downloads\reference-case-ETH-Mahshid\min_error_labels.csv')
