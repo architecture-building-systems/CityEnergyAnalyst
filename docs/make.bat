@@ -1,4 +1,4 @@
-@ECHO OFF
+REM @ECHO OFF
 
 pushd %~dp0
 
@@ -11,7 +11,7 @@ if "%SPHINXBUILD%" == "" (
 set SOURCEDIR=.
 set BUILDDIR=_build
 set SPHINXPROJ=CityEnergyAnalyst
-set %SPHINXOPTS%=
+set SPHINXOPTS=
 
 if "%1" == "" goto help
 

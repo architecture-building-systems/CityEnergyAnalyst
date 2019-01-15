@@ -120,8 +120,6 @@
 
 * `scenario/outputs/data/emissions/Total_LCA_mobility.csv`
 
-## Heatmaps
-
 ### Input files
 
 * `scenario/inputs/building-geometry/zone.shp`

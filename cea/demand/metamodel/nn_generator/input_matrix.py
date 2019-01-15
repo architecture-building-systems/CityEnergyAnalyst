@@ -28,7 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
+def input_prepare_multi_processing(building_name, locator, target_parameters, nn_delay, climatic_variables,
                                    region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
                                    building_properties, schedules_dict, date):
     '''
@@ -43,7 +43,7 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     #   collect targets from the target reader function
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, region, year,
                                                      use_daysim_radiation,use_stochastic_occupancy,weather_array,
                                                       weather_data,building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
@@ -55,16 +55,16 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
 
 
 def prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay):
-    '''
+    """
     this function adds a time-delay to the inputs
     :param raw_nn_inputs_D: hourly building properties with dynamic characteristics throughout the year,
-            these parameters require delay (e.g. climatic parameters, internal gains)
+    these parameters require delay (e.g. climatic parameters, internal gains)
     :param raw_nn_inputs_S: houtly building properties with static characteristics throughout the year,
-            these parameters DO NOT require delay (e.g. geometry characteristic, thermal characteristics of the envelope)
+    these parameters DO NOT require delay (e.g. geometry characteristic, thermal characteristics of the envelope)
     :param raw_nn_targets: hourly demand data (targets)
     :param nn_delay: number of intended delays (can be accessed from 'nn_settings.py')
     :return: array of hourly input and target values for a single building associated with delay (NN_input_ready, NN_target_ready)
-    '''
+    """
     input1=raw_nn_inputs_D
     target1=raw_nn_targets
     #   input matrix shape
@@ -124,7 +124,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+def get_cea_inputs(locator, building_name, climatic_variables, region, year,
                    use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
                    building_properties, schedules_dict, date):
     '''
@@ -147,10 +147,10 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
     array_arch = get_array_architecture_variables(building, building_name, locator)
 
     #   collecting all input features concerning comfort characteristics
-    array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data,use_stochastic_occupancy)
+    array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, schedules_dict, weather_data,use_stochastic_occupancy)
 
     #   collecting all input features concerning internal load characteristics
-    array_int_load = get_array_internal_loads_variables(schedules, tsd, building, gv)
+    array_int_load = get_array_internal_loads_variables(schedules, tsd, building)
 
     #   collecting all input features concerning HVAC and systems characteristics
     array_hvac = get_array_HVAC_variables(building)
@@ -267,7 +267,7 @@ def get_array_architecture_variables(building, building_name, locator):
     return array_arch
 
 
-def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data,use_stochastic_occupancy):
+def get_array_comfort_variables(building, date, schedules_dict, weather_data,use_stochastic_occupancy):
     '''
     this function collects comfort/setpoint chatacteristics
     :param building: the intended building dataset
@@ -278,7 +278,7 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     :return: array of setpoint properties for each hour of the year (array_cmfrts, schedules, tsd)
     '''
     #   collect schedules
-    schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data,use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(building, schedules_dict, weather_data,use_stochastic_occupancy)
     #   calculate seoasonal setpoint
     tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, building, date.dayofweek)
     #   replace NaNs values with -100 for heating set point and 100 for cooling set point (it implies no setpoint)
@@ -288,8 +288,9 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     array_Tcset = tsd['ta_cs_set']
     #   create a single vector of setpoint temperatures
     array_cmfrt = np.empty((1, 8760))
+    seasonhours = [3216, 6192]
     array_cmfrt[0, :] = array_Thset
-    array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
+    array_cmfrt[0, seasonhours[0] + 1:seasonhours[1]] = array_Tcset[seasonhours[0] + 1:seasonhours[1]]
     array_cmfrt[:,:]=array_Tcset
     # todo: change the comfort array to match other than singapore
     array_HVAC_status=np.where(array_cmfrt > 99, 0,
@@ -308,13 +309,12 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     return array_cmfrts, schedules, tsd
 
 
-def get_array_internal_loads_variables(schedules, tsd, building, gv):
+def get_array_internal_loads_variables(schedules, tsd, building):
     '''
     this function collects the internal loads
     :param schedules: schedules profile
     :param tsd: building properties struct
     :param building: the intended building dataset
-    :param gv: global variables
     :return: array of all internal gains (array_int_load)
     '''
     #   electricity gains(appliances, datacenter, lighting, process and refrigration)
@@ -378,7 +378,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = 'B001'
     settings = config.demand
-    get_cea_inputs(locator=locator, building_name=building_name, gv=gv, climatic_variables=config.neural_network.climatic_variables,
+    get_cea_inputs(locator=locator, building_name=building_name, climatic_variables=config.neural_network.climatic_variables,
                    region = config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
                     use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 

@@ -18,16 +18,16 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-    assert os.path.exists(config.dbf_tools.dbf_file), 'Input file not found: %s' % config.dbf_tools.dbf_file
+    input_file = config.dbf_tools.input_file
+    output_file_name = config.dbf_tools.output_file_name
+    output_path = config.dbf_tools.output_path
 
-    config.dbf_tools.excel_file  = os.path.splitext(config.dbf_tools.dbf_file)[0] + '.xls'
+    assert os.path.exists(input_file), 'Input file not found: %s' % input_file
 
     # print out all configuration variables used by this script
-    print("Running excel-to-dbf with dbf-file = %s" % config.dbf_tools.dbf_file)
-    print("Running excel-to-dbf with excel-file = %s" % config.dbf_tools.excel_file)
+    print("Running excel-to-dbf with excel-file = %s" % input_file)
 
-    cea.utilities.dbf.dbf_to_xls(input_path=config.dbf_tools.dbf_file,
-                                 output_path=config.dbf_tools.excel_file)
+    cea.utilities.dbf.dbf_to_xls(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
 
 
 if __name__ == '__main__':

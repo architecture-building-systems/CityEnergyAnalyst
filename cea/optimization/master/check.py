@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import cea.optimization.supportFn as sFn
+from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 
 __author__ =  "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -53,15 +54,14 @@ def GHPCheck(individual, locator, Qnom, gv):
     :param individual: list with variables included in each individual.
     :param locator: path to the demand folder
     :param Qnom: Nominal installed capacity in the district heating plant
-    :param gv: Global Variables
     :type individual: list
     :type locator: string
     :type Qnom: float
-    :type gv: class
 
     :return: None
     :rtype: NoneType
     """
+
     areaArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Area_geo"] ) )
     buildArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Name"] ) )
     
@@ -73,7 +73,7 @@ def GHPCheck(individual, locator, Qnom, gv):
     for index, buildName in zip(barcode, buildList):
         if index == "1":
             areaAvail = areaArray[ np.where(buildArray == buildName)[0][0] ][0]
-            Qallowed += np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
+            Qallowed += np.ceil(areaAvail/GHP_A) * GHP_HMAX_SIZE #[W_th]
     
     print Qallowed, "Qallowed"
     if Qallowed < individual[11] * Qnom:

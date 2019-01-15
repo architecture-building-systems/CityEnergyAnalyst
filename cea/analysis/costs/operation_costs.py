@@ -56,7 +56,7 @@ def operation_costs(locator, config):
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
         # calculate the total and relative costs
         heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
-        heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
+        heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['NFA_m2']
 
     # for cooling services
     dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
@@ -65,7 +65,7 @@ def operation_costs(locator, config):
         # calculate the total and relative costs
         # calculate the total and relative costs
         dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
-        dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['GFA_m2']
+        dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['NFA_m2']
 
 
     ## calculate the operational primary energy and emissions for cooling services
@@ -75,7 +75,7 @@ def operation_costs(locator, config):
         # change price to that of local electricity mix
         # calculate the total and relative costs
         cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
-        cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
+        cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['NFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
     electrical_services = ['GRID', 'PV']
@@ -83,10 +83,10 @@ def operation_costs(locator, config):
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
         # calculate the total and relative costs
         electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
-        electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['GFA_m2']
+        electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['NFA_m2']
 
-    #plot also GFA area.
-    fields_to_plot.extend(['GFA_m2'])
+    #plot also NFA area.
+    fields_to_plot.extend(['NFA_m2'])
 
     # create and save results
     result = heating.merge(dhw, on='Name', suffixes=('', '_dhw'))

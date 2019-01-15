@@ -19,7 +19,7 @@ class GlobalVariables(object):
         self.print_totals = True  # print yearly values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2015-01-01'  # format: yyyy-mm-dd
-        self.seasonhours = [1, 8759]
+        #self.seasonhours = [1, 8759]
         #self.Z = 3  # height of basement for every building in m
         #self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         #self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -82,10 +82,10 @@ class GlobalVariables(object):
         self.mdot_step_counter_heating = [0.05, 0.1, 0.15, 0.3, 0.4, 0.5, 0.6, 1]
         self.mdot_step_counter_cooling = [0, 0.2, 0.5, 0.8, 1]
         self.NetworkLengthReference = 1745.0  # meters of network length of max network. (Reference = Zug Case Study) , from J. Fonseca's Pipes Data
-        self.PipeCostPerMeterInv = 660.0  # CHF /m
-        self.PipeLifeTime = 40.0  # years, Data from A&W
-        self.PipeInterestRate = 0.05  # 5% interest rate
-        self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
+        # self.PipeCostPerMeterInv = 660.0  # CHF /m
+        # self.PipeLifeTime = 40.0  # years, Data from A&W
+        # self.PipeInterestRate = 0.05  # 5% interest rate
+        # self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
         self.NetworkDepth = 1  # m
 
         self.Subst_i = 0.05  # default 0.05
@@ -121,7 +121,7 @@ class GlobalVariables(object):
         will be updated with the current datetime."""
         if self.testing:
             from cea.utilities import reporting
-            reporting.full_report_to_xls(tsd, output_folder, basename, self)
+            reporting.full_report_to_xls(tsd, output_folder, basename)
 
     def log(self, msg, **kwargs):
         print msg % kwargs

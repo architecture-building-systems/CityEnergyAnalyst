@@ -9,6 +9,14 @@ cea.interfaces.cli package
 Submodules
 ----------
 
+cea.interfaces.cli.cea\_config module
+-------------------------------------
+
+.. automodule:: cea.interfaces.cli.cea_config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.interfaces.cli.cli module
 -----------------------------
 

@@ -11,8 +11,8 @@ import os
 import pandas as pd
 import cea.config
 import cea.inputlocator
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
-from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.optimization.slave.electricity_main import electricity_calculations_of_all_buildings
+from cea.optimization.slave.natural_gas_main import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -44,7 +44,7 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
         Q_cooling_total_W = data_cooling['Q_total_cooling_W'].sum()
 
         if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation)):
-            data_electricity = electricity_import_and_exports(generation, individual, locator, config)
+            data_electricity = electricity_calculations_of_all_buildings(generation, individual, locator, config)
         else:
             data_electricity = pd.read_csv(
                 locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation))
@@ -63,11 +63,11 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
         E_building_appliances_total_W = E_required_district_total_W - E_hotwater_total_W - E_VCC_backup_total_W - E_VCC_total_W - \
                                         E_CT_total_W - E_ACH_total_W
 
-        if not os.path.exists(locator.get_optimization_slave_natural_gas_imports(individual, generation, category)):
+        if not os.path.exists(locator.get_optimization_slave_natural_gas_imports(individual, generation)):
             data_natural_gas = natural_gas_imports(generation, individual, locator, config)
         else:
             data_natural_gas = pd.read_csv(
-                locator.get_optimization_slave_natural_gas_imports(individual, generation, category))
+                locator.get_optimization_slave_natural_gas_imports(individual, generation))
 
         NG_used_total_W = data_natural_gas['NG_used_CCGT_W'].sum()
 

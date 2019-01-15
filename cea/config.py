@@ -657,7 +657,6 @@ def main():
     print(config.scenario)
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
-    print(config.heatmaps.file_to_analyze)
     # make sure the config can be pickled (for multiprocessing)
     config.scenario = r'C:\reference-case-zurich'
     import pickle
@@ -682,7 +681,6 @@ def main():
     print(config.weather)
     # test changing scenario (and resulting RelativePathParameters)
     config.scenario = r'C:\reference-case-open'
-    print(config.heatmaps.file_to_analyze)
     args = ['--reference-cases', 'zurich/baseline']
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)

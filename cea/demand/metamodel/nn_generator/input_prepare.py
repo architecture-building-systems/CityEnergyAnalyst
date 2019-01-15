@@ -25,14 +25,14 @@ __status__ = "Production"
 
 
 
-def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_delay, climatic_variables, region, year,
+def input_prepare_main(list_building_names, locator, target_parameters, nn_delay, climatic_variables, region, year,
                        use_daysim_radiation,use_stochastic_occupancy):
+
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
     :param list_building_names: a list of building names
     :param locator: points to the variables
     :param target_parameters: (imported from 'nn_settings.py') a list containing the name of desirable outputs
-    :param gv: global variables
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
 
@@ -40,19 +40,19 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
     #   transpose the weather array
     weather_array = np.transpose(np.asarray(weather_data))
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     # ***tag (#) lines 40-68 if you DO NOT want multiprocessing***
     # multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
-    gv.log("Using %i CPU's" % mp.cpu_count())
+    print("Using {cpu_count} CPU's".format(cpu_count=mp.cpu_count()))
     #   creat an empty job list to be filled later
     joblist = []
     #   create one job for each data preparation task i.e. each building
     from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
     for building_name in list_building_names:
         job = pool.apply_async(input_prepare_multi_processing,
-                               [building_name, gv, locator, target_parameters, nn_delay,climatic_variables,region,year,
+                               [building_name, locator, target_parameters, nn_delay,climatic_variables,region,year,
                                 use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
                                 building_properties, schedules_dict, date])
         joblist.append(job)
@@ -109,10 +109,10 @@ def main(config):
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
-    input_prepare_main(list_building_names, locator, target_parameters, gv, nn_delay=config.neural_network.nn_delay,
+    input_prepare_main(list_building_names, locator, target_parameters, nn_delay=config.neural_network.nn_delay,
                        climatic_variables=config.neural_network.climatic_variables,region = config.region,
                        year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation,
                        use_stochastic_occupancy=config.demand.use_stochastic_occupancy)

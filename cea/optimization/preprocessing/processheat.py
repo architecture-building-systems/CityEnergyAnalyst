@@ -54,8 +54,8 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
 
             # Investment costs
 
-            Capex_a_hp, Opex_fixed_hp = boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
-            hpCosts += (Capex_a_hp + Opex_fixed_hp)
+            Capex_a_hp_USD, Opex_fixed_hp_USD, Capex_hp_USD = boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
+            hpCosts += (Capex_a_hp_USD + Opex_fixed_hp_USD)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim

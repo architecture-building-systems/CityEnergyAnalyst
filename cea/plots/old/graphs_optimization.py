@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import cea.config
+import cea.inputlocator
 import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
@@ -399,11 +401,8 @@ test
 =========================================
 """
 
-def test_graphs_optimization():
-    import cea.globalvar
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+def test_graphs_optimization(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # define scenarios and headers
     scenarios = ['BAU', 'CAMP', 'HEB', 'UC']
@@ -511,4 +510,4 @@ def test_graphs_optimization():
     # costsDisc = normalizeresults.decentralizeCosts(pop[indexBest], pathX, gV)
 
 if __name__ == '__main__':
-    test_graphs_optimization()
+    test_graphs_optimization(cea.config.Configuration())

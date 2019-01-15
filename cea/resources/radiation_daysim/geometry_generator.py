@@ -6,6 +6,7 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
+from __future__ import division
 from __future__ import print_function
 
 import py4design.py3dmodel.construct as construct

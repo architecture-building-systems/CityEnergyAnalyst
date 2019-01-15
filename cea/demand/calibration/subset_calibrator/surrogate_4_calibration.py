@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Testing"
 
 all_results=[]
-def simulate_demand_sample(locator, building_name, output_parameters):
+def simulate_demand_sample(locator, building_name, output_parameters, config):
     """
     This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
 
@@ -41,18 +41,19 @@ def simulate_demand_sample(locator, building_name, output_parameters):
     """
 
     # force simulation to be sequential and to only do one building
-    gv = cea.globalvar.GlobalVariables()
-    gv.multiprocessing = False
-    gv.print_totals = False
-    gv.simulate_building_list = [building_name]
-    gv.testing = True
+    config.multiprocessing = False
+    config.demand.buildings = [building_name]
+    config.demand.massflows_output = []
+    config.demand.temperatures_output = []
+    config.demand.format_output = "csv"
+    config.demand.override_variables = True
 
     #import weather and measured data
     weather_path = locator.get_default_weather()
     #weather_path = 'C:\CEAforArcGIS\cea\databases\weather\Zurich.epw'
 
     #calculate demand timeseries for buidling an calculate cvrms
-    demand_main.demand_calculation(locator, weather_path, gv)
+    demand_main.demand_calculation(locator, config)
     output_folder=locator.get_demand_results_folder()
     file_path=os.path.join(output_folder, "%(building_name)s.xls" % locals())
     #file_path=locator.get_demand_results_file(building_name)
@@ -140,7 +141,7 @@ def prep_NN_inputs(NN_input,NN_target,NN_delays):
 
     return NN_input_ready, NN_target_ready
 
-def sampling_main(locator, variables, building_name, building_load, region):
+def sampling_main(locator, variables, building_name, building_load, region, config):
     """
     This script creates samples using a lating Hypercube sample of 5 variables of interest.
     then runs the demand calculation of CEA for all the samples. It delivers a json file storing
@@ -187,7 +188,7 @@ def sampling_main(locator, variables, building_name, building_load, region):
 
         #create overrides and return pointer to files
         apply_sample_parameters(locator, sample)
-        simulate_demand_sample(locator, building_name, building_load)
+        simulate_demand_sample(locator, building_name, building_load, config)
         # define the inputs
         intended_parameters=['people','Eaf','Elf','Qwwf','I_rad','I_sol','T_ext','rh_ext',
         'ta_hs_set','ta_cs_set','theta_a','Qhsf', 'Qcsf']
@@ -396,7 +397,7 @@ def run_as_script(config):
     building_name = 'B155066' # intended building
     building_load = 'Qhsf_kWh' # target of prediction
     region= config.region
-    sampling_main(locator, variables, building_name, building_load)
+    sampling_main(locator, variables, building_name, building_load, config)
 
 
 if __name__ == '__main__':

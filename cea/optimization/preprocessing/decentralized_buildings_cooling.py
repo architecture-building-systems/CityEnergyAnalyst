@@ -196,7 +196,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         w_SC_FP_Wh = SC_FP_data['Q_SC_gen_kWh']* 1000
         T_hw_in_FP_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_FP_data['T_SC_re_C']]
 
-        Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
+        Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
                                                                  technology=0)
         # Evacuated Tube Solar Collectors
         SC_ET_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='ET'),
@@ -206,7 +206,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         w_SC_ET_Wh = SC_ET_data['Eaux_SC_kWh']* 1000
         T_hw_in_ET_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_ET_data['T_SC_re_C']]
 
-        Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
+        Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
                                                                  technology=1)
 
         ## calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
@@ -237,9 +237,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
         Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                     sheetname="Absorption_chiller",
-                                                     usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c',
-                                                              'd', 'e', 'IR_%', 'LT_yr', 'O&M_%'])
+                                                     sheetname="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[
             Absorption_chiller_cost_data['type'] == ACH_TYPE_SINGLE]
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
@@ -1380,168 +1378,168 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_AHU = np.zeros((4, 1))
         if config.decentralized.AHUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_W)
-            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_AHU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_AHU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU[3][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
 
         # ARU
         Inv_Costs_ARU = np.zeros((4, 1))
         if config.decentralized.ARUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_ARU_W)
-            Inv_Costs_ARU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_ARU_W)
+            Inv_Costs_ARU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_ARU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_ARU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_ARU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_ARU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_ARU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_ARU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_ARU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_ARU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_ARU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_ARU[3][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_ARU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_ARU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_ARU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # SCU
         Inv_Costs_SCU = np.zeros((4, 1))
         if config.decentralized.SCUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_SCU_W)
-            Inv_Costs_SCU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_SCU_W)
+            Inv_Costs_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_SCU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_SCU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_SCU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_SCU[3][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_SCU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # AHU + ARU
         Inv_Costs_AHU_ARU = np.zeros((4, 1))
         if config.decentralized.AHUARUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_W)
-            Inv_Costs_AHU_ARU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_W)
+            Inv_Costs_AHU_ARU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_AHU_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_AHU_ARU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_ARU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_ARU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_ARU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_ARU[3][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_ARU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_ARU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_ARU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # AHU + SCU
         Inv_Costs_AHU_SCU = np.zeros((4, 1))
         if config.decentralized.AHUSCUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_SCU_W)
-            Inv_Costs_AHU_SCU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_SCU_W)
+            Inv_Costs_AHU_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_AHU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_AHU_SCU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_SCU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_SCU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                                      Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_AHU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_SCU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + \
+                                      Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # ARU + SCU
         Inv_Costs_ARU_SCU = np.zeros((4, 1))
         if config.decentralized.ARUSCUflag:
             # 0
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_ARU_SCU_W)
-            Inv_Costs_ARU_SCU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_ARU_SCU_W)
+            Inv_Costs_ARU_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
             # 1
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_ARU_SCU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
             # 2
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_ARU_SCU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
             # 3
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                                      Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_ARU_SCU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + \
+                                      Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # AHU + ARU + SCU
         Inv_Costs_AHU_ARU_SCU = np.zeros((6, 1))
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
             print 'decentralized building simulation with configuration: AHU + ARU + SCU cost calculations'
             # 0: DX
-            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_SCU_W)
-            Inv_Costs_AHU_ARU_SCU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_SCU_W)
+            Inv_Costs_AHU_ARU_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
 
             # 1: VCC + CT
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_AHU_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_AHU_ARU_SCU[1][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_USD + Opex_fixed_VCC_USD
 
             # 2: single effect ACH + CT + Boiler + SC_FP
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_ARU_SCU[2][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
             # 3: double effect ACH + CT + Boiler + SC_ET
-            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
-            Inv_Costs_AHU_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_ET + Opex_SC_ET
+            Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(burner_ET_to_single_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
+            Inv_Costs_AHU_ARU_SCU[3][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_ACH_USD + Opex_fixed_ACH_USD + Capex_a_burner_USD + Opex_fixed_burner_USD + Capex_a_SC_ET_USD + Opex_SC_ET_USD
 
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
-            Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
-            Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
-            Inv_Costs_AHU_ARU_SCU[4][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
+            Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
+            Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
+            Inv_Costs_AHU_ARU_SCU[4][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD + Opex_VCC_AA_USD + Opex_VCC_S_USD
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
-            Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
-            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
-            Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config, technology=0)
-            Inv_Costs_AHU_ARU_SCU[5][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Opex_VCC_AA + Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH_S_USD, Opex_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
+            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
+            Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config, technology=0)
+            Inv_Costs_AHU_ARU_SCU[5][0] = Capex_a_CT_USD + Opex_fixed_CT_USD + Capex_a_VCC_AA_USD + Opex_VCC_AA_USD + Capex_a_ACH_S_USD + Opex_ACH_S_USD + Capex_a_boiler_USD + Opex_fixed_boiler_USD + Capex_a_SC_FP_USD + Opex_SC_FP_USD
 
         # Best configuration AHU
         number_config = len(result_AHU)
@@ -1607,7 +1605,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU (ET) [W]"] = result_AHU[:, 3] * Qc_nom_combination_AHU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration ARU
@@ -1674,7 +1672,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to ARU (ET) [W]"] = result_ARU[:, 3] * Qc_nom_combination_ARU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'ARU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'ARU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration SCU
@@ -1741,7 +1739,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to SCU (ET) [W]"] = result_SCU[:, 3] * Qc_nom_combination_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + ARU
@@ -1808,7 +1806,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU_ARU (ET) [W]"] = result_AHU_ARU[:, 3] * Qc_nom_combination_AHU_ARU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_ARU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + SCU
@@ -1875,7 +1873,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU_SCU (ET) [W]"] = result_AHU_SCU[:, 3] * Qc_nom_combination_AHU_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration ARU + SCU
@@ -1942,7 +1940,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to ARU_SCU (ET) [W]"] = result_ARU_SCU[:, 3] * Qc_nom_combination_ARU_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'ARU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + ARU + SCU
@@ -2016,7 +2014,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to SCU (FP) [W]"] = result_AHU_ARU_SCU[:, 6] * Qc_nom_combination_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
@@ -2060,7 +2058,6 @@ def main(config):
     from cea.optimization.prices import Prices as Prices
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
 
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name

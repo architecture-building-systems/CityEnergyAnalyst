@@ -9,14 +9,6 @@ cea.resources.radiation\_daysim package
 Submodules
 ----------
 
-cea.resources.radiation\_daysim.create\_gml module
---------------------------------------------------
-
-.. automodule:: cea.resources.radiation_daysim.create_gml
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.resources.radiation\_daysim.daysim\_main module
 ---------------------------------------------------
 

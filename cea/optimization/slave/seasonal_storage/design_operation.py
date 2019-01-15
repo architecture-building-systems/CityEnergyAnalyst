@@ -20,7 +20,7 @@ from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import epwreader
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, config):
+                   STORAGE_SIZE_m3, STORE_DATA, master_to_slave_vars, P_HP_max_W, config):
     """
 
     :param CSV_NAME:
@@ -30,7 +30,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :param locator:
     :param STORAGE_SIZE_m3:
     :param STORE_DATA:
-    :param context:
+    :param master_to_slave_vars:
     :param P_HP_max_W:
     :param gV:
     :type CSV_NAME:
@@ -40,14 +40,13 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :type locator:
     :type STORAGE_SIZE_m3:
     :type STORE_DATA:
-    :type context:
+    :type master_to_slave_vars:
     :type P_HP_max_W:
     :type gV:
     :return:
     :rtype:
     """
 
-    MS_Var = context
 
     # Import Network Data
     Network_Data = pd.read_csv(locator.get_optimization_network_data_folder(CSV_NAME))
@@ -77,48 +76,48 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     # Import Solar Data
     os.chdir(locator.get_potentials_solar_folder())
     
-    fNameArray = [MS_Var.SOLCOL_TYPE_PVT, MS_Var.SOLCOL_TYPE_SC_ET, MS_Var.SOLCOL_TYPE_SC_FP, MS_Var.SOLCOL_TYPE_PV]
+    fNameArray = [master_to_slave_vars.SOLCOL_TYPE_PVT, master_to_slave_vars.SOLCOL_TYPE_SC_ET, master_to_slave_vars.SOLCOL_TYPE_SC_FP, master_to_slave_vars.SOLCOL_TYPE_PV]
     
         #LOOP AROUND ALL SC TYPES
     for solartype in range(4):
         fName = fNameArray[solartype]
     
-        if MS_Var.SOLCOL_TYPE_SC_ET != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC_ET:
+        if master_to_slave_vars.SOLCOL_TYPE_SC_ET != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_ET:
             Solar_Area_SC_ET_m2, Solar_E_aux_SC_ET_req_kWh, Solar_Q_th_SC_ET_kWh, Solar_Tscs_th_SC_ET, Solar_mcp_SC_ET_kWperC, SC_ET_kWh, Solar_Tscr_th_SC_ET_K\
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC_ET)
+                            = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_SC_ET)
 
-        if MS_Var.SOLCOL_TYPE_SC_FP != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC_FP:
+        if master_to_slave_vars.SOLCOL_TYPE_SC_FP != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_FP:
             Solar_Area_SC_FP_m2, Solar_E_aux_SC_FP_req_kWh, Solar_Q_th_SC_FP_kWh, Solar_Tscs_th_SC_FP, Solar_mcp_SC_FP_kWperC, SC_FP_kWh, Solar_Tscr_th_SC_FP_K \
-                = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC_FP)
+                = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_SC_FP)
         
-        if MS_Var.SOLCOL_TYPE_PVT != "NONE" and fName == MS_Var.SOLCOL_TYPE_PVT:
+        if master_to_slave_vars.SOLCOL_TYPE_PVT != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_PVT:
             Solar_Area_PVT_m2, Solar_E_aux_PVT_kW, Solar_Q_th_PVT_kW, Solar_Tscs_th_PVT, Solar_mcp_PVT_kWperC, PVT_kWh, Solar_Tscr_th_PVT_K \
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PVT)
+                            = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_PVT)
 
-        if MS_Var.SOLCOL_TYPE_PV != "NONE" and fName == MS_Var.SOLCOL_TYPE_PV:
+        if master_to_slave_vars.SOLCOL_TYPE_PV != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_PV:
             Solar_Area_PV_m2, Solar_E_aux_PV_kWh, Solar_Q_th_PV_kW, Solar_Tscs_th_PV, Solar_mcp_PV_kWperC, PV_kWh, Solar_Tscr_th_PV_K\
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PV)
+                            = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_PV)
 
     
     # Recover Solar Data
-    Solar_E_aux_W = np.ravel(Solar_E_aux_SC_ET_req_kWh * 1000 * MS_Var.SOLAR_PART_SC_ET) + np.ravel(Solar_E_aux_SC_FP_req_kWh * 1000 * MS_Var.SOLAR_PART_SC_FP)\
-                    + np.ravel(Solar_E_aux_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT)  + np.ravel(Solar_E_aux_PV_kWh * 1000 * MS_Var.SOLAR_PART_PV)
+    Solar_E_aux_W = np.ravel(Solar_E_aux_SC_ET_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_ET) + np.ravel(Solar_E_aux_SC_FP_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP)\
+                    + np.ravel(Solar_E_aux_PVT_kW * 1000 * master_to_slave_vars.SOLAR_PART_PVT)  + np.ravel(Solar_E_aux_PV_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PV)
 
     
-    Q_SC_ET_gen_Wh = Solar_Q_th_SC_ET_kWh * 1000 * MS_Var.SOLAR_PART_SC_ET
-    Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * MS_Var.SOLAR_PART_SC_FP
-    Q_PVT_gen_Wh = Solar_Q_th_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT
+    Q_SC_ET_gen_Wh = Solar_Q_th_SC_ET_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_ET
+    Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP
+    Q_PVT_gen_Wh = Solar_Q_th_PVT_kW * 1000 * master_to_slave_vars.SOLAR_PART_PVT
     Q_SCandPVT_gen_Wh = np.zeros(8760)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
                                                               'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(len(Q_SCandPVT_gen_Wh)):
         Q_SCandPVT_gen_Wh[hour] = Q_SC_ET_gen_Wh[hour] + Q_SC_FP_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
 
     
-    E_PV_Wh = PV_kWh * 1000 * MS_Var.SOLAR_PART_PV
-    E_PVT_Wh = PVT_kWh * 1000  * MS_Var.SOLAR_PART_PVT
+    E_PV_Wh = PV_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PV
+    E_PVT_Wh = PVT_kWh * 1000  * master_to_slave_vars.SOLAR_PART_PVT
 
     HOUR = 0
     Q_to_storage_avail_W = np.zeros(8760)
@@ -154,7 +153,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     HPScDesignArray_Wh = np.zeros(8760)
     
     T_amb_K = 10 + 273.0 # K
-    T_storage_min_K = MS_Var.T_ST_MAX
+    T_storage_min_K = master_to_slave_vars.T_ST_MAX
     Q_disc_seasonstart_W = [0]
     Q_loss_tot_W = 0
     
@@ -168,7 +167,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         T_DH_sup_K = T_DH_supply_array_K[HOUR]
         T_DH_return_K = T_DH_return_array_K[HOUR]
         mdot_DH_kgpers = mdot_heat_netw_total_kgpers[HOUR]
-        if MS_Var.WasteServersHeatRecovery == 1:
+        if master_to_slave_vars.WasteServersHeatRecovery == 1:
             Q_server_gen_kW = Q_wasteheatServer_kWh[HOUR]
         else:
             Q_server_gen_kW = 0
@@ -260,7 +259,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
 
         Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
-                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, ground_temp[HOUR])
+                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, master_to_slave_vars, P_HP_max_W, ground_temp[HOUR])
     
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]
@@ -287,7 +286,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             Q_in_storage_new_W = 0
     
         
-        if T_storage_new_K >= MS_Var.T_ST_MAX-0.001: # no more charging possible - reject energy
+        if T_storage_new_K >= master_to_slave_vars.T_ST_MAX-0.001: # no more charging possible - reject energy
             Q_in_storage_new_W = min(Q_in_storage_old_W, Storage_Data[0])
             Q_to_storage_final_W = max(Q_in_storage_new_W - Q_in_storage_old_W, 0)
             Q_rejected_fin_W[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W - Storage_Data[3]
@@ -375,8 +374,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "Q_rejected_fin_W":Q_rejected_fin_W,
              "P_HPCharge_max_W":P_HP_max_W
             })
-        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number,
-                                                                                            MS_Var.generation_number)
+        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
+                                                                                            master_to_slave_vars.generation_number)
         results.to_csv(storage_operation_data_path, index=False)
 
     Q_stored_max_W = np.amax(Q_storage_content_fin_W)
