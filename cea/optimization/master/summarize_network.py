@@ -51,7 +51,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     t0 = time.clock()
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
                                                               'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
     # import properties of distribution
     network_type = config.thermal_network.network_type
     list_network_name = ['', '']  # config.thermal_network.network_names
@@ -224,7 +224,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
         if T_DCN_space_cooling_and_refrigeration_sup_K[i] > T_DCN_space_cooling_and_refrigeration_re_K[i]:
             print (i)
-
 
     date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
     results = pd.DataFrame({"DATE": date,

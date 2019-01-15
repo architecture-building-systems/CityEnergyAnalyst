@@ -349,11 +349,14 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
     Modeled after:
-        Approach A (NREL Approach):
-            http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
-            and
-            NREL : p.5  of [M. Zolot et al., 2004]_
-        Approach B (Empiric Approach): [Iain Staffell]_
+
+        - **Approach A (NREL Approach)**:
+          http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
+          and
+          NREL : p.5  of [M. Zolot et al., 2004]_
+
+        - **Approach B (Empiric Approach)**: [Iain Staffell]_
+
     :type Q_load_W : float
     :param Q_load_W: Load at each time step
     :type Q_design_W : float
@@ -366,6 +369,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     :returns eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
     :rtype Q_fuel : float
     :returns Q_fuel: Heat demand from fuel (in Watt)
+
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf
@@ -459,10 +463,11 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_CCGT_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_CCGT_USD = Capex_a_CCGT_USD * Inv_OM
+    Capex_CCGT_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD
 
 
 def calc_Cinv_FC(P_design_W, locator, config, technology=0):
@@ -495,7 +500,8 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Capex_a_FC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_FC_USD = Capex_a_FC_USD * Inv_OM
+    Capex_FC_USD = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD

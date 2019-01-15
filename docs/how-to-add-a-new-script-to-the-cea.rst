@@ -1,3 +1,5 @@
+:orphan:
+
 How to add a new script
 =======================
 
@@ -100,7 +102,7 @@ running your script from PyCharm. Please take the time to do this anyway, since 
 the ArcGIS and dashboard interfaces* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
 
 The name of your script should be the same as the module name and the core function name from
-`Step 3: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
+`Step 2: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
 
 The ``scripts.yml`` file is grouped by categories and each category contains a list of scripts in that category. The
 syntax used is YAML_. The easiest way to add a new script is to copy an existing script definition.
@@ -211,7 +213,7 @@ appending "Tool" and uppercasing the first letter of each word. Example: ``multi
             self.canRunInBackground = False
 
 
-The tools DemandTool, RadiationDaysimTool, and HeatmapsTool are implemented in this manner and can be used as examples.
+The tools DemandTool and RadiationDaysimTool are implemented in this manner and can be used as examples.
 
 .. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
     ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements

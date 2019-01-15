@@ -16,7 +16,7 @@ import deap.tools
 import numpy as np
 from numpy import random
 
-from cea.analysis.clustering.sax import SAX
+from cea.analysis.clustering.sax.sax import SAX
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

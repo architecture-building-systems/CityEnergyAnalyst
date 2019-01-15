@@ -68,9 +68,9 @@ class Thermal_Network(object):
 def calc_Capex_a_network_pipes(network_info):
     ''' Calculates network piping costs'''
     if network_info.network_type == 'DH':
-        InvC = network_info.network_features.pipesCosts_DHN
+        InvC = network_info.network_features.pipesCosts_DHN_USD
     else:
-        InvC = network_info.network_features.pipesCosts_DCN
+        InvC = network_info.network_features.pipesCosts_DCN_USD
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
     Inv_LT = 25 #TODO: find reference
@@ -103,7 +103,7 @@ def calc_Ctot_network_pump(network_info):
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
-    Capex_a, Opex_a_fixed = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a, Opex_a_fixed, _ = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var
@@ -149,9 +149,9 @@ def calc_Ctot_cooling_plants(network_info):
             building_demand[building] = pd.read_csv(
                 network_info.locator.get_demand_results_file(building))
 
-        Capex_chiller = 0.0
+        Capex_a_chiller_USD = 0.0
         Opex_fixed_chiller = 0.0
-        Capex_CT = 0.0
+        Capex_a_CT_USD = 0.0
         Opex_fixed_CT = 0.0
 
         if plant_heat_peak_kW > 0:  # we have non 0 demand
@@ -189,13 +189,13 @@ def calc_Ctot_cooling_plants(network_info):
                         plant_heat_original_kWh[column_name][t]) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
 
             # calculate equipment cost of chiller and cooling tower
-            Capex_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
+            Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                       network_info.config, 'CH1')
-            Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
+            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
                                                network_info.config, 'CT1')
         # sum over all plants
-        Capex_a_chiller += Capex_chiller
-        Capex_a_CT += Capex_CT
+        Capex_a_chiller += Capex_a_chiller_USD
+        Capex_a_CT += Capex_a_CT_USD
         Opex_fixed_plant += Opex_fixed_chiller + Opex_fixed_CT
 
     return Opex_fixed_plant, Opex_var_plant, Capex_a_chiller, Capex_a_CT
@@ -283,14 +283,14 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                         Q_peak_CT_kW = max(Q_CT_kW)
 
                     # calculate disconnected systems cost of disconnected loads. Assumes that all these loads are supplied by one chiller, unless this exceeds maximum chiller capacity of database
-                    Capex_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
+                    Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
                                                               network_info.locator,
                                                               network_info.config, 'CH3')
-                    Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
+                    Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
                                                        network_info.config, 'CT1')
                     # sum up costs
                     dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
-                    dis_capex += Capex_chiller + Capex_CT
+                    dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
@@ -410,14 +410,14 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                     Q_peak_CT_kW = max(Q_CT_kW)
 
                 # calculate cost of chiller and cooling tower at building level
-                Capex_a_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
+                Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
                                                                              network_info.locator,
                                                                              network_info.config, 'CH3')
-                Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
+                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
                                                                  network_info.config, 'CT1')
                 # sum up costs
                 dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
-                dis_capex += Capex_a_chiller + Capex_a_CT
+                dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
@@ -601,7 +601,7 @@ def main(config):
     cost_output['opex_plant'] = round(cost_storage_df.ix['opex_plant'][0], 2)
     cost_output['opex_pump'] = round(cost_storage_df.ix['opex_pump'][0], 2)
     cost_output['opex_hex'] = round(cost_storage_df.ix['opex_hex'][0], 2)
-    cost_output['el_MWh'] = round(cost_storage_df.ix['el'][0], 2)
+    cost_output['el_network_MWh'] = round(cost_storage_df.ix['el_network_MWh'][0], 2)
     cost_output['el_price'] = network_info.prices.ELEC_PRICE
     cost_output['capex_network'] = round(cost_storage_df.ix['capex_network'][0], 2)
     cost_output['capex_pumps'] = round(cost_storage_df.ix['capex_pump'][0], 2)

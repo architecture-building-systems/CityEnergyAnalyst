@@ -43,7 +43,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_demand_samples(locator, method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}, region='CH'):
+def create_demand_samples(locator, method, num_samples, variable_groups, sampler_parameters, region):
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each

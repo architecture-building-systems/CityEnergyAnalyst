@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-| This script creates samples using a lating Hypercube sample of 5 variables of interest.
-| then runs the demand calculation of CEA for all the samples. It delivers a json file storing
+This script creates samples using a lating Hypercube sample of 5 variables of interest.
+then runs the demand calculation of CEA for all the samples. It delivers a json file storing
 the results of cv_rmse and rmse for each sample.
 """
 
@@ -36,18 +36,20 @@ def sampling_main(locator, config):
     then runs the demand calculation of CEA for all the samples. It delivers a json file storing
     the results of cv_rmse and rmse for each sample.
 
-    for more details on the work behind this please check:
+    For more details on the work behind this please check:
     Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
 
     :param locator: pointer to location of CEA files
-    :param variables: input variables of CEA to sample. They must be 5!
+    :param variables: input variables of CEA to sample. They must be 6!
     :param building_name: name of building to calibrate
     :param building_load: name of building load to calibrate
     :return:
-        1. a file storing values of cv_rmse and rmse for all samples. the file is sotred in
-            file(locator.get_calibration_cvrmse_file(building_name)
-        2 a file storing information about variables, the building_load and the probability distribtuions used in the
-          excercise. the file is stored in locator.get_calibration_problem(building_name)
+
+        1. a file storing values of cv_rmse and rmse for all samples. the file is stored in
+        file(locator.get_calibration_cvrmse_file(building_name)
+
+        2 a file storing information about variables, the building_load and the probability distributions used in the
+        exercise. the file is stored in locator.get_calibration_problem(building_name)
 
     :rtype: .json and .pkl
     """
@@ -114,7 +116,7 @@ def simulate_demand_sample(locator, building_name, building_load, config):
     config.demand.temperatures_output = ["Tww_sys_sup"] # give one entry so it doe snot plot all ( it saves memory)
     config.demand.format_output = "csv"
 
-    _ , time_series = demand_main.demand_calculation(locator, gv, config)
+    _ , time_series = demand_main.demand_calculation(locator, config)
     return time_series[0][building_load+"_kWh"].values
 
 def calc_cv_rmse(prediction, target):
@@ -123,8 +125,10 @@ def calc_cv_rmse(prediction, target):
     :param prediction: vector of predicted/simulated data
     :param target: vector of target/measured data
     :return:
-        CVrmse: float
-        rmse: float
+
+        - CVrmse: float
+        - rmse: float
+
     """
 
     delta = (prediction - target)**2

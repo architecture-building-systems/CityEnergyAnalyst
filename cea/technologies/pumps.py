@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
+def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, config):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -62,7 +62,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
     # ntot = len(buildList)
 
     Opex_var_pumps = 0
-    if config.optimization.isheating:
+    if config.district_heating_network:
 
 
         df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
@@ -77,9 +77,9 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
 
         deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
 
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
 
         if dicoSupply.WasteServersHeatRecovery == 1:
             df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
@@ -99,11 +99,11 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config,
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config,
                                              locator, 'PU1')  # investment of Machinery
 
 
-    return Capex_a, Opex_fixed, Opex_var_pumps
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pumps, Capex_pump_USD
 
 
 # investment and maintenance costs
@@ -151,8 +151,9 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
     # if PpumpRemain < PpumpMinkW * 1000:
     #   PpumpRemain = PpumpMinkW * 1000
 
-    Capex_a = 0.0
-    Opex_fixed = 0.0
+    Capex_a_pump_USD = 0.0
+    Opex_fixed_pump_USD = 0.0
+    Capex_pump_USD = 0.0
 
     for pump_i in range(nPumps):
         # calculate pump nominal capacity
@@ -181,8 +182,11 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
 
         InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(Pump_Array_W[pump_i])
 
-        Capex_a += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed += Capex_a * Inv_OM
+        Capex_a_pump_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed_pump_USD += Capex_a_pump_USD * Inv_OM
+        Capex_pump_USD += InvC
 
 
-    return Capex_a, Opex_fixed
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD
+
+

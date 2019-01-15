@@ -171,7 +171,7 @@ def calc_building_supply_system(individual_system_configuration, network_name):
 def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_columns, locator, config):
     # get nominal power and costs from disconnected calculation
     bui_results = pd.read_csv(
-        locator.get_optimization_disconnected_folder_building_result_cooling(building, bui_sys_config))
+        locator.get_optimization_decentralized_folder_building_result_cooling(building, bui_sys_config))
     bui_results_best = bui_results[bui_results['Best configuration'] > 0.0]
 
     technology_columns = [item for item in bui_results_best.columns if 'Nominal Power' in item]

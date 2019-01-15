@@ -80,9 +80,9 @@ def individual_to_barcode(individual, building_list):
     DCN_barcode = ""
     cooling = len_of_heating_supply_systems + len(building_list) + len_of_cooling_supply_systems
     for i in range(len_of_heating_supply_systems + len_of_cooling_supply_systems, cooling):
-        DHN_barcode += str(individual[i])
+        DHN_barcode += str(int(individual[i]))
     for j in range(cooling, len(individual)):
-        DCN_barcode += str(individual[j])
+        DCN_barcode += str(int(individual[j]))
 
     DHN_configuration = individual[len_of_heating_supply_systems - 1]
     DCN_configuration = individual[len_of_heating_supply_systems + len_of_cooling_supply_systems - 1]

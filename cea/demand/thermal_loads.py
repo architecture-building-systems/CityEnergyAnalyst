@@ -13,7 +13,9 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+import cea.utilities
+
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output, region):
     """
@@ -63,9 +65,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     :param date: the dates (hours) of the year (8760)
     :type date: pandas.tseries.index.DatetimeIndex
-
-    :param gv: global variables / context
-    :type gv: GlobalVariables
 
     :param locator:
     :param use_dynamic_infiltration_calculation:
@@ -129,7 +128,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         if hotwater_loads.has_hot_water_technical_system(bpr):
             tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
-            tsd = hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
+            tsd = hotwater_loads.calc_Qww_sys(bpr, tsd) # system (incl. losses)
             tsd = electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
             tsd = hotwater_loads.calc_Qwwf(bpr, tsd) #final
         else:
@@ -149,7 +148,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
     #WRITE SOLAR RESULTS
-    write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
+    write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd)
 
     return
@@ -162,8 +161,9 @@ def calc_QH_sys_QC_sys(tsd):
     return tsd
 
 
-def write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
+def write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd):
+
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
     elif resolution_outputs == 'monthly':
@@ -176,8 +176,10 @@ def write_results(bpr, building_name, date, format_output, gv, loads_output, loc
         writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
     else:
         raise Exception('error')
+
     # write report & quick visualization
-    gv.report(tsd, locator.get_demand_results_folder(), building_name)
+    # (NOTE: uncomment to write full report for debugging purposes)
+    # cea.utilities.reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):

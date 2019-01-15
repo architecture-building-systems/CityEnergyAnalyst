@@ -33,14 +33,6 @@ cea.technologies.solar.photovoltaic\_thermal module
     :undoc-members:
     :show-inheritance:
 
-cea.technologies.solar.radiation\_total module
-----------------------------------------------
-
-.. automodule:: cea.technologies.solar.radiation_total
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.technologies.solar.solar\_collector module
 ----------------------------------------------
 

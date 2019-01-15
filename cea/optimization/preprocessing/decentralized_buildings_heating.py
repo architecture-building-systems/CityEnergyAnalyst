@@ -29,7 +29,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
     :param building_names: list with names of buildings
     :type locator: class
     :type building_names: list
-    :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
+    :return: results of operation of buildings located in locator.get_optimization_decentralized_folder
     :rtype: Nonetype
     """
     t0 = time.clock()
@@ -43,7 +43,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         'Area']
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -55,11 +55,9 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         :param mdot: mass flow
         :param TsupDH: supply temeperature
         :param Tret: return temperature
-        :param gv: global variables class
         :type mdot: float
         :type TsupDH: float
         :type Tret: float
-        :type gv: class
         :return: Qload: load of the distribution
         :rtype: float
         """
@@ -211,12 +209,12 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
-        InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
-        InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
+        Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
+        InvCosts[0][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
+        InvCosts[1][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
 
-        Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, locator, config)
-        InvCosts[2][0] = Capex_a_FC + Opex_FC
+        Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom, locator, config)
+        InvCosts[2][0] = Capex_a_FC_USD + Opex_fixed_FC_USD
 
         for i in range(10):
             result[3 + i][0] = i / 10
@@ -224,13 +222,13 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
 
             QnomBoiler = i / 10 * Qnom
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
+            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
 
-            InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
+            InvCosts[3 + i][0] = Capex_a_Boiler_USD + Opex_fixed_Boiler_USD
 
-            Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
-            InvCaGHP = Capex_a_GHP + Opex_GHP
-            InvCosts[3 + i][0] += InvCaGHP * prices.EURO_TO_CHF
+            Capex_a_GHP_USD, Opex_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
+            InvCaGHP = Capex_a_GHP_USD + Opex_fixed_GHP_USD
+            InvCosts[3 + i][0] += InvCaGHP
 
         # Best configuration
         Best = np.zeros((13, 1))
@@ -305,7 +303,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
 
         results_to_csv = pd.DataFrame(dico)
 
-        fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
+        fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
         BestComb = {}
@@ -324,7 +322,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary_heating()
+        fName = locator.get_optimization_decentralized_folder_disc_op_summary_heating()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep=',')
 

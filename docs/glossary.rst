@@ -5,8 +5,7 @@ themed by the type of information they contain. There are three main types of da
 
     - **Input**
         - Primary: These databases define the location and geometry of the district and buildings within.
-        - Secondary: These databases are constructed using the default databases. They store assumed variables, such as
-            zone architecture, indoor comfort and loads as well as the building system constraints and typology.
+        - Secondary: These databases are constructed using the default databases. They store assumed variables, such as zone architecture, indoor comfort and loads as well as the building system constraints and typology.
 
     - **Default**
         These databases act as libraries from which the secondary input databases are built.

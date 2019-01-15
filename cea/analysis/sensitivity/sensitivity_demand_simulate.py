@@ -120,17 +120,16 @@ def simulate_demand_sample(locator, config, output_parameters):
     :rtype: pandas.DataFrame
     """
 
-    gv = cea.globalvar.GlobalVariables()
-
     # MODIFY CONFIG FILE TO RUN THE DEMAND FOR ONLY SPECIFIC QUANTITIES
     config.demand.resolution_output = "monthly"
     config.multiprocessing = False
     config.demand.massflows_output = []
     config.demand.temperatures_output = []
     config.demand.format_output = "csv"
+    config.demand.override_variables = True
 
     # force simulation to be sequential
-    totals, time_series = demand_main.demand_calculation(locator, gv, config)
+    totals, time_series = demand_main.demand_calculation(locator, config)
     return totals[output_parameters], time_series
 
 

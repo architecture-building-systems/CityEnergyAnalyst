@@ -28,7 +28,15 @@ cea.plots.comparisons.emissions\_intensity module
 cea.plots.comparisons.energy\_demand module
 -------------------------------------------
 
-.. automodule:: cea.plots.comparisons.energy_use
+.. automodule:: cea.plots.comparisons.energy_demand
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.comparisons.energy\_supply\_mix module
+------------------------------------------------
+
+.. automodule:: cea.plots.comparisons.energy_supply_mix
     :members:
     :undoc-members:
     :show-inheritance:
@@ -45,6 +53,14 @@ cea.plots.comparisons.main module
 ---------------------------------
 
 .. automodule:: cea.plots.comparisons.main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.comparisons.occupancy\_types module
+---------------------------------------------
+
+.. automodule:: cea.plots.comparisons.occupancy_types
     :members:
     :undoc-members:
     :show-inheritance:

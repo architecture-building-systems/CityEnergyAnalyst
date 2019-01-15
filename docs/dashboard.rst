@@ -16,7 +16,7 @@ categories of plots:
                              solar technologies in buildings in a
                              certain scenario
 
-    energy_use            Plots related to the energy demand of
+    energy_use               Plots related to the energy demand of
                              buildings in a certain scenario
 
     optimization             Plots related to the optimization of the

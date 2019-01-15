@@ -19,14 +19,9 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V2.2:    |V2.2|
-
-For V0.4:    |V0.4|
+For V2.9.1 (stable):    |V2.9.1|
 
 
+.. |V2.9.1| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1487867.svg
+   :target: https://doi.org/10.5281/zenodo.1487867
 
-.. |V2.2| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.556165.svg
-   :target: https://doi.org/10.5281/zenodo.556165
-   
-.. |V0.4| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.496194.svg
-   :target: https://doi.org/10.5281/zenodo.496194

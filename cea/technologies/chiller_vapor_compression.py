@@ -109,8 +109,9 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     :rtype InvCa: float
 
     """
-    Capex_a = 0
-    Opex_fixed = 0
+    Capex_a_VCC_USD = 0
+    Opex_fixed_VCC_USD = 0
+    Capex_VCC_USD = 0
 
     if qcold_W > 0:
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
@@ -131,8 +132,9 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
             Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
             Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
             InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Capex_a * Inv_OM
+            Capex_a_VCC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_VCC_USD = Capex_a_VCC_USD * Inv_OM
+            Capex_VCC_USD = InvC
         else:  # more than one unit of ACH are activated
             number_of_chillers = int(ceil(qcold_W / max_chiller_size))
             Q_nom_each_chiller = qcold_W / number_of_chillers
@@ -150,10 +152,11 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(
                     Q_nom_each_chiller)
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Capex_a = Capex_a + Capex_a1
-                Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
-    return Capex_a, Opex_fixed
+                Capex_a_VCC_USD = Capex_a_VCC_USD + Capex_a1
+                Opex_fixed_VCC_USD = Opex_fixed_VCC_USD + Capex_a1 * Inv_OM
+                Capex_VCC_USD = Capex_VCC_USD + InvC
 
+    return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
 
 def calc_VCC_COP(config, load_types, centralized=True):
     """

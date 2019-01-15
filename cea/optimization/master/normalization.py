@@ -165,7 +165,7 @@ def decentralizeCosts(individual, locator, gV):
     for i in range(len(indCombi)):
         if indCombi[i] == "0": # Decentralized building
             building_name = buildList[i]
-            df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
+            df = pd.read_csv(locator.get_optimization_decentralized_result_file(building_name))
             dfBest = df[df["Best configuration"] == 1]
             costsDisc += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
 

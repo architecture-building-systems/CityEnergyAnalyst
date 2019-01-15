@@ -1,5 +1,5 @@
-from cea.demand.calibration.nn_generator.nn_settings import random_variables, target_parameters
-from cea.demand.calibration.nn_generator.nn_trainer import nn_input_collector
+from cea.demand.metamodel.nn_generator.nn_settings import random_variables, target_parameters
+from cea.demand.metamodel.nn_generator.nn_trainer import nn_input_collector
 
 import cea.inputlocator
 import cea.globalvar
@@ -18,7 +18,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     weather_path = config.weather()
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    building_properties, schedules_dict, date = properties_and_schedule(locator)
     list_building_names = building_properties.list_building_names()
     run_nn_resume_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 

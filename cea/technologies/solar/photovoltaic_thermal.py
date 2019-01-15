@@ -642,8 +642,9 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
+    Capex = InvC
 
-    return Capex_a, Opex_fixed
+    return Capex_a, Opex_fixed, Capex
 
 
 def main(config):
@@ -662,13 +663,13 @@ def main(config):
     if not list_buildings_names:
         list_buildings_names = locator.get_zone_building_names()
 
-    data = gdf.from_file(locator.get_zone_geometry())
-    latitude, longitude = get_lat_lon_projected_shapefile(data)
+    hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
+    latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
-    # weather data
+    # weather hourly_results_per_building
     weather_data = epwreader.epw_reader(config.weather)
-    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
-    print('reading weather data done.')
+    date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
+    print('reading weather hourly_results_per_building done.')
 
     building_count = len(list_buildings_names)
     number_of_processes = config.get_number_of_processes()
@@ -693,23 +694,35 @@ def main(config):
                                   repeat(date_local, building_count),
                                   list_buildings_names))
 
+    # aggregate results from all buildings
+    aggregated_annual_results = {}
     for i, building in enumerate(list_buildings_names):
-        data = pd.read_csv(locator.PVT_results(building))
+        hourly_results_per_building = pd.read_csv(locator.PVT_results(building))
         if i == 0:
-            df = data
+            aggregated_hourly_results_df = hourly_results_per_building
             temperature_sup = []
             temperature_re = []
-            temperature_sup.append(data['T_PVT_sup_C'])
-            temperature_re.append(data['T_PVT_re_C'])
+            temperature_sup.append(hourly_results_per_building['T_PVT_sup_C'])
+            temperature_re.append(hourly_results_per_building['T_PVT_re_C'])
         else:
-            df = df + data
-            temperature_sup.append(data['T_PVT_sup_C'])
-            temperature_re.append(data['T_PVT_re_C'])
-    df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
-    df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
-    df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    df = df.set_index('Date')
-    df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
+            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+            temperature_sup.append(hourly_results_per_building['T_PVT_sup_C'])
+            temperature_re.append(hourly_results_per_building['T_PVT_re_C'])
+
+        annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
+        panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
+        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        aggregated_annual_results[building] = building_annual_results
+
+    # save hourly results
+    aggregated_hourly_results_df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
+    aggregated_hourly_results_df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
+    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
+    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
+    aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
+    # save annual results
+    aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
+    aggregated_annual_results_df.to_csv(locator.PVT_total_buildings(), index=True, float_format='%.2f')
 
 
 if __name__ == '__main__':

@@ -141,9 +141,9 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     print "Daysim simulation starts for building(s)", names_zone
     print "and the next number of total sensors", num_sensors
     if num_sensors > 50000:
-        raise ValueError('You are sending more than 50000 sensors at the same time, this \
-                          will eventually crash a daysim instance. To solve it, reduce the number of buildings \
-                          in each chunk in the Settings.py file')
+        raise ValueError('You are sending more than 50000 sensors at the same time, this '
+                         'will eventually crash a daysim instance. To solve it, please reconfigure the radiation tool. '
+                         'Just reduce the number of buildings per chunk and try again')
 
     # add_elevation_weather_file(weather_path)
     rad.execute_epw2wea(weather_path, ground_reflectance = settings.albedo)
