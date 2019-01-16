@@ -7,3 +7,4 @@ include cea/default.config
 include cea/tests/test_calc_thermal_loads.config
 include cea/tests/test_schedules.config
 include cea/tests/radiation_data/*.csv
+include cea/examples/*.zip
