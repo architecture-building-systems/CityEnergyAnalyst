@@ -531,6 +531,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                           izip(range(start_t, stop_t),
                                                repeat(thermal_network, times=(stop_t - start_t)),
                                                repeat(region, times=(stop_t - start_t))))
+        pool.close()
+        pool.join()
     else:
         hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
                                      repeat(thermal_network, times=(stop_t - start_t)),
@@ -1636,6 +1638,8 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             pool = multiprocessing.Pool(number_of_processes)
             mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
                                   izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
+            pool.close()
+            pool.join()
         else:
             mass_flows = map(hourly_mass_flow_calculation, t,
                              repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
