@@ -429,7 +429,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.buildings_demands, substation_systems, thermal_network)
 
     # Output substation HEX node data
-    # merge with nodes df # TODO[SH]: check if it is repeating?
+    # merge with nodes df
     substation_HEX_Q['Building'] = substation_HEX_Q.index
     all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True'))
     all_nodes_index = all_nodes_df_output.index
@@ -446,19 +446,15 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    if config.thermal_network_optimization.use_representative_week_per_month: #TODO[SH]: combine
+    if config.thermal_network_optimization.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
         start_t = 0
         stop_t = 2016  # 24 hours x 7 days x 12 months
+        prepare_inputs_of_representative_weeks(thermal_network)
     else:
         # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
         start_t = config.thermal_network.start_t
         stop_t = config.thermal_network.stop_t
-
-    if config.thermal_network_optimization.use_representative_week_per_month:
-        prepare_inputs_of_representative_weeks(thermal_network)
-
-
 
     print('Calculating edge mass flows')
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
