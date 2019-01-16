@@ -44,7 +44,7 @@ class Network_info(object):
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
                           'capex_chiller', 'capex_CT', 'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_hex',
-                          'capex_network', 'length', 'avg_diam']
+                          'capex_network', 'network_length_m', 'avg_diam_m']
         self.generation_info = ['individual', 'plant_buildings', 'number_of_plants', 'supplied_loads',
                                 'disconnected_buildings', 'has_loops']
         self.cost_storage = None
@@ -64,6 +64,65 @@ class Network_info(object):
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
+
+def thermal_network_optimization(config, gv, locator):
+    # initialize timer
+    start = time.time()
+    # read network type and ensure consistency in network layout and network_info
+    network_type = config.thermal_network.network_type
+    config.network_layout.network_type = network_type
+    if network_type == 'DH':
+        raise ValueError('This optimization procedure is not ready for district heating yet!')
+    ## initialize object
+    network_info = Network_info(locator, config, network_type, gv)
+    # write buildings names to object
+    total_demand = pd.read_csv(locator.get_total_demand())
+    network_info.building_names = total_demand.Name.values
+    network_info.number_of_buildings_in_district = total_demand.Name.count()
+    # write possible plant location sites to object
+    if not config.thermal_network_optimization.possible_plant_sites:
+        # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
+        config.thermal_network_optimization.possible_plant_sites = network_info.building_names
+
+    ## create initial population
+    print 'Creating initial population.'
+    newMutadedGen = generateInitialPopulation(network_info)
+    # iterate through number of generations
+    for generation_number in range(config.thermal_network_optimization.number_of_generations):
+        print 'Running optimization for generation number ', generation_number
+        # calculate network cost for each individual and sort by increasing cost
+        sortedPop = network_cost_calculation(newMutadedGen, network_info, config)
+        print 'Lowest cost individual: ', sortedPop[0], '\n'
+        # setup next generation
+        if generation_number < config.thermal_network_optimization.number_of_generations - 1:
+            # select individuals for next generation
+            selectedPop = selectFromPrevPop(sortedPop, network_info)
+            # breed next generation
+            newGen = breedNewGeneration(selectedPop, network_info)
+            # add mutations
+            newMutadedGen = mutateGeneration(newGen, network_info)
+            print 'Finished mutation.'
+    # write values into all_individuals_list and output results
+    output_results_of_all_individuals(config, locator, network_info)
+    print('thermal_network_optimization_main() succeeded')
+    print('total time: ', time.time() - start)
+
+
+def output_results_of_all_individuals(config, locator, network_info):
+    all_individuals_list = []
+    for individual in network_info.populations.keys():
+        # read results from each individual
+        individual_df = pd.read_csv(
+            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
+                                                                                  individual), index_col=None, header=0)
+        all_individuals_list.append(individual_df.as_matrix())
+    all_individuals_array = np.vstack(all_individuals_list)
+    all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
+    all_individuals_df.columns = network_info.generation_info + network_info.cost_info
+    all_individuals_df = all_individuals_df.sort_values(by=['total'])
+    all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
+                              index=False)
+    return np.nan
 
 
 def network_cost_calculation(newMutadedGen, network_info, config):
@@ -89,29 +148,30 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
-            Capex_total, Opex_total, Costs_total, cost_storage_df = objective_function(network_info)
+            capex_total, opex_total, total_cost, cost_storage_df = objective_function(network_info)
 
             # write result costs values to file
-            total_cost = Costs_total
-            opex = Opex_total
-            capex = Capex_total
+            # total_cost = Costs_total
+            # opex_total = Opex_total
+            # capex_total = Capex_total
 
-            # calculate network total length and average diameter
-            length, average_diameter = calc_network_size(network_info)
+            # calculate network total network_length_m and average diameter
+            network_length_m, average_pipe_diameter_m = calc_network_size(network_info)
 
             # save total cost to dictionary
             population_performance[total_cost] = individual
             print 'population performance', population_performance
 
-            # store all values
+            # list supplied loads
             if network_info.config.thermal_network.network_type == 'DH':
                 list_of_supplied_loads = network_info.config.thermal_network.substation_heating_systems
             else:
                 list_of_supplied_loads = network_info.config.thermal_network.substation_cooling_systems
+
             # store values
             individual_outputs_df['total'] = total_cost
-            individual_outputs_df['capex'] = capex
-            individual_outputs_df['opex'] = opex
+            individual_outputs_df['capex'] = capex_total
+            individual_outputs_df['opex'] = opex_total
             individual_outputs_df['el_network_MWh'] = cost_storage_df.ix['el_network_MWh'][0]
             individual_outputs_df['opex_plant'] = cost_storage_df.ix['opex_plant'][0]
             individual_outputs_df['opex_pump'] = cost_storage_df.ix['opex_pump'][0]
@@ -131,10 +191,11 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             individual_outputs_df['plant_buildings'] = str(building_plants)
             individual_outputs_df['disconnected_buildings'] = str(disconnected_buildings) if disconnected_buildings != [] else 0
             individual_outputs_df['supplied_loads'] = ', '.join(list_of_supplied_loads)
-            individual_outputs_df['length'] = length
-            individual_outputs_df['avg_diam'] = average_diameter
+            individual_outputs_df['network_length_m'] = network_length_m
+            individual_outputs_df['avg_diam_m'] = average_pipe_diameter_m
             individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
             individual_outputs_df['has_loops'] = individual[5]
+
             # save results of an unique individual
             individual_outputs_df.to_csv(
                 network_info.locator.get_optimization_network_individual_results_file(
@@ -760,7 +821,6 @@ def mutateGeneration(newGen, network_info):
 # test
 # ============================
 
-
 def main(config):
     """
     runs an optimization calculation for the plant location in the thermal network.
@@ -784,68 +844,15 @@ def main(config):
     # check if a net if a network name is given, else set it to an empty string
     if not config.thermal_network_optimization.network_name:
         config.thermal_network_optimization.network_name = ""
-    # initialize timer
-    start = time.time()
+
     ## initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
-    network_type = config.thermal_network.network_type
-    # overwrite config network_layout network type to make it match the network type, since we need to generate and simulate networks in this optimization
-    config.network_layout.network_type = network_type
-    ## initialize object
-    network_info = Network_info(locator, config, network_type, gv)
-    # read in basic information and save to object, e.g. building demand, names, total number of buildings
-    total_demand = pd.read_csv(locator.get_total_demand())
-    network_info.building_names = total_demand.Name.values
-    network_info.number_of_buildings_in_district = total_demand.Name.count()
 
-    # list possible plant location sites
-    if not config.thermal_network_optimization.possible_plant_sites:
-        # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
-        config.thermal_network_optimization.possible_plant_sites = network_info.building_names
+    ## start optimization
+    thermal_network_optimization(config, gv, locator)
 
-    ## initialize data storage for later output to file
-    # network_info.cost_storage = pd.DataFrame(
-    #     np.zeros((len(network_info.cost_info), config.thermal_network_optimization.number_of_individuals)))
-    # network_info.cost_storage.index = network_info.cost_info
-
-    ## create initial population
-    print 'Creating initial population.'
-    newMutadedGen = generateInitialPopulation(network_info)
-    # iterate through number of generations
-    for generation_number in range(config.thermal_network_optimization.number_of_generations):
-        print 'Running optimization for generation number ', generation_number
-        # calculate network cost for each individual and sort by increasing cost
-        sortedPop = network_cost_calculation(newMutadedGen, network_info, config)
-        print 'Lowest cost individual: ', sortedPop[0], '\n'
-        # setup next generation
-        if generation_number < config.thermal_network_optimization.number_of_generations - 1:
-            # select individuals for next generation
-            selectedPop = selectFromPrevPop(sortedPop, network_info)
-            # breed next generation
-            newGen = breedNewGeneration(selectedPop, network_info)
-            # add mutations
-            newMutadedGen = mutateGeneration(newGen, network_info)
-            print 'Finished mutation.'
-
-    # write values into all_individuals_list and output results
-    all_individuals_list = []
-    for individual in network_info.populations.keys():
-        # read results from each individual
-        individual_df = pd.read_csv(
-            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
-                                                                                  individual), index_col=None, header=0)
-        all_individuals_list.append(individual_df.as_matrix())
-    all_individuals_array = np.vstack(all_individuals_list)
-    all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
-    all_individuals_df.columns = network_info.generation_info + network_info.cost_info
-    all_individuals_df = all_individuals_df.sort_values(by=['total'])
-    all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
-                              index=False)
-
-    print('thermal_network_optimization_main() succeeded')
-    print('total time: ', time.time() - start)
-
+    return np.nan
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
