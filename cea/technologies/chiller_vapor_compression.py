@@ -162,6 +162,7 @@ def calc_VCC_COP(config, load_types, centralized=True):
     """
     Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
     auxiliary power demand for centralized and decentralized systems.
+    This approximation only works in tropical climates
 
     Clark D (CUNDALL). Chiller energy efficiency 2013.
 
@@ -188,7 +189,7 @@ def calc_VCC_COP(config, load_types, centralized=True):
         T_evap = T_evap - DT_NETWORK_CENTRALIZED
     # read weather data for condeser temperature calculation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
-    # calculate condenser temperature with static approach temperature assumptions
+    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
     T_cond = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
     # calculate chiller COP
     cop_chiller = g_value * T_evap / (T_cond - T_evap)
