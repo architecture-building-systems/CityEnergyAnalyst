@@ -42,7 +42,7 @@ class Thermal_Network(object):
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
                           'capex_chiller', 'capex_CT', 'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_hex',
-                          'capex_network', 'length', 'avg_diam']
+                          'capex_network', 'network_length_m', 'avg_diam_m']
         self.generation_info = ['plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                                 'has_loops']
         self.cost_storage = None
@@ -609,7 +609,7 @@ def main(config):
     cost_output['capex_chiller'] = round(cost_storage_df.ix['capex_chiller'][0], 2)
     cost_output['capex_CT'] = round(cost_storage_df.ix['capex_CT'][0], 2)
     cost_output['avg_diam_m'] = average_diameter_m
-    cost_output['length_m'] = length_m
+    cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     return
