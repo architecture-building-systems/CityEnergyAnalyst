@@ -845,6 +845,10 @@ def main(config):
     if not config.thermal_network_optimization.network_name:
         config.thermal_network_optimization.network_name = ""
 
+    # the optimization procedure is only working for region = SG at the moment
+    if not config.region == 'SG':
+        raise ValueError('The current optimization is only working for DC networks in tropical regions (SG), future updates are on the way!')
+
     ## initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
