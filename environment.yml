@@ -133,7 +133,6 @@ dependencies:
     - backports.shutil-which==3.5.2
     - bleach==3.1.0
     - chardet==3.0.4
-    - cityenergyanalyst==2.9.0
     - cloudpickle==0.6.1
     - colorama==0.4.1
     - configparser==3.5.0
@@ -213,5 +212,3 @@ dependencies:
     - win-unicode-console==0.5
     - xlrd==1.2.0
     - xlwt==1.3.0
-prefix: C:\Users\darthoma\Miniconda2\envs\cea
-

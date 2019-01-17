@@ -328,7 +328,7 @@ def task_run_calibration():
         config.single_calibration.building = 'B01'
         config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
         config.single_calibration.load = 'E_sys'
-        config.single_calibration.samples = 10
+        config.single_calibration.samples = 1
         config.single_calibration.show_plots = False
         config.single_calibration.iterations = 2000
 
