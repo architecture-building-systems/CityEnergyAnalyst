@@ -3,7 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
-from cea.plots.variable_naming import NAMING, COLOR
+from cea.plots.variable_naming import NAMING, COLOR, LOGO
 
 import pandas as pd
 
