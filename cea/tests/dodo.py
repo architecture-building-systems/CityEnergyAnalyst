@@ -360,7 +360,7 @@ def task_run_thermal_network_matrix():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
         config.scenario = locator.scenario
-        config.multiprocessing = False
+        config.multiprocessing = True
         config.thermal_network.start_t = 100
         config.thermal_network.stop_t = 200
 
