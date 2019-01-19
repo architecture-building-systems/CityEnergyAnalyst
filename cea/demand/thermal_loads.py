@@ -95,7 +95,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
             actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
 
-    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, actual_weather_data, use_stochastic_occupancy)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
