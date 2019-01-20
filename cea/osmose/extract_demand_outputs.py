@@ -36,36 +36,33 @@ Rw_JperkgK = 461.5
 
 RH_max = 70  # %
 RH_min = 40  # %
-CASE = 'WTP_CBD_m_WP1_RET'
-START_t = 3240  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
-TIMESTEPS = 24  # 168 (week)
-# T_offcoil
+# T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
 T_interval = 0.65 #0.5
 # T_low_C = 14.5
 # T_high_C = 18
 # T_interval = 0.65 #0.5
+# SS553_lps_m2 = 0.6
 
 
 
-
-def main():
-    building_names = ['B001', 'B002', 'B007']
-    SS553_lps_m2 = 0.6
+def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
 
     # read total demand
-    total_demand_df = pd.read_csv(path_to_total_demand()).set_index('Name')
+    total_demand_df = pd.read_csv(path_to_total_demand(case)).set_index('Name')
+    # building_names = total_demand_df.index
+    building_names = ['B001', 'B002', 'B007'] #TODO: set in config
 
     for name in building_names:
         # read demand output
         # demand_df = pd.read_csv(path_to_demand_output(name)['csv'], usecols=(BUILDINGS_DEMANDS_COLUMNS))
-        tsd_df = pd.read_excel(path_to_demand_output(name)['xls'])
+        tsd_df = pd.read_excel(path_to_demand_output(name, case)['xls'])
 
         # reduce to 24 or 168 hours
-        end_t = (START_t + TIMESTEPS)
-        # reduced_demand_df = demand_df[START_t:end_t]
-        reduced_tsd_df = tsd_df[START_t:end_t]
+        end_t = (start_t + timesteps)
+        # reduced_demand_df = demand_df[start_t:end_t]
+        reduced_tsd_df = tsd_df[start_t:end_t]
         reduced_tsd_df = reduced_tsd_df.reset_index()
         output_df = reduced_tsd_df
         output_df1 = pd.DataFrame()
@@ -91,9 +88,9 @@ def main():
         output_hcs['T_ext'] = reduced_tsd_df['T_ext']
         output_hcs['T_ext_wb'] = reduced_tsd_df['T_ext_wetbulb']
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
-        if ('OFF' in CASE) or ('RET' in CASE):
+        if ('OFF' in case) or ('RET' in case):
             output_hcs['w_RA'] = 10.2
-        elif 'RES' in CASE:
+        elif 'RES' in case:
             output_hcs['w_RA'] = 13
         output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_tsd_df['rh_ext'],
@@ -152,14 +149,14 @@ def main():
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
 
         # add hour of the day
-        # output_df['hour'] = range(1, 1 + TIMESTEPS)
+        # output_df['hour'] = range(1, 1 + timesteps)
         # TODO: delete the first few hours without demand (howwwwww?)
         # output_df = output_df.round(4)  # osmose does not read more decimals (observation)
         # output_df = output_df.reset_index()
         # output_df = output_df.drop(['index'], axis=1)
         # output_df = output_df.drop(output_df.index[range(7)])
 
-    return
+    return building_names
 
 
 def calc_CO2_gains(output_df, reduced_tsd_df):
@@ -235,16 +232,16 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
 ##  Paths (TODO: connected with cea.config and inputLocator)
 
 
-def path_to_demand_output(building_name):
+def path_to_demand_output(building_name, case):
     path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % CASE
+    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
     path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
     path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
     return path_to_file
 
-def path_to_total_demand():
+def path_to_total_demand(case):
     path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % CASE
+    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
     path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
     return path_to_file
 
@@ -270,4 +267,7 @@ def path_to_osmose_project_inputT(number):
 
 
 if __name__ == '__main__':
-    main()
+    case = 'WTP_CBD_m_WP1_HOT'
+    start_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
+    timesteps = 168  # 168 (week)
+    extract_cea_outputs_to_osmose_main(case, start_t, timesteps)
