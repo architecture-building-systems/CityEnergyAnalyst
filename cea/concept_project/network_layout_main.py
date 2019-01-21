@@ -26,9 +26,9 @@ def network_layout(config, locator, plant_building_names, input_path_name, outpu
     input_buildings_shp = locator.get_zone_geometry()
     connected_buildings = config.network_layout.buildings
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    input_paths_shp = locator.get_network_input_paths(input_path_name)  # shapefile with the stations
 
-    # input_paths_shp = os.path.join(locator.get_electric_networks_folder() + '/' + input_path_name + '.shp')  # shapefile with the stations
+    input_paths_shp = os.path.join(locator.get_electric_networks_folder() + '/' + input_path_name + '.shp')  # shapefile with the stations
+
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     total_demand_location = locator.get_total_demand()

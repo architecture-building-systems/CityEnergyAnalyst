@@ -264,8 +264,3 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
     write_coordinates_to_shp_file(config, locator, list_geo_grid, electrical_grid_file_name)
     write_coordinates_to_shp_file(config, locator, list_geo_thermal_network, thermal_network_file_name)
-
-    #Standarize coordinates for thermal network
-    street_geometry_path = locator.get_electric_networks_folder()+ '/' + thermal_network_file_name + '.shp'
-    street, _, _ = shapefile_to_WSG_and_UTM(street_geometry_path)
-    street.to_file(locator.get_electric_networks_folder()+ '/' + thermal_network_file_name + '.shp')
