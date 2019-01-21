@@ -16,6 +16,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def heating_reset_schedule(data_frame, analysis_fields, title, output_path):
     # CREATE FIRST PAGE WITH TIMESERIES
     traces = []

@@ -2,6 +2,7 @@ from __future__ import division
 
 import plotly.graph_objs as go
 from plotly.offline import plot
+
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Jimeno A. Fonseca"

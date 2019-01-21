@@ -15,6 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
@@ -55,7 +56,7 @@ def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
     data_frame['total'] = data_frame[analysis_fields].sum(axis=1)
-    data_frame = data_frame.sort_values(by='total', ascending=False)# this will get the maximum value to the left
+    data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
         name = NAMING[field]
