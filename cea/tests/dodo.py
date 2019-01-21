@@ -327,10 +327,11 @@ def task_run_calibration():
         config.scenario = locator.scenario
         config.single_calibration.building = 'B01'
         config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
+
         config.single_calibration.load = 'E_sys'
-        config.single_calibration.samples = 10
+        config.single_calibration.samples = 2
         config.single_calibration.show_plots = False
-        config.single_calibration.iterations = 2000
+        config.single_calibration.iterations = 100
 
         # run calibration_sampling
         calibration_sampling.sampling_main(locator=locator, config=config)
@@ -359,7 +360,7 @@ def task_run_thermal_network_matrix():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
         config.scenario = locator.scenario
-        config.multiprocessing = False
+        config.multiprocessing = True
         config.thermal_network.start_t = 100
         config.thermal_network.stop_t = 200
 
