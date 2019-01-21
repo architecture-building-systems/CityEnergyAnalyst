@@ -7,7 +7,9 @@ call conda env create -q --name ceatest
 call activate ceatest
 
 pip.exe install .
-where cea
+
+rem where cea
+
 cea test --reference-cases open --tasks all --verbosity 1
 if %errorlevel% neq 0 exit /b %errorlevel%
 
