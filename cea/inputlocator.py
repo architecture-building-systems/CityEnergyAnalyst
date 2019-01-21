@@ -1076,19 +1076,26 @@ class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
+    already_extracted = False  # only extract once per run
+
     def __init__(self):
-        import cea.examples
-        import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
-
-        archive.extractall(temp_folder)
         reference_case = os.path.join(project_folder, 'baseline')
+
+        if not ReferenceCaseOpenLocator.already_extracted:
+            import cea.examples
+            import zipfile
+            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+
+            if os.path.exists(project_folder):
+                shutil.rmtree(project_folder)
+                assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+
+            archive.extractall(temp_folder)
+            ReferenceCaseOpenLocator.already_extracted = True
+
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

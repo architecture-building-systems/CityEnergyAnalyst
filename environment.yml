@@ -130,45 +130,76 @@ dependencies:
     - alabaster==0.7.12
     - babel==2.6.0
     - backports.shutil-get-terminal-size==1.0.0
+    - backports.shutil-which==3.5.2
     - bleach==3.1.0
     - chardet==3.0.4
-    - cityenergyanalyst==2.9.0
     - cloudpickle==0.6.1
     - colorama==0.4.1
     - configparser==3.5.0
     - cvxopt==1.2.2
+    - dash==0.35.2
+    - dash-core-components==0.42.1
+    - dash-html-components==0.13.5
+    - dash-renderer==0.16.2
     - decorator==4.3.0
+    - defusedxml==0.5.0
     - docutils==0.14
     - doit==0.29.0
+    - entrypoints==0.3
+    - flask==1.0.2
+    - flask-compress==1.4.0
     - idna==2.8
     - imagesize==1.1.0
+    - ipaddress==1.0.22
+    - ipykernel==4.10.0
     - ipython==5.8.0
     - ipython-genutils==0.2.0
+    - ipywidgets==7.4.2
+    - itsdangerous==1.1.0
     - jinja2==2.10
+    - jsonschema==2.6.0
+    - jupyter==1.0.0
+    - jupyter-client==5.2.4
+    - jupyter-console==5.2.0
+    - jupyter-core==4.4.0
     - lxml==4.3.0
+    - mistune==0.8.4
+    - nbconvert==5.4.0
+    - nbformat==4.4.0
     - networkx==2.2
+    - notebook==5.7.4
     - packaging==18.0
+    - pandocfilters==1.4.2
     - pathlib2==2.3.3
     - pickleshare==0.7.5
     - pkginfo==1.5.0.1
+    - plotly==3.5.0
+    - prometheus-client==0.5.0
     - prompt-toolkit==1.0.15
     - py4design==0.25
     - pycollada==0.6
     - pygments==2.3.1
     - pymf==0.1.9
     - pyshp==2.0.1
+    - pywinpty==0.5.5
     - pyyaml==3.13
+    - pyzmq==17.1.2
+    - qtconsole==4.4.3
     - readme-renderer==24.0
     - requests==2.21.0
     - requests-toolbelt==0.8.0
+    - retrying==1.3.3
     - salib==1.2
     - scandir==1.9.0
     - scikit-learn==0.20.2
     - seaborn==0.9.0
+    - send2trash==1.5.0
     - simplegeneric==0.8.1
     - snowballstemmer==1.2.1
     - sphinx==1.8.3
     - sphinxcontrib-websupport==1.1.0
+    - terminado==0.8.1
+    - testpath==0.4.2
     - traitlets==4.3.2
     - twine==1.12.1
     - typing==3.6.6
@@ -176,7 +207,8 @@ dependencies:
     - utm==0.4.2
     - wcwidth==0.1.7
     - webencodings==0.5.1
+    - werkzeug==0.14.1
+    - widgetsnbextension==3.4.2
     - win-unicode-console==0.5
     - xlrd==1.2.0
-prefix: C:\Users\darthoma\Miniconda2\envs\cea2
-
+    - xlwt==1.3.0
