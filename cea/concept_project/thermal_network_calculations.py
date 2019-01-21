@@ -20,32 +20,29 @@ def thermal_network_calculations(dict_connected, config, network_number):
     copy_tree(locator.get_networks_folder(), locator.get_electric_networks_folder()) # resetting the streets layout to the scenario default
 
     m = electrical_grid_calculations(dict_connected, config, locator)
-    print ('abc')
 
-    electrical_grid_file_name = 'grid'
-    thermal_network_file_name = 'streets'
+    electrical_grid_file_name = 'electrical_grid'
+    thermal_network_file_name = 'electrical_grid_as_streets'
 
     # ============================
     # Create shape file of the thermal network based on the buildings connected, which is further processed
     # ============================
     process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator, dict_connected)
 
-    print (config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
     # thermal_network_matrix.main(config)
     thermal_network_costs.main(dict_connected, config, network_number)
-    print (m.var_costs.values())
 
 def main(config):
 
-    dict_connected = [{0: 1, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1},
+    dict_connected = [{0: 1, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1}
                       # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
                       # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1},
                       # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 1, 7: 1, 8: 1, 9: 0},
                       # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 1, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
                       # # {0: 0, 1: 1, 2: 1, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
-                      {0: 1, 1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 0}
+                      # {0: 1, 1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 0}
                       ]
     #                        , 10: 1, 11: 1,
     #                   12: 1, 13: 1, 14: 1,
