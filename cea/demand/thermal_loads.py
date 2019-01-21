@@ -5,6 +5,7 @@ Demand model of thermal loads
 from __future__ import division
 
 import numpy as np
+import pandas as pd
 
 from cea.demand import demand_writers
 from cea.demand import latent_loads
@@ -108,7 +109,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region) #end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name) #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -315,13 +316,18 @@ def calc_Qhs_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region):
+def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
     # get internal comfort properties
     tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
+    print (tsd['ta_cs_set'])
+    if True:
+        a = pd.read_excel('C:\WTP_MIX_m\data/Temperature ' + str(building_name) + '.xlsx')
     # initialize first previous time step
+    tsd['ta_cs_set'] = a['temperature'].values
+    print (tsd['ta_cs_set'])
     t_prev = get_hours(bpr).next() - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
