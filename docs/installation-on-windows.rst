@@ -8,6 +8,7 @@ Follow these instructions to install the CEA on a Windows system (tested with Wi
 Prerequisites
 ~~~~~~~~~~~~~
 
+
 * Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and install `Anaconda (64-bit) for python 2.7 <https://www.anaconda.com/download/>`__.
@@ -30,12 +31,12 @@ Prerequisites
 Installation
 ~~~~~~~~~~~~
 
-#. Open Github Desktop from the start menu.
+#. Open GitHub Desktop from the start menu.
 #. Press Ctrl+Shift+O (clone repository) and select the URL tab.
-#. Paste the CEA Github address: https://github.com/architecture-building-systems/CityEnergyAnalyst
+#. Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Click Clone.
 #. Open Anaconda prompt (terminal console) from the start menu.
-#. Type ``cd Documents\Github\CityEnergyAnalyst`` and press ENTER.
+#. Type ``cd Documents\GitHub\CityEnergyAnalyst`` and press ENTER.
 #. Type ``conda env create`` and press ENTER.
 #. Type ``activate cea`` and press ENTER.
 #. Type ``pip install -e .[dev]`` and press ENTER (mind the dot '.' included in this comand!).
