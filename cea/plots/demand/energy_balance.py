@@ -1,12 +1,14 @@
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
+import cea.plots.demand
+import pandas as pd
+import numpy as np
+
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -16,6 +18,53 @@ __version__ = "2.8"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
+    name = "Energy balance"
+
+    def __init__(self, project, parameters):
+        super(EnergyBalancePlot, self).__init__(project, parameters)
+        if len(self.buildings) > 1:
+            self.buildings = [self.buildings[0]]
+        self.analysis_fields = ['I_sol_kWh',
+                                'Qhs_tot_sen_kWh',
+                                'Qhs_loss_sen_kWh',
+                                'Q_gain_lat_peop_kWh',
+                                'Q_gain_sen_light_kWh',
+                                'Q_gain_sen_app_kWh',
+                                'Q_gain_sen_data_kWh',
+                                'Q_gain_sen_peop_kWh',
+                                'Q_gain_sen_wall_kWh',
+                                'Q_gain_sen_base_kWh',
+                                'Q_gain_sen_roof_kWh',
+                                'Q_gain_sen_wind_kWh',
+                                'Q_gain_sen_vent_kWh',
+                                'Q_gain_lat_vent_kWh',
+                                'I_rad_kWh',
+                                'Qcs_tot_sen_kWh',
+                                'Qcs_tot_lat_kWh',
+                                'Qcs_loss_sen_kWh',
+                                'Q_loss_sen_wall_kWh',
+                                'Q_loss_sen_base_kWh',
+                                'Q_loss_sen_roof_kWh',
+                                'Q_loss_sen_wind_kWh',
+                                'Q_loss_sen_vent_kWh',
+                                'Q_loss_sen_ref_kWh']
+        self.layout = go.Layout(barmode='relative',
+                                yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
+
+    def calc_graph(self):
+        gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
+        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        self.data = calc_monthly_energy_balance(self.data, gfa_m2)
+        traces = []
+        for field in self.analysis_fields:
+            y = self.data[field]
+            trace = go.Bar(x=self.data.index, y=y, name=field.split('_kWh', 1)[0],
+                           marker=dict(color=COLOR[field]))  # , text = total_perc_txt)
+            traces.append(trace)
+        return traces
 
 
 def energy_balance(data_frame, analysis_fields, normalize_value, title, output_path):
@@ -93,8 +142,9 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     data_frame['Qhs_tot_sen_kWh'] = data_frame['Qhs_sen_sys_kWh'] + abs(data_frame['Qhs_loss_sen_kWh'])
     data_frame['Qcs_loss_sen_kWh'] = -data_frame['Qcs_em_ls_kWh'] - data_frame['Qcs_dis_ls_kWh']
     data_frame['Qcs_tot_sen_kWh'] = data_frame['Qcs_sen_sys_kWh'] - abs(data_frame['Qcs_loss_sen_kWh'])
-    data_frame['Qcs_tot_lat_kWh'] = -data_frame[
-        'Qcs_lat_sys_kWh']  # change sign because this variable is now positive in demand
+    data_frame['Qcs_tot_lat_kWh'] = -data_frame['Qcs_lat_sys_kWh']  # change sign because this variable is now positive in demand
+
+
 
     # split up R-C model heat fluxes into heating and cooling contributions
     data_frame['Q_loss_sen_wall_kWh'] = data_frame["Q_gain_sen_wall_kWh"][data_frame["Q_gain_sen_wall_kWh"] < 0]
@@ -118,6 +168,8 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     data_frame['Q_gain_sen_wind_kWh'].fillna(0, inplace=True)
     data_frame['Q_loss_sen_wind_kWh'].fillna(0, inplace=True)
 
+
+
     # convert to monthly
     data_frame.index = pd.to_datetime(data_frame.index)
     data_frame_month = data_frame.resample("M").sum()  # still kWh
@@ -139,24 +191,23 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
         else:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = 0.0
 
-    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcs_lat_sys_kWh']) - data_frame_month[
-        'Q_gain_lat_peop_kWh']
+    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcs_lat_sys_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
 
     # balance of heating
     data_frame_month['Q_heat_sum'] = data_frame_month['Qhs_tot_sen_kWh'] + data_frame_month['Q_gain_sen_wall_kWh'] \
-                                     + data_frame_month['Q_gain_sen_base_kWh'] + data_frame_month['Q_gain_sen_roof_kWh'] \
-                                     + data_frame_month['Q_gain_sen_vent_kWh'] + data_frame_month['Q_gain_sen_wind_kWh'] \
-                                     + data_frame_month["Q_gain_sen_app_kWh"] + data_frame_month['Q_gain_sen_light_kWh'] \
-                                     + data_frame_month['Q_gain_sen_peop_kWh'] + data_frame_month['Q_gain_sen_data_kWh'] \
-                                     + data_frame_month['I_sol_kWh'] + data_frame_month['Qcs_loss_sen_kWh'] \
-                                     + data_frame_month['Q_gain_lat_peop_kWh'] + data_frame_month['Q_gain_lat_vent_kWh']
+        + data_frame_month['Q_gain_sen_base_kWh'] + data_frame_month['Q_gain_sen_roof_kWh'] \
+        + data_frame_month['Q_gain_sen_vent_kWh'] + data_frame_month['Q_gain_sen_wind_kWh']\
+        + data_frame_month["Q_gain_sen_app_kWh"] + data_frame_month['Q_gain_sen_light_kWh']\
+        + data_frame_month['Q_gain_sen_peop_kWh'] + data_frame_month['Q_gain_sen_data_kWh'] \
+        + data_frame_month['I_sol_kWh'] + data_frame_month['Qcs_loss_sen_kWh']\
+        + data_frame_month['Q_gain_lat_peop_kWh'] + data_frame_month['Q_gain_lat_vent_kWh']
 
     # balance of cooling
     data_frame_month['Q_cool_sum'] = data_frame_month['Qcs_tot_sen_kWh'] + data_frame_month['Q_loss_sen_wall_kWh'] \
-                                     + data_frame_month['Q_loss_sen_base_kWh'] + data_frame_month['Q_loss_sen_roof_kWh'] \
-                                     + data_frame_month['Q_loss_sen_vent_kWh'] + data_frame_month['Q_loss_sen_wind_kWh'] \
-                                     + data_frame_month['I_rad_kWh'] + data_frame_month['Qhs_loss_sen_kWh'] \
-                                     + data_frame_month['Q_loss_sen_ref_kWh'] + data_frame_month['Qcs_tot_lat_kWh']
+        + data_frame_month['Q_loss_sen_base_kWh']+ data_frame_month['Q_loss_sen_roof_kWh']\
+        + data_frame_month['Q_loss_sen_vent_kWh'] + data_frame_month['Q_loss_sen_wind_kWh']\
+        + data_frame_month['I_rad_kWh'] + data_frame_month['Qhs_loss_sen_kWh']\
+        + data_frame_month['Q_loss_sen_ref_kWh'] + data_frame_month['Qcs_tot_lat_kWh']
 
     # total balance
     data_frame_month['Q_balance'] = data_frame_month['Q_heat_sum'] + data_frame_month['Q_cool_sum']
@@ -167,3 +218,15 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     data_frame_month = data_frame_month.round(2)
 
     return data_frame_month
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
+    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)

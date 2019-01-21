@@ -78,7 +78,7 @@ def plots_main(locator, config):
     return
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, generation, config, type_of_network, data_address):
         # local variables

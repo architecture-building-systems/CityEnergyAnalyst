@@ -13,7 +13,7 @@ __status__ = "Production"
 
 # GET SHORT NAMES OF VARIABLES IN CEA
 
-NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.plots.__file__), "naming.csv")
+NAMING_FILE_PATH = os.path.join(os.path.dirname(__file__), "naming.csv")
 
 with open(NAMING_FILE_PATH) as naming_file:
     NAMING = {row['VARIABLE']: row['SHORT_DESCRIPTION'] for row in csv.DictReader(naming_file)}
