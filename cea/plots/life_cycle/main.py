@@ -46,7 +46,7 @@ def plots_main(locator, config):
         plots.primary_energy_intensity(category)
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, buildings):
         self.locator = locator

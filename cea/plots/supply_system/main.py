@@ -129,7 +129,7 @@ def preprocessing_run_thermal_network(config, locator, output_name_network, outp
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
     thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, individual, generation, individual_pointer, generation_pointer, config, output_type_network, category):
         # local variables
