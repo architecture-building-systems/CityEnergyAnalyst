@@ -56,7 +56,7 @@ def plots_main(locator, config):
     return
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, buildings, weather):
         # local variables

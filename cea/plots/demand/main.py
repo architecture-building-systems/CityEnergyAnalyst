@@ -73,7 +73,7 @@ def plots_main(locator, config):
     return
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, config, buildings):
         self.locator = locator
@@ -125,7 +125,7 @@ class Plots():
         self.plot_output_path_header = self.preprocess_plot_outputpath(buildings)
 
     def preprocess_plot_outputpath(self, buildings):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
+        if not buildings:  # get all buildings of the district if not indicated a single building
             return "District"
         elif len(buildings) == 1:
             return "Building_" + str(buildings[0])
