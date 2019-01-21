@@ -19,12 +19,13 @@ For the moment, CEA supports neighbourhoods and districts in Temperate (e.g., Sw
 
    getting-started
    tutorials
+   agile-with-CEA
    how-to-contribute
-   modules/modules
    known-issues
    glossary
    legal
    developer-walk-through
+   modules/modules
 
 
 Indices and tables

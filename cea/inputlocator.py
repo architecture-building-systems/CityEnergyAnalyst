@@ -589,9 +589,11 @@ class InputLocator(object):
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
+        if not os.path.exists(self.get_zone_geometry()):
+            return []
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
-        return zone_building_names
+        return [b.encode('utf-8') for b in zone_building_names]
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
@@ -774,6 +776,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
+    def PV_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_buildings.csv')
+
     def PV_network(self, network):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
@@ -791,6 +797,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'SC_%s_total.csv' % panel_type)
 
+    def SC_total_buildings(self, panel_type):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'SC_%s_total_buildings.csv' % panel_type)
+
     def SC_metadata_results(self, building_name, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building_name, panel_type))
@@ -802,6 +812,10 @@ class InputLocator(object):
     def PVT_totals(self):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
+
+    def PVT_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
 
     def PVT_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
@@ -1067,19 +1081,26 @@ class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
+    already_extracted = False  # only extract once per run
+
     def __init__(self):
-        import cea.examples
-        import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
-
-        archive.extractall(temp_folder)
         reference_case = os.path.join(project_folder, 'baseline')
+
+        if not ReferenceCaseOpenLocator.already_extracted:
+            import cea.examples
+            import zipfile
+            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+
+            if os.path.exists(project_folder):
+                shutil.rmtree(project_folder)
+                assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+
+            archive.extractall(temp_folder)
+            ReferenceCaseOpenLocator.already_extracted = True
+
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

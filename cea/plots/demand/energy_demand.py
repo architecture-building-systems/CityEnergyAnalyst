@@ -1,10 +1,29 @@
 from __future__ import division
 from __future__ import print_function
 
+import cea.plots.demand
 import plotly.graph_objs as go
 from plotly.offline import plot
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
+
+
+class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
+    """Implement the energy-use plot"""
+    name = "Energy Demand"
+
+    def __init__(self, project, parameters):
+        super(EnergyDemandDistrictPlot, self).__init__(project, parameters)
+        self.analysis_fields = ["E_sys_MWhyr",
+                                "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        self.data = self.yearly_loads
+        self.layout = go.Layout(barmode='stack',
+                                yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                                xaxis=dict(title='Building Name'), showlegend=True)
+
+    def calc_graph(self):
+        return self.totals_bar_plot()
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
@@ -64,3 +83,15 @@ def calc_top_three_anchor_loads(data_frame, field):
     data_frame = data_frame.sort_values(by=field, ascending=False)
     anchor_list = data_frame[:3].Name.values
     return anchor_list
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    EnergyDemandDistrictPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
+    EnergyDemandDistrictPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
+    EnergyDemandDistrictPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
