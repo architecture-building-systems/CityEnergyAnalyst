@@ -23,6 +23,9 @@ def thermal_network_calculations(dict_connected, config, network_number):
 
     electrical_grid_file_name = 'electrical_grid'
     thermal_network_file_name = 'electrical_grid_as_streets'
+    default_streets_file_name = 'streets'
+
+    input_path_name = default_streets_file_name
 
     # ============================
     # Create shape file of the thermal network based on the buildings connected, which is further processed
@@ -30,9 +33,11 @@ def thermal_network_calculations(dict_connected, config, network_number):
     process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator, dict_connected)
 
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names, input_path_name=thermal_network_file_name)
+    network_layout(config, locator, connected_building_names, input_path_name)
     # thermal_network_matrix.main(config)
-    thermal_network_costs.main(dict_connected, config, network_number)
+    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_costs.main(dict_connected, config, network_number)
+
+    return total_annual_cost, total_annual_capex, total_annual_opex
 
 def main(config):
 
@@ -44,15 +49,8 @@ def main(config):
                       # # {0: 0, 1: 1, 2: 1, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
                       # {0: 1, 1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 0}
                       ]
-    #                        , 10: 1, 11: 1,
-    #                   12: 1, 13: 1, 14: 1,
-    #                   15: 1, 16: 1, 17: 1,
-    #                   18: 1, 19: 1, 20: 1,
-    #                   21: 1, 22: 1, 23: 1,
-    #                   }
 
     t0 = time.clock()
-    network_number = 0
     for i in range(len(dict_connected)):
         network_number = i
         thermal_network_calculations(dict_connected[i], config, network_number)
