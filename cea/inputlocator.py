@@ -60,11 +60,42 @@ class InputLocator(object):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
 
+    def get_electrical_and_thermal_network_optimization_results_folder(self):
+        """scenario/outputs/data/optimization"""
+        return self._ensure_folder(self.scenario, 'outputs', 'electrical and thermal network', 'optimization')
+
     def get_optimization_master_results_folder(self):
         """scenario/outputs/data/optimization/master
         Master checkpoints
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "master")
+
+    def get_electrical_and_thermal_network_optimization_master_results_folder(self):
+        """scenario/outputs/data/optimization/master
+        Master checkpoints
+        """
+        return self._ensure_folder(self.get_electrical_and_thermal_network_optimization_results_folder(), "master")
+
+    def get_electrical_and_thermal_network_optimization_slave_results_folder(self, gen_num):
+        """scenario/outputs/data/optimization/slave
+        Slave results folder (storage + operation pattern)
+        """
+        return self._ensure_folder(self.get_electrical_and_thermal_network_optimization_results_folder(), "slave/gen_%(gen_num)s" %locals())
+
+    def get_electrical_and_thermal_network_optimization_slave_storage_operation_data(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_StorageOperationData.csv' % locals())
+
+    def get_electrical_and_thermal_network_optimization_individuals_in_generation(self, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
+                            'generation_%(gen_num)s_individuals.csv' % locals())
+
+    def get_electrical_and_thermal_network_optimization_all_individuals(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_results_folder(),
+                            'slave/All_individuals.csv')
 
     def get_optimization_slave_results_folder(self, gen_num):
         """scenario/outputs/data/optimization/slave
@@ -435,6 +466,7 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_master_results_folder(),
                             'CheckPoint_' + str(generation))
 
+
     def get_optimization_checkpoint_initial(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
@@ -443,6 +475,21 @@ class InputLocator(object):
     def get_optimization_checkpoint_final(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
+                            'Checkpoint_Final')
+
+    def get_electrical_and_thermal_network_optimization_checkpoint(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_master_results_folder(),
+                            'CheckPoint_' + str(generation))
+
+    def get_electrical_and_thermal_network_optimization_checkpoint_initial(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_master_results_folder(),
+                            'CheckPoint_Initial')
+
+    def get_electrical_and_thermal_network_optimization_checkpoint_final(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_master_results_folder(),
                             'Checkpoint_Final')
 
     def get_uncertainty_checkpoint(self, generation):

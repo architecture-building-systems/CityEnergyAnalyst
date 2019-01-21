@@ -164,9 +164,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
             saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
             saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
 
-        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
+        saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(genCP))
 
-        with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
+        with open(locator.get_electrical_and_thermal_network_optimization_checkpoint_initial(),"wb") as fp:
             cp = dict(nsga_selected_population=pop, generation=0, DHN_List=DHN_network_list, DCN_list = DCN_network_list, tested_population=[],
                       tested_population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
@@ -174,7 +174,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     else:
         print "Recover from CP " + str(genCP) + "\n"
         # import the checkpoint based on the genCP
-        with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
+        with open(locator.get_electrical_and_thermal_network_optimization_checkpoint(genCP), "rb") as fp:
             cp = json.load(fp)
             pop = toolbox.population(n=config.optimization.initialind)
             for i in xrange(len(pop)):
@@ -250,7 +250,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
             saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
             saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
 
-        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(g))
+        saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(g))
 
         selection = toolbox.select(pop + invalid_ind, config.optimization.initialind) # assigning crowding distance
 
@@ -271,7 +271,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         # Create Checkpoint if necessary
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
-            with open(locator.get_optimization_checkpoint(g), "wb") as fp:
+            with open(locator.get_electrical_and_thermal_network_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
                           tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
@@ -286,13 +286,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
     # Dataframe with all the individuals whose objective functions are calculated, gathering all the results from
     # multiple generations
-    df = pd.read_csv(locator.get_optimization_individuals_in_generation(0))
+    df = pd.read_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(0))
     for i in range(config.optimization.ngen):
-        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i+1)))
+        df = df.append(pd.read_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(i+1)))
     df.to_csv(locator.get_optimization_all_individuals())
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
-    with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
+    with open(locator.get_electrical_and_thermal_network_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
                   tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
