@@ -1,10 +1,9 @@
 from __future__ import division
 from __future__ import print_function
 
+import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
-import pandas as pd
-import numpy as np
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
@@ -37,6 +36,7 @@ def likelihood_chart(data_frame, analysis_fields, title, output_path):
 
     return {'data': traces_graph, 'layout': layout}
 
+
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
@@ -44,7 +44,7 @@ def calc_graph(analysis_fields, data_frame):
     hours = datetime.hour
 
     for field in analysis_fields:
-        y = data_frame[field]/1000 #in kWh
+        y = data_frame[field] / 1000  # in kWh
         name = NAMING[field]
         trace = go.Box(x=hours, y=y, name=name, marker=dict(color=COLOR[field]))
         graph.append(trace)

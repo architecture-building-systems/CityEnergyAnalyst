@@ -16,6 +16,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def thermal_storage_activation_curve(data_frame, analysis_fields_charging, analysis_fields_discharging,
                                      analysis_fields_status, title, output_path):
     # CALCULATE GRAPH

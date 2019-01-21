@@ -12,7 +12,6 @@ import cea.inputlocator
 import cea.config
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 
-
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Gabriel Happle"]
@@ -31,6 +30,7 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 # layout of graph and table
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
+
 
 def comfort_chart(data_frame, title, output_path, config, locator):
     """
@@ -197,7 +197,6 @@ def create_relative_humidity_lines():
     P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
 
     for rh_line in rh_lines:
-
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
         trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
                            line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
@@ -300,7 +299,7 @@ def calc_table(dict_graph):
                                                                  dict_graph['x_int_occupied_winter'],
                                                                  VERTICES_WINTER_COMFORT)
     winter_hours = len(dict_graph['t_op_occupied_winter'])
-    perc_winter_comfort = count_winter_comfort/winter_hours if winter_hours > 0 else 0
+    perc_winter_comfort = count_winter_comfort / winter_hours if winter_hours > 0 else 0
     cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, perc_winter_comfort)
     perc_winter_uncomfort = count_winter_uncomfort / winter_hours if winter_hours > 0 else 0
     cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_uncomfort, perc_winter_uncomfort)
@@ -420,7 +419,7 @@ def p_ws_from_t(t_celsius):
     C12 = -1.4452093E-08
     C13 = 6.5459673E+00
 
-    return math.exp(C8/t+C9+C10*t+C11*t**2+C12*t**3+C13*math.log1p(t))
+    return math.exp(C8 / t + C9 + C10 * t + C11 * t ** 2 + C12 * t ** 3 + C13 * math.log1p(t))
 
 
 def p_w_from_rh_p_and_ws(rh, p_ws):
@@ -452,7 +451,7 @@ def hum_ratio_from_p_w_and_p(p_w, p):
     :rtype: double
     """
 
-    return 0.62198 * p_w/(p-p_w)
+    return 0.62198 * p_w / (p - p_w)
 
 
 def calc_constant_rh_curve(t_array, rh, p):

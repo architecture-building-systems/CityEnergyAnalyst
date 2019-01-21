@@ -1,10 +1,12 @@
 from __future__ import division
 from __future__ import print_function
 
+import math
+
 import plotly.graph_objs as go
 from plotly.offline import plot
+
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
-import math
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

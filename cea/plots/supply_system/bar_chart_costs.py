@@ -28,13 +28,14 @@ def bar_chart_costs(data_frame, analysis_fields, title, output_path):
 
     return {'data': traces_graph, 'layout': layout}
 
+
 def calc_graph(analysis_fields, data_frame):
     # main data about technologies
     graph = []
     for field in analysis_fields:
-        y = [data_frame[field]/1000000] # to convert to Millions
+        y = [data_frame[field] / 1000000]  # to convert to Millions
         name = NAMING[field]
-        trace = go.Bar(x= ["district"], y=y, name=name, marker=dict(color=COLOR[field]))
+        trace = go.Bar(x=["district"], y=y, name=name, marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     return graph

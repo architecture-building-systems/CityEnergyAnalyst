@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
+
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Shanshan Hsieh"

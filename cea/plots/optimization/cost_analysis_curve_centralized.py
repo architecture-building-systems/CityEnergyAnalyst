@@ -14,6 +14,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def cost_analysis_curve_centralized(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
