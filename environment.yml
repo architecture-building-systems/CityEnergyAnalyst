@@ -1,5 +1,7 @@
 name: cea
 channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
   - defaults
 dependencies:
   - backports=1.0=py27_1
