@@ -1,0 +1,39 @@
+<!-- a navigation list for the modal folder dialog -->
+<div class="modal-header">
+  <button type="button" class="close cea-folder-dialog-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+  </button>
+  <h4 class="modal-title" id="cea-folder-dialog-title">{{title}}</h4>
+</div>
+
+<div class="modal-body">
+
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      {% for folder in breadcrumbs %}
+      <li class="breadcrumb-item {% if loop.last %}active{% endif %}" aria-current="page">
+        <a href="#" onclick="folder_dialog_navigate_to('{{fqname}}', '{{breadcrumbs|join_paths(loop.index)|escapejs}}', '.')">{{folder}}</a></li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <ul class="cea-folder-listing">
+    <li><a href="#" onclick="folder_dialog_navigate_to('{{fqname}}', '{{current_folder|escapejs}}', '..')">
+      <i class="fa fa-level-up">&nbsp;</i>..</a>
+    </li>
+
+    {% for folder in folders %}
+    <li><a href="#" onclick="folder_dialog_navigate_to('{{fqname}}', '{{current_folder|escapejs}}', '{{folder|escapejs}}')">
+      <i class="fa fa-folder-o">&nbsp;</i>{{folder}}</a>
+    </li>
+    {% endfor %}
+  </ul>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+  <button id="cea-folder-dialog-select-button" data-save-target="{{parameter_name}}" data-save-folder-path="{{current_folder}}"
+          type="button" class="btn btn-default"
+          data-dismiss="modal" onclick="save_folder_name($(this).data('save-target'), $(this).data('save-folder-path'))">Select
+  </button>
+</div>

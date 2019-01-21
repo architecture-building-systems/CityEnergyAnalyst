@@ -9,14 +9,6 @@ cea.analysis.multicriteria.optimization\_post\_processing package
 Submodules
 ----------
 
-cea.analysis.multicriteria.optimization\_post\_processing.electricity\_imports\_exports\_script module
-------------------------------------------------------------------------------------------------------
-
-.. automodule:: cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.analysis.multicriteria.optimization\_post\_processing.energy\_mix\_based\_on\_technologies\_script module
 -------------------------------------------------------------------------------------------------------------
 
@@ -37,14 +29,6 @@ cea.analysis.multicriteria.optimization\_post\_processing.locating\_individuals\
 --------------------------------------------------------------------------------------------------------------
 
 .. automodule:: cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.analysis.multicriteria.optimization\_post\_processing.natural\_gas\_imports\_script module
-----------------------------------------------------------------------------------------------
-
-.. automodule:: cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script
     :members:
     :undoc-members:
     :show-inheritance:
