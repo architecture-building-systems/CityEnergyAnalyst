@@ -499,7 +499,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Electricity_Costs_Mio'] = ((data_electricity_processed['E_from_grid_W'].sum() +
                                            data_electricity_processed[
-                                               'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE) / 1000000
+                                               'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean()) / 1000000
 
         data_costs['Capex_a_total_Mio'] = (Capex_a_ACH_USD * number_of_ACH_chillers + Capex_a_VCC_USD * number_of_VCC_chillers + \
                     Capex_a_VCC_backup_USD * number_of_VCC_backup_chillers + Capex_a_CT_USD * number_of_CT + Capex_a_storage_tank_USD + \
@@ -521,7 +521,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
                                    data_costs['Opex_total_pumps'] + Opex_total_disconnected_USD)) + data_costs['Opex_total_PV'] + \
-                                   data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE) / 1000000
+                                   data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE.mean()) / 1000000
 
         data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
 

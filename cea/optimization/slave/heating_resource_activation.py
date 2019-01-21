@@ -17,7 +17,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                             gv, prices, lca, T_ground):
+                             gv, prices, lca, T_ground, config):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -71,7 +71,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                     mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers.copy())
 
                 C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary_W, Q_HPSew_therm_W, E_HPSew_req_W = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                                                  lca, Q_therm_Sew_W)
+                                                  lca, Q_therm_Sew_W, hour)
                 Q_therm_req_W -= Q_HPSew_therm_W
 
                 # Storing data for further processing
@@ -102,7 +102,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                     mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
 
-                C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, GHP_COP, lca)
+                C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, GHP_COP, lca, hour)
 
                 # Storing data for further processing
                 source_GHP = 1
@@ -130,7 +130,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                     Q_therm_HPL_W = Q_therm_req_W.copy()
                     mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
-                C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, T_LAKE, lca)
+                C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, T_LAKE, lca, hour)
 
                 # Storing Data
                 source_HP_Lake = 1
@@ -151,7 +151,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
             if (master_to_slave_vars.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
                 CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
-                                                prices, lca)  # create cost information
+                                                prices, lca, hour)  # create cost information
                 Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
                 cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
                 q_output_CC_min_W = CC_op_cost_data['q_output_min_W']
@@ -193,7 +193,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
                     if Q_therm_req_W > master_to_slave_vars.Furnace_Q_max_W:  # scale down if above maximum load, Furnace operates at max. capacity
                         Furnace_Cost_Data = furnace_op_cost(master_to_slave_vars.Furnace_Q_max_W, master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,
-                                                            master_to_slave_vars.Furn_Moist_type, gv)
+                                                            master_to_slave_vars.Furn_Moist_type, lca, hour)
 
                         C_Furn_therm = Furnace_Cost_Data[0]
                         Q_Furn_prim_W = Furnace_Cost_Data[2]
@@ -203,7 +203,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
                     else:  # Normal Operation Possible
                         Furnace_Cost_Data = furnace_op_cost(Q_therm_req_W, master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,
-                                                            master_to_slave_vars.Furn_Moist_type, gv)
+                                                            master_to_slave_vars.Furn_Moist_type, lca, hour)
 
                         Q_Furn_prim_W = Furnace_Cost_Data[2]
                         C_Furn_therm = Furnace_Cost_Data[0]
@@ -237,7 +237,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                         Q_therm_boiler_W = Q_therm_req_W.copy()
 
                     C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W = cond_boiler_op_cost(Q_therm_boiler_W, master_to_slave_vars.Boiler_Q_max_W, tdhret_req_K, \
-                                                           master_to_slave_vars.BoilerType, master_to_slave_vars.EL_TYPE, gv, prices, lca)
+                                                           master_to_slave_vars.BoilerType, master_to_slave_vars.EL_TYPE, prices, lca, hour)
 
                     source_BaseBoiler = 1
                     cost_BaseBoiler_USD = C_boil_therm
@@ -266,7 +266,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                         Q_therm_req_W = 0
 
                     C_boil_thermP, C_boil_per_WhP, Q_primaryP_W, E_aux_BoilerP_W = cond_boiler_op_cost(Q_therm_boilerP_W, master_to_slave_vars.BoilerPeak_Q_max_W, tdhret_req_K, \
-                                                            master_to_slave_vars.BoilerPeakType, master_to_slave_vars.EL_TYPE, gv, prices, lca)
+                                                            master_to_slave_vars.BoilerPeakType, master_to_slave_vars.EL_TYPE, prices, lca, hour)
 
                     source_PeakBoiler = 1
                     cost_PeakBoiler_USD = C_boil_thermP

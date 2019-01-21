@@ -190,7 +190,7 @@ dependencies:
   - pathlib2==2.3.3
   - pickleshare==0.7.5
   - pkginfo==1.5.0.1
-  - plotly==3.5.0
+  - plotly==2.5.0 #wathchout! versions above changed the sliders in the plots. do not install further versions.
   - prometheus-client==0.5.0
   - prompt-toolkit==1.0.15
   - pycollada==0.6
