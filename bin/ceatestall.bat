@@ -1,7 +1,6 @@
 rem script used to test the cea by the jenkins
 rem creates a conda environment (deleting the old one first)
 
-
 call conda env remove -y -q --name ceatestall
 call conda env create -q --name ceatestall
 
