@@ -27,14 +27,19 @@ class TestConfiguration(unittest.TestCase):
 
     def test_update_parameter_value(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set(tempfile.gettempdir().replace('\\', '/'))
-        self.assertEquals(config.scenario, tempfile.gettempdir())
+        config.general.parameters['multiprocessing'].set(False)
+        self.assertEquals(config.multiprocessing, False)
+        config.general.parameters['multiprocessing'].set(True)
+        self.assertEquals(config.multiprocessing, True)
 
     def test_update_parameter_values_after_pickling(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set(tempfile.gettempdir().replace('\\', '/'))
+        config.general.parameters['multiprocessing'].set(False)
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.scenario, tempfile.gettempdir())
+        self.assertEquals(config.multiprocessing, False)
+        config.general.parameters['multiprocessing'].set(True)
+        config = pickle.loads(pickle.dumps(config))
+        self.assertEquals(config.multiprocessing, True)
 
     def test_applying_parameters(self):
         config = cea.config.Configuration()
