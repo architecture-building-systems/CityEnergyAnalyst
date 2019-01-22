@@ -624,7 +624,7 @@ class ChoiceParameter(Parameter):
         if str(value) in self._choices:
             return str(value)
         else:
-            return self.config.default_config.get(self.section.name, self.name)
+            return self._choices[0]
 
 
 class ScenarioNameParameter(ChoiceParameter):
@@ -743,7 +743,7 @@ def main():
     config = pickle.loads(pickle.dumps(config))
     print(config.weather)
     # test changing scenario (and resulting RelativePathParameters)
-    config.scenario = r'C:\reference-case-open'
+    config.scenario = r'C:\reference-case-open\baseline'
     args = ['--reference-cases', 'zurich/baseline']
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)

@@ -38,11 +38,13 @@ class TestConfiguration(unittest.TestCase):
 
     def test_applying_parameters(self):
         config = cea.config.Configuration()
-        config.apply_command_line_args(['--scenario', tempfile.gettempdir().replace('\\', '/')], ['general'])
-        self.assertEquals(config.scenario, tempfile.gettempdir())
+        scenario = os.path.normpath(os.path.join(tempfile.gettempdir().replace('\\', '/'), 'baseline'))
+        if not os.path.exists(scenario):
+            os.mkdir(scenario)
+        config.apply_command_line_args(['--scenario', scenario], ['general'])
+        self.assertEquals(config.scenario, scenario)
         self.assertEquals(config.scenario, config.general.scenario)
         config = pickle.loads(pickle.dumps(config))
-        config.scenario = 'foo'
         self.assertEquals(config.scenario, config.general.scenario)
 
     def test_setting_weather(self):
