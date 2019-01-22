@@ -527,9 +527,12 @@ def main(network, config, network_number):
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
+    total_annual_cost = cost_output['total_annual_cost']
+    total_annual_capex = cost_output['annual_capex']
+    total_annual_opex = cost_output['annual_opex']
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type, network_number))
-    return
+    return total_annual_cost, total_annual_capex, total_annual_opex
 
 
 if __name__ == '__main__':

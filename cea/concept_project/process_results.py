@@ -197,7 +197,7 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network, conf
     return list_geo_thermal_network
 
 
-def write_shp(config, locator, list_geotranch, name='grid'):
+def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     """
     Write grid.shp and thermal_network.shp on base of list of coordinate data
 
@@ -262,10 +262,5 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     print (list_geo_thermal_network)
 
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
-    write_shp(config, locator, list_geo_grid, name=electrical_grid_file_name)
-    write_shp(config, locator, list_geo_thermal_network, name=thermal_network_file_name)
-
-    #Standarize coordinates for thermal network
-    street_geometry_path = locator.get_electric_networks_folder()+ '/' + thermal_network_file_name + '.shp'
-    street, _, _ = shapefile_to_WSG_and_UTM(street_geometry_path)
-    street.to_file(locator.get_electric_networks_folder()+ '/' + thermal_network_file_name + '.shp')
+    write_coordinates_to_shp_file(config, locator, list_geo_grid, electrical_grid_file_name)
+    write_coordinates_to_shp_file(config, locator, list_geo_thermal_network, thermal_network_file_name)
