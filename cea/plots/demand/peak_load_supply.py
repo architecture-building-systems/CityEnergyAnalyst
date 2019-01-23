@@ -6,16 +6,18 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 import cea.plots.demand
 
 
-class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
-    name = "Peak Load"
+class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
+    name = "Peak Load Supply"
 
     def __init__(self, project, parameters):
-        super(PeakLoadCurvePlot, self).__init__(project, parameters)
-        self.data = self.yearly_loads
-        self.data = self.data[self.data['Name'].isin(self.buildings)]
-        self.analysis_fields = ["E_sys0_kW",
-                                "Qhs_sys0_kW", "Qww_sys0_kW",
-                                "Qcs_sys0_kW", 'Qcdata_sys0_kW', 'Qcre_sys0_kW']
+        super(PeakLoadSupplyPlot, self).__init__(project, parameters)
+        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+        self.analysis_fields = self.remove_unused_fields(self.data,
+                                                         ["DH_hs0_kW", "DH_ww0_kW", 'SOLAR_ww0_kW', 'SOLAR_hs0_kW',
+                                                          "DC_cs0_kW", 'DC_cdata0_kW', 'DC_cre0_kW', 'GRID0_kW',
+                                                          'PV0_kW', 'NG_hs0_kW', 'COAL_hs0_kW', 'OIL_hs0_kW',
+                                                          'WOOD_hs0_kW', 'NG_ww0_kW', 'COAL_ww0_kW', 'OIL_ww0_kW',
+                                                          'WOOD_ww0_kW'])
         self.layout = go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
 
     def calc_graph(self):
@@ -100,6 +102,6 @@ if __name__ == '__main__':
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    PeakLoadCurvePlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    PeakLoadCurvePlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    PeakLoadCurvePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    PeakLoadSupplyPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
+    PeakLoadSupplyPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
+    PeakLoadSupplyPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
