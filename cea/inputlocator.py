@@ -523,6 +523,11 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_infrastructure.xlsx')
 
+    def get_electricity_costs(self, region):
+        """Returns the database of life cycle inventory for supply systems. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return self._get_region_specific_db_file(region, 'systems', 'electricity_costs.xlsx')
+
     def get_life_cycle_inventory_building_systems(self, region):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
