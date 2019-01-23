@@ -1,11 +1,19 @@
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from cea.plots.variable_naming import COLOR
+import numpy as np
+import pandas as pd
+
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
@@ -130,7 +138,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     data = data_frame[analysis_fields[0]]["NODE" + str(node)]
                 else:
                     node_index = np.where(all_nodes['Name'] == "NODE" + str(node))[0]
-                    if len(node_index)==1:
+                    if len(node_index) == 1:
                         building = str(all_nodes['Building'][node_index].values[0])
                         if building in data_frame[analysis_fields[0]].columns:
                             data = data_frame[analysis_fields[0]][building]
@@ -188,10 +196,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
 
         if not is_layout_plot:
             nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
-                                            edge_cmap=plt.cm.Blues, node_size=peak_demand)
+                                           edge_cmap=plt.cm.Blues, node_size=peak_demand)
         else:
             nodes = nx.draw_networkx_nodes(graph, pos, node_color='orange', with_labels=True,
-                                            node_size=peak_demand)
+                                           node_size=peak_demand)
 
         if not is_layout_plot:
             edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, width=Diameter,
