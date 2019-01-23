@@ -1,17 +1,18 @@
 rem script used to test the cea by the jenkins
 rem creates a conda environment (deleting the old one first)
 
-set PATH=%USERPROFILE%\Miniconda2\Scripts\;%PATH%
-set PATH=%PROGRAMDATA%\Miniconda2\Scripts\;%PATH%
-echo %USERPROFILE%
-where conda
-set CONDA_ENVS_PATH=%LOCALAPPDATA%\conda\conda\envs
-conda env remove -y -q --name ceatestall
-conda env create -q  --name ceatestall
-set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatestall;%PATH%
-set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts;%PATH%
-set CONDA_DEFAULT_ENV=ceatestall
-%LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts\pip.exe install .[dev]
-where cea
+call conda env remove -y -q --name ceatestall
+call conda env create -q --name ceatestall
+
+call activate ceatestall
+
+pip.exe install .
+
+rem where cea
+
 cea test --reference-cases open --tasks all --verbosity 1
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+call deactivate
+
 
