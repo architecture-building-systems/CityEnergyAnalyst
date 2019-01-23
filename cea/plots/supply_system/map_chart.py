@@ -2,16 +2,22 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import pandas as pd
-import geopandas as gpd
 
-import cea.config
-import cea.inputlocator
+import geopandas as gpd
 import jinja2
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def map_chart(data_frame, locator, analysis_fields, title, output_path,
@@ -19,7 +25,6 @@ def map_chart(data_frame, locator, analysis_fields, title, output_path,
               building_connected_not_connected):
     # CALCULATE TABLE
     table_div, header_values, cells_values = calc_table(data_frame, analysis_fields)
-
 
     # CALCULATE MAP FILES
     streets_json, buildings_json, edges_json, nodes_json = calc_graph(locator, output_name_network, output_type_network,

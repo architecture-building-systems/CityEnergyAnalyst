@@ -10,6 +10,16 @@ import pandas as pd
 import numpy as np
 
 
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
     name = "Energy balance"
 
