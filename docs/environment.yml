@@ -5,6 +5,7 @@ channels:
 dependencies:
 - numpy
 - pandas
+- geopandas
 - pyaml
 - pip:
   - py4design
