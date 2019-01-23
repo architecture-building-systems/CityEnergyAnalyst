@@ -7,6 +7,15 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
     """Implement the energy-use plot"""
@@ -66,7 +75,7 @@ def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
     data_frame['total'] = data_frame[analysis_fields].sum(axis=1)
-    data_frame = data_frame.sort_values(by='total', ascending=False)# this will get the maximum value to the left
+    data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
         name = NAMING[field]

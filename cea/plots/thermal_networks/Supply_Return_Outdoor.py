@@ -2,9 +2,19 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from plotly.offline import plot
 import plotly.graph_objs as go
+from plotly.offline import plot
+
 from cea.plots.variable_naming import LOGO, NAMING, COLOR
+
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, title, output_path):
