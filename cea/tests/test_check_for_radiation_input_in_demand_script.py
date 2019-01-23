@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import unittest
 import cea.config
+import cea.inputlocator
 
 class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
     """
@@ -11,34 +12,10 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
 
     This fixes the issue #222
     """
-
-    @classmethod
-    def setUpClass(cls):
-        """
-        Create a copy of the ninecubes reference case in the temp folder. The ninecubes reference case is
-        in the `../examples` folder as a zip file (`ninecubes.zip`) and has to be extracted first.
-        """
-        import zipfile
-        import cea.examples
-        import tempfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-        archive.extractall(tempfile.gettempdir())
-        cls.reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
-
-    @classmethod
-    def tearDownClass(cls):
-        """delete the ninecubes stuff from the temp directory"""
-        shutil.rmtree(os.path.join(tempfile.gettempdir(), 'reference-case-open'))
-
-    def test_ninecubes_copied(self):
-        """sanity check on `setUpClass`"""
-        self.assertTrue(os.path.exists(os.path.join(tempfile.gettempdir(), 'reference-case-open')))
-
     def test_demand_checks_radiation_arcgis_script(self):
         import cea.demand.demand_main
-        import cea.globalvar
 
-        locator = cea.inputlocator.InputLocator(os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline'))
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
         if os.path.exists(locator.get_radiation()):
             # scenario contains radiation.csv, remove it for test
             os.remove(locator.get_radiation())
@@ -51,11 +28,13 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         config.demand.use_daysim_radiation = False
         self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
 
+        # Make sure future instantiations of ReferenceCaseOpenLocator extract again as we deleted stuff
+        cea.inputlocator.ReferenceCaseOpenLocator.already_extracted = False
+
     def test_demand_checks_radiation_daysim_script(self):
         import cea.demand.demand_main
-        import cea.globalvar
 
-        locator = cea.inputlocator.InputLocator(os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline'))
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
         building_name = locator.get_zone_building_names()[0]
         if os.path.exists(locator.get_radiation_metadata(building_name)):
             # scenario contains radiation.csv, remove it for test
@@ -68,3 +47,4 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         config.scenario = locator.scenario
         config.demand.use_daysim_radiation = True
         self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
+        cea.inputlocator.ReferenceCaseOpenLocator.already_extracted = False

@@ -10,7 +10,7 @@ from cea.optimization.constants import N_HR, N_HEAT, N_SOLAR, N_COOL, INDICES_CO
 toolbox = base.Toolbox()
 
 
-def mutFlip(individual, proba, nBuildings):
+def mutFlip(individual, proba, nBuildings, config):
     """
     For all integer parameters of individual except the connection integers,
     flip the value with probability *proba*
@@ -25,48 +25,58 @@ def mutFlip(individual, proba, nBuildings):
     """
     mutant = toolbox.clone(individual)
 
-    # Flip the CHP
-    if individual[0] > 0:
-        if random.random() < proba:
-            CHPList = [1,2,3,4]
-            CHPList.remove(individual[0])
-            mutant[0] = random.choice(CHPList)
-
-    # Flip the Boiler NG/BG
-    indexList = [2,4]
-    for i in indexList:
-        if individual[i] == 1:
+    if config.district_heating_network:
+        # Flip the CHP
+        if individual[0] > 0:
             if random.random() < proba:
-                individual[i] = 2
-        if individual[i] == 2:
-            if random.random() < proba:
-                individual[i] = 1
+                CHPList = [1,2,3,4]
+                CHPList.remove(individual[0])
+                mutant[0] = random.choice(CHPList)
 
-    # Flip the HR units
-    for HR in range(N_HR):
-        if random.random() < proba:
-            mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR]+1) % 2
+        # Flip the Boiler NG/BG
+        indexList = [2,4]
+        for i in indexList:
+            if individual[i] == 1:
+                if random.random() < proba:
+                    individual[i] = 2
+            if individual[i] == 2:
+                if random.random() < proba:
+                    individual[i] = 1
+
+        # Flip the HR units
+        for HR in range(N_HR):
+            if random.random() < proba:
+                mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR]+1) % 2
     heating_block = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN
 
-    # Flip the cooling absorption chiller technology
-    if individual[heating_block + 4] > 0:
-        if random.random() < proba:
-            AC_List = [1,2,3,4]
-            AC_List.remove(individual[heating_block + 4])
-            mutant[heating_block + 4] = random.choice(AC_List)
+    if config.district_cooling_network:
+
+        # Flip the cooling absorption chiller technology
+        if individual[heating_block + 4] > 0:
+            if random.random() < proba:
+                AC_List = [1,2,3,4]
+                AC_List.remove(individual[heating_block + 4])
+                mutant[heating_block + 4] = random.choice(AC_List)
 
     # Flip the buildings' connection
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
-    for building in range(2*nBuildings):
-        if random.random() < proba:
-            mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
+    if config.district_heating_network:
+        for building in range(nBuildings):
+            if random.random() < proba:
+                mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
+
+    network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings
+    if config.district_cooling_network:
+        for building in range(nBuildings):
+            if random.random() < proba:
+                mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
 
     del mutant.fitness.values
 
     return mutant
 
 
-def mutShuffle(individual, proba, nBuildings):
+def mutShuffle(individual, proba, nBuildings, config):
     """
     Swap with probability *proba*
     :param individual: list of all parameters corresponding to an individual configuration
@@ -91,22 +101,37 @@ def mutShuffle(individual, proba, nBuildings):
                     mutant[irank:irank+2], mutant[rank:rank+2]
 
     # Swap
-    swap(N_HEAT,0)
+    if config.district_heating_network:
+        swap(N_HEAT,0)
     swap(N_SOLAR, N_HEAT * 2 + N_HR)
-    swap(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
+    if config.district_cooling_network:
+        swap(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
     # Swap buildings
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
 
-    for i in range(2*nBuildings):
+    if config.district_heating_network:
+        for i in range(nBuildings):
+            if random.random() < proba:
+                iswap = random.randint(0, nBuildings - 2)
+                if iswap >= i:
+                    iswap += 1
+                rank = network_block_starting_index + i
+                irank = network_block_starting_index + iswap
+                mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
 
-        if random.random() < proba:
-            iswap = random.randint(0, 2*nBuildings - 2)
-            if iswap >= i:
-                iswap += 1
-            rank = network_block_starting_index + i
-            irank = network_block_starting_index + iswap
-            mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
+    network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings
+
+    if config.district_cooling_network:
+        for i in range(nBuildings):
+            if random.random() < proba:
+                iswap = random.randint(0, nBuildings - 2)
+                if iswap >= i:
+                    iswap += 1
+                rank = network_block_starting_index + i
+                irank = network_block_starting_index + iswap
+                mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
+
 
     # Repair the system types
     for i in range(N_HEAT):
@@ -235,7 +260,7 @@ def mutUniformCap(individual):
     return mutant
 
 
-def mutGU(individual, proba):
+def mutGU(individual, proba, config):
     """
     Flip the presence of the Generation units with probability *proba*
     :param individual: list of all parameters corresponding to an individual configuration
@@ -285,9 +310,11 @@ def mutGU(individual, proba):
                     for i in range(nPlants):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
-    flip(N_HEAT, 0)
+    if config.district_heating_network:
+        flip(N_HEAT, 0)
     flip(N_SOLAR, N_HEAT * 2 + N_HR)
-    flip(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
+    if config.district_cooling_network:
+        flip(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
     
     del mutant.fitness.values
