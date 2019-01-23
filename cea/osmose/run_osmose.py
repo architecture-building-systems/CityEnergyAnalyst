@@ -5,6 +5,8 @@
 #
 # Author: Michel Lopez <michel.lopez@epfl.ch>
 import sys, os, subprocess, requests
+from threading import Timer
+import numpy as np
 # from pika import ConnectionParameters, PlainCredentials, BlockingConnection
 # import json
 # from appOwnExceptions import SolverError
@@ -91,43 +93,33 @@ import sys, os, subprocess, requests
     #     payload = {"uuid": self.__hexuuid, "app": "xOsmoseServer", "status": status, "project": project_name}
     #     requests.post(self.__status_url, json=payload)
 
-def exec_osmose(tech):
-    # frontend_path = os.path.join("projects", "frontend.lua")
-    # print("execute lua5.1 " + frontend_path + " in folder " + project_path)
-    # project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects\\"
-    #project_path = "C:\\Program Files (x86)\\Lua\\5.1"
-    #frontend_path = os.path.join(project_path,"HCS_coil_frontend.lua")
-
+def exec_osmose(tech, timeout_sec):
     frontend_file = tech + "_frontend.lua"
     frontend_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects\\" + frontend_file
     project_path = "C:\\OSMOSE_projects\\hcs_windows"
 
     p = subprocess.Popen(["lua", (frontend_path)], cwd=project_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print "running Lua: ", frontend_file
+    timeout = {"value": False}
+    timer = Timer(timeout_sec, kill_proc, [p, timeout])
+    timer.start()
     output, err = p.communicate()
-    # if err.decode('utf-8') is not '':
-    #     print(err.decode('utf-8'))
-    #     if err.decode('utf-8').startswith('WARNING:'):
-    #         return 'warning', err.decode('utf-8')
-    #     elif err.decode('utf-8').startswith('pandoc: Could not find image'):
-    #         return 'warning', err.decode('utf-8')
-    #     else:
-    #         raise ValueError(err.decode('utf-8'))
-            # raise SolverError(self.__hexuuid, "ERROR : " + err.decode('utf-8'))
+    timer.cancel()
+
+    # p2 = subprocess.Popen("C:\\Users\\Shanshan\\Desktop\\ampl\\ampl_lic.exe stop",
+    #                       cwd="C:\\Users\\Shanshan\\Desktop\\ampl")
+
     print(output.decode('utf-8'))
     return 'ok', output.decode('utf-8')
 
-def main(argv=None):
-    # if len(argv) is 0:
-    #     print("Server need user entries")
-    # else:
-    #     user, pwd, ip, port, vhost, queue, outqueue, elasticserver, dataPath = argv
 
-    # dataPath = ''
-    # c = Server(user, pwd, ip, port, vhost, queue, outqueue, elasticserver, dataPath)
-    # c.run()
+def kill_proc(proc, timeout):
+    timeout["value"] = True
+    proc.kill()
+    return np.nan
+
+def main(argv=None):
     exec_osmose()
 
 if __name__ == '__main__':
-    # main(sys.argv[1:])
     main()
