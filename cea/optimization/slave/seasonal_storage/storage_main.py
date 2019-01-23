@@ -349,7 +349,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     E_thermalstorage_W = np.add(E_aux_ch_W, E_aux_dech_W)
 
     # costs, GHG and PEN corresponding to the operation of the heat pump associated with thermal storage
-    costs_storage_USD = costs_storage_USD + np.sum(E_thermalstorage_W) * lca.ELEC_PRICE
+    for hour in range(len(E_thermalstorage_W)):
+        costs_storage_USD = costs_storage_USD + E_thermalstorage_W[hour] * lca.ELEC_PRICE[hour]
     GHG_storage_tonCO2 = GHG_storage_tonCO2 + (np.sum(E_thermalstorage_W) * lca.EL_TO_CO2 * WH_TO_J / 1.0E6)
     PEN_storage_MJoil = PEN_storage_MJoil + (np.sum(E_thermalstorage_W) * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6)
 
