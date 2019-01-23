@@ -122,7 +122,7 @@ def create_layout(title):
 
     layout = {
         'xaxis': {
-            'title': 'Operative Temperature [°C]',
+            'title': 'Operative Temperature [Â°C]',
             'range': [5, 35],
             'domain': XAXIS_DOMAIN_GRAPH
         },
@@ -358,11 +358,11 @@ def check_comfort(temperature, moisture, vertices_comfort_area):
     checks if a point of operative temperature and moisture ratio is inside the polygon of comfort defined by its
      vertices, the function only works if the polygon has constant moisture ratio edges
 
-    :param temperature: operative temperature [°C]
+    :param temperature: operative temperature [Â°C]
     :type temperature: list
     :param moisture: moisture ratio [g/kg dry air]
     :type moisture: list
-    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([°C],[g/kg dry air])
+    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([Â°C],[g/kg dry air])
     :type vertices_comfort_area: list of tuples
     :return: hours of comfort, hours of uncomfort
     :rtype: double, double
@@ -427,10 +427,10 @@ def datetime_in_season(dt, season_start, season_end):
 
 def p_ws_from_t(t_celsius):
     """
-    Calculate water vapor saturation pressure over liquid water for the temperature range of 0 to 200°C
+    Calculate water vapor saturation pressure over liquid water for the temperature range of 0 to 200Â°C
     Eq (6) in "CHAPTER 6 - PSYCHROMETRICS" in "2001 ASHRAE Fundamentals Handbook (SI)"
 
-    :param t_celsius: temperature [°C]
+    :param t_celsius: temperature [Â°C]
     :type t_celsius: double
     :return: water vapor saturation pressure [Pa]
     :rtype: double
@@ -486,7 +486,7 @@ def calc_constant_rh_curve(t_array, rh, p):
     """
     Calculates curves of humidity ratio at different temperatures for a constant relative humidity and pressure
 
-    :param t_array: array pf temperatures [°C]
+    :param t_array: array pf temperatures [Â°C]
     :type t_array: numpy.array
     :param rh: relative humidity [-]
     :type rh: double
