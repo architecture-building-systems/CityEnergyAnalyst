@@ -27,14 +27,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-creator.create("FitnessMin", base.Fitness, weights=(-1.0))
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
 random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
 
-def objective_function(individual, individual_number, config):
+def objective_function(individual, individual_number, config, building_names):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -43,8 +43,8 @@ def objective_function(individual, individual_number, config):
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
     print ('cea optimization progress: individual ' + str(individual_number) )
-    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number)
-    return total_annual_cost
+    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names)
+    return total_annual_cost, total_annual_capex
 
 def objective_function_wrapper(args):
     """
@@ -100,15 +100,15 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
     columns_of_saved_files = ['generation', 'individual']
 
-    for i in building_names: #DHN
-        columns_of_saved_files.append(str(i) + ' DHN')
+
+    # for i in building_names: #DHN
+    #     columns_of_saved_files.append(str(i) + ' DHN')
 
     for i in building_names: #DCN
         columns_of_saved_files.append(str(i) + ' DCN')
 
-    columns_of_saved_files.append('TAC')
-    columns_of_saved_files.append('CO2 emissions')
-    columns_of_saved_files.append('Primary Energy')
+    columns_of_saved_files.append('Total Annualized Cost')
+    columns_of_saved_files.append('CAPEX Total')
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     # stats.register("avg", numpy.mean, axis=0)
@@ -135,7 +135,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
-                                     repeat(config, len(invalid_ind))))
+                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -158,11 +158,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         for i, ind in enumerate(invalid_ind):
             saved_dataframe_for_each_generation['individual'][i] = i
             saved_dataframe_for_each_generation['generation'][i] = genCP
-            for j in range(len(columns_of_saved_files) - 5):
-                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
-            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
-            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
+            saved_dataframe_for_each_generation['Total Annualized Cost'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[1]
 
         saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(genCP))
 
@@ -190,7 +187,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
             fitnesses = toolbox.map(toolbox.evaluate,
                                     izip(invalid_ind, range(len(invalid_ind)),
-                                         repeat(config, len(invalid_ind))))
+                                         repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
 
             function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
             # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -230,7 +227,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
-                                     repeat(config, len(invalid_ind))))
+                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -244,11 +241,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         for i, ind in enumerate(invalid_ind):
             saved_dataframe_for_each_generation['individual'][i] = i
             saved_dataframe_for_each_generation['generation'][i] = g
-            for j in range(len(columns_of_saved_files) - 5):
-                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
-            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
-            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
+            saved_dataframe_for_each_generation['Total Annualized Cost'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[1]
 
         saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(g))
 
