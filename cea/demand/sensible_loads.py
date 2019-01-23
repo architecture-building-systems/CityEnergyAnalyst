@@ -106,13 +106,18 @@ def calc_I_rad(t, tsd, bpr):
     if np.isnan(tsd['theta_c'][t - 1]):
         temp_s_prev = tsd['T_ext'][t - 1]
 
+    # Temperature difference between T_sky and temp_s_prev
     theta_ss = tsd['T_sky'][t] - temp_s_prev
+
+    # Arithmetic average of the surface temperature and the sky temperature, in °C
+    theta_mean = (tsd['T_sky'][t] + temp_s_prev) / 2
+
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
-    I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
+    I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_mean) * bpr.rc_model[
         'Aw'] * theta_ss
-    I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
+    I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_mean) * bpr.rc_model[
         'Aroof'] * theta_ss
-    I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
+    I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_mean) * bpr.rc_model[
         'Aop_sup'] * theta_ss
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
