@@ -6,6 +6,16 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
+__author__ = "Bhargava Srepathi"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Bhargava Srepathi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
@@ -25,7 +35,6 @@ def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
 
 
 def calc_table(analysis_fields, data_frame):
-
     # analysis of renewable energy share
     data_frame['load base unit'] = calc_top_three_technologies(analysis_fields, data_frame, analysis_fields)
 
@@ -49,7 +58,7 @@ def calc_graph(analysis_fields, data):
             name = NAMING[field]
             total_perc = (y / data['total'] * 100).round(2).values
             total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-            trace = go.Bar(x=data['Name'], y=y, text=total_perc_txt, name = name,
+            trace = go.Bar(x=data['Name'], y=y, text=total_perc_txt, name=name,
                            marker=dict(color=COLOR[field]))
             graph.append(trace)
 

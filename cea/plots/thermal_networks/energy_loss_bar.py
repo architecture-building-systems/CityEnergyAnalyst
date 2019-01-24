@@ -1,11 +1,20 @@
 from __future__ import division
 from __future__ import print_function
 
+import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
-import pandas as pd
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
+
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def energy_loss_bar_plot(data_frame, analysis_fields, title, output_path):
@@ -62,7 +71,8 @@ def calc_table(analysis_fields, data_frame, substation_plot_flag):
     if not substation_plot_flag:
         table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
                          header=dict(
-                             values=['Loss Name', 'Total [kWh/yr]', 'Peak [kWh/yr]', 'Median [kWh/yr]', 'Highest 3 Losses']),
+                             values=['Loss Name', 'Total [kWh/yr]', 'Peak [kWh/yr]', 'Median [kWh/yr]',
+                                     'Highest 3 Losses']),
                          cells=dict(values=[load_names, total_perc, peak, median, anchors]))
     else:
         table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
@@ -92,7 +102,8 @@ def calc_graph(analysis_fields, data_frame, substation_plot_flag):
     # iterate through data to plot
     for field in analysis_fields:
         if not substation_plot_flag:
-            total_perc = (data_frame[field].values.reshape(1, len(total.index)) / data_frame['total'].values.reshape(1, len(
+            total_perc = \
+            (data_frame[field].values.reshape(1, len(total.index)) / data_frame['total'].values.reshape(1, len(
                 total.index)) * 100).round(2)[0]
             total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
             trace = go.Bar(x=data_frame.index, y=data_frame[field].values, name=NAMING[field],
