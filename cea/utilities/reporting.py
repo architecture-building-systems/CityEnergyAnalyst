@@ -52,7 +52,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
     plot_cool_moisture = True
     plot_cool_air = True
     plot_cool_sup = True
-    auto_open = True
+    auto_open = False 
 
     if plot_heat_load:
         filename = os.path.join(output_folder, "heat-load-{}.html").format(basename)
