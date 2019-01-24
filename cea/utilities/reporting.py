@@ -37,12 +37,8 @@ def full_report_to_xls(tsd, output_folder, basename):
     writer.save()
     writer.close()
 
-    # quick visualization
-    # UNCOMMENT THE NEXT LINE TO PRODUCE QUICK VISUALIZATIONS WITH PLOTLY OF THE DEMAND CALCULATION IN BUILDINGS
-    # quick_visualization_tsd(tsd, output_folder, basename)
 
-
-def quick_visualization_tsd(tsd, output_folder, building_name):
+def quick_visualization_tsd(tsd, output_folder, basename):
 
     # import keys
     from cea.demand.thermal_loads import TSD_KEYS_HEATING_LOADS, TSD_KEYS_HEATING_TEMP, TSD_KEYS_RC_TEMP, \
@@ -59,7 +55,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
     auto_open = True
 
     if plot_heat_load:
-        filename = os.path.join(output_folder, "heat-load-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "heat-load-{}.html").format(basename)
         traces = []
         for key in TSD_KEYS_HEATING_LOADS:
             y = tsd[key][50:150]
@@ -69,7 +65,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_heat_temp:
-        filename = os.path.join(output_folder, "heat-temp-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "heat-temp-{}.html").format(basename)
         traces = []
         keys = []
         keys.extend(TSD_KEYS_HEATING_TEMP)
@@ -82,7 +78,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_load:
-        filename = os.path.join(output_folder, "cool-load-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "cool-load-{}.html").format(basename)
         traces = []
         for key in TSD_KEYS_COOLING_LOADS:
             y = tsd[key]
@@ -92,7 +88,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_moisture:
-        filename = os.path.join(output_folder, "cool-moisture-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "cool-moisture-{}.html").format(basename)
         traces = []
         for key in TSD_KEYS_MOISTURE:
             y = tsd[key]
@@ -102,7 +98,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_air:
-        filename = os.path.join(output_folder, "cool-air-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "cool-air-{}.html").format(basename)
         traces = []
         for key in TSD_KEYS_VENTILATION_FLOWS:
             y = tsd[key]
@@ -112,7 +108,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_sup:
-        filename = os.path.join(output_folder, "cool-sup-{}.html").format(building_name)
+        filename = os.path.join(output_folder, "cool-sup-{}.html").format(basename)
         traces = []
         keys = []
         keys.extend(TSD_KEYS_COOLING_SUPPLY_TEMP)
