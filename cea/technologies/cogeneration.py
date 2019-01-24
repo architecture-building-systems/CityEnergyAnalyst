@@ -28,7 +28,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -88,7 +88,7 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca):
 
         range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
         range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * lca.ELEC_PRICE) / range_q_output_CC_W[i]
+            i] * lca_hour) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
@@ -349,11 +349,14 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
     Modeled after:
-        Approach A (NREL Approach):
-            http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
-            and
-            NREL : p.5  of [M. Zolot et al., 2004]_
-        Approach B (Empiric Approach): [Iain Staffell]_
+
+        - **Approach A (NREL Approach)**:
+          http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
+          and
+          NREL : p.5  of [M. Zolot et al., 2004]_
+
+        - **Approach B (Empiric Approach)**: [Iain Staffell]_
+
     :type Q_load_W : float
     :param Q_load_W: Load at each time step
     :type Q_design_W : float
@@ -366,6 +369,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     :returns eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
     :rtype Q_fuel : float
     :returns Q_fuel: Heat demand from fuel (in Watt)
+
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf

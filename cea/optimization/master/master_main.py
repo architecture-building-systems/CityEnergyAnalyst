@@ -198,11 +198,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             pop = toolbox.population(n=config.optimization.initialind)
             for i in xrange(len(pop)):
                 for j in xrange(len(pop[i])):
-                    pop[i][j] = cp['population'][i][j]
+                    pop[i][j] = cp['nsga_selected_population'][i][j]
             DHN_network_list = DHN_network_list
             DCN_network_list = DCN_network_list
-            epsInd = cp["epsIndicator"]
-
 
             for ind in pop:
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
@@ -257,13 +255,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         offspring = list(pop)
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings)
+            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings, config)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mutations.mutFlip(mutant, proba, nBuildings)
-            mutant = mutations.mutShuffle(mutant, proba, nBuildings)
-            offspring.append(mutations.mutGU(mutant, proba))
+            mutant = mutations.mutFlip(mutant, proba, nBuildings, config)
+            mutant = mutations.mutShuffle(mutant, proba, nBuildings, config)
+            offspring.append(mutations.mutGU(mutant, proba, config))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 

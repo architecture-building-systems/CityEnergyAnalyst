@@ -116,7 +116,6 @@ FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Woo
 FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
 FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant
 
-ZERNEZ_FLAG = False
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
@@ -185,8 +184,8 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 # operation temperature of the DHN. In this case, the excess temperature requirement is provided by installing
 # decentralised units. If it is False, it calculates the DHN supply temperature based on the demand of the buildings
 # connected in the network. The same goes for DCN temperature
-DHN_temperature_considered = True
-DCN_temperature_considered = True
+DHN_temperature_considered = False
+DCN_temperature_considered = False
 
 PROBA = 0.5
 SIGMAP = 0.2

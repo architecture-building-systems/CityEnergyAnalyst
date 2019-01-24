@@ -1,0 +1,22 @@
+ul.cea-file-listing {
+    padding-left: 0;
+}
+
+ul.cea-file-listing li {
+    display: block;
+}
+
+ul.cea-file-listing li a {
+    display: block;
+    padding-top: 0.2em;
+}
+
+ul.cea-file-listing a.bg-primary:focus {
+    color: #ffffff;
+    background-color: #337ab7;
+}
+
+ul.cea-file-listing li:hover {
+    color: #050505;
+    background-color: #f5f5f5;
+}

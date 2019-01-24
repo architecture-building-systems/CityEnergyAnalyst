@@ -9,7 +9,6 @@ cea.resources.radiation\_daysim package
 Submodules
 ----------
 
-
 cea.resources.radiation\_daysim.daysim\_main module
 ---------------------------------------------------
 
