@@ -18,6 +18,8 @@ from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
+import warnings
+warnings.filterwarnings("ignore")
 
 
 __author__ = "Jimeno A. Fonseca"
