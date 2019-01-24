@@ -17,7 +17,7 @@ from cea.utilities import reporting
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, region):
+                       temperatures_output, format_output, region, write_detailed_output):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -149,7 +149,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     #WRITE SOLAR RESULTS
     write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd)
+                  resolution_outputs, temperatures_output, tsd, write_detailed_output)
 
     return
 
@@ -162,7 +162,7 @@ def calc_QH_sys_QC_sys(tsd):
 
 
 def write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd):
+                  resolution_outputs, temperatures_output, tsd, write_detailed_output):
 
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -177,9 +177,9 @@ def write_results(bpr, building_name, date, format_output, loads_output, locator
     else:
         raise Exception('error')
 
-    # write report & quick visualization
-    # (NOTE: uncomment to write full report for debugging purposes)
-    # reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+    if write_detailed_output:
+        print('Writing detailed demand results of {} to .xls file.'.format(building_name))
+        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):
