@@ -440,7 +440,7 @@ def main(config):
     if longitude is None:
         longitude = get_longitude(config.scenario)
 
-    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+    path_default_arcgis_db = locator.get_default_arcgis_db()
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
                              latitude=latitude, longitude=longitude, year=config.radiation.year,
