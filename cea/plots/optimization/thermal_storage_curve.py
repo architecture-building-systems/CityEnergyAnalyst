@@ -7,6 +7,15 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, COLOR
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def thermal_storage_activation_curve(data_frame, analysis_fields_charging, analysis_fields_discharging,
                                      analysis_fields_status, title, output_path):
