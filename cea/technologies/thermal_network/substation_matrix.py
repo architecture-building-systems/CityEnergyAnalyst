@@ -187,8 +187,8 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
         if system == 'data':
             # calculate HEX area and UA for the data centers
             hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data, Q_nom_data.Q_hex_c_data = calc_hex_area_from_demand(
-                building_demand, 'data_sys',
-                '', T_DC_supply_C, thermal_network)
+                building_demand, 'cdata_sys', '', T_DC_supply_C, thermal_network)
+
         elif system == 're':
             # calculate HEX area and UA for cre
             hex_areas.A_hex_cs_re, UA_data.UA_cooling_cs_re, Q_nom_data.Q_hex_c_re = calc_hex_area_from_demand(
@@ -208,16 +208,14 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
     primary side: network; secondary side: building
     :param building_demand: DataFrame with demand values
-    :param load_type: 'cs_sys' or 'hs_sys' for cooling or heating
-    :param building_system: 'aru', 'ahu', 'scu', 'data_sys', 're_sys'
+    :param load_type: 'cs_sys' or 'hs_sys' for cooling or heating, 'cdata_sys', 'cre_sys'
+    :param building_system: 'aru', 'ahu', 'scu'
     :param T_supply_C: Supply temperature
     :return: HEX area and UA
     '''
 
     # calculate HEX area and UA for customers
     m = 'mcp' + load_type + '_' + building_system + 'kWperC'
-    if load_type == 'data_sys':  # necessary because column name for m is "mcpdata-sys" but for T is "Tcdata_sys" and Q is "Qcdata_sys"
-        load_type = 'cdata_sys'
     Q = 'Q' + load_type + '_' + building_system + 'kWh'
     T_sup = 'T' + load_type + '_sup_' + building_system + 'C'
     T_ret = 'T' + load_type + '_re_' + building_system + 'C'
@@ -463,7 +461,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_value['cs_scu'][t][name] = float(cc_value)
 
     if 'UA_cooling_cs_data' in substation_HEX_specs.HEX_UA.columns:
-        Qcdata_sys, t_DC_return_data, mcp_DC_data, cc_value = calc_HEX_cooling(building, 'data_sys', '', T_DC_supply_K,
+        Qcdata_sys, t_DC_return_data, mcp_DC_data, cc_value = calc_HEX_cooling(building, 'cdata_sys', '', T_DC_supply_K,
                                                                                substation_HEX_specs.HEX_UA.UA_cooling_cs_data[
                                                                                    '0'],
                                                                                thermal_network.cc_old['cs_data'][t][
@@ -581,8 +579,6 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
     """
 
     m_name = 'mcp' + type + '_' + name + 'kWperC'
-    if type == 'data_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
-        type = 'cdata_sys'
     Q_name = 'Q' + type + '_' + name + 'kWh'
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
     T_ret_name = 'T' + type + '_re_' + name + 'C'
@@ -712,8 +708,6 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
     """
 
     m_name = 'mcp' + type + '_' + name + 'kWperC'
-    if type == 'cdata_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
-        type = 'cdata_sys'
     Q_name = 'Q' + type + '_' + name + 'kWh'
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
     T_ret_name = 'T' + type + '_re_' + name + 'C'

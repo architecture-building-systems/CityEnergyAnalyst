@@ -60,8 +60,6 @@ class GlobalVariables(object):
         self.sensibilityStep = 2  # the more, the longer the sensibility analysis
 
         ########################### User inputs
-        self.ZernezFlag = 0
-
         self.roughness = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
 
         ########################### Model parameters

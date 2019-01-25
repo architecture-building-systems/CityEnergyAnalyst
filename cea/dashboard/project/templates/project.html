@@ -1,0 +1,80 @@
+{% extends "base_site.html" %}
+
+{% block title %} Project settings {% endblock title %}
+
+{% import 'input_macros.html' as input_macros %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Project</h3>
+        </div>
+      </div>
+
+      <!-- show the open file dialog -->
+    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+        <!-- see template file_listing.html for contents -->
+
+        </div>
+      </div>
+    </div>
+
+    <!-- show the open folder dialog -->
+    <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <!-- see template folder_listing.html for contents -->
+
+        </div>
+      </div>
+    </div>
+
+      <div class="clearfix"></div>
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Project data <small>Project-wide options</small></h2>
+              <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+              <br />
+              <form id="demo-form2" data-parsley-validate class="form-horizontal form-label-left" method="post"
+                    action="save">
+                {% for parameter in parameters %}
+                  {{ input_macros.input(parameter, weather_dict) }}
+                {% endfor %}
+
+                <div class="ln_solid"></div>
+                <div class="form-group">
+                  <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                    <button type="submit" class="btn btn-success">Save</button>
+                  </div>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+  <!-- Parsley -->
+  <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+  <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+{% endblock javascripts %}

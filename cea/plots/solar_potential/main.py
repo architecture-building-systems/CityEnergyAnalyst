@@ -4,16 +4,17 @@ This is the dashboard of CEA
 from __future__ import division
 from __future__ import print_function
 
-import os
+import time
+
+import numpy as np
+import pandas as pd
+
 import cea.config
 import cea.inputlocator
-from cea.plots.solar_potential.solar_radiation_curve import solar_radiation_curve
 from cea.plots.solar_potential.solar_radiation import solar_radiation_district
+from cea.plots.solar_potential.solar_radiation_curve import solar_radiation_curve
 from cea.plots.solar_potential.solar_radiation_monthly import solar_radiation_district_monthly
 from cea.utilities import epwreader
-import pandas as pd
-import numpy as np
-import time
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -26,7 +27,6 @@ __status__ = "Production"
 
 
 def plots_main(locator, config):
-
     # initialize timer
     t0 = time.clock()
 
@@ -56,16 +56,17 @@ def plots_main(locator, config):
     return
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, buildings, weather):
         # local variables
         self.locator = locator
         self.weather = weather
         self.analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
-                           'walls_east', 'walls_west', 'walls_south', 'walls_north', 'roofs_top']
+                                'walls_east', 'walls_west', 'walls_south', 'walls_north', 'roofs_top']
         self.buildings = self.preprocess_buildings(buildings)
-        self.data_processed_district = self.preprocessing(self.analysis_fields, self.buildings, self.locator, self.weather)
+        self.data_processed_district = self.preprocessing(self.analysis_fields, self.buildings, self.locator,
+                                                          self.weather)
         self.plot_title_tail = self.preprocess_plot_title(buildings)
         self.plot_output_path_header = self.preprocess_plot_outputpath(buildings)
 
@@ -109,7 +110,7 @@ class Plots():
                     array_field = np.array(
                         [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
                          select_sensors.index]).sum(axis=0)  #
-                    dict_not_aggregated[field] =  array_field
+                    dict_not_aggregated[field] = array_field
 
                 # add date and resample into months
                 df_not_aggregated = pd.DataFrame(dict_not_aggregated)
@@ -124,8 +125,8 @@ class Plots():
                     array_field = np.array(
                         [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
                          select_sensors.index]).sum(axis=0)
-                    dict_not_aggregated_2[field] = array_field # W
-                    dict_not_aggregated[field]  = dict_not_aggregated[field] + array_field
+                    dict_not_aggregated_2[field] = array_field  # W
+                    dict_not_aggregated[field] = dict_not_aggregated[field] + array_field
 
                     # add date and resample into months
                 df_not_aggregated = pd.DataFrame(dict_not_aggregated_2)
@@ -140,10 +141,12 @@ class Plots():
         input_data_aggregated_kW["DATE"] = weather_data["date"]
         input_data_not_aggregated_MW["Name"] = input_data_not_aggregated_MW.index.values
 
-        return {'input_data_aggregated_kW': input_data_aggregated_kW, "input_data_not_aggregated_MW":input_data_not_aggregated_MW}
+        return {'input_data_aggregated_kW': input_data_aggregated_kW,
+                "input_data_not_aggregated_MW": input_data_not_aggregated_MW}
 
     def solar_radiation_curve(self, category):
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_curve', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_curve',
+                                                             category)
         title = "Solar radiation curve" + self.plot_title_tail
         data = self.data_processed_district['input_data_aggregated_kW'].copy()
         plot = solar_radiation_curve(data, self.analysis_fields + ["T_ext_C"], title, output_path)
@@ -151,7 +154,8 @@ class Plots():
         return plot
 
     def solar_radiation_district_monthly(self, category):
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_monthly', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_monthly',
+                                                             category)
         title = "Solar radiation per month" + self.plot_title_tail
         data = self.data_processed_district['input_data_aggregated_kW'].copy()
         plot = solar_radiation_district_monthly(data, self.analysis_fields, title, output_path)
@@ -166,6 +170,7 @@ class Plots():
         plot = solar_radiation_district(data, self.analysis_fields, title, output_path)
 
         return plot
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

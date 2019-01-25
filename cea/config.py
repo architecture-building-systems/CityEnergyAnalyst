@@ -90,6 +90,11 @@ class Configuration(object):
         that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
+        if 'general:scenario' in self.restricted_to:
+            # since general:scenario is forced to be "{general:project}/{general:scenario-name}",
+            # allow those two too
+            self.restricted_to.append('general:project')
+            self.restricted_to.append('general:scenario-name')
 
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
@@ -167,6 +172,15 @@ class Configuration(object):
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
+
+    def get(self, fqname):
+        """Given a string of the form "section:parameter", return the value of that parameter"""
+        return self.get_parameter(fqname).get()
+
+    def get_parameter(self, fqname):
+        """Given a string of the form "section:parameter", return the parameter object"""
+        section, parameter = fqname.split(':')
+        return self.sections[section].parameters[parameter]
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
@@ -312,7 +326,7 @@ class Parameter(object):
 
     def get(self):
         """Return the value from the config file"""
-        encoded_value = self.config.user_config.get(self.section.name, self.name)
+        encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
         try:
             return self.decode(encoded_value)
@@ -530,11 +544,6 @@ class SubfoldersParameter(ListParameter):
             return []
 
 
-class BuildingsParameter(ListParameter):
-    """A list of buildings in the zone"""
-    typename = 'BuildingsParameter'
-
-
 class StringParameter(Parameter):
     typename = 'StringParameter'
 
@@ -615,7 +624,46 @@ class ChoiceParameter(Parameter):
         if str(value) in self._choices:
             return str(value)
         else:
-            return self.config.default_config.get(self.section.name, self.name)
+            return self._choices[0]
+
+
+class ScenarioNameParameter(ChoiceParameter):
+    """A parameter that can be set to a scenario-name"""
+    typename = 'ScenarioNameParameter'
+
+    def initialize(self, parser):
+        pass
+
+    def encode(self, value):
+        """Make sure the scenario folder exists"""
+        if not os.path.exists(os.path.join(self.config.project, value)):
+            return self._choices[0]
+        return str(value)
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list of scenarios in the project
+        return [folder for folder in os.listdir(self.config.project)
+                if os.path.isdir(os.path.join(self.config.project, folder))]
+
+
+class ScenarioParameter(Parameter):
+    """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
+
+    typename = 'ScenarioParameter'
+
+    def get_raw(self):
+        return "{general:project}/{general:scenario-name}"
+
+    def set(self, value):
+        """Update the {general:project} and {general:scenario-name} parameters"""
+        project, scenario_name = os.path.split(value)
+        self.config.project = project
+        self.config.scenario_name = scenario_name
+
+    def decode(self, value):
+        """Make sure the path is nicely formatted"""
+        return os.path.normpath(value)
 
 
 class MultiChoiceParameter(ChoiceParameter):
@@ -638,6 +686,21 @@ class MultiChoiceParameter(ChoiceParameter):
         return choices
 
 
+class BuildingsParameter(MultiChoiceParameter):
+    """A list of buildings in the zone"""
+    typename = 'BuildingsParameter'
+
+    def initialize(self, parser):
+        # skip the default MultiChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        return locator.get_zone_building_names()
+
+
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
     if line is None:
@@ -650,18 +713,18 @@ def parse_string_to_list(line):
 def main():
     """Run some tests on the configuration module"""
     config = Configuration()
-    print(config.plots.scenarios)
-    print(config.general.scenario)
     print(config.general.multiprocessing)
     # print(config.demand.heating_season_start)
     print(config.scenario)
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
     # make sure the config can be pickled (for multiprocessing)
-    config.scenario = r'C:\reference-case-zurich'
+    config.scenario = r'C:\reference-case-open'
+    print(config.project, config.scenario_name, config.scenario)
     import pickle
     config = pickle.loads(pickle.dumps(config))
-    assert config.scenario == r'C:\reference-case-zurich'
+    print(config.scenario)
+    assert config.scenario == r'C:\reference-case-open'
     print('reference case: %s' % config.scenario)
     # config = pickle.loads(pickle.dumps(config))
     # test overriding
@@ -680,11 +743,14 @@ def main():
     config = pickle.loads(pickle.dumps(config))
     print(config.weather)
     # test changing scenario (and resulting RelativePathParameters)
-    config.scenario = r'C:\reference-case-open'
+    config.scenario = r'C:\reference-case-open\baseline'
     args = ['--reference-cases', 'zurich/baseline']
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)
     print(config.scenario_plots.scenarios)
+    print(config.get('general:region'))
+    print(config.get('plots:buildings'))
+    print(config.get_parameter('general:scenario-name')._choices)
 
 
 if __name__ == '__main__':

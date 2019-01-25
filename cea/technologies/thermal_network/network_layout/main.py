@@ -34,7 +34,7 @@ def network_layout(config, locator, plant_building_names, output_name_network=""
     # Calculate points where the substations will be located
     calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
 
-    # Claculate potential network
+    # Calculate potential network
     calc_connectivity_network(path_default_arcgis_db, path_streets_shp, output_substations_shp,
                               path_potential_network)
 

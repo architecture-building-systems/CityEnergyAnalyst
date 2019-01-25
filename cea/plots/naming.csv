@@ -205,7 +205,7 @@ Activation curve,Q_AddBoiler_W,W,Back-up boiler generation,grey
 Activation curve,Q_BaseBoiler_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_W,W,Peak boiler generation,black
 Activation curve,Q_CHP_W,W,CHP generation (thermal) to direct load,brown
-Activation curve,Q_Furnace_W,W,Heating load provided by furnace,green
+Activation curve,Q_Furnace_W,W,Heating load provided by CHP-furnace,green
 Activation curve,Q_GHP_W,W,Heating load provided by geothermal heat pump,purple
 Activation curve,Q_HPLake_W,W,Heating load provided by heat pump associated with lake,blue
 Activation curve,Q_HPSew_W,W,Heating load provided by heat pump associated with sewage,blue_light
