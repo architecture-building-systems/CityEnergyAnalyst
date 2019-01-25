@@ -166,7 +166,7 @@ def calc_VCC_COP(config, load_types, centralized=True):
 
     Clark D (CUNDALL). Chiller energy efficiency 2013.
 
-    :param load_types:
+    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
     :param centralized:
     :return:
     """

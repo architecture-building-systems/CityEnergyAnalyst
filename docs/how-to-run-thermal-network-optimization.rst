@@ -41,7 +41,7 @@ For each optimization, the users can decide some variables related to thermal ne
 Plant location
 ^^^^^^^^^^^^^^
 This is a default variable, meaning that the optimization algorithm will always search for the optimal plant location(s).
-And it is not possible to disable this variable at the moment (v2.9).
+And it is not possible to disable this variable at the moment (v2.10).
 
 Number of Plants
 ^^^^^^^^^^^^^^^^
@@ -53,16 +53,31 @@ Building connections
 ^^^^^^^^^^^^^^^^^^^^
 The optimization can determine how many and which buildings in a district should be connected to the centralized network.
 The costs of the buildings that are disconnected from the centralized network are also evaluated.
+To enable this function, set ``optimize-building-connections = True``.
 
 Network Layout
 ^^^^^^^^^^^^^^
+The optimization can compare two types of network layout: branch or loop.
+To enable this variable, set the ``optimize-loop-branch = True``.
+The default layout is branch when ``optimize-loop-branch = False``.
 
 Network Load
 ^^^^^^^^^^^^
+**WARNING: This functionality is not available yet, see github issue `#1757 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1757>`_. **
+
+The optimization can evaluate which loads from the space heating/cooling systems to supply by the network.
+The space heating/cooling loads are divided into the loads from three units: Air Handling Units (AHU), Recirculated Air Units (RAU), and Sensible Cooling/Heating Units (SCU/SHU).
+Since all three units require different supply temperatures, therefore, it will affect thermal network performance.
+To enable this variable, set ``optimize-network-loads = True``
+
 
 Rule-based Approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^
-
+It is possible to enable some pre-defined constraints to save time for optimization.
+The constraints includes:
+#. When there are more than one plants in a network, always place one plant close to the anchor load.
+#. When setting ``optimize-building-connections = True``, always connect the building with the anchor load to the network.
+#. When setting ``optimize-network-loads = True``, always connect/disconnect both AHU and RAU to/from the network at the same time.
 
 
 

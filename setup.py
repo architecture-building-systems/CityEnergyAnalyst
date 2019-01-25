@@ -17,7 +17,8 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['setuptools', 'doit==0.29.0', 'py4design']
+INSTALL_REQUIRES = ['setuptools', 'doit==0.29.0', 'py4design', 'requests', 'xlrd', 'utm', 'pyyaml', 'sphinx', 'twine',
+                    'ipython', 'pymc3', 'seaborn', 'SALib', 'xlwt', 'jupyter', 'plotly']
 
 # For building the documentation on readthedocs, exclude some of the packages, as they create build errors...
 if os.environ.get('READTHEDOCS') == 'True':
@@ -40,7 +41,4 @@ setup(name='cityenergyanalyst',
       entry_points={
           'console_scripts': ['cea=cea.interfaces.cli.cli:main', 'cea-config=cea.interfaces.cli.cea_config:main'],
       },
-      extras_require={
-          'dev': ['sphinx', 'twine', 'ipython']
-      }
       )
