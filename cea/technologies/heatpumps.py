@@ -132,7 +132,7 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     """
     Operation cost of GSHP supplying DHN
 
@@ -164,7 +164,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca):
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
-    C_GHP_el_USD = E_GHP_req_W * lca.ELEC_PRICE
+    C_GHP_el_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
 
     return C_GHP_el_USD, E_GHP_req_W, qcoldot_W, q_therm_W
 
@@ -193,7 +193,7 @@ def GHP_Op_max(tsup_K, tground_K, nProbes):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -225,7 +225,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca):
 
     Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
-    C_HPL_el_USD = E_HPLake_req_W * lca.ELEC_PRICE
+    C_HPL_el_USD = E_HPLake_req_W * lca.ELEC_PRICE[hour]
 
     Q_cold_primary_W = qcolddot_W
 
@@ -278,7 +278,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
 
     return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W, hour):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -330,7 +330,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W)
             q_therm_W = Q_therm_Sew_W
         qcoldot_W = q_therm_W * (1 - (1 / COP))
         wdot_W = q_therm_W / COP
-        C_HPSew_el_pure_USD = wdot_W * lca.ELEC_PRICE
+        C_HPSew_el_pure_USD = wdot_W * lca.ELEC_PRICE[hour]
         C_HPSew_per_kWh_th_pure_USD = C_HPSew_el_pure_USD / (q_therm_W)
 
     return C_HPSew_el_pure_USD, C_HPSew_per_kWh_th_pure_USD, qcoldot_W, q_therm_W, wdot_W

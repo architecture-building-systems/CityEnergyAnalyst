@@ -7,11 +7,15 @@ A collection of utility functions for working with ``*.DBF`` (dBase database) fi
 
 """
 
-import pysal
 import numpy as np
 import pandas as pd
 import os
 import cea.config
+
+# import PySAL without the warning
+import warnings
+warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+import pysal
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

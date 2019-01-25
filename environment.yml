@@ -1,11 +1,48 @@
 name: cea
 channels:
+  - conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+  - dlr-sc
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - defaults
 dependencies:
+  - openssl=1.0.2p=h0c8e037_0
+  - m2w64-binutils=2.25.1=5
+  - m2w64-bzip2=1.0.6=6
+  - m2w64-crt-git=5.0.0.4636.2595836=2
+  - m2w64-gcc=5.3.0=6
+  - m2w64-gcc-ada=5.3.0=6
+  - m2w64-gcc-fortran=5.3.0=6
+  - m2w64-gcc-libgfortran=5.3.0=6
+  - m2w64-gcc-libs=5.3.0=7
+  - m2w64-gcc-libs-core=5.3.0=7
+  - m2w64-gcc-objc=5.3.0=6
+  - m2w64-gmp=6.1.0=2
+  - m2w64-headers-git=5.0.0.4636.c0ad18a=2
+  - m2w64-isl=0.16.1=2
+  - m2w64-libiconv=1.14=6
+  - m2w64-libmangle-git=5.0.0.4509.2e5a9a2=2
+  - m2w64-libwinpthread-git=5.0.0.4634.697f757=2
+  - m2w64-make=4.1.2351.a80a8b8=2
+  - m2w64-mpc=1.0.3=3
+  - m2w64-mpfr=3.1.4=4
+  - m2w64-pkg-config=0.29.1=2
+  - m2w64-toolchain=5.3.0=7
+  - m2w64-tools-git=5.0.0.4592.90b8472=2
+  - m2w64-windows-default-manifest=6.4=3
+  - m2w64-winpthreads-git=5.0.0.4634.697f757=2
+  - m2w64-zlib=1.2.8=10
+  - msys2-conda-epoch=20160418=1
+  - freeimageplus=3.17.0=vc9_0
+  - gl2ps=1.3.8=vc9_0
+  - oce=0.17.2=vc9_7
+  - pythonocc-core=0.17=py27_vc9_0
+  - tbb=4.3.6=vc9_0
+  - blas=1.0=mkl
+  - pyproj=1.9.5.1=py27_0
   - backports=1.0=py27_1
   - backports.functools_lru_cache=1.5=py27_1
   - backports_abc=0.5=py27h0ec6b72_0
-  - blas=1.0=mkl
   - ca-certificates=2018.03.07=0
   - certifi=2018.11.29=py27_0
   - click=7.0=py27_0
@@ -52,44 +89,17 @@ dependencies:
   - libtiff=4.0.9=he490001_2
   - libxml2=2.9.8=hdfd6920_1
   - llvmlite=0.27.0=py27hc56fc5f_0
-  - m2w64-binutils=2.25.1=5
-  - m2w64-bzip2=1.0.6=6
-  - m2w64-crt-git=5.0.0.4636.2595836=2
-  - m2w64-gcc=5.3.0=6
-  - m2w64-gcc-ada=5.3.0=6
-  - m2w64-gcc-fortran=5.3.0=6
-  - m2w64-gcc-libgfortran=5.3.0=6
-  - m2w64-gcc-libs=5.3.0=7
-  - m2w64-gcc-libs-core=5.3.0=7
-  - m2w64-gcc-objc=5.3.0=6
-  - m2w64-gmp=6.1.0=2
-  - m2w64-headers-git=5.0.0.4636.c0ad18a=2
-  - m2w64-isl=0.16.1=2
-  - m2w64-libiconv=1.14=6
-  - m2w64-libmangle-git=5.0.0.4509.2e5a9a2=2
-  - m2w64-libwinpthread-git=5.0.0.4634.697f757=2
-  - m2w64-make=4.1.2351.a80a8b8=2
-  - m2w64-mpc=1.0.3=3
-  - m2w64-mpfr=3.1.4=4
-  - m2w64-pkg-config=0.29.1=2
-  - m2w64-toolchain=5.3.0=7
-  - m2w64-tools-git=5.0.0.4592.90b8472=2
-  - m2w64-windows-default-manifest=6.4=3
-  - m2w64-winpthreads-git=5.0.0.4634.697f757=2
-  - m2w64-zlib=1.2.8=10
   - mako=1.0.7=py27_0
   - markupsafe=1.1.0=py27h0c8e037_0
   - matplotlib=2.2.3=py27h263d877_0
   - mkl=2019.1=144
   - mkl-service=1.1.2=py27h0b88c2a_5
   - mkl_fft=1.0.10=py27h44c1dab_0
-  - msys2-conda-epoch=20160418=1
   - munch=2.3.2=py27_0
   - numba=0.42.0=py27h39f3610_0
   - numpy=1.15.4=py27h5fc8d92_0
   - numpy-base=1.15.4=py27hb1d0314_0
   - openjpeg=2.3.0=h8d199b9_1
-  - openssl=1.0.2p=h0c8e037_0
   - pandas=0.23.4=py27h39f3610_0
   - patsy=0.5.1=py27_0
   - pip=18.1=py27_0
@@ -98,7 +108,6 @@ dependencies:
   - pygpu=0.7.6=py27hc997a72_0
   - pymc3=3.6=py27_0
   - pyparsing=2.3.0=py27_0
-  - pyproj=1.9.5.1=py27_0
   - pyqt=5.6.0=py27h6e61f57_6
   - pysal=1.14.4.post1=py27_1
   - python=2.7.15=hcb6e200_5
@@ -130,6 +139,7 @@ dependencies:
     - alabaster==0.7.12
     - babel==2.6.0
     - backports.shutil-get-terminal-size==1.0.0
+    - backports.shutil-which==3.5.2
     - bleach==3.1.0
     - chardet==3.0.4
     - cityenergyanalyst==2.9.0
@@ -137,38 +147,69 @@ dependencies:
     - colorama==0.4.1
     - configparser==3.5.0
     - cvxopt==1.2.2
+    - dash==0.35.2
+    - dash-core-components==0.42.1
+    - dash-html-components==0.13.5
+    - dash-renderer==0.16.2
     - decorator==4.3.0
+    - defusedxml==0.5.0
     - docutils==0.14
     - doit==0.29.0
+    - entrypoints==0.3
+    - flask==1.0.2
+    - flask-compress==1.4.0
     - idna==2.8
     - imagesize==1.1.0
+    - ipaddress==1.0.22
+    - ipykernel==4.10.0
     - ipython==5.8.0
     - ipython-genutils==0.2.0
+    - ipywidgets==7.4.2
+    - itsdangerous==1.1.0
     - jinja2==2.10
+    - jsonschema==2.6.0
+    - jupyter==1.0.0
+    - jupyter-client==5.2.4
+    - jupyter-console==5.2.0
+    - jupyter-core==4.4.0
     - lxml==4.3.0
+    - mistune==0.8.4
+    - nbconvert==5.4.0
+    - nbformat==4.4.0
     - networkx==2.2
+    - notebook==5.7.4
     - packaging==18.0
+    - pandocfilters==1.4.2
     - pathlib2==2.3.3
     - pickleshare==0.7.5
     - pkginfo==1.5.0.1
+    - plotly==2.5.0
+    - prometheus-client==0.5.0
     - prompt-toolkit==1.0.15
     - py4design==0.25
     - pycollada==0.6
     - pygments==2.3.1
     - pymf==0.1.9
     - pyshp==2.0.1
+    - pywinpty==0.5.5
     - pyyaml==3.13
+    - pyzmq==17.1.2
+    - qtconsole==4.4.3
     - readme-renderer==24.0
     - requests==2.21.0
     - requests-toolbelt==0.8.0
+    - retrying==1.3.3
     - salib==1.2
     - scandir==1.9.0
     - scikit-learn==0.20.2
     - seaborn==0.9.0
+    - send2trash==1.5.0
     - simplegeneric==0.8.1
     - snowballstemmer==1.2.1
     - sphinx==1.8.3
     - sphinxcontrib-websupport==1.1.0
+    - terminado==0.8.1
+    - testpath==0.4.2
     - traitlets==4.3.2
     - twine==1.12.1
     - typing==3.6.6
@@ -176,7 +217,9 @@ dependencies:
     - utm==0.4.2
     - wcwidth==0.1.7
     - webencodings==0.5.1
+    - werkzeug==0.14.1
+    - widgetsnbextension==3.4.2
     - win-unicode-console==0.5
     - xlrd==1.2.0
-prefix: C:\Users\darthoma\Miniconda2\envs\cea2
+    - xlwt==1.3.0
 

@@ -11,6 +11,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.plots.demand.comfort_chart import comfort_chart
 from cea.plots.demand.energy_balance import energy_balance
 from cea.plots.demand.energy_demand import energy_demand_district
 from cea.plots.demand.energy_use_intensity import energy_use_intensity_district, energy_use_intensity
@@ -18,8 +19,6 @@ from cea.plots.demand.heating_reset_schedule import heating_reset_schedule
 from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_district, peak_load_building
-from cea.plots.demand.comfort_chart import comfort_chart
-from cea.plots.variable_naming import NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -67,7 +66,6 @@ def plots_main(locator, config):
         plots.energy_supply_intensity(category)
         plots.energy_supply(category)
 
-
     # print execution time
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
@@ -75,7 +73,7 @@ def plots_main(locator, config):
     return
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, config, buildings):
         self.locator = locator
@@ -127,7 +125,7 @@ class Plots():
         self.plot_output_path_header = self.preprocess_plot_outputpath(buildings)
 
     def preprocess_plot_outputpath(self, buildings):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
+        if not buildings:  # get all buildings of the district if not indicated a single building
             return "District"
         elif len(buildings) == 1:
             return "Building_" + str(buildings[0])
@@ -152,7 +150,7 @@ class Plots():
         analysis_fields_no_zero = []
         for field in fields:
             sum = data[field].sum()
-            if sum >0 :
+            if sum > 0:
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
@@ -171,10 +169,11 @@ class Plots():
 
     def load_duration_curve(self, category):
         title = "Load Duration Curve" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve',
+                                                             category)
         analysis_fields = ["E_sys_kWh",
                            "Qhs_sys_kWh", "Qww_sys_kWh",
-                           "Qcs_sys_kWh",'Qcdata_sys_kWh', 'Qcre_sys_kWh']
+                           "Qcs_sys_kWh", 'Qcdata_sys_kWh', 'Qcre_sys_kWh']
         data = self.data_processed['hourly_loads'].copy()
         plot = load_duration_curve(data, analysis_fields, title, output_path)
         return plot
@@ -184,7 +183,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve', category)
         analysis_fields = ["E_sys_kWh",
                            "Qhs_sys_kWh", "Qww_sys_kWh",
-                           "Qcs_sys_kWh",'Qcdata_sys_kWh', 'Qcre_sys_kWh']
+                           "Qcs_sys_kWh", 'Qcdata_sys_kWh', 'Qcre_sys_kWh']
         data = self.data_processed['hourly_loads'].copy()
         plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
         return plot
@@ -205,7 +204,8 @@ class Plots():
 
     def energy_use_intensity(self, category):
         title = "Energy Use Intensity" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity',
+                                                             category)
         analysis_fields = ["E_sys_MWhyr",
                            "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                            "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
@@ -232,9 +232,9 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             self.plot_output_path_header + '_load_duration_curve_supply', category)
         analysis_fields = ["DH_hs_kWh", "DH_ww_kWh",
-                           'SOLAR_ww_kWh','SOLAR_hs_kWh',
-                           "DC_cs_kWh",'DC_cdata_kWh','DC_cre_kWh',
-                           'GRID_kWh','PV_kWh',
+                           'SOLAR_ww_kWh', 'SOLAR_hs_kWh',
+                           "DC_cs_kWh", 'DC_cdata_kWh', 'DC_cre_kWh',
+                           'GRID_kWh', 'PV_kWh',
                            'NG_hs_kWh',
                            'COAL_hs_kWh',
                            'OIL_hs_kWh',
@@ -250,11 +250,12 @@ class Plots():
 
     def load_curve_final(self, category):
         title = "Load Curve" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve_supply', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve_supply',
+                                                             category)
         analysis_fields = ["DH_hs_kWh", "DH_ww_kWh",
-                           'SOLAR_ww_kWh','SOLAR_hs_kWh',
-                           "DC_cs_kWh",'DC_cdata_kWh','DC_cre_kWh',
-                           'GRID_kWh','PV_kWh',
+                           'SOLAR_ww_kWh', 'SOLAR_hs_kWh',
+                           "DC_cs_kWh", 'DC_cdata_kWh', 'DC_cre_kWh',
+                           'GRID_kWh', 'PV_kWh',
                            'NG_hs_kWh',
                            'COAL_hs_kWh',
                            'OIL_hs_kWh',
@@ -270,10 +271,11 @@ class Plots():
 
     def peak_load_final(self, category):
         title = "Peak Load" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load_supply', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load_supply',
+                                                             category)
         analysis_fields = ["DH_hs0_kW", "DH_ww0_kW",
-                           'SOLAR_ww0_kW','SOLAR_hs0_kW',
-                           "DC_cs0_kW",'DC_cdata0_kW','DC_cre0_kW',
+                           'SOLAR_ww0_kW', 'SOLAR_hs0_kW',
+                           "DC_cs0_kW", 'DC_cdata0_kW', 'DC_cre0_kW',
                            'GRID0_kW', 'PV0_kW',
                            'NG_hs0_kW',
                            'COAL_hs0_kW',
@@ -282,7 +284,7 @@ class Plots():
                            'NG_ww0_kW',
                            'COAL_ww0_kW',
                            'OIL_ww0_kW',
-                           'WOOD_ww0_kW',]
+                           'WOOD_ww0_kW', ]
         data = self.data_processed['yearly_loads'].copy()
         analysis_fields = self.erase_zeros(data, analysis_fields)
         if len(self.buildings) == 1:
@@ -297,8 +299,8 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             self.plot_output_path_header + '_energy_supply_intensity', category)
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
+                           "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
                            'PV_MWhyr', 'GRID_MWhyr',
                            'NG_hs_MWhyr',
                            'COAL_hs_MWhyr',
@@ -322,8 +324,8 @@ class Plots():
         title = "Energy supply" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_supply', category)
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
+                           "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
                            'PV_MWhyr', 'GRID_MWhyr',
                            'NG_hs_MWhyr',
                            'COAL_hs_MWhyr',
@@ -373,10 +375,13 @@ class Plots():
 
     def heating_reset_schedule(self, category):
         title = "Heating Reset Schedule" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_heating_reset_schedule', category)
-        analysis_fields = ["Tww_sys_sup_C", "Tww_sys_re_C", 'Tcs_sys_re_ahu_C', 'Tcs_sys_re_aru_C', 'Tcs_sys_re_scu_C', 'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C',
-                           'Tcs_sys_sup_scu_C', 'Ths_sys_re_ahu_C', 'Ths_sys_re_aru_C', 'Ths_sys_re_shu_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_aru_C',
-                            'Ths_sys_sup_shu_C', ]
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_heating_reset_schedule',
+                                                             category)
+        analysis_fields = ["Tww_sys_sup_C", "Tww_sys_re_C", 'Tcs_sys_re_ahu_C', 'Tcs_sys_re_aru_C', 'Tcs_sys_re_scu_C',
+                           'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C',
+                           'Tcs_sys_sup_scu_C', 'Ths_sys_re_ahu_C', 'Ths_sys_re_aru_C', 'Ths_sys_re_shu_C',
+                           'Ths_sys_sup_ahu_C', 'Ths_sys_sup_aru_C',
+                           'Ths_sys_sup_shu_C', ]
         data = self.data_processed['hourly_loads'].copy()
         plot = heating_reset_schedule(data, analysis_fields, title, output_path)
         return plot
@@ -389,6 +394,7 @@ class Plots():
         locator = self.locator
         plot = comfort_chart(data, title, output_path, config, locator)
         return plot
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
