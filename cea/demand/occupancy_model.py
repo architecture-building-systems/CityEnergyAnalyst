@@ -170,7 +170,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
 
 def calc_process_schedules(schedules, archetype_schedules, bpr):
     # processes in hospital can also take place on weekends, otherwise assume industry schedule
-    if bpr.occupancy['HOSPITAL'] > 0.0:
+    if ('HOSPITAL' in bpr.occupancy.keys()) and (bpr.occupancy['HOSPITAL'] > 0.0):
         process_type = 'HOSPITAL'
     else:
         process_type = 'INDUSTRIAL'
