@@ -1,7 +1,9 @@
 import os
-import datetime
+import copy
+from datetime import datetime
 import pandas as pd
 import numpy as np
+import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
@@ -85,7 +87,7 @@ def event_xml_reader(file):
 
     return
 
-def matsim_population_reader(file):
+def matsim_population_to_curve(file):
     '''
     Code to read xml population file from a transportation model and transform it into an activity model for CEA.
 
@@ -158,8 +160,87 @@ def matsim_population_reader(file):
 
     return
 
-def main(file_path):
-    matsim_population_reader(file_path)
+def matsim_population_reader(locator, building_properties):
+    '''
+    Code to read xml population file from a transportation model and transform it into an activity model for CEA.
+
+    :param file:
+    :return:
+    '''
+
+    floor_areas = building_properties._prop_RC_model.Af
+    occupancy = building_properties._prop_occupancy
+    facilities = pd.read_csv(locator.get_facilities()).set_index('id')
+    tree = ET.parse(locator.get_population())
+    root = tree.getroot()
+    # activity_types = []
+    # building_list = []
+    # user_types = {}
+    length_of_day = 24
+    buildings = {}
+    building_schedules = {'employee': [], 'student': []}
+    # schedules = {'employeeETHUZH': [], 'employeeUSZ': [], 'patientUSZ': [], 'student': [], 'lunch': []}
+    number_of_people = 0
+    blank_schedule = np.zeros(length_of_day)
+
+    for person in root:
+        current_plan = {}
+        for occupation in building_schedules.keys():
+            if occupation in person.find('attributes')[6].text:
+                # only add occupant types in the pre-defined building_schedules dict
+                for plan in person.find('plan'):
+                    for activity in plan.iter('activity'):
+                        if activity.get('type') != 'lunch':
+                            facility = activity.get('facility')
+                            if facility in facilities.index:
+                            # only consider facilities in the facility catalogue
+                                if not facility in current_plan.keys():
+                                    current_plan[facility] = blank_schedule.copy()
+                                # define individual occupant's schedule in this particular facility
+                                start_time = datetime.strptime(activity.get('start_time'), '%H:%M:%S').hour
+                                current_plan[facility][start_time] += 1 - (datetime.strptime(activity.get('start_time'),
+                                                                                             '%H:%M:%S').minute) / 60
+                                if activity.get('end_time') != '24:00:00':
+                                    end_time = datetime.strptime(activity.get('end_time'), '%H:%M:%S').hour
+                                    current_plan[facility][end_time] += datetime.strptime(activity.get('end_time'),
+                                                                                          '%H:%M:%S').minute / 60
+                                else:
+                                    end_time = length_of_day
+                                current_plan[facility][start_time+1:end_time] += 1.0
+                for facility in current_plan.keys():
+                    if not facility in buildings.keys():
+                        buildings[facility] = copy.deepcopy(building_schedules)
+                    buildings[facility][occupation].append(current_plan[facility].tolist())
+
+    for facility in facilities.index:
+        building_names = facilities.loc[facility, 'EGID'].split('_')
+        if len(building_names) > 1:
+            # for now, split by conditioned area
+            total_area = np.sum(floor_areas[building_names])
+            student_area = np.sum(floor_areas[building_names] * np.sum(occupancy.loc[building_names, ['SCHOOL', 'LIBRARY']].transpose()))
+            first_student = 0
+            first_employee = 0
+            for i in range(len(building_names)):
+                student_area_i = floor_areas[building_names[i]] * np.sum(occupancy.loc[building_names[i], ['SCHOOL', 'LIBRARY']])
+                print i, 'of', len(building_names), '-', student_area_i, 'of', student_area
+                students = int(len(buildings[facility]['employee']) * floor_areas[building_names[i]] / total_area)
+                employees = int(len(buildings[facility]['student']) * floor_areas[building_names[i]] / total_area)
+                buildings[building_names[i]] = copy.deepcopy(building_schedules)
+                buildings[building_names[i]]['employee'] = buildings[facility]['employee'][
+                                                           first_employee:employees]
+                buildings[building_names[i]]['student'] = buildings[facility]['student'][
+                                                          first_student:students]
+                first_student += students
+                first_employee += employees
+            buildings.pop(facility)
+        else:
+            buildings[building_names[0]] = buildings.pop(facility)
+
+    return buildings
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    matsim_population_reader(locator)
 
 if __name__ == '__main__':
-    main(r'C:\Users\User\Documents\MATSim\ZH_Hochschulquartier\files_andreas\Share 20.11\zurich_population_cleanup.xml')
+    main(cea.config.Configuration())
