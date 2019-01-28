@@ -73,7 +73,6 @@ def demand_calculation(locator, config):
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     use_daysim_radiation = config.demand.use_daysim_radiation
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
-    use_matsim_population = config.demand.use_matsim_population
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
@@ -87,8 +86,6 @@ def demand_calculation(locator, config):
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation,
                                                                         override_variables)
-    if use_matsim_population:
-        occupants = matsim_population_reader(locator.get_matsim_population())
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
