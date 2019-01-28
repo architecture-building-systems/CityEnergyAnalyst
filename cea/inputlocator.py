@@ -568,11 +568,14 @@ class InputLocator(object):
     def get_microclimate_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'microclimate-data')
 
-    def get_matsim_population_folder(self):
-        return self._ensure_folder(self.scenario, 'inputs', 'matsim-population')
+    def get_population_folder(self):
+        return self._ensure_folder(self.scenario, 'inputs', 'transportation-data')
 
-    def get_matsim_population(self):
-        return os.path.join(self.get_matsim_population_folder(), 'population.xml')
+    def get_population(self):
+        return os.path.join(self.get_population_folder(), 'population.xml')
+
+    def get_facilities(self):
+        return os.path.join(self.get_population_folder(), 'facilities.csv')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
