@@ -1,0 +1,24 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "demand"[style=filled, fillcolor=darkorange];
+    "inputs/building-properties/internal_loads.dbf" -> "demand";
+    "outputs/data/solar-radiation/{BUILDING}_geometry.csv" -> "demand";
+    "databases/CH/lifecycle/LCA_infrastructure.xlsx" -> "demand";
+    "inputs/building-properties/indoor_comfort.dbf" -> "demand";
+    "inputs/building-geometry/zone.shp" -> "demand";
+    "outputs/data/solar-radiation/{BUILDING}_insolation_Whm2.json" -> "demand";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "demand";
+    "inputs/building-properties/architecture.dbf" -> "demand";
+    "databases/CH/archetypes/construction_properties.xlsx" -> "demand";
+    "inputs/building-properties/age.dbf" -> "demand";
+    "databases/CH/systems/emission_systems.xls" -> "demand";
+    "databases/CH/archetypes/system_controls.xlsx" -> "demand";
+    "demand" -> "outputs/data/demand/Total_demand.csv";
+    "databases/CH/systems/envelope_systems.xls" -> "demand";
+    "inputs/building-properties/technical_systems.dbf" -> "demand";
+    "inputs/building-properties/occupancy.dbf" -> "demand";
+    "inputs/building-properties/supply_systems.dbf" -> "demand";
+    "demand" -> "outputs/data/demand/{BUILDING}.csv";
+    "databases/CH/archetypes/occupancy_schedules.xlsx" -> "demand";
+}

@@ -1,0 +1,13 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "radiation-daysim"[style=filled, fillcolor=darkorange];
+    "radiation-daysim" -> "outputs/data/solar-radiation/{BUILDING}_geometry.csv";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "radiation-daysim";
+    "inputs/building-properties/architecture.dbf" -> "radiation-daysim";
+    "inputs/building-geometry/district.shp" -> "radiation-daysim";
+    "databases/CH/systems/envelope_systems.xls" -> "radiation-daysim";
+    "radiation-daysim" -> "outputs/data/solar-radiation/{BUILDING}_insolation_Whm2.json";
+    "inputs/topography/terrain.tif" -> "radiation-daysim";
+    "inputs/building-geometry/zone.shp" -> "radiation-daysim";
+}
