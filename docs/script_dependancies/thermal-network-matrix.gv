@@ -1,0 +1,28 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "thermal-network-matrix"[style=filled, fillcolor=darkorange];
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Plant_heat_requirement_kW.csv";
+    "thermal-network-matrix" -> "inputs/networks/DH/edges.shp";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__MassFlow_kgs.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Edges.csv";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Nominal_EdgeMassFlow_at_design_DH__kgpers.csv";
+    "databases/CH/systems/supply_systems.xls" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__P_DeltaP_kW.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__substaion_HEX_cost_USD.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__P_DeltaP_Pa.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Nodes.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__ploss_System_edges_kW.csv";
+    "inputs/networks/DH/nodes.shp" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Aggregated_Demand_DH__Wh.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Nodes.csv";
+    "outputs/data/demand/{BUILDING}.csv" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__T_Supply_K.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__qloss_System_kW.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__T_Return_K.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__EdgeNode.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Nominal_NodeMassFlow_at_design_DH__kgpers.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__ploss_Substations_kW.csv";
+    "databases/CH/systems/thermal_networks.xls" -> "thermal-network-matrix";
+}

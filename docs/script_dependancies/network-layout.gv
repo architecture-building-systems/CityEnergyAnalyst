@@ -1,0 +1,8 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "network-layout"[style=filled, fillcolor=darkorange];
+    "inputs/networks/streets.shp" -> "network-layout";
+    "outputs/data/demand/Total_demand.csv" -> "network-layout";
+    "inputs/building-geometry/zone.shp" -> "network-layout";
+}
