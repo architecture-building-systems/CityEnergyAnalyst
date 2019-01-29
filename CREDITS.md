@@ -1,7 +1,7 @@
 How to Cite
 ===========
 
-The CEA team. City Energy Analyst v 2.9.2. Zenodo. FIXME: @JIMENOFONSECA add this!. 2019.
+The CEA team, "City Energy Analyst v2.9.2", Zenodo, 2019, 10.5281/zenodo.2551827. 
 
 The CEA team
 ============
@@ -9,7 +9,7 @@ Starting from version 2.9.1 the credits are structured alphabetically (surname) 
 scrum master, project owner, project sponsor and collaborators.
 
 
-  - Version 2.9.1 - December 2018
+  - Version 2.9.2 - January 2019
 
     Developers:
     * [Amr Elesawy](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/amr-elesawy.html)
@@ -22,7 +22,7 @@ scrum master, project owner, project sponsor and collaborators.
     * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
 
     Scrum master:
-    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+    * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
 
     Project owner:
     * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
