@@ -7,6 +7,9 @@ import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
+student_facilities = ['SCHOOL', 'LIBRARY']
+employee_facilities = ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']
+
 def convert_matsim_plans_to_csv(xml_filename='plans100', xml_folder=r'C:\Users\User\Downloads'):
     # create path to xml file
     path_to_xml = os.path.join(xml_folder, xml_filename+'.xml')
@@ -216,15 +219,25 @@ def matsim_population_reader(locator, building_properties):
         building_names = facilities.loc[facility, 'EGID'].split('_')
         if len(building_names) > 1:
             # for now, split by conditioned area
-            total_area = np.sum(floor_areas[building_names])
-            student_area = np.sum(floor_areas[building_names] * np.sum(occupancy.loc[building_names, ['SCHOOL', 'LIBRARY']].transpose()))
             first_student = 0
             first_employee = 0
             for i in range(len(building_names)):
-                student_area_i = floor_areas[building_names[i]] * np.sum(occupancy.loc[building_names[i], ['SCHOOL', 'LIBRARY']])
-                print i, 'of', len(building_names), '-', student_area_i, 'of', student_area
-                students = int(len(buildings[facility]['employee']) * floor_areas[building_names[i]] / total_area)
-                employees = int(len(buildings[facility]['student']) * floor_areas[building_names[i]] / total_area)
+                if len(buildings[facility]['employee']) > 0:
+                    employees = int(len(buildings[facility]['employee']) *
+                                    (floor_areas[building_names[i]] *
+                                     np.sum(occupancy.loc[building_names[i], employee_facilities])) / np.sum(
+                        floor_areas[building_names] *
+                        np.sum(occupancy.loc[building_names, employee_facilities].transpose())))
+                else:
+                    employees = 0
+                if len(buildings[facility]['student']) > 0:
+                    students = int(len(buildings[facility]['student']) *
+                                   (floor_areas[building_names[i]] *
+                                    np.sum(occupancy.loc[building_names[i], student_facilities])) / np.sum(
+                        floor_areas[building_names] *
+                        np.sum(occupancy.loc[building_names, student_facilities].transpose())))
+                else:
+                    students = 0
                 buildings[building_names[i]] = copy.deepcopy(building_schedules)
                 buildings[building_names[i]]['employee'] = buildings[facility]['employee'][
                                                            first_employee:employees]
