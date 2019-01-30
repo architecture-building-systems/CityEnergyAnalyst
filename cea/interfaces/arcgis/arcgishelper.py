@@ -458,6 +458,13 @@ class PathParameterInfoBuilder(ParameterInfoBuilder):
         return parameter
 
 
+class ScenarioParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(ScenarioParameterInfoBuilder, self).get_parameter_info()
+        parameter.datatype = 'DEFolder'
+        return parameter
+
+
 class ChoiceParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(ChoiceParameterInfoBuilder, self).get_parameter_info()
@@ -779,6 +786,7 @@ def list_buildings(scenario):
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
+    cea.config.ScenarioParameter: ScenarioParameterInfoBuilder,
     cea.config.PathParameter: PathParameterInfoBuilder,
     cea.config.StringParameter: StringParameterInfoBuilder,
     cea.config.BooleanParameter: ScalarParameterInfoBuilder,
