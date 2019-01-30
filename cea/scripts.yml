@@ -50,7 +50,7 @@ Demand forecasting:
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
-               'general:number-of-cpus-to-keep-free', demand]
+               'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
 
 Energy potentials:
