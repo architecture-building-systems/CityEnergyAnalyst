@@ -105,21 +105,7 @@ class GlobalVariables(object):
         self.max_temperature_difference_tabs = 9  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
         self.max_surface_temperature_tabs = 27  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
 
-        # ==============================================================================================================
-        # Columns to write for the demand calculation
-        # ==============================================================================================================
-        # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = False  # if true: reports are generated, if false: not
 
-
-
-    def report(self, tsd, output_folder, basename):
-        """Use vars to fill worksheets in an excel file $destination_template based on the template.
-        The template references self.report_variables. The destination_template may contain date format codes that
-        will be updated with the current datetime."""
-        if self.testing:
-            from cea.utilities import reporting
-            reporting.full_report_to_xls(tsd, output_folder, basename)
 
     def log(self, msg, **kwargs):
         print msg % kwargs

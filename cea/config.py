@@ -640,6 +640,10 @@ class ScenarioNameParameter(ChoiceParameter):
             return self._choices[0]
         return str(value)
 
+    def decode(self, value):
+        # allow scenario name to be non-existing folder when reading from config file...
+        return str(value)
+
     @property
     def _choices(self):
         # set the `._choices` attribute to the list of scenarios in the project
