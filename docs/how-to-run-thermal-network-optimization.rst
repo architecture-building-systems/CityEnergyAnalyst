@@ -34,6 +34,16 @@ For this optimization, the users can adjust four optimization parameters or use 
 - number of generations:
 - lucky few:
 
+These parameters are case-study dependent and need to be tuned based on the user requirement. The default values
+provided are to act like a beacon in the research.
+
+NOTE: As Genetic Algorithm, which is stochastic in nature, is being used as an optimization algorithm, the results
+might not always be exact. So if there are 5 runs of the optimization, there is no guarantee that all 5 runs will
+yield the same solution, but the solutions will be in close proximity. For example, if in a minimization problem, the
+result in first run is 30056712, the second run might be 30045891 and the third run might be 30050025. But if the
+results are normalized they are within 0.1% of the each other. An ideal way to run Genetic Algorithm is to do multiple
+runs and take the best out of it and also note the worst result you might get from the optimization.
+
 Optimization Variables
 ----------------------
 For each optimization, the users can decide some variables related to thermal network design:
