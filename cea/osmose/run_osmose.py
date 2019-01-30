@@ -100,11 +100,11 @@ def exec_osmose(tech, timeout_sec):
 
     p = subprocess.Popen(["lua", (frontend_path)], cwd=project_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print "running Lua: ", frontend_file
-    timeout = {"value": False}
-    timer = Timer(timeout_sec, kill_proc, [p, timeout])
-    timer.start()
+    # timeout = {"value": False}
+    # timer = Timer(timeout_sec, kill_proc, [p, timeout])
+    # timer.start()
     output, err = p.communicate()
-    timer.cancel()
+    # timer.cancel()
 
     # p2 = subprocess.Popen("C:\\Users\\Shanshan\\Desktop\\ampl\\ampl_lic.exe stop",
     #                       cwd="C:\\Users\\Shanshan\\Desktop\\ampl")
