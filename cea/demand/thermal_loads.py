@@ -12,7 +12,8 @@ import os
 
 from cea.demand import demand_writers
 from cea.demand import latent_loads
-from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
+from cea.demand import occupancy_model_matsim_import as occupancy_model
+from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.utilities.physics import calc_wet_bulb_temperature
@@ -400,9 +401,13 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
     list_uses = usage_schedules['list_uses']
-    archetype_schedules = usage_schedules['archetype_schedules']
+    daily_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
+    if 'building_schedules' in usage_schedules.keys():
+        if bpr.name in usage_schedules['building_schedules'].keys():
+            for user in usage_schedules['building_schedules'][bpr.name].keys():
+                daily_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
+    schedules = occupancy_model.calc_schedules(list_uses, daily_schedules, bpr, archetype_values,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
