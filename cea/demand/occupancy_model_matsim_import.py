@@ -584,7 +584,8 @@ def read_schedules(use, x):
     dhw = [x['Weekday_3'].values[:24], x['Saturday_3'].values[:24], x['Sunday_3'].values[:24]]
     month = x['month'].values[:12]
 
-    if use == "INDUSTRIAL":
+    # if use == "INDUSTRIAL":
+    if 'Weekday_4' in x.index:
         pro = [x['Weekday_4'].values[:24], x['Saturday_4'].values[:24], x['Sunday_4'].values[:24]]
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]

@@ -7,7 +7,7 @@ import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
-student_facilities = ['SCHOOL', 'LIBRARY']
+student_facilities = ['SCHOOL'] #, 'LIBRARY']
 employee_facilities = ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']
 
 def convert_matsim_plans_to_csv(xml_filename='plans100', xml_folder=r'C:\Users\User\Downloads'):
