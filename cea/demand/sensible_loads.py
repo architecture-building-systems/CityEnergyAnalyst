@@ -110,7 +110,7 @@ def calc_I_rad(t, tsd, bpr):
 
     # theta_ss is the is the arithmetic average of the surface
     # temperature and the sky temperature, in °C.
-    theta_ss = 0.5 * (tsd['T_sky'][t] - temp_s_prev)  # [see 11.4.6 in ISO 13790]
+    theta_ss = 0.5 * (tsd['T_sky'][t] + temp_s_prev)  # [see 11.4.6 in ISO 13790]
 
     # delta_theta_er is the average difference between outdoor air temperature and sky temperature
     delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
