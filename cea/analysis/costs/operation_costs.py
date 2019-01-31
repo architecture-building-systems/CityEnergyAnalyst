@@ -60,6 +60,7 @@ def operation_costs(locator, config):
             heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['NFA_m2']
         except KeyError:
             print(heating)
+            print(heating.columns)
             raise
 
     # for cooling services
