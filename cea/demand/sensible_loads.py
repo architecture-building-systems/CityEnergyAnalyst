@@ -70,6 +70,7 @@ def calc_Qgain_lat(schedules, bpr):
 def calc_I_sol(t, bpr, tsd):
     """
     This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
+    see Eq. (23) in 11.3.1
 
     :param t: hour of the year
     :param bpr: building properties object
@@ -81,12 +82,12 @@ def calc_I_sol(t, bpr, tsd):
     """
 
     # calc irradiation to the sky
-    I_rad = calc_I_rad(t, tsd, bpr)
+    I_rad = calc_I_rad(t, tsd, bpr)  # according to section 11.3.1 in ISO 13790 I_rad is a positive term
 
     # get incident radiation
     I_sol_gross = bpr.solar.I_sol[t]
 
-    I_sol_net = I_sol_gross + I_rad
+    I_sol_net = I_sol_gross - I_rad  # Eq. (23) in 11.3.1, I_rad gets subtracted here
 
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
