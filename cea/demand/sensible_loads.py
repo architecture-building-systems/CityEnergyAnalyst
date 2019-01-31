@@ -82,12 +82,12 @@ def calc_I_sol(t, bpr, tsd):
     """
 
     # calc irradiation to the sky
-    I_rad = calc_I_rad(t, tsd, bpr)  # according to section 11.3.1 in ISO 13790 I_rad is a positive term
+    I_rad = calc_I_rad(t, tsd, bpr)  # according to section 11.3.2 in ISO 13790 I_rad is a positive term
 
     # get incident radiation
     I_sol_gross = bpr.solar.I_sol[t]
 
-    I_sol_net = I_sol_gross - I_rad  # Eq. (23) in 11.3.1, I_rad gets subtracted here
+    I_sol_net = I_sol_gross - I_rad  # Eq. (43) in 11.3.1, I_rad gets subtracted here
 
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
@@ -95,7 +95,7 @@ def calc_I_sol(t, bpr, tsd):
 def calc_I_rad(t, tsd, bpr):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
-    See Eq. (26) in 11.3.4
+    See Eq. (46) in 11.3.5
 
     :param t: hour of the year
     :param tsd: time series dataframe
@@ -130,7 +130,7 @@ def calc_I_rad(t, tsd, bpr):
 def calc_hr(emissivity, theta_ss):
     """
     This function calculates the external radiative heat transfer coefficient according to ISO 13790
-    see Eq. (30) in section 11.4.6
+    see Eq. (51) in section 11.4.6
 
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
