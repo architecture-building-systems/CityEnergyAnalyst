@@ -108,14 +108,13 @@ def calc_I_rad(t, tsd, bpr):
     if np.isnan(tsd['theta_c'][t - 1]):
         temp_s_prev = tsd['T_ext'][t - 1]
 
-    # theta_ss is the is the arithmetic average of the surface
-    # temperature and the sky temperature, in °C.
+    # theta_ss is the is the arithmetic average of the surface temperature and the sky temperature, in °C.
     theta_ss = 0.5 * (tsd['T_sky'][t] + temp_s_prev)  # [see 11.4.6 in ISO 13790]
 
     # delta_theta_er is the average difference between outdoor air temperature and sky temperature
     delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
 
-    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
+    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
     I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
         'Aw'] * delta_theta_er
     I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
