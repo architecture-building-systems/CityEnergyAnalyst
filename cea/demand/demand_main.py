@@ -14,7 +14,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import demand_writers
-from cea.demand import occupancy_model
+from cea.demand import occupancy_model_matsim_import as occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
@@ -89,7 +89,7 @@ def demand_calculation(locator, config):
     building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation,
                                                                         override_variables)
     if use_transportation_population:
-        occupants = matsim_population_reader(locator, building_properties)
+        schedules_dict['building_schedules'] = matsim_population_reader(locator, building_properties)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
@@ -135,6 +135,7 @@ def properties_and_schedule(locator, region, year, use_daysim_radiation, overrid
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.columns)
+    # changing schedule_maker to import only *daily* schedules!
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
 
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
