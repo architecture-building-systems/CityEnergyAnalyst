@@ -53,10 +53,14 @@ def operation_costs(locator, config):
     fields_to_plot = []
     heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
     for service in heating_services:
-        fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-        # calculate the total and relative costs
-        heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
-        heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['NFA_m2']
+        try:
+            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+            # calculate the total and relative costs
+            heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
+            heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['NFA_m2']
+        except KeyError:
+            print(heating)
+            raise
 
     # for cooling services
     dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
