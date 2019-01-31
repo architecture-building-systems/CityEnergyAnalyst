@@ -7,8 +7,8 @@ import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
-student_facilities = ['SCHOOL'] #, 'LIBRARY']
-employee_facilities = ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']
+STUDENT_FACILITIES = ['SCHOOL'] #, 'LIBRARY']
+EMPLOYEE_FACILITIES = ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']
 
 def convert_matsim_plans_to_csv(xml_filename='plans100', xml_folder=r'C:\Users\User\Downloads'):
     # create path to xml file
@@ -225,17 +225,17 @@ def matsim_population_reader(locator, building_properties):
                 if len(buildings[facility]['employee']) > 0:
                     employees = int(len(buildings[facility]['employee']) *
                                     (floor_areas[building_names[i]] *
-                                     np.sum(occupancy.loc[building_names[i], employee_facilities])) / np.sum(
+                                     np.sum(occupancy.loc[building_names[i], EMPLOYEE_FACILITIES])) / np.sum(
                         floor_areas[building_names] *
-                        np.sum(occupancy.loc[building_names, employee_facilities].transpose())))
+                        np.sum(occupancy.loc[building_names, EMPLOYEE_FACILITIES].transpose())))
                 else:
                     employees = 0
                 if len(buildings[facility]['student']) > 0:
                     students = int(len(buildings[facility]['student']) *
                                    (floor_areas[building_names[i]] *
-                                    np.sum(occupancy.loc[building_names[i], student_facilities])) / np.sum(
+                                    np.sum(occupancy.loc[building_names[i], STUDENT_FACILITIES])) / np.sum(
                         floor_areas[building_names] *
-                        np.sum(occupancy.loc[building_names, student_facilities].transpose())))
+                        np.sum(occupancy.loc[building_names, STUDENT_FACILITIES].transpose())))
                 else:
                     students = 0
                 buildings[building_names[i]] = copy.deepcopy(building_schedules)
