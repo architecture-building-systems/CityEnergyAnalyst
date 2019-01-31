@@ -94,6 +94,7 @@ def calc_I_sol(t, bpr, tsd):
 def calc_I_rad(t, tsd, bpr):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
+    See Eq. (26) in 11.3.4
 
     :param t: hour of the year
     :param tsd: time series dataframe
@@ -106,14 +107,20 @@ def calc_I_rad(t, tsd, bpr):
     if np.isnan(tsd['theta_c'][t - 1]):
         temp_s_prev = tsd['T_ext'][t - 1]
 
-    theta_ss = tsd['T_sky'][t] - temp_s_prev
+    # theta_ss is the is the arithmetic average of the surface
+    # temperature and the sky temperature, in °C.
+    theta_ss = 0.5 * (tsd['T_sky'][t] - temp_s_prev)  # [see 11.4.6 in ISO 13790]
+
+    # delta_theta_er is the average difference between outdoor air temperature and sky temperature
+    delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
+
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
     I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
-        'Aw'] * theta_ss
+        'Aw'] * delta_theta_er
     I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
-        'Aroof'] * theta_ss
+        'Aroof'] * delta_theta_er
     I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
-        'Aop_sup'] * theta_ss
+        'Aop_sup'] * delta_theta_er
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
     return I_rad
@@ -122,6 +129,7 @@ def calc_I_rad(t, tsd, bpr):
 def calc_hr(emissivity, theta_ss):
     """
     This function calculates the external radiative heat transfer coefficient according to ISO 13790
+    see Eq. (30) in section 11.4.6
 
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
