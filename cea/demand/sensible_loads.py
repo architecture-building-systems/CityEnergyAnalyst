@@ -69,7 +69,7 @@ def calc_Qgain_lat(schedules, bpr):
 
 def calc_I_sol(t, bpr, tsd):
     """
-    This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
+    This function calculates the net solar radiation (incident - reflected - re-irradiated) according to ISO 13790
     see Eq. (23) in 11.3.1
 
     :param t: hour of the year
