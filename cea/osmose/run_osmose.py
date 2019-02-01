@@ -93,21 +93,31 @@ import numpy as np
     #     payload = {"uuid": self.__hexuuid, "app": "xOsmoseServer", "status": status, "project": project_name}
     #     requests.post(self.__status_url, json=payload)
 
-def exec_osmose(tech, timeout_sec):
+def exec_osmose(tech):
     frontend_file = tech + "_frontend.lua"
     frontend_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects\\" + frontend_file
     project_path = "C:\\OSMOSE_projects\\hcs_windows"
 
+    timeout = {"value": False}
+
     p = subprocess.Popen(["lua", (frontend_path)], cwd=project_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print "running Lua: ", frontend_file
-    # timeout = {"value": False}
+
     # timer = Timer(timeout_sec, kill_proc, [p, timeout])
     # timer.start()
     output, err = p.communicate()
     # timer.cancel()
-
     # p2 = subprocess.Popen("C:\\Users\\Shanshan\\Desktop\\ampl\\ampl_lic.exe stop",
     #                       cwd="C:\\Users\\Shanshan\\Desktop\\ampl")
+
+    if err.decode('utf-8') is not '':
+        print(err.decode('utf-8'))
+        if err.decode('utf-8').startswith('WARNING:'):
+            print 'warning', err.decode('utf-8')
+        elif err.decode('utf-8').startswith('pandoc: Could not find image'):
+            print 'warning', err.decode('utf-8')
+        else:
+            print "ERROR : ", err.decode('utf-8')
 
     print(output.decode('utf-8'))
     return 'ok', output.decode('utf-8')

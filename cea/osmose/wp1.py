@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import time
+import subprocess
 
 import cea.osmose.extract_demand_outputs as extract_demand_outputs
 import cea.osmose.run_osmose as run_osmose
@@ -20,12 +21,21 @@ def main():
     building_names = ['B007'] # FIXME: temporary
 
     # run osmose
+    p_ampllic = subprocess.Popen("C:\\Users\\Shanshan\\Desktop\\ampl\\ampl_lic.exe start",
+                                 cwd="C:\\Users\\Shanshan\\Desktop\\ampl")
+    ampllic_out, ampllic_err = p_ampllic.communicate()
+    if ampllic_out is not None:
+        print ampllic_out.decode('utf-8')
+    if ampllic_err is not None:
+        ampllic_err.decode('utf-8')
+
     for building in building_names:
         # TODO: create folder to store results, or copy results
         # pause(building)
         for tech in TECHS:
-            timeout_sec = calc_timeout_sec(tech)
-            run_osmose.exec_osmose(tech, timeout_sec)
+            # timeout_sec = calc_timeout_sec(tech)
+            # run_osmose.exec_osmose(tech, timeout_sec)
+            run_osmose.exec_osmose(tech)
 
         # plot_results.main(building, TECHS) #TODO: change paths in osmose
 
@@ -33,7 +43,7 @@ def main():
 
 
 def calc_timeout_sec(tech):
-    time_dict = {"HCS_coil": 600, "HCS_ER0": 11000, "HCS_3for2": 1200, "HCS_LD": 120, "HCS_IEHX": 3000}
+    time_dict = {"HCS_coil" : 600, "HCS_ER0": 11000, "HCS_3for2": 1200, "HCS_LD": 120, "HCS_IEHX": 3000}
     return float(time_dict[tech])
 
 
