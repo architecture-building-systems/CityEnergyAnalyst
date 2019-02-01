@@ -50,7 +50,7 @@ Demand forecasting:
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
-               'general:number-of-cpus-to-keep-free', demand]
+               'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
 
 Energy potentials:
@@ -160,7 +160,7 @@ Sensitivity analysis:
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_samples
   parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order', 'sensitivity-demand:grid-jump',
+               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
                'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
 - name: sensitivity-demand-simulate

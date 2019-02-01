@@ -27,9 +27,11 @@ def network_layout(config, locator, plant_building_names, output_name_network=""
     connected_buildings = config.network_layout.buildings
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
-    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+    path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     total_demand_location = locator.get_total_demand()
+
+    path_default_arcgis_db = locator.get_default_arcgis_db()
+    print('Path to ArcGIS workspace: %s' % path_default_arcgis_db)
 
     # Calculate points where the substations will be located
     calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
