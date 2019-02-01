@@ -249,6 +249,9 @@ T_RE_COOL_MAX = 12 + 273.0
 DELTA_P_COEFF = 104.81
 DELTA_P_ORIGIN = 59016
 
+PIPELIFETIME = 40.0  # years, Data from A&W
+PIPEINTERESTRATE = 0.05  # 5% interest rate
+
 SUBSTATION_N = 20  # Lifetime after A+W default 20
 
 ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C
