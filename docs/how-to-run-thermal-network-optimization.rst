@@ -30,9 +30,9 @@ Optimization Parameters
 For this optimization, the users can adjust four optimization parameters or use the default numbers.
 
 - number of individuals (float): default 6
-- number of mutation (float): default
-- number of generations:
-- lucky few:
+- number of mutation (float): default 20
+- number of generations: default 20
+- lucky few: default 1
 
 These parameters are case-study dependent and need to be tuned based on the user requirement. The default values
 provided are to act like a beacon in the research.
