@@ -63,7 +63,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     # get occupant densities from archetypes schedules
     occupant_densities = {}
     for use in list_uses:
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(config.region), use).T
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(config.region), use, index_col=0).T
         area_per_occupant = archetypes_schedules['density'].values[:1][0]
         if area_per_occupant > 0:
             occupant_densities[use] = 1 / area_per_occupant
