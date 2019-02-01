@@ -321,12 +321,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
         while (Qh_output_CCGT_max_W - Qh_req_from_CCGT_max_W) <= 0:
             Q_GT_nom_sizing_W += 1000  # update GT size
             # get CCGT performance limits and functions at Q_GT_nom_sizing_W
-            CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, hour)
+            CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca.ELEC_PRICE[hour])
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performance functions
         Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + SIZING_MARGIN)  # installed CCGT capacity
-        CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, hour)
+        CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca.ELEC_PRICE[hour])
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
             'fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
