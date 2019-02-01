@@ -89,7 +89,7 @@ class DemandWriter(object):
         else:
             self.temperature_vars = temperatures
 
-        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2' 'people0']
+        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2', 'people0']
 
     def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
