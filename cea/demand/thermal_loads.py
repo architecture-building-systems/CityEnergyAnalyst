@@ -18,6 +18,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.utilities.physics import calc_wet_bulb_temperature
 from cea.technologies import heatpumps
+from cea.demand.transportation.matsim_data_import import TRANSPORTATION_FACILITIES
 
 import cea.utilities
 
@@ -96,7 +97,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
             actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
 
-    schedules, tsd = initialize_inputs(bpr, usage_schedules, actual_weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, actual_weather_data, use_stochastic_occupancy, date)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
@@ -377,7 +378,7 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region):
     return tsd
 
 
-def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy, date):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -401,13 +402,15 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
     list_uses = usage_schedules['list_uses']
-    daily_schedules = usage_schedules['archetype_schedules']
+    all_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
     if 'building_schedules' in usage_schedules.keys():
         if bpr.name in usage_schedules['building_schedules'].keys():
             for user in usage_schedules['building_schedules'][bpr.name].keys():
-                daily_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
-    schedules = occupancy_model.calc_schedules(list_uses, daily_schedules, bpr, archetype_values,
+                all_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
+            all_schedules['patient'] = all_schedules['HOSPITAL']
+            list_uses = [use for use in list_uses not in [TRANSPORTATION_FACILITIES.values()]]
+    schedules = occupancy_model.calc_schedules(list_uses, all_schedules, bpr, archetype_values, date,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
