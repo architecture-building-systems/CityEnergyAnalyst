@@ -7,8 +7,8 @@ import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
-STUDENT_FACILITIES = ['SCHOOL'] #, 'LIBRARY']
-EMPLOYEE_FACILITIES = ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']
+TRANSPORTATION_FACILITIES = {'student': ['SCHOOL'], #, 'LIBRARY']
+                             'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
 
 def convert_matsim_plans_to_csv(xml_filename='plans100', xml_folder=r'C:\Users\User\Downloads'):
     # create path to xml file
@@ -176,14 +176,9 @@ def matsim_population_reader(locator, building_properties):
     facilities = pd.read_csv(locator.get_facilities()).set_index('id')
     tree = ET.parse(locator.get_population())
     root = tree.getroot()
-    # activity_types = []
-    # building_list = []
-    # user_types = {}
     length_of_day = 24
     buildings = {}
     building_schedules = {'employee': [], 'student': []}
-    # schedules = {'employeeETHUZH': [], 'employeeUSZ': [], 'patientUSZ': [], 'student': [], 'lunch': []}
-    number_of_people = 0
     blank_schedule = np.zeros(length_of_day)
 
     for person in root:
@@ -196,7 +191,7 @@ def matsim_population_reader(locator, building_properties):
                         if activity.get('type') != 'lunch':
                             facility = activity.get('facility')
                             if facility in facilities.index:
-                            # only consider facilities in the facility catalogue
+                                # only consider facilities in the facility catalogue
                                 if not facility in current_plan.keys():
                                     current_plan[facility] = blank_schedule.copy()
                                 # define individual occupant's schedule in this particular facility
@@ -214,28 +209,25 @@ def matsim_population_reader(locator, building_properties):
                     if not facility in buildings.keys():
                         buildings[facility] = copy.deepcopy(building_schedules)
                     buildings[facility][occupation].append(current_plan[facility].tolist())
-
     for facility in facilities.index:
         building_names = facilities.loc[facility, 'EGID'].split('_')
         if len(building_names) > 1:
-            # for now, split by conditioned area
             first_student = 0
             first_employee = 0
             for i in range(len(building_names)):
                 if len(buildings[facility]['employee']) > 0:
                     employees = int(len(buildings[facility]['employee']) *
                                     (floor_areas[building_names[i]] *
-                                     np.sum(occupancy.loc[building_names[i], EMPLOYEE_FACILITIES])) / np.sum(
+                                     np.sum(occupancy.loc[building_names[i], TRANSPORTATION_FACILITIES['employee']])) / np.sum(
                         floor_areas[building_names] *
-                        np.sum(occupancy.loc[building_names, EMPLOYEE_FACILITIES].transpose())))
+                        np.sum(occupancy.loc[building_names, TRANSPORTATION_FACILITIES['employee']].transpose())))
                 else:
                     employees = 0
                 if len(buildings[facility]['student']) > 0:
-                    students = int(len(buildings[facility]['student']) *
-                                   (floor_areas[building_names[i]] *
-                                    np.sum(occupancy.loc[building_names[i], STUDENT_FACILITIES])) / np.sum(
-                        floor_areas[building_names] *
-                        np.sum(occupancy.loc[building_names, STUDENT_FACILITIES].transpose())))
+                    students = int(len(buildings[facility]['student']) * (floor_areas[building_names[i]] * np.sum(
+                        occupancy.loc[building_names[i], TRANSPORTATION_FACILITIES['student']])) / np.sum(
+                        floor_areas[building_names] * np.sum(
+                            occupancy.loc[building_names, TRANSPORTATION_FACILITIES['student']].transpose())))
                 else:
                     students = 0
                 buildings[building_names[i]] = copy.deepcopy(building_schedules)
