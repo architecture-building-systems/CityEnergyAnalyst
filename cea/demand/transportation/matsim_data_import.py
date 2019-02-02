@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 TRANSPORTATION_FACILITIES = {'student': ['SCHOOL'], #, 'LIBRARY']
                              'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
+HOSPITAL_EMPLOYEE_DENSITY = 126000.0/3900.0
+HOSPITAL_PATIENT_DENSITY = 126000.0/1700.0
 
 def convert_matsim_plans_to_csv(xml_filename='plans100', xml_folder=r'C:\Users\User\Downloads'):
     # create path to xml file
@@ -216,6 +218,7 @@ def matsim_population_reader(locator, building_properties):
             first_employee = 0
             for i in range(len(building_names)):
                 if len(buildings[facility]['employee']) > 0:
+                    # for now distribute only by conditioned area
                     employees = int(len(buildings[facility]['employee']) *
                                     (floor_areas[building_names[i]] *
                                      np.sum(occupancy.loc[building_names[i], TRANSPORTATION_FACILITIES['employee']])) / np.sum(
