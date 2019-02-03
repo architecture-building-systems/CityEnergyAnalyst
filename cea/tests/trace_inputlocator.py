@@ -9,7 +9,7 @@ import cea.api
 import pprint
 from collections import defaultdict
 from datetime import datetime
-from jinja2 import Template
+from jinja2 import Template, Environment, FileSystemLoader
 import cea.inputlocator
 
 
@@ -59,14 +59,18 @@ def main(config):
             print("{}, {}".format(locator_method, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
+            file_path = os.path.dirname(relative_filename)
+            file_name = os.path.basename(relative_filename)
+
             for building in locator.get_zone_building_names():
                 # remove "B01", "B02" etc. from filenames -> "BXX"
                 relative_filename = relative_filename.replace(building, '{BUILDING}')
             relative_filename = str(relative_filename)
             if script_start < mtime:
-                trace_data.add(('output', script_name, locator_method, relative_filename))
+                trace_data.add(('output', script_name, locator_method, file_path, file_name))
             else:
-                trace_data.add(('input', script_name, locator_method, relative_filename))
+                trace_data.add(('input', script_name, locator_method, file_path, file_name))
+
 
     config.restricted_to = None
     create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
@@ -76,8 +80,10 @@ def main(config):
 def create_graphviz_output(trace_data, graphviz_output_file):
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
+    trace_data = sorted(trace_data)
     scripts = sorted(set([td[1] for td in trace_data]))
-    digraph = template.render(trace_data=trace_data, scripts=scripts)
+    db_group = sorted(set(td[3] for td in trace_data))
+    digraph = template.render(trace_data=trace_data, scripts=scripts, db_group=db_group)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
     with open(graphviz_output_file, 'w') as f:
@@ -89,9 +95,9 @@ def create_yaml_output(trace_data, yaml_output_file):
     import yaml
     scripts = sorted(set([td[1] for td in trace_data]))
     yml_data = {}  # script -> inputs, outputs
-    for direction, script, locator, file in trace_data:
+    for direction, script, locator, path, file in trace_data:
         yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
-        yml_data[script][direction].append((locator, file))
+        yml_data[script][direction].append((locator, path, file))
     for script in scripts:
         yml_data[script]['input'] = sorted(yml_data[script]['input'])
         yml_data[script]['output'] = sorted(yml_data[script]['output'])
