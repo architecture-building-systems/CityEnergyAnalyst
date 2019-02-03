@@ -17,10 +17,12 @@ digraph trace_inputlocator {
 
     {% for db in range(0, db_group|length) %}
     subgraph cluster_{{db}} {
+        style = filled;
+        color = peachpuff;
         label="{{db_group[db]}}";
         {% for direction, script, locator, path, file in trace_data %}
         {% if path == db_group[db] %}
-    "{{file}}"
+    "{{file}}"[style=filled, color=white]
         {% endif %}
         {% endfor %}
     }

@@ -1,0 +1,32 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "data-helper"[style=filled, fillcolor=darkorange];
+    "construction_properties.xlsx" -> "data-helper"[label="get_archetypes_properties"]
+    "occupancy_schedules.xlsx" -> "data-helper"[label="get_archetypes_schedules"]
+    "age.dbf" -> "data-helper"[label="get_building_age"]
+    "occupancy.dbf" -> "data-helper"[label="get_building_occupancy"]
+    "data-helper" -> "architecture.dbf"[label="get_building_architecture"]
+    "data-helper" -> "indoor_comfort.dbf"[label="get_building_comfort"]
+    "data-helper" -> "technical_systems.dbf"[label="get_building_hvac"]
+    "data-helper" -> "internal_loads.dbf"[label="get_building_internal"]
+    "data-helper" -> "restrictions.dbf"[label="get_building_restrictions"]
+    "data-helper" -> "supply_systems.dbf"[label="get_building_supply"]
+    subgraph cluster_0 {
+        label="databases/CH/archetypes";
+    "construction_properties.xlsx"
+    "occupancy_schedules.xlsx"
+    }
+    subgraph cluster_1 {
+        label="inputs/building-properties";
+    "age.dbf"
+    "occupancy.dbf"
+    "architecture.dbf"
+    "indoor_comfort.dbf"
+    "technical_systems.dbf"
+    "internal_loads.dbf"
+    "restrictions.dbf"
+    "supply_systems.dbf"
+    }
+}
