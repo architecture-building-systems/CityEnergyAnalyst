@@ -1,16 +1,28 @@
 digraph trace_inputlocator {
     rankdir="LR";
     node [shape=box];
+    graph [overlap = false];
 
     {% for script in scripts %}
     "{{script}}"[style=filled, fillcolor=darkorange];
     {% endfor %}
 
-    {% for direction, script, locator, file in trace_data %}
+    {% for direction, script, locator, path, file in trace_data %}
         {% if direction == 'input' %}
-    "{{file}}" -> "{{script}}";
+    "{{file}}" -> "{{script}}"[label="{{locator}}"]
         {% else %}
-    "{{script}}" -> "{{file}}";
+    "{{script}}" -> "{{file}}"[label="{{locator}}"]
         {% endif %}
+    {% endfor %}
+
+    {% for db in range(0, db_group|length) %}
+    subgraph cluster_{{db}} {
+        label="{{db_group[db]}}";
+        {% for direction, script, locator, path, file in trace_data %}
+        {% if path == db_group[db] %}
+    "{{file}}"
+        {% endif %}
+        {% endfor %}
+    }
     {% endfor %}
 }
