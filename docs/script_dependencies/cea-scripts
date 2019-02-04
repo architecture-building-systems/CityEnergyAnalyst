@@ -1,0 +1,115 @@
+CEA Scripts
+===========
+CEA relies on a number of scripts to perform tasks, which may share dependencies.
+This section aims to clarify the databases created or used by each script, along with the methods used
+to access this data.
+
+
+data-helper
+-----------
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "data-helper"[style=filled, fillcolor=darkorange];
+    "data-helper" -> "inputs/building-properties/indoor_comfort.dbf";
+    "inputs/building-properties/occupancy.dbf" -> "data-helper";
+    "data-helper" -> "inputs/building-properties/internal_loads.dbf";
+    "data-helper" -> "inputs/building-properties/supply_systems.dbf";
+    "data-helper" -> "inputs/building-properties/architecture.dbf";
+    "data-helper" -> "inputs/building-properties/technical_systems.dbf";
+    "inputs/building-properties/age.dbf" -> "data-helper";
+    "databases/CH/archetypes/occupancy_schedules.xlsx" -> "data-helper";
+    "databases/CH/archetypes/construction_properties.xlsx" -> "data-helper";
+    "data-helper" -> "inputs/building-properties/restrictions.dbf";
+}
+    
+thermal-network-matrix
+----------------------
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "thermal-network-matrix"[style=filled, fillcolor=darkorange];
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Plant_heat_requirement_kW.csv";
+    "thermal-network-matrix" -> "inputs/networks/DH/edges.shp";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__MassFlow_kgs.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Edges.csv";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Nominal_EdgeMassFlow_at_design_DH__kgpers.csv";
+    "databases/CH/systems/supply_systems.xls" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__P_DeltaP_kW.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__substaion_HEX_cost_USD.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__P_DeltaP_Pa.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Nodes.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__ploss_System_edges_kW.csv";
+    "inputs/networks/DH/nodes.shp" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Aggregated_Demand_DH__Wh.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__Nodes.csv";
+    "outputs/data/demand/{BUILDING}.csv" -> "thermal-network-matrix";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__T_Supply_K.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__qloss_System_kW.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__T_Return_K.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__EdgeNode.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/Nominal_NodeMassFlow_at_design_DH__kgpers.csv";
+    "thermal-network-matrix" -> "outputs/data/optimization/network/layout/DH__ploss_Substations_kW.csv";
+    "databases/CH/systems/thermal_networks.xls" -> "thermal-network-matrix";
+}
+    
+radiation-daysim
+----------------
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "radiation-daysim"[style=filled, fillcolor=darkorange];
+    "radiation-daysim" -> "outputs/data/solar-radiation/{BUILDING}_geometry.csv";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "radiation-daysim";
+    "inputs/building-properties/architecture.dbf" -> "radiation-daysim";
+    "inputs/building-geometry/district.shp" -> "radiation-daysim";
+    "databases/CH/systems/envelope_systems.xls" -> "radiation-daysim";
+    "radiation-daysim" -> "outputs/data/solar-radiation/{BUILDING}_insolation_Whm2.json";
+    "inputs/topography/terrain.tif" -> "radiation-daysim";
+    "inputs/building-geometry/zone.shp" -> "radiation-daysim";
+}
+    
+demand
+------
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "demand"[style=filled, fillcolor=darkorange];
+    "inputs/building-properties/internal_loads.dbf" -> "demand";
+    "outputs/data/solar-radiation/{BUILDING}_geometry.csv" -> "demand";
+    "databases/CH/lifecycle/LCA_infrastructure.xlsx" -> "demand";
+    "inputs/building-properties/indoor_comfort.dbf" -> "demand";
+    "inputs/building-geometry/zone.shp" -> "demand";
+    "outputs/data/solar-radiation/{BUILDING}_insolation_Whm2.json" -> "demand";
+    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw" -> "demand";
+    "inputs/building-properties/architecture.dbf" -> "demand";
+    "databases/CH/archetypes/construction_properties.xlsx" -> "demand";
+    "inputs/building-properties/age.dbf" -> "demand";
+    "databases/CH/systems/emission_systems.xls" -> "demand";
+    "databases/CH/archetypes/system_controls.xlsx" -> "demand";
+    "demand" -> "outputs/data/demand/Total_demand.csv";
+    "databases/CH/systems/envelope_systems.xls" -> "demand";
+    "inputs/building-properties/technical_systems.dbf" -> "demand";
+    "inputs/building-properties/occupancy.dbf" -> "demand";
+    "inputs/building-properties/supply_systems.dbf" -> "demand";
+    "demand" -> "outputs/data/demand/{BUILDING}.csv";
+    "databases/CH/archetypes/occupancy_schedules.xlsx" -> "demand";
+}
+    
+network-layout
+--------------
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    "network-layout"[style=filled, fillcolor=darkorange];
+    "inputs/networks/streets.shp" -> "network-layout";
+    "outputs/data/demand/Total_demand.csv" -> "network-layout";
+    "inputs/building-geometry/zone.shp" -> "network-layout";
+}
+    

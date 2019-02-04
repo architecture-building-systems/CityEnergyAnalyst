@@ -3,13 +3,10 @@ Trace the InputLocator calls in a selection of scripts.
 """
 import sys
 import os
-
 import cea.config
 import cea.api
-import pprint
-from collections import defaultdict
 from datetime import datetime
-from jinja2 import Template, Environment, FileSystemLoader
+from jinja2 import Template
 import cea.inputlocator
 
 
@@ -37,7 +34,7 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    trace_data = set()  # {(direction, script, locator_method, file)}
+    trace_data = set()  # {(direction, script, locator_method, path, file)}
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     for script_name in config.trace_inputlocator.scripts:
@@ -59,13 +56,12 @@ def main(config):
             print("{}, {}".format(locator_method, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
-            file_path = os.path.dirname(relative_filename)
-            file_name = os.path.basename(relative_filename)
-
             for building in locator.get_zone_building_names():
                 # remove "B01", "B02" etc. from filenames -> "BXX"
                 relative_filename = relative_filename.replace(building, '{BUILDING}')
             relative_filename = str(relative_filename)
+            file_path = os.path.dirname(relative_filename)
+            file_name = os.path.basename(relative_filename)
             if script_start < mtime:
                 trace_data.add(('output', script_name, locator_method, file_path, file_name))
             else:
