@@ -2,9 +2,18 @@ import os
 import csv
 import cea.plots
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 # GET SHORT NAMES OF VARIABLES IN CEA
 
-NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.plots.__file__), "naming.csv")
+NAMING_FILE_PATH = os.path.join(os.path.dirname(__file__), "naming.csv")
 
 with open(NAMING_FILE_PATH) as naming_file:
     NAMING = {row['VARIABLE']: row['SHORT_DESCRIPTION'] for row in csv.DictReader(naming_file)}

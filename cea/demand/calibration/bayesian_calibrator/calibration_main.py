@@ -15,8 +15,8 @@ from __future__ import division
 import os
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-import pymc3 as pm
-import seaborn as sns
+import pymc3
+import seaborn as seaborn
 import theano.tensor as tt
 from theano import as_op
 from sklearn.externals import joblib
@@ -69,7 +69,7 @@ def calibration_main(locator, config):
         _, sigma = emulator.predict(input_sample, return_std=True)
         return sigma
 
-    with pm.Model() as basic_model:
+    with pymc3.Model() as basic_model:
 
         # DECLARE PRIORS
         for i, variable in enumerate(variables):
@@ -77,29 +77,29 @@ def calibration_main(locator, config):
                                   distributions.loc[variable, 'mu']]).reshape(-1, 1)
             min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
             arguments_norm = min_max_scaler.fit_transform(arguments)
-            globals()['var' + str(i + 1)] = pm.Triangular('var' + str(i + 1), lower=arguments_norm[0][0],
-                                                          upper=arguments_norm[1][0], c=arguments_norm[2][0])
+            globals()['var' + str(i + 1)] = pymc3.Triangular('var' + str(i + 1), lower=arguments_norm[0][0],
+                                                             upper=arguments_norm[1][0], c=arguments_norm[2][0])
 
         # DECLARE OBJECTIVE FUNCTION
-        mu = pm.Deterministic('mu', predict_y(var1, var2, var3, var4, var5, var6))
-        sigma = pm.HalfNormal('sigma', 0.15)
+        mu = pymc3.Deterministic('mu', predict_y(var1, var2, var3, var4, var5, var6))
+        sigma = pymc3.HalfNormal('sigma', 0.15)
         # sigma = pm.Deterministic('sigma', predict_sigma(var1, var2, var3, var4, var5, var6))
-        y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed=0)
+        y_obs = pymc3.Normal('y_obs', mu=mu, sd=sigma, observed=0)
 
         # RUN MODEL, SAVE TO DISC AND PLOT RESULTS
         with basic_model:
             # Running
-            step = pm.Metropolis()
-            trace = pm.sample(iteration_pymc3, tune=1000, njobs=1, step=step)
+            step = pymc3.Metropolis()
+            trace = pymc3.sample(iteration_pymc3, tune=1000, njobs=1, step=step)
             # Saving
-            df_trace = pm.trace_to_dataframe(trace)
+            df_trace = pymc3.trace_to_dataframe(trace)
 
             #CREATE GRAPHS AND SAVE TO DISC
             df_trace.to_csv(locator.get_calibration_posteriors(building_name, building_load))
-            pm.traceplot(trace)
+            pymc3.traceplot(trace)
 
             columns = ["var1", "var2", "var3", "var4", "var5", "var6"]
-            sns.pairplot(df_trace[columns])
+            seaborn.pairplot(df_trace[columns])
 
             if config.single_calibration.show_plots:
                 plt.show()

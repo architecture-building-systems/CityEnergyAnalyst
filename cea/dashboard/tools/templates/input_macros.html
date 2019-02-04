@@ -1,0 +1,110 @@
+{% macro input(parameter, weather_dict) -%}
+    {% if parameter.typename == "ScenarioParameter" %}
+      <!-- don't show ScenarioParameter - it's constructed from the project + scenario-name parameter -->
+      <input type="hidden" name="{{ parameter.name }}" id="{{ parameter.name }}" class="cea-parameter"
+             data-cea-parameter-typename="{{ parameter.typename }}" value="{{ parameter.get() }}" />
+    {% elif parameter.typename == "BooleanParameter" %}
+    <div class="form-group">
+      <label for="{{parameter.name}}" class="control-label col-md-3 col-sm-3 col-xs-12">{{parameter.name}}</label>
+        <div class="col-md-9 col-sm-9 col-xs-12">
+          <div class="">
+            <label>
+              <input type="checkbox" name="{{parameter.name}}" id="{{parameter.name}}" class="js-switch cea-parameter"
+                     data-cea-parameter-typename="{{ parameter.typename }}"
+                     {% if parameter.get() %}checked {% endif %}/>
+            </label>
+          </div>
+          <small id="{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
+        </div>
+    </div>
+
+    {% else %}
+        <div class="form-group">
+        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="{{parameter.name}}">{{ parameter.name }}</label>
+        <div class="col-md-6 col-sm-6 col-xs-12">
+
+          {% if parameter.typename == "ChoiceParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}">
+          {% for choice in parameter._choices %}
+              <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+          {% endfor %}
+          </select>
+
+          {% elif parameter.typename == "ScenarioNameParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}">
+          {% for choice in parameter._choices %}
+              <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+          {% endfor %}
+          </select>
+
+          {% elif parameter.typename == "MultiChoiceParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control selectpicker cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}" multiple>
+          {% for choice in parameter._choices %}
+              <option {% if choice in parameter.get() %}selected{% endif %}>{{choice}}</option>
+          {% endfor %}
+          </select>
+
+          {% elif parameter.typename == "BuildingsParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control selectpicker cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}" multiple>
+          {% for choice in parameter._choices %}
+              <option {% if choice in parameter.get() %}selected{% endif %}>{{choice}}</option>
+          {% endfor %}
+          </select>
+
+          {% elif parameter.typename == "SubfoldersParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}" multiple>
+          {% for subfolder in parameter.get_folders() %}
+              <option {% if subfolder in parameter.get() %}selected{% endif %}>{{subfolder}}</option>
+          {% endfor %}
+          </select>
+
+          {% elif parameter.typename == "FileParameter" %}
+          <div class="input-group">
+            <input type="text" class="form-control cea-parameter" value="{{parameter.get()}}" placeholder="{{parameter.help}}"
+                   id="{{parameter.name}}" name="{{parameter.name}}" data-cea-parameter-typename="{{ parameter.typename }}">
+            <div class="input-group-btn">
+              <button class="btn btn-file-parameter" type="button"
+                      onclick="show_open_file_dialog('{{parameter.fqname}}')">...</button>
+            </div>
+          </div>
+
+          {% elif parameter.typename == "WeatherPathParameter" %}
+          <div class="input-group">
+            <input type="text" class="form-control cea-parameter" value="{{parameter.get()}}" placeholder="{{parameter.help}}"
+                   id="{{parameter.name}}" name="{{parameter.name}}" data-cea-parameter-typename="{{ parameter.typename }}">
+            <div class="input-group-btn">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+              <ul class="dropdown-menu dropdown-menu-right">
+                {% for weather_name, weather_path in weather_dict.items()|sort %}
+                <li><a href="#" onclick="$('#{{parameter.name}}').val('{{weather_path|escapejs}}')">{{ weather_name }}</a></li>
+                {% endfor %}
+                <li role="separator" class="divider"></li>
+                <li><a href="#" onclick="show_open_file_dialog('{{parameter.fqname}}')">...</a></li>
+              </ul>
+            </div>
+          </div>
+
+
+          {% elif parameter.typename == "PathParameter" %}
+          <div class="input-group">
+            <input type="text" class="form-control cea-parameter" value="{{parameter.get()}}" placeholder="{{parameter.help}}"
+                   id="{{parameter.name}}" name="{{parameter.name}}" data-cea-parameter-typename="{{ parameter.typename }}">
+            <div class="input-group-btn">
+              <button class="btn btn-file-parameter" type="button"
+                      onclick="show_open_folder_dialog('{{parameter.fqname}}')">...</button>
+            </div>
+          </div>
+
+
+          {% else %}
+
+          <input id="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}"
+             name="{{parameter.name}}" type="text"
+             value="{{parameter.get_raw()|e}}"
+             aria-describedby="{{parameter.name}}-help"/>
+          {% endif %}
+          <small id="{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
+        </div>
+        </div>
+    {% endif %}
+{%- endmacro %}
