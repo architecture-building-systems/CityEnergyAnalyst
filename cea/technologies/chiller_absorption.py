@@ -1,14 +1,14 @@
 """
 Absorption chillers
 """
-from __future__ import division
+from __future__ import division, print_function
 import cea.config
 import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
 from math import log, ceil
-from sympy import *
+import sympy
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Shanshan Hsieh"
@@ -131,7 +131,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
 
     # variables to solve
-    T_hw_out_C, T_cw_out_C, q_hw_kW = symbols('T_hw_out_C T_cw_out_C q_hw_kW')
+    T_hw_out_C, T_cw_out_C, q_hw_kW = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW')
 
     # characteristic temperature differences
     T_hw_mean_C = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2
@@ -148,7 +148,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     # solve the system of equations with sympy
     eq_sys = [eq_e, eq_g, eq_bal_g]
     unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW)
-    (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*linsolve(eq_sys, unknown_variables))
+    (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*sympy.linsolve(eq_sys, unknown_variables))
 
     # calculate results
     q_cw_kW = q_hw_kW + q_chw_kW  # approximation
@@ -242,9 +242,9 @@ def main(config):
     ACH_type = 'single'
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type,
                                           Qc_nom_W, locator, config)
-    print chiller_operation
+    print(chiller_operation)
 
-    print 'test_decentralized_buildings_cooling() succeeded'
+    print('test_decentralized_buildings_cooling() succeeded')
 
 
 if __name__ == '__main__':
