@@ -9,24 +9,8 @@ digraph trace_inputlocator {
     "terrain.tif" -> "radiation-daysim"[label="get_terrain"]
     "Zug.epw" -> "radiation-daysim"[label="get_weather"]
     "zone.shp" -> "radiation-daysim"[label="get_zone_geometry"]
-    "radiation-daysim" -> "B01_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B02_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B03_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B04_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B05_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B06_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B07_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B08_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B09_insolation_Whm2.json"[label="get_radiation_building"]
-    "radiation-daysim" -> "B01_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B02_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B03_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B04_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B05_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B06_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B07_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B08_geometry.csv"[label="get_radiation_metadata"]
-    "radiation-daysim" -> "B09_geometry.csv"[label="get_radiation_metadata"]
+    "radiation-daysim" -> "{BUILDING}_insolation_Whm2.json"[label="get_radiation_building"]
+    "radiation-daysim" -> "{BUILDING}_geometry.csv"[label="get_radiation_metadata"]
     subgraph cluster_0 {
         style = filled;
         color = peachpuff;
@@ -62,23 +46,7 @@ digraph trace_inputlocator {
         style = filled;
         color = peachpuff;
         label="outputs/data/solar-radiation";
-    "B01_insolation_Whm2.json"[style=filled, color=white]
-    "B02_insolation_Whm2.json"[style=filled, color=white]
-    "B03_insolation_Whm2.json"[style=filled, color=white]
-    "B04_insolation_Whm2.json"[style=filled, color=white]
-    "B05_insolation_Whm2.json"[style=filled, color=white]
-    "B06_insolation_Whm2.json"[style=filled, color=white]
-    "B07_insolation_Whm2.json"[style=filled, color=white]
-    "B08_insolation_Whm2.json"[style=filled, color=white]
-    "B09_insolation_Whm2.json"[style=filled, color=white]
-    "B01_geometry.csv"[style=filled, color=white]
-    "B02_geometry.csv"[style=filled, color=white]
-    "B03_geometry.csv"[style=filled, color=white]
-    "B04_geometry.csv"[style=filled, color=white]
-    "B05_geometry.csv"[style=filled, color=white]
-    "B06_geometry.csv"[style=filled, color=white]
-    "B07_geometry.csv"[style=filled, color=white]
-    "B08_geometry.csv"[style=filled, color=white]
-    "B09_geometry.csv"[style=filled, color=white]
+    "{BUILDING}_insolation_Whm2.json"[style=filled, color=white]
+    "{BUILDING}_geometry.csv"[style=filled, color=white]
     }
 }
