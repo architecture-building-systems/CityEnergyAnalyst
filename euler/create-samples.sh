@@ -13,7 +13,6 @@
 # METHOD               | --method
 # SAMPLES_FOLDER       | --samples-folder
 # CALC_SECOND_ORDER    | --calc-second-order
-# GRID_JUMP            | --grid-jump
 # NUM_LEVELS           | --num-levels
 # VARIABLE_GROUPS      | --variable-groups
 
@@ -34,7 +33,6 @@ N=${N:-1}
 METHOD=${METHOD:-sobol}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
 CALC_SECOND_ORDER=${CALC_SECOND_ORDER:-0}
-GRID_JUMP=${GRID_JUMP:-2}
 NUM_LEVELS=${NUM_LEVELS:-4}
 VARIABLE_GROUPS=${VARIABLE_GROUPS:-ENVELOPE INDOOR_COMFORT INTERNAL_LOADS}
 
@@ -43,5 +41,5 @@ mkdir -p $SAMPLES_FOLDER
 # create the samples
 echo "Creating samples $METHOD $N"
 python -m cea.analysis.sensitivity.sensitivity_demand_samples --samples-folder $SAMPLES_FOLDER -n $N \
-          --method $METHOD --calc-second-order $CALC_SECOND_ORDER --grid-jump $GRID_JUMP --num-levels $NUM_LEVELS \
+          --method $METHOD --calc-second-order $CALC_SECOND_ORDER --num-levels $NUM_LEVELS \
           --variable-groups $VARIABLE_GROUPS

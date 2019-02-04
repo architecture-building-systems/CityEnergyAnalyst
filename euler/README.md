@@ -167,7 +167,7 @@ done - time elapsed: 5.32 seconds
 8,0.0,0.0,0.0,0.0
 ```
 
-The above steps run morris sampling (the default) with N=1, grid_jump=2 (default) and num_levels=4 (default), simulates
+The above steps run morris sampling (the default) with N=1, and num_levels=4 (default), simulates
 all the samples and stores the results back into the sampling directory.
 
 On the Euler cluster, we can set N to a much higher number, say, 1000 and we would then

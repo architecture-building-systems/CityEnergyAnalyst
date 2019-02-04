@@ -10,7 +10,7 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK
+from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK, PIPELIFETIME, PIPEINTERESTRATE
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
@@ -492,14 +492,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         addcosts_Capex_USD += Capex_storage_USD
 
         # Costs from distribution configuration
-        if gv.ZernezFlag == 1:
-            NetworkCost_a_USD, NetworkCost_USD = network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv)
-            NetworkCost_a_USD = NetworkCost_a_USD * nBuildinNtw / len(buildList)
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-        else:
-            NetworkCost_USD = network_features.pipesCosts_DHN_USD
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-            NetworkCost_a_USD = NetworkCost_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
+        NetworkCost_USD = network_features.pipesCosts_DHN_USD
+        NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
+        NetworkCost_a_USD = NetworkCost_USD * PIPEINTERESTRATE * (1+ PIPEINTERESTRATE) ** PIPELIFETIME / ((1+PIPEINTERESTRATE) ** PIPELIFETIME - 1)
         addcosts_Capex_a_USD += NetworkCost_a_USD
         addcosts_Capex_USD += NetworkCost_USD
 
@@ -550,7 +545,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
     # Pump operation costs
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, gv, locator, lca, config)
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, config)
     addcosts_Capex_a_USD += Capex_a_pump_USD
     addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
     addcosts_Capex_USD += Capex_pump_USD

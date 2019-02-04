@@ -5,7 +5,16 @@ import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import LOGO, COLOR
+
+__author__ = "Bhargava Sreepathi"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Bhargava Srepathi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def thermal_storage_activation_curve(data_frame, analysis_fields_charging, analysis_fields_discharging,
