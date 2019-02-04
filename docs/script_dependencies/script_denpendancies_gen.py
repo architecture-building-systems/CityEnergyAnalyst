@@ -26,5 +26,5 @@ template_path = os.path.join(os.path.dirname(__file__), 'script_dependencies_tem
 template = Template(open(template_path, 'r').read())
 dependencies = get_script_dependencies()
 output = template.render(dependencies=dependencies)
-with open('cea-scripts', 'w') as cea:
+with open('cea-scripts.rst', 'w') as cea:
     cea.write(output)

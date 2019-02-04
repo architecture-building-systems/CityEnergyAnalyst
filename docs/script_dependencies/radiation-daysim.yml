@@ -2,26 +2,98 @@ radiation-daysim:
   input:
   - !!python/tuple
     - get_building_architecture
-    - inputs/building-properties/architecture.dbf
+    - inputs/building-properties
+    - architecture.dbf
   - !!python/tuple
     - get_district_geometry
-    - inputs/building-geometry/district.shp
+    - inputs/building-geometry
+    - district.shp
   - !!python/tuple
     - get_envelope_systems
-    - databases/CH/systems/envelope_systems.xls
+    - databases/CH/systems
+    - envelope_systems.xls
   - !!python/tuple
     - get_terrain
-    - inputs/topography/terrain.tif
+    - inputs/topography
+    - terrain.tif
   - !!python/tuple
     - get_weather
-    - ../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/Zug.epw
+    - ../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather
+    - Zug.epw
   - !!python/tuple
     - get_zone_geometry
-    - inputs/building-geometry/zone.shp
+    - inputs/building-geometry
+    - zone.shp
   output:
   - !!python/tuple
     - get_radiation_building
-    - outputs/data/solar-radiation/{BUILDING}_insolation_Whm2.json
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B01_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B02_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B03_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B04_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B05_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B06_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B07_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B08_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_building
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B09_insolation_Whm2.json'
   - !!python/tuple
     - get_radiation_metadata
-    - outputs/data/solar-radiation/{BUILDING}_geometry.csv
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B01_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B02_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B03_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B04_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B05_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B06_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B07_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B08_geometry.csv'
+  - !!python/tuple
+    - get_radiation_metadata
+    - !!python/unicode 'outputs/data/solar-radiation'
+    - !!python/unicode 'B09_geometry.csv'

@@ -1,15 +1,36 @@
 digraph trace_inputlocator {
     rankdir="LR";
     node [shape=box];
+    graph [overlap = false];
     "data-helper"[style=filled, fillcolor=darkorange];
-    "data-helper" -> "inputs/building-properties/indoor_comfort.dbf";
-    "inputs/building-properties/occupancy.dbf" -> "data-helper";
-    "data-helper" -> "inputs/building-properties/internal_loads.dbf";
-    "data-helper" -> "inputs/building-properties/supply_systems.dbf";
-    "data-helper" -> "inputs/building-properties/architecture.dbf";
-    "data-helper" -> "inputs/building-properties/technical_systems.dbf";
-    "inputs/building-properties/age.dbf" -> "data-helper";
-    "databases/CH/archetypes/occupancy_schedules.xlsx" -> "data-helper";
-    "databases/CH/archetypes/construction_properties.xlsx" -> "data-helper";
-    "data-helper" -> "inputs/building-properties/restrictions.dbf";
+    "construction_properties.xlsx" -> "data-helper"[label="get_archetypes_properties"]
+    "occupancy_schedules.xlsx" -> "data-helper"[label="get_archetypes_schedules"]
+    "age.dbf" -> "data-helper"[label="get_building_age"]
+    "occupancy.dbf" -> "data-helper"[label="get_building_occupancy"]
+    "data-helper" -> "architecture.dbf"[label="get_building_architecture"]
+    "data-helper" -> "indoor_comfort.dbf"[label="get_building_comfort"]
+    "data-helper" -> "technical_systems.dbf"[label="get_building_hvac"]
+    "data-helper" -> "internal_loads.dbf"[label="get_building_internal"]
+    "data-helper" -> "restrictions.dbf"[label="get_building_restrictions"]
+    "data-helper" -> "supply_systems.dbf"[label="get_building_supply"]
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+        label="databases/CH/archetypes";
+    "construction_properties.xlsx"[style=filled, color=white]
+    "occupancy_schedules.xlsx"[style=filled, color=white]
+    }
+    subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
+        label="inputs/building-properties";
+    "age.dbf"[style=filled, color=white]
+    "occupancy.dbf"[style=filled, color=white]
+    "architecture.dbf"[style=filled, color=white]
+    "indoor_comfort.dbf"[style=filled, color=white]
+    "technical_systems.dbf"[style=filled, color=white]
+    "internal_loads.dbf"[style=filled, color=white]
+    "restrictions.dbf"[style=filled, color=white]
+    "supply_systems.dbf"[style=filled, color=white]
+    }
 }
