@@ -12,4 +12,3 @@ dependencies:
   - py4design
   - fiona
   - mock
-  - ..
