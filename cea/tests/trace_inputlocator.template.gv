@@ -1,3 +1,27 @@
+
+{% if scripts|length > 1 %}
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box, style=filled, fillcolor=peachpuff]
+    graph [overlap = false];
+
+    {% for script in scripts %}
+    "{{script}}"[style=filled, fillcolor=darkorange];
+    {% endfor %}
+
+    {% for direction, script, locator, path, file in trace_data %}
+        {% if loop.changed(direction, script, path) %}
+            {% if direction == 'input' %}
+    "{{path}}" -> "{{script}}"
+            {% else %}
+    "{{script}}" -> "{{path}}"
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+}
+
+{% else %}
+
 digraph trace_inputlocator {
     rankdir="LR";
     node [shape=box];
@@ -28,3 +52,4 @@ digraph trace_inputlocator {
     }
     {% endfor %}
 }
+{% endif %}
