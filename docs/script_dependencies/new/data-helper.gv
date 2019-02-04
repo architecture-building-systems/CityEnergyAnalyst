@@ -14,19 +14,23 @@ digraph trace_inputlocator {
     "data-helper" -> "restrictions.dbf"[label="get_building_restrictions"]
     "data-helper" -> "supply_systems.dbf"[label="get_building_supply"]
     subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
         label="databases/CH/archetypes";
-    "construction_properties.xlsx"
-    "occupancy_schedules.xlsx"
+    "construction_properties.xlsx"[style=filled, color=white]
+    "occupancy_schedules.xlsx"[style=filled, color=white]
     }
     subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
         label="inputs/building-properties";
-    "age.dbf"
-    "occupancy.dbf"
-    "architecture.dbf"
-    "indoor_comfort.dbf"
-    "technical_systems.dbf"
-    "internal_loads.dbf"
-    "restrictions.dbf"
-    "supply_systems.dbf"
+    "age.dbf"[style=filled, color=white]
+    "occupancy.dbf"[style=filled, color=white]
+    "architecture.dbf"[style=filled, color=white]
+    "indoor_comfort.dbf"[style=filled, color=white]
+    "technical_systems.dbf"[style=filled, color=white]
+    "internal_loads.dbf"[style=filled, color=white]
+    "restrictions.dbf"[style=filled, color=white]
+    "supply_systems.dbf"[style=filled, color=white]
     }
 }
