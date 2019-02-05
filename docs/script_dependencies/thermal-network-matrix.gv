@@ -1,0 +1,84 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "thermal-network-matrix"[style=filled, fillcolor=darkorange];
+    "thermal-network-matrix" -> "Aggregated_Demand_DH__Wh.csv"[label="get_thermal_demand_csv_file"]
+    "thermal-network-matrix" -> "DH__Plant_heat_requirement_kW.csv"[label="get_optimization_network_layout_plant_heat_requirement_file"]
+    "thermal-network-matrix" -> "DH__MassFlow_kgs.csv"[label="get_optimization_network_layout_massflow_file"]
+    "thermal-network-matrix" -> "DH__Edges.csv"[label="get_optimization_network_edge_list_file"]
+    "thermal-network-matrix" -> "DH__P_DeltaP_kW.csv"[label="get_optimization_network_layout_pressure_drop_kw_file"]
+    "thermal-network-matrix" -> "DH__substaion_HEX_cost_USD.csv"[label="get_substation_HEX_cost"]
+    "thermal-network-matrix" -> "DH__P_DeltaP_Pa.csv"[label="get_optimization_network_layout_pressure_drop_file"]
+    "thermal-network-matrix" -> "DH__Nodes.csv"[label="get_optimization_network_node_list_file"]
+    "thermal-network-matrix" -> "DH__ploss_System_edges_kW.csv"[label="get_optimization_network_layout_ploss_system_edges_file"]
+    "thermal-network-matrix" -> "DH__T_Supply_K.csv"[label="get_optimization_network_layout_supply_temperature_file"]
+    "thermal-network-matrix" -> "DH__qloss_System_kW.csv"[label="get_optimization_network_layout_qloss_system_file"]
+    "thermal-network-matrix" -> "DH__T_Return_K.csv"[label="get_optimization_network_layout_return_temperature_file"]
+    "thermal-network-matrix" -> "DH__EdgeNode.csv"[label="get_optimization_network_edge_node_matrix_file"]
+    "thermal-network-matrix" -> "DH__ploss_Substations_kW.csv"[label="get_optimization_network_substation_ploss_file"]
+    "thermal-network-matrix" -> "Nominal_EdgeMassFlow_at_design_DH__kgpers.csv"[label="get_edge_mass_flow_csv_file"]
+    "thermal-network-matrix" -> "Nominal_NodeMassFlow_at_design_DH__kgpers.csv"[label="get_node_mass_flow_csv_file"]
+
+    "{BUILDING}.csv" -> "thermal-network-matrix"[label="get_demand_results_file"]
+
+    "thermal-network-matrix" -> "edges.shp"[label="get_network_layout_edges_shapefile"]
+    "nodes.shp" -> "thermal-network-matrix"[label="get_network_layout_nodes_shapefile"]
+
+    "Zug.epw" -> "thermal-network-matrix"[label="get_weather"]
+
+    "supply_systems.xls" -> "thermal-network-matrix"[label="get_supply_systems"]
+    "thermal_networks.xls" -> "thermal-network-matrix"[label="get_thermal_networks"]
+
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+	label="outputs/data/optimization/network/layout/"
+	"Aggregated_Demand_DH__Wh.csv"[style=filled, color=white]
+	"DH__Plant_heat_requirement_kW.csv"[style=filled, color=white]
+	"DH__MassFlow_kgs.csv"[style=filled, color=white]
+	"DH__Edges.csv"[style=filled, color=white]
+	"DH__EdgeNode.csv"[style=filled, color=white]
+	"DH__P_DeltaP_kW.csv"[style=filled, color=white]
+	"DH__substaion_HEX_cost_USD.csv"[style=filled, color=white]
+	"DH__P_DeltaP_Pa.csv"[style=filled, color=white]
+	"DH__Nodes.csv"[style=filled, color=white]
+	"DH__ploss_System_edges_kW.csv"[style=filled, color=white]
+	"DH__T_Supply_K.csv"[style=filled, color=white]
+	"DH__qloss_System_kW.csv"[style=filled, color=white]
+	"DH__T_Return_K.csv"[style=filled, color=white]
+	"DH__ploss_Substations_kW.csv"[style=filled, color=white]
+	"Nominal_EdgeMassFlow_at_design_DH__kgpers.csv"[style=filled, color=white]
+	"Nominal_NodeMassFlow_at_design_DH__kgpers.csv"[style=filled, color=white]
+	}
+
+    subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
+	label="outputs/data/demand/"
+	"{BUILDING}.csv"[style=filled, color=white]
+	}
+
+    subgraph cluster_2 {
+        style = filled;
+        color = peachpuff;
+	label="inputs/networks/DH/"
+	"edges.shp"[style=filled, color=white]
+	"nodes.shp"[style=filled, color=white]
+	}
+
+    subgraph cluster_3 {
+        style = filled;
+        color = peachpuff;
+	label="../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather/"
+	"Zug.epw"[style=filled, color=white]
+	}
+
+    subgraph cluster_4 {
+        style = filled;
+        color = peachpuff;
+	label="databases/CH/systems/"
+	"supply_systems.xls"[style=filled, color=white]
+	"thermal_networks.xls"[style=filled, color=white]
+	}
+	}

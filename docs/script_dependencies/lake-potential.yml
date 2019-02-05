@@ -1,0 +1,7 @@
+lake-potential:
+  input: []
+  output:
+  - !!python/tuple
+    - get_lake_potential
+    - outputs/data/potentials
+    - Lake_potential.csv

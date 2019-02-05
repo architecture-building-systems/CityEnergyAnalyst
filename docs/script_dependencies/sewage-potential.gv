@@ -1,0 +1,22 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "sewage-potential"[style=filled, fillcolor=darkorange];
+    "{BUILDING}.csv" -> "sewage-potential"[label="get_demand_results_file"]
+    "Total_demand.csv" -> "sewage-potential"[label="get_total_demand"]
+    "sewage-potential" -> "SWP.csv"[label="get_sewage_heat_potential"]
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/demand";
+    "{BUILDING}.csv"[style=filled, color=white]
+    "Total_demand.csv"[style=filled, color=white]
+    }
+    subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/potentials";
+    "SWP.csv"[style=filled, color=white]
+    }
+    }

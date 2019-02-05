@@ -47,9 +47,6 @@ other scripts. They should be run in the following order:
 {% for script, underline, digraph in dependencies%}
 {{script}}
 {{underline}}
-
-``{{script}}`` runs a number of modules
-
 .. graphviz::
 
     {{digraph}}

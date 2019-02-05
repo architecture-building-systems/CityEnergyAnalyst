@@ -1,0 +1,60 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "emissions"[style=filled, fillcolor=darkorange];
+    "age.dbf" -> "emissions"[label="get_building_age"]
+    "architecture.dbf" -> "emissions"[label="get_building_architecture"]
+    "occupancy.dbf" -> "emissions"[label="get_building_occupancy"]
+    "supply_systems.dbf" -> "emissions"[label="get_building_supply"]
+    "benchmark_2000W.xls" -> "emissions"[label="get_data_benchmark"]
+    "LCA_buildings.xlsx" -> "emissions"[label="get_life_cycle_inventory_building_systems"]
+    "LCA_infrastructure.xlsx" -> "emissions"[label="get_life_cycle_inventory_supply_systems"]
+    "Total_demand.csv" -> "emissions"[label="get_total_demand"]
+    "zone.shp" -> "emissions"[label="get_zone_geometry"]
+    "emissions" -> "Total_LCA_embodied.csv"[label="get_lca_embodied"]
+    "emissions" -> "Total_LCA_mobility.csv"[label="get_lca_mobility"]
+    "emissions" -> "Total_LCA_operation.csv"[label="get_lca_operation"]
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+        label="databases/CH/benchmarks";
+    "benchmark_2000W.xls"[style=filled, color=white]
+    }
+    subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
+        label="databases/CH/lifecycle";
+    "LCA_buildings.xlsx"[style=filled, color=white]
+    "LCA_infrastructure.xlsx"[style=filled, color=white]
+    }
+    subgraph cluster_2 {
+        style = filled;
+        color = peachpuff;
+        label="inputs/building-geometry";
+    "zone.shp"[style=filled, color=white]
+    }
+    subgraph cluster_3 {
+        style = filled;
+        color = peachpuff;
+        label="inputs/building-properties";
+    "age.dbf"[style=filled, color=white]
+    "architecture.dbf"[style=filled, color=white]
+    "occupancy.dbf"[style=filled, color=white]
+    "supply_systems.dbf"[style=filled, color=white]
+    }
+    subgraph cluster_4 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/demand";
+    "Total_demand.csv"[style=filled, color=white]
+    }
+    subgraph cluster_5 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/emissions";
+    "Total_LCA_embodied.csv"[style=filled, color=white]
+    "Total_LCA_mobility.csv"[style=filled, color=white]
+    "Total_LCA_operation.csv"[style=filled, color=white]
+    }
+    }

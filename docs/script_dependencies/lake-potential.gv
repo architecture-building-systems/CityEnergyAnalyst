@@ -1,0 +1,13 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "lake-potential"[style=filled, fillcolor=darkorange];
+    "lake-potential" -> "Lake_potential.csv"[label="get_lake_potential"]
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/potentials";
+    "Lake_potential.csv"[style=filled, color=white]
+    }
+    }
