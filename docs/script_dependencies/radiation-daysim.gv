@@ -49,4 +49,4 @@ digraph trace_inputlocator {
     "{BUILDING}_insolation_Whm2.json"[style=filled, color=white]
     "{BUILDING}_geometry.csv"[style=filled, color=white]
     }
-}
+    }
