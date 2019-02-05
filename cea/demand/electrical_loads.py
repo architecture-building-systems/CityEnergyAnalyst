@@ -50,12 +50,15 @@ def calc_Eal_Epro(tsd, bpr, schedules):
     """
 
     # calculate final electrical consumption due to appliances and lights in W
-    tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
-    tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
+    # tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
+    # tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
+    tsd['Ea'] = schedules['Ea_Wm2'] * bpr.internal_loads['Ea_Wm2']
+    tsd['El'] = schedules['El_Wm2'] * bpr.internal_loads['El_Wm2']
     tsd['Eal'] = tsd['El'] + tsd['Ea']
 
     if bpr.internal_loads['Epro_Wm2'] > 0:
-        tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
+        # tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
+        tsd['Epro'] = schedules['Epro_Wm2'] * bpr.internal_loads['Epro_Wm2']
     else:
         tsd['Epro'] = np.zeros(8760)
 
@@ -115,7 +118,8 @@ def calc_Eaux(tsd):
 
 def calc_Eaux_fw(tsd, bpr, schedules):
 
-    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+    tsd['vfw_m3perh'] = schedules['Vw_lpd'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+    # tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
 
     nf_ag = bpr.geometry['floors_ag']
     if nf_ag > 5:  # up to 5th floor no pumping needs

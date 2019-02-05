@@ -135,7 +135,8 @@ def calc_Qww(bpr, tsd, schedules):
     Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
 
     # calc end-use demand
-    tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
+    tsd['vww_m3perh'] = schedules['Vww_lpd'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
+    # tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
     tsd['mww'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
     tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
