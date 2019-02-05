@@ -1,0 +1,49 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    node [shape=box];
+    graph [overlap = false];
+    "solar-collector"[style=filled, fillcolor=darkorange];
+    "{BUILDING}_insolation_Whm2.json" -> "solar-collector"[label="get_radiation_building"]
+    "{BUILDING}_geometry.csv" -> "solar-collector"[label="get_radiation_metadata"]
+    "supply_systems.xls" -> "solar-collector"[label="get_supply_systems"]
+    "Zug.epw" -> "solar-collector"[label="get_weather"]
+    "zone.shp" -> "solar-collector"[label="get_zone_geometry"]
+    "solar-collector" -> "{BUILDING}_SC_FP_sensors.csv"[label="SC_metadata_results"]
+    "solar-collector" -> "{BUILDING}_SC_FP.csv"[label="SC_results"]
+    "solar-collector" -> "SC_FP_total_buildings.csv"[label="SC_total_buildings"]
+    "solar-collector" -> "SC_FP_total.csv"[label="SC_totals"]
+    subgraph cluster_0 {
+        style = filled;
+        color = peachpuff;
+        label="../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather";
+    "Zug.epw"[style=filled, color=white]
+    }
+    subgraph cluster_1 {
+        style = filled;
+        color = peachpuff;
+        label="databases/CH/systems";
+    "supply_systems.xls"[style=filled, color=white]
+    }
+    subgraph cluster_2 {
+        style = filled;
+        color = peachpuff;
+        label="inputs/building-geometry";
+    "zone.shp"[style=filled, color=white]
+    }
+    subgraph cluster_3 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/potentials/solar";
+    "{BUILDING}_SC_FP_sensors.csv"[style=filled, color=white]
+    "{BUILDING}_SC_FP.csv"[style=filled, color=white]
+    "SC_FP_total_buildings.csv"[style=filled, color=white]
+    "SC_FP_total.csv"[style=filled, color=white]
+    }
+    subgraph cluster_4 {
+        style = filled;
+        color = peachpuff;
+        label="outputs/data/solar-radiation";
+    "{BUILDING}_insolation_Whm2.json"[style=filled, color=white]
+    "{BUILDING}_geometry.csv"[style=filled, color=white]
+    }
+    }
