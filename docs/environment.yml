@@ -1,14 +1,16 @@
 name: cityenergyanalyst_docs
 channels:
-- conda-forge
 - defaults
 dependencies:
+- fiona
+- geopandas
+- mock
 - numpy
 - pandas
-- geopandas
 - pyaml
 - python=2.7
+- pillow
+- sphinx
+- sphinx_rtd_theme
 - pip:
   - py4design
-  - fiona
-  - mock
