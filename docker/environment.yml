@@ -1,0 +1,12 @@
+name: cea
+channels:
+  - conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - defaults
+dependencies:
+  - geopandas
+  - fiona
+  - python=2.7
+  - pip:
+    - numba
