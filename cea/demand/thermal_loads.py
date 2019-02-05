@@ -119,7 +119,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
 
         #CALCULATE PROCESS HEATING
-        tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        tsd['Qhpro_sys'][:] = schedules['Qhpro_Wm2'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        # tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
@@ -409,14 +410,18 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
             for user in usage_schedules['building_schedules'][bpr.name].keys():
                 all_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
             all_schedules['patient'] = all_schedules['HOSPITAL']
-            list_uses = [use for use in list_uses not in [TRANSPORTATION_FACILITIES.values()]]
+            list_uses = [use for use in list_uses if
+                            use not in [facility for facility_list in TRANSPORTATION_FACILITIES.values() for facility in
+                                        facility_list]]
     schedules = occupancy_model.calc_schedules(list_uses, all_schedules, bpr, archetype_values, date,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = np.floor(schedules['people'])
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
+    # tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
+    # tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
+    tsd['ve'] = schedules['Ve_lps'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
+    tsd['Qs'] = schedules['Qs_Wp'] * bpr.internal_loads['Qs_Wp']  # in W
     # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
 
