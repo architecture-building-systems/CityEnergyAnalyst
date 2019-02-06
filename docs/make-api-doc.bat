@@ -16,6 +16,4 @@ sphinx-apidoc -f -M -T -o modules ../cea^
  ../cea/optimization/master/generation*^
 
 echo.
-echo Sphinx has updated cea rst files - excluding some files and paths.
-echo When documentation issues for these modules are fixed, please delete the exceptions in the docs make-api-doc.bat.
-echo.
+echo Sphinx has updated cea rst files.

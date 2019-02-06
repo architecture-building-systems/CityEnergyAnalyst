@@ -70,23 +70,10 @@ This batch file will delete all the existing auto-generated module documentation
 ``CityEnergyAnalyst\docs\modules`` repository. Then, it will run the `sphinx-apidoc <http://www.sphinx-doc.org/en/master/man/sphinx-apidoc.html>`_
 function, rebuilding the documentation for all modules in the ``CityEnergyAnalyst\cea`` repository.
 
-Note, the following paths/modules are currently excluded due to module import errors::
+Note: the following paths/modules are currently excluded::
 
     ../cea/databases*^
-    ../cea/analysis/clustering*^
-    ../cea/demand/metamodel*^
-    ../cea/demand/calibration/bayesian_calibrator*^
-    ../cea/demand/calibration/subset_calibrator*^
-    ../cea/interfaces/dashboard*^
-    ../cea/optimization/slave/test*^
-    ../cea/resources/radiation_daysim/plot_points*^
-    ../cea/technologies/cogeneration*^
-    ../cea/technologies/thermal_network/network_layout*^
     ../cea/optimization/master/generation*^
-    ../cea/tests/test_dbf*^
-    ../cea/utilities/compile_pyd_files*^
-
-    TO DO: Check/update cea VE to include missing modules.
 
 make clean
 ^^^^^^^^^^
@@ -99,7 +86,7 @@ make html
 ^^^^^^^^^
 This extension of the make batch runs sphinx-build_ to generate html files in the ``CityEnergyAnalyst\docs\_build``
 from each of the rst files within the ``CityEnergyAnalyst\docs`` and ``CityEnergyAnalyst\docs\modules`` repositories.
-This tool will generate html files from any new rst files created since the last build,
+This tool will generate html files from any new or modified rst files since the last build,
 skipping pre-existing rst and corresponding html files.
 
 
