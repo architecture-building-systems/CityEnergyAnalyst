@@ -33,6 +33,22 @@ cea.plots.demand.energy\_demand module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.demand.energy\_supply module
+--------------------------------------
+
+.. automodule:: cea.plots.demand.energy_supply
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.demand.energy\_supply\_intensity module
+-------------------------------------------------
+
+.. automodule:: cea.plots.demand.energy_supply_intensity
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.demand.energy\_use\_intensity module
 ----------------------------------------------
 
@@ -57,10 +73,26 @@ cea.plots.demand.load\_curve module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.demand.load\_curve\_supply module
+-------------------------------------------
+
+.. automodule:: cea.plots.demand.load_curve_supply
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.demand.load\_duration\_curve module
 ---------------------------------------------
 
 .. automodule:: cea.plots.demand.load_duration_curve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.demand.load\_duration\_curve\_supply module
+-----------------------------------------------------
+
+.. automodule:: cea.plots.demand.load_duration_curve_supply
     :members:
     :undoc-members:
     :show-inheritance:
@@ -77,6 +109,14 @@ cea.plots.demand.peak\_load module
 ----------------------------------
 
 .. automodule:: cea.plots.demand.peak_load
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.demand.peak\_load\_supply module
+------------------------------------------
+
+.. automodule:: cea.plots.demand.peak_load_supply
     :members:
     :undoc-members:
     :show-inheritance:

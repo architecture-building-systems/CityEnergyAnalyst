@@ -1,3 +1,5 @@
+:orphan:
+
 Variable Naming in CEA
 ======================
 
