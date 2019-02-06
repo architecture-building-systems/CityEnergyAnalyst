@@ -74,6 +74,10 @@ MOCK_MODULES = ['COLOR',
                 'networkx.algorithms.approximation.steinertree.steiner_tree',
                 'numba',
                 'numba.pycc',
+                'OCC',
+                'OCC.gp',
+                'OCC.TopoDS',
+                'OCC.IntCurvesFace',
                 'plotly',
                 'plotly.graph_objs',
                 'plotly.offline',
@@ -173,6 +177,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
                     'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
+                    'modules/cea.api*'
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.

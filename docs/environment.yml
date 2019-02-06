@@ -5,6 +5,7 @@ dependencies:
 - fiona
 - geopandas
 - mock
+- mkl-service
 - numpy
 - pandas
 - pyaml
@@ -14,3 +15,5 @@ dependencies:
 - sphinx_rtd_theme
 - pip:
   - py4design
+  - flask
+  - flask-wtf
