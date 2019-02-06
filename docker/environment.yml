@@ -8,5 +8,6 @@ dependencies:
   - geopandas
   - fiona
   - python=2.7
+  - mkl-service
   - pip:
     - numba
