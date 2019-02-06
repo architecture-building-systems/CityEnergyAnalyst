@@ -25,14 +25,6 @@ cea.resources.radiation\_daysim.geometry\_generator module
     :undoc-members:
     :show-inheritance:
 
-cea.resources.radiation\_daysim.plot\_points module
----------------------------------------------------
-
-.. automodule:: cea.resources.radiation_daysim.plot_points
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.resources.radiation\_daysim.radiation\_main module
 ------------------------------------------------------
 

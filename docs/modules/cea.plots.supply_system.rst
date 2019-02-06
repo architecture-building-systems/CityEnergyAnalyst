@@ -33,6 +33,14 @@ cea.plots.supply\_system.demo\_maps module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.supply\_system.energy\_system\_map module
+---------------------------------------------------
+
+.. automodule:: cea.plots.supply_system.energy_system_map
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.supply\_system.individual\_activation\_curve module
 -------------------------------------------------------------
 
