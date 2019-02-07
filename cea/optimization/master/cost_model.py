@@ -4,23 +4,25 @@ Extra costs to an individual
 
 """
 from __future__ import division
+
 import os
-import cea.technologies.solar.photovoltaic as pv
-import cea.technologies.solar.photovoltaic_thermal as pvt
-import cea.technologies.solar.solar_collector as stc
+
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK
-from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
+
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex
-import cea.technologies.thermal_network.thermal_network as network
 import cea.technologies.heatpumps as hp
 import cea.technologies.pumps as pumps
+import cea.technologies.solar.photovoltaic as pv
+import cea.technologies.solar.photovoltaic_thermal as pvt
+import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as storage
+from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY
+from cea.optimization.constants import N_PVT
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
