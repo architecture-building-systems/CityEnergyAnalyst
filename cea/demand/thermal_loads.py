@@ -403,7 +403,7 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
     list_uses = usage_schedules['list_uses']
-    all_schedules = usage_schedules['archetype_schedules']
+    all_schedules = usage_schedules['archetype_schedules'].copy()
     archetype_values = usage_schedules['archetype_values']
     if 'building_schedules' in usage_schedules.keys():
         if bpr.name in usage_schedules['building_schedules'].keys():
