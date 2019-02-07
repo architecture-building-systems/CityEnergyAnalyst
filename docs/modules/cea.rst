@@ -12,6 +12,7 @@ Subpackages
 .. toctree::
 
     cea.analysis
+    cea.dashboard
     cea.datamanagement
     cea.demand
     cea.examples
