@@ -273,7 +273,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
     :param thermal_network: container for all the
            thermal network data.
-    :type thermal_network: cea.technologies.thermal_network.thermal_network_matrix.ThermalNetwork
+    :type thermal_network: cea.technologies.thermal_network.thermal_network.ThermalNetwork
 
     :return:
 
@@ -840,7 +840,7 @@ def main(config):
     """
     run the whole network summary routine
     """
-    from cea.technologies.thermal_network.thermal_network_matrix import ThermalNetwork
+    from cea.technologies.thermal_network.thermal_network import ThermalNetwork
     import cea.inputlocator as inputlocator
 
     locator = cea.inputlocator.InputLocator(config.scenario)
