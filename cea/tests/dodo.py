@@ -354,10 +354,10 @@ def task_run_calibration():
     }
 
 
-def task_run_thermal_network_matrix():
-    """run the thermal_network_matrix for the included reference case"""
-    def run_thermal_network_matrix():
-        import cea.technologies.thermal_network.thermal_network_matrix as tnm
+def task_run_thermal_network():
+    """run the thermal_network for the included reference case"""
+    def run_thermal_network():
+        import cea.technologies.thermal_network.thermal_network as tnm
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
@@ -369,9 +369,9 @@ def task_run_thermal_network_matrix():
         tnm.main(config)
 
     return {
-        'name': 'run_thermal_network_matrix',
+        'name': 'run_thermal_network',
         'task_dep': ['run_demand:open@Zug'],
-        'actions': [(run_thermal_network_matrix, [], {})],
+        'actions': [(run_thermal_network, [], {})],
     }
 
 def main(config):
