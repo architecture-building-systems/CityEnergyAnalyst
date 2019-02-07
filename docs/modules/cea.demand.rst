@@ -12,6 +12,7 @@ Subpackages
 .. toctree::
 
     cea.demand.calibration
+    cea.demand.metamodel
 
 Submodules
 ----------

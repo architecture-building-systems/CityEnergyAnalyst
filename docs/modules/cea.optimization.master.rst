@@ -41,6 +41,14 @@ cea.optimization.master.evaluation module
     :undoc-members:
     :show-inheritance:
 
+cea.optimization.master.generation module
+-----------------------------------------
+
+.. automodule:: cea.optimization.master.generation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.master.master\_main module
 -------------------------------------------
 
