@@ -7,14 +7,13 @@ path_to_scenarios = r'C:\reference-case-open'
 
 # columns_to_plot = [column for column in list(pd.read_csv(
 #     os.path.join(path_to_scenarios, 'zurich_baseline\deterministic\outputs\data\demand\Total_demand.csv')).columns) if
-#                    column not in ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Ecaf_MWhyr', 'Ecaf0_kW', 'Q_cool_ref_MWhyr',
-#                                   'q_cs_lat_peop_MWhyr', 'q_cs_lat_peop0_kW', 'Qcs_sen0_kW', 'Qhsf_lat_MWhyr',
-#                                   'Qhsf_lat_kW']]
+#                    column not in ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Eca_sys_MWhyr', 'Eca_sys0_kW', 'Q_cool_re_sys_MWhyr',
+#                                   'q_cs_lat_peop_MWhyr', 'q_cs_lat_peop0_kW', 'Qcs_sen0_kW', 'Qhs_sys_lat_MWhyr',
+#                                   'Qhs_sys_lat_kW']]
 
-columns_to_plot_yearly = ['people0', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qhsf_MWhyr', 'Qhsf0_kW', 'Eauxf_ve_MWhyr',
-                          'Eauxf_ve0_kW', 'Qcsf_lat_MWhyr', 'Qcsf_lat0_kW', 'Qgain_pers_MWhyr', 'Qgain_pers0_kW',
-                          'Qgain_vent_MWhyr', 'Qgain_vent0_kW']
-columns_to_plot_hourly = ['people', 'Qcsf_kWh', 'Qhsf_kWh', 'Eauxf_ve_kWh', 'Qcsf_lat_kWh']
+columns_to_plot_yearly = ['people0', 'Qcs_sys0_kW', 'Qcs_sys_MWhyr', 'Qhs_sys_MWhyr', 'Qhs_sys0_kW', 'Eaux_MWhyr',
+                          'Eaux0_kW', 'Qcs_lat_sys_MWhyr', 'Qcs_lat_sys0_kW']
+columns_to_plot_hourly = ['people', 'Qcs_sys_kWh', 'Qhs_sys_kWh', 'Eaux_kWh', 'Qcs_sys_lat_kWh']
 
 scenarios = ['baseline', 'masterplan', 'dynamic']
 cases = ['deterministic', 'stochastic']
@@ -23,7 +22,7 @@ which_plots = {'bar': True,
                'vs': True,
                'hourly': True}
 
-# which_hourly = ['people', 'Qcsf_kWh', 'Eauxf_ve_kWh']
+which_hourly = ['people', 'Qcs_sys_kWh', 'Eaux_sys_ve_kWh']
 columns_to_plot = columns_to_plot_yearly
 which_hourly = columns_to_plot_hourly
 
@@ -66,7 +65,7 @@ for scenario in scenarios:
             plt.legend()
 
             plt.tight_layout()
-            plt.savefig(os.path.join(path_to_scenarios,'zurich_'+scenario,'comparison', column + '.png'))
+            plt.savefig(os.path.join(path_to_scenarios, 'zurich_'+scenario,'comparison', column + '.png'))
             plt.close()
 
         if which_plots['vs']:
@@ -77,7 +76,7 @@ for scenario in scenarios:
             else:
                 plt.plot([0, max(baseline)], [0, max(baseline)], 'k--')
             plt.title(column)
-            plt.savefig(os.path.join(path_to_scenarios,'zurich_'+scenario,'comparison', column + '_points.png'))
+            plt.savefig(os.path.join(path_to_scenarios, 'zurich_'+scenario,'comparison', column + '_points.png'))
             plt.close()
 
 if which_plots['hourly']:
