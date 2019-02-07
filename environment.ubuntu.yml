@@ -22,6 +22,7 @@ dependencies:
   - libffi=3.2.1=hd88cf55_4
   - libgcc-ng=8.2.0=hdf63c60_1
   - libstdcxx-ng=8.2.0=hdf63c60_1
+  - mkl-service
   - ncurses=6.1=he6710b0_1
   - openssl=1.1.1a=h7b6447c_0
   - pip=18.1=py27_0

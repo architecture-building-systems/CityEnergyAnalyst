@@ -30,10 +30,9 @@ home directory (``~``):
 - navigate to that folder: ``cd tmp``
 - clone the CEA repository: ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
 - navigate to the repository folder: ``cd CityEnergyAnalyst``
-- *FIXME*: this step needs to be removed when merging to master: ``git checkout 951-chisqprob-is-deprecated``
 - create the conda environment: ``conda env create --file environment.ubuntu.yml``
 - activate the conda environment: ``source activate cea``
-- install the CEA to the conda environment: ``pip install -e .[dev]``
+- install the CEA to the conda environment: ``pip install -e .``
 - add this to your environment: ``export MKL_THREADING_LAYER=GNU``
 
   - either type that out every time before you start using the CEA or add it to your ``~/.bashrc``
