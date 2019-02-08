@@ -31,6 +31,7 @@ dependencies:
   - pyopenssl=18.0.0=py27_0
   - pysocks=1.6.8=py27_0
   - python=2.7.15=h9bab390_6
+  - pyqt>=5.6
   - readline=7.0=h7b6447c_5
   - requests=2.21.0=py27_0
   - ruamel_yaml=0.15.46=py27h14c3975_0
