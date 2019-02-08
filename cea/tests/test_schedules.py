@@ -94,14 +94,14 @@ def get_test_config_path():
 def calculate_test_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
-    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE').T['density'].values[:1][0])
-    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM').T['density'].values[:1][0])
+    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE', index_col=0).T['density'].values[:1][0])
+    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM', index_col=0).T['density'].values[:1][0])
     calculated_results = calculate_average_multiuse(
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS')).set_index('Name')
+        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS', index_col=0)).set_index('Name')
     return calculated_results
 
 
