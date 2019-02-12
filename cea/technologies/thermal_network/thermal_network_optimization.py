@@ -7,7 +7,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
-from cea.technologies.thermal_network import thermal_network_matrix as thermal_network_matrix
+from cea.technologies.thermal_network import thermal_network as thermal_network
 from cea.technologies.thermal_network.network_layout.main import network_layout as network_layout
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
@@ -311,7 +311,7 @@ def objective_function(network_info):
         network_layout(network_info.config, network_info.locator, network_info.building_names,
                        optimization_flag=True)
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
-        thermal_network_matrix.main(network_info.config)
+        thermal_network.main(network_info.config)
         # set all buildings to disconnected
         network_info.config.thermal_network.disconnected_buildings = network_info.building_names
         # set all indexes as disconnected
@@ -326,8 +326,8 @@ def objective_function(network_info):
         # create the network specified by the individual
         network_layout(network_info.config, network_info.locator, plant_building_names,
                        optimization_flag=True)
-        # run the thermal_network_matrix simulation with the generated network
-        thermal_network_matrix.main(network_info.config)
+        # run the thermal_network simulation with the generated network
+        thermal_network.main(network_info.config)
 
     ## Cost calculations
     Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)
