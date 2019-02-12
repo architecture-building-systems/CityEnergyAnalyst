@@ -245,6 +245,12 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_layout_folder(), "reduced_timesteps")
 
+    def get_optimization_network_layout_costs_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DC_costs.csv
+        Optimized network layout files for pipes of district heating networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_costs.csv" % network_type)
+
     def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
@@ -294,6 +300,32 @@ class InputLocator(object):
         else:
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type + "_" + network_name + "_T_Supply_K.csv")
+
+    def get_optimization_network_generation_folder(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return self._ensure_folder(self.get_optimization_network_results_folder(), str(generation))
+
+
+    def get_optimization_network_individual_results_file(self, network_type, individual):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                        network_type + "_" + str(individual) + ".csv")
+
+    def get_optimization_network_generation_individuals_results_file(self, network_type, generation):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                            network_type + '_' + str(generation) + "_individuals.csv")
+
+    def get_optimization_network_all_individuals_results_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                            network_type + "_all_individuals.csv")
 
     def get_optimization_network_layout_return_temperature_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
@@ -357,6 +389,7 @@ class InputLocator(object):
             folder = self.get_representative_week_optimization_network_layout_folder()
         else:
             folder = self.get_optimization_network_layout_folder()
+        print (os.path.join(folder, network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")) # todo: delete
         return os.path.join(folder, network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")
 
     def get_optimization_network_totals_folder(self):

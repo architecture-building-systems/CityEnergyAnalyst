@@ -188,3 +188,5 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
 
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD
+
+
