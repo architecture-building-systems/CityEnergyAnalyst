@@ -6,7 +6,7 @@ hydraulic network
 from __future__ import division
 import pandas as pd
 
-__author__ = "Thuy-An Nguyen, Lennart Rogenhofer"
+__author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
 __license__ = "MIT"
