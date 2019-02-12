@@ -19,7 +19,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_connectivity_network(path_arcgis_db, path_streets_shp, path_connection_point_buildings_shp, path_potential_network):
+def calc_connectivity_network(merge, path_arcgis_db, path_streets_shp, path_connection_point_buildings_shp, path_potential_network):
     """
     This script outputs a potential network connecting a series of building points to the closest street network
     the street network is assumed to be a good path to the district heating or cooling network
@@ -35,7 +35,6 @@ def calc_connectivity_network(path_arcgis_db, path_streets_shp, path_connection_
     arcpy.env.overwriteOutput = True
     spatialReference = arcpy.Describe(path_connection_point_buildings_shp).spatialReference
     memorybuildings = path_arcgis_db + "\\" + "points"
-    merge = path_arcgis_db + "\\" + "merge"
     Newlines = path_arcgis_db + "\\" + "linesToerase"
     Finallines = path_arcgis_db + "\\" + "final_line"
 
@@ -55,10 +54,12 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
-    path_connection_point_buildings_shp = locator.get_connection_point()  # substation, it can be the centroid of the building
-    path_potential_network = locator.get_connectivity_potential()  # shapefile, location of output.
+    path_connection_point_buildings_shp = locator.get_temporary_file(
+        "nodes_buildings.shp")  # substation, it can be the centroid of the building
+    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     path_default_arcgis_db = locator.get_default_arcgis_db()
-    calc_connectivity_network(path_default_arcgis_db, path_streets_shp, path_connection_point_buildings_shp,
+    merge = locator.get_temporary_file("merge.shp")
+    calc_connectivity_network(merge, path_default_arcgis_db, path_streets_shp, path_connection_point_buildings_shp,
                               path_potential_network)
 
 if __name__ == '__main__':
