@@ -178,7 +178,7 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     # compute endpoints of the new prototype network
     gdf_points = computer_end_points(prototype_network.geometry, crs)
     gdf_intersections = compute_intersections(prototype_network.geometry, crs)
-    gdf_points_snapped = gdf_points.append(gdf_intersections)
+    gdf_points_snapped = gdf_points.append(gdf_intersections).reset_index(drop=True)
     gdf_points_snapped.crs = crs
     # snap these points to the lines
     gdf_points_snapped = snap_points(gdf_points_snapped, prototype_network, crs)
