@@ -191,6 +191,14 @@ Thermal networks:
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'thermal-network']
 
+- name: thermal-network-optimization
+  label: Thermo network optimization
+  description: Optimize network design variables (plant locations, layout,...)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.thermal_network_optimization
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
+
 
 Utilities:
 
