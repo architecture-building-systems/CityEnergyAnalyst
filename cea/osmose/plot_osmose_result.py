@@ -7,7 +7,7 @@ from extract_demand_outputs import calc_m_dry_air
 from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-#TECHS = ['HCS_3for2'] #, 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']#, 'HCS_ER0']
+TECHS = ['HCS_3for2'] #, 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']#, 'HCS_ER0']
 # TECHS = ['HCS_LD']
 # TECHS = ['HCS_coil', 'HCS_LD']
 PATH_TO_RESULT_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
@@ -17,7 +17,7 @@ PATH_TO_RESULT_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\
 Af_m2 = {'B001': 28495.062, 'B002': 28036.581, 'B007': 30743.113}
 
 
-def main(building, TECHS):
+def main(building):
     el_use_sum = {}
     for tech in TECHS:
         # building = 'B007'
@@ -558,4 +558,4 @@ def path_to_chiller_csv(building, tech):
 
 
 if __name__ == '__main__':
-    main()
+    main(building='B007')
