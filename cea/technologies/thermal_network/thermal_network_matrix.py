@@ -26,7 +26,7 @@ from math import ceil
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
-    FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST, MAX_NODE_FLOW
+    MAX_NODE_FLOW
 from cea.optimization.constants import PUMP_ETA
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
@@ -214,7 +214,7 @@ class ThermalNetwork(object):
 
         building_names = pd.read_csv(locator.get_total_demand())['Name'].values
 
-        self.edge_node_df = edge_node_df
+        self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -345,7 +345,7 @@ class ThermalNetwork(object):
                 index_col=0)
         else:
             edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
-            self.edge_node_df = edge_node_df
+            self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -354,10 +354,10 @@ class ThermalNetwork(object):
 # collect the results of each call to hourly_thermal_calculation in a record
 HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                               ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges',
-                                                'plant_heat_requirement', 'pressure_loss_system_Pa',
-                                                'pressure_loss_system_kW',
-                                                'pressure_loss_substations_kW', 'edge_mass_flows',
-                                                'q_loss_system', 'p_loss_system_edges'])
+                                               'plant_heat_requirement', 'pressure_loss_system_Pa',
+                                               'pressure_loss_system_kW',
+                                               'pressure_loss_substations_kW', 'edge_mass_flows',
+                                               'q_loss_system', 'p_loss_system_edges'])
 
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
@@ -413,33 +413,23 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     .. [Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating
        Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
-    # # prepare data for calculation
 
-    # get edge-node matrix from defined network, the input formats are either .csv or .shp
+    # # prepare data for calculation
+    print('Initialize network')
+    # initiate class, and get edge-node matrix from defined network
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
-    region = config.region
-    if config.thermal_network.use_representative_week_per_month:
-        # we run the predefined schedule of the first week of each month for the year
-        start_t = 0
-        stop_t = 2016 # 24 hours x 7 days x 12 months
-    else:
-        # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
-        start_t = config.thermal_network.start_t
-        stop_t = config.thermal_network.stop_t
 
     # calculate ground temperature
     thermal_network.T_ground_K = calculate_ground_temperature(locator, config)
-
+    print('Running substation design')
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
         thermal_network.building_names, locator, substation_systems)
-    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
+    thermal_network.substations_HEX_specs, substation_HEX_Q = substation_matrix.substation_HEX_design_main(
         thermal_network.buildings_demands, substation_systems, thermal_network)
 
-    # Output substation HEX cost data
-    substation_HEX_costs=pd.DataFrame(thermal_network.substations_HEX_specs['HEX_Cost'], index=thermal_network.building_names)
-    substation_HEX_costs.to_csv(thermal_network.locator.get_substation_HEX_cost(thermal_network.network_name, thermal_network.network_type))
-
+    # Output substation HEX node data
+    output_hex_specs_at_nodes(substation_HEX_Q, thermal_network)
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
@@ -447,31 +437,28 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    if config.thermal_network.use_representative_week_per_month:
-        hours_list = range(0, 168) + range(744, 912) + range(1416, 1584) + range(2160, 2328) + range(2880,
-                     3048) + range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832,
-                     6000) + range(6522, 6690) + range(7296, 7464) + range(8016, 8184)
-        # cut out relevant parts of all dataframes
-        thermal_network.T_ground_K = [value for index, value in enumerate(thermal_network.T_ground_K) if index in hours_list]
-        for building in thermal_network.buildings_demands.keys():
-            thermal_network.buildings_demands[building] = thermal_network.buildings_demands[building].ix[hours_list]
-            thermal_network.buildings_demands[building].index = range(0, 2016)
-        thermal_network.t_target_supply_C = thermal_network.t_target_supply_C.ix[hours_list]
-        thermal_network.t_target_supply_C.index = range(0, 2016)
-        thermal_network.t_target_supply_df = thermal_network.t_target_supply_df.ix[hours_list]
-        thermal_network.t_target_supply_df.index = range(0, 2016)
+    if config.thermal_network_optimization.use_representative_week_per_month:
+        # we run the predefined schedule of the first week of each month for the year
+        start_t = 0
+        stop_t = 2016  # 24 hours x 7 days x 12 months
+        prepare_inputs_of_representative_weeks(thermal_network)
+    else:
+        # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
+        start_t = config.thermal_network.start_t
+        stop_t = config.thermal_network.stop_t
 
+    print('Calculating edge mass flows')
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
-                               start_t, stop_t, substation_systems, config,
-                               use_multiprocessing=config.multiprocessing)
+                                                                   start_t, stop_t, substation_systems, config,
+                                                                   use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
             # and network optimization will fail as they expect 8760 timesteps.
             edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
@@ -486,10 +473,10 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         else:
             thermal_network.edge_mass_flow_df.to_csv(
                 thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                thermal_network.network_name))
+                                                                    thermal_network.network_name))
 
     # assign pipe id/od according to maximum edge mass flow
-    thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, set_diameter, region)
+    thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
     thermal_network.edge_df = thermal_network.edge_df.merge(thermal_network.pipe_properties.T, left_index=True,
@@ -499,14 +486,16 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
-                               sheetname='HEX',  index_col=0)
+                               sheetname='HEX', index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
     d_p = HEX_prices['d']['District substation heat exchanger']
-    e_p = HEX_prices['e']['District substation heat exchanger'] #make this into list, add readout in pressure loss calc
+    e_p = HEX_prices['e'][
+        'District substation heat exchanger']  # make this into list, add readout in pressure loss calc
     thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
+    print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
     number_of_processes = config.get_number_of_processes()
     if number_of_processes > 1:
@@ -515,17 +504,41 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
                                           izip(range(start_t, stop_t),
                                                repeat(thermal_network, times=(stop_t - start_t)),
-                                               repeat(region, times=(stop_t - start_t))))
+                                               repeat(thermal_network.config.region, times=(stop_t - start_t))))
+        pool.close()
+        pool.join()
     else:
         hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
                                      repeat(thermal_network, times=(stop_t - start_t)),
-                                     repeat(region, times=(stop_t - start_t)))
+                                     repeat(thermal_network.config.region, times=(stop_t - start_t)))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
     csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
                    for field in HourlyThermalResults._fields}
     save_all_results_to_csv(csv_outputs, thermal_network)
+
+    # identify all plants
+    plant_indexes = np.where(thermal_network.all_nodes_df['Type'] == 'PLANT')[0]
+    # read in all node df
+    all_nodes_df_output = pd.read_csv(
+        thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type,
+                                                                        thermal_network.network_name))
+    # add new column to dataframe
+    all_nodes_df_output = all_nodes_df_output.assign(Q_hex_plant_kW=pd.Series(np.zeros(len(all_nodes_df_output.index))))
+    # calculate maximum plant heat demand
+    for index_number, plant_index in enumerate(plant_indexes):
+        if len(plant_indexes) > 1:
+            max_demand = abs(max(csv_outputs['plant_heat_requirement'][index_number]))
+        else:
+            max_demand = abs(max(csv_outputs['plant_heat_requirement'], key=abs))
+        # add plant heat demand to node.csv file
+        ID = np.where(all_nodes_df_output['Name'] == 'NODE' + str(plant_index))[0][0]
+        all_nodes_df_output['Q_hex_plant_kW'][ID] = max_demand
+    # Output substation HEX node data
+    all_nodes_df_output.to_csv(
+        thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type,
+                                                                        thermal_network.network_name))
 
     print("Completed thermal-hydraulic calculation.\n")
 
@@ -543,9 +556,41 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                 print(key, thermal_network.problematic_edges[key])
 
 
+def output_hex_specs_at_nodes(substation_HEX_Q, thermal_network):
+    # merge with nodes df
+    substation_HEX_Q['Building'] = substation_HEX_Q.index
+    all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True'))
+    all_nodes_index = all_nodes_df_output.index
+    all_nodes_df_output = pd.merge(all_nodes_df_output, substation_HEX_Q, on='Building', how='outer')
+    all_nodes_df_output = all_nodes_df_output.sort_values(by=['coordinates'], ascending='True')
+    all_nodes_df_output.index = all_nodes_index
+    all_nodes_df_output.to_csv(
+        thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type,
+                                                                        thermal_network.network_name))
+    return np.nan
+
+
+def prepare_inputs_of_representative_weeks(thermal_network):
+    hours_list = range(0, 168) + range(744, 912) + range(1416, 1584) + range(2160, 2328) + range(2880, 3048) + \
+                 range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832,6000) + range(6522, 6690) + \
+                 range(7296, 7464) + range(8016, 8184)
+    # cut out relevant parts of all dataframes
+    thermal_network.T_ground_K = [value for index, value in enumerate(thermal_network.T_ground_K) if
+                                  index in hours_list]
+    for building in thermal_network.buildings_demands.keys():
+        thermal_network.buildings_demands[building] = thermal_network.buildings_demands[building].ix[hours_list]
+        thermal_network.buildings_demands[building].index = range(0, 2016)
+    thermal_network.t_target_supply_C = thermal_network.t_target_supply_C.ix[hours_list]
+    thermal_network.t_target_supply_C.index = range(0, 2016)
+    thermal_network.t_target_supply_df = thermal_network.t_target_supply_df.ix[hours_list]
+    thermal_network.t_target_supply_df.index = range(0, 2016)
+    return np.nan
+
+
 def save_all_results_to_csv(csv_outputs, thermal_network):
-    if thermal_network.config.thermal_network.use_representative_week_per_month:
-        # Todo: reduce these to minimum necessary outputs to run optimization
+    if thermal_network.config.thermal_network_optimization.use_representative_week_per_month:
+        # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
+        representative_week = True
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
         edge_mass_flows_for_csv = pd.DataFrame(csv_outputs['edge_mass_flows'])
@@ -574,7 +619,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         plant_heat_requirement_for_csv = pd.concat([plant_heat_requirement_for_csv] * 4, ignore_index=True)
         while len(plant_heat_requirement_for_csv.index) < HOURS_IN_YEAR:
-            plant_heat_requirement_for_csv = plant_heat_requirement_for_csv.append(plant_heat_requirement_for_csv.mean(), ignore_index=True)
+            plant_heat_requirement_for_csv = plant_heat_requirement_for_csv.append(
+                plant_heat_requirement_for_csv.mean(), ignore_index=True)
 
         q_loss_system_for_csv = pd.concat([q_loss_system_for_csv] * 4, ignore_index=True)
         while len(q_loss_system_for_csv.index) < HOURS_IN_YEAR:
@@ -582,7 +628,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         pressure_loss_system_kW_for_csv = pd.concat([pressure_loss_system_kW_for_csv] * 4, ignore_index=True)
         while len(pressure_loss_system_kW_for_csv.index) < HOURS_IN_YEAR:
-            pressure_loss_system_kW_for_csv = pressure_loss_system_kW_for_csv.append(pressure_loss_system_kW_for_csv.mean(), ignore_index=True)
+            pressure_loss_system_kW_for_csv = pressure_loss_system_kW_for_csv.append(
+                pressure_loss_system_kW_for_csv.mean(), ignore_index=True)
 
         pressure_loss_system_Pa_for_csv = pd.concat([pressure_loss_system_Pa_for_csv] * 4, ignore_index=True)
         while len(pressure_loss_system_Pa_for_csv.index) < HOURS_IN_YEAR:
@@ -594,9 +641,10 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             pressure_loss_substations_kW_for_csv = pressure_loss_substations_kW_for_csv.append(
                 pressure_loss_substations_kW_for_csv.mean(), ignore_index=True)
 
-        p_loss_system_edges_to_csv = pd.concat([p_loss_system_edges_to_csv]*4, ignore_index=True)
+        p_loss_system_edges_to_csv = pd.concat([p_loss_system_edges_to_csv] * 4, ignore_index=True)
         while len(p_loss_system_edges_to_csv.index) < HOURS_IN_YEAR:
-            p_loss_system_edges_to_csv = p_loss_system_edges_to_csv.append(p_loss_system_edges_to_csv.mean(), ignore_index=True)
+            p_loss_system_edges_to_csv = p_loss_system_edges_to_csv.append(p_loss_system_edges_to_csv.mean(),
+                                                                           ignore_index=True)
 
         #Output values
         # Edge Mass Flows
@@ -631,6 +679,15 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             index=False,
             float_format='%.3f')
 
+        # pressure losses over entire network in Pa
+        pressure_loss_system_Pa_for_csv.columns = ['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
+                                                   'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']
+        pressure_loss_system_Pa_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
+                                                                                       thermal_network.network_name),
+            index=False,
+            float_format='%.3f')
+
         # heat losses over entire network
         q_loss_system_for_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(q_loss_system_for_csv).to_csv(
@@ -642,14 +699,15 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # pressure losses over entire network
         p_loss_system_edges_to_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(p_loss_system_edges_to_csv).to_csv(
-            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(thermal_network.network_type,
-                                                                                      thermal_network.network_name),
+            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(
+                thermal_network.network_type,
+                thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
         # plant heat requirements
-        plant_heat_requirement_for_csv.columns=filter(None, thermal_network.all_nodes_df[
-                         thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
+        plant_heat_requirement_for_csv.columns = filter(None, thermal_network.all_nodes_df[
+            thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
         plant_heat_requirement_for_csv.to_csv(
             thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
                 thermal_network.network_type,
@@ -657,22 +715,21 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # node temperatures
-        T_supply_nodes_for_csv.columns=thermal_network.edge_node_df.index
+        T_supply_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_supply_nodes_for_csv.to_csv(
             thermal_network.locator.get_optimization_network_layout_supply_temperature_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
-        T_return_nodes_for_csv.columns=thermal_network.edge_node_df.index
+        T_return_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_return_nodes_for_csv.to_csv(
             thermal_network.locator.get_optimization_network_layout_return_temperature_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
-        # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
-        representative_week = True
+
 
     else:
         representative_week = False
@@ -685,16 +742,19 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             na_rep='NaN', index=False, float_format='%.3f')
 
         # pressure losses over entire network in Pa
-        pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
-                                                                      'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
+        pd.DataFrame(csv_outputs['pressure_loss_system_Pa'],
+                     columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
+                              'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
             thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                       thermal_network.network_name, representative_week),
+                                                                                       thermal_network.network_name,
+                                                                                       representative_week),
             index=False,
             float_format='%.3f')
 
         # pressure losses over entire network in kW
-        pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
-                                                                      'pressure_loss_substations_kW', 'pressure_loss_total_kW']).to_csv(
+        pd.DataFrame(csv_outputs['pressure_loss_system_kW'],
+                     columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
+                              'pressure_loss_substations_kW', 'pressure_loss_total_kW']).to_csv(
             thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
                                                                                           thermal_network.network_name,
                                                                                           representative_week),
@@ -702,24 +762,26 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # pressure losses over substations of network
-        pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns= thermal_network.building_names).to_csv(
+        pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns=thermal_network.building_names).to_csv(
             thermal_network.locator.get_optimization_network_substation_ploss_file(thermal_network.network_type,
                                                                                    thermal_network.network_name,
                                                                                    representative_week),
             index=False,
             float_format='%.3f')
 
-         # heat losses over entire network
+        # heat losses over entire network
         pd.DataFrame(csv_outputs['q_loss_system'], columns=thermal_network.edge_node_df.columns).to_csv(
             thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                      thermal_network.network_name, representative_week),
+                                                                                      thermal_network.network_name,
+                                                                                      representative_week),
             index=False,
             float_format='%.3f')
 
-         # pressure losses over entire network per edge
+        # pressure losses over entire network per edge
         pd.DataFrame(csv_outputs['p_loss_system_edges'], columns=thermal_network.edge_node_df.columns).to_csv(
-            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(thermal_network.network_type,
-                                                                                      thermal_network.network_name, representative_week),
+            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(
+                thermal_network.network_type,
+                thermal_network.network_name, representative_week),
             index=False,
             float_format='%.3f')
 
@@ -734,13 +796,16 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-            thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
-                                                                                            thermal_network.network_name, representative_week),
+            thermal_network.locator.get_optimization_network_layout_supply_temperature_file(
+                thermal_network.network_type,
+                thermal_network.network_name, representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
         pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-            thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
-                                                                                            thermal_network.network_name, representative_week),
+            thermal_network.locator.get_optimization_network_layout_return_temperature_file(
+                thermal_network.network_type,
+                thermal_network.network_name, representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
+
 
 def calculate_ground_temperature(locator, config):
     """
@@ -799,7 +864,7 @@ def hourly_thermal_calculation(t, thermal_network, region):
     plant_heat_requirement_kW, \
     thermal_network.edge_mass_flow_df.ix[t], \
     q_loss_supply_edges_kW, \
-    total_heat_loss_kW = solve_network_temperatures(thermal_network, t, region)
+    total_heat_loss_kW = solve_network_temperatures(thermal_network, t)
 
     # calculate pressure at each node and pressure drop throughout the entire network
     P_supply_nodes_Pa, \
@@ -818,7 +883,7 @@ def hourly_thermal_calculation(t, thermal_network, region):
         plant_heat_requirement=plant_heat_requirement_kW,
         pressure_loss_system_Pa=delta_P_network_Pa,
         pressure_loss_system_kW=pressure_loss_system_kW,
-        pressure_loss_substations_kW = pressure_loss_substations_kW,
+        pressure_loss_substations_kW=pressure_loss_substations_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
         q_loss_system=total_heat_loss_kW,
         p_loss_system_edges=pressure_loss_edges_kW
@@ -869,7 +934,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
        Applied Thermal Engineering, 2016.
     """
-
+    edge_node_df = edge_node_df.copy()
     loops, graph = find_loops(edge_node_df)  # identifies all linear independent loops
     if loops:
         # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
@@ -923,7 +988,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                     sum_delta_m_num[i] = sum_delta_m_num[i] + delta_m_num[index["edge_number"]] * clockwise
                     sum_delta_m_den[i] = sum_delta_m_den[i] + delta_m_den[index["edge_number"]]
                 # calculate flow correction for each loop
-                delta_m = -sum_delta_m_num[i] / sum_delta_m_den[i]
+                if np.isclose(sum_delta_m_den[i], 0):
+                    delta_m = 0
+                else:
+                    delta_m = -sum_delta_m_num[i] / sum_delta_m_den[i]
 
                 # apply mass flow correction to all edges of each loop
                 for j in range(len(loops[i])):
@@ -945,10 +1013,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
             # adapt tolerance to reduce total amount of iterations
             if iterations < 20:
                 tolerance = 0.01
-            elif iterations < 50:
+            elif iterations < 40:
                 tolerance = 0.02
-            elif iterations < 100:
-                tolerance = 0.03
+            elif iterations < 80:
+                tolerance = 0.04
             else:
                 print('No convergence of looped massflows after ', iterations, ' iterations with a remaining '
                                                                                'difference of',
@@ -974,9 +1042,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         print('Error in the defined mass flows, deviation of ', max(abs(b_original - b_verification)),
               ' from node demands.')
     if loops:
-        if (abs(sum_delta_m_num) > 5000).any():  # 5 kPa is sufficiently small
+        if (abs(sum_delta_m_num) > 15000).any():  # 5 kPa is sufficiently small
             print('Error in the defined mass flows, deviation of ', max(abs(sum_delta_m_num)),
-                  ' from 0 pressure in loop.')
+                  ' from 0 pressure in loop. Most likely due to low edge flows within the loop.')
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
     return mass_flow_edge
@@ -1020,7 +1088,7 @@ def find_loops(edge_node_df):
     return loops, graph
 
 
-def assign_pipes_to_edges(thermal_network, set_diameter, region):
+def assign_pipes_to_edges(thermal_network, set_diameter):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -1040,7 +1108,7 @@ def assign_pipes_to_edges(thermal_network, set_diameter, region):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(region), sheetname=['PIPING CATALOG'])[
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(thermal_network.config.region), sheetname=['PIPING CATALOG'])[
         'PIPING CATALOG']
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
@@ -1161,13 +1229,13 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_substations_kW = []
     # remove non buildings, match this to buildings_names list from Pa and kW values
     for building in thermal_network.building_names:
-        # identify which node matches this building
-        building_node_id = thermal_network.all_nodes_df.loc[thermal_network.all_nodes_df['Building'] == building]
-        building_node_id = int(building_node_id.index.values[0].replace('NODE',''))
-        # add value from this node-index to the list
-        pressure_loss_substations_pa.append(pressure_loss_nodes_pa[building_node_id])
-        pressure_loss_substations_kW.append(pressure_loss_nodes_kW[building_node_id])
+        for index, name in enumerate(thermal_network.all_nodes_df.Building):
+            if name == building:
+                # add value from this node-index to the list
+                # TODO: Fix for ecocampus case, not all buildings in network
 
+                pressure_loss_substations_pa.append(pressure_loss_nodes_pa[index])
+                pressure_loss_substations_kW.append(pressure_loss_nodes_kW[index])
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
@@ -1219,6 +1287,7 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
 
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
+    plant_indexes = np.where(thermal_network.all_nodes_df['Type'] == 'PLANT')[0]
     all_buildings = thermal_network.all_nodes_df['Building'].values
     valve_losses = {}
     hex_losses = {}
@@ -1235,48 +1304,100 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
             # iterate through all heating/cooling types
             if t in cap_mass_flow[type].keys():
                 if isinstance(cap_mass_flow[type][t], pd.DataFrame):
-                    if any(cap_mass_flow[type][t][name] > 0):
-                        node_flow = cap_mass_flow[type][t][name].values/HEAT_CAPACITY_OF_WATER_JPERKGK
-                        ## calculate valve pressure loss
-                        # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                        # find assigned node of building
-                        building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
-                        building_node = thermal_network.all_nodes_df.index[building_index]
-                        building_edge = thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
-                        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
-                        # calculate equivalent length for valve
-                        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
-                                [node_flow],
-                                [supply_temperature[building_index]], 0)
+                    if name in cap_mass_flow[type][t].keys():
+                        if any(cap_mass_flow[type][t][name] > 0):
+                            node_flow = cap_mass_flow[type][t][name].values / HEAT_CAPACITY_OF_WATER_JPERKGK
+                            ## calculate valve pressure loss
+                            # find out diameter of building. This is assumed to be the same as the edge connecting to that building
+                            # find assigned node of building
+                            building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
+                            building_node = thermal_network.all_nodes_df.index[building_index]
+                            building_edge = thermal_network.edge_node_df.columns[
+                                np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+                            building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+                            # calculate equivalent length for valve
+                            valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                            aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
+                                                                                          [valve_eq_length],
+                                                                                          [node_flow],
+                                                                                          [supply_temperature[
+                                                                                               building_index]], 0)
 
-                        if node_flow <= MAX_NODE_FLOW:
-                            ## calculate HEX losses
-                            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                            if aggregated_hex == 0:
-                                aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
-                            else:
-                                aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
-
-                        else:
-                            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
-                            nodeflow_nom = node_flow / number_of_HEXs
-                            for i in range(number_of_HEXs):
+                            if node_flow <= MAX_NODE_FLOW:
                                 ## calculate HEX losses
-                                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
-                                if aggregated_hex == 0:
-                                    aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                                mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                if np.isclose(aggregated_hex, 0):
+                                    aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
+                                        mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
                                 else:
-                                    aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                                    aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                                        mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+
+                            else:
+                                number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+                                nodeflow_nom = node_flow / number_of_HEXs
+                                for i in range(number_of_HEXs):
+                                    ## calculate HEX losses
+                                    mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                    if np.isclose(aggregated_hex, 0):
+                                        aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+                                    else:
+                                        aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
 
+    # calculate plant pressure losses
+    total_plant_losses = np.zeros(len(all_buildings))
+    aggregated_valve = 0
+    aggregated_hex = 0
+    for index in plant_indexes:
+        node_flow = thermal_network.node_mass_flow_df['NODE' + str(index)].abs().max()
+        building_index = index
+        building_node = thermal_network.all_nodes_df.index[building_index]
+        building_edge = \
+            thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == -1)][0]
+        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+        # calculate equivalent length for valve
+        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
+                                                                      [node_flow],
+                                                                      [supply_temperature[building_index]], 0)
+
+        if node_flow <= MAX_NODE_FLOW:
+            ## calculate HEX losses
+            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+            if aggregated_hex == 0:
+                aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+            else:
+                aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(
+                    mcp_sub)
+
+        else:
+            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+            nodeflow_nom = node_flow / number_of_HEXs
+            for i in range(number_of_HEXs):
+                ## calculate HEX losses
+                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                if aggregated_hex == 0:
+                    aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(
+                        mcp_sub)
+                else:
+                    aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                        mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+        total_plant_losses[index] = aggregated_hex + aggregated_valve
+
     # convert total_losses into a ndarray in the order or node numbering, with 0 values for NONE nodes
     total_losses_array = np.zeros(len(all_buildings))
+    # add building losses
     for index, name in enumerate(thermal_network.all_nodes_df.Building):
-        if name in total_losses.keys(): #this is a consumer building
+        if name in total_losses.keys():  # this is a consumer building
             total_losses_array[index] = total_losses[str(name)]
+    # add plant losses
+    for index in plant_indexes:
+        total_losses_array[index] = total_plant_losses[index]
     return total_losses_array
 
 
@@ -1341,7 +1462,6 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
         # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
         pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
                 math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
-    # todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return pressure_loss_edge_Pa
 
 
@@ -1499,7 +1619,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
 
     region = config.region
     # create empty DataFrames to store results
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         thermal_network.edge_mass_flow_df = pd.DataFrame(
             data=np.zeros((2016, len(thermal_network.edge_node_df.columns.values))),
             columns=thermal_network.edge_node_df.columns.values)  # stores values for 2016 timesteps
@@ -1555,6 +1675,8 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             pool = multiprocessing.Pool(number_of_processes)
             mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
                                   izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
+            pool.close()
+            pool.join()
         else:
             mass_flows = map(hourly_mass_flow_calculation, t,
                              repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
@@ -1565,7 +1687,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         thermal_network.thermal_demand.iloc[range(start_t, stop_t)] = [mfe[2] for mfe in mass_flows]
 
         # update diameter guess for iteration
-        pipe_properties_df = assign_pipes_to_edges(thermal_network, set_diameter, region)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network, set_diameter)
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         # exit condition for diameter iteration while statement
@@ -1602,7 +1724,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         iterations += 1
 
     # output csv files with node mass flows
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
         node_mass_flow_for_csv = pd.DataFrame(thermal_network.node_mass_flow_df)
@@ -1634,7 +1756,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         thermal_network.thermal_demand.to_csv(
             thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name),
-            columns = thermal_network.building_names)
+            columns=thermal_network.building_names)
 
     return thermal_network.edge_mass_flow_df
 
@@ -1732,9 +1854,11 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
         else:
             mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())),
                                     index=thermal_network.buildings_demands.keys()).T
-            for key in FULL_HEATING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_heating_systems:
+                key = 'hs_' + key
                 thermal_network.ch_value[key][t] = 0
-            for key in FULL_COOLING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_cooling_systems:
+                key = 'cs_' + key
                 thermal_network.cc_value[key][t] = 0
             thermal_demand_for_t = np.zeros(len(thermal_network.building_names))
         # write consumer substation required flow rate to nodes
@@ -1783,7 +1907,8 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         test_edge_flow = pd.DataFrame(edge_mass_flow_df)
     test_edge_flow = test_edge_flow.abs()
     test_edge_flow[
-        test_edge_flow == 0] = np.nan  # remove zero values as we are only interested in edges which have mass flows
+        np.isclose(test_edge_flow,
+                   0)] = np.nan  # remove zero values as we are only interested in edges which have mass flows
     if np.isnan(test_edge_flow).values.all():
         min_edge_flow_flag = True  # no mass flows
     elif (
@@ -1836,10 +1961,12 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
             (test_edge_flow.abs() - pipe_min_mass_flow).values))  # deviation from minimum mass flow
         min_edge_flow_flag = False  # need to iterate
         if thermal_network.network_type == 'DH':
-            for key in FULL_HEATING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_heating_systems:
+                key = 'hs_' + key
                 thermal_network.ch_old[key][t] = thermal_network.ch_value[key][t]
         else:
-            for key in FULL_COOLING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_cooling_systems:
+                key = 'cs_' + key
                 thermal_network.cc_old[key][t] = thermal_network.cc_value[key][t]
         min_iteration = min_iteration + 1
     else:  # all edge mass flows ok
@@ -1892,7 +2019,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
     # Identify time steps of highest 50 demands
     region = config.region
     if thermal_network.network_type == 'DH':
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             heating_sum = np.zeros(2016)
         else:
             heating_sum = np.zeros(HOURS_IN_YEAR)
@@ -1901,10 +2028,11 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                 if system == 'ww':
                     heating_sum = heating_sum + thermal_network.buildings_demands[building].Qww_sys_kWh
                 else:
-                    heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhs_sys_' + system + '_kWh']
+                    heating_sum = heating_sum + thermal_network.buildings_demands[building][
+                        'Qhs_sys_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             cooling_sum = np.zeros(2016)
         else:
             cooling_sum = np.zeros(HOURS_IN_YEAR)
@@ -2029,7 +2157,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                                                               iteration, t)
 
         # assign pipe id/od according to maximum edge mass flow
-        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, set_diameter, region)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, set_diameter)
         # update diameter guess
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
@@ -2083,7 +2211,7 @@ def calc_edge_temperatures(temperature_node, edge_node):
 # ===========================
 
 
-def solve_network_temperatures(thermal_network, t, region):
+def solve_network_temperatures(thermal_network, t):
     """
     This function calculates the node temperatures at time-step t accounting for heat losses throughout the network.
     There is one iteration to determine weather the substation supply temperature and the substation mass flow are
@@ -2145,19 +2273,19 @@ def solve_network_temperatures(thermal_network, t, region):
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
-        t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df)
+        t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df.copy())
 
         # initialization of K_value
         k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
                                                         thermal_network.locator, thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
                                                         thermal_network.network_type,
-                                                        region)  # [kW/K]
+                                                        thermal_network.config.region)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw = calc_supply_temperatures(thermal_network.T_ground_K[t],
-                                                               edge_node_df,
+                                                               edge_node_df.copy(),
                                                                edge_mass_flow_df, k,
                                                                thermal_network.t_target_supply_df.loc[t],
                                                                thermal_network.network_type,
@@ -2190,7 +2318,7 @@ def solve_network_temperatures(thermal_network, t, region):
                                                                                      mdot_all_kgs)
 
                 # solve for the required mass flow rate on each pipe
-                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df,
+                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
                                                                mass_flow_substations_nodes_df,
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
@@ -2200,7 +2328,7 @@ def solve_network_temperatures(thermal_network, t, region):
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
                 edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
-                                                            edge_node_df)
+                                                            edge_node_df.copy())
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
                                                               edge_mass_flow_df_2_kgs, min_iteration, t)
@@ -2210,18 +2338,18 @@ def solve_network_temperatures(thermal_network, t, region):
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
                                                                 thermal_network.network_type,
-                                                                region)  # [kW/K]
+                                                                thermal_network.config.region)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
                 thermal_network.T_ground_K[t],
-                edge_node_df,
+                edge_node_df.copy(),
                 edge_mass_flow_df_2_kgs, k,
                 thermal_network.t_target_supply_df.loc[t],
                 thermal_network.network_type,
                 thermal_network.all_nodes_df, thermal_network)
             # calculate edge temperature for heat transfer coefficient within iteration
-            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df)
+            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
 
             # write supply temperatures to substation nodes
             t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, thermal_network.all_nodes_df)
@@ -2276,11 +2404,11 @@ def solve_network_temperatures(thermal_network, t, region):
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
                                                                 thermal_network.network_type,
-                                                                region)  # [kW/K]
+                                                                thermal_network.config.region)  # [kW/K]
 
                 t_return_nodes_2__k, \
                 q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t],
-                                                                    edge_node_df,
+                                                                    edge_node_df.copy(),
                                                                     edge_mass_flow_df_2_kgs,
                                                                     mass_flow_substations_nodes_df_2, k,
                                                                     t_substation_return_df_2, thermal_network)
@@ -2309,7 +2437,8 @@ def reset_min_mass_flow_variables(thermal_network, t):
     :param thermal_network:
     :return:
     '''
-    for key in FULL_COOLING_SYSTEMS_LIST:
+    for key in thermal_network.config.thermal_network.substation_cooling_systems:
+        key = 'cs_' + key
         if not key in thermal_network.cc_old.keys():
             thermal_network.cc_old[key] = {}
         if not t in thermal_network.cc_old[key].keys():
@@ -2318,7 +2447,8 @@ def reset_min_mass_flow_variables(thermal_network, t):
             thermal_network.cc_value[key] = {}
         if t not in thermal_network.cc_value[key].keys():
             thermal_network.cc_value[key][t] = pd.DataFrame(index=['0'])
-    for key in FULL_HEATING_SYSTEMS_LIST:
+    for key in thermal_network.config.thermal_network.substation_heating_systems:
+        key = 'hs_' + key
         if not key in thermal_network.ch_old.keys():
             thermal_network.ch_old[key] = {}
         if not t in thermal_network.ch_old[key].keys():
@@ -2405,7 +2535,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
     :rtype plant_node: numpy array
 
     """
-    z = np.asarray(edge_node_df)  # (nxe) edge-node matrix
+    z = np.asarray(edge_node_df.copy())  # (nxe) edge-node matrix
     z_pipe_out = z.clip(min=0)  # pipe outlet matrix
     z_pipe_in = z.clip(max=0)  # pipe inlet matrix
 
@@ -2454,8 +2584,39 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                     calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground__k, z_note, thermal_network)
             plant_node = t_node.nonzero()[0]  # the node indices of the plant nodes in the edge-node index
 
+
+            # Identify all nodes with no in or outflows and delete those values from the z matrixes
+            # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
+            for i in range(z_note.shape[0]):
+                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])),0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])),0):
+                    t_node[i] = np.nan
+                    # no in our outflows, clear in and outflows at this node
+                    # and clear node incoming flows from the corresponding edges
+                    outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, 1.0)]
+                    if outflowing_edges:
+                        for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                            target_node = np.where(z_note[:, edge] == -1)[0]
+                            z_note[target_node, edge] = 0.0
+                            z_pipe_in[target_node, edge] = 0.0
+                            t_e_in[target_node, edge] = 0.0
+                    outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, -1.0)]
+                    if outflowing_edges:
+                        for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                            target_node = np.where(z_note[:, edge] == 1)[0]
+                            z_note[target_node, edge] = 0.0
+                            z_pipe_out[target_node, edge] = 0.0
+                            t_e_out[target_node, edge] = 0.0
+                    target_edges = [a for a, x in enumerate(z_note[i]) if not np.isclose(x, 0.0)]
+                    if target_edges:
+                        for target_edge in target_edges:
+                            z_note[i, target_edge] = 0.0
+                            z_pipe_in[i, target_edge] = 0.0
+                            z_pipe_out[i, target_edge] = 0.0
+                            t_e_in[i, target_edge] = 0.0
+                            t_e_out[i, target_edge] = 0.0
+
             # # calculate pipe outlet temperature and node temperature for the rest
-            while np.count_nonzero(t_node == 0) > 0:
+            while np.count_nonzero(np.isclose(t_node, 0)) > 0:
                 if not_stuck.any():  # if there are no changes for all elements but we have not yet solved the system
                     z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, t_ground__k, not_stuck = calculate_outflow_temp(
                         z,
@@ -2470,6 +2631,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                         k, thermal_network)
                 else:  # stuck! this can happen with loops
                     for i in range(np.shape(t_e_out)[1]):
+                        #check if we have a mass flow on this edge
                         if np.any(t_e_out[:, i] == 1):
                             z_note[np.where(t_e_out[:, i] == 1), i] = 0  # remove inflow value from z_note
                             if temp_iter < 1:  # do this in first iteration only, since there is no previous value
@@ -2604,16 +2766,15 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
     :rtype not_stuck: ndarray (1 x e)
 
     """
-    # we get not_stuck because we have a loop with no intuitive place to start. Iteration is necessary
     for j in range(z.shape[0]):
         # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
         if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[1]:
             # calculate node temperature with merging flows from pipes
-            part1 = np.dot(m_d, t_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
+            part1 = np.dot(m_d, np.nan_to_num(t_e_out[j])).sum()  # sum of massflows entering node * Entry Temperature
             part2 = np.dot(m_d, z_pipe_out[j]).sum()  # total massflow leaving node
             t_node[j] = part1 / part2
-            if t_node[j] == np.nan:
-                raise ValueError('The are no flow entering/existing ', z.index[j],
+            if np.isnan(t_node[j]):
+                raise ValueError('There are no flow entering/existing node', j,
                                  '. Please check if the edge_node_df make sense.')
             # write the node temperature to the corresponding pipe inlet
             t_e_in[j] = t_e_in[j] * t_node[j]
@@ -2626,12 +2787,12 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
                     calc_t_out(j, edge, k, m_d, z, t_e_in, t_e_out, t_ground_k, z_note, thermal_network)
             not_stuck[j] = True
         # fill in temperatures for nodes at network branch ends
-        elif t_node[j] == 0 and t_e_out[j].max() != 1:
+        elif np.isclose(t_node[j], 0) and t_e_out[j].max() != 1:
             t_node[j] = np.nan if np.isnan(t_e_out[j]).any() else t_e_out[j].max()
             not_stuck[j] = True
-        elif t_e_out[j].min() < 0:
-            print('negative node temperature!')
-            not_stuck[j] = True
+        # elif t_e_out[j].min() < 0:
+        #    print('negative node temperature!')
+        #    not_stuck[j] = True
         else:
             not_stuck[j] = False
 
@@ -2662,7 +2823,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
 
     """
 
-    z = np.asarray(edge_node_df) * (-1)  # (n x e) edge-node matrix
+    z = np.asarray(edge_node_df.copy()) * (-1)  # (n x e) edge-node matrix
     z_pipe_out = z.clip(min=0)  # pipe outlet matrix
     z_pipe_in = z.clip(max=0)  # pipe inlet matrix
 
@@ -2696,23 +2857,55 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         m_sub = np.zeros((z.shape[0], z.shape[0]))  # (nxn) substation flow rate matrix
         np.fill_diagonal(m_sub, mass_flow_substation_df)
 
+        # Identify all nodes with no in or outflows and delete those values from the z matrixes
+        # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
+        for i in range(z_note.shape[0]):
+            if np.isclose(sum(np.dot(m_d, z_pipe_out[i])), 0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])), 0):
+                t_node[i] = np.nan
+                # no in our outflows, clear in and outflows at this node
+                # and clear node incoming flows from the corresponding edges
+                outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, 1.0)]
+                if outflowing_edges:
+                    for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                        target_node = np.where(z_note[:, edge] == -1)[0]
+                        z_note[target_node, edge] = 0.0
+                        z_pipe_in[target_node, edge] = 0.0
+                        t_e_in[target_node, edge] = 0.0
+                outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, -1.0)]
+                if outflowing_edges:
+                    for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                        target_node = np.where(z_note[:, edge] == 1)[0]
+                        z_note[target_node, edge] = 0.0
+                        z_pipe_out[target_node, edge] = 0.0
+                        t_e_out[target_node, edge] = 0.0
+                target_edges = [a for a, x in enumerate(z_note[i]) if not np.isclose(x, 0.0)]
+                if target_edges:
+                    for target_edge in target_edges:
+                        z_note[i, target_edge] = 0.0
+                        z_pipe_in[i, target_edge] = 0.0
+                        z_pipe_out[i, target_edge] = 0.0
+                        t_e_in[i, target_edge] = 0.0
+                        t_e_out[i, target_edge] = 0.0
+
         # calculate the return pipe node temperature of substations locating at the end of the branch
         for i in range(z.shape[0]):
             # choose the consumer nodes locating at the end of the branches
-            if np.count_nonzero(z[i] == 1) == 0 and np.count_nonzero(z[i] == 0) != z.shape[1]:
+            if np.count_nonzero(np.isclose(z_note[i], 1)) == 0 and np.count_nonzero(np.isclose(z_note[i], 0)) != z.shape[1]:
                 t_node[i] = t_return.values[0, i]
                 # t_node[i] = map(list, t_return.values)[0][i]
-                for edge in range(z_note.shape[1]):
-                    if t_e_in[i, edge] != 0:
-                        t_e_in[i, edge] = map(list, t_return.values)[0][i]
+                if not np.isnan(t_node[i]):
+                    for edge in range(z_note.shape[1]):
+                        if t_e_in[i, edge] != 0:
+                            t_e_in[i, edge] = map(list, t_return.values)[0][i]
                         # calculate pipe outlet
                         calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network)
 
         while z_note.max() >= 1:
             if not_stuck.any():
                 for j in range(z.shape[0]):
-                    if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[
-                        1]:  # only -1 values in z_note
+                    if np.count_nonzero(np.isclose(z_note[j], 1)) == 0 and np.count_nonzero(np.isclose(z_note[j], 0)) != \
+                            z.shape[
+                                1]:  # only -1 values in z_note
                         # calculate node temperature with merging flows from pipes
                         t_node[j] = calc_return_node_temperature(j, m_d, t_e_out, t_return, z_pipe_out, m_sub)
                         for edge in range(z_note.shape[1]):
@@ -2721,7 +2914,8 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
                                 # calculate pipe outlet
                                 calc_t_out(j, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network)
                         not_stuck[j] = True
-                    elif np.argwhere(z_note[j] == 0).size == z.shape[1] and t_node[j] == 0:  # all 0 values
+                    elif np.argwhere(np.isclose(z_note[j], 0)).size == z.shape[1] and np.isclose(t_node[j],
+                                                                                                 0):  # all 0 values
                         t_node[j] = calc_return_node_temperature(j, m_d, t_e_out, t_return, z_pipe_out, m_sub)
                         not_stuck[j] = False
                     else:
@@ -2741,8 +2935,8 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
                 not_stuck = np.array([True] * z.shape[0])
 
         # calculate temperature with merging flows from pipes at the plant node
-        if len(np.where(t_node == 0)[0]) != 0:
-            node_index = np.where(t_node == 0)[0][0]
+        if len(np.where(np.isclose(t_node, 0))[0]) != 0:
+            node_index = np.where(np.isclose(t_node, 0))[0][0]
             m_sub[node_index] = 0
             t_node[node_index] = calc_return_node_temperature(node_index, m_d, t_e_out, t_return,
                                                               z_pipe_out, m_sub)
@@ -2783,13 +2977,13 @@ def calc_return_node_temperature(index, m_d, t_e_out, t_return, z_pipe_out, m_su
 
     """
     total_mass_flow_to_node = np.dot(m_d, z_pipe_out[index]).sum() + m_sub[index].max()
-    if total_mass_flow_to_node == 0:
+    if np.isclose(total_mass_flow_to_node, 0):
         # set node temperature to nan if no flow to node
         t_node = np.nan
     else:
         total_mcp_from_edges = np.dot(m_d, np.nan_to_num(t_e_out[index])).sum()
-        total_mcp_from_substations = 0 if m_sub[index].max() == 0 else np.dot(m_sub[index].max(),
-                                                                              t_return.values[0, index])
+        total_mcp_from_substations = 0 if np.isclose(m_sub[index].max(), 0) else np.dot(m_sub[index].max(),
+                                                                                        t_return.values[0, index])
         t_node = (total_mcp_from_edges + total_mcp_from_substations) / total_mass_flow_to_node
     return t_node
 
@@ -2835,12 +3029,12 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
         k = k_old[e, e]
         m = m_d[e, e]
         out_node_index = np.where(z[:, e] == 1)[0].max()
-        if abs(m) == 0 and z[node, e] == -1:
+        if np.isclose(abs(m), 0) and np.isclose(z_note[node, e], -1):
             # set outlet temperature to nan if no flow is going out from node to connected edges
             t_e_out[out_node_index, e] = np.nan
             z_note[:, e] = 0
 
-        elif z[node, e] == -1:
+        elif np.isclose(z_note[node, e], -1):
             # calculate outlet temperature if flow goes from node to out_node through edge
             t_e_out[out_node_index, e] = (t_e_in[node, e] * (
                     k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
@@ -2848,21 +3042,25 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
+                #Store value
                 if not str(
                         e) in thermal_network.problematic_edges.keys():  # add problematic edge and corresponding mass flow to the dictionary
                     thermal_network.problematic_edges[str(e)] = m
-                else:
-                    if thermal_network.problematic_edges[str(
+                elif thermal_network.problematic_edges[str(
                             e)] > m:  # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value
                         thermal_network.problematic_edges[str(e)] = m
+
                 if (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) > 0:
                     print(
                         'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
                         m, ' on edge: ', e)
+                if thermal_network.network_type == 'DH':
                     t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
-                    # Induces some error but necessary to avoid spiraling to negative temperatures
-                    # Todo: find better method which allows loss calculation at low massflows
-            z_note[:, e] = 0
+                else:
+                    t_e_out[out_node_index, e] = t_e_in[node, e] + 30  # assumes maximum 30 K temperature loss
+                # Induces some error but necessary to avoid spiraling to negative temperatures
+                # Todo: find better method which allows loss calculation at low massflows
+            z_note[:, e] = 0.0
 
 
 def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pipe_properties_df, temperature__k,
@@ -2929,15 +3127,16 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
         R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
                 2 * math.pi * conductivity_pipe)  # [m*K/W]
         if network_type == 'DC':
-            D_ins = 0.25 * pipe_properties_df.loc['D_ins_m', pipe] # approximation based on COOLMANT CLM 2.0 Pipe catalogue
+            D_ins = 0.25 * pipe_properties_df.loc[
+                'D_ins_m', pipe]  # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
             D_ins = pipe_properties_df.loc['D_ins_m', pipe]
-        R_insulation = np.log(D_ins / pipe_properties_df.loc['D_ext_m', pipe]) / (
-                    2 * math.pi * conductivity_insulation)  # [m*K/W]
+        R_insulation = np.log((D_ins+pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
+                2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
-        if alpha_th[pipe_number] == 0:
+        if np.isclose(alpha_th[pipe_number], 0):
             R_conv = 0.2  # case with no massflow, avoids divide by 0 error
         else:
             R_conv = 1 / (
@@ -2945,7 +3144,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe] * (1 + extra_heat_transfer_coef) / (R_pipe + R_insulation + R_ground + R_conv) / 1000  # [kW/K]
         k_all.append(k)
-    k_all = np.diag(k_all)
+    k_all = abs(np.diag(k_all))
     return k_all
 
 
@@ -3214,13 +3413,11 @@ def main(config):
     network_names = config.thermal_network.network_names
 
     if network_type == 'DC':
-        substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
-                                      're']  # list of cooling demand types supplied by network to substation
+        substation_cooling_systems = config.thermal_network.substation_cooling_systems  # list of cooling demand types supplied by network to substation
         substation_heating_systems = []
     else:
         substation_cooling_systems = []
-        substation_heating_systems = ['ahu', 'aru', 'shu',
-                                      'ww']  # list of heating demand types supplied by network to substation
+        substation_heating_systems = config.thermal_network.substation_heating_systems  # list of heating demand types supplied by network to substation
 
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
@@ -3229,11 +3426,15 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         print('Running thermal_network with representative week per month.')
     else:
         print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
         print('Running thermal_network with stop-t %s' % config.thermal_network.stop_t)
+    if network_type == 'DH':
+        print('Running thermal_network with heating loads: %s' % substation_heating_systems)
+    else:
+        print('Running thermal_network with cooling loads: %s' % substation_cooling_systems)
 
     if len(network_names) == 0:
         network_names = ['']
