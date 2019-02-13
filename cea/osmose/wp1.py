@@ -7,19 +7,23 @@ import csv
 
 import cea.osmose.extract_demand_outputs as extract_demand_outputs
 import cea.osmose.plot_osmose_result as plot_results
+import cea.osmose.compare_el_usages as compare_el
 
 # import from config # TODO: add to config
-# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_coil']
-case = 'WTP_CBD_m_WP1_HOT'  # FIXME: config
-timesteps = 24  # 168 (week)
+TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
+# TECHS = ['HCS_coil', 'HCS_LD']
+case = 'WTP_CBD_m_WP1_HOT'
+specified_buildings = []
+timesteps = 168  # 168 (week)
+
 if timesteps == 168:
     start_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
 elif timesteps == 24:
     start_t = 3240
-specified_buildings = ["B001"]  # FIXME: config
+
 osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
+result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
 
 
 def main():
@@ -36,9 +40,13 @@ def main():
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
         for tech in TECHS:
             exec_osmose(tech, osmose_project_path)
+        
+        # plot results
+        building_result_path = result_path + "\\" + building + "_" + str(timesteps)
+        plot_results.main(building, TECHS, building_result_path)
+        compare_el.main(building, building_result_path)
 
     start_ampl_license(ampl_lic_path, "stop")
-    # plot_results.main(building, TECHS) #TODO: change paths in osmose
 
     return np.nan
 
@@ -81,7 +89,7 @@ def exec_osmose(tech, osmose_project_path):
         elif err.decode('utf-8').startswith('pandoc: Could not find image'):
             print 'warning', err.decode('utf-8')
         else:
-            print "ERROR : ", err.decode('utf-8')
+            print "ERROR"
 
     print(output.decode('utf-8'))
     return 'ok', output.decode('utf-8')

@@ -4,13 +4,11 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-PATH_TO_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\'
-#PATH_TO_FOLDER = 'C:\\Users\\Shanshan\\Documents\\0_Shanshan_Hsieh\\WP1\\results\\results_1219\\'
 
-def main():
-    building = 'B007'
-    paths = path_to_elec_csv_files(building)
-    chiller_paths = path_to_chiller_csv_files(building)
+def main(building, building_result_path):
+    # building = 'B007'
+    paths = path_to_elec_csv_files(building_result_path)
+    chiller_paths = path_to_chiller_csv_files(building_result_path)
     el_dfs = {}
     cop_mean = {}
     compare_df = pd.DataFrame()
@@ -27,7 +25,7 @@ def main():
     # T_high_C = 14.1
     # T_interval = 0.65  # 0.5
     # T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
-    #chiller_df = pd.DataFrame(columns=T_OAU_offcoil)
+    # chiller_df = pd.DataFrame(columns=T_OAU_offcoil)
     i = 0
     for path in chiller_paths:
         if i == 0:
@@ -42,15 +40,15 @@ def main():
     float_columns = [float(x) for x in chiller_df.columns]
     float_columns.sort()
     string_columns = [str(x) for x in float_columns]
-    chiller_df = chiller_df.reindex(string_columns,axis=1)
+    chiller_df = chiller_df.reindex(string_columns, axis=1)
     chiller_df = chiller_df.fillna(0)
-    plot_chiller_temperatures(chiller_df, building)
+    plot_chiller_temperatures(chiller_df, building, building_result_path)
 
-    compare_df.to_csv(path_to_save_compare_df(building))
+    compare_df.to_csv(path_to_save_compare_df(building, building_result_path))
     return
 
 
-def plot_chiller_temperatures(chiller_df, building):
+def plot_chiller_temperatures(chiller_df, building, building_result_path):
     X = np.arange(chiller_df.columns.size)
     fig, ax = plt.subplots()
     width = 0.00
@@ -58,62 +56,62 @@ def plot_chiller_temperatures(chiller_df, building):
     colors = {'HCS_3for2': '#C96A50', 'HCS_coil': '#3E9AA3', 'HCS_ER0': '#E2B43F', 'HCS_IEHX': '#51443D'}
     for i in range(chiller_df.index.size):
         color = colors[chiller_df.index[i]]
-        ax.bar(X + width, chiller_df.loc[chiller_df.index[i]][:], width=0.15, label=chiller_df.index[i], color = color)
+        ax.bar(X + width, chiller_df.loc[chiller_df.index[i]][:], width=0.15, label=chiller_df.index[i], color=color)
         width = width + 0.15
-    #ax.bar(X + 0.25, chiller_df.loc[chiller_df.index[1]][:], width=0.25, label=chiller_df.index[1])
+    # ax.bar(X + 0.25, chiller_df.loc[chiller_df.index[1]][:], width=0.25, label=chiller_df.index[1])
     ax.legend(loc='upper right')
     ax.set_xticks(X + width / 2)
     ax.set_xticklabels(tuple(chiller_df.columns))
-    #ax.set_xticks(chiller_df.columns)
+    # ax.set_xticks(chiller_df.columns)
     ax.set(xlabel='Temperature [C]', ylabel='Frequency [%]', ylim=(0, 100))
     # plt.show()
-    fig.savefig(path_to_save_chiller_t(building))
+    fig.savefig(path_to_save_chiller_t(building, building_result_path))
     return np.nan
 
-def path_to_elec_csv_files(building):
+
+def path_to_elec_csv_files(building_result_path):
     """
     find files with _el.csv and return a list of paths
     :param building:
     :return:
     """
-    path_to_folder = PATH_TO_FOLDER + building
-    all_files_in_path = os.listdir(path_to_folder)
+    # path_to_folder = PATH_TO_FOLDER + building
+    all_files_in_path = os.listdir(building_result_path)
     path_to_files = []
     file_name = 'el.csv'
     for file in all_files_in_path:
         if file_name in file:
-            path_to_file = os.path.join(path_to_folder, file)
+            path_to_file = os.path.join(building_result_path, file)
             path_to_files.append(path_to_file)
     return path_to_files
 
 
-def path_to_chiller_csv_files(building):
+def path_to_chiller_csv_files(building_result_path):
     """
     find files with _el.csv and return a list of paths
     :param building:
     :return:
     """
-    path_to_folder = PATH_TO_FOLDER + building
-    all_files_in_path = os.listdir(path_to_folder)
+    # path_to_folder = PATH_TO_FOLDER + building
+    all_files_in_path = os.listdir(building_result_path)
     path_to_files = []
     file_name = 'chiller.csv'
     for file in all_files_in_path:
         if file_name in file:
-            path_to_file = os.path.join(path_to_folder, file)
+            path_to_file = os.path.join(building_result_path, file)
             path_to_files.append(path_to_file)
     return path_to_files
 
 
-def path_to_save_compare_df(building):
-    path_to_folder = PATH_TO_FOLDER + building
+def path_to_save_compare_df(building, building_result_path):
     filename = building + '_el_compare.csv'
-    path_to_file = os.path.join(path_to_folder, filename)
+    path_to_file = os.path.join(building_result_path, filename)
     return path_to_file
 
-def path_to_save_chiller_t(building):
-    path_to_folder = PATH_TO_FOLDER + building
+
+def path_to_save_chiller_t(building, building_result_path):
     filename = building + '_chiller.png'
-    path_to_file = os.path.join(path_to_folder, filename)
+    path_to_file = os.path.join(building_result_path, filename)
     return path_to_file
 
 
