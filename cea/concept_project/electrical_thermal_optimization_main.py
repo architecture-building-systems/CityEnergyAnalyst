@@ -15,6 +15,7 @@ import numpy as np
 from deap import base
 from deap import creator
 from deap import tools
+from deap.tools import mutation, crossover
 from itertools import repeat, izip
 from cea.concept_project.thermal_network_calculations import thermal_network_calculations
 
@@ -27,7 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
 random.seed(config.optimization.random_seed)
@@ -44,7 +45,7 @@ def objective_function(individual, individual_number, config, building_names):
     """
     print ('cea optimization progress: individual ' + str(individual_number) )
     total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names)
-    return total_annual_cost, total_annual_capex, total_annual_opex
+    return total_annual_cost, total_annual_capex
 
 def objective_function_wrapper(args):
     """
@@ -60,6 +61,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     # genCP = 2
     # NDIM = 30
     # MU = 500
+    CXPB = 0.5
+    MUTPB = 0.2
 
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
@@ -158,6 +161,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         for i, ind in enumerate(invalid_ind):
             saved_dataframe_for_each_generation['individual'][i] = i
             saved_dataframe_for_each_generation['generation'][i] = genCP
+            for j in range(len(columns_of_saved_files) - 4):
+                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
             saved_dataframe_for_each_generation['Total Annualized Cost'][i] = ind.fitness.values[0]
             saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[1]
 
@@ -214,12 +219,15 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         offspring = list(pop)
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = toolbox.mate(ind1, ind2)
-            offspring += [child1, child2]
+            if random.random() < CXPB:
+                child1, child2 = toolbox.mate(ind1, ind2)
+                del child1.fitness.values
+                del child2.fitness.values
 
         for mutant in pop:
-            mutant = toolbox.mutate(mutant)
-            offspring.append(mutant)
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 

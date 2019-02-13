@@ -37,10 +37,10 @@ def thermal_network_calculations(individual, config, network_number, building_na
     process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator, dict_connected)
 
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    # network_layout(config, locator, connected_building_names, input_path_name)
-    # thermal_network_matrix.main(config)
-    total_annual_cost, total_annual_capex, total_annual_opex = 0.0, 0.0, 0.0
-    # total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_costs.main(dict_connected, config, network_number)
+    network_layout(config, locator, connected_building_names, input_path_name)
+    thermal_network_matrix.main(config)
+    # total_annual_cost, total_annual_capex, total_annual_opex = 0.0, 0.0, 0.0
+    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_costs.main(dict_connected, config, network_number)
     print total_annual_cost, total_annual_capex, total_annual_opex
 
     return total_annual_cost, total_annual_capex, total_annual_opex
