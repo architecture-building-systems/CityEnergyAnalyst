@@ -5,11 +5,9 @@ a series of points (buildings) to the closest street
 
 import os
 
-import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely.geometry import Point, LineString, box, MultiLineString
-from shapely.ops import split, snap, linemerge
-
+from shapely.geometry import Point, LineString, MultiLineString, MultiPoint, box
+from shapely.ops import split, linemerge
 
 import cea.config
 import cea.globalvar
@@ -61,53 +59,152 @@ def compute_intersections(lines, crs):
 
 
 def computer_end_points(lines, crs):
-    endpts = [(Point(list(line.coords)[0]), Point(list(line.coords)[-1])) for line in lines]
-    # flatten the resulting list to a simple list of points
-    endpts = [pt for sublist in endpts for pt in sublist]
+    all_points = []
+    for line in lines:
+        for i in [0, -1]:  # start and end point
+            all_points.append(line.coords[i])
 
-    geometry = endpts
-    df = gdf(geometry=geometry, crs=crs)
+    unique_points = set(all_points)
+    endpts = [Point(p) for p in unique_points]
+    df = gdf(geometry=endpts, crs=crs)
 
     return df
 
-def cut(line, distance):
-    # Cuts a line in two at a distance from its starting point
-    # This is taken from shapely manual
-    if distance <= 0.0 or distance >= line.length:
-        return [None, LineString(line)]
-    coords = list(line.coords)
-    for i, p in enumerate(coords):
-        pd = line.project(Point(p))
-        if pd == distance:
-            result = [
-                LineString(coords[:i+1]),
-                LineString(coords[i:])]
-            return result
-        if pd > distance:
-            cp = line.interpolate(distance)
-            result = [LineString(coords[:i] + [(cp.x, cp.y)]),
-                LineString([(cp.x, cp.y)] + coords[i:])]
-            return result
 
+def nearest_neighbor_within(others, point, max_distance):
+    """Find nearest point among others up to a maximum distance.
 
-def split_line_with_points(line, points):
-    """Splits a line string in several segments considering a list of points.
+    Args:
+        others: a list of Points or a MultiPoint
+        point: a Point
+        max_distance: maximum distance to search for the nearest neighbor
 
-    The points used to cut the line are assumed to be in the line string
-    and given in the order of appearance they have in the line string.
-
-    ['LINESTRING (1 2, 8 7, 4 5, 2 4)', 'LINESTRING (2 4, 4 7, 8 5, 9 18)', 'LINESTRING (9 18, 1 2, 12 7, 4 5, 6 5)', 'LINESTRING (6 5, 4 9)']
-
+    Returns:
+        A shapely Point if one is within max_distance, None otherwise
     """
-    segments = []
-    current_line = line
-    for p in points:
-        d = current_line.project(p)
-        seg, current_line = cut(current_line, d)
-        if seg is not None:
-            segments.append(seg)
-    segments.append(current_line)
-    return segments
+    search_region = point.buffer(max_distance)
+    interesting_points = search_region.intersection(MultiPoint(others))
+
+    if not interesting_points:
+        closest_point = None
+    elif isinstance(interesting_points, Point):
+        closest_point = interesting_points
+    else:
+        distances = [point.distance(ip) for ip in interesting_points
+                     if point.distance(ip) > 0]
+        closest_point = interesting_points[distances.index(min(distances))]
+
+    return closest_point
+
+
+def find_isolated_endpoints(lines):
+    """Find endpoints of lines that don't touch another line.
+
+    Args:
+        lines: a list of LineStrings or a MultiLineString
+
+    Returns:
+        A list of line end Points that don't touch any other line of lines
+    """
+
+    isolated_endpoints = []
+    for i, line in enumerate(lines):
+        other_lines = lines[:i] + lines[i + 1:]
+        for q in [0, -1]:
+            endpoint = Point(line.coords[q])
+            if any(endpoint.touches(another_line)
+                   for another_line in other_lines):
+                continue
+            else:
+                isolated_endpoints.append(endpoint)
+    return isolated_endpoints
+
+
+def bend_towards(line, where, to):
+    """Move the point where along a line to the point at location to.
+
+    Args:
+        line: a LineString
+        where: a point ON the line (not necessarily a vertex)
+        to: a point NOT on the line where the nearest vertex will be moved to
+
+    Returns:
+        the modified (bent) line
+    """
+
+    if not line.contains(where) and not line.touches(where):
+        raise ValueError('line does not contain the point where.')
+
+    coords = line.coords[:]
+    # easy case: where is (within numeric precision) a vertex of line
+    for k, vertex in enumerate(coords):
+        if where.almost_equals(Point(vertex)):
+            # move coordinates of the vertex to destination
+            coords[k] = to.coords[0]
+            return LineString(coords)
+
+    # hard case: where lies between vertices of line, so
+    # find nearest vertex and move that one to point to
+    _, min_k = min((where.distance(Point(vertex)), k)
+                   for k, vertex in enumerate(coords))
+    coords[min_k] = to.coords[0]
+    return LineString(coords)
+
+
+def vertices_from_lines(lines):
+    """Return list of unique vertices from list of LineStrings."""
+
+    vertices = []
+    for line in lines:
+        vertices.extend(list(line.coords))
+    return [Point(p) for p in set(vertices)]
+
+
+def snappy_endings(lines, max_distance, crs):
+    """Snap endpoints of lines together if they are at most max_length apart.
+
+    Args:
+        lines: a list of LineStrings or a MultiLineString
+        max_distance: maximum distance two endpoints may be joined together
+    """
+
+    # initialize snapped lines with list of original lines
+    # snapping points is a MultiPoint object of all vertices
+    snapped_lines = [line for line in lines]
+    snapping_points = vertices_from_lines(snapped_lines)
+
+    # isolated endpoints are going to snap to the closest vertex
+    isolated_endpoints = find_isolated_endpoints(snapped_lines)
+
+    # only move isolated endpoints, one by one
+    for endpoint in isolated_endpoints:
+        # find all vertices within a radius of max_distance as possible
+        target = nearest_neighbor_within(snapping_points, endpoint,
+                                         max_distance)
+
+        # do nothing if no target point to snap to is found
+        if not target:
+            continue
+
+            # find the LineString to modify within snapped_lines and update it
+        for i, snapped_line in enumerate(snapped_lines):
+            if endpoint.touches(snapped_line):
+                snapped_lines[i] = bend_towards(snapped_line, where=endpoint,
+                                                to=target)
+                break
+
+        # also update the corresponding snapping_points
+        for i, snapping_point in enumerate(snapping_points):
+            if endpoint.equals(snapping_point):
+                snapping_points[i] = target
+                break
+
+    # post-processing: remove any resulting lines of length 0
+    snapped_lines = [s for s in snapped_lines if s.length > 0]
+
+    df = gdf(geometry=snapped_lines, crs=crs)
+    return df
+
 
 def split_line_by_nearest_points(gdf_line, gdf_points, tolerance, crs):
     """
@@ -123,32 +220,25 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance, crs):
     -------
     gdf_segments : geoDataFrame
         geodataframe of segments
+        https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
     """
 
     # union all geometries
-    line = gdf_line.unary_union
+    line = gdf_line.geometry.unary_union
     line._crs = crs
-    snap_points = gdf_points.unary_union
+    snap_points = gdf_points.geometry.unary_union
     snap_points._crs = crs
 
     # snap and split coords on line
     # returns GeometryCollection
     # snap_points = snap(coords, line, tolerance)
     # snap_points._crs = crs
-    one_iter_segments = []
-    for l in gdf_line.geometry:
-        one_iter_segments.extend(split_line_with_points(l, gdf_points.geometry))
-
-    segments = []
-    for l in one_iter_segments:
-        segments.extend(split_line_with_points(l, gdf_points.geometry))
-
-
-    # split_line = split(line, snap_points)
-    # split_line._crs = crs
-    # segments = [feature for feature in split_line]# if feature.length > 0.01]
+    split_line = split(line, snap_points)
+    split_line._crs = crs
+    segments = [feature for feature in split_line if feature.length > 0.01]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
+    # gdf_segments.columns = ['index', 'geometry']
 
     return gdf_segments
 
@@ -162,7 +252,6 @@ def near_analysis(buiding_centroids, street_network, crs):
         for line in street_network.geometry:
             line._crs = crs
             nearest_point_candidate = line.interpolate(line.project(point))
-            nearest_point_candidate._crs = crs
             distance_candidate = point.distance(nearest_point_candidate)
             if distance_candidate < distance:
                 distance = distance_candidate
@@ -177,19 +266,30 @@ def near_analysis(buiding_centroids, street_network, crs):
 
 
 def snap_points(points, lines, crs):
-    near_point = []
-    for point in points.geometry:
-        point._crs = crs
-        distance = 1.0
-        for line in lines.geometry:
-            line._crs = crs
+    tolerance = 1
+    length = lines.shape[0]
+    for i in range(length):
+        line = lines.loc[i, "geometry"]
+        line._crs = crs
+        for point in points.geometry:
+            point._crs = crs
             point_inline_projection = line.interpolate(line.project(point))
             point_inline_projection._crs = crs
             distance_to_line = point.distance(point_inline_projection)
-            if distance_to_line < distance:
-                points = gdf(pd.concat([points, pd.DataFrame({"geometry":[point_inline_projection]})], ignore_index=True, sort=True), crs=crs)
+            if distance_to_line < tolerance:
+                # if point is inside, then move the line to that vertex
+                buff = point_inline_projection.buffer(1.0)
+                ### Split the line on the buffer
+                geometry = split(line, buff)
+                point_buffer = Point(geometry[0].coords[-1])
+                ### Stitch together the first segment, the interpolated point, and the last segment
+                new_line = linemerge(MultiLineString(geometry))
+                points.append(gdf(geometry=[point_buffer], crs=crs))
+                lines.loc[i, "geometry"] = new_line
 
-    return points
+    G = points["geometry"].apply(lambda geom: geom.wkb)
+    points = points.loc[G.drop_duplicates().index]
+    return points, lines
 
 
 def one_linestring_per_intersection(lines, crs):
@@ -216,34 +316,57 @@ def one_linestring_per_intersection(lines, crs):
     lines_merged = lines_merged.intersection(bounding_box)
     lines_merged = linemerge(lines_merged)
 
-    geometry = [line for line in lines_merged]
-    df = gdf(geometry=geometry, crs=crs)
-
+    lines = [line for line in lines_merged]
+    df = gdf(geometry=lines, crs=crs)
     return df
 
 
-def line_merge(linestrings_or_multilinestrings):
-    """ Merge list of LineStrings and/or MultiLineStrings.
+def calculate_end_points_intersections(prototype_network, crs):
+    # compute endpoints of the new prototype network
+    gdf_points = computer_end_points(prototype_network.geometry, crs)
+    # compute intersections
+    gdf_intersections = compute_intersections(prototype_network.geometry, crs)
+    gdf_points_snapped = gdf_points.append(gdf_intersections).reset_index(drop=True)
+    G = gdf_points_snapped["geometry"].apply(lambda geom: geom.wkb)
+    gdf_points_snapped = gdf_points_snapped.loc[G.drop_duplicates().index]
+    return gdf_points_snapped
 
-    Given a list of LineStrings and possibly MultiLineStrings, merge all of
-    them to a single MultiLineString.
 
-    Args:
-        list of LineStrings and/or MultiLineStrings
+def create_terminals(buiding_centroids, crs, street_network):
+    # get list of nearest points
+    near_points = near_analysis(buiding_centroids, street_network, crs)
+    # extend to the buiding centroids
+    all_points = near_points.append(buiding_centroids)
+    all_points.crs = crs
+    # Aggregate these points with the GroupBy
+    lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
+    lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
+    return lines_to_buildings
 
-    Returns:
-        a merged LineString or MultiLineString
-    """
-    lines = []
-    for line in linestrings_or_multilinestrings:
-        if isinstance(line, MultiLineString):
-            # line is a multilinestring, so append its components
-            lines.extend(line)
-        else:
-            # line is a line, so simply append it
-            lines.append(line)
 
-    return linemerge(lines)
+def simplify_points_accurracy(buiding_centroids, decimals, crs):
+    new_points = []
+    names = []
+    for point, name in zip(buiding_centroids.geometry, buiding_centroids.Name):
+        x = round(point.x, decimals)
+        y = round(point.y, decimals)
+        new_points.append(Point(x, y))
+        names.append(name)
+    df = gdf(geometry=new_points, crs=crs)
+    df["Name"] = names
+    return df
+
+def simplify_liness_accurracy(lines, decimals, crs):
+    new_lines = []
+    for line in lines:
+        points_of_line = []
+        for point in line.coords:
+            x = round(point[0], decimals)
+            y = round(point[1], decimals)
+            points_of_line.append((x, y))
+        new_lines.append(LineString(points_of_line))
+    df = gdf(geometry=new_lines, crs=crs)
+    return df
 
 
 def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_shp, path_potential_network):
@@ -267,50 +390,41 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    buiding_centroids = buiding_centroids.to_crs(get_geographic_coordinate_system())
-    lon = buiding_centroids.geometry[0].centroid.coords.xy[0][0]
-    lat = buiding_centroids.geometry[0].centroid.coords.xy[1][0]
-    buiding_centroids = buiding_centroids.to_crs(get_projected_coordinate_system(lat, lon))
-    crs = buiding_centroids.crs
+    # decrease the number of units of the points
+    buiding_centroids = simplify_points_accurracy(buiding_centroids, 5, crs)
+    street_network = simplify_liness_accurracy(street_network.geometry.values, 5, crs)
 
-    # get list of nearest points
-    near_points = near_analysis(buiding_centroids, street_network, crs)
+    # create terminals/branches form street to buildings
+    lines_to_buildings = create_terminals(buiding_centroids, crs, street_network)
 
-    # extend to the buiding centroids
-    all_points = near_points.append(buiding_centroids)
-    all_points.crs = crs
+    # combine streets and branches
+    prototype_network = lines_to_buildings.append(street_network).reset_index(drop=True)
+    prototype_network.crs = crs
 
-    # Aggregate these points with the GroupBy
-    lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
-    lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
+    # first split in intersections
+    prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
+                                                        crs)  # TODO: it does not seem to help in here.
 
-    # extend to the streets
-    prototype_network = gdf(pd.concat([lines_to_buildings, street_network], ignore_index=True, sort=True), crs=crs)
-    # compute endpoints of the new prototype network
-    gdf_points = computer_end_points(prototype_network.geometry, crs)
-    gdf_intersections = compute_intersections(prototype_network.geometry, crs)
-    gdf_points_snapped = gdf(pd.concat([gdf_points, gdf_intersections], ignore_index=True, sort=True), crs=crs)
+    # snap endings of all vectors to ending of all other vectors
+    prototype_network = snappy_endings(prototype_network.geometry.values, 1.0,
+                                       crs)  # TODO: it does not seem to help in here.
 
-    # snap these points to the lines
-    gdf_points_snapped = snap_points(gdf_points_snapped, prototype_network, crs)
+    # calculate intersections
+    gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
 
-    # get segments with method 1
-    gdf_segments = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 0.5, crs)
+    # snap these points to the lines and transform lines
+    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network,
+                                                        crs)  # TODO: it does not seem to help in here.
 
-    # get segments with method 2
-    gdf_segments = one_linestring_per_intersection(gdf_segments.geometry.values, crs)
-
-    #change to projected coordinate system
-    gdf_segments = gdf_segments.to_crs(get_projected_coordinate_system(lat, lon))
-    gdf_points_snapped = gdf_points_snapped.to_crs(get_projected_coordinate_system(lat, lon))
-    print(gdf_segments.crs)
+    # get segments
+    gdf_segments = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 10, crs)
 
     # gdf_segments.plot()
+    # import matplotlib.pyplot as plt
     # gdf_points.plot()
     # gdf_points_snapped.plot()
     # plt.show()
     # x=1
-
     gdf_segments.to_file(path_potential_network, driver='ESRI Shapefile')
     gdf_points_snapped.to_file(r'C:\Users\JimenoF\AppData\Local\Temp/trypoints.shp', driver='ESRI Shapefile')
 
