@@ -7,8 +7,8 @@ import cea.config
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
-TRANSPORTATION_FACILITIES = {'student': ['SCHOOL'], #, 'LIBRARY']
-                             'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
+FACILITY_TYPES = {'student': ['SCHOOL'],  #, 'LIBRARY']
+                  'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
 HOSPITAL_EMPLOYEE_DENSITY = 126000.0/3900.0
 HOSPITAL_PATIENT_DENSITY = 126000.0/1700.0
 
@@ -221,23 +221,23 @@ def matsim_population_reader(locator, building_properties):
                     # for now distribute only by conditioned area
                     employees = int(len(buildings[facility]['employee']) *
                                     (floor_areas[building_names[i]] *
-                                     np.sum(occupancy.loc[building_names[i], TRANSPORTATION_FACILITIES['employee']])) / np.sum(
+                                     np.sum(occupancy.loc[building_names[i], FACILITY_TYPES['employee']])) / np.sum(
                         floor_areas[building_names] *
-                        np.sum(occupancy.loc[building_names, TRANSPORTATION_FACILITIES['employee']].transpose())))
+                        np.sum(occupancy.loc[building_names, FACILITY_TYPES['employee']].transpose())))
                 else:
                     employees = 0
                 if len(buildings[facility]['student']) > 0:
                     students = int(len(buildings[facility]['student']) * (floor_areas[building_names[i]] * np.sum(
-                        occupancy.loc[building_names[i], TRANSPORTATION_FACILITIES['student']])) / np.sum(
+                        occupancy.loc[building_names[i], FACILITY_TYPES['student']])) / np.sum(
                         floor_areas[building_names] * np.sum(
-                            occupancy.loc[building_names, TRANSPORTATION_FACILITIES['student']].transpose())))
+                            occupancy.loc[building_names, FACILITY_TYPES['student']].transpose())))
                 else:
                     students = 0
                 buildings[building_names[i]] = copy.deepcopy(building_schedules)
                 buildings[building_names[i]]['employee'] = buildings[facility]['employee'][
-                                                           first_employee:employees]
+                                                           first_employee:first_employee+employees]
                 buildings[building_names[i]]['student'] = buildings[facility]['student'][
-                                                          first_student:students]
+                                                          first_student:first_student+students]
                 first_student += students
                 first_employee += employees
             buildings.pop(facility)
