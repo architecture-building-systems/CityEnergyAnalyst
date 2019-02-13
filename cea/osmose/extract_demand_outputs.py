@@ -11,7 +11,8 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Qww_sys_kWh', 'Qcdata_sys_kWh',
                              'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh', 'Qcs_sys_scu_kWh',
                              'people', 'x_int', 'T_int_C', 'T_ext_C']
 
-TSD_COLUMNS = ['T_int', 'T_ext', 'rh_ext', 'w_int', 'x_int', 'x_ve_inf', 'x_ve_mech', 'people', 'I_sol_and_I_rad', 'Q_gain_lat_peop', 'Q_gain_sen_peop',
+TSD_COLUMNS = ['T_int', 'T_ext', 'rh_ext', 'w_int', 'x_int', 'x_ve_inf', 'x_ve_mech', 'people', 'I_sol_and_I_rad',
+               'Q_gain_lat_peop', 'Q_gain_sen_peop',
                'Q_gain_sen_vent', 'g_dhu_ld', 'm_ve_inf', 'm_ve_mech', 'm_ve_rec', 'm_ve_required', 'm_ve_window']
 
 Q_GAIN_ENV = ['Q_gain_sen_base', 'Q_gain_sen_roof', 'Q_gain_sen_wall', 'Q_gain_sen_wind']
@@ -33,26 +34,27 @@ Pair_Pa = 101325
 Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 
-
 RH_max = 70  # %
 RH_min = 40  # %
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
-T_interval = 0.65 #0.5
+T_interval = 0.65  # 0.5
+
+
 # T_low_C = 14.5
 # T_high_C = 18
 # T_interval = 0.65 #0.5
 # SS553_lps_m2 = 0.6
 
 
-
-def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
-
+def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_buildings):
     # read total demand
     total_demand_df = pd.read_csv(path_to_total_demand(case)).set_index('Name')
-    # building_names = total_demand_df.index
-    building_names = ['B001', 'B002', 'B007'] #TODO: set in config
+    if specified_buildings != []:
+        building_names = specified_buildings
+    else:
+        building_names = total_demand_df.index
 
     for name in building_names:
         # read demand output
@@ -71,7 +73,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
         ## output to building.lua
         # de-activate inf when no occupant
         # reduced_tsd_df.ix[output_df.people == 0, 'm_ve_inf'] = 0
-        output_df1['m_ve_inf'] = reduced_tsd_df['m_ve_inf'] #kg/s
+        output_df1['m_ve_inf'] = reduced_tsd_df['m_ve_inf']  # kg/s
         ## heat gain
         calc_sensible_gains(output_df, reduced_tsd_df)
         output_df1['Q_gain_total_kWh'] = reduced_tsd_df['Q_gain_total_kWh']
@@ -94,7 +96,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
             output_hcs['w_RA'] = 13
         output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_tsd_df['rh_ext'],
-                                                               reduced_tsd_df['T_ext'])  # g/kg d.a.
+                                                           reduced_tsd_df['T_ext'])  # g/kg d.a.
         ## building size
         output_hcs.loc[:, 'Af_m2'] = total_demand_df['Af_m2'][name]
         output_hcs.loc[:, 'Vf_m3'] = floor_height_m * total_demand_df['Af_m2'][name]
@@ -108,8 +110,10 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
         output_hcs['CO2_max_ppm'] = CO2_int_max_ppm
         output_hcs['m_ve_req'] = reduced_tsd_df['m_ve_required']
         output_hcs['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
-        reduced_tsd_df['rho_air_int'] = np.vectorize(calc_moist_air_density)(reduced_tsd_df['T_int']+273.15,reduced_tsd_df['x_int'])
-        output_hcs['M_dry_air'] = np.vectorize(calc_m_dry_air)(output_hcs['Vf_m3'], reduced_tsd_df['rho_air_int'], reduced_tsd_df['x_int'])
+        reduced_tsd_df['rho_air_int'] = np.vectorize(calc_moist_air_density)(reduced_tsd_df['T_int'] + 273.15,
+                                                                             reduced_tsd_df['x_int'])
+        output_hcs['M_dry_air'] = np.vectorize(calc_m_dry_air)(output_hcs['Vf_m3'], reduced_tsd_df['rho_air_int'],
+                                                               reduced_tsd_df['x_int'])
         output_hcs['m_ve_min'] = np.vectorize(
             calc_m_exhaust_from_CO2)(output_hcs['CO2_max_ppm'], output_hcs['CO2_ext_ppm'],
                                      output_hcs['v_CO2_in_infil_occupant_m3pers'], output_hcs['rho_air'])
@@ -120,7 +124,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
         output_hcs['m_w_max'] = np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_hcs['w_max'],
                                                               output_hcs['Vf_m3'])
         output_hcs['m_w_min'] = (np.vectorize(calc_m_w_in_air)(reduced_tsd_df['T_int'], output_hcs['w_min'],
-                                                              output_hcs['Vf_m3'])).min()
+                                                               output_hcs['Vf_m3'])).min()
 
         output_hcs = output_hcs.round(4)  # osmose does not read more decimals (observation)
         # output_hcs = output_hcs.drop(output_df.index[range(7)])
@@ -131,7 +135,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps):
         output_hcs_copy = output_hcs.copy()
         for i in range(T_OAU_offcoil.size):
             # output hcs
-            output_hcs['T_OAU_offcoil'+str(i+1)] = T_OAU_offcoil[i]
+            output_hcs['T_OAU_offcoil' + str(i + 1)] = T_OAU_offcoil[i]
             # output hcs_in
             output_hcs_dict[i] = output_hcs_copy
             output_hcs_dict[i]['T_OAU_offcoil'] = T_OAU_offcoil[i]
@@ -239,6 +243,7 @@ def path_to_demand_output(building_name, case):
     path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
     return path_to_file
 
+
 def path_to_total_demand(case):
     path_to_file = {}
     path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
@@ -258,6 +263,7 @@ def path_to_osmose_project_hcs(building_name, extension):
     path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
     path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
     return path_to_file
+
 
 def path_to_osmose_project_inputT(number):
     format = 'csv'
