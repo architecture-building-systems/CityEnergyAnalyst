@@ -18,10 +18,10 @@ import cea.technologies.cogeneration as cogeneration
 import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
-from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, PUMP_ETA, DELTA_U, \
-    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO
+    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME
 import cea.technologies.pumps as pumps
 from math import log, ceil
 
@@ -205,10 +205,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    PipeLifeTime = 40.0  # years, Data from A&W
-    PipeInterestRate = 0.05  # 5% interest rate
     network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
-    network_costs_a_USD = network_costs_USD * PipeInterestRate * (1+ PipeInterestRate) ** PipeLifeTime / ((1+PipeInterestRate) ** PipeLifeTime - 1)
+    network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1+ PIPEINTERESTRATE) ** PIPELIFETIME / ((1+PIPEINTERESTRATE) ** PIPELIFETIME - 1)
     costs_a_USD = network_costs_a_USD
     CO2_kgCO2 = 0
     prim_MJ = 0

@@ -18,12 +18,12 @@ abandoned.
 from __future__ import print_function, division
 
 import os
-import pandas as pd
+
 import geopandas as gpd
+import jinja2
 
 import cea.config
 import cea.inputlocator
-import jinja2
 
 
 def main(config):
@@ -50,21 +50,19 @@ def main(config):
     nodes_df = nodes_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
     nodes_json = nodes_df.to_json()
 
-
     template_path = os.path.join(os.path.dirname(__file__), 'demo_maps.html')
     template = jinja2.Template(open(template_path, 'r').read())
 
     # create html by applying the template
     table_div = '<table><tr><th>one</th><th>two</th></tr><tr><th>1.0</th><th>2.0</th></tr></table>'
     title = "jimeno's awesome plot"
-    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json, table_div=table_div, title=title)
-
+    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json,
+                                table_div=table_div, title=title)
 
     maps_html_path = os.path.join(locator.get_plots_folder('demo'), 'demo_maps.html')
     print('Writing output to: %s' % maps_html_path)
     with open(maps_html_path, 'w') as f:
         f.write(maps_html)
-
 
 
 if __name__ == '__main__':

@@ -50,7 +50,7 @@ Demand forecasting:
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
-               'general:number-of-cpus-to-keep-free', demand]
+               'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
 
 Energy potentials:
@@ -160,7 +160,7 @@ Sensitivity analysis:
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_samples
   parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order', 'sensitivity-demand:grid-jump',
+               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
                'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
 - name: sensitivity-demand-simulate
@@ -183,13 +183,21 @@ Thermal networks:
   module: cea.technologies.thermal_network.network_layout.main
   parameters: ['general:scenario', network-layout]
 
-- name: thermal-network-matrix
+- name: thermal-network
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.thermal_network_matrix
+  module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'thermal-network']
+
+- name: thermal-network-optimization
+  label: Thermo network optimization
+  description: Optimize network design variables (plant locations, layout,...)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.thermal_network_optimization
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
 
 
 Utilities:
@@ -267,7 +275,7 @@ default:
   label: dashboard
   description: dashboard
   interfaces: [cli]
-  module: cea.interfaces.dashboard.dashboard
+  module: cea.dashboard.dashboard
   parameters: []
 
 - name: excel-to-shapefile

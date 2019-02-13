@@ -1,11 +1,13 @@
+include cea/scripts.yml
 include cea/databases/weather/*.epw
-include cea/databases/archetypes/*.xlsx
-include cea/databases/benchmarks/benchmark_2000W.xls
-include cea/databases/lifecycle/*.xlsx
-include cea/databases/systems/*.xls
-include cea/databases/uncertainty/uncertainty_distributions.xls
-include cea/examples/reference-case-open.zip
+
+recursive-include cea/databases *.xlsx *.xls
+
 include cea/default.config
 include cea/tests/test_calc_thermal_loads.config
 include cea/tests/test_schedules.config
 include cea/tests/radiation_data/*.csv
+include cea/examples/*.zip
+
+include cea/plots/naming.csv
+include cea/plots/plots.yml
