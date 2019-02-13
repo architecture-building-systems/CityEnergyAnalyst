@@ -32,6 +32,8 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     GHG_electricity_tonCO2 = 0
     PEN_electricity_MJoil = 0
 
+
+    # step 1: Get demand of all the district (tota
     E_appliances_total_W = np.zeros(8760)
     E_data_center_total_W = np.zeros(8760)
     E_industrial_processes_total_W = np.zeros(8760)
@@ -61,13 +63,11 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
                                           usecols=['E_cs_kWh'])
             E_space_cooling_total_W += building_demand['E_cs_kWh'] * 1000
 
-
-
     total_electricity_demand_W = E_appliances_total_W + E_data_center_total_W + E_industrial_processes_total_W + \
                                  E_auxiliary_units_total_W + E_hotwater_total_W + E_space_heating_total_W + E_space_cooling_total_W
 
 
-    # Solar data
+    # Step2. get solar potential data
     centralized_plant_data = pd.read_csv(
         locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
@@ -87,7 +87,8 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
 
     date = centralized_plant_data.DATE.values
 
-    # Electricity of Energy Systems
+    # Step3. Electricity of Energy Systems
+    # if there is district cooling and at least one building is in the network
     if config.district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
 
         data_cooling = pd.read_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
@@ -233,6 +234,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
             costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (
                     E_from_CHP_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
+    # if there is district heating and at least one building is in the network
     if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
 
         data_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
@@ -399,6 +401,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
             costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (
                         E_from_CHP_W[hour] + E_from_Furnace_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
+    # if all buildings are decentralized heating case
     if master_to_slave_vars.DHN_barcode.count("1") == 0:
 
         E_from_PV_W = E_PV_gen_W
@@ -479,6 +482,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         for hour in range(len(total_electricity_demand_W)):
             costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
+    # if all buildings are decentralized cooling case
     if master_to_slave_vars.DCN_barcode.count("1") == 0:
 
         E_from_PV_W = E_PV_gen_W

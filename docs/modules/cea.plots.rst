@@ -25,6 +25,22 @@ Subpackages
 Submodules
 ----------
 
+cea.plots.base module
+---------------------
+
+.. automodule:: cea.plots.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.categories module
+---------------------------
+
+.. automodule:: cea.plots.categories
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.plots\_main module
 ----------------------------
 

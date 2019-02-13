@@ -1,9 +1,19 @@
 from __future__ import division
 from __future__ import print_function
 
-from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from plotly.offline import plot
+
+from cea.plots.variable_naming import LOGO, COLOR
+
+__author__ = "Shanshan Hsieh"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Shanshan Hsieh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output_path):
@@ -29,9 +39,9 @@ def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output
                       dict(count=1, label='1m', step='month', stepmode='backward'),
                       dict(count=6, label='6m', step='month', stepmode='backward'),
                       dict(count=1, label='1y', step='year', stepmode='backward'),
-                      dict(step='all')])), rangeslider=dict(), type='date',range= [data_frame.index[0],
-                                                                                 data_frame.index[168]],
-                                                                          fixedrange=False))
+                      dict(step='all')])), rangeslider=dict(), type='date', range=[data_frame.index[0],
+                                                                                   data_frame.index[168]],
+                      fixedrange=False))
 
     fig = dict(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

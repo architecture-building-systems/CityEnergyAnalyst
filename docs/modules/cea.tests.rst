@@ -73,6 +73,14 @@ cea.tests.test\_is\_heating\_season module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_plots module
+----------------------------
+
+.. automodule:: cea.tests.test_plots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.test\_schedules module
 --------------------------------
 

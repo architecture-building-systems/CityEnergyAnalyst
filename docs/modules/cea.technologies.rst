@@ -57,6 +57,14 @@ cea.technologies.chiller\_vapor\_compression module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.cogeneration module
+------------------------------------
+
+.. automodule:: cea.technologies.cogeneration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.constants module
 ---------------------------------
 
