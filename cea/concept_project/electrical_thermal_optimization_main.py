@@ -27,7 +27,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
 random.seed(config.optimization.random_seed)
@@ -44,7 +44,7 @@ def objective_function(individual, individual_number, config, building_names):
     """
     print ('cea optimization progress: individual ' + str(individual_number) )
     total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names)
-    return total_annual_cost, total_annual_capex
+    return total_annual_cost, total_annual_capex, total_annual_opex
 
 def objective_function_wrapper(args):
     """
