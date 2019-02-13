@@ -391,8 +391,8 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     crs = street_network.crs
 
     # decrease the number of units of the points
-    buiding_centroids = simplify_points_accurracy(buiding_centroids, 5, crs)
-    street_network = simplify_liness_accurracy(street_network.geometry.values, 5, crs)
+    # buiding_centroids = simplify_points_accurracy(buiding_centroids, 5, crs)
+    # street_network = simplify_liness_accurracy(street_network.geometry.values, 5, crs)
 
     # create terminals/branches form street to buildings
     lines_to_buildings = create_terminals(buiding_centroids, crs, street_network)
@@ -402,8 +402,7 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     prototype_network.crs = crs
 
     # first split in intersections
-    prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
-                                                        crs)  # TODO: it does not seem to help in here.
+    prototype_network = one_linestring_per_intersection(prototype_network.geometry.values, crs)  # TODO: it does not seem to help in here.
 
     # snap endings of all vectors to ending of all other vectors
     prototype_network = snappy_endings(prototype_network.geometry.values, 1.0,
