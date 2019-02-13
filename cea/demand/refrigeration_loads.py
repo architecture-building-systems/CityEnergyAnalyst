@@ -33,8 +33,8 @@ def has_refrigeration_load(bpr):
         return False
 
 def calc_Qcre_sys(bpr, tsd, schedules):
-
-    tsd['Qcre_sys'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+    tsd['Qcre_sys'] = schedules['Qcre'] # in kWh
+    # tsd['Qcre_sys'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
 
     def function(Qcre_sys):
         if Qcre_sys > 0:

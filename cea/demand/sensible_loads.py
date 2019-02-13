@@ -62,8 +62,9 @@ def calc_Qgain_lat(schedules, bpr):
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
     # humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h
-    humidity_schedule = schedules['X_ghp'] * bpr.internal_loads['X_ghp']  # in g/h
-    w_int = humidity_schedule / (1000 * 3600)  # kg/s
+    # humidity_schedule = schedules['X_ghp'] * bpr.internal_loads['X_ghp']  # in g/h
+    # w_int = humidity_schedule / (1000 * 3600)  # kg/s
+    w_int = schedules['X'] / (1000 * 3600)  # kg/s
 
     return w_int
 
