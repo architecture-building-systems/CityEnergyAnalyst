@@ -33,8 +33,8 @@ def has_data_load(bpr):
 
 
 def calc_Edata(bpr, tsd, schedules):
-    tsd['Edata'] = schedules['Ed'] # in kWh
     # tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
+    tsd['Edata'] = schedules['Ed'] # in kWh
 
     return tsd
 
