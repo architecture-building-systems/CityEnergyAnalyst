@@ -18,7 +18,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.utilities.physics import calc_wet_bulb_temperature
 from cea.technologies import heatpumps
-from cea.demand.transportation.matsim_data_import import TRANSPORTATION_FACILITIES
+from cea.demand.transportation.matsim_data_import import FACILITY_TYPES
 
 import cea.utilities
 
@@ -119,7 +119,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
 
         #CALCULATE PROCESS HEATING
-        tsd['Qhpro_sys'][:] = schedules['Qhpro_Wm2'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        tsd['Qhpro_sys'][:] = schedules['Qhpro']  # in kWh
         # tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
 
         # CALCULATE DATA CENTER LOADS
@@ -408,11 +408,14 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     if 'building_schedules' in usage_schedules.keys():
         if bpr.name in usage_schedules['building_schedules'].keys():
             for user in usage_schedules['building_schedules'][bpr.name].keys():
-                all_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
-            all_schedules['patient'] = all_schedules['HOSPITAL']
-            list_uses = [use for use in list_uses if
-                            use not in [facility for facility_list in TRANSPORTATION_FACILITIES.values() for facility in
-                                        facility_list]]
+                if len(usage_schedules['building_schedules'][bpr.name][user]) > 0:
+                    all_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
+                    list_uses = [use for use in list_uses if use not in FACILITY_TYPES[user]]
+            if user in all_schedules.keys():
+                all_schedules['patient'] = all_schedules['HOSPITAL']
+            # list_uses = [use for use in list_uses if
+            #                 use not in [facility for facility_list in FACILITY_TYPES.values() for facility in
+            #                             facility_list]]
     schedules = occupancy_model.calc_schedules(list_uses, all_schedules, bpr, archetype_values, date,
                                                use_stochastic_occupancy)
 
@@ -420,8 +423,10 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     tsd['people'] = np.floor(schedules['people'])
     # tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
     # tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
-    tsd['ve'] = schedules['Ve_lps'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
-    tsd['Qs'] = schedules['Qs_Wp'] * bpr.internal_loads['Qs_Wp']  # in W
+    # tsd['ve'] = schedules['Ve_lps'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
+    # tsd['Qs'] = schedules['Qs_Wp'] * bpr.internal_loads['Qs_Wp']  # in W
+    tsd['ve'] = schedules['Ve'] * 3.6  # in m3/h
+    tsd['Qs'] = schedules['Qs']  # in W
     # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
 
