@@ -11,12 +11,9 @@ See the script ``install_toolbox.py`` for the mechanics of installing the toolbo
 
 import inspect
 
-import cea.config
-import cea.inputlocator
-import cea.interfaces.arcgis.arcgishelper
+import legacy.arcgis.arcgishelper
 
-reload(cea.interfaces.arcgis.arcgishelper)
-from cea.interfaces.arcgis.arcgishelper import *
+reload(legacy.arcgis.arcgishelper)
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
