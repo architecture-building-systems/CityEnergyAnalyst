@@ -411,8 +411,7 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
                 if len(usage_schedules['building_schedules'][bpr.name][user]) > 0:
                     all_schedules[user] = usage_schedules['building_schedules'][bpr.name][user]
                     list_uses = [use for use in list_uses if use not in FACILITY_TYPES[user]]
-            if user in all_schedules.keys():
-                all_schedules['patient'] = all_schedules['HOSPITAL']
+                    all_schedules['patient'] = all_schedules['HOSPITAL']
             # list_uses = [use for use in list_uses if
             #                 use not in [facility for facility_list in FACILITY_TYPES.values() for facility in
             #                             facility_list]]
