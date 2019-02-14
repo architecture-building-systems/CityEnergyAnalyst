@@ -13,6 +13,7 @@ from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
+from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
 
 from cea.utilities import reporting
 
@@ -326,14 +327,18 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, b
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
+    predefined_set_points = True
     # get internal comfort properties
-    tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
-    print (tsd['ta_cs_set'])
-    if True:
-        a = pd.read_excel('C:\WTP_MIX_m\data/Temperature ' + str(building_name) + '.xlsx')
-    # initialize first previous time step
-    tsd['ta_cs_set'] = a['temperature'].values
-    print (tsd['ta_cs_set'])
+    if predefined_set_points:
+        tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name)
+    else:
+        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
+    # print (tsd['ta_cs_set'])
+    # if True:
+    #     a = pd.read_excel('D:\demand_code\WTP_MIX_m\data/Temperature ' + str(building_name) + '.xlsx')
+    # # initialize first previous time step
+    # tsd['ta_cs_set'] = a['temperature'].values
+    # print (tsd['ta_cs_set'])
     t_prev = get_hours(bpr).next() - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
