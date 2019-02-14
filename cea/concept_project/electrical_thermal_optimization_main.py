@@ -88,11 +88,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 
-
-    if config.multiprocessing:
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-        toolbox.register("map", pool.map)
-
     # Initialization of variables
     DHN_network_list = ["1"*nBuildings]
     DCN_network_list = ["1"*nBuildings]
@@ -305,8 +300,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     print ("Number of function evaluations = " + str(function_evals))
     t1 = time.clock()
     print (t1-t0)
-    if config.multiprocessing:
-        pool.close()
 
     return pop, logbook
 
