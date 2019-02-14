@@ -112,7 +112,7 @@ Here is an example category with a script::
 
     Thermal networks:
 
-    - name: thermal-network-matrix
+    - name: thermal-network
       label: Thermo-hydraulic network (branched)
       description: Solve the thermal hydraulic network
       interfaces: [cli, dashboard]
