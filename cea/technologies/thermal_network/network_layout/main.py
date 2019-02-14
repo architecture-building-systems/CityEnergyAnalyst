@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, output_name_network=""):
+def network_layout(config, locator, plant_building_names, output_name_network="", optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
     type_mat_default = config.network_layout.type_mat
@@ -46,14 +46,19 @@ def network_layout(config, locator, output_name_network=""):
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
     # calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
     #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
+    disconnected_building_names = config.thermal_network.disconnected_buildings
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location, create_plant, config.network_layout.allow_looped_networks)
+                               total_demand_location, create_plant, config.network_layout.allow_looped_networks,
+                               optimization_flag, plant_building_names, disconnected_building_names)
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    network_layout(config, locator)
+    plant_building_names = []  # Placeholder, this is only used in Network optimization
+    network_layout(config, locator, plant_building_names)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

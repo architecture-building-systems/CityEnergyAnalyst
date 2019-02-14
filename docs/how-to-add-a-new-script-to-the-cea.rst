@@ -113,11 +113,11 @@ Here is an example category with a script::
 
     Thermal networks:
 
-    - name: thermal-network-matrix
+    - name: thermal-network
       label: Thermo-hydraulic network (branched)
       description: Solve the thermal hydraulic network
       interfaces: [cli, arcgis, dashboard]
-      module: cea.technologies.thermal_network.thermal_network_matrix
+      module: cea.technologies.thermal_network.thermal_network
       parameters: ['general:scenario', thermal-network]
 
 Note that whitespace is relevant in YAML - except for the newlines, I added them to make the structure easier to
