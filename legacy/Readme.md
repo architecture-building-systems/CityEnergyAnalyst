@@ -20,3 +20,5 @@ people interested in them, to use CEA outputs and those tools for this. But plea
 
 6. Network_layout: It contains scripts to generate the layout of a thermal network with ArcGIS. A new script was developed in python.
    the network layout was the last step for CEA to become full open source
+   
+7. config_editor: This was an initial interface to CEA. It is not anymore supported.
