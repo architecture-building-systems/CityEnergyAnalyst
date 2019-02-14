@@ -18,7 +18,7 @@ import cea.technologies.cogeneration as cogeneration
 import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
-from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME

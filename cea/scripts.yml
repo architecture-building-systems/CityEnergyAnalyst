@@ -183,13 +183,21 @@ Thermal networks:
   module: cea.technologies.thermal_network.network_layout.main
   parameters: ['general:scenario', network-layout]
 
-- name: thermal-network-matrix
+- name: thermal-network
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
   interfaces: [cli, dashboard]
   module: cea.technologies.thermal_network.thermal_network_matrix
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'thermal-network']
+
+- name: thermal-network-optimization
+  label: Thermo network optimization
+  description: Optimize network design variables (plant locations, layout,...)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.thermal_network_optimization
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
 
 
 Utilities:

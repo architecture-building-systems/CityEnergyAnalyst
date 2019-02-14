@@ -22,7 +22,7 @@ import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
 import cea.technologies.substation as substation
 import cea.technologies.solar.solar_collector as solar_collector
-from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from math import ceil
 
 
