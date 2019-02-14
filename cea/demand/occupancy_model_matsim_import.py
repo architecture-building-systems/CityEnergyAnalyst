@@ -93,12 +93,10 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, stoch
                     else:
                         number_of_people = 0
                     for person in range(first, number_of_people):
-                        occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
-                        # yearly_schedule = get_yearly_vectors(dates, occupant_schedule,
-                        #                                      all_schedules[facility]['electricity'],
-                        #                                      occupant_schedule,
-                        #                                      all_schedules[facility]['processes'],
-                        #                                      all_schedules[facility]['monthly'])
+                        if facility != 'HOSPITAL':
+                            occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
+                        else:
+                            occupant_schedule = [np.array(all_schedules[user_type][person])] * 3
                         building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
                                                                     all_schedules[facility]['monthly'],
                                                                     archetype_values.loc[facility])
