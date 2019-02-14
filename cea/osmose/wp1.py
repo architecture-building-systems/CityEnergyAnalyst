@@ -10,11 +10,11 @@ import cea.osmose.plot_osmose_result as plot_results
 import cea.osmose.compare_el_usages as compare_el
 
 # import from config # TODO: add to config
-TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-# TECHS = ['HCS_coil', 'HCS_LD']
+# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
+TECHS = ['HCS_coil', 'HCS_LD']
 case = 'WTP_CBD_m_WP1_HOT'
-specified_buildings = []
-timesteps = 168  # 168 (week)
+specified_buildings = ['B009']
+timesteps = 24  # 168 (week)
 
 if timesteps == 168:
     start_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
@@ -23,10 +23,15 @@ elif timesteps == 24:
 
 osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
-result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+new_calculation = False
 
 
 def main():
+    # make folder to save results
+    path_to_case_folder = os.path.join(result_destination, case)
+    make_directory(path_to_case_folder, new_calculation)
+
     # extract demand outputs
     building_names = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, start_t, timesteps,
                                                                                specified_buildings)
@@ -35,19 +40,33 @@ def main():
     start_ampl_license(ampl_lic_path, "start")
 
     # run osmose
+    write_string_to_txt(path_to_case_folder, osmose_project_path, "path_to_case_folder.txt")  # osmose input
     write_value_to_csv(timesteps, osmose_project_path, "timesteps.csv")  # osmose input
     for building in building_names:
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
         for tech in TECHS:
             exec_osmose(tech, osmose_project_path)
-        
+
         # plot results
-        building_result_path = result_path + "\\" + building + "_" + str(timesteps)
+        building_timestep_tag = building + "_" + str(timesteps)
+        building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         plot_results.main(building, TECHS, building_result_path)
         compare_el.main(building, building_result_path)
 
     start_ampl_license(ampl_lic_path, "stop")
 
+    return np.nan
+
+
+def make_directory(dirName, new_calculation=True):
+    if not os.path.exists(dirName):
+        os.mkdir(dirName)
+        print("Directory ", dirName, " Created ")
+    elif new_calculation == True:
+        raise ValueError("Directory ", dirName,
+                         " already exists, please clean up the files and restart the calculation.")
+    else:
+        print("Directory ", dirName, " already exists")
     return np.nan
 
 
@@ -58,6 +77,13 @@ def write_value_to_csv(timesteps, osmose_project_path, filename):
         writer = csv.writer(csvFile)
         writer.writerows(csvData)
     csvFile.close()
+    return np.nan
+
+
+def write_string_to_txt(content, osmose_project_path, filename):
+    file_path = os.path.join(osmose_project_path, filename)
+    with open(file_path, "w") as text_file:
+        text_file.write(content)
     return np.nan
 
 
