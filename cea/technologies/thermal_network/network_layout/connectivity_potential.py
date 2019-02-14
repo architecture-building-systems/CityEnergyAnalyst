@@ -1,5 +1,5 @@
 """
-This script uses libraries in arcgis to create connections from
+This script uses libraries in shapely to create connections from
 a series of points (buildings) to the closest street
 """
 
@@ -441,7 +441,6 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     # plt.show()
     # x=1
     gdf_segments.to_file(path_potential_network, driver='ESRI Shapefile')
-    gdf_points_snapped.to_file(r'C:\Users\JimenoF\AppData\Local\Temp/trypoints.shp', driver='ESRI Shapefile')
 
 
 def main(config):
