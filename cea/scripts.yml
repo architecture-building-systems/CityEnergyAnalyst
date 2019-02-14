@@ -260,7 +260,7 @@ default:
   label: dashboard
   description: dashboard
   interfaces: [cli]
-  module: cea.dashboard.dashboard
+  module: cea.interfaces.dashboard.dashboard
   parameters: []
 
 - name: excel-to-shapefile
