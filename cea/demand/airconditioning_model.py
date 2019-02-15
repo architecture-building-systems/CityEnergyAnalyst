@@ -119,7 +119,7 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
             'ma_sup_cs_ahu': ma_sup_cs_ahu, 'ta_sup_cs_ahu': ta_sup_cs_ahu, 'ta_re_cs_ahu': ta_re_cs_ahu}
 
 
-def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
+def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, ta_hs_set, bpr):
     """
     the central air handling unit acts on the mechanical ventilation air stream
     it has a fixed coil and fixed supply temperature
@@ -141,7 +141,9 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
     t_coil_h_ahu = bpr.hvac['Tshs0_ahu_C']  # (C) coil temperature of central ahu
 
     # check if system is operated or bypassed
-    if t_ve_mech_after_hex >= t_sup_h_ahu:  # no operation if incoming air temperature is higher than supply
+    if t_ve_mech_after_hex >= t_sup_h_ahu or \
+    t_ve_mech_after_hex >= ta_hs_set:  # no operation if incoming air temperature is higher than supply
+                                        # no operation if supply air after heat ex. is higher than heating set point
         qh_sen_ahu = 0.0  # no load because no operation
         qh_lat_ahu = 0.0  # no load because no operation
         x_sup_h_ahu = x_ve_mech
