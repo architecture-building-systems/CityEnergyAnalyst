@@ -28,19 +28,26 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     mCw0 = Qhsf_0 / (tsh0 - trh0)
 
     # log mean temperature at nominal conditions
-    TD10 = Ta_sup_0 - trh0
-    TD20 = Ta_re_0 - tsh0
-    LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
+    # https: // en.wikipedia.org / wiki / Logarithmic_mean_temperature_difference
+    TD10 = tsh0 - Ta_sup_0  # nominal temperature difference at hot end of heat exchanger
+    TD20 = trh0 - Ta_re_0  # nominal temperature difference at cold end of heat exchanger
+    LMRT0 = (TD10 - TD20) / scipy.log(TD10 / TD20)
     UA0 = Qhsf_0 / LMRT0
+
+    NTU_0 = UA0 / (ma_sup_0 * Cpa)
+    ec_0 = 1 - scipy.exp(-NTU_0)
 
     if Qhsf > 0 and ma_sup_hs > 0:
         AUa = UA0 * (ma_sup_hs / ma_sup_0) ** 0.77
-        NTUc = AUa / (ma_sup_hs * Cpa * 1000)
-        ec = 1 - scipy.exp(-NTUc)
-        tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
+        NTUc = AUa / (ma_sup_hs * Cpa)  # we removed a wrong unit conversion,
+        #  according to HEX graphs NTU should be in the range of 3-5 (-), see e.g.
+        #  http://kb.eng-software.com/display/ESKB/Difference+Between+the+Effectiveness-NTU+and+LMTD+Methods
+        ec = 1 - scipy.exp(-NTUc)  # this is a very strong assumption. it is only valid for boilers and condensers.
+        tc = (tasup - tare + tare * ec) / ec  # (contact temperature of coil)
+        # We think tc calculated here is the minimum required hot water supply temperature
 
         # minimum
-        LMRT = abs((tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc)))
+        LMRT = abs((tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc)))  # we don't understand what is happening here
         k1 = 1 / mCw0
 
         def fh(x):
@@ -54,8 +61,8 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
             # print (Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0)
             result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500).real - 273
 
-        trh = result
-        tsh = trh + k2
+        tsh = result  # we swap the result to be the water supply temperature in accordance with `tc` above
+        trh = tsh - k2  # the return temperature of the water, assuming some delta_T of k2
         mcphs = Qhsf / (tsh - trh)
     else:
         tsh = np.nan
