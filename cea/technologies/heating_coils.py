@@ -7,6 +7,10 @@ import scipy.optimize as sopt
 import scipy
 import numpy as np
 from cea.technologies import substation
+from cea.demand import constants
+
+# import from GV
+C_A = constants.C_A
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -18,8 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0,
-                      Cpa):
+def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0, Ta_sup_0, Ta_re_0):
 
     tasup = Ta_sup_hs + 273
     tare = Ta_re_hs + 273
@@ -34,12 +37,12 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     LMRT0 = (TD10 - TD20) / scipy.log(TD10 / TD20)
     UA0 = Qhsf_0 / LMRT0
 
-    NTU_0 = UA0 / (ma_sup_0 * Cpa)
+    NTU_0 = UA0 / (ma_sup_0 * C_A)
     ec_0 = 1 - scipy.exp(-NTU_0)
 
     if Qhsf > 0 and ma_sup_hs > 0:
         AUa = UA0 * (ma_sup_hs / ma_sup_0) ** 0.77
-        NTUc = AUa / (ma_sup_hs * Cpa)  # we removed a wrong unit conversion,
+        NTUc = AUa / (ma_sup_hs * C_A)  # we removed a wrong unit conversion,
         #  according to HEX graphs NTU should be in the range of 3-5 (-), see e.g.
         #  http://kb.eng-software.com/display/ESKB/Difference+Between+the+Effectiveness-NTU+and+LMTD+Methods
         ec = 1 - scipy.exp(-NTUc)  # this is a very strong assumption. it is only valid for boilers and condensers.
@@ -58,7 +61,6 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         try:
             result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01).real - 273
         except RuntimeError:
-            # print (Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0)
             result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500).real - 273
 
         tsh = result  # we swap the result to be the water supply temperature in accordance with `tc` above
@@ -93,7 +95,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
 #     mcp_DC_cs = 0
 #     A_hex_cs = 0
 
-def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa):
+def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0):
     '''
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
 
@@ -120,8 +122,8 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     thi = Ta_re_cs + 273
     tho =  Ta_sup_cs + 273
     tci = Tcs_sup_0 + 273
-    ch = ma_sup_cs * Cpa # WperC
-    ch_0 = ma_sup_0 * Cpa # WperC
+    ch = ma_sup_cs * C_A # WperC
+    ch_0 = ma_sup_0 * C_A # WperC
     thi_0 = Ta_re_0
     tho_0 = Ta_sup_0
     tci_0 = Tcs_sup_0 + 273
@@ -145,7 +147,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     return np.float(tci-273), np.float(tco), np.float(cc) #temperature return, capacitymassflowrate, area heat exchange
 
 
-# def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa):
+# def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0):
 #     # Initialize temperatures
 #     tasup = Ta_sup_cs + 273
 #     tare = Ta_re_cs + 273
@@ -161,7 +163,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
 #
 #     if Qcsf < -0 and ma_sup_cs > 0:
 #         AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
-#         NTUc = AUa / (ma_sup_cs * Cpa * 1000)
+#         NTUc = AUa / (ma_sup_cs * C_A * 1000)
 #         ec = 1 - scipy.exp(-NTUc)
 #         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 #
