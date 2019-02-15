@@ -86,7 +86,7 @@ def main(config):
     import plots.routes
     import inputs.routes
     import project.routes
-
+    import webbrowser
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
@@ -101,7 +101,9 @@ def main(config):
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
 
+    webbrowser.open("http://localhost:5050/")
     app.run(host='localhost', port=5050, threaded=False)
+
 
 
 if __name__ == '__main__':

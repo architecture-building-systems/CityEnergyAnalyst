@@ -1,6 +1,6 @@
 import traceback
 import cea.inputlocator
-from cea.interfaces.arcgis.modules import arcpy
+from legacy.arcgis import arcpy
 import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
