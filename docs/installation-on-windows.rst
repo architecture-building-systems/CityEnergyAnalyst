@@ -21,19 +21,8 @@ Prerequisites
 * Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and install `Miniconda(64-bit) for Python 2.7 <https://conda.io/miniconda.html>`__.
-
-   .. note:: UNCHECK the "Register Anaconda as my default Python 2.7" option as ArcGIS integration
-      will not work otherwise.
-
 * Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__ OR your own favorite editor.
 * Download and install `Daysim <https://daysim.ning.com/page/download>`__.
-* Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
-    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in Products: All Products.
-    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
-* Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
-
-    .. note:: ArcGIS (with Background Geoprocessing) is required to run the thermal network layout script.
-        Otherwise, ArcGIS is only used for visualisation purposes.
 
 Installation
 ~~~~~~~~~~~~
@@ -51,7 +40,6 @@ Python library) and  1 hour of your time.
 #. Grab a cup of tea and some toast, this will take ~ 45 minutes.
 #. Type ``activate cea`` and press ENTER.
 #. Type ``pip install -e .[dev]`` and press ENTER (mind the dot '.' included in this command!).
-#. Type ``cea install-toolbox`` and press ENTER.
 
 
 Configuration of Pycharm
