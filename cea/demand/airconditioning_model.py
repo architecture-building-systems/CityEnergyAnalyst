@@ -127,9 +127,10 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
 
     Gabriel Happle, Feb. 2018
 
-    :param m_ve_mech:
-    :param t_ve_mech_after_hex:
-    :param x_ve_mech:
+    :param m_ve_mech: mechanical ventilation air flow, outdoor air (kg/s)
+    :param t_ve_mech_after_hex: supply air temperature of mechanical ventilation (i.e. after HEX)
+    :param x_ve_mech: moisture content of ventilation airflows
+    :param ta_hs_set: heating system set point air temperature
     :param bpr:
     :return:
     """
@@ -156,7 +157,7 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         # calculate the max moisture content at the coil temperature
         x_sup_h_ahu_max = convert_rh_to_moisture_content(100.0, t_coil_h_ahu)
 
-        # calculate the system sensible cooling power
+        # calculate the system sensible heating power
         qh_sen_ahu = m_ve_mech * C_A * (t_sup_h_ahu - t_ve_mech_after_hex)
 
         # calculate the supply moisture content
