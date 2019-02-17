@@ -11,14 +11,18 @@ from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hu
 def main(building, TECHS, building_result_path):
     el_use_sum = {}
     for tech in TECHS:
-        # building = 'B007'
         results = pd.read_csv(path_to_osmose_results(building_result_path, tech), header=None).T.reset_index()
         results = results.rename(columns=results.iloc[0])[1:]
+        results = results.fillna(0)
         el_use_sum[tech] = results['SU_elec'].sum()
 
         if tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
             chiller_count = analysis_chilled_water_usage(results, tech)
             chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech))
+
+        ## plot air flows
+        air_flow_df = set_up_air_flow_df(results)
+        plot_air_flow(air_flow_df, results, tech, building, building_result_path)
 
         ## plot T_SA and w_SA
         operation_df = set_up_operation_df(tech, results)
@@ -27,6 +31,7 @@ def main(building, TECHS, building_result_path):
         ## plot water balance
         humidity_df = set_up_humidity_df(tech, results)
         plot_water_balance(building, building_result_path, humidity_df, results, tech)
+        # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
 
         ## plot humidity level (storage)
         hu_store_df = set_up_hu_store_df(results)
@@ -246,14 +251,22 @@ def set_up_humidity_df(tech, results):
     # humidity_df['m_w_infil_occupant'] = results['w_bui']
     humidity_df['m_w_lcu_removed'] = results['w_lcu']
     if tech == 'HCS_LD':
-        total_oau_removed = results['w_oau_out'] - results['w_oau_in']  # - results['w_oau_in_ve']
+        total_oau_removed = results['w_oau_out'] - results['w_oau_in'] - results['w_oau_in_by']
     else:
-        total_oau_removed = results['w_oau_out'] - results.filter(like='w_oau_in').sum(axis=1)
-    total_oau_removed[total_oau_removed < 0] = 0
+        total_oau_removed = results['w_oau_out'] - results.filter(like='w_oau_in').sum(axis=1) - results['w_oau_in_by']
+    # total_oau_removed[total_oau_removed < 0] = 0 # FIXME: check graph
     humidity_df['m_w_oau_removed'] = total_oau_removed
     humidity_df['m_w_stored'] = results['w_sto_charge']
     # humidity_df['m_w_discharged'] = results['w_sto_discharge']
     return humidity_df
+
+def set_up_air_flow_df(results):
+    air_flow_df = pd.DataFrame()
+    air_flow_df['OAU_in'] = results.filter(like='m_oau_in').drop(columns=['m_oau_in_by']).sum(axis=1)
+    air_flow_df['OAU_in_bypass'] = results['m_oau_in_by']
+    # air_flow_df['OAU_out'] = results['m_oau_out']*(-1)
+    air_flow_df['infiltration'] = results['m_inf_in']
+    return air_flow_df
 
 
 def set_up_operation_df(tech, results):
@@ -375,6 +388,80 @@ def plot_water_balance(building, building_result_path, humidity_df, results, tec
         ax.bar(x_ticks, humidity_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + humidity_df[column]
+    ax.set(xlabel='Time [hr]', ylabel='Water flow [kg/s]', xlim=(1, time_steps), ylim=(0, 0.3))
+    ax.xaxis.label.set_size(14)
+    ax.yaxis.label.set_size(14)
+    ax.legend(loc='upper left')
+    # plot line
+    ax1 = ax.twinx()
+    w_bui_float = pd.to_numeric(results['w_bui'])
+    ax1.plot(x_ticks, w_bui_float, '-o', linewidth=2, markersize=4, label='water gain')
+    ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
+    ax1.set_xticks(x_ticks_shown)
+    ax.legend(loc='upper right')
+    plt.title(building + '_' + tech, fontsize=14)
+    # plt.show()
+    # plot layout
+    fig.savefig(path_to_save_fig(building, building_result_path, tech, 'water_flow'))
+    return np.nan
+
+
+def plot_air_flow(air_flow_df, results, tech, building, building_result_path):
+    # extract parameters
+    time_steps = results.shape[0]
+    x_ticks = results.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
+    bar_width = 0.5
+    opacity = 1
+    colors = plt.cm.Set2(np.linspace(0, 1, len(air_flow_df.columns)))
+    # initialize the vertical-offset for the stacked bar chart
+    y_offset = np.zeros(air_flow_df.shape[0])
+    # plot bars
+    for c in range(len(air_flow_df.columns)):
+        column = air_flow_df.columns[c]
+        ax.bar(x_ticks, air_flow_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
+               label=column)
+        y_offset = y_offset + air_flow_df[column]
+    ax.set(xlabel='Time [hr]', ylabel='Air flow [kg/s]', xlim=(1, time_steps), ylim=(0, 50))
+    ax.xaxis.label.set_size(14)
+    ax.yaxis.label.set_size(14)
+    ax.legend(loc='upper left')
+
+    # plt.show()
+    # plot layout
+    plt.title(building + '_' + tech, fontsize=14)
+    fig.savefig(path_to_save_fig(building, building_result_path, tech, 'air_flow'))
+
+    return np.nan
+
+def plot_water_in_out(building, building_result_path, humidity_df, results, tech):
+    # rearrange humidity_df
+    water_in_out_df = humidity_df*(-1)
+    water_in_out_df['m_w_gain'] = results['w_bui']
+
+    # extract parameters
+    time_steps = results.shape[0]
+    x_ticks = results.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
+    bar_width = 0.5
+    opacity = 1
+    colors = plt.cm.Set2(np.linspace(0, 1, len(humidity_df.columns)))
+    # initialize the vertical-offset for the stacked bar chart
+    y_offset = np.zeros(water_in_out_df.shape[0])
+    # plot bars
+    for c in range(len(water_in_out_df.columns)):
+        column = water_in_out_df.columns[c]
+        ax.bar(x_ticks, water_in_out_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
+               label=column)
+        y_offset = y_offset + water_in_out_df[column]
     ax.set(xlabel='Time [hr]', ylabel='Water flow [kg/s]', xlim=(1, time_steps), ylim=(0, 0.3))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
@@ -546,4 +633,7 @@ def path_to_chiller_csv(building, building_result_path, tech):
 
 
 if __name__ == '__main__':
-    main(building='B007')
+    building = "B001"
+    tech = ["HCS_coil"]
+    building_result_path = "C:\Users\Shanshan\Documents\WP1_results\WTP_CBD_m_WP1_RES\B001_24"
+    main(building, tech, building_result_path)
