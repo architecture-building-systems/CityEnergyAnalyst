@@ -1,8 +1,55 @@
 What are the CEA Scripts?
 =========================
 CEA relies on a number of scripts which may share dependencies.
-This section aims to clarify the databases created or used by each script, along with the methods used
+This section aims to clarify the files created or used by each script, along with the methods used
 to access this data. Scripts can be run via the command line interface (cli) by calling: ``cea script-name``.
+
+The following diagrams are used to visualise the input and output files used by each script, along with the method of access:
+
+.. graphviz::
+
+    digraph example {
+        rankdir="LR";
+        graph [overlap = false, fontname="arial"];
+        "script-name"[style=filled, fillcolor=turquoise3, shape=note, fontsize=20, fontname="arial"]
+
+        node [shape=box, style=filled, color=white, fontsize= 15, fontname=arial, fixedsize=true, width=1.6];
+        edge [fontname=arial, fontsize = 15];
+        "input_data.file" -> "script-name"[label="inputlocator_method_1"]
+        "script-name" -> "output_data.file"[label="inputlocator_method_2"]
+
+            subgraph cluster_0 {
+            style=filled;
+            shape=box;
+            fillcolor=azure2;
+            fontsize=20;
+            label="relative/path/of/input_data.file";
+        "input_data.file"
+        }
+        subgraph cluster_1 {
+            style=filled;
+            shape=box;
+            fillcolor=azure2;
+            fontsize=20;
+            label="relative/path/of/output_data.file";
+        "output_data.file"
+        }
+        }
+
+Script Name
+^^^^^^^^^^^
+
+
+Relative File Path
+^^^^^^^^^^^^^^^^^^
+Config
+
+
+
+Inputlocator Method
+^^^^^^^^^^^^^^^^^^^
+All script requests for reading or writing data are routed through the inputlocator's specific 'get_methods', which join the
+current working path with that of the desired input/output file.
 
 Core
 ----

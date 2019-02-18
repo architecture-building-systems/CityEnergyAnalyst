@@ -2,13 +2,12 @@
 {% if scripts|length > 1 %}
 digraph trace_inputlocator {
     rankdir="LR";
-    node [shape=box, style=filled, fillcolor=peachpuff]
-    graph [overlap = false];
-
+    graph [overlap = false, fontname=arial];
     {% for script in scripts %}
-    "{{script}}"[style=filled, fillcolor=darkorange];
+    "{{script}}"[shape=note, style=filled, fillcolor=turquoise3, fontname=arial, fontsize=20];
     {% endfor %}
 
+    node [shape=box, style=filled, fillcolor=azure2, fontname=arial, fontsize=15]
     {% for direction, script, locator, path, file in trace_data %}
         {% if loop.changed(direction, script, path) %}
             {% if direction == 'input' %}
@@ -24,12 +23,14 @@ digraph trace_inputlocator {
 
 digraph trace_inputlocator {
     rankdir="LR";
-    node [shape=box];
-    graph [overlap = false];
 
+    graph [overlap=false, fontname=arial];
     {% for script in scripts %}
-    "{{script}}"[style=filled, fillcolor=darkorange];
+    "{{script}}"[style=filled, fillcolor=turquoise3, shape=note, fontsize=20, fontname=arial];
     {% endfor %}
+
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width={{width}}];
+    edge [fontname=arial, fontsize = 15];
 
     {% for direction, script, locator, path, file in trace_data %}
         {% if direction == 'input' %}
@@ -42,11 +43,12 @@ digraph trace_inputlocator {
     {% for db in range(0, db_group|length) %}
     subgraph cluster_{{db}} {
         style = filled;
-        color = peachpuff;
+        color = azure2;
+        fontsize = 20;
         label="{{db_group[db]}}";
         {% for direction, script, locator, path, file in trace_data %}
         {% if path == db_group[db] %}
-    "{{file}}"[style=filled, color=white]
+    "{{file}}"
         {% endif %}
         {% endfor %}
     }
