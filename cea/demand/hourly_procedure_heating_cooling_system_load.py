@@ -267,7 +267,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     # (2) The load of the central AC unit is determined by the air mass flows and fixed supply temperature
     # calc central ac unit load
     system_loads_ahu = airconditioning_model.central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex,
-                                                                               x_ve_mech, ta_hs_set, bpr)
+                                                                               x_ve_mech, ta_hs_set, t_int_prev, bpr)
     qh_sen_central_ac_load = system_loads_ahu['qh_sen_ahu']
 
     # (3) Check demand vs. central AC heating load
