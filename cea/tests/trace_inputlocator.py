@@ -79,7 +79,8 @@ def create_graphviz_output(trace_data, graphviz_output_file):
     trace_data = sorted(trace_data)
     scripts = sorted(set([td[1] for td in trace_data]))
     db_group = sorted(set(td[3] for td in trace_data))
-    digraph = template.render(trace_data=trace_data, scripts=scripts, db_group=db_group)
+    width = max(len(td[4]) for td in trace_data)*0.1
+    digraph = template.render(trace_data=trace_data, scripts=scripts, db_group=db_group, width=width)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
     with open(graphviz_output_file, 'w') as f:
