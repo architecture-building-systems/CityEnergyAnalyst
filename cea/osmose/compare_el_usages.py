@@ -2,6 +2,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import os
+import operator
+from collections import OrderedDict
 import matplotlib.pyplot as plt
 
 
@@ -43,6 +45,7 @@ def main(building, building_result_path):
     chiller_df = chiller_df.reindex(string_columns, axis=1)
     chiller_df = chiller_df.fillna(0)
     plot_chiller_temperatures(chiller_df, building, building_result_path)
+    plot_chiller_temperatures_scatter(chiller_df, building, building_result_path)
 
     compare_df.to_csv(path_to_save_compare_df(building, building_result_path))
     return
@@ -66,6 +69,46 @@ def plot_chiller_temperatures(chiller_df, building, building_result_path):
     ax.set(xlabel='Temperature [C]', ylabel='Frequency [%]', ylim=(0, 100))
     # plt.show()
     fig.savefig(path_to_save_chiller_t(building, building_result_path))
+    return np.nan
+
+
+def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path):
+    chiller_dict = chiller_df.T.to_dict()
+    chiller_dict_sorted = {}
+    for k, v in chiller_dict.items():
+        new_sub_dict = {}
+        for i, j in v.items():
+            new_sub_dict[float(i)] = j
+        new_sub_dict_sorted = sorted(new_sub_dict.items(), key=operator.itemgetter(0))
+        chiller_dict_sorted[k] = new_sub_dict_sorted
+    # x axis
+    x_labels = list(chiller_dict.keys())
+    x_values = list(range(len(x_labels)))
+    # lookup table mapping category
+    lookup_table = dict((v, k) for k, v in enumerate(x_labels))
+    # build a list of points (x,y,annotation)
+    points = [(lookup_table[action], key, anno)
+              for action, values in chiller_dict.items()
+              for key, anno in (values if values else {}).items()]
+    x, y, anno = zip(*points)
+    y_float = tuple(map(lambda i: float(i), y))
+    # y axis
+    y_values = [float(i) for i in chiller_df.columns]
+    y_labels = [str(v) for v in y_values]
+    # marker size
+    area = tuple(map(lambda x: 10 * (x), anno))
+
+    # format the plt
+    plt.figure()
+    # plt.xlabel('x')
+    plt.ylabel('Chilled water temperature [C]')
+    plt.xticks(x_values, x_labels)
+    plt.yticks(y_values, y_labels)
+    plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
+              min(y_values) - 0.5, max(y_values) + 0.5])
+    plt.scatter(x, y_float, s=area)
+    # plt.show()
+    plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
 
 
@@ -114,6 +157,13 @@ def path_to_save_chiller_t(building, building_result_path):
     path_to_file = os.path.join(building_result_path, filename)
     return path_to_file
 
+def path_to_save_chw_scatter(building, building_result_path):
+    filename = building + '_chw_scatter.png'
+    path_to_file = os.path.join(building_result_path, filename)
+    return path_to_file
+
 
 if __name__ == '__main__':
-    main()
+    building = "B001"
+    building_result_path = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WTP_CBD_m_WP1_RES\\B001_168'
+    main(building, building_result_path)
