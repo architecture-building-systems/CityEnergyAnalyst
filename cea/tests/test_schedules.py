@@ -12,7 +12,6 @@ import ConfigParser
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
-from cea.datamanagement.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 from cea.globalvar import GlobalVariables
@@ -39,7 +38,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
 
-        architecture_DB = get_database(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
+        architecture_DB = pd.read_excel(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
