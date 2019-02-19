@@ -45,7 +45,7 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         # minimum
         LMRT0 = lmrt(tair0, trh0, tsh0)
         delta_t = Qh / mCw0
-        result = newton(fh, trh0, args=(delta_t, Qh0, tair, LMRT0, nh), maxiter=100, tol=0.01) - 273
+        result = newton(fh, trh0, args=(delta_t, Qh0, Qh, tair, LMRT0, nh), maxiter=100, tol=0.01) - 273
         trh = result.real
         tsh = trh + Qh / mCw0
         mCw = Qh / (tsh - trh)
@@ -56,7 +56,7 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
     # return floats with numpy function. Needed when np.vectorize is use to call this function
     return np.float(tsh), np.float(trh), np.float(mCw) # C, C, W/C
 
-def fh(x, delta_t, Qh0, tair, LMRT0, nh):
+def fh(x, delta_t, Qh0, Qh, tair, LMRT0, nh):
     '''
     Static radiator heat balance equation from Holst (1996), eq. 6.
 
