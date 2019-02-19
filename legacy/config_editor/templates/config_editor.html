@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ 'css/config_editor.css'|staticfile }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+</head>
+<body>
+
+<script src="{{'js/jquery-3.2.1.min.js'|staticfile}}"></script>
+<script src="{{'js/config_editor.js'|staticfile}}"></script>
+
+
+<div id="wrapper">
+<div id="section-list" class="list-group" role="tablist">
+    {% for section in config.sections.values() %}
+        <a class="list-group-item list-group-item-action" id="list-{{section.name}}-list" data-toggle="list"
+           href="#list-{{section.name}}" role="tab" aria-controls="{{section.name}}">{{ section.name }}</a>
+    {% endfor %}
+</div>
+
+<div id="section-editor" class="tab-content">
+    {% import 'input_macros.html' as input_macros %}
+    {% for section in config.sections.values() %}
+        <div class="tab-pane fade" id="list-{{section.name}}" role="tabpanel" aria-labelledby="list-{{section.name}}-list">
+            <form name="config_form">
+            <h2>{{section.name}}</h2>
+        {% for parameter in section.parameters.values() %}
+            {{ input_macros.input(parameter) }}
+        {% endfor %}
+            <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick="save_section_js('{{section.name}}')">Save</button>
+            <button type="button" value="Restore defaults" class="btn btn-primary btn-lg btn-block" onclick="restore_defaults_js('{{section.name}}')">Restore defaults</button>
+            </form>
+        </div>
+    {% endfor %}
+
+</div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+</body>
+</html>
