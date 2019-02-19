@@ -26,7 +26,7 @@ Edges.shp
 - **Shape**: Polyline (Geometry Type)
 - **Type_mat (String)**: material of the pipes (default T1), more types can be found in databases>region>systems>thermal_networks.xls
 - **Pipe_DN (String)**: 150 (this is an initial guess, it will be updated after the simulation).
-- **Type (String)**: Pipe number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``""PIPE""&[FID]``).
+- **Type (String)**: Pipe number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``"PIPE"&[FID]``).
 
 Nodes.shp
 ---------
@@ -34,7 +34,7 @@ Nodes.shp
     :align: center
 
 - **Shape**: Point (Geometry Type)
-- **Name (String)**: Node number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``""NODE""&[FID]``).
+- **Name (String)**: Node number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``"NODE"&[FID]``).
 - **Building (String)**: Building number as specified in ``zone.shp``, or else **NONE**.
 - **Type (String)**: specify **CONSUMER** and **PLANT** nodes, the rest is **NONE**.
 

@@ -269,7 +269,7 @@ class Plots(object):
 
         # find node coordinates
         coords = node_data['coordinates']
-        node_names = node_data.index
+        node_names = node_data['Name']
         coordinates = {}
         node_numbers = []
         for name in node_names:

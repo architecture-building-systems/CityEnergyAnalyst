@@ -16,9 +16,8 @@ import pickle
 
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from geopandas import GeoDataFrame as gdf
-from cea.interfaces.arcgis.modules import arcpy
+from legacy.arcgis import arcpy
 from cea.utilities import epwreader
-import cea.config
 import cea.globalvar
 
 __author__ = "Jimeno A. Fonseca"

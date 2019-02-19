@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from simpledbf import Dbf5
 
-from cea.interfaces.arcgis.modules import arcpy
+from legacy.arcgis import arcpy
 
 
 def calculate_radiation_for_surfaces(observers_path, data_factor_centroids_csv, sunny_hours_of_year, temporary_folder,
