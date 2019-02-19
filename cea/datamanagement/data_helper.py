@@ -81,7 +81,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get properties about the construction and architecture
     if prop_architecture_flag:
-        architecture_DB = get_database(locator.get_archetypes_properties(config.region), 'ARCHITECTURE')
+        architecture_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                             x['year_end'], x['standard']), axis=1)
         categories_df['cat_built'] = calc_category(architecture_DB, categories_df, 'built', 'C')
@@ -101,14 +101,14 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get properties about types of HVAC systems
     if prop_hvac_flag:
-        HVAC_DB = get_database(locator.get_archetypes_properties(config.region), 'HVAC')
-        HVAC_DB['Code'] = HVAC_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(config.region), 'HVAC')
+        construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                             x['year_end'], x['standard']), axis=1)
 
-        categories_df['cat_HVAC'] = calc_category(HVAC_DB, categories_df, 'HVAC', 'R')
+        categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
 
         # define HVAC systems types
-        prop_HVAC_df = categories_df.merge(HVAC_DB, left_on='cat_HVAC', right_on='Code')
+        prop_HVAC_df = categories_df.merge(construction_properties_hvac, left_on='cat_HVAC', right_on='Code')
 
         # write to shapefile
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
@@ -116,7 +116,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
     if prop_comfort_flag:
-        comfort_DB = get_database(locator.get_archetypes_properties(config.region), 'INDOOR_COMFORT')
+        comfort_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'INDOOR_COMFORT')
 
         # define comfort
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
@@ -130,7 +130,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
-        internal_DB = get_database(locator.get_archetypes_properties(config.region), 'INTERNAL_LOADS')
+        internal_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'INTERNAL_LOADS')
 
         # define comfort
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
@@ -144,7 +144,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
     if prop_supply_systems_flag:
-        supply_DB = get_database(locator.get_archetypes_properties(config.region), 'SUPPLY')
+        supply_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'SUPPLY')
         supply_DB['Code'] = supply_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
 
@@ -190,11 +190,6 @@ def calc_mainuse(uses_df, uses):
     mainuse = np.array(map(calc_comparison, array_second, array_max))
 
     return mainuse
-
-
-def get_database(path_database, sheet):
-    database = pd.read_excel(path_database, sheet, index_col=0)
-    return database
 
 
 def calc_comparison(array_second, array_max):
