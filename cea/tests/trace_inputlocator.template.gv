@@ -30,30 +30,12 @@ digraph trace_inputlocator {
 
     subgraph cluster_legend {
     fontsize=25
-    style="rounded, filled"
-    color="#ffddc6"
-    label="Legend"
-    "script name"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-        subgraph cluster_input {
-        style=filled;
-        shape=box;
-        color=white;
-        fillcolor="#E1F2F2";
-        fontsize=20;
-        label="relative/file/path";
-        "input.file"
-        }
-           subgraph cluster_output {
-        style=filled;
-        shape=box;
-        color=white;
-        fillcolor="#E1F2F2";
-        fontsize=20;
-        label="relative/file/path";
-        "output.file"
-        }
-        "input.file"->"script name"[label="inputlocator_method1"]
-        "script name"->"output.file"[label="inputlocator_method2"]
+    style=invis
+    "processes"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"processes"[style=invis]
+    "processes"->"outputs"[style=invis]
     }
 
     {% for script in scripts %}
@@ -62,20 +44,43 @@ digraph trace_inputlocator {
 
 
     {% for db in range(0, db_group|length) %}
-    subgraph cluster_{{db}} {
+    {% set count_in = namespace(a=0) %}
+    {% set count_out = namespace(a=0) %}
+            {% for direction, script, locator, path, file in trace_data %}
+            {% if db_group[db] == path and direction == 'input' %}
+                {% if count_in.a == 0 %}
+
+    subgraph cluster_{{db}}_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
         label="{{db_group[db]}}";
-        {% for direction, script, locator, path, file in trace_data %}
-        {% if path == db_group[db] %}
-    "{{file}}"
-        {% endif %}
+
+                {% endif %}
+                {% set count_in.a = 1 %}
+
+        "{{file}}"
+
+        {% elif db_group[db] == path and direction == 'output' %}
+            {% if count_out.a == 0 %}
+                {% if count_in.a == 1 %}
+    }
+                {% endif %}
+
+    subgraph cluster_{{db}}_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="{{db_group[db]}}";
+            {% endif %}
+            {% set count_out.a = 1 %}
+        "{{file}}"
+            {% endif %}
         {% endfor %}
     }
     {% endfor %}
-
 
     {% for direction, script, locator, path, file in trace_data %}
         {% if direction == 'input' %}
