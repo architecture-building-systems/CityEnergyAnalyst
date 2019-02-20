@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 import os
 import operator
-from collections import OrderedDict
 import matplotlib.pyplot as plt
 
 
 def main(building, building_result_path):
-    # building = 'B007'
+    # get paths to chiller_T_tech_df and el csv
     paths = path_to_elec_csv_files(building_result_path)
     chiller_paths = path_to_chiller_csv_files(building_result_path)
+
     el_dfs = {}
     cop_mean = {}
     compare_df = pd.DataFrame()
@@ -21,37 +21,37 @@ def main(building, building_result_path):
         index = el_dfs[tech].shape[0] - 1
         cop_mean[tech] = el_dfs[tech]['cop_system'].replace(0, np.nan).mean()
         compare_df[tech] = el_dfs[tech].ix[index][1:]
-    # compare_df = compare_df.loc['el_chi_lt', 'el_aux_lcu', 'el_chi_oau', 'el_aux_oau', 'el_chi_ht', 'el_aux_scu', 'el_ct', 'el_total']
-
-    # T_low_C = 8.1
-    # T_high_C = 14.1
-    # T_interval = 0.65  # 0.5
-    # T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
-    # chiller_df = pd.DataFrame(columns=T_OAU_offcoil)
-    i = 0
-    for path in chiller_paths:
-        if i == 0:
-            chiller_df = pd.read_csv(path)
-            chiller_df = chiller_df.set_index(chiller_df.columns[0])
-            i = i + 1
-        else:
-            chiller = pd.read_csv(path)
-            chiller = chiller.set_index(chiller.columns[0])
-            chiller_df = chiller_df.append(chiller)
-
-    float_columns = [float(x) for x in chiller_df.columns]
-    float_columns.sort()
-    string_columns = [str(x) for x in float_columns]
-    chiller_df = chiller_df.reindex(string_columns, axis=1)
-    chiller_df = chiller_df.fillna(0)
-    plot_chiller_temperatures(chiller_df, building, building_result_path)
-    plot_chiller_temperatures_scatter(chiller_df, building, building_result_path)
-
     compare_df.to_csv(path_to_save_compare_df(building, building_result_path))
+
+    # get chiller_T_tech_df df from all tech
+    chiller_T_all_tech_df = get_chiller_T_from_all_techs(chiller_paths)
+    plot_chiller_temperatures_bar(chiller_T_all_tech_df, building, building_result_path)
+    plot_chiller_temperatures_scatter(chiller_T_all_tech_df, building, building_result_path)
+
+
     return
 
 
-def plot_chiller_temperatures(chiller_df, building, building_result_path):
+def get_chiller_T_from_all_techs(chiller_paths):
+    i = 0
+    for path in chiller_paths:
+        if i == 0:
+            chiller_T_all_tech_df = pd.read_csv(path)
+            chiller_T_all_tech_df = chiller_T_all_tech_df.set_index(chiller_T_all_tech_df.columns[0])
+            i = i + 1
+        else:
+            chiller_T_tech_df = pd.read_csv(path)
+            chiller_T_tech_df = chiller_T_tech_df.set_index(chiller_T_tech_df.columns[0])
+            chiller_T_all_tech_df = chiller_T_all_tech_df.append(chiller_T_tech_df)
+    float_columns = [float(x) for x in chiller_T_all_tech_df.columns]
+    float_columns.sort()
+    string_columns = [str(x) for x in float_columns]
+    chiller_T_all_tech_df = chiller_T_all_tech_df.reindex(string_columns, axis=1)
+    chiller_T_all_tech_df = chiller_T_all_tech_df.fillna(0)
+    return chiller_T_all_tech_df
+
+
+def plot_chiller_temperatures_bar(chiller_df, building, building_result_path):
     X = np.arange(chiller_df.columns.size)
     fig, ax = plt.subplots()
     width = 0.00
@@ -74,14 +74,11 @@ def plot_chiller_temperatures(chiller_df, building, building_result_path):
 
 def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path):
     chiller_dict = chiller_df.T.to_dict()
-    chiller_dict_sorted = {}
-    for k, v in chiller_dict.items():
-        new_sub_dict = {}
-        for i, j in v.items():
-            new_sub_dict[float(i)] = j
-        new_sub_dict_sorted = sorted(new_sub_dict.items(), key=operator.itemgetter(0))
-        chiller_dict_sorted[k] = new_sub_dict_sorted
-    # x axis
+
+    # sort two level dict with the value of key in second level
+    sorted_dict = sort_dict_with_second_level_key(chiller_dict)
+
+    # x axis (keys of the first level dict)
     x_labels = list(chiller_dict.keys())
     x_values = list(range(len(x_labels)))
     # lookup table mapping category
@@ -92,7 +89,7 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
               for key, anno in (values if values else {}).items()]
     x, y, anno = zip(*points)
     y_float = tuple(map(lambda i: float(i), y))
-    # y axis
+    # y axis (keys of the second level dict)
     y_values = [float(i) for i in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
@@ -100,6 +97,7 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
 
     # format the plt
     plt.figure()
+    plt.title(building)
     # plt.xlabel('x')
     plt.ylabel('Chilled water temperature [C]')
     plt.xticks(x_values, x_labels)
@@ -110,6 +108,17 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     # plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
+
+
+def sort_dict_with_second_level_key(two_level_dict):
+    dict_sorted_with_second_level_key = {}
+    for k, v in two_level_dict.items():
+        new_sub_dict = {}
+        for i, j in v.items():
+            new_sub_dict[float(i)] = j
+        new_sub_dict_sorted = sorted(new_sub_dict.items(), key=operator.itemgetter(0))
+        dict_sorted_with_second_level_key[k] = new_sub_dict_sorted
+    return dict_sorted_with_second_level_key
 
 
 def path_to_elec_csv_files(building_result_path):
@@ -165,5 +174,5 @@ def path_to_save_chw_scatter(building, building_result_path):
 
 if __name__ == '__main__':
     building = "B001"
-    building_result_path = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WTP_CBD_m_WP1_RES\\B001_168'
+    building_result_path = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WTP_CBD_m_WP1_RET\\B001_168'
     main(building, building_result_path)
