@@ -236,6 +236,12 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_layout_folder(), "reduced_timesteps")
 
+    def get_optimization_network_layout_costs_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DC_costs.csv
+        Optimized network layout files for pipes of district heating networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_costs.csv" % network_type)
+
     def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
@@ -285,6 +291,32 @@ class InputLocator(object):
         else:
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type + "_" + network_name + "_T_Supply_K.csv")
+
+    def get_optimization_network_generation_folder(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return self._ensure_folder(self.get_optimization_network_results_folder(), str(generation))
+
+
+    def get_optimization_network_individual_results_file(self, network_type, individual):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                        network_type + "_" + str(individual) + ".csv")
+
+    def get_optimization_network_generation_individuals_results_file(self, network_type, generation):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                            network_type + '_' + str(generation) + "_individuals.csv")
+
+    def get_optimization_network_all_individuals_results_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_results_folder(),
+                            network_type + "_all_individuals.csv")
 
     def get_optimization_network_layout_return_temperature_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
@@ -348,6 +380,7 @@ class InputLocator(object):
             folder = self.get_representative_week_optimization_network_layout_folder()
         else:
             folder = self.get_optimization_network_layout_folder()
+        print (os.path.join(folder, network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")) # todo: delete
         return os.path.join(folder, network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")
 
     def get_optimization_network_totals_folder(self):
@@ -523,6 +556,11 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_infrastructure.xlsx')
 
+    def get_electricity_costs(self, region):
+        """Returns the database of life cycle inventory for supply systems. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return self._get_region_specific_db_file(region, 'systems', 'electricity_costs.xlsx')
+
     def get_life_cycle_inventory_building_systems(self, region):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
@@ -596,9 +634,11 @@ class InputLocator(object):
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
+        if not os.path.exists(self.get_zone_geometry()):
+            return []
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
-        return zone_building_names
+        return [b.encode('utf-8') for b in zone_building_names]
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
@@ -781,6 +821,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
+    def PV_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_buildings.csv')
+
     def PV_network(self, network):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
@@ -798,6 +842,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'SC_%s_total.csv' % panel_type)
 
+    def SC_total_buildings(self, panel_type):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'SC_%s_total_buildings.csv' % panel_type)
+
     def SC_metadata_results(self, building_name, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building_name, panel_type))
@@ -809,6 +857,10 @@ class InputLocator(object):
     def PVT_totals(self):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
+
+    def PVT_total_buildings(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
 
     def PVT_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
@@ -1074,19 +1126,26 @@ class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
+    already_extracted = False  # only extract once per run
+
     def __init__(self):
-        import cea.examples
-        import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
-
-        archive.extractall(temp_folder)
         reference_case = os.path.join(project_folder, 'baseline')
+
+        if not ReferenceCaseOpenLocator.already_extracted:
+            import cea.examples
+            import zipfile
+            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+
+            if os.path.exists(project_folder):
+                shutil.rmtree(project_folder)
+                assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+
+            archive.extractall(temp_folder)
+            ReferenceCaseOpenLocator.already_extracted = True
+
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

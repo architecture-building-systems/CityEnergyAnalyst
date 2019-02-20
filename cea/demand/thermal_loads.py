@@ -20,11 +20,12 @@ from cea.utilities.physics import calc_wet_bulb_temperature
 from cea.technologies import heatpumps
 from cea.demand.transportation.matsim_data_import import FACILITY_TYPES
 
-import cea.utilities
+from cea.utilities import reporting
+
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, region):
+                       temperatures_output, format_output, region, write_detailed_output, debug):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -133,7 +134,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region) #end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region)  # end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -174,7 +175,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     #WRITE SOLAR RESULTS
     write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd)
+                  resolution_outputs, temperatures_output, tsd, write_detailed_output, debug)
 
     return
 
@@ -187,7 +188,7 @@ def calc_QH_sys_QC_sys(tsd):
 
 
 def write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd):
+                  resolution_outputs, temperatures_output, tsd, write_detailed_output, debug):
 
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -202,9 +203,14 @@ def write_results(bpr, building_name, date, format_output, loads_output, locator
     else:
         raise Exception('error')
 
-    # write report & quick visualization
-    # (NOTE: uncomment to write full report for debugging purposes)
-    # cea.utilities.reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+    if write_detailed_output:
+        print('Writing detailed demand results of {} to .xls file.'.format(building_name))
+        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+
+    if debug:
+        print('Creating instant plotly visualizations of demand variable time series.')
+        print('Behavior can be changed in cea.utilities.reporting code.')
+        reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):

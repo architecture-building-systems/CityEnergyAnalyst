@@ -40,7 +40,7 @@ def calc_cop_burner(Q_load_W, Q_design_W):
     return burner_eff
 
 
-def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, gV, prices):
+def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, lca, prices):
     """
     This function calculates the operation cost of gas burners supplying heat directly to the high temperature generators
     in double effect absorption chillers.
@@ -71,7 +71,7 @@ def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, gV, prices):
         GAS_PRICE = prices.NG_PRICE
 
     if ElectricityType == 'green':
-        ELEC_PRICE = gV.ELEC_PRICE_GREEN
+        ELEC_PRICE = lca.ELEC_PRICE_GREEN
     else:
         ELEC_PRICE = lca.ELEC_PRICE
 

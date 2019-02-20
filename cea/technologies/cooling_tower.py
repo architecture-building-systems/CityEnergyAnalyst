@@ -57,7 +57,25 @@ def calc_CT(qhotdot_W, Qdesign_W):
         wdot_W = wpartload * wdesign_fan
     
     return wdot_W
-    
+
+
+def calc_CT_yearly(qhotdot_kWh):
+    """
+    For the operation of a water condenser + direct cooling tower with a fit funciton based on the hourly calculation in calc_CT.
+
+    :type qhotdot_kWh : float
+    :param qhotdot_kWh: heating power to condenser, From Model_VCC
+
+    :type usd_elec : float
+    :param usd_elec: cost of electric power needed for the variable speed drive fan
+    """
+    if qhotdot_kWh > 0.0:
+        usd_elec = 19450 + 7.562 * 10 ** -9 * qhotdot_kWh ** 1.662
+    else:
+        usd_elec = 0.0
+
+    return usd_elec
+
 
 # Investment costs
 

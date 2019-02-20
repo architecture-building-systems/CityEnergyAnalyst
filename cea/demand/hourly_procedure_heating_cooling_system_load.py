@@ -284,7 +284,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
         tsd['sys_status_aru'][t] = 'Off'
-        tsd['sys_status_ahu'][t] = 'On - over heating'
+        tsd['sys_status_ahu'][t] = 'On:over heating'
 
     elif 0.0 <= qh_sen_central_ac_load < qh_sen_rc_demand:
 
@@ -416,6 +416,11 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
 
+    # system status
+    tsd['sys_status_aru'][t] = 'On:T'
+    tsd['sys_status_ahu'][t] = 'no system'
+    tsd['sys_status_sen'][t] = 'no system'
+
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
@@ -513,6 +518,11 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     # TODO: check
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+
+    # system status
+    tsd['sys_status_ahu'][t] = 'On'
+    tsd['sys_status_aru'][t] = 'On:T/R'
+    tsd['sys_status_sen'][t] = 'no system'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -619,6 +629,11 @@ def calc_cool_loads_3for2(bpr, t, tsd):
 
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+
+    # system status
+    tsd['sys_status_ahu'][t] = 'On'
+    tsd['sys_status_aru'][t] = 'On:R'
+    tsd['sys_status_sen'][t] = 'On'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures

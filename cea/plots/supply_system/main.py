@@ -107,7 +107,7 @@ def plots_main(locator, config):
 
 
 def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
-    from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+    from cea.technologies.thermal_network.thermal_network import thermal_network_main
     # configure thermal network (reduced simulation and create diagram of new network.
     config.restricted_to = None  # FIXME: remove this later
     network_name = output_name_network
@@ -129,7 +129,7 @@ def preprocessing_run_thermal_network(config, locator, output_name_network, outp
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
     thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, individual, generation, individual_pointer, generation_pointer, config, output_type_network, category):
         # local variables
@@ -423,7 +423,8 @@ class Plots():
         config.network_layout.network_type = output_type_network
         config.network_layout.create_plant = True
         config.network_layout.buildings = buildings_connected
-        network_layout(config, locator, output_name_network)
+        network_layout(config, locator, config.network_layout.buildings, output_name_network)
+
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 

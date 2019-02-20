@@ -49,6 +49,14 @@ cea.tests.test\_config module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_dbf module
+--------------------------
+
+.. automodule:: cea.tests.test_dbf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.test\_inputlocator module
 -----------------------------------
 
@@ -65,18 +73,18 @@ cea.tests.test\_is\_heating\_season module
     :undoc-members:
     :show-inheritance:
 
-cea.tests.test\_schedules module
---------------------------------
+cea.tests.test\_plots module
+----------------------------
 
-.. automodule:: cea.tests.test_schedules
+.. automodule:: cea.tests.test_plots
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.tests.test\_sensible\_loads module
---------------------------------------
+cea.tests.test\_schedules module
+--------------------------------
 
-.. automodule:: cea.tests.test_sensible_loads
+.. automodule:: cea.tests.test_schedules
     :members:
     :undoc-members:
     :show-inheritance:

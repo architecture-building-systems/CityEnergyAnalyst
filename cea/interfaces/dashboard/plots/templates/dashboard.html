@@ -1,0 +1,192 @@
+{% extends "base_site.html" %}
+
+{% block title %} {{ dashboard.name  }} {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+      <div class="">
+        <div class="page-title">
+          <div class="title_left" style="width:100%;">
+            <h3><a href="#" data-toggle="modal" data-target="#cea-dashboard-name-editor">{{ dashboard.name }}</a></h3>
+          </div>
+
+          <!--
+          <div class="title_right">
+            <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="button">Go!</button>
+                </span>
+              </div>
+            </div>
+          </div>
+          -->
+        </div>
+
+        <div class="clearfix"></div>
+
+        {% for plot in dashboard.plots %}
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel cea-plot"
+                 data-cea-plot-index="{{ loop.index0 }}"
+                 data-cea-dashboard-index="{{ dashboard_index }}">
+              <div class="x_title">
+                <h2><a href="{{ url_for('plots_blueprint.route_plot', dashboard_index=dashboard_index, plot_index=loop.index0) }}">{{ plot.title }}</a></h2>
+
+                <ul class="nav navbar-right panel_toolbox">
+                  {% if not loop.first %}
+                  <li>
+                    <a href="{{ url_for('plots_blueprint.route_move_plot_up', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                      <i class="fa fa-chevron-up"></i>
+                    </a>
+                  </li>
+                  {% endif %}
+                  {% if not loop.last %}
+                  <li><a href="{{ url_for('plots_blueprint.route_move_plot_down', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                    <i class="fa fa-chevron-down"></i></a>
+                  </li>
+                  {% endif %}
+                  <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-dashboard-index="{{ dashboard_index }}"
+                       data-plot-index="{{ loop.index0 }}" data-toggle="modal" data-target="#cea-dashboard-edit-plot"
+                       role="button" aria-expanded="false">
+                      <i class="fa fa-wrench"></i>
+                    </a>
+                  </li>
+                  <li><a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                    <i class="fa fa-close"></i></a>
+                  </li>
+                </ul>
+                <div class="clearfix"></div>
+              </div>
+              <div class="x_content" id="x_content-{{ dashboard_index }}-{{ loop.index0 }}">
+                  <p>Loading plot...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        <a href="#" data-toggle="modal" data-target="#cea-dashboard-add-plot">Add plot...</a>
+      </div>
+    </div>
+
+
+  <!-- modal dialogs for editing the dashboard -->
+
+  <!-- edit dashboard name -->
+  <div class="modal fade" id="cea-dashboard-name-editor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+          </button>
+          <h4 class="modal-title">Rename dashboard</h4>
+        </div>
+        <div class="modal-body">
+          <form id="cea-dashboard-title-editor-form" class="form-horizontal form-label-left" method="post"
+                action="rename/{{ dashboard_index }}">
+            <div class="form-group">
+              <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-dashboard-name">New name</label>
+              <div class="col-md-6 col-sm-6 col-xs-12">
+                <input type="text" id="cea-dashboard-name" name="new-name" value="{{ dashboard.name }}"
+                       required="required"
+                       class="form-control col-md-7 col-xs-12">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
+                  onclick="$('#cea-dashboard-title-editor-form').submit()">OK
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- add plot -->
+  <div class="modal fade" id="cea-dashboard-add-plot" tabindex="-1" role="dialog" aria-hidden="true"
+       data-cea-categories='{{ categories | tojson }}'>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+          </button>
+          <h4 class="modal-title">Add plot</h4>
+        </div>
+        <div class="modal-body">
+          <form id="cea-dashboard-add-plot-form" class="form-horizontal form-label-left" method="post"
+                action="add-plot/{{ dashboard_index }}">
+            <div class="form-group">
+              <label class="control-label" for="cea-plot-category">Category</label>
+              <select class="form-control" id="cea-plot-category" name="category">
+                {% for category in categories %}
+                  <option value="{{ category }}">{{ categories[category]['label'] }}</option>
+                {% endfor %}
+              </select>
+              <label class="control-label" for="cea-plot-name">Plot</label>
+              <select class="form-control" id="cea-plot-name" name="plot-id">
+                {% for plot in categories['demand']['plots'] %}
+                  <option value="{{ plot['id'] }}">{{ plot['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
+                  onclick="$('#cea-dashboard-add-plot-form').submit()">Add plot
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- edit plot parameters-->
+  <div class="modal fade" id="cea-dashboard-edit-plot" tabindex="-1" role="dialog" aria-hidden="true"
+       data-cea-categories='{{ categories | tojson }}'>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+          </button>
+          <h4 class="modal-title">Edit plot parameters</h4>
+        </div>
+        <div class="modal-body">
+          <form id="cea-dashboard-edit-plot-form" class="form-horizontal form-label-left" method="post"
+                action="plot-parameters/{{ dashboard_index }}" enctype='application/json'>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
+                  onclick="$('#cea-dashboard-edit-plot-form').submit()">Save
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super() }}
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+{% endblock javascripts %}
+
