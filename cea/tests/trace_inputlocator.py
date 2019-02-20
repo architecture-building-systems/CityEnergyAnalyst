@@ -74,13 +74,33 @@ def main(config):
 
 
 def create_graphviz_output(trace_data, graphviz_output_file):
+    # creating new variable to preserve original trace_data used by other methods
+    tracedata = sorted(trace_data)
+
+    # replacing any relative paths outside the case dir with the last three dirs in the path
+    # this prevents long path names in digraph clusters
+    for i, (x, y, path, z) in enumerate(tracedata):
+        if path.split('/')[0] == '..':
+            path = path.rsplit('/', 3)
+            del path[0]
+            path = '/'.join(path)
+            tracedata[i] = list(tracedata[i])
+            tracedata[i][2] = path
+            tracedata[i] = tuple(tracedata[i])
+
+    # set of unique scripts
+    scripts = sorted(set([td[1] for td in trace_data]))
+
+    # set of common dirs for each file accessed by the script(s)
+    db_group = sorted(set(td[3] for td in trace_data))
+
+    # float containing the largest width required for the file name
+    width = max(len(td[4]) for td in trace_data)*0.1
+
+    # jinja2 template setup and execution
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
-    trace_data = sorted(trace_data)
-    scripts = sorted(set([td[1] for td in trace_data]))
-    db_group = sorted(set(td[3] for td in trace_data))
-    width = max(len(td[4]) for td in trace_data)*0.1
-    digraph = template.render(trace_data=trace_data, scripts=scripts, db_group=db_group, width=width)
+    digraph = template.render(tracedata=tracedata, scripts=scripts, db_group=db_group, width=width)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
     with open(graphviz_output_file, 'w') as f:

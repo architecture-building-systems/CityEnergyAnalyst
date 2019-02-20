@@ -7,7 +7,7 @@ digraph trace_inputlocator {
     {% endfor %}
 
     node [shape=box, style=filled, fillcolor="#E1F2F2", fontname=arial, fontsize=15]
-    {% for direction, script, locator, path, file in trace_data %}
+    {% for direction, script, locator, path, file in tracedata %}
         {% if loop.changed(direction, script, path) %}
             {% if direction == 'input' %}
     "{{path}}" -> "{{script}}"
@@ -46,7 +46,7 @@ digraph trace_inputlocator {
     {% for db in range(0, db_group|length) %}
     {% set count_in = namespace(a=0) %}
     {% set count_out = namespace(a=0) %}
-            {% for direction, script, locator, path, file in trace_data %}
+            {% for direction, script, locator, path, file in tracedata %}
             {% if db_group[db] == path and direction == 'input' %}
                 {% if count_in.a == 0 %}
 
@@ -82,7 +82,7 @@ digraph trace_inputlocator {
     }
     {% endfor %}
 
-    {% for direction, script, locator, path, file in trace_data %}
+    {% for direction, script, locator, path, file in tracedata %}
         {% if direction == 'input' %}
     "{{file}}" -> "{{script}}"[label="({{locator}})"]
         {% else %}
