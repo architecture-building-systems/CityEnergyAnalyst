@@ -31,11 +31,11 @@ digraph trace_inputlocator {
     subgraph cluster_legend {
     fontsize=25
     style=invis
-    "processes"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
     "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
     "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"processes"[style=invis]
-    "processes"->"outputs"[style=invis]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
     }
 
     {% for script in scripts %}
