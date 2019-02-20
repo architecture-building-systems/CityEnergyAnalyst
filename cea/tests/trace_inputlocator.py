@@ -79,7 +79,7 @@ def create_graphviz_output(trace_data, graphviz_output_file):
 
     # replacing any relative paths outside the case dir with the last three dirs in the path
     # this prevents long path names in digraph clusters
-    for i, (x, y, path, z) in enumerate(tracedata):
+    for i, (direction, script, method, path, file) in enumerate(tracedata):
         if path.split('/')[0] == '..':
             path = path.rsplit('/', 3)
             del path[0]
