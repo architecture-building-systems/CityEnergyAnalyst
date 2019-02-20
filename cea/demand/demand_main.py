@@ -107,12 +107,12 @@ def demand_calculation(locator, config):
         calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output, config, region)
+                                    format_output, config, region, write_detailed_output, debug)
     else:
         calc_demand_singleprocessing(building_properties, date, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output, region)
+                                     format_output, region, write_detailed_output, debug)
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
