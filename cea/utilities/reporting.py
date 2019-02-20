@@ -59,7 +59,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_HEATING_LOADS:
             y = tsd[key][50:150]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line+markers')
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
