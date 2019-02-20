@@ -85,17 +85,20 @@ def create_graphviz_output(trace_data, graphviz_output_file):
             del path[0]
             path = '/'.join(path)
             tracedata[i] = list(tracedata[i])
-            tracedata[i][2] = path
+            tracedata[i][3] = path
             tracedata[i] = tuple(tracedata[i])
 
     # set of unique scripts
-    scripts = sorted(set([td[1] for td in trace_data]))
+    scripts = sorted(set([td[1] for td in tracedata]))
 
     # set of common dirs for each file accessed by the script(s)
-    db_group = sorted(set(td[3] for td in trace_data))
+    db_group = sorted(set(td[3] for td in tracedata))
 
-    # float containing the largest width required for the file name
-    width = max(len(td[4]) for td in trace_data)*0.1
+    # float containing the node width for the largest file name
+    if max(len(td[4]) for td in tracedata)*0.113 > 3.5:
+        width = max(len(td[4]) for td in tracedata)*0.113
+    else:
+        width = 3.5
 
     # jinja2 template setup and execution
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
