@@ -100,7 +100,7 @@ def calculate_test_mixed_use_archetype_values_results(locator):
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS', index_col=0)).set_index('Name')
+        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS')).set_index('Name')
     return calculated_results
 
 
