@@ -20,8 +20,20 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_set_point_from_predefined_file(tsd, bpr, weekday, building_name, config, locator):
+def calc_set_point_from_predefined_file(tsd, bpr, weekday, building_name, locator):
     """
+    This function is used to set the space cooling and space heating set points from a predefined hourly set points
+    xlsx file. This will help in finding the building demand for a flexible building scenario.
+
+    This script is developed as part of the CONCEPT project (an Intra-CREATE collaboration between FCL and TUM CREATE)
+
+    The excel files with the predefined hourly temperatures are to be stored in
+    `scenario\inputs\predefined-hourly-setpoints` folder. This folder in turn has two subfolders namely `space heating`
+    and `space cooling`. Inside these folders the setpoints are to be provided in an excel file.
+
+    In case the files are not present, the calculations will still carry on by taking the archetypical set points
+    present in CEA databases. Though it will print a message saying `predefined set points file is not provided`
+
 
     :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
     :type tsd: dict
