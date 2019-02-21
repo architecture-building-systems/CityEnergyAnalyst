@@ -6,7 +6,7 @@ digraph trace_inputlocator {
     "{{script}}"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
     {% endfor %}
 
-    node [shape=box, style=filled, fillcolor="#E1F2F2", fontname=arial, fontsize=15]
+    node [shape=box, style=filled, fillcolor="#E1F2F2", fontname=arial, fontsize=15, fixedsize=true, width=3.75]
     {% for direction, script, locator, path, file in tracedata %}
         {% if loop.changed(direction, script, path) %}
             {% if direction == 'input' %}

@@ -1,10 +1,10 @@
 digraph trace_inputlocator {
     rankdir="LR";
-    node [shape=box, style=filled, fillcolor=peachpuff]
-    graph [overlap = false];
-    "data-helper"[style=filled, fillcolor=darkorange];
-    "demand"[style=filled, fillcolor=darkorange];
-    "radiation-daysim"[style=filled, fillcolor=darkorange];
+    graph [overlap = false, fontname=arial];
+    "data-helper"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    "demand"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    "radiation-daysim"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    node [shape=box, style=filled, fillcolor="#E1F2F2", fontname=arial, fontsize=15, fixedsize=true, width=3.75]
     "databases/CH/archetypes" -> "data-helper"
     "inputs/building-properties" -> "data-helper"
     "databases/CH/archetypes" -> "demand"
@@ -13,13 +13,13 @@ digraph trace_inputlocator {
     "databases/CH/lifecycle" -> "demand"
     "outputs/data/solar-radiation" -> "demand"
     "databases/CH/systems" -> "demand"
-    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather" -> "demand"
+    "cea/databases/weather" -> "demand"
     "inputs/building-geometry" -> "demand"
     "inputs/building-properties" -> "radiation-daysim"
     "inputs/building-geometry" -> "radiation-daysim"
     "databases/CH/systems" -> "radiation-daysim"
     "inputs/topography" -> "radiation-daysim"
-    "../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather" -> "radiation-daysim"
+    "cea/databases/weather" -> "radiation-daysim"
     "inputs/building-geometry" -> "radiation-daysim"
     "data-helper" -> "inputs/building-properties"
     "demand" -> "outputs/data/demand"
