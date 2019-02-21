@@ -7,7 +7,7 @@ import tempfile
 import cea.config
 import cea.scripts
 import cea.inputlocator
-from legacy.arcgis import arcpy
+from cea.interfaces.arcgis.modules import arcpy
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
