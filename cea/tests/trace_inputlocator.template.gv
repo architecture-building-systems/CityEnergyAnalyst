@@ -89,5 +89,5 @@ digraph trace_inputlocator {
     "{{script}}" -> "{{file}}"[label="({{locator}})"]
         {% endif %}
     {% endfor %}
-}
+    }
 {% endif %}
