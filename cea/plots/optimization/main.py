@@ -161,10 +161,10 @@ class Plots(object):
             data = json.load(fp)
         # get lists of data for performance values of the population
         costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                     data['population_fitness']]  # convert to millions
+                     data['tested_population_fitness']]  # convert to millions
         individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
         individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                               individual] for individual in data['population']]
+                               individual] for individual in data['tested_population']]
         def_individual_barcode = pd.DataFrame({'Name': individual_names,
                                                'individual_barcode': individual_barcode}).set_index("Name")
         data_processed = {'individual_barcode': def_individual_barcode}
