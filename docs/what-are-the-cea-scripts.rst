@@ -29,14 +29,12 @@ other scripts. They should be run in the following order:
         "inputs/building-properties" -> "data-helper"
         "databases/CH/archetypes" -> "demand"
         "inputs/building-properties" -> "demand"
-        "databases/CH/systems" -> "demand"
         "databases/CH/lifecycle" -> "demand"
         "outputs/data/solar-radiation" -> "demand"
         "databases/CH/systems" -> "demand"
         "cea/databases/weather" -> "demand"
         "inputs/building-geometry" -> "demand"
         "inputs/building-properties" -> "radiation-daysim"
-        "inputs/building-geometry" -> "radiation-daysim"
         "databases/CH/systems" -> "radiation-daysim"
         "inputs/topography" -> "radiation-daysim"
         "cea/databases/weather" -> "radiation-daysim"
@@ -44,6 +42,7 @@ other scripts. They should be run in the following order:
         "data-helper" -> "inputs/building-properties"
         "demand" -> "outputs/data/demand"
         "radiation-daysim" -> "outputs/data/solar-radiation"
+        {rank=same "databases/CH/lifecycle" "databases/CH/archetypes" "inputs/building-geometry" "databases/CH/systems" "inputs/topography" "cea/databases/weather" "inputs/building-properties"}
     }
 
 
