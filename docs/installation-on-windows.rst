@@ -21,11 +21,12 @@ Prerequisites
 * Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and install `Miniconda(64-bit) for Python 2.7 <https://conda.io/miniconda.html>`__.
-* Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__ OR your own favorite editor.
+   .. note:: UNCHECK the "Register Anaconda as my default Python 2.7" option as ArcGIS integration
+      will not work otherwise.
 * Download and install `Daysim <https://daysim.ning.com/page/download>`__.
 
-Installation
-~~~~~~~~~~~~
+Installation of the code base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Excluding the above software, CEA installation requires approximately 13 GB of storage (depending on your existing
 Python library) and  1 hour of your time.
@@ -41,10 +42,40 @@ Python library) and  1 hour of your time.
 #. Type ``activate cea`` and press ENTER.
 #. Type ``pip install -e .[dev]`` and press ENTER (mind the dot '.' included in this command!).
 
+Installation of Interfaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Configuration of Pycharm
-~~~~~~~~~~~~~~~~~~~~~~~~
+There are different ways in which you can interact with the code of CEA.
 
+#. The command line interface: This is the command line to all the commands of CEA from your computer terminal
+#. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
+#. The pycharm interface: this interface provides access to all the source code of CEA.
+#. The Arcgis interface: This a GIS interface to CEA.
+
+While the command line interface, and dashboard interface are included during the installation of CEA, the rest of the interfaces
+require a few steps to get them up and running.
+
+Arcgis
+-------
+
+In order to install the interface to ArcGIS do:
+
+#. Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
+    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in Products: All Products.
+    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
+#. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
+    .. note:: ArcGIS (with Background Geoprocessing) is required to run the thermal network layout script.
+        Otherwise, ArcGIS is only used for visualisation purposes.
+#. Follow the steps of the installation guide, described above.
+#. In your command line Type ``cea install-toolbox`` and press ENTER.
+
+
+Pycharm
+-------
+
+In order to use pycharm with the source code of CEA do:
+
+#. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__ OR your own favorite editor.
 #. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CityEnergyAnalyst).
 #. Open ``File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter``.
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add.
