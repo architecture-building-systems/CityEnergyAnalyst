@@ -190,3 +190,30 @@ Example::
 
 .. _kebab-case: http://wiki.c2.com/?KebabCase
 .. _snake_case: https://en.wikipedia.org/wiki/Snake_case
+
+Step 5: Add an ArcGIS interface (optional
+-----------------------------------------
+
+In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
+in the ``scripts.yml`` file. The module :py:mod:`cea.interfaces.arcgis.CityEnergyAnalyst` creates subclasses of
+:py:class:`cea.interfaces.arcgis.arcgishelper.CeaTool` for each such script.
+
+Should you want to modify the behavior, you can overwrite that definition simply by adding your own implementation of
+that class. To do so, create a class with the same name as your script (the ``name`` property) by removing the dashes,
+appending "Tool" and uppercasing the first letter of each word. Example: ``multi-criteria-analysis`` would become
+``MultiCriteriaAnalysisTool`` and you would define the class like this::
+
+    class MultiCriteriaAnalysisTool(CeaTool):
+        def __init__(self):
+            self.cea_tool = 'multi-criteria-analysis'
+            self.label = 'Multicriteria analysis'
+            self.description = 'Multicriteria analysis'
+            self.category = 'Analysis'
+            self.canRunInBackground = False
+
+
+The tools DemandTool and RadiationDaysimTool are implemented in this manner and can be used as examples.
+
+.. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
+    ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements
+    code to find all subclasses of :py:class`cea.interfaces.arcgis.arcgishelper.CeaTool` defined in the same file.

@@ -271,6 +271,13 @@ default:
   module: cea.interfaces.dashboard.dashboard
   parameters: []
 
+- name: install-toolbox
+  label: install-toolbox
+  description: install-toolbox
+  interfaces: [cli]
+  module: cea.interfaces.arcgis.install_toolbox
+  parameters: ['general:debug']
+
 - name: excel-to-shapefile
   label: excel-to-shapefile
   description: excel-to-shapefile
