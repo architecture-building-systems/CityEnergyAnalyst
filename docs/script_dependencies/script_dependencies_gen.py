@@ -12,7 +12,6 @@ all_scripts = cea.scripts.list_scripts()
 def get_script_dependencies():
     dependencies = []
     for script in sorted(all_scripts):
-
         viz_file = os.path.join(os.path.curdir, (script.name + '.gv'))
         if os.path.isfile(viz_file):
             with open(viz_file) as viz:
