@@ -20,7 +20,7 @@ from cea.utilities import reporting
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, region, write_detailed_output, debug):
+                       temperatures_output, format_output, config, region, write_detailed_output, debug):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -111,7 +111,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name) #end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name, config, locator) #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -323,14 +323,13 @@ def calc_Qhs_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name):
+def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name, config, locator):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
-    predefined_set_points = True
     # get internal comfort properties
-    if predefined_set_points:
-        tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name)
+    if config.demand.predefined_hourly_setpoints:
+        tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name, config, locator)
     else:
         tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
     # print (tsd['ta_cs_set'])
