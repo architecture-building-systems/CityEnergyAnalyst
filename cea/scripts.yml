@@ -271,9 +271,9 @@ default:
   module: cea.interfaces.dashboard.dashboard
   parameters: []
 
-- name: install-toolbox
-  label: install-toolbox
-  description: install-toolbox
+- name: install-arcgis
+  label: install-arcgis
+  description: install-arcgis
   interfaces: [cli]
   module: cea.interfaces.arcgis.install_toolbox
   parameters: ['general:debug']

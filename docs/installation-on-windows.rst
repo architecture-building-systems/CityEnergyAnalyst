@@ -51,29 +51,15 @@ There are different ways in which you can interact with the code of CEA.
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
 #. The pycharm interface: this interface provides access to all the source code of CEA.
 #. The Arcgis interface: This a GIS interface to CEA.
+#. The Rhino/Grasshopper interface: This a 3D modeling interface to CEA.
 
 While the command line interface, and dashboard interface are included during the installation of CEA, the rest of the interfaces
 require a few steps to get them up and running.
 
-Arcgis
--------
-
-In order to install the interface to ArcGIS do:
-
-#. Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
-    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in Products: All Products.
-    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
-#. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
-    .. note:: ArcGIS (with Background Geoprocessing) is required to run the thermal network layout script.
-        Otherwise, ArcGIS is only used for visualisation purposes.
-#. Follow the steps of the installation guide, described above.
-#. In your command line Type ``cea install-toolbox`` and press ENTER.
-
-
 Pycharm
 -------
 
-In order to use pycharm with the source code of CEA do:
+In order to access and work on the source code of CEA from pycharm do:
 
 #. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__ OR your own favorite editor.
 #. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CityEnergyAnalyst).
@@ -85,3 +71,35 @@ In order to use pycharm with the source code of CEA do:
    ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``.
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
+
+Arcgis
+-------
+
+.. attention:: We will end support of the ArcGIS interface by the 1st of April of 2019. We will aim to describe some tutorials
+               for you to get acquainted to our new 100% open source interface, the CEA dashboard.
+
+In order to install the interface for ArcGIS do:
+
+#. Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
+    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in Products: All Products.
+    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
+#. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
+    .. note:: ArcGIS (with Background Geoprocessing) is required to run the thermal network layout script.
+        Otherwise, ArcGIS is only used for visualisation purposes.
+#. Follow the steps of the installation guide of the code base described above.
+#. In your command line Type ``cea install-arcgis`` and press ENTER.
+
+
+Grasshopper
+------------
+
+.. attention:: This is a highly experimental interface to Rhino/Grasshopper, and we do not include any tutorials nor support to the public.
+               for the time being, just a few modules of CEA have been integrated. If you are interested in support or would like to furthermore activate this interface
+               contact shi@arch.ethz.ch
+
+In order to install the interface for Rhino/Grasshopper do:
+
+#. Download and install `Rhino 5.0 <https://www.rhino3d.com/download>`_ (requires a licence).
+#. Download and install the `Grasshopper for rhino 5.0 <https://www.grasshopper3d.com/page/download-1>`_.
+#. Follow the steps of the installation guide of the code base described above.
+#. In your command line Type ``cea install-grasshopper`` and press ENTER.
