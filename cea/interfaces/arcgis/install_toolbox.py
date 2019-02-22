@@ -54,11 +54,10 @@ def copy_library(toolbox_folder, debug=False):
     lib_src_folder = os.path.dirname(__file__)
     shutil.copy(os.path.join(lib_src_folder, 'arcgishelper.py'), lib_dst_folder)
     shutil.copy(os.path.join(lib_src_folder, 'modules.py'), lib_dst_folder)
+    shutil.copy(os.path.join(lib_src_folder, '__init__.py'), lib_dst_folder)
 
     # add `__init__.py` files to interfaces and arcgis folders
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
-        f.write('')
-    with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
     # during development, copy this file too
