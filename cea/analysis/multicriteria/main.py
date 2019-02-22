@@ -247,7 +247,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         # PV
 
-        data_costs['Capex_total_PV'] = data_emissions['Capex_pump'].values[0]
+        data_costs['Capex_total_PV'] = data_emissions['Capex_PV'].values[0]
         data_costs['Opex_total_PV'] = Opex_a_PV_USD + Opex_fixed_PV_USD
         data_costs['Opex_fixed_PV'] = Opex_fixed_PV_USD
         data_costs['Capex_a_PV'] = Capex_a_PV_USD
