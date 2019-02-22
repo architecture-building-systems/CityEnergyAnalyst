@@ -191,8 +191,8 @@ Example::
 .. _kebab-case: http://wiki.c2.com/?KebabCase
 .. _snake_case: https://en.wikipedia.org/wiki/Snake_case
 
-Step 5: Add an ArcGIS interface (optional
------------------------------------------
+Step 5: Add an ArcGIS interface (optional)
+------------------------------------------
 
 In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
 in the ``scripts.yml`` file. The module :py:mod:`cea.interfaces.arcgis.CityEnergyAnalyst` creates subclasses of
