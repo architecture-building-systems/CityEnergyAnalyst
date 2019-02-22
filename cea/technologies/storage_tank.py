@@ -267,7 +267,7 @@ def calc_cold_storage_discharge_HEX(m_hot_0, Q_hot_0, T_cold_in, T_hot_in, T_hot
     mcp_hot_0 = m_hot_0*HEAT_CAPACITY_OF_WATER_JPERKGK
     mcp_cold_0 = mcp_hot_0 * (T_hot_in - T_hot_out) / ((T_hot_in - T_cold_in) * TANK_HEX_EFFECTIVENESS)
     T_cold_out = Q_hot_0 / mcp_cold_0 + T_cold_in #todo: check if the number is realistic
-    dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out, 'cool')
+    dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out)
     # Area heat exchange and UA_heating
     Area_HEX_m2, UA_WperK = calc_area_HEX(Q_hot_0, dTm_0, U_COOL)
 
@@ -290,7 +290,7 @@ def calc_cold_storage_charge_HEX(mcp_cold_0, Q_cold_0, T_hot_in, T_cold_in, T_co
     # nominal conditions on the tank side
     mcp_hot_0 = mcp_cold_0 * (T_cold_out - T_cold_in) / ((T_hot_in - T_cold_in) * TANK_HEX_EFFECTIVENESS)
     T_hot_out = T_hot_in - Q_cold_0 / mcp_hot_0  #todo: check if the number is realistic
-    dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out, 'heat')
+    dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out)
     # Area heat exchange and UA_WperK
     Area_HEX_m2, UA_WperK = calc_area_HEX(Q_cold_0, dTm_0, U_HEAT)
 
