@@ -8,6 +8,7 @@ import cea.config
 import cea.scripts
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
+from cea.interfaces.arcgis import DEPRECATION_WARNING
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -216,6 +217,11 @@ def run_cli(script_name, **parameters):
     add_message('Executing: ' + ' '.join(command))
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
+
+    add_message('')
+    add_message(DEPRECATION_WARNING)
+    add_message('')
+
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
