@@ -33,15 +33,18 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
+        self.generate_tools()
         self.tools = [tool for tool in globals().values()
                       if inspect.isclass(tool) and issubclass(tool, CeaTool) and not tool is CeaTool]
 
-# here some magic: create the list of script classes based on the ``scripts.yml`` file.
-# any tools that need more configuration can just be overwritten below.
-import cea.scripts
-for cea_script in cea.scripts.for_interface('arcgis'):
-    tool = create_cea_tool(cea_script)
-    globals()[tool.__name__] = tool
+    def generate_tools(self):
+        # here some magic: create the list of script classes based on the ``scripts.yml`` file.
+        # any tools that need more configuration can just be overwritten below.
+        import cea.scripts
+        for cea_script in cea.scripts.for_interface('arcgis'):
+            tool = create_cea_tool(cea_script)
+            globals()[tool.__name__] = tool
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Redefine tools that need more than just the basic definition below.
