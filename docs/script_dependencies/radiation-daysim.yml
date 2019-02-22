@@ -1,0 +1,35 @@
+radiation-daysim:
+  input:
+  - !!python/tuple
+    - get_building_architecture
+    - inputs/building-properties
+    - architecture.dbf
+  - !!python/tuple
+    - get_district_geometry
+    - inputs/building-geometry
+    - district.shp
+  - !!python/tuple
+    - get_envelope_systems
+    - databases/CH/systems
+    - envelope_systems.xls
+  - !!python/tuple
+    - get_terrain
+    - inputs/topography
+    - terrain.tif
+  - !!python/tuple
+    - get_weather
+    - ../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather
+    - Zug.epw
+  - !!python/tuple
+    - get_zone_geometry
+    - inputs/building-geometry
+    - zone.shp
+  output:
+  - !!python/tuple
+    - get_radiation_building
+    - outputs/data/solar-radiation
+    - '{BUILDING}_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_metadata
+    - outputs/data/solar-radiation
+    - '{BUILDING}_geometry.csv'
