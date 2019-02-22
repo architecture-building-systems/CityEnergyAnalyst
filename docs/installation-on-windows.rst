@@ -50,7 +50,7 @@ There are different ways in which you can interact with the code of CEA.
 #. The command line interface: This is the command line to all the commands of CEA from your computer terminal
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
 #. The pycharm interface: this interface provides access to all the source code of CEA.
-#. The Arcgis interface: This a GIS interface to CEA.
+#. The ArcGIS interface: This a GIS interface to CEA.
 #. The Rhino/Grasshopper interface: This a 3D modeling interface to CEA.
 
 While the command line interface, and dashboard interface are included during the installation of CEA, the rest of the interfaces
@@ -72,7 +72,7 @@ In order to access and work on the source code of CEA from pycharm do:
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
 
-Arcgis
+ArcGIS
 -------
 
 .. attention:: We will end support of the ArcGIS interface by the 1st of May of 2019. This means that there will not be anymore
