@@ -44,7 +44,7 @@ digraph trace_inputlocator {
     "data-helper" -> "inputs/building-properties"
     "demand" -> "outputs/data/demand"
     "radiation-daysim" -> "outputs/data/solar-radiation"
-}
+    }
 
 {% for script, underline, digraph in dependencies%}
 {{script}}

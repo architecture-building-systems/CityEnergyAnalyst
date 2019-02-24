@@ -44,7 +44,9 @@ digraph trace_inputlocator {
     "data-helper" -> "inputs/building-properties"
     "demand" -> "outputs/data/demand"
     "radiation-daysim" -> "outputs/data/solar-radiation"
-}
+    {rank=same "databases/CH/lifecycle" "databases/CH/archetypes" "inputs/building-geometry" "databases/CH/systems"
+    "inputs/topography" "cea/databases/weather" "inputs/building-properties"}
+    }
 
 
 data-helper
@@ -108,7 +110,7 @@ data-helper
     "data-helper" -> "internal_loads.dbf"[label="(get_building_internal)"]
     "data-helper" -> "restrictions.dbf"[label="(get_building_restrictions)"]
     "data-helper" -> "supply_systems.dbf"[label="(get_building_supply)"]
-}
+    }
 
 thermal-network-matrix
 ----------------------
@@ -218,7 +220,7 @@ thermal-network-matrix
     "thermal-network-matrix" -> "DH__ploss_Substations_kW.csv"[label="(get_optimization_network_substation_ploss_file)"]
     "thermal-network-matrix" -> "DH__substaion_HEX_cost_USD.csv"[label="(get_substation_HEX_cost)"]
     "thermal-network-matrix" -> "Aggregated_Demand_DH__Wh.csv"[label="(get_thermal_demand_csv_file)"]
-}
+    }
 
 solar-collector
 ---------------
@@ -293,7 +295,7 @@ solar-collector
     "solar-collector" -> "{BUILDING}_SC_FP.csv"[label="(SC_results)"]
     "solar-collector" -> "SC_FP_total_buildings.csv"[label="(SC_total_buildings)"]
     "solar-collector" -> "SC_FP_total.csv"[label="(SC_totals)"]
-}
+    }
 
 photovoltaic-thermal
 --------------------
@@ -368,7 +370,7 @@ photovoltaic-thermal
     "photovoltaic-thermal" -> "{BUILDING}_PVT.csv"[label="(PVT_results)"]
     "photovoltaic-thermal" -> "PVT_total_buildings.csv"[label="(PVT_total_buildings)"]
     "photovoltaic-thermal" -> "PVT_total.csv"[label="(PVT_totals)"]
-}
+    }
 
 photovoltaic
 ------------
@@ -443,7 +445,7 @@ photovoltaic
     "photovoltaic" -> "{BUILDING}_PV.csv"[label="(PV_results)"]
     "photovoltaic" -> "PV_total_buildings.csv"[label="(PV_total_buildings)"]
     "photovoltaic" -> "PV_total.csv"[label="(PV_totals)"]
-}
+    }
 
 radiation-daysim
 ----------------
@@ -523,7 +525,7 @@ radiation-daysim
     "zone.shp" -> "radiation-daysim"[label="(get_zone_geometry)"]
     "radiation-daysim" -> "{BUILDING}_insolation_Whm2.json"[label="(get_radiation_building)"]
     "radiation-daysim" -> "{BUILDING}_geometry.csv"[label="(get_radiation_metadata)"]
-}
+    }
 
 demand
 ------
@@ -639,7 +641,7 @@ demand
     "zone.shp" -> "demand"[label="(get_zone_geometry)"]
     "demand" -> "{BUILDING}.csv"[label="(get_demand_results_file)"]
     "demand" -> "Total_demand.csv"[label="(get_total_demand)"]
-}
+    }
 
 emissions
 ---------
@@ -727,4 +729,4 @@ emissions
     "emissions" -> "Total_LCA_embodied.csv"[label="(get_lca_embodied)"]
     "emissions" -> "Total_LCA_mobility.csv"[label="(get_lca_mobility)"]
     "emissions" -> "Total_LCA_operation.csv"[label="(get_lca_operation)"]
-}
+    }
