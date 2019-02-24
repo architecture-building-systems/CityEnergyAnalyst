@@ -80,4 +80,4 @@ digraph trace_inputlocator {
     "emissions" -> "Total_LCA_embodied.csv"[label="(get_lca_embodied)"]
     "emissions" -> "Total_LCA_mobility.csv"[label="(get_lca_mobility)"]
     "emissions" -> "Total_LCA_operation.csv"[label="(get_lca_operation)"]
-}
+    }
