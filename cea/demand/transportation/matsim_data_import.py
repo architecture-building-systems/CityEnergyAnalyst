@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 FACILITY_TYPES = {'student': ['SCHOOL'],  #, 'LIBRARY']
                   'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
