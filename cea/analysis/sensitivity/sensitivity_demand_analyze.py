@@ -139,16 +139,14 @@ def morris_analyze_function(problem, X, Y):
     :param problem: The definition of the problem statement as defined for the sampling method.
     :param X: the `X` parameter of the morris method (The NumPy matrix containing the model inputs)
     :param Y: The NumPy array containing the model outputs
-    :param parameters: dictionary containing the keys 'grid_jump' and 'num_levels' that are passed on to the
-                       SALib.analyze.morris method parameters of the same name.
+    :param parameters: dictionary containing the key 'num_levels' that is passed on to the
+                       SALib.analyze.morris method parameter of the same name.
     :return: returns the result of the SALib.analyze.sobol method (from the documentation: a dictionary with keys 
              `mu`, `mu_star`, `sigma`, and `mu_star_conf`, where each entry is a list of size D (the number of eters) 
              containing the indices in the same order as the parameter file.)
     """
-    assert 'grid_jump' in problem, 'morris method requires the `grid_jump` parameter to be set (int)'
     assert 'num_levels' in problem, 'morris method requires the `num_levels` parameter to be set (int)'
-    return morris.analyze(problem, X, Y,
-                          grid_jump=problem['grid_jump'], num_levels=problem['num_levels'])
+    return morris.analyze(problem, X, Y, num_levels=problem['num_levels'])
 
 
 def read_results(samples_folder, samples_count, output_parameter, temporal_scale, month = 0):

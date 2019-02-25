@@ -69,7 +69,8 @@ def calc_Qgain_lat(schedules, bpr):
 
 def calc_I_sol(t, bpr, tsd):
     """
-    This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
+    This function calculates the net solar radiation (incident - reflected - re-irradiated) according to ISO 13790
+    see Eq. (23) in 11.3.1
 
     :param t: hour of the year
     :param bpr: building properties object
@@ -81,12 +82,12 @@ def calc_I_sol(t, bpr, tsd):
     """
 
     # calc irradiation to the sky
-    I_rad = calc_I_rad(t, tsd, bpr)
+    I_rad = calc_I_rad(t, tsd, bpr)  # according to section 11.3.2 in ISO 13790 I_rad is a positive term
 
     # get incident radiation
     I_sol_gross = bpr.solar.I_sol[t]
 
-    I_sol_net = I_sol_gross + I_rad
+    I_sol_net = I_sol_gross - I_rad  # Eq. (43) in 11.3.1, I_rad gets subtracted here
 
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
@@ -94,6 +95,7 @@ def calc_I_sol(t, bpr, tsd):
 def calc_I_rad(t, tsd, bpr):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
+    See Eq. (46) in 11.3.5
 
     :param t: hour of the year
     :param tsd: time series dataframe
@@ -106,14 +108,19 @@ def calc_I_rad(t, tsd, bpr):
     if np.isnan(tsd['theta_c'][t - 1]):
         temp_s_prev = tsd['T_ext'][t - 1]
 
-    theta_ss = tsd['T_sky'][t] - temp_s_prev
-    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
+    # theta_ss is the is the arithmetic average of the surface temperature and the sky temperature, in °C.
+    theta_ss = 0.5 * (tsd['T_sky'][t] + temp_s_prev)  # [see 11.4.6 in ISO 13790]
+
+    # delta_theta_er is the average difference between outdoor air temperature and sky temperature
+    delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
+
+    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
     I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
-        'Aw'] * theta_ss
+        'Aw'] * delta_theta_er
     I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
-        'Aroof'] * theta_ss
+        'Aroof'] * delta_theta_er
     I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
-        'Aop_sup'] * theta_ss
+        'Aop_sup'] * delta_theta_er
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
     return I_rad
@@ -122,6 +129,7 @@ def calc_I_rad(t, tsd, bpr):
 def calc_hr(emissivity, theta_ss):
     """
     This function calculates the external radiative heat transfer coefficient according to ISO 13790
+    see Eq. (51) in section 11.4.6
 
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
@@ -241,7 +249,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
                                                                                bpr.building_systems['Ths_re_ahu_0'],
                                                                                tsd['ma_sup_hs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Ths_sys_sup_ahu'] = Ths_sup  # in C
         tsd['Ths_sys_re_ahu'] = Ths_re  # in C
         tsd['mcphs_sys_ahu'] = mcphs
@@ -263,7 +271,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_aru_0'],
                                                                                bpr.building_systems['Ths_re_aru_0'],
                                                                                tsd['ma_sup_hs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Ths_sys_sup_aru'] = Ths_sup  # in C
         tsd['Ths_sys_re_aru'] = Ths_re  # in C
         tsd['mcphs_sys_aru'] = mcphs
@@ -330,7 +338,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Tcs_sys_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_ahu'] = Tcs_re  # in C
         tsd['mcpcs_sys_ahu'] = mcpcs
@@ -351,7 +359,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs
@@ -386,7 +394,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs
@@ -416,7 +424,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Tcs_sys_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_ahu'] = Tcs_re  # in C
         tsd['mcpcs_sys_ahu'] = mcpcs
@@ -440,7 +448,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_A)
+                                                                               Ta_sup_0, Ta_re_0)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs

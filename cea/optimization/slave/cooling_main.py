@@ -18,10 +18,10 @@ import cea.technologies.cogeneration as cogeneration
 import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
-from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, PUMP_ETA, DELTA_U, \
-    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO
+    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME
 import cea.technologies.pumps as pumps
 from math import log, ceil
 
@@ -205,10 +205,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    PipeLifeTime = 40.0  # years, Data from A&W
-    PipeInterestRate = 0.05  # 5% interest rate
     network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
-    network_costs_a_USD = network_costs_USD * PipeInterestRate * (1+ PipeInterestRate) ** PipeLifeTime / ((1+PipeInterestRate) ** PipeLifeTime - 1)
+    network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1+ PIPEINTERESTRATE) ** PIPELIFETIME / ((1+PIPEINTERESTRATE) ** PIPELIFETIME - 1)
     costs_a_USD = network_costs_a_USD
     CO2_kgCO2 = 0
     prim_MJ = 0
@@ -268,7 +266,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         Qc_CT_W, Qh_CHP_ACH_W, \
         cooling_resource_potentials = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
                                                                  limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator)
+                                                                 T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator, hour)
 
         print (hour)
         # save results for each time-step
@@ -327,7 +325,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     if Q_CT_nom_W > 0:
         for hour in timesteps:
             wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE
+            opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE[hour]
             co2_CT_kgCO2[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CT_MJ[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
             E_used_CT_W[hour] = wdot_CT
@@ -354,12 +352,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         while (Qh_output_CCGT_max_W - Qh_req_from_CCGT_max_W) <= 0:
             Q_GT_nom_sizing_W += 1000  # update GT size
             # get CCGT performance limits and functions at Q_GT_nom_sizing_W
-            CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca)
+            CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca.ELEC_PRICE[hour])
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performance functions
         Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + SIZING_MARGIN)  # installed CCGT capacity
-        CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca)
+        CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices, lca.ELEC_PRICE[hour])
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
             'fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
@@ -383,7 +381,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                 E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(
                     Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
 
-            opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE
+            opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE[hour]
             co2_CCGT_kgCO2[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CCGT_MJ[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
             NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
@@ -475,7 +473,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     calibration = calfactor_total / 50976000
 
     extraElec = (127865400 + 85243600) * calibration
-    costs_a_USD += extraElec * lca.ELEC_PRICE
+    costs_a_USD += extraElec * lca.ELEC_PRICE.mean()
     CO2_kgCO2 += extraElec * lca.EL_TO_CO2 * 3600E-6
     prim_MJ += extraElec * lca.EL_TO_OIL_EQ * 3600E-6
     # Converting costs into float64 to avoid longer values

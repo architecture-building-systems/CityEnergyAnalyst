@@ -49,16 +49,19 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
             architecture_DB=architecture_DB,
             list_uses=['SERVERROOM', 'PARKING']),
-            ([0.5, 0.2], [0.5, 0.2], [0.5, 0.2]))
+            ([0.5, 0.2], [0.5, 0.2], [0.95, 0.9200000000000002]))
 
 
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
+        locator = ReferenceCaseOpenLocator()
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = locator.scenario
         stochastic_occupancy = config.demand.use_stochastic_occupancy
         gv = GlobalVariables()
         gv.config = config
-        locator = ReferenceCaseOpenLocator()
+
+
         date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
         building_properties = BuildingProperties(locator, False, 'CH', False)

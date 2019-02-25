@@ -46,7 +46,7 @@ def plots_main(locator, config):
         plots.primary_energy_intensity(category)
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, locator, buildings):
         self.locator = locator
@@ -110,7 +110,7 @@ class Plots():
         analysis_fields_no_zero = []
         for field in fields:
             sum = data[field].sum()
-            if sum >0 :
+            if sum > 0:
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
@@ -124,7 +124,8 @@ class Plots():
 
     def operation_costs(self, category):
         title = "Operation Costs" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs',
+                                                             category)
         data = self.data_processed
         return operation_costs_district(data, self.analysis_fields_costs, title, output_path)
 
@@ -136,7 +137,8 @@ class Plots():
 
     def emissions_intensity(self, category):
         title = "Green House Gas Emissions intensity" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions_intensity', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions_intensity',
+                                                             category)
         data = self.data_processed_emissions
         return emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
 
@@ -148,7 +150,8 @@ class Plots():
 
     def primary_energy_intensity(self, category):
         title = "Primary energy intensity (non-renewable)" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity', category)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity',
+                                                             category)
         data = self.data_processed_emissions
         return primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
 

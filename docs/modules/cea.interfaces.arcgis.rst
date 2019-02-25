@@ -48,5 +48,3 @@ cea.interfaces.arcgis.modules module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
