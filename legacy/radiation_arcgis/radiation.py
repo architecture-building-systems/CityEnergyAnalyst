@@ -29,6 +29,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def get_default_arcgis_db(self):
+    """Returns the ArcGIS Default.gdb path to use."""
+    from cea.interfaces.arcgis.modules import arcpy
+    if not arcpy.env.workspace:
+        out_folder_path, out_name = os.path.split(tempfile.mktemp(suffix='.gdb'))
+        arcpy.CreateFileGDB_management(out_folder_path, out_name)
+        arcpy.env.workspace = os.path.join(out_folder_path, out_name)
+    return arcpy.env.workspace
 
 def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,weather_path):
     """
