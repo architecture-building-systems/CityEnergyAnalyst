@@ -119,11 +119,11 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, stoch
                     #                                           archetype_values.loc['HOSPITAL'], bpr.rc_model['NFA_m2'],
                     #                                           single_occupant_schedule=True)
                     building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
-                                                                all_schedules[facility]['monthly'],
-                                                                archetype_values.loc[facility])
-                building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[facility],
-                                                               archetype_values.loc[facility],
-                                                               bpr.rc_model['Aef'] * bpr.occupancy[facility])
+                                                                all_schedules['HOSPITAL']['monthly'],
+                                                                archetype_values.loc['HOSPITAL'])
+                building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules['HOSPITAL'],
+                                                               archetype_values.loc['HOSPITAL'],
+                                                               bpr.rc_model['Aef'] * bpr.occupancy['HOSPITAL'])
     # define single occupants' schedules for other uses
     for use in list_uses: # all_schedules.keys():
         if bpr.occupancy[use] > 0:
