@@ -1,13 +1,12 @@
 What are the CEA Scripts?
 =========================
 CEA relies on a number of scripts which may share dependencies.
-This section aims to clarify the files created or used by each script, along with the methods used
+This section aims to clarify the files created (outputs) or used (inputs) by each script, along with the methods used
 to access this data. All script requests for reading or writing data are routed through the inputlocator's specific 'get_methods',
 which join the current working path with that of the desired input/output file.
-Scripts can be run via the command line interface (cli) by calling: ``cea script-name``.
 
-Core
-----
+Scripts can be run via the command line interface (cli) by calling: ``cea script-name``. The following
+
 Currently, the CEA operates using a core set of scripts whose outputs are necessary for the function of most
 other scripts. They should be run in the following order:
 
@@ -18,7 +17,7 @@ other scripts. They should be run in the following order:
 
 .. graphviz::
 
-digraph trace_inputlocator {
+    digraph trace_inputlocator {
     rankdir="LR";
     graph [overlap = false, fontname=arial];
     "data-helper"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
