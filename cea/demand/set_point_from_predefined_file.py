@@ -44,15 +44,15 @@ def calc_set_point_from_predefined_file(tsd, bpr, weekday, building_name, locato
     :return: tsd with updated columns
     :rtype: dict
     """
-    if os.path.isfile(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space heating')):
-        predefined_set_temperatures_space_heating = pd.read_excel(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space heating'))
+    if os.path.isfile(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space-heating')):
+        predefined_set_temperatures_space_heating = pd.read_csv(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space-heating'))
         tsd['ta_hs_set'] = predefined_set_temperatures_space_heating['temperature'].values
     else:
         print ('predefined set points file for space heating is not provided. It is running with the default archetype set points')
         tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point)(tsd['people'], range(8760), bpr, weekday)
 
-    if os.path.isfile(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space cooling')):
-        predefined_set_temperatures_space_cooling = pd.read_excel(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space cooling'))
+    if os.path.isfile(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space-cooling')):
+        predefined_set_temperatures_space_cooling = pd.read_csv(locator.get_predefined_hourly_setpoints(building_name, type_of_district_network='space-cooling'))
         tsd['ta_cs_set'] = predefined_set_temperatures_space_cooling['temperature'].values
     else:
         print ('predefined set points file for space cooling is not provided. It is running with the default archetype set points')
