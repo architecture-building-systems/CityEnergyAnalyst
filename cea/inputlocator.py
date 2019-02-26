@@ -883,7 +883,7 @@ class InputLocator(object):
 
     def get_predefined_hourly_setpoints(self, building_name, type_of_district_network):
         """scenario/outputs/data/demand/{building_name}_.csv"""
-        return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.xlsx')
+        return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.csv')
 
     # THERMAL NETWORK
 
