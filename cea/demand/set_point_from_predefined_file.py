@@ -28,8 +28,8 @@ def calc_set_point_from_predefined_file(tsd, bpr, weekday, building_name, locato
     This script is developed as part of the CONCEPT project (an Intra-CREATE collaboration between FCL and TUM CREATE)
 
     The excel files with the predefined hourly temperatures are to be stored in
-    `scenario\inputs\predefined-hourly-setpoints` folder. This folder in turn has two subfolders namely `space heating`
-    and `space cooling`. Inside these folders the setpoints are to be provided in an excel file. The excel files need
+    `scenario\inputs\predefined-hourly-setpoints` folder. This folder in turn has two subfolders namely `space-heating`
+    and `space-cooling`. Inside these folders the setpoints are to be provided in an excel file. The excel files need
     to be provided in `BuildingName_temperature.xlsx` format and the necessary columns are `time` and `temperature`
 
     In case the files are not present, the calculations will still carry on by taking the archetypical set points
