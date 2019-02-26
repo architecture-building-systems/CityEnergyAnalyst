@@ -36,6 +36,6 @@ present in the building for every given hour, i.e. if a building has both office
 regions will have different set point temperatures for every given hour. Using these values, a single temperature
 column is generated. For example, in space-cooling, if office space has a temperature of 23 and a residential space has
 a temperature of 25, then the overall building temperature is set to be 23. This process is repeated for every given
-hour and fed into the `csv` file. 
+hour and fed into the `csv` file.
 
 
