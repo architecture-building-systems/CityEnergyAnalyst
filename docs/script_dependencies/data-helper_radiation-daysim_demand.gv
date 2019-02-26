@@ -24,4 +24,6 @@ digraph trace_inputlocator {
     "data-helper" -> "inputs/building-properties"
     "demand" -> "outputs/data/demand"
     "radiation-daysim" -> "outputs/data/solar-radiation"
+    {rank=same "databases/CH/lifecycle" "databases/CH/archetypes" "inputs/building-geometry" "databases/CH/systems"
+    "inputs/topography" "cea/databases/weather" "inputs/building-properties"}
     }
