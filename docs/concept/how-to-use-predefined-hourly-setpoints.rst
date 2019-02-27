@@ -29,8 +29,10 @@ This is a snippet of the overall content of the file. It should have values corr
 | 01/01/2005 04:00  | 24.88       |
 +-------------------+-------------+
 
-The files generated are to be saved in the following folder `scenario\inputs\predefined-hourly-setpoints\space-heating`
- and `scenario\inputs\predefined-hourly-setpoints\space-cooling`.
+
+The files generated are to be saved in the following folder
+`scenario\inputs\predefined-hourly-setpoints\space-heating`
+and `scenario\inputs\predefined-hourly-setpoints\space-cooling`.
 
 Step 3: Run `cea\datamangement\data_helper.py`
 
