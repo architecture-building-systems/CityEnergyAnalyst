@@ -1,5 +1,5 @@
-What are the CEA Scripts?
-=========================
+Script input and output files
+=============================
 This section aims to clarify the files used (inputs) or created (outputs) by each script, along with the methods used
 to access this data.
 
