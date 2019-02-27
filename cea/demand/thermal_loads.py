@@ -111,7 +111,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name, config, locator) #end-use demand latent and sensible + ventilation
+        tsd = calc_set_points(bpr, date, tsd, building_name, config, locator)
+        tsd = calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, region)  #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -322,11 +323,7 @@ def calc_Qhs_sys(bpr, tsd):
         raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     return tsd
 
-
-def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, building_name, config, locator):
-    # get ventilation flows
-    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
-    ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
+def calc_set_points(bpr, date, tsd, building_name, config, locator):
     # get internal comfort properties
     # predefined set points for every given hour can be used to calculate the demand profile for a building
     # a config flag is used for this, it is present in the config.demand section
@@ -338,6 +335,14 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, b
     t_prev = get_hours(bpr).next() - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
+    return tsd
+
+
+def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, region):
+    # get ventilation flows
+    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
+    ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
+
     # end-use demand calculation
     for t in get_hours(bpr):
 
