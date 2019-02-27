@@ -3,6 +3,15 @@ import pandas as pd
 from datetime import datetime
 from concept.algorithm_operation.set_temperatures import main_set_temperatures
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def main_preliminary_setup_buildings(date_and_time_prediction, time_step, set_temperature_goal,
                                      constant_temperature, buildings_names, system_controls_df,

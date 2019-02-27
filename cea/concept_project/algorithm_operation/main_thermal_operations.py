@@ -1,8 +1,18 @@
 """
 Building model main function definitions
 """
+
 import os, sys, inspect, time
 from concept.algorithm_planning_and_operation.lp_op_config import *
+
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 # Add `building_model` to the path
 sys.path.append(

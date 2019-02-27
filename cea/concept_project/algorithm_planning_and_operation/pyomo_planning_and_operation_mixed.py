@@ -7,6 +7,15 @@ from pyomo.environ import *
 from lp_op_config import *
 import concept.algorithm_operation.main_thermal_operations as main_thermal_operations
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 # Import constraints for operation problem
 from concept.algorithm_operation.optimisation_district import (
     initial_state_condition_constraint_rule,

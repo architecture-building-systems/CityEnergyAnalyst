@@ -2,6 +2,15 @@ import numpy as np
 import pandas as pd
 from concept.algorithm_operation.minimal_maximal_outputs import main_minimum_maximum_outputs
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def main_preliminary_setup_optimisation(
         case_goal,

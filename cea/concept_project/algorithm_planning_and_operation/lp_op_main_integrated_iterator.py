@@ -3,6 +3,15 @@ import pandas as pd
 import os
 import subprocess
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 if __name__ == '__main__':
     lp_op_config_iterator_df = pd.DataFrame.from_csv(os.path.join(LOCATOR, 'lp_op_config_iterator.csv'), index_col=None)
 

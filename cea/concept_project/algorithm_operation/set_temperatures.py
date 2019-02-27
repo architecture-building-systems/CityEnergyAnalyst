@@ -2,6 +2,15 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def main_set_temperatures(date_and_time_prediction, prediction_horizon, buildings_names, system_controls_df,
                           occupancy_per_building_cardinal, occupancy_per_building_list, occupancy_probability_df,
