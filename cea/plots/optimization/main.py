@@ -265,7 +265,7 @@ class Plots(object):
                                       'Opex_var_PV_USD',
                                       'Opex_var_VCC_backup_USD', 'Capex_ACH_USD', 'Capex_CCGT_USD', 'Capex_CT_USD', 'Capex_Tank_USD',
                                       'Capex_VCC_USD', 'Capex_a_PV_USD',
-                                      'Capex_VCC_backup_USD', 'Capex_a_pump_USD', 'Opex_Total_USD', 'Capex_Total_USD', 'Opex_var_pumps_USD',
+                                      'Capex_VCC_backup_USD', 'Opex_Total_USD', 'Capex_Total_USD', 'Opex_var_pumps_USD',
                                       'Disconnected_costs_USD',
                                       'Capex_Decentralized_USD', 'Opex_Decentralized_USD', 'Capex_Centralized_USD',
                                       'Opex_Centralized_USD', 'Electricitycosts_for_hotwater_USD',
@@ -442,7 +442,7 @@ class Plots(object):
                 data_mcda_ind = data_mcda[data_mcda['individual'] == individual_index[individual_code]]
 
                 for column_name in df_cooling_costs.columns.values:
-                    data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
+                    data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values[0]
 
                 data_processed.loc[individual_code]['Opex_var_ACH_USD'] = data_mcda_ind['Opex_total_ACH_USD'].values[0] - \
                                                                       data_mcda_ind['Opex_fixed_ACH_USD'].values[0]
@@ -470,11 +470,11 @@ class Plots(object):
                                                                       data_mcda_ind['Opex_fixed_Tank_USD'].values[0]
                 data_processed.loc[individual_code]['Capex_a_VCC_USD'] = (
                         data_mcda_ind['Capex_a_VCC_USD'].values[0] + data_mcda_ind['Opex_fixed_VCC_USD'].values[0])
-                data_processed.loc[individual_code]['Capex_a_VCC_backup_USD'] = data_mcda_ind['Capex_a_VCC_backup_USD'].values[
+                data_processed.loc[individual_code]['Capex_a_VCC_backup_USD'] = (data_mcda_ind['Capex_a_VCC_backup_USD'].values[
                                                                                 0] + data_mcda_ind[
-                                                                                'Opex_fixed_VCC_backup_USD'].values[0]
-                data_processed.loc[individual_code]['Capex_a_pump_USD'] = data_mcda_ind['Capex_pump_USD'].values[0] + \
-                                                                      data_mcda_ind['Opex_fixed_pump_USD'].values[0]
+                                                                                'Opex_fixed_VCC_backup_USD'].values[0])
+                data_processed.loc[individual_code]['Capex_a_pump_USD'] = (data_mcda_ind['Capex_pump_USD'].values[0] + \
+                                                                      data_mcda_ind['Opex_fixed_pump_USD'].values[0])
                 data_processed.loc[individual_code]['Capex_a_PV_USD'] = data_mcda_ind['Capex_a_PV_USD'].values[0]
                 data_processed.loc[individual_code]['Substation_costs_USD'] = data_mcda_ind['Substation_costs_USD'].values[0]
                 data_processed.loc[individual_code]['Network_costs_USD'] = data_mcda_ind['Network_costs_USD'].values[0]
