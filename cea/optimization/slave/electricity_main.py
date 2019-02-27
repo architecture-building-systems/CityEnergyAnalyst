@@ -22,7 +22,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config):
+def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config):
 
     # Electricity Requirement of the Buildings
     total_demand = pd.read_csv(locator.get_total_demand())

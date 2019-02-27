@@ -629,8 +629,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_Boiler_peak": [Capex_Boiler_peak_USD],
         "Capex_Lake": [Capex_Lake_USD],
         "Capex_Sewage": [Capex_Sewage_USD],
-        "Capex_pump": [Capex_pump_USD],
-
+        "Capex_pump": [Capex_pump_USD]
     })
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
