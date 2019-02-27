@@ -211,46 +211,46 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # Total CAPEX calculations
         # Absorption Chiller
 
-        data_costs['Capex_total_ACH'] = data_costs['Capex_ACH_USD'].values[0]
-        data_costs['Opex_total_ACH'] = np.sum(data_cooling['Opex_var_ACH_USD']) + data_costs['Opex_fixed_ACH_USD']
+        data_costs['Capex_total_ACH_USD'] = data_costs['Capex_ACH_USD'].values[0]
+        data_costs['Opex_total_ACH_USD'] = np.sum(data_cooling['Opex_var_ACH_USD']) + data_costs['Opex_fixed_ACH_USD']
 
         # VCC
-        data_costs['Capex_total_VCC'] = data_costs['Capex_VCC_USD'].values[0]
-        data_costs['Opex_total_VCC'] = np.sum(data_cooling['Opex_var_VCC_USD']) + data_costs['Opex_fixed_VCC_USD']
+        data_costs['Capex_total_VCC_USD'] = data_costs['Capex_VCC_USD'].values[0]
+        data_costs['Opex_total_VCC_USD'] = np.sum(data_cooling['Opex_var_VCC_USD']) + data_costs['Opex_fixed_VCC_USD']
 
         # VCC Backup
-        data_costs['Capex_total_VCC_backup'] = data_costs['Capex_VCC_backup_USD']
-        data_costs['Opex_total_VCC_backup'] = np.sum(data_cooling['Opex_var_VCC_backup_USD']) + data_costs['Opex_fixed_VCC_backup_USD']
+        data_costs['Capex_total_VCC_backup_USD'] = data_costs['Capex_VCC_backup_USD']
+        data_costs['Opex_total_VCC_backup_USD'] = np.sum(data_cooling['Opex_var_VCC_backup_USD']) + data_costs['Opex_fixed_VCC_backup_USD']
 
         # Storage Tank
-        data_costs['Capex_total_storage_tank'] = data_costs['Capex_Tank_USD']
-        data_costs['Opex_total_storage_tank'] =  data_costs['Opex_fixed_Tank_USD']
+        data_costs['Capex_total_storage_tank_USD'] = data_costs['Capex_Tank_USD']
+        data_costs['Opex_total_storage_tank_USD'] =  data_costs['Opex_fixed_Tank_USD']
 
         # Cooling Tower
-        data_costs['Capex_total_CT'] = data_costs['Capex_CT_USD']
-        data_costs['Opex_total_CT'] = np.sum(data_cooling['Opex_var_CT_USD']) + data_costs['Opex_fixed_CT_USD']
+        data_costs['Capex_total_CT_USD'] = data_costs['Capex_CT_USD']
+        data_costs['Opex_total_CT_USD'] = np.sum(data_cooling['Opex_var_CT_USD']) + data_costs['Opex_fixed_CT_USD']
 
         # CCGT
-        data_costs['Capex_total_CCGT'] = data_costs['Capex_CCGT_USD']
-        data_costs['Opex_total_CCGT'] = np.sum(data_cooling['Opex_var_CCGT_USD']) + data_costs['Opex_fixed_CCGT_USD']
+        data_costs['Capex_total_CCGT_USD'] = data_costs['Capex_CCGT_USD']
+        data_costs['Opex_total_CCGT_USD'] = np.sum(data_cooling['Opex_var_CCGT_USD']) + data_costs['Opex_fixed_CCGT_USD']
 
         # pump
-        data_costs['Capex_total_pumps'] = data_emissions['Capex_pump'].values[0]
-        data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump_USD'] + data_costs['Opex_var_pump_USD']
+        data_costs['Capex_total_pumps_USD'] = data_emissions['Capex_pump'].values[0]
+        data_costs['Opex_total_pumps_USD'] = data_costs['Opex_fixed_pump_USD'] + data_costs['Opex_var_pump_USD']
 
         # Lake - No lake in singapore, should be modified in future
-        data_costs['Opex_fixed_Lake'] = [0]
-        data_costs['Opex_total_Lake'] = [0]
-        data_costs['Capex_total_Lake'] = [0]
-        data_costs['Capex_a_Lake'] = [0]
+        data_costs['Opex_fixed_Lake_USD'] = [0]
+        data_costs['Opex_total_Lake_USD'] = [0]
+        data_costs['Capex_total_Lake_USD'] = [0]
+        data_costs['Capex_a_Lake_USD'] = [0]
 
 
         # PV
 
-        data_costs['Capex_total_PV'] = data_emissions['Capex_PV'].values[0]
-        data_costs['Opex_total_PV'] = data_emissions['Opex_fixed_PV'].values[0]
-        data_costs['Opex_fixed_PV'] = data_emissions['Opex_fixed_PV'].values[0]
-        data_costs['Capex_a_PV'] = data_emissions['Capex_a_PV'].values[0]
+        data_costs['Capex_total_PV_USD'] = data_emissions['Capex_PV'].values[0]
+        data_costs['Opex_total_PV_USD'] = data_emissions['Opex_fixed_PV'].values[0]
+        data_costs['Opex_fixed_PV_USD'] = data_emissions['Opex_fixed_PV'].values[0]
+        data_costs['Capex_a_PV_USD'] = data_emissions['Capex_a_PV'].values[0]
 
         # Disconnected Buildings
         Capex_total_disconnected_USD = 0
@@ -289,8 +289,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected_USD / 1000000
         data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected_USD / 1000000
 
-        data_costs['Capex_a_disconnected'] = Capex_a_total_disconnected_USD
-        data_costs['Opex_total_disconnected'] = Opex_total_disconnected_USD
+        data_costs['Capex_a_disconnected_USD'] = Capex_a_total_disconnected_USD
+        data_costs['Opex_total_disconnected_USD'] = Opex_total_disconnected_USD
 
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
         data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
@@ -299,11 +299,11 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # Network costs
         network_features = network_opt.network_opt_main(config, locator)
         network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(DCN_barcode)
-        data_costs['Network_costs'] = network_costs_a_USD
+        data_costs['Network_costs_USD'] = network_costs_a_USD
         Inv_IR = 0.05
         Inv_LT = 20
         network_costs_total_USD = (network_costs_a_USD * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
-        data_costs['Network_costs_Total'] = network_costs_total_USD
+        data_costs['Network_costs_Total_USD'] = network_costs_total_USD
         # Substation costs
         substation_costs_a_USD = 0
         substation_costs_total_USD = 0
@@ -344,12 +344,14 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                 substation_costs_total_USD += InvC
                 substation_costs_a_USD += Capex_a + Opex_fixed
 
-        data_costs['Substation_costs'] = substation_costs_a_USD
-        data_costs['Substation_costs_Total'] = substation_costs_total_USD
+        data_costs['Substation_costs_USD'] = substation_costs_a_USD
+        data_costs['Substation_costs_Total_USD'] = substation_costs_total_USD
         # Electricity Details/Renewable Share
         lca = lca_calculations(locator, config)
 
         data_costs['Total_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_hotwater_GW'] = (data_electricity['E_hotwater_total_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_appliances_GW'] = (data_electricity['E_appliances_total_W'].sum()) / 1000000000 # GW
 
         renewable_share_electricity = (data_electricity['E_PV_directload_W'].sum() +
                                        data_electricity['E_PV_grid_W'].sum() + data_electricity['E_PVT_directload_W'].sum() +
@@ -362,26 +364,26 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                                                'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean()) / 1000000
 
 
-        data_costs['Capex_a_ACH'] = data_costs['Capex_a_ACH_USD'].values[0]
-        data_costs['Capex_a_VCC'] = data_costs['Capex_a_VCC_USD'].values[0]
-        data_costs['Capex_a_VCC_backup'] = data_costs['Capex_a_VCC_backup_USD'].values[0]
-        data_costs['Capex_a_CT'] = data_costs['Capex_a_CT_USD'].values[0]
-        data_costs['Capex_a_storage_tank'] = data_costs['Capex_a_Tank_USD'].values[0]
-        data_costs['Capex_a_total_pumps'] = data_emissions['Capex_a_pump'].values[0]
-        data_costs['Capex_a_CCGT'] = data_costs['Capex_a_CCGT_USD'].values[0]
-        data_costs['Capex_a_PV'] = data_emissions['Capex_a_PV'].values[0]
+        data_costs['Capex_a_ACH_USD'] = data_costs['Capex_a_ACH_USD'].values[0]
+        data_costs['Capex_a_VCC_USD'] = data_costs['Capex_a_VCC_USD'].values[0]
+        data_costs['Capex_a_VCC_backup_USD'] = data_costs['Capex_a_VCC_backup_USD'].values[0]
+        data_costs['Capex_a_CT_USD'] = data_costs['Capex_a_CT_USD'].values[0]
+        data_costs['Capex_a_storage_tank_USD'] = data_costs['Capex_a_Tank_USD'].values[0]
+        data_costs['Capex_a_total_pumps_USD'] = data_emissions['Capex_a_pump'].values[0]
+        data_costs['Capex_a_CCGT_USD'] = data_costs['Capex_a_CCGT_USD'].values[0]
+        data_costs['Capex_a_PV_USD'] = data_emissions['Capex_a_PV'].values[0]
 
-        data_costs['Capex_a_total_Mio'] = (data_costs['Capex_a_ACH'] + data_costs['Capex_a_VCC'] + \
-                                           data_costs['Capex_a_VCC_backup'] + data_costs['Capex_a_CT'] + data_costs['Capex_a_storage_tank'] + \
-                                           data_costs['Capex_a_total_pumps'] + data_costs['Capex_a_CCGT'] + data_costs['Capex_a_PV'] + Capex_a_total_disconnected_USD + substation_costs_a_USD + network_costs_a_USD) / 1000000
+        data_costs['Capex_a_total_Mio'] = (data_costs['Capex_a_ACH_USD'] + data_costs['Capex_a_VCC_USD'] + \
+                                           data_costs['Capex_a_VCC_backup_USD'] + data_costs['Capex_a_CT_USD'] + data_costs['Capex_a_storage_tank_USD'] + \
+                                           data_costs['Capex_a_total_pumps_USD'] + data_costs['Capex_a_CCGT_USD'] + data_costs['Capex_a_PV_USD'] + Capex_a_total_disconnected_USD + substation_costs_a_USD + network_costs_a_USD) / 1000000
 
-        data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
-                                    data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
-                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected_USD + substation_costs_total_USD + network_costs_total_USD) / 1000000
+        data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH_USD'] + data_costs['Capex_total_VCC_USD'] + data_costs['Capex_total_VCC_backup_USD'] + \
+                                    data_costs['Capex_total_storage_tank_USD'] + data_costs['Capex_total_CT_USD'] + data_costs['Capex_total_CCGT_USD'] + \
+                                    data_costs['Capex_total_pumps_USD'] + data_costs['Capex_total_PV_USD'] + Capex_total_disconnected_USD + substation_costs_total_USD + network_costs_total_USD) / 1000000
 
-        data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
-                                   data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
-                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected_USD)) + data_costs['Opex_total_PV'] + \
+        data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH_USD'] + data_costs['Opex_total_VCC_USD'] + data_costs['Opex_total_VCC_backup_USD'] + \
+                                   data_costs['Opex_total_storage_tank_USD'] + data_costs['Opex_total_CT_USD'] + data_costs['Opex_total_CCGT_USD'] + \
+                                   data_costs['Opex_total_pumps_USD'] + Opex_total_disconnected_USD)) + data_costs['Opex_total_PV_USD'] + \
                                    data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE.mean()) / 1000000
 
         data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']

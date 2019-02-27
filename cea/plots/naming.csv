@@ -249,74 +249,74 @@ Activation curve,E_total_req_W,W,Electricity required by the district energy sys
 Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the grid,grey
 Activation curve,NG_used_CCGT_W,W,Natural Gas import to run CCGT plant,grey
 
-Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
-Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
-Cost Analysis,Capex_a_CT,$USD(2015),Annualized CAPEX of cooling tower,blue
-Cost Analysis,Capex_a_Tank,$USD(2015),Annualized CAPEX of thermal storage,blue_light
-Cost Analysis,Capex_a_VCC,$USD(2015),Annualized CAPEX of vapor compression chiller,red_light
-Cost Analysis,Capex_a_VCC_backup,$USD(2015),Annualized CAPEX of back-up vapor compression chiller,orange_light
-Cost Analysis,Capex_a_pump,$USD(2015),Annualized CAPEX of thermal network pumps,grey
-Cost Analysis,Opex_var_ACH,$USD(2015),OPEX of absorption chiller,blue
-Cost Analysis,Opex_var_CCGT,$USD(2015),OPEX of combined cycle gas turbine,green
-Cost Analysis,Opex_var_CT,$USD(2015),OPEX of cooling tower,red
-Cost Analysis,Opex_var_Lake,$USD(2015),OPEX of free-cooling from lake,blue_light
-Cost Analysis,Opex_var_VCC,$USD(2015),OPEX of vapor compression chiller,brown_light
-Cost Analysis,Opex_var_VCC_backup,$USD(2015),OPEX of back-up vapor compression chiller,blue_light
-Cost Analysis,Opex_var_pumps,$USD(2015),OPEX of thermal network pumps,orange
-Cost Analysis,Capex_Total,$USD(2015),Total annualized CAPEX,orange
-Cost Analysis,Opex_Total,$USD(2015),Total OPEX,blue
-Cost Analysis,Capex_SC,$USD(2015),Annualized CAPEX of solar collectors,blue
-Cost Analysis,Capex_PVT,$USD(2015),Annualized CAPEX of photovoltaic-thermal,red
-Cost Analysis,Capex_furnace,$USD(2015),Annualized CAPEX of CHP-furnace,orange
-Cost Analysis,Capex_Boiler_Total,$USD(2015),Annualized CAPEX of boiler,blue_light
-Cost Analysis,Capex_Lake,$USD(2015),Annualized CAPEX of free-cooling from the lake,red_light
-Cost Analysis,Capex_Sewage,$USD(2015),Annualized CAPEX of sewage heat-pump,orange_light
-Cost Analysis,Capex_CHP,$USD(2015),Annualized CAPEX of combined heat and power plant,grey_light
-Cost Analysis,Capex_pump,$USD(2015),Annualized CAPEX of thermal network pumps,grey
-Cost Analysis,Opex_HP_Sewage,$USD(2015),OPEX of sewage heat-pump,blue
-Cost Analysis,Opex_HP_Lake,$USD(2015),OPEX of lake-source heat-pump,red
-Cost Analysis,Opex_GHP,$USD(2015),OPEX of ground-source heat-pump,orange
-Cost Analysis,Opex_CHP_Total,$USD(2015),OPEX of combined cycle heat pump,blue_light
-Cost Analysis,Opex_Furnace_Total,$USD(2015),OPEX of furnace,orange_light
-Cost Analysis,Opex_Boiler_Total,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
-Cost Analysis,Disconnected_costs,$USD(2015),Disconnected costs,grey_light
-Cost Analysis,Capex_Decentralized,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
-Cost Analysis,Opex_Decentralized,$USD(2015),OPEX of decentralized energy systems in buildings,blue
-Cost Analysis,Capex_Centralized,$USD(2015),Annualized CAPEX of district energy system,green
-Cost Analysis,Opex_Centralized,$USD(2015),OPEX of district energy system,brown
+Cost Analysis,Capex_a_ACH_USD,$USD(2015),Annualized CAPEX of absorption chiller,red
+Cost Analysis,Capex_a_CCGT_USD,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
+Cost Analysis,Capex_a_CT_USD,$USD(2015),Annualized CAPEX of cooling tower,blue
+Cost Analysis,Capex_a_Tank_USD,$USD(2015),Annualized CAPEX of thermal storage,blue_light
+Cost Analysis,Capex_a_VCC_USD,$USD(2015),Annualized CAPEX of vapor compression chiller,red_light
+Cost Analysis,Capex_a_VCC_backup_USD,$USD(2015),Annualized CAPEX of back-up vapor compression chiller,orange_light
+Cost Analysis,Capex_a_pump_USD,$USD(2015),Annualized CAPEX of thermal network pumps,grey
+Cost Analysis,Opex_var_ACH_USD,$USD(2015),OPEX of absorption chiller,blue
+Cost Analysis,Opex_var_CCGT_USD,$USD(2015),OPEX of combined cycle gas turbine,green
+Cost Analysis,Opex_var_CT_USD,$USD(2015),OPEX of cooling tower,red
+Cost Analysis,Opex_var_Lake_USD,$USD(2015),OPEX of free-cooling from lake,blue_light
+Cost Analysis,Opex_var_VCC_USD,$USD(2015),OPEX of vapor compression chiller,brown_light
+Cost Analysis,Opex_var_VCC_backup_USD,$USD(2015),OPEX of back-up vapor compression chiller,blue_light
+Cost Analysis,Opex_var_pumps_USD,$USD(2015),OPEX of thermal network pumps,orange
+Cost Analysis,Capex_Total_USD,$USD(2015),Total annualized CAPEX,orange
+Cost Analysis,Opex_Total_USD,$USD(2015),Total OPEX,blue
+Cost Analysis,Capex_SC_USD,$USD(2015),Annualized CAPEX of solar collectors,blue
+Cost Analysis,Capex_PVT_USD,$USD(2015),Annualized CAPEX of photovoltaic-thermal,red
+Cost Analysis,Capex_furnace_USD,$USD(2015),Annualized CAPEX of CHP-furnace,orange
+Cost Analysis,Capex_Boiler_Total_USD,$USD(2015),Annualized CAPEX of boiler,blue_light
+Cost Analysis,Capex_Lake_USD,$USD(2015),Annualized CAPEX of free-cooling from the lake,red_light
+Cost Analysis,Capex_Sewage_USD,$USD(2015),Annualized CAPEX of sewage heat-pump,orange_light
+Cost Analysis,Capex_CHP_USD,$USD(2015),Annualized CAPEX of combined heat and power plant,grey_light
+Cost Analysis,Capex_pump_USD,$USD(2015),Annualized CAPEX of thermal network pumps,grey
+Cost Analysis,Opex_HP_Sewage_USD,$USD(2015),OPEX of sewage heat-pump,blue
+Cost Analysis,Opex_HP_Lake_USD,$USD(2015),OPEX of lake-source heat-pump,red
+Cost Analysis,Opex_GHP_USD,$USD(2015),OPEX of ground-source heat-pump,orange
+Cost Analysis,Opex_CHP_Total_USD,$USD(2015),OPEX of combined cycle heat pump,blue_light
+Cost Analysis,Opex_Furnace_Total_USD,$USD(2015),OPEX of furnace,orange_light
+Cost Analysis,Opex_Boiler_Total_USD,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
+Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
+Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
+Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_Centralized_USD,$USD(2015),Annualized CAPEX of district energy system,green
+Cost Analysis,Opex_Centralized_USD,$USD(2015),OPEX of district energy system,brown
 
 Cost Analysis,Capex_Decentralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_m2,$USD(2015)/m2.yr,OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized_m2,$USD(2015)/m2.yr,OPEX of district energy system,brown
 
-Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Annualized CAPEX of BG boilers in decentralized buildings,red
-Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Annualized CAPEX of NG-boilers in decentralized buildings,blue
-Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Annualized CAPEX of geothermal heat-pumps in decentralized buildings,green
-Cost Analysis,Disconnected_Capex_FC,$USD(2015),Annualized CAPEX of fuel cells in decentralized buildings,brown
-Cost Analysis,Disconnected_Opex_Boiler_BG,$USD(2015),OPEX of BG-boiler in decentralized buildings,green
-Cost Analysis,Disconnected_Opex_Boiler_NG,$USD(2015),OPEX of NG-boiler in decentralized buildings,red
-Cost Analysis,Disconnected_Opex_GHP,$USD(2015),OPEX of ground-source heat-pump in decentralized buildings,brown
-Cost Analysis,Disconnected_Opex_FC,$USD(2015),OPEX of fuel cells in decentralized buildings,blue
-Cost Analysis,Disconnected_Capex_Direct_Expansion,$USD(2015),Annualized CAPEX of mini-split systems in decentralized buildings,red
-Cost Analysis,Disconnected_Capex_VCC,$USD(2015),Annualized CAPEX of vapor compression chillers in decentralized buildings,blue
-Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$USD(2015),Annualized CAPEX of single effect absorption chillers (FP) in decentralized buildings,green
-Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$USD(2015),Annualized CAPEX of single effect absorption chillers (ET) in decentralized buildings,brown
-Cost Analysis,Disconnected_Opex_Direct_Expansion,$USD(2015),OPEX of mini-split systems in decentralized buildings,green
-Cost Analysis,Disconnected_Opex_VCC,$USD(2015),OPEX of vapor compression chillers in decentralized buildings,red
-Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$USD(2015),OPEX of single effect absorption chillers (FP) in decentralized buildings,brown
-Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of single effect absorption chillers (ET) in decentralized buildings,blue
-Cost Analysis,Capex_a_PV,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
-Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
-Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
-Cost Analysis,Electricitycosts,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances and hot water demand,grey
-Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
-Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
-Cost Analysis,TAC,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
+Cost Analysis,Disconnected_Capex_Boiler_BG_USD,$USD(2015),Annualized CAPEX of BG boilers in decentralized buildings,red
+Cost Analysis,Disconnected_Capex_Boiler_NG_USD,$USD(2015),Annualized CAPEX of NG-boilers in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_GHP_USD,$USD(2015),Annualized CAPEX of geothermal heat-pumps in decentralized buildings,green
+Cost Analysis,Disconnected_Capex_FC_USD,$USD(2015),Annualized CAPEX of fuel cells in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_Boiler_BG_USD,$USD(2015),OPEX of BG-boiler in decentralized buildings,green
+Cost Analysis,Disconnected_Opex_Boiler_NG_USD,$USD(2015),OPEX of NG-boiler in decentralized buildings,red
+Cost Analysis,Disconnected_Opex_GHP_USD,$USD(2015),OPEX of ground-source heat-pump in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_FC_USD,$USD(2015),OPEX of fuel cells in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_Direct_Expansion_USD,$USD(2015),Annualized CAPEX of mini-split systems in decentralized buildings,red
+Cost Analysis,Disconnected_Capex_VCC_USD,$USD(2015),Annualized CAPEX of vapor compression chillers in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_single_effect_ACH_FP_USD,$USD(2015),Annualized CAPEX of single effect absorption chillers (FP) in decentralized buildings,green
+Cost Analysis,Disconnected_Capex_single_effect_ACH_ET_USD,$USD(2015),Annualized CAPEX of single effect absorption chillers (ET) in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_Direct_Expansion_USD,$USD(2015),OPEX of mini-split systems in decentralized buildings,green
+Cost Analysis,Disconnected_Opex_VCC_USD,$USD(2015),OPEX of vapor compression chillers in decentralized buildings,red
+Cost Analysis,Disconnected_Opex_single_effect_ACH_FP_USD,$USD(2015),OPEX of single effect absorption chillers (FP) in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_single_effect_ACH_ET_USD,$USD(2015),OPEX of single effect absorption chillers (ET) in decentralized buildings,blue
+Cost Analysis,Capex_a_PV_USD,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
+Cost Analysis,Opex_var_PV_USD,$USD(2015),OPEX of photo-voltaic panels,blue
+Cost Analysis,Electricity_Costs_USD,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
+Cost Analysis,Electricitycosts_USD,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances and hot water demand,grey
+Cost Analysis,Electricitycosts_for_appliances_USD,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
+Cost Analysis,Electricitycosts_for_hotwater_USD,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
+Cost Analysis,TAC_USD,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
 Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_light
 Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
-Cost Analysis,Network_costs,$USD(2015),Annualized CAPEX of installing the district network,red_light
-Cost Analysis,Substation_costs,$USD(2015),Annualized CAPEX of substations in the district network,blue
+Cost Analysis,Network_costs_USD,$USD(2015),Annualized CAPEX of installing the district network,red_light
+Cost Analysis,Substation_costs_USD,$USD(2015),Annualized CAPEX of substations in the district network,blue
 
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
