@@ -8,20 +8,23 @@ import matplotlib.pyplot as plt
 
 def main(path_result_folder, cases, time_steps):
     # get names
-    building_names_to_analyse, case_names = get_building_and_case_names(cases, path_result_folder, time_steps)
-    building_names_to_analyse = ['B001', 'B002', 'B007'] #FIXME: to improve
+    building_names_to_analyse, case_names = get_building_and_case_names(cases, path_result_folder, time_steps)#FIXME: to improve
+    building_names_to_analyse = ['B001', 'B002', 'B005', 'B007'] #FIXME: temporary
     # get cop from buildings in all cases
     cop_in_all_cases_dict = {}
+    qc_in_all_cases_dict = {}
     for case in cases:
         path_district_result_folder = os.path.join(path_result_folder, case)
         el_compare_paths = path_to_el_compare_files(path_district_result_folder, time_steps)
         # iterate through files and combine results
         all_cop_dict = {}
         for path in el_compare_paths:
+            # collect data from buildings
             building_name_of_path = path.split('\\')[6].split('_')[0]
             if building_name_of_path in building_names_to_analyse:
                 el_compare_df = pd.read_csv(path, index_col=0)
-                all_cop_dict[building_name_of_path] = el_compare_df.loc['cop_system'].to_dict()
+                all_cop_dict[building_name_of_path] = el_compare_df.loc['cop_system_mean'].to_dict()
+
         cop_in_all_cases_dict[case] = all_cop_dict
     # exchange dict levels
     for building in building_names_to_analyse:
@@ -145,7 +148,7 @@ def path_to_save_compare_plots(building, path_result_folder):
     return path_to_file
 
 if __name__ == '__main__':
-    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF']
+    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     time_steps = 168
     main(path_result_folder, cases, time_steps)

@@ -16,7 +16,7 @@ def main(path_result_folder, case, time_steps):
         building = path.split('\\')[6].split('_')[0]
         el_compare_df = pd.read_csv(path, index_col=0)
         list_of_labels = []
-        for label in ['cop_system', 'el_total', 'qc_sys_total']:
+        for label in ['cop_system', 'el_total', 'qc_sys_total','cop_system_mean']:
             list_of_labels.append(el_compare_df.loc[label])
         building_result_df = pd.concat(list_of_labels,axis=1)
         building_result_df = building_result_df.sort_values(by=['el_total']).T
@@ -65,7 +65,7 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
         y_offset = y_offset + qc_all_tech_per_building_dict[key]
         i = i + 1
     ax.set(ylabel='% of heat supplied', xlim=(-0.5, 4.5), ylim=(0, 1))
-    ax.set_xticklabels(techs.values)
+    ax.set_xticklabels(np.append(([0]),techs.values))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
     ax.legend(loc='lower right')
@@ -167,7 +167,7 @@ def path_to_save_total_heat_supplied_fig(building, time_steps, path_district_res
     return path_to_file
 
 if __name__ == '__main__':
-    case = 'WTP_CBD_m_WP1_HOT'
+    case = 'WTP_CBD_m_WP1_OFF'
     path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     time_steps = 168
     main(path_result_folder, case, time_steps)
