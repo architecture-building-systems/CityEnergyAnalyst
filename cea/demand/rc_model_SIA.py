@@ -643,7 +643,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext,
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
     phi_i_l = calc_phi_i_l(Elf=Elf)
     phi_i_a = calc_phi_i_a(Eaf=Eaf, Epro=Epro) # include processes
-    phi_i_p = calc_phi_i_p(Qs=Qs) # , people=people)
+    phi_i_p = calc_phi_i_p(Qs=Qs)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
     phi_a = calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol)
     phi_m = calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm)
