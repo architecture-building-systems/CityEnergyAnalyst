@@ -18,24 +18,20 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def fh(x, mCw0, k2, Qh0, tair, LMRT, nh):
-    Eq = mCw0 * k2 - Qh0 * (k2 / (math.log((x + k2 - tair) / (x - tair)) * LMRT)) ** (nh + 1)
-    return Eq
-
-def lmrt(tair0, trh0, tsh0):
-    LMRT = (tsh0 - trh0) / math.log((tsh0 - tair0) / (trh0 - tair0))
-    return LMRT
-
 def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
     """
+    Calculates the supply and return temperature as well as the flow rate of water in radiators similar to the model
+    implemented by Holst (1996) using a Newton-Raphson solver.
 
-    :param Qh:
-    :param tair:
-    :param Qh0:
+    :param Qh: Space heating demand in the building
+    :param tair: environment temperature in the building
+    :param Qh0: nominal radiator power
     :param tair0:
     :param tsh0:
     :param trh0:
     :return:
+
+    [Holst} S. Holst (1996) "TRNSYS-Models for Radiator Heating Systems"
     """
     # TODO: add documentation and sources
 
@@ -47,12 +43,11 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         trh0 = trh0 + 273
         mCw0 = Qh0 / (tsh0 - trh0)
         # minimum
-        LMRT = lmrt(tair0, trh0, tsh0)
-        k1 = 1 / mCw0
-        k2 = Qh * k1
-        result = newton(fh, trh0, args=(mCw0, k2, Qh0, tair, LMRT, nh), maxiter=100, tol=0.01) - 273
+        LMRT0 = lmrt(tair0, trh0, tsh0)
+        delta_t = Qh / mCw0
+        result = newton(fh, trh0, args=(delta_t, Qh0, Qh, tair, LMRT0, nh), maxiter=100, tol=0.01) - 273
         trh = result.real
-        tsh = trh + k2
+        tsh = trh + Qh / mCw0
         mCw = Qh / (tsh - trh)
     else:
         mCw = 0
@@ -60,6 +55,37 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         trh = np.nan
     # return floats with numpy function. Needed when np.vectorize is use to call this function
     return np.float(tsh), np.float(trh), np.float(mCw) # C, C, W/C
+
+def fh(x, delta_t, Qh0, Qh, tair, LMRT0, nh):
+    '''
+    Static radiator heat balance equation from Holst (1996), eq. 6.
+
+    :param x: radiator exhaust temperature
+    :param mCw0: nominal radiator mass flow rate
+    :param Qh: space heating demand
+    :param Qh0: nominal space heating power
+    :param tair: air temperature in the building
+    :param LMRT0: nominal logarithmic temperature difference
+    :param nh: radiator constant
+    :return:
+    '''
+    LMRT = lmrt(tair, x, x+delta_t)
+    # Eq. 6
+    Eq = Qh - Qh0 * (LMRT / LMRT0) ** (nh + 1)
+    return Eq
+
+def lmrt(tair, trh, tsh):
+    '''
+    Logarithmic temperature difference (Eq. 3 in Holst, 1996)
+    :param tair: environment temperature in the room
+    :param trh: radiator exhaust temperature
+    :param tsh: radiator supply temperature
+    :return:
+    '''
+    LMRT = (tsh - trh) / math.log((tsh - tair) / (trh - tair))
+    return LMRT
+
+
 
 try:
     # import Numba AOT versions of the functions above, overwriting them
