@@ -1,0 +1,2 @@
+hvac_tu_type,tu_cooling_type,tu_heating_type,tu_air_intake_type,tu_supply_air_temperature_setpoint,tu_fan_efficiency,tu_cooling_efficiency,tu_heating_efficiency
+hvac_tu_default,default,default,zone,20,1,4.75,1

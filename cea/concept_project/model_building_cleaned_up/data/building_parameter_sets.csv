@@ -1,0 +1,38 @@
+parameter_set,parameter_name,parameter_value,parameter_unit,parameter_comment
+parameters_default,heat_capacity_zone,1211.025,J/(m3*K),
+parameters_default,heat_capacity_base_ceiling,480000.0,J/(m2*K),
+parameters_default,heat_capacity_interior_wall_window_gypsum,91455.0,J/(m2*K),
+parameters_default,heat_capacity_interior_wall_concrete,810000.0,J/(m2*K),
+parameters_default,heat_capacity_exterior_wall_curtain,91455.0,J/(m2*K),
+parameters_default,heat_capacity_exterior_wall_concrete,945000.0,J/(m2*K),
+parameters_default,thermal_resistance_base_ceiling,0.0749,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_interior_wall_window_gypsum,0.9226,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_interior_wall_concrete,0.1297,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_exterior_wall_curtain,0.9226,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_exterior_wall_concrete,0.1447,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_interior_window,0.0025,m2*K/W,half-resistance only
+parameters_default,thermal_resistance_exterior_window,0.33,m2*K/W,half-resistance only
+parameters_default,irradiation_gain_coefficient_base_ceiling,0.3,-,
+parameters_default,irradiation_gain_coefficient_interior_wall_gypsum,0.3,-,
+parameters_default,irradiation_gain_coefficient_interior_wall_concrete,0.3,-,
+parameters_default,irradiation_gain_coefficient_exterior_wall_curtain,0.3,-,
+parameters_default,irradiation_gain_coefficient_exterior_wall_concrete,0.3,-,
+parameters_default,emissivity_exterior_wall_curtain,0.87,-,
+parameters_default,emissivity_exterior_wall_concrete,0.87,-,
+parameters_default,irradiation_transfer_coefficient_interior_window,0.0,-,
+parameters_default,irradiation_transfer_coefficient_exterior_window,0.2,-,
+parameters_default,infiltration_rate,5.5e-05,1/s = (1/h)/3600 = (m3/h)/(m3*3600),
+parameters_default,internal_gain_appliances_factor,32.0,W/m2/unit,Per unit of the reference profile
+parameters_default,hvac_ahu_supply_air_temperature_setpoint,20.0,degree Celsius,
+parameters_default,hvac_ahu_supply_air_relative_humidity_setpoint,60.,percent,
+parameters_default,hvac_ahu_fan_efficiency,331.95,J/kg,assuming 400 Pa pressure rise
+parameters_default,hvac_ahu_cooling_efficiency,4.75,Wtherm/Welectric,
+parameters_default,hvac_ahu_heating_efficiency,1.0,Wtherm/Welectric,
+parameters_default,hvac_ahu_return_air_heat_recovery_efficiency,0.575,Wrecovered/Wavailable,
+parameters_default,co2_generation_rate_per_person,5.2,m3/s/person*1000000,
+parameters_default,moisture_generation_rate_per_person,0.000022,kg/s/person,
+constants,density_air,1.205,kg/m3,
+constants,heat_capacity_air,1211.025,J/(m3*K),
+constants,stefan_boltzmann_constant,5.67e-08,W/(m2*K4),
+constants,heat_transfer_coefficient_surface_to_ambient,25.0,W/(m2*K),
+constants,heat_transfer_coefficient_surface_to_zone,7.69,W/(m2*K),TODO: differentiate between vertical/horizontal

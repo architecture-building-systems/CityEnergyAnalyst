@@ -1,0 +1,2 @@
+internal_gain_type,internal_gain_occupancy_factor,internal_gain_appliances_factor
+internal_gain_default,0,internal_gain_appliances_factor

@@ -14,13 +14,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# Add `building_model` to the path
-sys.path.append(
-    os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/../../external/building_model"
-)
 
-from building_model.building import Building  # Unresolved reference warnings can be ignored
-from building_model.utils import *  # Unresolved reference warnings can be ignored
+from cea.concept_project.model_building_cleaned_up.building_model.building import Building  # Unresolved reference warnings can be ignored
+from cea.concept_project.model_building_cleaned_up.building_model.utils import *  # Unresolved reference warnings can be ignored
 from concept.model_building.get_process_write_data import main_get_process_write_data
 from concept.algorithm_operation.preliminary_setup_optimisation \
     import main_preliminary_setup_optimisation
@@ -29,7 +25,7 @@ from concept.algorithm_operation.optimisation_district import main_optimisation_
 # User parameters --> to be changed if needed
 # TODO: Move case files to local folder and make local user config file to define path
 # Keeping it in the data folder for now, so I don't need to change the path after each commit
-scenario_data_path = os.path.abspath(os.path.join(os.path.dirname(os.path.normpath(__file__)), '..', '..', 'data'))
+scenario_data_path = 'C:\Users\Bhargava\Documents\GitHub\CityEnergyAnalyst\cea\concept_project\data'
 results_path = os.path.join(scenario_data_path, 'output_operation')
 
 # Case parameters --> to be changed if needed

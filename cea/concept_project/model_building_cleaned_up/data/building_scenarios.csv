@@ -1,0 +1,2 @@
+scenario_name,building_name,parameter_set,linearization_type,demand_controlled_ventilation,co2_model_type,humidity_model_type,heating_cooling_session,time_start,time_end,time_step
+scenario_default,create_level_8_4a,parameters_default,linearization_default,demand_controlled_ventilation_default,co2_model_default,humidity_model_default,cooling,2017-01-01 00:00:00.000,2017-01-02 00:00:00.000,00:30:00.000

@@ -1,0 +1,3 @@
+[submodule "external/building_model"]
+	path = external/building_model
+	url = https://bitbucket.org/TUMCREATE_ESTL/building_model
