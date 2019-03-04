@@ -124,6 +124,10 @@ def main(config):
 
     heatmaps(locator=locator, analysis_fields=analysis_fields, file_to_analyze=file_to_analyze)
 
+    analysis_fields = ['O_ghg_ton', 'O_ghg_kgm2', 'O_nre_pen_GJ', 'O_nre_pen_MJm2']
+    file_to_analyze = locator.get_lca_operation()
+
+    heatmaps(locator=locator, analysis_fields=analysis_fields, file_to_analyze=file_to_analyze)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
