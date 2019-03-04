@@ -238,11 +238,11 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
                                      "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
                                          "normals_windows":normals_win, "normals_walls": normals_w})
 
-            # DO this to visualize progress while debugging!:
-            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
-            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
-            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
-            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
+            # # DO this to visualize progress while debugging!:
+            # edges1 = calculate.face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+            # utility.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
         else:
             facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
             wall_list = facade_list
@@ -250,11 +250,11 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
                                  "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
                                   "normals_windows":normals_win, "normals_walls": normals_w})
 
-            ## DO this to visualize progress while debugging!:
-            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
-            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
-            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
-            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
+            # # DO this to visualize progress while debugging!:
+            # edges1 = calculate.face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+            # utility.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
     return geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -309,10 +309,10 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
     bldg_solid = construct.make_solid(building_shell_list[0])
     bldg_solid = modify.fix_close_solid(bldg_solid)
 
-    ##dO this to visualize progress while debugging!:
-    #face_list = fetch.geom_explorer(bldg_solid, "face")
-    # edges = calculate.visualise_face_normal_as_edges(face_list,5)
-    # construct.visualise([face_list,edges],["WHITE","BLACK"])
+    # # DO this to visualize progress while debugging!:
+    # face_list = fetch.topo_explorer(bldg_solid, "face")
+    # edges = calculate.face_normal_as_edges(face_list,5)
+    # utility.visualise([face_list,edges],["WHITE","BLACK"])
     return bldg_solid
 
 def calc_windows_walls(facade_list, wwr):
@@ -401,8 +401,8 @@ if __name__ == '__main__':
     geometry_buildings.extend(windows_s)
     geometry_buildings.extend(roof_s)
 
-    # DO this to visualize progress while debugging!:
-    #normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
+    # # DO this to visualize progress while debugging!:
+    # normals_terrain = calculate.face_normal_as_edges(geometry_terrain,5)
     utility.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
 
 
