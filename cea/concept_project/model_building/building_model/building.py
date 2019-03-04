@@ -9,6 +9,14 @@ from scipy.interpolate import interp1d
 # Using CoolProp for calculating humid air properties: http://www.coolprop.org/fluid_properties/HumidAir.html
 from CoolProp.HumidAirProp import HAPropsSI as humid_air_properties
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 class Building(object):
     """
@@ -1887,12 +1895,14 @@ class Building(object):
             for row_time in self.time_vector:
                 # Create index function for `from_time` (mapping `row_time.timestamp` to `from_time`)
                 constraint_profile_index_time = interp1d(
-                    (pd.to_datetime(
-                        building_zone_constraint_profile['from_time'][
+                    pd.to_datetime(
+                        str(row_time.date())
+                        + ' '
+                        + building_zone_constraint_profile['from_time'][
                             building_zone_constraint_profile['from_weekday']
                             == constraint_profile_index_day(row_time.weekday())
-                            ]
-                    ) - pd.Timestamp.today().date() + row_time.date()).view('int64'),
+                        ]
+                    ).view('int64'),
                     building_zone_constraint_profile.index[
                         building_zone_constraint_profile['from_weekday']
                         == constraint_profile_index_day(row_time.weekday())
@@ -1949,7 +1959,7 @@ class Building(object):
                     else:
                         if row_zone['hvac_ahu_type'] != '':
                             self.output_constraint_timeseries_minimum.at[
-                                row_time, index_zone + '_ahu_fresh_air_flow'
+                                row_time, index_zone + '_total_fresh_air_flow'
                             ] = self.parse_parameter(
                                 building_zone_constraint_profile['minimum_fresh_air_flow_per_area_no_dcv'][
                                     int(constraint_profile_index_time(row_time.to_datetime64().astype('int64')))

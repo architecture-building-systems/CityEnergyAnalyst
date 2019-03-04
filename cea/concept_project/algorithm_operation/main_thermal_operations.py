@@ -3,7 +3,7 @@ Building model main function definitions
 """
 
 import os, sys, inspect, time
-from concept.algorithm_planning_and_operation.lp_op_config import *
+from cea.concept_project.algorithm_planning_and_operation.lp_op_config import *
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -15,10 +15,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-from cea.concept_project.model_building_cleaned_up.building_model.building import Building  # Unresolved reference warnings can be ignored
-from cea.concept_project.model_building_cleaned_up.building_model.utils import *  # Unresolved reference warnings can be ignored
-from concept.model_building.get_process_write_data import main_get_process_write_data
-from concept.algorithm_operation.preliminary_setup_optimisation \
+from cea.concept_project.model_building.building_model.building import Building  # Unresolved reference warnings can be ignored
+from cea.concept_project.model_building.building_model.utils import *  # Unresolved reference warnings can be ignored
+from cea.concept_project.model_building.get_process_write_data import main_get_process_write_data
+from cea.concept_project.algorithm_operation.preliminary_setup_optimisation \
     import main_preliminary_setup_optimisation
 from concept.algorithm_operation.optimisation_district import main_optimisation_district
 
