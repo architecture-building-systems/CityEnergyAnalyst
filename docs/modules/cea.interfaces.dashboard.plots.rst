@@ -10,7 +10,7 @@ Submodules
 ----------
 
 cea.interfaces.dashboard.plots.routes module
----------------------------------------------
+--------------------------------------------
 
 .. automodule:: cea.interfaces.dashboard.plots.routes
     :members:

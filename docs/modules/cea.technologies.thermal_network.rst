@@ -32,10 +32,18 @@ cea.technologies.thermal\_network.thermal\_network module
     :undoc-members:
     :show-inheritance:
 
-cea.technologies.thermal\_network.thermal\_network\_matrix module
------------------------------------------------------------------
+cea.technologies.thermal\_network.thermal\_network\_costs module
+----------------------------------------------------------------
 
-.. automodule:: cea.technologies.thermal_network.thermal_network_matrix
+.. automodule:: cea.technologies.thermal_network.thermal_network_costs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.thermal\_network.thermal\_network\_optimization module
+-----------------------------------------------------------------------
+
+.. automodule:: cea.technologies.thermal_network.thermal_network_optimization
     :members:
     :undoc-members:
     :show-inheritance:
