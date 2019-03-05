@@ -104,8 +104,8 @@ Energy potentials:
   description: Use Daysim to calculate solar radiation for a scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.radiation_daysim.radiation_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', radiation-daysim]
-
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', 'general:debug',
+               radiation-daysim]
 
 Life cycle analysis:
 
