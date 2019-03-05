@@ -121,7 +121,7 @@ In PyCharm:
 
 #. Plots basic: run this tool located in CityEnergyAnalyst > cea > plots > plots_main.py
 
-In PyCharm:
+In ArcGIS:
 
 #. Plots basic: run this tool located in CityEnergyAnalyst > Visualization > Plots basic
 
@@ -165,7 +165,7 @@ This idea will be pursued in the next tools:
 In Pycharm:
 
 #. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies > thermal_network > network_layout > main.py
-#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network_matrix.py
+#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network.py
 #. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > disconnected_building_main.py
 #. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
 #. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
