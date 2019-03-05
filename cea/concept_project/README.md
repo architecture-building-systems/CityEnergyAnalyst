@@ -24,3 +24,9 @@ is essential for `pvlib`
         'sqlalchemy',  # No real dependency, just to suppress warning
         'pandapower'
         
+3. Fix Fiona/GDAL installation: https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1741
+        1. Go to: https://www.lfd.uci.edu/~gohlke/pythonlibs/
+        2. Download `Fiona‑1.8.4‑cp27‑cp27m‑win_amd64.whl` and `GDAL‑2.2.4‑cp27‑cp27m‑win_amd64.whl`
+        3. Run `cd path_to_download_folder`
+        4. Run `pip install Fiona-1.8.4-cp27-cp27m-win_amd64.whl --upgrade`
+        5. Run `pip install GDAL-2.2.4-cp27-cp27m-win_amd64.whl --upgrade`
