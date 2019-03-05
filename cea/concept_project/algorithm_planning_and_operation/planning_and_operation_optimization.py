@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import os
 from pyomo.environ import *
-from concept.algorithm_planning_and_operation import planning_and_operation_preprocess_network
-from concept.algorithm_operation import operation_main
-from concept.algorithm_operation.operation_optimization import (  # Constraint rules for operation problem
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_preprocess_network
+from cea.concept_project.algorithm_operation import operation_main
+from cea.concept_project.algorithm_operation.operation_optimization import (  # Constraint rules for operation problem
     initial_state_condition_constraint_rule,
     minimal_maximal_output_constraint_rule,
     setback_controls_constraint_rule,
