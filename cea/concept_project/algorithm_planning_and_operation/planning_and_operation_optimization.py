@@ -14,7 +14,14 @@ from cea.concept_project.algorithm_operation.operation_optimization import (  # 
     temperatures_absolute_value_constraint_rule,
     maximal_emission_capacity_rule
 )
-
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 #
 # Auxiliary functions for LP

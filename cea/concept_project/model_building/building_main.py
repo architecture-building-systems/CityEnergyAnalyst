@@ -7,6 +7,14 @@ from concept.model_building import building_write_definitions
 from concept.model_building import building_setup_district
 from concept.model_building import building_process_hvac_efficiencies
 
+__author__ = "Sebastian Troitzsch"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def main(
         scenario_data_path,
