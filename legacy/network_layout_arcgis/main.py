@@ -1,8 +1,8 @@
 import cea.globalvar
 import cea.inputlocator
-from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
-from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+from legacy.network_layout_arcgis.connectivity_potential import calc_connectivity_network
+from legacy.network_layout_arcgis.substations_location import calc_substation_location
+from legacy.network_layout_arcgis.steiner_spanning_tree import calc_steiner_spanning_tree
 import cea.config
 import os
 import tempfile

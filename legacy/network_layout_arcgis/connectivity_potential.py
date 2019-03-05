@@ -5,7 +5,7 @@ a series of points (buildings) to the closest street
 
 import cea.globalvar
 import cea.inputlocator
-from legacy.arcgis import arcpy
+from cea.interfaces.arcgis.modules import arcpy
 import cea.config
 import os
 
