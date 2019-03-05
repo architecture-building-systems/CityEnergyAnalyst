@@ -1,5 +1,5 @@
 """
-Script to generate cea_scripts.rst
+Script to generate script-input-outputs.rst
 """
 
 import cea.scripts
@@ -28,5 +28,5 @@ output = template.render(dependencies=dependencies)
 
 os.chdir(os.path.join('..\\', os.curdir))
 
-with open('what-are-the-cea-scripts.rst', 'w') as cea:
+with open('script-input-outputs.rst', 'w') as cea:
     cea.write(output)
