@@ -187,9 +187,10 @@ Thermal networks:
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.thermal_network_matrix
+  module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network']
+               'general:number-of-cpus-to-keep-free', 'thermal-network',
+               'thermal-network-optimization:use-representative-week-per-month']
 
 - name: thermal-network-optimization
   label: Thermo network optimization
