@@ -121,7 +121,7 @@ In PyCharm:
 
 #. Plots basic: run this tool located in CityEnergyAnalyst > cea > plots > plots_main.py
 
-In PyCharm:
+In ArcGIS:
 
 #. Plots basic: run this tool located in CityEnergyAnalyst > Visualization > Plots basic
 
