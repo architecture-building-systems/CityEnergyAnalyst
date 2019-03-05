@@ -87,8 +87,6 @@ dependencies:
 - pythonocc-core=0.18
 - smesh
 - pip:
-  - ephem==3.7.6.0
-  - timezonefinder==3.4.2
   - alabaster==0.7.10
   - astral==1.4
   - babel==2.4.0
@@ -138,4 +136,8 @@ dependencies:
   - urllib3==1.22
   - xlrd==1.0.0
   - xlwt==1.2.0
+  - mpmath==0.19
+  - sympy==1.3
+  - ephem==3.7.6.0
+  - timezonefinder==3.4.2
 
