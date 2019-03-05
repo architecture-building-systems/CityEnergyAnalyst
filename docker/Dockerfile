@@ -11,6 +11,16 @@ RUN /bin/bash -c "source activate cea && \
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 RUN mkdir -p ~/.config/matplotlib && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
 
+# build the DAYSIM stuff
+# first: build radiance
+RUN apt-get -y install cmake build-essential libgl1-mesa-dev freeglut3-dev
+RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
+RUN mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install
+
+# next: build the Daysim specific stuff
+COPY ./CMakeLists.txt /Daysim/CMakeLists.txt
+RUN cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/bin/Daysim/bin
+
 # use the environment - no need to source because it's the only environment anyway...
-ENV PATH /opt/conda/envs/cea/bin:$PATH
+ENV PATH "/opt/conda/envs/cea/bin:/root/Daysim/bin:$PATH"
 CMD ipython
