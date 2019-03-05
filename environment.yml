@@ -136,6 +136,8 @@ dependencies:
   - xz=5.2.4=h3cc03e0_4
   - zlib=1.2.11=h3cc03e0_3
   - pip:
+    - ephem==3.7.6.0
+    - timezonefinder==3.4.2
     - alabaster==0.7.12
     - babel==2.6.0
     - backports.shutil-get-terminal-size==1.0.0
