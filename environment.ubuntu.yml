@@ -140,4 +140,5 @@ dependencies:
   - sympy==1.3
   - ephem==3.7.6.0
   - timezonefinder==3.4.2
+  - deap==1.2.2
 
