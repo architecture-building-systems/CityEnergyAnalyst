@@ -72,4 +72,4 @@ digraph trace_inputlocator {
     "zone.shp" -> "radiation-daysim"[label="(get_zone_geometry)"]
     "radiation-daysim" -> "{BUILDING}_insolation_Whm2.json"[label="(get_radiation_building)"]
     "radiation-daysim" -> "{BUILDING}_geometry.csv"[label="(get_radiation_metadata)"]
-}
+    }

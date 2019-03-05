@@ -67,4 +67,4 @@ digraph trace_inputlocator {
     "solar-collector" -> "{BUILDING}_SC_FP.csv"[label="(SC_results)"]
     "solar-collector" -> "SC_FP_total_buildings.csv"[label="(SC_total_buildings)"]
     "solar-collector" -> "SC_FP_total.csv"[label="(SC_totals)"]
-}
+    }
