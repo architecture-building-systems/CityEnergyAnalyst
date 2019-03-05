@@ -4,11 +4,11 @@ import os
 import time
 import datetime
 import errno
-from concept import config
-from concept.algorithm_operation import operation_write_results
-from concept.algorithm_planning_and_operation import planning_and_operation_optimization
-from concept.algorithm_planning_and_operation import planning_and_operation_write_results
-from concept.algorithm_planning_and_operation import planning_and_operation_plots
+from cea.concept_project import config
+from cea.concept_project.algorithm_operation import operation_write_results
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_optimization
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_write_results
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_plots
 
 
 def main(
