@@ -5,7 +5,9 @@ channels:
   - dlr-sc
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - defaults
+  - http://conda.anaconda.org/gurobi
 dependencies:
+  - gurobi=8.1.0
   - openssl=1.0.2p=h0c8e037_0
   - m2w64-binutils=2.25.1=5
   - m2w64-bzip2=1.0.6=6
