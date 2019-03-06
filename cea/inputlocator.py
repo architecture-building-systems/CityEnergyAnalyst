@@ -1139,3 +1139,31 @@ class ReferenceCaseOpenLocator(InputLocator):
     def get_default_weather(self):
         """The reference-case-open uses the Zug weather file..."""
         return self.get_weather('Zug')
+
+    def get_mpc_building_results_folder(self, date_main):
+        """scenario/outputs/data/optimization"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'mpc_building', '_'.join(os.path.normpath(self.scenario).split(os.path.sep))
+                                + '_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}'.format(
+                                    date_main.year, date_main.month, date_main.day, date_main.hour, date_main.minute,
+                                    date_main.second))
+
+    def get_mpc_building_results_outputs(self, building):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_building_results_folder, building + '_outputs.csv')
+
+    def get_mpc_building_results_controls(self, building):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_building_results_folder, building + '_controls.csv')
+
+    def get_mpc_building_results_states(self, building):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_building_results_folder, building + '_states.csv')
+
+    def get_mpc_building_results_min_outputs(self, building):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_building_results_folder, building + '_outputs_minimum.csv')
+
+    def get_mpc_building_results_max_outputs(self, building):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_building_results_folder, building + '_outputs_maximum.csv')
+
