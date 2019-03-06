@@ -23,7 +23,7 @@ Prerequisites
 * Download and install `Miniconda(64-bit) for Python 2.7 <https://conda.io/miniconda.html>`__.
    .. note:: UNCHECK the "Register Anaconda as my default Python 2.7" option as ArcGIS integration
       will not work otherwise.
-* Download and install `Daysim <https://daysim.ning.com/page/download>`__.
+* Download and install `DAYSIM version >= 4.0 <https://daysim.ning.com/page/download>`__.
 
 Installation of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
