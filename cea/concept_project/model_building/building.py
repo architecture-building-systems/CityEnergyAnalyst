@@ -4,10 +4,10 @@ Building model class definition
 
 import numpy as np
 import pandas as pd
-from scipy.linalg import expm
-from scipy.interpolate import interp1d
 # Using CoolProp for calculating humid air properties: http://www.coolprop.org/fluid_properties/HumidAir.html
 from CoolProp.HumidAirProp import HAPropsSI as humid_air_properties
+from scipy.interpolate import interp1d
+from scipy.linalg import expm
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -17,6 +17,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
+
 
 class Building(object):
     """
@@ -703,8 +704,8 @@ class Building(object):
                                         + (
                                                 self.parse_parameter(row['heat_transfer_coefficient_surface_to_sky'])
                                                 + self.parse_parameter(
-                                                        row['heat_transfer_coefficient_surface_to_ground']
-                                                )
+                                            row['heat_transfer_coefficient_surface_to_ground']
+                                        )
                                         )
                                         / self.parse_parameter('heat_transfer_coefficient_surface_to_ambient'))
                         )
@@ -730,8 +731,8 @@ class Building(object):
                                         + (
                                                 self.parse_parameter(row['heat_transfer_coefficient_surface_to_sky'])
                                                 + self.parse_parameter(
-                                                        row['heat_transfer_coefficient_surface_to_ground']
-                                                )
+                                            row['heat_transfer_coefficient_surface_to_ground']
+                                        )
                                         )
                                         / self.parse_parameter('heat_transfer_coefficient_surface_to_ambient'))
                         )
@@ -913,8 +914,8 @@ class Building(object):
                         * (
                                 self.parse_parameter(self.building_scenarios['linearization_ambient_air_temperature'])
                                 - self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_temperature_cool']
-                                )
+                            self.building_scenarios['linearization_zone_air_temperature_cool']
+                        )
                         )
                         / self.heat_capacity_vector[index]
                 )
@@ -987,8 +988,8 @@ class Building(object):
                         * (
                                 self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
                                 - self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_temperature_heat']
-                                )
+                            self.building_scenarios['linearization_zone_air_temperature_heat']
+                        )
                         )
                         / self.heat_capacity_vector[index]
                 )
@@ -1004,8 +1005,8 @@ class Building(object):
                         * (
                                 self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
                                 - self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_temperature_cool']
-                                )
+                            self.building_scenarios['linearization_zone_air_temperature_cool']
+                        )
                         )
                         / self.heat_capacity_vector[index]
                 )
@@ -1025,8 +1026,8 @@ class Building(object):
                         * (
                                 self.parse_parameter(row['tu_supply_air_temperature_setpoint'])
                                 - self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_temperature_heat']
-                                )
+                            self.building_scenarios['linearization_zone_air_temperature_heat']
+                        )
                         )
                         / self.heat_capacity_vector[index]
                 )
@@ -1042,8 +1043,8 @@ class Building(object):
                         * (
                                 self.parse_parameter(row['tu_supply_air_temperature_setpoint'])
                                 - self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_temperature_cool']
-                                )
+                            self.building_scenarios['linearization_zone_air_temperature_cool']
+                        )
                         )
                         / self.heat_capacity_vector[index]
                 )
@@ -1067,11 +1068,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['irradiation_gain_coefficient'])
@@ -1099,11 +1100,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['irradiation_gain_coefficient'])
@@ -1179,7 +1180,7 @@ class Building(object):
                                             + self.parse_parameter(row_interior['thermal_resistance_surface'])
                                             * self.parse_parameter('heat_transfer_coefficient_surface_to_zone')
                                     )
-                               )
+                            )
                             * self.parse_parameter(row_exterior['irradiation_transfer_coefficient'])
                             * self.parse_parameter(row_exterior['surface_area'])
                             * self.parse_parameter(row_exterior['window_wall_ratio'])
@@ -1207,11 +1208,11 @@ class Building(object):
                                                     1
                                                     + self.parse_parameter(row_interior['thermal_resistance_surface'])
                                                     * self.parse_parameter(
-                                                            'heat_transfer_coefficient_surface_to_zone'
-                                                    )
+                                                'heat_transfer_coefficient_surface_to_zone'
+                                            )
                                             )
                                     )
-                               )
+                            )
                             * self.parse_parameter(row_exterior['irradiation_transfer_coefficient'])
                             * self.parse_parameter(row_exterior['surface_area'])
                             * self.parse_parameter(row_exterior['window_wall_ratio'])
@@ -1314,11 +1315,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1341,11 +1342,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1374,11 +1375,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1406,11 +1407,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1441,11 +1442,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1473,11 +1474,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_sky'])
@@ -1509,11 +1510,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1536,11 +1537,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1569,11 +1570,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1600,11 +1601,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1634,11 +1635,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1666,11 +1667,11 @@ class Building(object):
                                 * (
                                         self.parse_parameter('heat_transfer_coefficient_surface_to_ambient')
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_ground']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_ground']
+                                )
                                         + self.parse_parameter(
-                                                row_exterior['heat_transfer_coefficient_surface_to_sky']
-                                        )
+                                    row_exterior['heat_transfer_coefficient_surface_to_sky']
+                                )
                                 )
                         )
                         * self.parse_parameter(row_exterior['heat_transfer_coefficient_surface_to_ground'])
@@ -1806,15 +1807,15 @@ class Building(object):
                                                 self.building_scenarios['linearization_zone_air_humidity_ratio']
                                             )
                                             - humid_air_properties(
-                                                'W',
-                                                'T',
-                                                self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
-                                                + 273.15,
-                                                'R',
-                                                self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint']),
-                                                'P',
-                                                101325
-                                            )
+                                        'W',
+                                        'T',
+                                        self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
+                                        + 273.15,
+                                        'R',
+                                        self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint']),
+                                        'P',
+                                        101325
+                                    )
                                     )
                                     / self.parse_parameter(row['zone_height'])
                                     / self.parse_parameter(row['zone_area'])
@@ -1834,15 +1835,15 @@ class Building(object):
                                                 self.building_scenarios['linearization_zone_air_humidity_ratio']
                                             )
                                             - humid_air_properties(
-                                                'W',
-                                                'T',
-                                                self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
-                                                + 273.15,
-                                                'R',
-                                                self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint']),
-                                                'P',
-                                                101325
-                                            )
+                                        'W',
+                                        'T',
+                                        self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
+                                        + 273.15,
+                                        'R',
+                                        self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint']),
+                                        'P',
+                                        101325
+                                    )
                                     )
                                     / self.parse_parameter(row['zone_height'])
                                     / self.parse_parameter(row['zone_area'])
@@ -1863,8 +1864,8 @@ class Building(object):
                                                     self.building_scenarios['linearization_zone_air_humidity_ratio']
                                                 )
                                                 - self.parse_parameter(
-                                                    self.building_scenarios['linearization_ambient_air_humidity_ratio']
-                                                )
+                                            self.building_scenarios['linearization_ambient_air_humidity_ratio']
+                                        )
                                         )
                                         / self.parse_parameter(row['zone_height'])
                                         / self.parse_parameter(row['zone_area'])
@@ -1908,8 +1909,8 @@ class Building(object):
                                         self.building_scenarios['linearization_ventilation_rate_per_square_meter']
                                     )
                                     * self.parse_parameter(
-                                        self.building_scenarios['linearization_zone_air_humidity_ratio']
-                                    )
+                                self.building_scenarios['linearization_zone_air_humidity_ratio']
+                            )
                                     / self.parse_parameter(row['zone_height'])
                             )
                     )
@@ -1979,16 +1980,16 @@ class Building(object):
                     if (
                             self.parse_parameter(self.building_scenarios['linearization_ambient_air_humidity_ratio'])
                             <= humid_air_properties(
-                                'W',
-                                'R',
-                                self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint'])
-                                / 100,
-                                'T',
-                                self.parse_parameter(self.building_scenarios['linearization_ambient_air_temperature'])
-                                + 273.15,
-                                'P',
-                                101325
-                            )
+                        'W',
+                        'R',
+                        self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint'])
+                        / 100,
+                        'T',
+                        self.parse_parameter(self.building_scenarios['linearization_ambient_air_temperature'])
+                        + 273.15,
+                        'P',
+                        101325
+                    )
                     ):
                         delta_enthalpy_ahu_cooling = min(
                             0,
@@ -2063,19 +2064,19 @@ class Building(object):
                                         101325
                                     )
                                     - humid_air_properties(
-                                        'H',
-                                        'T',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_temperature']
-                                        )
-                                        + 273.15,
-                                        'W',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_humidity_ratio']
-                                        ),
-                                        'P',
-                                        101325
-                                    )
+                                'H',
+                                'T',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_temperature']
+                                )
+                                + 273.15,
+                                'W',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_humidity_ratio']
+                                ),
+                                'P',
+                                101325
+                            )
                             )
                         )
                         delta_enthalpy_heating_recovery = max(
@@ -2097,18 +2098,18 @@ class Building(object):
                                         101325
                                     )
                                     - humid_air_properties(
-                                        'H',
-                                        'T',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_temperature']
-                                        )
-                                        + 273.15,
-                                        'W',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_humidity_ratio']),
-                                        'P',
-                                        101325
-                                    )
+                                'H',
+                                'T',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_temperature']
+                                )
+                                + 273.15,
+                                'W',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_humidity_ratio']),
+                                'P',
+                                101325
+                            )
                             )
                         )
                     else:
@@ -2135,19 +2136,19 @@ class Building(object):
                                     101325
                                 )
                                 - humid_air_properties(
-                                    'H',
-                                    'T',
-                                    self.parse_parameter(
-                                        self.building_scenarios['linearization_ambient_air_temperature']
-                                    )
-                                    + 273.15,
-                                    'W',
-                                    self.parse_parameter(
-                                        self.building_scenarios['linearization_ambient_air_humidity_ratio']
-                                    ),
-                                    'P',
-                                    101325
-                                )
+                            'H',
+                            'T',
+                            self.parse_parameter(
+                                self.building_scenarios['linearization_ambient_air_temperature']
+                            )
+                            + 273.15,
+                            'W',
+                            self.parse_parameter(
+                                self.building_scenarios['linearization_ambient_air_humidity_ratio']
+                            ),
+                            'P',
+                            101325
+                        )
                         )
                         delta_enthalpy_ahu_heating = (
                                 humid_air_properties(
@@ -2162,24 +2163,24 @@ class Building(object):
                                     101325
                                 )
                                 - humid_air_properties(
-                                    'H',
-                                    'R',
-                                    1,
-                                    'W',
-                                    humid_air_properties(
-                                        'W',
-                                        'T',
-                                        self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
-                                        + 273.15,
-                                        'R',
-                                        self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint'])
-                                        / 100,
-                                        'P',
-                                        101325
-                                    ),
-                                    'P',
-                                    101325
-                                )
+                            'H',
+                            'R',
+                            1,
+                            'W',
+                            humid_air_properties(
+                                'W',
+                                'T',
+                                self.parse_parameter(row['ahu_supply_air_temperature_setpoint'])
+                                + 273.15,
+                                'R',
+                                self.parse_parameter(row['ahu_supply_air_relative_humidity_setpoint'])
+                                / 100,
+                                'P',
+                                101325
+                            ),
+                            'P',
+                            101325
+                        )
                         )
                         delta_enthalpy_cooling_recovery = min(
                             0,
@@ -2200,19 +2201,19 @@ class Building(object):
                                         101325
                                     )
                                     - humid_air_properties(
-                                        'H',
-                                        'T',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_temperature']
-                                        )
-                                        + 273.15,
-                                        'W',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_zone_air_humidity_ratio']
-                                        ),
-                                        'P',
-                                        101325
-                                    )
+                                'H',
+                                'T',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_temperature']
+                                )
+                                + 273.15,
+                                'W',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_zone_air_humidity_ratio']
+                                ),
+                                'P',
+                                101325
+                            )
                             )
                         )
                         delta_enthalpy_heating_recovery = max(
@@ -2234,19 +2235,19 @@ class Building(object):
                                         101325
                                     )
                                     - humid_air_properties(
-                                        'H',
-                                        'T',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_ambient_air_temperature']
-                                        )
-                                        + 273.15,
-                                        'W',
-                                        self.parse_parameter(
-                                            self.building_scenarios['linearization_zone_air_humidity_ratio']
-                                        ),
-                                        'P',
-                                        101325
-                                    )
+                                'H',
+                                'T',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_ambient_air_temperature']
+                                )
+                                + 273.15,
+                                'W',
+                                self.parse_parameter(
+                                    self.building_scenarios['linearization_zone_air_humidity_ratio']
+                                ),
+                                'P',
+                                101325
+                            )
                             )
                         )
 
@@ -2267,8 +2268,8 @@ class Building(object):
                                 )
                                 / self.parse_parameter(row['ahu_cooling_efficiency'])
                                 + (
-                                            abs(delta_enthalpy_ahu_heating)
-                                            - abs(delta_enthalpy_heating_recovery)
+                                        abs(delta_enthalpy_ahu_heating)
+                                        - abs(delta_enthalpy_heating_recovery)
                                 )
                                 / self.parse_parameter(row['ahu_heating_efficiency'])
                                 + self.parse_parameter(row['ahu_fan_efficiency'])
@@ -2517,14 +2518,14 @@ class Building(object):
 
         # Outputs that are some kind of power can only be positive (greater than zero)
         self.output_constraint_timeseries_minimum.loc[
-            :,
-            [column for column in self.output_constraint_timeseries_minimum.columns if '_power' in column]
+        :,
+        [column for column in self.output_constraint_timeseries_minimum.columns if '_power' in column]
         ] = 0
 
         # Outputs that are some kind of flow can only be positive (greater than zero)
         self.output_constraint_timeseries_minimum.loc[
-            :,
-            [column for column in self.output_constraint_timeseries_minimum.columns if '_flow' in column]
+        :,
+        [column for column in self.output_constraint_timeseries_minimum.columns if '_flow' in column]
         ] = 0
 
         # If a heating/cooling session is defined, the heating/cooling air flow is forced to 0
@@ -2532,11 +2533,11 @@ class Building(object):
         # however it would not appear explicitly in the output.
         if self.building_scenarios['heating_cooling_session'][0] == 'heating':
             self.output_constraint_timeseries_maximum.loc[
-                :, [column for column in self.output_constraint_timeseries_minimum.columns if '_cool' in column]
+            :, [column for column in self.output_constraint_timeseries_minimum.columns if '_cool' in column]
             ] = 0
         if self.building_scenarios['heating_cooling_session'][0] == 'cooling':
             self.output_constraint_timeseries_maximum.loc[
-                :, [column for column in self.output_constraint_timeseries_minimum.columns if '_heat' in column]
+            :, [column for column in self.output_constraint_timeseries_minimum.columns if '_heat' in column]
             ] = 0
 
         for index_zone, row_zone in self.building_zones.iterrows():
@@ -2565,7 +2566,7 @@ class Building(object):
                         + building_zone_constraint_profile['from_time'][
                             building_zone_constraint_profile['from_weekday']
                             == constraint_profile_index_day(row_time.weekday())
-                        ]
+                            ]
                     ).view('int64'),
                     building_zone_constraint_profile.index[
                         building_zone_constraint_profile['from_weekday']
@@ -2628,14 +2629,14 @@ class Building(object):
                                     * (
                                             self.disturbance_timeseries.transpose()[
                                                 self.building_zones["internal_gain_type"].loc[index_zone] + "_occupancy"
-                                            ].loc[row_time] * self.parse_parameter(row_zone['zone_area'])
+                                                ].loc[row_time] * self.parse_parameter(row_zone['zone_area'])
                                             + self.parse_parameter(
-                                                building_zone_constraint_profile['minimum_fresh_air_flow_per_area'][
-                                                    int(constraint_profile_index_time(
-                                                        row_time.to_datetime64().astype('int64')
-                                                    ))
-                                                ]
-                                            )
+                                        building_zone_constraint_profile['minimum_fresh_air_flow_per_area'][
+                                            int(constraint_profile_index_time(
+                                                row_time.to_datetime64().astype('int64')
+                                            ))
+                                        ]
+                                    )
                                             * self.parse_parameter(row_zone['zone_area'])
                                     )
                             )
