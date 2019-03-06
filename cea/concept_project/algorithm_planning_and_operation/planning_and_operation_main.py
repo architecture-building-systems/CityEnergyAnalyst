@@ -1,17 +1,19 @@
 from __future__ import division
 
 import datetime
-import errno
 import os
 import time
 
 from pyomo.environ import *
 
-from cea.concept_project import config
+import cea.config
+import cea.inputlocator
 from cea.concept_project.algorithm_operation import operation_write_results
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_optimization
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_plots
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_write_results
+from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA, \
+    POWER_FACTOR, VOLTAGE_NOMINAL, INTEREST_RATE, LOAD_FACTOR, APPROX_LOSS_HOURS
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -23,34 +25,39 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(
-        scenario_data_path=config.scenario_data_path,
-        scenario=config.scenario,
-        country=config.country,
-        parameter_set=config.parameter_set,
-        time_start=config.time_start,
-        time_end=config.time_end,
-        time_step_ts=config.time_step_ts,
-        set_temperature_goal=config.set_temperature_goal,
-        constant_temperature=config.constant_temperature,
-        alpha=config.alpha,
-        beta=config.beta,
-        pricing_scheme=config.pricing_scheme,
-        constant_price=config.constant_price,
-        min_max_source=config.min_max_source,
-        min_constant_temperature=config.min_constant_temperature,
-        max_constant_temperature=config.max_constant_temperature,
-        delta_set=config.delta_set,
-        delta_setback=config.delta_setback,
-        power_factor=config.power_factor,
-        approx_loss_hours=config.approx_loss_hours,
-        voltage_nominal=config.voltage_nominal,
-        load_factor=config.load_factor,
-        interest_rate=config.interest_rate,
-        solver_name=config.solver_name,
-        time_limit=config.time_limit,
-        threads=config.threads
-):
+def planning_and_operation(locator, config):
+
+    #Local vars
+    project = locator.get_project_path()  # path to project : old name was scenario_path
+    scenario = config.scenario  # path to data: old name was scenario
+    country = config.region
+
+    time_start = config.mpc_district.time_start
+    time_end = config.mpc_district.time_end
+    set_temperature_goal = config.mpc_district.set_temperature_goal
+    constant_temperature = config.mpc_district.constant_temperature
+    pricing_scheme = config.mpc_district.pricing_scheme
+    constant_price = config.mpc_district.constant_price
+    min_max_source = config.mpc_district.min_max_source
+    min_constant_temperature = config.mpc_district.min_constant_temperature
+    max_constant_temperature = config.mpc_district.max_constant_temperature
+    delta_set = config.mpc_district.delta_set
+    delta_setback = config.mpc_district.delta_setback
+
+    # local constants
+    parameter_set = PARAMETER_SET
+    time_step_ts = TIME_STEP_TS
+    solver_name = SOLVER_NAME
+    time_limit = TIME_LIMIT
+    threads = THREADS
+    alpha = ALPHA
+    beta = BETA
+    power_factor = POWER_FACTOR
+    approx_loss_hours = APPROX_LOSS_HOURS
+    voltage_nominal = VOLTAGE_NOMINAL
+    load_factor = LOAD_FACTOR
+    interest_rate = INTEREST_RATE
+
     t0 = time.clock()
     time_main = time.time()
     date_main = datetime.datetime.now()
@@ -59,7 +66,7 @@ def main(
 
     print('Processing: Setup models and optimization')
     m = planning_and_operation_optimization.main(
-        scenario_data_path,
+        project,
         scenario,
         country,
         parameter_set,
@@ -104,7 +111,7 @@ def main(
         m,
         results_path,
         time_main,
-        scenario_data_path,
+        project,
         scenario,
         solver_name,
         threads,
@@ -116,12 +123,19 @@ def main(
         beta,
         load_factor
     )
-    planning_and_operation_plots.save_plots(m, scenario_data_path, scenario, results_path)
+    planning_and_operation_plots.save_plots(m, project, scenario, results_path)
     operation_write_results.main(locator, m, output_folder, date_main)
 
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
 
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    planning_and_operation(locator, config)
+
+
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
