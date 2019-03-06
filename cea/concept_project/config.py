@@ -57,8 +57,8 @@ set_temperature_goal = 'constant_temperature'
 constant_temperature = 25  # For 'constant_temperature'
 
 # min_max_source == 'from building.py'
-min_max_source = 'from occupancy variations'
-# min_max_source = 'constants'
+# min_max_source = 'from occupancy variations'
+min_max_source = 'constants'
 
 delta_set = 3  # For 'from occupancy variations'
 delta_setback = 5  # For 'from occupancy variations'
