@@ -1,82 +1,40 @@
 from __future__ import division
-import pandas as pd
-import geopandas
-import shapely
-import networkx as nx
+
 import os
-import utm
-import time
 import random
+
+import geopandas
+import networkx as nx
+import pandas as pd
+import shapely
+
+from cea.technologies.thermal_network.network_layout.substations_location import \
+    calc_substation_location as substation_location
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_substation_location(
-        scenario_data_path,
-        scenario
-):
+
+def calc_substation_location(locator):
+    # pint to function of cea doing this.
+    input_buildings_shp = locator.get_zone_geometry()
+    output_substations_shp = locator.get_network_layout_nodes_shapefile("EL", "")
+
+    points, poly = substation_location(input_buildings_shp, output_substations_shp, connected_buildings=[])
+
+    return (points, poly)
+
+
+def connect_building_to_grid(locator):
     # Import/ export paths
-    input_buildings_shp = os.path.join(
-        scenario_data_path, scenario, 'inputs', 'building-geometry', 'zone.shp'
-    )
-    output_substations_shp = os.path.join(
-        scenario_data_path, scenario, 'inputs', 'networks', 'nodes_buildings.shp'
-    )
-
-    poly = geopandas.GeoDataFrame.from_file(input_buildings_shp)
-    poly = poly.to_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-    lon = poly.geometry[0].centroid.coords.xy[0][0]
-    lat = poly.geometry[0].centroid.coords.xy[1][0]
-
-    # get coordinate system and re project to UTM
-    utm_data = utm.from_latlon(lat, lon)
-    zone = utm_data[2]
-    south_or_north = utm_data[3]
-    code_projection = "+proj=utm +zone=" + str(zone) + south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    poly = poly.to_crs(code_projection)
-
-    # create points
-    points = poly.copy()
-    points.geometry = poly['geometry'].centroid
-
-    # saving result
-    success = False
-    while not success:
-        try:
-            points.to_file(output_substations_shp, driver='ESRI Shapefile')
-            success = True
-        except Exception as exc:
-            print(exc)
-            try:
-                os.remove(output_substations_shp)
-            except Exception:
-                pass
-            print('Waiting for next try.')
-            time.sleep(10)
-
-    return (
-        points,
-        poly
-    )
-
-
-def connect_building_to_grid(
-        scenario_data_path,
-        scenario
-):
-    # Import/ export paths
-    input_substations_shp = os.path.join(
-        scenario_data_path, scenario, 'inputs', 'networks', 'nodes_buildings.shp'
-    )
-    input_streets_shp = os.path.join(
-        scenario_data_path, scenario, 'inputs', 'networks', 'streets.shp'
-    )
+    input_substations_shp = locator.get_network_layout_nodes_shapefile("EL", "")
+    input_streets_shp = locator.get_street_network()
 
     # Import data
     building_points = geopandas.GeoDataFrame.from_file(input_substations_shp)
@@ -142,9 +100,9 @@ def connect_building_to_grid(
         filtered_points.sort_values(by='distance', inplace=True)
 
         # Create new Lines
-        for idx1 in range(0, len(filtered_points)-1):
+        for idx1 in range(0, len(filtered_points) - 1):
             start = filtered_points.iloc[idx1][0]
-            end = filtered_points.iloc[idx1+1][0]
+            end = filtered_points.iloc[idx1 + 1][0]
             newline = shapely.geometry.LineString([start, end])
             tranches_list.append(newline)
 
@@ -187,14 +145,10 @@ def connect_building_to_grid(
     )
 
 
-def process_network(
+def process_network(locator,
         points_on_line,
-        scenario_data_path,
-        scenario
 ):
-    building_path = os.path.join(
-        scenario_data_path, scenario, 'outputs', 'data', 'demand', 'Total_demand.csv'
-    )
+    building_path = locator.get_total_demand()
     building_prop = pd.read_csv(building_path)
     # building_prop = building_prop[['Name', 'GRID0_kW']]
     building_prop.rename(columns={'Name': 'Building'}, inplace=True)
@@ -206,33 +160,24 @@ def process_network(
     random.seed(1000)
 
     for idx, node in points_on_line.iterrows():
-            if node['Building'] is not None:
-                # if random.random() < 0.08:
-                if idx == 0:
-                    points_on_line.loc[idx, 'Type'] = 'PLANT'
-                else:
-                    points_on_line.loc[idx, 'Type'] = 'CONSUMER'
+        if node['Building'] is not None:
+            # if random.random() < 0.08:
+            if idx == 0:
+                points_on_line.loc[idx, 'Type'] = 'PLANT'
+            else:
+                points_on_line.loc[idx, 'Type'] = 'CONSUMER'
 
     return points_on_line
 
 
-def get_hourly_power_demand_per_building(
-        points_on_line,
-        scenario_data_path,
-        scenario
-):
-    demand_folder = os.path.join(
-        scenario_data_path, scenario, 'outputs', 'data', 'demand'
-    )
-
+def get_hourly_power_demand_per_building(locator, points_on_line):
     hourly_power_demand_per_building = {}
 
     for idx_node, node in points_on_line.iterrows():
         if node['Building'] != None:
             building_name = node['Building']
-            hourly_power_demand_per_building[building_name] = pd.read_csv(os.path.join(
-                demand_folder, building_name + '.csv'
-            ))
+            hourly_power_demand_per_building[building_name] = pd.read_csv(locator.get_demand_results_file(building_name)
+            )
 
     return hourly_power_demand_per_building
 

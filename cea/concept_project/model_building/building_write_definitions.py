@@ -4,9 +4,10 @@ import datetime
 import math
 import os
 import warnings
-
+import shutil
 import numpy as np
 import pandas as pd
+from cea.concept_project import model_building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -18,7 +19,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(locator,
+def main(locator, scenario,
          date_and_time_prediction,
          time_start,
          time_end,
@@ -54,7 +55,7 @@ def main(locator,
          supply_temperature_df,
          emissions_cooling_type_dic
          ):
-    # prepare_folder(locator) no need to do this, since CEA checks the existence of all folders once they are called
+    prepare_folder(locator) #this copies one file to the /outputs/building-definitions
     write_building_zones(locator,
                          buildings_names,
                          occupancy_types,
@@ -99,7 +100,7 @@ def main(locator,
                       weather_general_info,
                       weather_timeseries_initial_df
                       )
-    write_building_scenarios(locator, locator.scenario,
+    write_building_scenarios(locator, scenario,
                              buildings_names,
                              time_start,
                              time_end,
@@ -151,20 +152,11 @@ def main(locator,
     )
 
 
-# def prepare_folder(locator):
-#     """Check if /concept/building-definition exists. If not, create directory and necessary files."""
-#     if not os.path.isdir(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition')):
-#         os.makedirs(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition'))
-#
-#     # Copy file(s) from default building definition # TODO: Create these file(s) dynamically
-#     shutil.copy(
-#         os.path.join(
-#             os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv'
-#         ),
-#         os.path.join(
-#             scenario_data_path, scenario, 'concept', 'building-definition'
-#         )
-#     )
+def prepare_folder(locator):
+
+    # Copy file(s) from default building definition # TODO: Create these file(s) dynamically
+    shutil.copy(os.path.join(os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv' ),
+                locator.get_mpc_results_building_definitions_folder())
 
 
 def write_building_zones(

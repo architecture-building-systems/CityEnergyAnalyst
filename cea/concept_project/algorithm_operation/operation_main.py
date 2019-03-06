@@ -82,7 +82,6 @@ def operation(locator, config):
         gross_floor_area_m2,
         price_vector
     ) = get_optimization_inputs(locator, weather_path,
-        project_path,
         scenario_name,
         country,
         parameter_set,
@@ -142,13 +141,12 @@ def operation(locator, config):
 
     print('Processing: Write results')
     output_folder = "mpc-building" # this is an identifier for the location of the output folder
-    operation_write_results.main(locator, m, output_folder, date_main)
+    operation_write_results.main(locator, m, output_folder)
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
 
 def get_optimization_inputs(locator, weather_path,
-        project_path,
         scenario,
         country,
         parameter_set,
@@ -189,7 +187,6 @@ def get_optimization_inputs(locator, weather_path,
         Qcsmax_Wm2_dic,
         electricity_prices_MWh
     ) = building_main.main(locator, weather_path,
-        project_path,
         scenario,
         country,
         parameter_set,

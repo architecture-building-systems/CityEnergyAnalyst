@@ -31,6 +31,7 @@ def planning_and_operation(locator, config):
     project_path = locator.get_project_path()  # path to project_path : old name was scenario_path
     scenario_name = config.scenario_name # scenario_name
     country = config.region
+    weather_path = config.weather
 
     time_start = config.mpc_district.time_start
     time_end = config.mpc_district.time_end
@@ -65,7 +66,7 @@ def planning_and_operation(locator, config):
     print('Running scenario: ' + scenario_name)
 
     print('Processing: Setup models and optimization')
-    m = planning_and_operation_optimization.main(
+    m = planning_and_operation_optimization.main(locator, weather_path,
         project_path,
         scenario_name,
         country,

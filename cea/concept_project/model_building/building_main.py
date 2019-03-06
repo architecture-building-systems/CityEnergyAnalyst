@@ -24,7 +24,6 @@ __status__ = "Production"
 
 def main(locator,
          weather_path,
-         project_path,
          scenario, region,
          parameter_set,
          time_start,
@@ -102,7 +101,7 @@ def main(locator,
         year,
         wet_bulb_temperature_df,
         occupancy_probability_df
-    ) = building_write_definitions.main(locator,
+    ) = building_write_definitions.main(locator, scenario,
         date_and_time_prediction,
         time_start,
         time_end,

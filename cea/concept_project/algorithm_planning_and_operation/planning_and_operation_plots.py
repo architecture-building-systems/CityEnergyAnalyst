@@ -3,7 +3,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 import re
-from cea.concept_project import config
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_preprocess_network
 
 __author__ = "Sebastian Troitzsch"
@@ -16,8 +15,23 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 # Plotting settings
-plot_colors = config.plot_colors
-plot_all_lines_on_streets = config.plot_all_lines_on_streets
+plot_all_lines_on_streets = 0  # Plots all possible lines, even if not utilised
+plot_colors = [
+    '#ffc130',
+    # '#ebbb53',
+    # '#d7b56d',
+    # '#beb086',
+    '#a3aa9c',
+    # '#82a5b2',
+    # '#519fc7',
+    # '#5c92c7',
+    '#6984c5',
+    # '#7276c3',
+    # '#7969c1',
+    # '#7f58be',
+    '#8447bc'
+]
+
 font = {
     'family': 'Arial',
     'weight': 'regular',

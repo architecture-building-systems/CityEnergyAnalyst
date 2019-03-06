@@ -26,28 +26,11 @@ __status__ = "Production"
 #
 # Auxiliary functions for LP
 #
-def initial_network(
-        scenario_data_path,
-        scenario
-):
-    planning_and_operation_preprocess_network.calc_substation_location(
-        scenario_data_path,
-        scenario
-    )
-    points_on_line, tranches = planning_and_operation_preprocess_network.connect_building_to_grid(
-        scenario_data_path,
-        scenario
-    )
-    points_on_line_processed = planning_and_operation_preprocess_network.process_network(
-        points_on_line,
-        scenario_data_path,
-        scenario
-    )
-    hourly_demand_per_building = planning_and_operation_preprocess_network.get_hourly_power_demand_per_building(
-        points_on_line,
-        scenario_data_path,
-        scenario
-    )
+def initial_network(locator):
+    planning_and_operation_preprocess_network.calc_substation_location(locator)
+    points_on_line, tranches = planning_and_operation_preprocess_network.connect_building_to_grid(locator)
+    points_on_line_processed = planning_and_operation_preprocess_network.process_network(locator, points_on_line)
+    hourly_demand_per_building = planning_and_operation_preprocess_network.get_hourly_power_demand_per_building(locator, points_on_line)
     (
         dict_length,
         dict_path
@@ -64,7 +47,7 @@ def initial_network(
     )
 
 
-def get_line_parameters(scenario_data_path):
+def get_line_parameters(locator):
     df_line_parameter = pd.read_csv(os.path.join(scenario_data_path, 'electric_line_data.csv'))
     return df_line_parameter
 
@@ -262,7 +245,7 @@ def total_electric_load_per_building_rule(m, building, time):
     )
 
 
-def main(
+def main(locator, weather_path,
         project_path,
         scenario,
         country,
@@ -311,8 +294,7 @@ def main(
         Qcsmax_Wm2_dic,
         gross_floor_area_m2,
         price_vector
-    ) = operation_main.get_optimization_inputs(
-        project_path,
+    ) = operation_main.get_optimization_inputs(locator, weather_path,
         scenario,
         country,
         parameter_set,
@@ -345,7 +327,7 @@ def main(
     del tranches, points_on_line
 
     # Line Parameters
-    df_line_parameter = get_line_parameters(project_path)
+    df_line_parameter = get_line_parameters(locator)
     dict_line_tech_params = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
