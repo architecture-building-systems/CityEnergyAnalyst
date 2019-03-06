@@ -24,8 +24,8 @@ scenario = 'IBPSA/Office'
 scenario = os.path.normpath(scenario)  # Convert to proper path name
 
 time_start = '2005-01-01 00:00:00'
-time_end = '2005-01-01 23:30:00'
-# time_end = '2005-01-01 23:30:00'  # Adapt alpha when running for shorter periods
+# time_end = '2005-12-31 23:30:00'
+time_end = '2005-01-01 23:30:00'  # Adapt alpha when running for shorter periods
 time_step_ts = '01:00:00'  # TODO: Currently only hourly time step works
 
 #
@@ -57,8 +57,8 @@ set_temperature_goal = 'constant_temperature'
 constant_temperature = 25  # For 'constant_temperature'
 
 # min_max_source == 'from building.py'
-# min_max_source = 'from occupancy variations'
-min_max_source = 'constants'
+min_max_source = 'from occupancy variations'
+# min_max_source = 'constants'
 
 delta_set = 3  # For 'from occupancy variations'
 delta_setback = 5  # For 'from occupancy variations'

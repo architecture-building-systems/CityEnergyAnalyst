@@ -291,7 +291,7 @@ def minimum_maximum_temperatures(
                         )
                         maximum_temperature_df.loc[occupancy][time] = (
                                 center_interval_temperatures_dic[building].loc[occupancy][time]
-                                + delta_set
+
                         )
                     elif setback_boolean_dic[building].loc[occupancy][time] == 1:
                         minimum_temperature_df.loc[occupancy][time] = (
@@ -300,7 +300,7 @@ def minimum_maximum_temperatures(
                         )
                         maximum_temperature_df.loc[occupancy][time] = (
                                 center_interval_temperatures_dic[building].loc[occupancy][time]
-                                + delta_setback
+
                         )
                     else:
                         raise ValueError(
