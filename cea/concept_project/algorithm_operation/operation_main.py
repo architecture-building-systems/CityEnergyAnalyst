@@ -1,20 +1,22 @@
 from __future__ import division
-from pyomo.environ import *
-import os
-import time
+
 import datetime
-import errno
+import os
 import sqlite3
-from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS,  SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA
-from cea.concept_project import model_building
-from cea.concept_project.model_building.building import Building
-from cea.concept_project.model_building import building_utils
-from cea.concept_project.model_building import building_main
-from cea.concept_project.algorithm_operation import operation_preprocess_optimization
-from cea.concept_project.algorithm_operation import operation_optimization
-from cea.concept_project.algorithm_operation import operation_write_results
+import time
+
+from pyomo.environ import *
+
 import cea.config
 import cea.inputlocator
+from cea.concept_project import model_building
+from cea.concept_project.algorithm_operation import operation_optimization
+from cea.concept_project.algorithm_operation import operation_preprocess_optimization
+from cea.concept_project.algorithm_operation import operation_write_results
+from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA
+from cea.concept_project.model_building import building_main
+from cea.concept_project.model_building import building_utils
+from cea.concept_project.model_building.building import Building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -25,11 +27,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def operation(locator, config):
 
-    #local variables
-    project = locator.get_project_path() #path to project
-    scenario = config.scenario # path to data
+def operation(locator, config):
+    # local variables
+    project = locator.get_project_path()  # path to project
+
+    scenario = config.scenario  # path to data
     country = config.region
     time_start = config.mpc_building.time_start
     time_end = config.mpc_building.time_end
@@ -43,7 +46,7 @@ def operation(locator, config):
     delta_set = config.mpc_building.delta_set
     delta_setback = config.mpc_building.delta_setback
 
-    #local constants
+    # local constants
     parameter_set = PARAMETER_SET
     time_step_ts = TIME_STEP_TS
     solver_name = SOLVER_NAME
@@ -79,23 +82,23 @@ def operation(locator, config):
         gross_floor_area_m2,
         price_vector
     ) = get_optimization_inputs(
-            project,
-            scenario,
-            country,
-            parameter_set,
-            time_start,
-            time_end,
-            time_step_ts,
-            set_temperature_goal,
-            constant_temperature,
-            pricing_scheme,
-            constant_price,
-            min_max_source,
-            min_constant_temperature,
-            max_constant_temperature,
-            delta_set,
-            delta_setback
-        )
+        project,
+        scenario,
+        country,
+        parameter_set,
+        time_start,
+        time_end,
+        time_step_ts,
+        set_temperature_goal,
+        constant_temperature,
+        pricing_scheme,
+        constant_price,
+        min_max_source,
+        min_constant_temperature,
+        max_constant_temperature,
+        delta_set,
+        delta_setback
+    )
     print('Processing: Setup optimization model')
     m = operation_optimization.main(
         alpha,
@@ -138,25 +141,8 @@ def operation(locator, config):
     )
 
     print('Processing: Write results')
-    results_path = os.path.join(
-        project,
-        'output_operation',
-        '_'.join(os.path.normpath(scenario).split(os.path.sep))
-        + '_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}'.format(
-            date_main.year, date_main.month, date_main.day, date_main.hour, date_main.minute, date_main.second
-        )
-    )
-    if not os.path.exists(results_path):
-        try:
-            os.makedirs(results_path)
-        except OSError as exc:  # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
-    operation_write_results.main(
-        m,
-        results_path
-    )
-
+    results_path = locator.get_mpc_building_results_folder(date_main)
+    operation_write_results.main(locator, m, results_path)
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
@@ -297,11 +283,13 @@ def get_optimization_inputs(
         price_vector
     )
 
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     operation(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -131,7 +131,7 @@ def main(
         scenario,
         results_path
     )
-    operation_write_results.main(
+    operation_write_results.main(locator,
         m,
         results_path
     )

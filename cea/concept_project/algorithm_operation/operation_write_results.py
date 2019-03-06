@@ -14,7 +14,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(
+def main(locator,
         m,
         results_path
 ):
@@ -32,7 +32,7 @@ def main(
             for output in m.buildings_dic[building].index_outputs:
                 outputs.loc[time, output] = m.outputs_variable[building, output, time].value
         outputs_dic[building] = outputs
-        outputs.to_csv(os.path.join(results_path, building + '_outputs.csv'))
+        outputs.to_csv(locator.get_mpc_building_results_outputs(building))
 
         controls = pd.DataFrame(
             0,
@@ -43,7 +43,7 @@ def main(
             for control in m.buildings_dic[building].index_controls:
                 controls.loc[time, control] = m.controls_variable[building, control, time].value
         controls_dic[building] = controls
-        controls.to_csv(os.path.join(results_path, building + '_controls.csv'))
+        controls.to_csv(locator.get_mpc_building_results_controls(building))
 
         states = pd.DataFrame(
             0,
@@ -54,10 +54,10 @@ def main(
             for state in m.buildings_dic[building].index_states:
                 states.loc[time, state] = m.states_variable[building, state, time].value
         states_dic[building] = states
-        states.to_csv(os.path.join(results_path, building + '_states.csv'))
+        states.to_csv(locator.get_mpc_building_results_states(building))
 
-        m.minimum_output_dic[building].to_csv(os.path.join(results_path, building + '_outputs_minimum.csv'))
-        m.maximum_output_dic[building].to_csv(os.path.join(results_path, building + '_outputs_maximum.csv'))
+        m.minimum_output_dic[building].to_csv(locator.get_mpc_building_results_min_outputs(building))
+        m.maximum_output_dic[building].to_csv(locator.get_mpc_building_results_max_outputs(building))
 
     # Aggregations
     predicted_temperature_df = pd.DataFrame(
