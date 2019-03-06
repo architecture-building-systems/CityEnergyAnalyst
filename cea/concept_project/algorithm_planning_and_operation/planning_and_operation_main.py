@@ -117,7 +117,7 @@ def main(
         load_factor
     )
     planning_and_operation_plots.save_plots(m, scenario_data_path, scenario, results_path)
-    operation_write_results.main(locator, m, output_folder)
+    operation_write_results.main(locator, m, output_folder, date_main)
 
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))

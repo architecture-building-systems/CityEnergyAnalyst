@@ -1172,42 +1172,42 @@ class ReferenceCaseOpenLocator(InputLocator):
                                        date_main.year, date_main.month, date_main.day, date_main.hour, date_main.minute,
                                        date_main.second))
 
-    def get_mpc_results_outputs(self, building, output_folder):
+    def get_mpc_results_outputs(self, building, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), building + '_outputs.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_outputs.csv')
 
-    def get_mpc_results_controls(self, building, output_folder):
+    def get_mpc_results_controls(self, building, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), building + '_controls.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_controls.csv')
 
-    def get_mpc_results_states(self, building, output_folder):
+    def get_mpc_results_states(self, building, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), building + '_states.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder, date_main), building + '_states.csv')
 
-    def get_mpc_results_min_outputs(self, building, output_folder):
+    def get_mpc_results_min_outputs(self, building, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), building + '_outputs_minimum.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder, date_main), building + '_outputs_minimum.csv')
 
-    def get_mpc_results_max_outputs(self, building, output_folder):
+    def get_mpc_results_max_outputs(self, building, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), building + '_outputs_maximum.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_outputs_maximum.csv')
 
-    def get_mpc_results_predicted_temperature(self, output_folder):
+    def get_mpc_results_predicted_temperature(self, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), 'predicted_temperature.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'predicted_temperature.csv')
 
-    def get_mpc_results_set_temperature(self, output_folder):
+    def get_mpc_results_set_temperature(self, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), 'set_temperature.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'set_temperature.csv')
 
-    def get_mpc_results_min_temperature(self, output_folder):
+    def get_mpc_results_min_temperature(self, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), 'minimum_temperature.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'minimum_temperature.csv')
 
-    def get_mpc_results_max_temperature(self, output_folder):
+    def get_mpc_results_max_temperature(self, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), 'maximum_temperature.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'maximum_temperature.csv')
 
-    def get_mpc_results_electric_power(self, output_folder):
+    def get_mpc_results_electric_power(self, output_folder, date_main):
         """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_building_results_folder(output_folder), 'electric_power.csv')
+        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'electric_power.csv')

@@ -141,8 +141,8 @@ def operation(locator, config):
     )
 
     print('Processing: Write results')
-    type = "building" # this is an identifier for the location of the output folder
-    operation_write_results.main(locator, m, type)
+    output_folder = "mpc_building" # this is an identifier for the location of the output folder
+    operation_write_results.main(locator, m, output_folder, date_main)
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
