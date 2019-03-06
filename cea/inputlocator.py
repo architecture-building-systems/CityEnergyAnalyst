@@ -883,6 +883,13 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building_name}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
 
+    def get_predefined_hourly_setpoints_folder(self, type_of_district_network):
+        return self._ensure_folder(self.scenario, 'inputs', 'predefined-hourly-setpoints', str(type_of_district_network))
+
+    def get_predefined_hourly_setpoints(self, building_name, type_of_district_network):
+        """scenario/outputs/data/demand/{building_name}_.csv"""
+        return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.csv')
+
     # THERMAL NETWORK
 
     def get_qloss(self, network_name, network_type, format='csv'):
