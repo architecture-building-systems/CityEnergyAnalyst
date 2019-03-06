@@ -1,10 +1,13 @@
 from __future__ import division
-import pandas as pd
-import numpy as np
-import os
+
 import csv
+import os
+
+import numpy as np
+import pandas as pd
 import xlrd
-import simpledbf
+from geopandas import GeoDataFrame as Gdf
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -15,13 +18,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def main(
-        scenario_data_path,
-        scenario,
-        country,
-        time_start,
-        time_end
-):
+
+def main(locator, weather_path,
+         region,
+         time_start,
+         time_end
+         ):
     (
         internal_loads_df,
         indoor_comfort_df,
@@ -36,28 +38,20 @@ def main(
         emission_systems_controller_df,
         system_controls_ini_df,
         cooling_generation_df
-    ) = extract_cea_databases_files(
-        scenario_data_path,
-        scenario,
-        country
-    )
+    ) = extract_cea_databases_files(locator,
+                                    region
+                                    )
     (
         zone_occupancy_df,
         zone_df,
         architecture_df,
         technical_systems_df,
         supply_systems_df
-    ) = extract_cea_inputs_files(
-        scenario_data_path,
-        scenario
-    )
+    ) = extract_cea_inputs_files(locator)
     (
         weather_general_info,
         weather_timeseries_initial_df
-    ) = process_weather_file(
-        scenario_data_path,
-        scenario
-    )
+    ) = process_weather_file(weather_path)
     (
         occupancy_types_full,
         occupancy_types,
@@ -66,11 +60,9 @@ def main(
         internal_loads_df,
         zone_occupancy_df
     )
-    building_geometry_all = extract_cea_building_geometry(
-        scenario_data_path,
-        scenario,
-        buildings_names
-    )
+    building_geometry_all = extract_cea_building_geometry(locator,
+                                                          buildings_names
+                                                          )
 
     (
         occupancy_types_full_cardinal,
@@ -87,13 +79,11 @@ def main(
         processes_probability_dic,
         monthly_use_probability_df,
         occupancy_density_m2_p
-    ) = process_occupancy_schedules(
-        scenario_data_path,
-        scenario,
-        country,
-        occupancy_types,
-        occupancy_types_cardinal
-    )
+    ) = process_occupancy_schedules(locator,
+                                    region,
+                                    occupancy_types,
+                                    occupancy_types_cardinal
+                                    )
     footprint = calculate_footprint(
         buildings_names,
         building_geometry_all
@@ -136,9 +126,7 @@ def main(
     (
         T_int_cea_dic,
         T_ext_cea_df
-    ) = get_temperatures(
-        scenario_data_path,
-        scenario,
+    ) = get_temperatures(locator,
         buildings_names,
         time_start,
         time_end
@@ -194,63 +182,23 @@ def main(
     )
 
 
-def extract_cea_databases_files(
-        scenario_data_path,
-        scenario,
-        country
-):
+def extract_cea_databases_files(locator,
+                                region
+                                ):
     # Get data
-    internal_loads_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'archetypes', 'construction_properties.xlsx'),
-        'INTERNAL_LOADS'
-    )
-    indoor_comfort_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'archetypes', 'construction_properties.xlsx'),
-        'INDOOR_COMFORT')
-    construction_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'CONSTRUCTION'
-    )
-    leakage_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'LEAKAGE'
-    )
-    window_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'WINDOW'
-    )
-    roofs_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'ROOF'
-    )
-    wall_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'WALL'
-    )
-    shading_envelope_systems_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'envelope_systems.xls'),
-        'SHADING'
-    )
-    emission_systems_heating_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'emission_systems.xls'),
-        'heating'
-    )
-    emission_systems_cooling_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'emission_systems.xls'),
-        'cooling'
-    )
-    emission_systems_controller_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'systems', 'emission_systems.xls'),
-        'controller'
-    )
-    system_controls_ini_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'archetypes', 'system_controls.xlsx'),
-        'heating_cooling'
-    )
-    cooling_generation_df = pd.read_excel(
-        os.path.join(scenario_data_path, scenario, 'databases', country, 'lifecycle', 'LCA_infrastructure.xlsx'),
-        'COOLING'
-    )
+    internal_loads_df = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS')
+    indoor_comfort_df = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT')
+    construction_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'CONSTRUCTION')
+    leakage_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'LEAKAGE')
+    window_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'WINDOW')
+    roofs_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'ROOF')
+    wall_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'WALL')
+    shading_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'SHADING')
+    emission_systems_heating_df = pd.read_excel(locator.get_technical_emission_systems(region), 'heating')
+    emission_systems_cooling_df = pd.read_excel(locator.get_technical_emission_systems(region), 'cooling')
+    emission_systems_controller_df = pd.read_excel(locator.get_technical_emission_systems(region), 'controller')
+    system_controls_ini_df = pd.read_excel(locator.get_archetypes_system_controls(region), 'heating_cooling')
+    cooling_generation_df = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), 'COOLING')
 
     # Set index
     internal_loads_df.set_index('Code', inplace=True)
@@ -283,20 +231,13 @@ def extract_cea_databases_files(
     )
 
 
-def extract_cea_inputs_files(scenario_data_path, scenario):
-    # Get dbf
-    zone_occupancy_dbf = simpledbf.Dbf5(os.path.join(scenario_data_path, scenario, 'inputs', 'building-properties', 'occupancy.dbf'))
-    zone_dbf = simpledbf.Dbf5(os.path.join(scenario_data_path, scenario, 'inputs', 'building-geometry', 'zone.dbf'))
-    architecture_dbf = simpledbf.Dbf5(os.path.join(scenario_data_path, scenario, 'inputs', 'building-properties', 'architecture.dbf'))
-    technical_systems_dbf = simpledbf.Dbf5(os.path.join(scenario_data_path, scenario, 'inputs', 'building-properties', 'technical_systems.dbf'))
-    supply_systems_dbf = simpledbf.Dbf5(os.path.join(scenario_data_path, scenario, 'inputs', 'building-properties', 'supply_systems.dbf'))
-
-    # Convert data to dataframe
-    zone_occupancy_df = zone_occupancy_dbf.to_dataframe()
-    zone_df = zone_dbf.to_dataframe()
-    architecture_df = architecture_dbf.to_dataframe()
-    technical_systems_df = technical_systems_dbf.to_dataframe()
-    supply_systems_df = supply_systems_dbf.to_dataframe()
+def extract_cea_inputs_files(locator):
+    # Get dataframes
+    zone_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
+    zone_df = Gdf.from_file(locator.get_zone_geometry())
+    architecture_df = dbf_to_dataframe(locator.get_building_architecture())
+    technical_systems_df = dbf_to_dataframe(locator.get_building_hvac())
+    supply_systems_df = dbf_to_dataframe(locator.get_building_supply())
 
     # Set index
     zone_occupancy_df.set_index('Name', inplace=True)
@@ -308,18 +249,17 @@ def extract_cea_inputs_files(scenario_data_path, scenario):
     return zone_occupancy_df, zone_df, architecture_df, technical_systems_df, supply_systems_df
 
 
-def extract_cea_building_geometry(scenario_data_path, scenario, buildings_names):
+def extract_cea_building_geometry(locator, buildings_names):
     building_geometry_all = {}
     for building in buildings_names:
-        building_geometry_all[building] = pd.read_csv(
-            os.path.join(scenario_data_path, scenario, 'outputs', 'data', 'solar-radiation', building + '_geometry.csv'))
+        building_geometry_all[building] = pd.read_csv(locator.get_radiation_metadata(building))
     return building_geometry_all
 
 
-def process_weather_file(scenario_data_path, scenario):
+def process_weather_file(weather_path):
     # This function deals with the fact that the weather file has an .epw format that is non-pandas dataframe ready.
     # Get data
-    with open(os.path.join(scenario_data_path, scenario, 'inputs', 'weather', 'weather.epw'), 'rb') as f:
+    with open(weather_path, 'rb') as f:
         reader = csv.reader(f)
         weather_initial = list(reader)
 
@@ -376,17 +316,14 @@ def process_weather_file(scenario_data_path, scenario):
 
 
 def process_occupancy_schedules(
-        scenario_data_path,
-        scenario,
-        country,
+        locator,
+        region,
         occupancy_types,
         occupancy_types_cardinal
 ):
     # This function makes the data from the occupancy schedule file more readable and pandas dataframe-ready.
     # Get data
-    book = xlrd.open_workbook(os.path.join(
-        scenario_data_path, scenario, 'databases', country, 'archetypes', 'occupancy_schedules.xlsx'
-    ))
+    book = xlrd.open_workbook(locator.get_archetypes_schedules(region))
 
     # Get occupancy types schedules
     occupancy_schedules = {}
@@ -716,8 +653,7 @@ def get_occupancy_per_building(
 
 
 def get_temperatures(
-        scenario_data_path,
-        scenario,
+        locator,
         buildings_names,
         time_start,
         time_end
@@ -730,9 +666,7 @@ def get_temperatures(
     T_int_cea_dic = {}
     for building in buildings_names:
         # Get data
-        building_demand_cea_build_df = pd.read_csv(
-            os.path.join(scenario_data_path, scenario, 'outputs', 'data', 'demand', building + '.csv')
-        )
+        building_demand_cea_build_df = pd.read_csv(locator.get_demand_results_file(building))
         building_demand_cea_build_df.set_index('DATE', inplace=True)
         building_demand_cea_build_df.index = pd.to_datetime(building_demand_cea_build_df.index)
 

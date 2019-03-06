@@ -1,10 +1,12 @@
 from __future__ import division
-import pandas as pd
-import numpy as np
-import math
-import os
+
 import datetime
-import simpledbf
+import math
+
+import numpy as np
+import pandas as pd
+
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -15,39 +17,34 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def main(
-        scenario,
-        scenario_data_path,
-        buildings_names,
-        footprint,
-        buildings_cardinal,
-        cooling_generation_df,
-        emission_systems_cooling_df,
-        emission_systems_controller_df,
-        generation_cooling_code_dic,
-        emissions_cooling_type_dic,
-        emissions_controller_type_dic,
-        set_temperatures_dic,
-        T_ext_cea_df,
-        wet_bulb_temperature_df,
-        prediction_horizon,
-        date_and_time_prediction,
-        occupancy_per_building_cardinal,
-        occupancy_per_building_list,
-        supply_temperature_df,
-        phi_5_max,
-        Fb,
-        HP_ETA_EX_COOL,
-        HP_AUXRATIO
-):
-    length_and_width_df = get_building_length_and_width(
-        scenario_data_path,
-        scenario,
-        buildings_names
-    )
-    Y_dic = calculate_pipe_transmittance(
-        scenario_data_path,
-        scenario,
+
+def main(locator,
+         buildings_names,
+         footprint,
+         buildings_cardinal,
+         cooling_generation_df,
+         emission_systems_cooling_df,
+         emission_systems_controller_df,
+         generation_cooling_code_dic,
+         emissions_cooling_type_dic,
+         emissions_controller_type_dic,
+         set_temperatures_dic,
+         T_ext_cea_df,
+         wet_bulb_temperature_df,
+         prediction_horizon,
+         date_and_time_prediction,
+         occupancy_per_building_cardinal,
+         occupancy_per_building_list,
+         supply_temperature_df,
+         phi_5_max,
+         Fb,
+         HP_ETA_EX_COOL,
+         HP_AUXRATIO
+         ):
+    length_and_width_df = get_building_length_and_width(locator,
+                                                        buildings_names
+                                                        )
+    Y_dic = calculate_pipe_transmittance(locator,
         buildings_names
     )
     fforma_dic = calculate_form_factor(
@@ -109,38 +106,32 @@ def main(
         HP_ETA_EX_COOL,
         HP_AUXRATIO
     )
-    write_building_system_ahu_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        Tc_sup_air_ahu_C_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-    )
-    write_building_system_aru_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        Tc_sup_air_aru_C_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-    )
-    write_building_hvac_generic_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-    )
+    write_building_system_ahu_types(locator,
+                                    buildings_names,
+                                    supply_temperature_df,
+                                    emissions_cooling_type_dic,
+                                    Tc_sup_air_ahu_C_dic,
+                                    gen_efficiency_mean_dic,
+                                    sto_efficiency,
+                                    dis_efficiency_mean_dic
+                                    )
+    write_building_system_aru_types(locator,
+                                    buildings_names,
+                                    supply_temperature_df,
+                                    emissions_cooling_type_dic,
+                                    Tc_sup_air_aru_C_dic,
+                                    gen_efficiency_mean_dic,
+                                    sto_efficiency,
+                                    dis_efficiency_mean_dic
+                                    )
+    write_building_hvac_generic_types(locator,
+                                      buildings_names,
+                                      supply_temperature_df,
+                                      emissions_cooling_type_dic,
+                                      gen_efficiency_mean_dic,
+                                      sto_efficiency,
+                                      dis_efficiency_mean_dic
+                                      )
 
     return (
         Qcsmax_Wm2_dic,
@@ -148,16 +139,12 @@ def main(
     )
 
 
-def get_building_length_and_width(
-        scenario_data_path,
-        scenario,
-        buildings_names
-):
+def get_building_length_and_width(locator,
+                                  buildings_names
+                                  ):
     # Function taken from calc_bounding_box_geom in the CEA file building_properties.py
     # Get data
-    geometry_shapefile_path = os.path.join(
-        scenario_data_path, scenario, 'inputs', 'building-geometry', 'zone.shp'
-    )
+    geometry_shapefile_path = locator.get_zone_geometry()
 
     # Calculate
     import shapefile
@@ -195,16 +182,11 @@ def get_building_length_and_width(
     return length_and_width_df
 
 
-def calculate_pipe_transmittance(
-        scenario_data_path,
-        scenario,
-        buildings_names
-):
+def calculate_pipe_transmittance(locator,
+                                 buildings_names
+                                 ):
     # Get data
-    dbf = simpledbf.Dbf5(os.path.join(
-        scenario_data_path, scenario, 'inputs', 'building-properties', 'age.dbf'
-    ))
-    age_df = dbf.to_dataframe()
+    age_df = dbf_to_dataframe(locator.get_building_age())
     age_df.set_index('Name', inplace=True)
 
     Y_dic = {}
@@ -330,7 +312,6 @@ def calculate_hvac_efficiencies(
         HP_ETA_EX_COOL,
         HP_AUXRATIO
 ):
-
     gen_efficiency_mean_dic = {}
     em_efficiency_mean_dic = {}
     dis_efficiency_mean_dic = {}
@@ -439,7 +420,6 @@ def get_generation_efficiency(
         HP_ETA_EX_COOL,
         HP_AUXRATIO
 ):
-
     gen_efficiency_df = pd.DataFrame(
         np.zeros((3, prediction_horizon)),
         ['ahu', 'aru', 'scu'],
@@ -517,13 +497,13 @@ def get_emission_efficiency(
 
                 if frac_t < 0:
                     em_efficiency_df.loc[occupancy][time] = 1
-                elif abs(T_int_t - T_ext_cea_df[string_object_time] + dTcs_C + dT_Qcs - 10) < 10**(-6):
+                elif abs(T_int_t - T_ext_cea_df[string_object_time] + dTcs_C + dT_Qcs - 10) < 10 ** (-6):
                     em_efficiency_df.loc[occupancy][time] = 1
                 else:
-                    if 1/(1 + frac_t) > 1:  # Check efficiency value
+                    if 1 / (1 + frac_t) > 1:  # Check efficiency value
                         raise ValueError('Emission efficiency is greater than 1')
                     else:
-                        em_efficiency_df.loc[occupancy][time] = 1/(1 + frac_t)
+                        em_efficiency_df.loc[occupancy][time] = 1 / (1 + frac_t)
 
     return em_efficiency_df
 
@@ -571,12 +551,12 @@ def get_distribution_efficiency(
                     string_object_time = datetime.datetime.strftime(time, '%Y-%m-%d %H:%M:%S')
                     common_coeff = em_efficiency_df.loc[occupancy][time] * Lv * Y / phi_5_max
                     Tb = (
-                                 set_temperatures_dic[building].loc[occupancy][time]
-                                 - Fb
-                                 * (
-                                         set_temperatures_dic[building].loc[occupancy][time]
-                                         - T_ext_cea_df[string_object_time]
-                                 )
+                            set_temperatures_dic[building].loc[occupancy][time]
+                            - Fb
+                            * (
+                                    set_temperatures_dic[building].loc[occupancy][time]
+                                    - T_ext_cea_df[string_object_time]
+                            )
                     )
                     if (1 + common_coeff * (sys_temperatures[sys] - Tb)) > 1:  # Check efficiency value
                         raise ValueError('Distribution efficiency is greater than 1')
@@ -641,14 +621,14 @@ def calculate_comparisons_mean(
     for time in date_and_time_prediction:
         for index, row in gen_efficiency_df.iterrows():
             comparison_gen_df.loc[index][time] = (
-                abs(row[time] - gen_efficiency_mean[index])
-                / gen_efficiency_mean[index]
+                    abs(row[time] - gen_efficiency_mean[index])
+                    / gen_efficiency_mean[index]
             )
 
         for index, row in em_efficiency_df.iterrows():
             comparison_em_df.loc[index][time] = (
-                abs(row[time] - em_efficiency_mean)
-                / em_efficiency_mean
+                    abs(row[time] - em_efficiency_mean)
+                    / em_efficiency_mean
             )
 
         for sys in ['ahu', 'aru', 'scu']:
@@ -684,17 +664,15 @@ def calculate_comparisons_mean(
     )
 
 
-def write_building_system_ahu_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        Tc_sup_air_ahu_C_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-):
+def write_building_system_ahu_types(locator,
+                                    buildings_names,
+                                    supply_temperature_df,
+                                    emissions_cooling_type_dic,
+                                    Tc_sup_air_ahu_C_dic,
+                                    gen_efficiency_mean_dic,
+                                    sto_efficiency,
+                                    dis_efficiency_mean_dic
+                                    ):
     ahu_types = []
     for building in buildings_names:
         if not math.isnan(supply_temperature_df.loc[building]['ahu']):
@@ -708,9 +686,9 @@ def write_building_system_ahu_types(
                 11.5,
                 1,
                 (
-                    gen_efficiency_mean_dic[building].loc['ahu']
-                    * sto_efficiency
-                    * dis_efficiency_mean_dic[building]['ahu']
+                        gen_efficiency_mean_dic[building].loc['ahu']
+                        * sto_efficiency
+                        * dis_efficiency_mean_dic[building]['ahu']
                 ),
                 1,
                 1
@@ -732,24 +710,21 @@ def write_building_system_ahu_types(
             'ahu_return_air_recovery_efficiency'
         ])
     ahu_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_hvac_ahu_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_hvac_ahu_types'
+                                                                      ),
         index=False
     )
 
 
-def write_building_system_aru_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        Tc_sup_air_aru_C_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-):
+def write_building_system_aru_types(locator,
+                                    buildings_names,
+                                    supply_temperature_df,
+                                    emissions_cooling_type_dic,
+                                    Tc_sup_air_aru_C_dic,
+                                    gen_efficiency_mean_dic,
+                                    sto_efficiency,
+                                    dis_efficiency_mean_dic
+                                    ):
     aru_types = []
     for building in buildings_names:
         if not math.isnan(supply_temperature_df.loc[building]['aru']):
@@ -761,9 +736,9 @@ def write_building_system_aru_types(
                 Tc_sup_air_aru_C_dic[building],
                 1,
                 (
-                    gen_efficiency_mean_dic[building].loc['aru']
-                    * sto_efficiency
-                    * dis_efficiency_mean_dic[building]['aru']
+                        gen_efficiency_mean_dic[building].loc['aru']
+                        * sto_efficiency
+                        * dis_efficiency_mean_dic[building]['aru']
                 ),
                 1
             ])
@@ -782,23 +757,20 @@ def write_building_system_aru_types(
         ])
 
     aru_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_hvac_tu_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_hvac_tu_types'
+                                                                      ),
         index=False
     )
 
 
-def write_building_hvac_generic_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        supply_temperature_df,
-        emissions_cooling_type_dic,
-        gen_efficiency_mean_dic,
-        sto_efficiency,
-        dis_efficiency_mean_dic
-):
+def write_building_hvac_generic_types(locator,
+                                      buildings_names,
+                                      supply_temperature_df,
+                                      emissions_cooling_type_dic,
+                                      gen_efficiency_mean_dic,
+                                      sto_efficiency,
+                                      dis_efficiency_mean_dic
+                                      ):
     scu_types = []
     for building in buildings_names:
         if not math.isnan(supply_temperature_df.loc[building]['scu']):
@@ -820,8 +792,7 @@ def write_building_hvac_generic_types(
             'generic_cooling_efficiency'
         ])
     scu_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_hvac_generic_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_hvac_generic_types'
+                                                                      ),
         index=False
     )

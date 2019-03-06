@@ -1,11 +1,16 @@
 from __future__ import division
-import pandas as pd
-import os
+
 import datetime
+import os
+
+import pandas as pd
+
 from cea.concept_project.model_building import building_extract_cea_data
-from cea.concept_project.model_building import building_write_definitions
-from cea.concept_project.model_building import building_setup_district
 from cea.concept_project.model_building import building_process_hvac_efficiencies
+from cea.concept_project.model_building import building_setup_district
+from cea.concept_project.model_building import building_write_definitions
+from cea.concept_project.model_building.constants import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
+    PHI_5_MAX, FB, HP_ETA_EX_COOL, HP_AUXRATIO
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -16,31 +21,18 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def main(
-        scenario_data_path,
-        scenario, country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature
-):
 
-    # Parameters you can/need to change - General
-    DELTA_P_DIM = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
-    # found in CEA > demand > constants.py
-    density_air = 1.205  # [kg/m3]
-    heat_capacity_air = 1211.025  # [J/(m3.K)]
-    h_e = 25  # [W/(m2.K)]
-    h_i = 7.7  # [W/(m2.K)]
-
-    # Parameters you can/need to change - HVAC efficiencies
-    phi_5_max = 6.73 * (10 ** 6)  # TODO:  Remind the user that this needs to be updated when the reference case changes
-    Fb = 0.7
-    HP_ETA_EX_COOL = 0.3
-    HP_AUXRATIO = 0.83
-
+def main(locator,
+         weather_path,
+         project_path,
+         scenario, region,
+         parameter_set,
+         time_start,
+         time_end,
+         time_step_ts,
+         set_temperature_goal,
+         constant_temperature
+         ):
     # Preliminary step - time
     date_and_time_prediction = pd.date_range(start=time_start, end=time_end, freq=pd.to_timedelta(time_step_ts))
     time_step = date_and_time_prediction[1] - date_and_time_prediction[0]
@@ -99,22 +91,18 @@ def main(
         occupancy_per_building_list,
         T_int_cea_dic,
         T_ext_cea_df
-    ) = building_extract_cea_data.main(
-        scenario_data_path,
-        scenario,
-        country,
-        time_start,
-        time_end
-    )
+    ) = building_extract_cea_data.main(locator, weather_path,
+                                       region,
+                                       time_start,
+                                       time_end
+                                       )
 
     (
         date_and_time,
         year,
         wet_bulb_temperature_df,
         occupancy_probability_df
-    ) = building_write_definitions.main(
-        scenario_data_path,
-        scenario,
+    ) = building_write_definitions.main(locator,
         date_and_time_prediction,
         time_start,
         time_end,
@@ -143,10 +131,10 @@ def main(
         gross_floor_area_m2,
         mean_floor_height_m,
         DELTA_P_DIM,
-        h_e,
-        h_i,
-        density_air,
-        heat_capacity_air,
+        HE_E,
+        H_I,
+        DENSITY_AIR,
+        HEAT_CAPACITY_AIR,
         supply_temperature_df,
         emissions_cooling_type_dic
     )
@@ -173,15 +161,15 @@ def main(
         T_int_cea_dic
     )
 
-    electricity_prices_MWh = pd.read_excel(os.path.join(scenario_data_path, 'prices_all.xlsx'))
+    electricity_prices_MWh = pd.read_excel(locator.get_electricity_costs(region), "ELECTRICITY")
+    electricity_prices_MWh["PRICE ($/MWh)"] = electricity_prices_MWh["cost_kWh"]*1000
+    electricity_prices_MWh["our_datetime"] = pd.date_range(start='1/1/2005', periods=8760)
     electricity_prices_MWh.set_index('our_datetime', inplace=True)
 
     (
         Qcsmax_Wm2_dic,
         em_efficiency_mean_dic,
-    ) = building_process_hvac_efficiencies.main(
-        scenario,
-        scenario_data_path,
+    ) = building_process_hvac_efficiencies.main(locator,
         buildings_names,
         footprint,
         buildings_cardinal,
@@ -199,8 +187,8 @@ def main(
         occupancy_per_building_cardinal,
         occupancy_per_building_list,
         supply_temperature_df,
-        phi_5_max,
-        Fb,
+        PHI_5_MAX,
+        FB,
         HP_ETA_EX_COOL,
         HP_AUXRATIO
     )

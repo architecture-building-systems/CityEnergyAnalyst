@@ -28,8 +28,8 @@ __status__ = "Production"
 def planning_and_operation(locator, config):
 
     #Local vars
-    project = locator.get_project_path()  # path to project : old name was scenario_path
-    scenario = config.scenario  # path to data: old name was scenario
+    project_path = locator.get_project_path()  # path to project_path : old name was scenario_path
+    scenario_name = config.scenario_name # scenario_name
     country = config.region
 
     time_start = config.mpc_district.time_start
@@ -62,12 +62,12 @@ def planning_and_operation(locator, config):
     time_main = time.time()
     date_main = datetime.datetime.now()
 
-    print('Running scenario: ' + scenario)
+    print('Running scenario: ' + scenario_name)
 
     print('Processing: Setup models and optimization')
     m = planning_and_operation_optimization.main(
-        project,
-        scenario,
+        project_path,
+        scenario_name,
         country,
         parameter_set,
         time_start,
@@ -105,14 +105,11 @@ def planning_and_operation(locator, config):
     )
 
     print('Processing: Write results')
-    output_folder = "mpc_district"
+    output_folder = "mpc-district"
     planning_and_operation_write_results.print_res(m)
-    planning_and_operation_write_results.write_results(
+    planning_and_operation_write_results.write_results(locator, date_main, output_folder, scenario_name,
         m,
-        results_path,
         time_main,
-        project,
-        scenario,
         solver_name,
         threads,
         time_limit,
@@ -123,7 +120,7 @@ def planning_and_operation(locator, config):
         beta,
         load_factor
     )
-    planning_and_operation_plots.save_plots(m, project, scenario, results_path)
+    planning_and_operation_plots.save_plots(m, project_path, scenario_name, results_path)
     operation_write_results.main(locator, m, output_folder, date_main)
 
     print('Completed.')

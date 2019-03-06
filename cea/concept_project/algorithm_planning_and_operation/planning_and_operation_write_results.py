@@ -36,12 +36,9 @@ def print_res(m):
             print ("Start: %02i End: %02i LineType %02i" % (start_node, end_node, linetype))
 
 
-def write_results(
+def write_results(locator, date_main, output_folder, scenario_name,
         m,
-        results_path,
         time_main,
-        scenario_data_path,
-        scenario,
         solver_name,
         threads,
         time_limit,
@@ -52,10 +49,10 @@ def write_results(
         beta,
         load_factor
 ):
-    with open(os.path.join(results_path + '.csv'), "wb") as csv_file:
+    with open(os.path.join(locator.get_mpc_results_folder(date_main, output_folder) + '.csv'), "wb") as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
 
-        writer.writerow(['scenario', scenario])
+        writer.writerow(['scenario', scenario_name])
         writer.writerow(['solver_name', solver_name])
         writer.writerow(['threads', threads])
         writer.writerow(['time_limit', time_limit])

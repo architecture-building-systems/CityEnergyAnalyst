@@ -30,10 +30,10 @@ __status__ = "Production"
 
 def operation(locator, config):
     # local variables
-    project = locator.get_project_path()  # path to project
-
-    scenario = config.scenario  # path to data
+    project_path = locator.get_project_path()  # path to project
+    scenario_name = config.scenario_name  # scenario_name
     country = config.region
+    weather_path = config.weather
     time_start = config.mpc_building.time_start
     time_end = config.mpc_building.time_end
     set_temperature_goal = config.mpc_building.set_temperature_goal
@@ -81,9 +81,9 @@ def operation(locator, config):
         Qcsmax_Wm2_dic,
         gross_floor_area_m2,
         price_vector
-    ) = get_optimization_inputs(
-        project,
-        scenario,
+    ) = get_optimization_inputs(locator, weather_path,
+        project_path,
+        scenario_name,
         country,
         parameter_set,
         time_start,
@@ -141,14 +141,14 @@ def operation(locator, config):
     )
 
     print('Processing: Write results')
-    output_folder = "mpc_building" # this is an identifier for the location of the output folder
+    output_folder = "mpc-building" # this is an identifier for the location of the output folder
     operation_write_results.main(locator, m, output_folder, date_main)
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
 
-def get_optimization_inputs(
-        scenario_data_path,
+def get_optimization_inputs(locator, weather_path,
+        project_path,
         scenario,
         country,
         parameter_set,
@@ -188,8 +188,8 @@ def get_optimization_inputs(
         em_efficiency_mean_dic,
         Qcsmax_Wm2_dic,
         electricity_prices_MWh
-    ) = building_main.main(
-        scenario_data_path,
+    ) = building_main.main(locator, weather_path,
+        project_path,
         scenario,
         country,
         parameter_set,
@@ -204,7 +204,7 @@ def get_optimization_inputs(
     buildings_dic = {}
     for building in buildings_names:
         # Update database from CSV files
-        building_data_path = os.path.join(scenario_data_path, scenario, 'concept', 'building-definition')
+        building_data_path = locator.get_mpc_results_building_definitions_folder()
         building_utils.create_database(
             sqlite_path=os.path.join(building_data_path, 'data.sqlite'),
             sql_path=os.path.abspath(os.path.join(

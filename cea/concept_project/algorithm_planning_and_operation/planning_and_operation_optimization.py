@@ -263,7 +263,7 @@ def total_electric_load_per_building_rule(m, building, time):
 
 
 def main(
-        scenario_data_path,
+        project_path,
         scenario,
         country,
         parameter_set,
@@ -312,7 +312,7 @@ def main(
         gross_floor_area_m2,
         price_vector
     ) = operation_main.get_optimization_inputs(
-        scenario_data_path,
+        project_path,
         scenario,
         country,
         parameter_set,
@@ -338,14 +338,14 @@ def main(
         dict_path,
         hourly_demand_per_building
     ) = initial_network(
-        scenario_data_path,
+        project_path,
         scenario
     )
     df_nodes = pd.DataFrame(points_on_line).drop(['geometry', 'Building', 'Name'], axis=1)
     del tranches, points_on_line
 
     # Line Parameters
-    df_line_parameter = get_line_parameters(scenario_data_path)
+    df_line_parameter = get_line_parameters(project_path)
     dict_line_tech_params = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)

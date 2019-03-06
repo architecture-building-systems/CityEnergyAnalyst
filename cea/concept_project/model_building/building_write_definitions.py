@@ -1,12 +1,12 @@
 from __future__ import division
-import pandas as pd
-import numpy as np
+
+import datetime
 import math
 import os
-import datetime
-import shutil
 import warnings
-from cea.concept_project import model_building
+
+import numpy as np
+import pandas as pd
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -17,167 +17,131 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def main(
-        scenario_data_path,
-        scenario,
-        date_and_time_prediction,
-        time_start,
-        time_end,
-        time_step,
-        parameter_set,
-        internal_loads_df,
-        construction_envelope_systems_df,
-        leakage_envelope_systems_df,
-        window_envelope_systems_df,
-        roofs_envelope_systems_df,
-        wall_envelope_systems_df,
-        shading_envelope_systems_df,
-        zone_occupancy_df,
-        architecture_df,
-        weather_general_info,
-        weather_timeseries_initial_df,
-        occupancy_types,
-        occupancy_types_cardinal,
-        buildings_names,
-        building_geometry_all,
-        occupants_probability_dic,
-        lighting_appliances_probability_dic,
-        processes_probability_dic,
-        monthly_use_probability_df,
-        occupancy_density_m2_p,
-        gross_floor_area_m2,
-        mean_floor_height_m,
-        DELTA_P_DIM,
-        h_e,
-        h_i,
-        density_air,
-        heat_capacity_air,
-        supply_temperature_df,
-        emissions_cooling_type_dic
-):
-    prepare_folder(
-        scenario_data_path,
-        scenario
-    )
-    write_building_zones(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        occupancy_types,
-        zone_occupancy_df,
-        gross_floor_area_m2,
-        mean_floor_height_m
-    )
-    write_building_surfaces_interior(
-        scenario_data_path,
-        scenario
-    )
-    write_building_surfaces_adiabatic(
-        scenario_data_path,
-        scenario
-    )
-    write_building_surfaces_exterior(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        architecture_df,
-        occupancy_types,
-        zone_occupancy_df,
-        building_geometry_all
-    )
-    write_building_blind_types(
-        scenario_data_path,
-        scenario,
-        shading_envelope_systems_df
-    )
-    write_buildings(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        weather_general_info
-    )
-    write_building_surface_types(
-        scenario_data_path,
-        scenario,
-        wall_envelope_systems_df,
-        window_envelope_systems_df,
-        roofs_envelope_systems_df,
-        h_e,
-        h_i
-    )
-    write_building_window_types(
-        scenario_data_path,
-        scenario,
-        window_envelope_systems_df,
-        h_e,
-        h_i
-    )
+
+def main(locator,
+         date_and_time_prediction,
+         time_start,
+         time_end,
+         time_step,
+         parameter_set,
+         internal_loads_df,
+         construction_envelope_systems_df,
+         leakage_envelope_systems_df,
+         window_envelope_systems_df,
+         roofs_envelope_systems_df,
+         wall_envelope_systems_df,
+         shading_envelope_systems_df,
+         zone_occupancy_df,
+         architecture_df,
+         weather_general_info,
+         weather_timeseries_initial_df,
+         occupancy_types,
+         occupancy_types_cardinal,
+         buildings_names,
+         building_geometry_all,
+         occupants_probability_dic,
+         lighting_appliances_probability_dic,
+         processes_probability_dic,
+         monthly_use_probability_df,
+         occupancy_density_m2_p,
+         gross_floor_area_m2,
+         mean_floor_height_m,
+         DELTA_P_DIM,
+         h_e,
+         h_i,
+         density_air,
+         heat_capacity_air,
+         supply_temperature_df,
+         emissions_cooling_type_dic
+         ):
+    # prepare_folder(locator) no need to do this, since CEA checks the existence of all folders once they are called
+    write_building_zones(locator,
+                         buildings_names,
+                         occupancy_types,
+                         zone_occupancy_df,
+                         gross_floor_area_m2,
+                         mean_floor_height_m
+                         )
+    write_building_surfaces_interior(locator)
+    write_building_surfaces_adiabatic(locator)
+    write_building_surfaces_exterior(locator,
+                                     buildings_names,
+                                     architecture_df,
+                                     occupancy_types,
+                                     zone_occupancy_df,
+                                     building_geometry_all
+                                     )
+    write_building_blind_types(locator,
+                               shading_envelope_systems_df
+                               )
+    write_buildings(locator,
+                    buildings_names,
+                    weather_general_info
+                    )
+    write_building_surface_types(locator,
+                                 wall_envelope_systems_df,
+                                 window_envelope_systems_df,
+                                 roofs_envelope_systems_df,
+                                 h_e,
+                                 h_i
+                                 )
+    write_building_window_types(locator,
+                                window_envelope_systems_df,
+                                h_e,
+                                h_i
+                                )
     (
         date_and_time,
         year,
         wet_bulb_temperature_df
-    ) = write_weather(
-        scenario_data_path,
-        scenario,
-        date_and_time_prediction,
-        weather_general_info,
-        weather_timeseries_initial_df
-    )
-    write_building_scenarios(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        time_start,
-        time_end,
-        time_step
-    )
-    write_building_parameter_sets(
-        scenario_data_path,
-        scenario,
-        parameter_set,
-        mean_floor_height_m,
-        buildings_names,
-        leakage_envelope_systems_df,
-        construction_envelope_systems_df,
-        DELTA_P_DIM,
-        h_e,
-        h_i,
-        density_air,
-        heat_capacity_air
-    )
-    write_building_linearization_types(
-        scenario_data_path,
-        scenario
-    )
-    lighting_appliances_probability_combined_dic = write_building_internal_gain_types(
-        scenario_data_path,
-        scenario,
-        occupancy_types,
-        internal_loads_df,
-        lighting_appliances_probability_dic,
-        processes_probability_dic,
-        occupancy_density_m2_p
-    )
-    occupancy_probability_df = write_building_internal_gain_timeseries(
-        scenario_data_path,
-        scenario,
-        date_and_time_prediction,
-        occupancy_types_cardinal,
-        occupancy_types,
-        occupants_probability_dic,
-        lighting_appliances_probability_combined_dic,
-        monthly_use_probability_df
-    )
-    write_building_zone_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        occupancy_types,
-        zone_occupancy_df,
-        architecture_df,
-        supply_temperature_df,
-        emissions_cooling_type_dic
-    )
+    ) = write_weather(locator,
+                      date_and_time_prediction,
+                      weather_general_info,
+                      weather_timeseries_initial_df
+                      )
+    write_building_scenarios(locator, locator.scenario,
+                             buildings_names,
+                             time_start,
+                             time_end,
+                             time_step
+                             )
+    write_building_parameter_sets(locator,
+                                  parameter_set,
+                                  mean_floor_height_m,
+                                  buildings_names,
+                                  leakage_envelope_systems_df,
+                                  construction_envelope_systems_df,
+                                  DELTA_P_DIM,
+                                  h_e,
+                                  h_i,
+                                  density_air,
+                                  heat_capacity_air
+                                  )
+    write_building_linearization_types(locator
+                                       )
+    lighting_appliances_probability_combined_dic = write_building_internal_gain_types(locator,
+                                                                                      occupancy_types,
+                                                                                      internal_loads_df,
+                                                                                      lighting_appliances_probability_dic,
+                                                                                      processes_probability_dic,
+                                                                                      occupancy_density_m2_p
+                                                                                      )
+    occupancy_probability_df = write_building_internal_gain_timeseries(locator,
+                                                                       date_and_time_prediction,
+                                                                       occupancy_types_cardinal,
+                                                                       occupancy_types,
+                                                                       occupants_probability_dic,
+                                                                       lighting_appliances_probability_combined_dic,
+                                                                       monthly_use_probability_df
+                                                                       )
+    write_building_zone_types(locator,
+                              buildings_names,
+                              occupancy_types,
+                              zone_occupancy_df,
+                              architecture_df,
+                              supply_temperature_df,
+                              emissions_cooling_type_dic
+                              )
 
     return (
         date_and_time,
@@ -186,30 +150,25 @@ def main(
         occupancy_probability_df
     )
 
-def prepare_folder(
-        scenario_data_path,
-        scenario
-):
-    """Check if /concept/building-definition exists. If not, create directory and necessary files."""
-    if not os.path.isdir(os.path.join(scenario_data_path, scenario)):
-        raise OSError("Scenario directory not found.")
-    if not os.path.isdir(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition')):
-        os.makedirs(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition'))
 
-    # Copy file(s) from default building definition # TODO: Create these file(s) dynamically
-    shutil.copy(
-        os.path.join(
-            os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv'
-        ),
-        os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition'
-        )
-    )
+# def prepare_folder(locator):
+#     """Check if /concept/building-definition exists. If not, create directory and necessary files."""
+#     if not os.path.isdir(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition')):
+#         os.makedirs(os.path.join(scenario_data_path, scenario, 'concept', 'building-definition'))
+#
+#     # Copy file(s) from default building definition # TODO: Create these file(s) dynamically
+#     shutil.copy(
+#         os.path.join(
+#             os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv'
+#         ),
+#         os.path.join(
+#             scenario_data_path, scenario, 'concept', 'building-definition'
+#         )
+#     )
 
 
 def write_building_zones(
-        scenario_data_path,
-        scenario,
+        locator,
         buildings_names,
         occupancy_types,
         zone_occupancy_df,
@@ -240,17 +199,12 @@ def write_building_zones(
         ]
     )
     building_zones_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_zones.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_zones'),
         index=False
     )
 
 
-def write_building_surfaces_interior(
-        scenario_data_path,
-        scenario
-):
+def write_building_surfaces_interior(locator):
     # Writing a blank file because no interior surface is considered here
     building_surfaces_interior_df = pd.DataFrame(
         index=[0],
@@ -265,17 +219,12 @@ def write_building_surfaces_interior(
         ]
     )
     building_surfaces_interior_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_surfaces_interior.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_surfaces_interior'),
         index=False
     )
 
 
-def write_building_surfaces_adiabatic(
-        scenario_data_path,
-        scenario
-):
+def write_building_surfaces_adiabatic(locator):
     # Writing a blank file because no adiabatic surface is considered here
     building_surfaces_adiabatic_df = pd.DataFrame(
         index=[0],
@@ -289,22 +238,18 @@ def write_building_surfaces_adiabatic(
         ]
     )
     building_surfaces_adiabatic_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_surfaces_adiabatic.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_surfaces_adiabatic'),
         index=False
-    )
+        )
 
 
-def write_building_surfaces_exterior(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        architecture_df,
-        occupancy_types,
-        zone_occupancy_df,
-        building_geometry_all
-):
+def write_building_surfaces_exterior(locator,
+                                     buildings_names,
+                                     architecture_df,
+                                     occupancy_types,
+                                     zone_occupancy_df,
+                                     building_geometry_all
+                                     ):
     building_surfaces_exterior = []
     for building in buildings_names:
         type_wall_build = architecture_df.loc[building]['type_wall']
@@ -360,27 +305,24 @@ def write_building_surfaces_exterior(
         'surface_type'
     ]).sum().reset_index()
     building_surfaces_exterior_df['surface_name'] = (
-        'srf_'
-        + building_surfaces_exterior_df['building_name'] + '_'
-        + building_surfaces_exterior_df['zone_name'] + '_'
-        + building_surfaces_exterior_df['direction_name'] + '_'
-        + building_surfaces_exterior_df['surface_type']
+            'srf_'
+            + building_surfaces_exterior_df['building_name'] + '_'
+            + building_surfaces_exterior_df['zone_name'] + '_'
+            + building_surfaces_exterior_df['direction_name'] + '_'
+            + building_surfaces_exterior_df['surface_type']
     )
     building_surfaces_exterior_df['surface_comment'] = ''
 
     building_surfaces_exterior_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_surfaces_exterior.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_surfaces_exterior'
+                                                                      ),
         index=False
     )
 
 
-def write_building_blind_types(
-        scenario_data_path,
-        scenario,
-        shading_envelope_systems_df
-):
+def write_building_blind_types(locator,
+                               shading_envelope_systems_df
+                               ):
     building_blind_types = []
     for index, row in shading_envelope_systems_df.iterrows():
         building_blind_types.append([
@@ -395,19 +337,16 @@ def write_building_blind_types(
         ]
     )
     building_blind_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_blind_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_blind_types'
+                                                                      ),
         index=False
     )
 
 
-def write_buildings(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        weather_general_info
-):
+def write_buildings(locator,
+                    buildings_names,
+                    weather_general_info
+                    ):
     location = weather_general_info[0][1]
     buildings = []
     for building in buildings_names:
@@ -423,22 +362,19 @@ def write_buildings(
         ]
     )
     buildings_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'buildings.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('buildings'
+                                                                      ),
         index=False
     )
 
 
-def write_building_surface_types(
-        scenario_data_path,
-        scenario,
-        wall_envelope_systems_df,
-        window_envelope_systems_df,
-        roofs_envelope_systems_df,
-        h_e,
-        h_i
-):
+def write_building_surface_types(locator,
+                                 wall_envelope_systems_df,
+                                 window_envelope_systems_df,
+                                 roofs_envelope_systems_df,
+                                 h_e,
+                                 h_i
+                                 ):
     #  TODO: consider adding heat capacity for the walls, and putting the air heat capacity
     #  instead of the construction heat capacity that is from envelope_systems.xls > CONSTRUCTION
     building_surface_types = []
@@ -500,20 +436,17 @@ def write_building_surface_types(
         ]
     )
     building_surface_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_surface_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_surface_types'
+                                                                      ),
         index=False
     )
 
 
-def write_building_window_types(
-        scenario_data_path,
-        scenario,
-        window_envelope_systems_df,
-        h_e,
-        h_i
-):
+def write_building_window_types(locator,
+                                window_envelope_systems_df,
+                                h_e,
+                                h_i
+                                ):
     building_window_type = []
     for index, row in window_envelope_systems_df.iterrows():
         resistance_r = 0.5 * ((1 / row['U_win']) - (1 / h_e) - (1 / h_i))
@@ -531,9 +464,8 @@ def write_building_window_types(
             'irradiation_transfer_coefficient'
         ])
     building_window_type_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_window_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_window_types'
+                                                                      ),
         index=False)
 
 
@@ -654,9 +586,7 @@ def combine_processes_appliances_internal_gains_one_occupancy_type(
     )
 
 
-def write_building_internal_gain_types(
-        scenario_data_path,
-        scenario,
+def write_building_internal_gain_types(locator,
         occupancy_types,
         internal_loads_df,
         lighting_appliances_probability_dic,
@@ -701,8 +631,7 @@ def write_building_internal_gain_types(
         ]
     )
     building_internal_gain_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_internal_gain_types.csv'
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_internal_gain_types'
         ),
         index=False
     )
@@ -711,8 +640,7 @@ def write_building_internal_gain_types(
 
 
 def write_building_internal_gain_timeseries(
-        scenario_data_path,
-        scenario,
+        locator,
         date_and_time_prediction,
         occupancy_types_cardinal,
         occupancy_types,
@@ -775,10 +703,7 @@ def write_building_internal_gain_timeseries(
     )
 
     internal_gain_timeseries_df.to_csv(
-        path_or_buf=(
-            os.path.join(
-                scenario_data_path, scenario, 'concept', 'building-definition', 'building_internal_gain_timeseries.csv'
-            )
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_internal_gain_timeseries'
         ),
         index=False
     )
@@ -786,9 +711,7 @@ def write_building_internal_gain_timeseries(
     return occupancy_probability_df
 
 
-def write_weather(
-        scenario_data_path,
-        scenario,
+def write_weather(locator,
         date_and_time_prediction,
         weather_general_info,
         weather_timeseries_initial_df
@@ -897,8 +820,7 @@ def write_weather(
 
     # Writing the CSV file
     weather_timeseries_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'weather_timeseries.csv'
+        path_or_buf=locator.get_mpc_results_building_definitions_file('weather_timeseries'
         ),
         index=False
     )
@@ -925,8 +847,7 @@ def write_weather(
 
     # Writing the CSV file
     weather_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'weather_types.csv'
+        path_or_buf=locator.get_mpc_results_building_definitions_file('weather_types'
         ),
         index=False
     )
@@ -937,14 +858,13 @@ def write_weather(
     )
 
 
-def write_building_scenarios(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        time_start,
-        time_end,
-        time_step
-):
+def write_building_scenarios(locator,
+                             scenario,
+                             buildings_names,
+                             time_start,
+                             time_end,
+                             time_step
+                             ):
     building_scenarios = []
     for building in buildings_names:
         building_scenarios.append([
@@ -977,9 +897,8 @@ def write_building_scenarios(
             'time_step'
         ])
     building_scenarios_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_scenarios.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_scenarios'
+                                                                      ),
         index=False
     )
 
@@ -1126,21 +1045,18 @@ def pre_write_constants(
     return constants_list_df
 
 
-def write_building_parameter_sets(
-        scenario_data_path,
-        scenario,
-        parameter_set,
-        mean_floor_height_m,
-        buildings_names,
-        leakage_envelope_systems_df,
-        construction_envelope_systems_df,
-        DELTA_P_DIM,
-        h_e,
-        h_i,
-        density_air,
-        heat_capacity_air
-):
-
+def write_building_parameter_sets(locator,
+                                  parameter_set,
+                                  mean_floor_height_m,
+                                  buildings_names,
+                                  leakage_envelope_systems_df,
+                                  construction_envelope_systems_df,
+                                  DELTA_P_DIM,
+                                  h_e,
+                                  h_i,
+                                  density_air,
+                                  heat_capacity_air
+                                  ):
     # Check whether all the buildings have the same mean floor height
     mean_floor_height_0 = mean_floor_height_m[buildings_names[0]]
     for building in buildings_names:
@@ -1184,17 +1100,13 @@ def write_building_parameter_sets(
     ]
     building_parameters_sets_df = pd.concat(sub_data_frames)
     building_parameters_sets_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_parameter_sets.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_parameter_sets'
+                                                                      ),
         index=False
     )
 
 
-def write_building_linearization_types(
-        scenario_data_path,
-        scenario
-):
+def write_building_linearization_types(locator):
     building_linearization_types = [[
         'linearization_default',
         15,
@@ -1231,24 +1143,20 @@ def write_building_linearization_types(
         ]
     )
     building_linearization_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_linearization_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_linearization_types'
+                                                                      ),
         index=False
     )
 
 
-def write_building_zone_types(
-        scenario_data_path,
-        scenario,
-        buildings_names,
-        occupancy_types,
-        zone_occupancy_df,
-        architecture_df,
-        supply_temperature_df,
-        emissions_cooling_type_dic
-):
-
+def write_building_zone_types(locator,
+                              buildings_names,
+                              occupancy_types,
+                              zone_occupancy_df,
+                              architecture_df,
+                              supply_temperature_df,
+                              emissions_cooling_type_dic
+                              ):
     building_zone_types = []
     for building in buildings_names:
         for occupancy in occupancy_types:
@@ -1302,8 +1210,6 @@ def write_building_zone_types(
     )
 
     building_zone_types_df.to_csv(
-        path_or_buf=os.path.join(
-            scenario_data_path, scenario, 'concept', 'building-definition', 'building_zone_types.csv'
-        ),
+        path_or_buf=locator.get_mpc_results_building_definitions_file('building_zone_types'),
         index=False
     )
