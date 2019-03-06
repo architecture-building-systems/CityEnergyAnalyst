@@ -6,7 +6,7 @@ import os
 import datetime
 import shutil
 import warnings
-from concept import model_building
+from cea.concept_project import model_building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

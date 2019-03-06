@@ -5,7 +5,7 @@ import time
 import datetime
 import errno
 import sqlite3
-from cea.concept_project import config
+from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS,  SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA
 from cea.concept_project import model_building
 from cea.concept_project.model_building.building import Building
 from cea.concept_project.model_building import building_utils
@@ -13,39 +13,45 @@ from cea.concept_project.model_building import building_main
 from cea.concept_project.algorithm_operation import operation_preprocess_optimization
 from cea.concept_project.algorithm_operation import operation_optimization
 from cea.concept_project.algorithm_operation import operation_write_results
+import cea.config
+import cea.inputlocator
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna"]
+__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def main(
-        scenario_data_path=config.scenario_data_path,
-        scenario=config.scenario,
-        country=config.country,
-        parameter_set=config.parameter_set,
-        time_start=config.time_start,
-        time_end=config.time_end,
-        time_step_ts=config.time_step_ts,
-        set_temperature_goal=config.set_temperature_goal,
-        constant_temperature=config.constant_temperature,
-        alpha=config.alpha,
-        beta=config.beta,
-        pricing_scheme=config.pricing_scheme,
-        constant_price=config.constant_price,
-        min_max_source=config.min_max_source,
-        min_constant_temperature=config.min_constant_temperature,
-        max_constant_temperature=config.max_constant_temperature,
-        delta_set=config.delta_set,
-        delta_setback=config.delta_setback,
-        solver_name=config.solver_name,
-        time_limit=config.time_limit,
-        threads=config.threads
-):
+def operation(locator, config):
+
+    #local variables
+    project = locator.get_project_path() #path to project
+    scenario = config.scenario # path to data
+    country = config.region
+    time_start = config.mpc_building.time_start
+    time_end = config.mpc_building.time_end
+    set_temperature_goal = config.mpc_building.set_temperature_goal
+    constant_temperature = config.mpc_building.constant_temperature
+    pricing_scheme = config.mpc_building.pricing_scheme
+    constant_price = config.mpc_building.constant_price
+    min_max_source = config.mpc_building.min_max_source
+    min_constant_temperature = config.mpc_building.min_constant_temperature
+    max_constant_temperature = config.mpc_building.max_constant_temperature
+    delta_set = config.mpc_building.delta_set
+    delta_setback = config.mpc_building.delta_setback
+
+    #local constants
+    parameter_set = PARAMETER_SET
+    time_step_ts = TIME_STEP_TS
+    solver_name = SOLVER_NAME
+    time_limit = TIME_LIMIT
+    threads = THREADS
+    alpha = ALPHA
+    beta = BETA
+
     t0 = time.clock()
     date_main = datetime.datetime.now()
 
@@ -73,7 +79,7 @@ def main(
         gross_floor_area_m2,
         price_vector
     ) = get_optimization_inputs(
-            scenario_data_path,
+            project,
             scenario,
             country,
             parameter_set,
@@ -133,7 +139,7 @@ def main(
 
     print('Processing: Write results')
     results_path = os.path.join(
-        scenario_data_path,
+        project,
         'output_operation',
         '_'.join(os.path.normpath(scenario).split(os.path.sep))
         + '_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}'.format(
@@ -291,6 +297,11 @@ def get_optimization_inputs(
         price_vector
     )
 
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(config.scenario)
 
-if __name__ == "__main__":
-    main()
+    operation(locator, config)
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())

@@ -2,10 +2,10 @@ from __future__ import division
 import pandas as pd
 import os
 import datetime
-from concept.model_building import building_extract_cea_data
-from concept.model_building import building_write_definitions
-from concept.model_building import building_setup_district
-from concept.model_building import building_process_hvac_efficiencies
+from cea.concept_project.model_building import building_extract_cea_data
+from cea.concept_project.model_building import building_write_definitions
+from cea.concept_project.model_building import building_setup_district
+from cea.concept_project.model_building import building_process_hvac_efficiencies
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

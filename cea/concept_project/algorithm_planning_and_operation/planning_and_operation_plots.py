@@ -3,8 +3,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 import re
-from concept import config
-from concept.algorithm_planning_and_operation import planning_and_operation_preprocess_network
+from cea.concept_project import config
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_preprocess_network
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
