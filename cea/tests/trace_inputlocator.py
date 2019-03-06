@@ -53,7 +53,6 @@ def main(config):
             if locator_method == 'get_temporary_file':
                 # this file is probably already deleted (hopefully?)
                 continue
-            print("{}, {}".format(locator_method, filename))
 
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
