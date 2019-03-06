@@ -102,4 +102,4 @@ digraph trace_inputlocator {
     "thermal-network-matrix" -> "DH__ploss_Substations_kW.csv"[label="(get_optimization_network_substation_ploss_file)"]
     "thermal-network-matrix" -> "DH__substaion_HEX_cost_USD.csv"[label="(get_substation_HEX_cost)"]
     "thermal-network-matrix" -> "Aggregated_Demand_DH__Wh.csv"[label="(get_thermal_demand_csv_file)"]
-}
+    }

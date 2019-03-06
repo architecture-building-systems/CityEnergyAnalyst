@@ -55,4 +55,4 @@ digraph trace_inputlocator {
     "data-helper" -> "internal_loads.dbf"[label="(get_building_internal)"]
     "data-helper" -> "restrictions.dbf"[label="(get_building_restrictions)"]
     "data-helper" -> "supply_systems.dbf"[label="(get_building_supply)"]
-}
+    }

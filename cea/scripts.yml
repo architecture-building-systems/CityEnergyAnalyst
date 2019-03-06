@@ -3,7 +3,7 @@ Analysis:
 - name: multi-criteria-analysis
   label: Multicriteria analysis
   description: Multicriteria analysis
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.multicriteria.main
   parameters: ['general:scenario', 'general:region', multi-criteria]
 
@@ -13,7 +13,7 @@ Cost analysis:
 - name: operation-costs
   label: Building operation costs
   description: Calculate energy costs due to building operation
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.costs.operation_costs
   parameters: ['general:scenario', 'general:region']
 
@@ -23,21 +23,21 @@ Data Management:
 - name: create-new-project
   label: New Project
   description: Create a new project and scenario based on a zone Shapefile and terrain DEM
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
 - name: data-helper
   label: Data helper
   description: Query characteristics of buildings and systems from statistical data
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.data_helper
   parameters: ['general:scenario', 'general:region', data-helper]
 
 - name: copy-default-databases
   label: Copy default databases
   description: Copy the default databases (archetypes) to the scenario for the selected region (does not replace existing files)
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.copy_default_databases
   parameters: ['general:scenario', 'general:region']
 
@@ -47,7 +47,7 @@ Demand forecasting:
 - name: demand
   label: Demand
   description: Calculate the Demand
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
                'general:number-of-cpus-to-keep-free', demand, 'general:debug']
@@ -58,14 +58,14 @@ Energy potentials:
 - name: lake-potential
   label: Lake potential
   description: Calculate the heat extracted from the Lake
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.resources.lake_potential
   parameters: ['general:scenario', lake]
 
 - name: photovoltaic-thermal
   label: Photovoltaic-thermal Panels
   description: Calculate electricity & heat production from photovoltaic / thermal technologies
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic_thermal
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'solar:buildings',  'solar:type-pvpanel',
@@ -76,7 +76,7 @@ Energy potentials:
 - name: photovoltaic
   label: Photovoltaic panels
   description: Calculate electricity production from solar photovoltaic technologies
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic
   parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
@@ -85,14 +85,14 @@ Energy potentials:
 - name: sewage-potential
   label: Sewage potential
   description: Calculate the heat extracted from the sewage heat exchanger.
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.resources.sewage_heat_exchanger
   parameters: ['general:scenario', sewage]
 
 - name: solar-collector
   label: Solar collectors
   description: Calculate heat production from solar collector technologies
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.solar_collector
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
@@ -102,7 +102,7 @@ Energy potentials:
 - name: radiation-daysim
   label: Solar radiation (Daysim engine)
   description: Use Daysim to calculate solar radiation for a scenario
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.resources.radiation_daysim.radiation_main
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', radiation-daysim]
 
@@ -112,7 +112,7 @@ Life cycle analysis:
 - name: emissions
   label: District emissions
   description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.lca.main
   parameters: ['general:scenario', 'general:region', emissions]
 
@@ -122,7 +122,7 @@ Optimization:
 - name: optimization
   label: Central supply system
   description: Run optimization for the given scenario
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:district-heating-network',
                'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
@@ -131,7 +131,7 @@ Optimization:
 - name: decentralized
   label: Decentralized supply system
   description: Run decentralized building optimization
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.preprocessing.decentralized_building_main
   parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized']
 
@@ -139,7 +139,7 @@ Optimization:
 - name: supply-system-simulation
   label: Supply system simulation
   description: Simulate the performances of a single supply system configuration
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.supply.supply_system_simulation
   parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
                'general:district-heating-network', 'general:district-cooling-network',
@@ -150,14 +150,14 @@ Sensitivity analysis:
 - name: sensitivity-demand-analyze
   label: Analysis
   description: Analyze the results in the samples folder and write them out to an Excel file.
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_analyze
   parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
 
 - name: sensitivity-demand-samples
   label: Initializer
   description: Create samples for sensitivity analysis
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_samples
   parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
                'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
@@ -166,7 +166,7 @@ Sensitivity analysis:
 - name: sensitivity-demand-simulate
   label: Sampler
   description: Simulate demand for sensitivity analysis samples
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_simulate
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
                'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
@@ -179,17 +179,18 @@ Thermal networks:
 - name: network-layout
   label: Network layout
   description: Create a potential layout of the network with the minimum spanning tree
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout]
+  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
-  interfaces: [cli, dashboard]
-  module: cea.technologies.thermal_network.thermal_network_matrix
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network']
+               'general:number-of-cpus-to-keep-free', 'thermal-network',
+               'thermal-network-optimization:use-representative-week-per-month']
 
 - name: thermal-network-optimization
   label: Thermo network optimization
@@ -205,14 +206,14 @@ Utilities:
 - name: dbf-to-excel-to-dbf
   label: DBF to Excel to DBF
   description: dbf => xls => DBF
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.utilities.dbf
   parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
 - name: test
   label: Test CEA
   description: Run some tests on the CEA
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.tests.dodo
   parameters: [test]
 
@@ -222,28 +223,28 @@ Visualization:
 - name: plots
   label: Plots basic
   description: Create plots for the default energy system of an urban scenario
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.plots.plots_main
   parameters: ['general:region', 'general:scenario', 'general:weather', plots]
 
 - name: plots-scenario-comparisons
   label: Plots comparison
   description: Plots comparing urban scenarios and supply system configurations
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.plots.comparisons.main
   parameters: [plots-scenario-comparisons]
 
 - name: plots-supply-system
   label: Plots optimization detailed
   description: Create plots for a supply system (default or optimal) of an urban scenario
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.plots.supply_system.main
   parameters: ['general:region', 'general:scenario', plots-supply-system]
 
 - name: plots-optimization
   label: Plots optimization overview
   description: Create plots for the results of the optimzation of an urban scenario
-  interfaces: [cli, dashboard]
+  interfaces: [cli, arcgis, dashboard]
   module: cea.plots.optimization.main
   parameters: ['general:region', 'general:scenario', plots-optimization]
 
@@ -270,6 +271,13 @@ default:
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
   parameters: []
+
+- name: install-arcgis
+  label: install-arcgis
+  description: install-arcgis
+  interfaces: [cli]
+  module: cea.interfaces.arcgis.install_toolbox
+  parameters: ['general:debug']
 
 - name: excel-to-shapefile
   label: excel-to-shapefile

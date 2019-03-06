@@ -67,4 +67,4 @@ digraph trace_inputlocator {
     "photovoltaic-thermal" -> "{BUILDING}_PVT.csv"[label="(PVT_results)"]
     "photovoltaic-thermal" -> "PVT_total_buildings.csv"[label="(PVT_total_buildings)"]
     "photovoltaic-thermal" -> "PVT_total.csv"[label="(PVT_totals)"]
-}
+    }
