@@ -174,7 +174,7 @@ def calc_benchmark_targets(locator, config):
     targets = {}
     area_study = 0
 
-    factors = pd.read_excel(data_benchmark, sheetname=categories[0]).set_index('code')
+    factors = pd.read_excel(data_benchmark, sheet_name=categories[0]).set_index('code')
 
     for use in project_uses:
         if factors.loc[use, 'NRE_target_retrofit'] > 0 and factors.loc[use, 'CO2_target_retrofit'] > 0:
@@ -183,7 +183,7 @@ def calc_benchmark_targets(locator, config):
     for category in categories:
         # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
         # (instead of new building targets)
-        factors = pd.read_excel(data_benchmark, sheetname=category).set_index('code').loc[project_uses]
+        factors = pd.read_excel(data_benchmark, sheet_name=category).set_index('code').loc[project_uses]
         vt = factors.index
         pt = factors['NRE_target_retrofit']
         gt = factors['CO2_target_retrofit']
@@ -259,14 +259,14 @@ def calc_benchmark_today(locator, config):
     values_today = {}
     area_study = 0
 
-    factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
+    factors = pd.read_excel(data_benchmark_today, sheet_name=categories[0])
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy_and_demand:
             if factors['NRE_today'][i] > 0 and factors['CO2_today'][i] > 0:
                 area_study += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[factors['code'][i]]).sum()
 
     for category in categories:
-        factors = pd.read_excel(data_benchmark_today, sheetname=category).set_index('code').loc[project_uses]
+        factors = pd.read_excel(data_benchmark_today, sheet_name=category).set_index('code').loc[project_uses]
         vt = factors.index
         pt = factors['NRE_today']
         gt = factors['CO2_today']
