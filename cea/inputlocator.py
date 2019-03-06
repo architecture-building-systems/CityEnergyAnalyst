@@ -1133,6 +1133,58 @@ class InputLocator(object):
         path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
         return path_a == path_b
 
+    # MPC by Concept Project
+    def get_mpc_results_folder(self, output_folder="mpc-building"):
+        """scenario/outputs/data/optimization"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data', output_folder)
+
+    def get_mpc_results_outputs(self, building, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs.csv')
+
+    def get_mpc_results_controls(self, building, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_controls.csv')
+
+    def get_mpc_results_states(self, building, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_states.csv')
+
+    def get_mpc_results_min_outputs(self, building, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs_minimum.csv')
+
+    def get_mpc_results_max_outputs(self, building, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs_maximum.csv')
+
+    def get_mpc_results_predicted_temperature(self, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), 'predicted_temperature.csv')
+
+    def get_mpc_results_set_temperature(self, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), 'set_temperature.csv')
+
+    def get_mpc_results_min_temperature(self, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), 'minimum_temperature.csv')
+
+    def get_mpc_results_max_temperature(self, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), 'maximum_temperature.csv')
+
+    def get_mpc_results_electric_power(self, output_folder):
+        """scenario/outputs/data/optimization"""
+        return os.path.join(self.get_mpc_results_folder(output_folder), 'electric_power.csv')
+
+    def get_mpc_results_building_definitions_folder(self, output_folder="mpc-building"):
+        return self._ensure_folder(self.get_mpc_results_folder(output_folder), "building-definitions")
+
+    def get_mpc_results_building_definitions_file(self, file_name, output_folder="mpc-building"):
+        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        return os.path.join(self.get_mpc_results_building_definitions_folder(output_folder), file_name + ".csv")
+
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
@@ -1163,51 +1215,3 @@ class ReferenceCaseOpenLocator(InputLocator):
     def get_default_weather(self):
         """The reference-case-open uses the Zug weather file..."""
         return self.get_weather('Zug')
-
-    def get_mpc_results_folder(self, date_main, output_folder="mpc_building"):
-        """scenario/outputs/data/optimization"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', output_folder,
-                                   '_'.join(os.path.normpath(self.scenario).split(os.path.sep))
-                                   + '_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}'.format(
-                                       date_main.year, date_main.month, date_main.day, date_main.hour, date_main.minute,
-                                       date_main.second))
-
-    def get_mpc_results_outputs(self, building, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_outputs.csv')
-
-    def get_mpc_results_controls(self, building, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_controls.csv')
-
-    def get_mpc_results_states(self, building, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder, date_main), building + '_states.csv')
-
-    def get_mpc_results_min_outputs(self, building, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder, date_main), building + '_outputs_minimum.csv')
-
-    def get_mpc_results_max_outputs(self, building, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), building + '_outputs_maximum.csv')
-
-    def get_mpc_results_predicted_temperature(self, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'predicted_temperature.csv')
-
-    def get_mpc_results_set_temperature(self, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'set_temperature.csv')
-
-    def get_mpc_results_min_temperature(self, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'minimum_temperature.csv')
-
-    def get_mpc_results_max_temperature(self, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'maximum_temperature.csv')
-
-    def get_mpc_results_electric_power(self, output_folder, date_main):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(date_main, output_folder), 'electric_power.csv')
