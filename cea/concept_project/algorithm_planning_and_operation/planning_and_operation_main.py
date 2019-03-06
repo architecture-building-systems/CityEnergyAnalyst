@@ -1,14 +1,17 @@
 from __future__ import division
-from pyomo.environ import *
-import os
-import time
+
 import datetime
 import errno
+import os
+import time
+
+from pyomo.environ import *
+
 from cea.concept_project import config
 from cea.concept_project.algorithm_operation import operation_write_results
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_optimization
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_write_results
 from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_plots
+from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_write_results
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -18,6 +21,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
+
 
 def main(
         scenario_data_path=config.scenario_data_path,
@@ -94,20 +98,7 @@ def main(
     )
 
     print('Processing: Write results')
-    results_path = os.path.join(
-        scenario_data_path,
-        'output_planning_and_operation',
-        '_'.join(os.path.normpath(scenario).split(os.path.sep))
-        + '_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}'.format(
-            date_main.year, date_main.month, date_main.day, date_main.hour, date_main.minute, date_main.second
-        )
-    )
-    if not os.path.exists(results_path):
-        try:
-            os.makedirs(results_path)
-        except OSError as exc:  # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
+    output_folder = "mpc_district"
     planning_and_operation_write_results.print_res(m)
     planning_and_operation_write_results.write_results(
         m,
@@ -125,16 +116,8 @@ def main(
         beta,
         load_factor
     )
-    planning_and_operation_plots.save_plots(
-        m,
-        scenario_data_path,
-        scenario,
-        results_path
-    )
-    operation_write_results.main(locator,
-        m,
-        results_path
-    )
+    planning_and_operation_plots.save_plots(m, scenario_data_path, scenario, results_path)
+    operation_write_results.main(locator, m, output_folder)
 
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
