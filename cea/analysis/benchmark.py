@@ -67,6 +67,7 @@ def benchmark(locator_list, output_file, config):
     fig.text(0.07, 0.5, 'Greenhouse Gas Emissions [kg CO$_2$-eq/m$^2$-yr]', va='center', rotation='vertical')
     fig.text(0.375, 0.04, 'Non-Renewable Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
     ax3.axis('off')
+
     ax6.axis('off')
     axes = [1, 2, 4, 5]
 
@@ -98,20 +99,20 @@ def benchmark(locator_list, output_file, config):
             plt.subplot(2, 3, axes[i])
             plt.plot(df_buildings[graphs[i] + fields[2]], df_buildings[graphs[i] + fields[3]], 'o',
                      color=color_palette[n])
-        legend.extend([scenario_name, scenario_name + ' total'])
+        legend.append(scenario_name)
 
         scenario_dict[scenario_name] = df_scenario
 
     # plot scenario totals
-    for n in range(len(locator_list)):
+    for n in range(len(scenario_dict.keys())):
         scenario_name = scenario_dict.keys()[n]
         for i in range(len(graphs)):
             plt.subplot(2, 3, axes[i])
             plt.plot(scenario_dict[scenario_name][graphs[i] + fields[2]],
                      scenario_dict[scenario_name][graphs[i] + fields[3]], 'o',
                      color=color_palette[n],
-                     markersize=15, markeredgewidth=2, markeredgecolor='k')
-        legend.extend([scenario_name, scenario_name + ' total'])
+                     markersize=12.5, markeredgewidth=1.5, markeredgecolor='k')
+        legend.append(scenario_name + ' total')
 
     # complete graphs
     plt.plot()
