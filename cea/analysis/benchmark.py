@@ -70,7 +70,6 @@ def benchmark(locator_list, output_file, config):
     ax6.axis('off')
     axes = [1, 2, 4, 5]
 
-    scenario_dict = {}
     # run for each locator (i.e., for each scenario)
     for n in range(len(locator_list)):
         locator = locator_list[n]
@@ -93,24 +92,14 @@ def benchmark(locator_list, output_file, config):
                 if scenario_max[graph + fields[j + 2]] < df_scenario[graph + fields[j + 2]]:
                     scenario_max[graph + fields[j + 2]] = df_scenario[graph + fields[j + 2]]
 
-        # plot building results
+        # plot scenario results
         for i in range(len(graphs)):
             plt.subplot(2, 3, axes[i])
             plt.plot(df_buildings[graphs[i] + fields[2]], df_buildings[graphs[i] + fields[3]], 'o',
                      color=color_palette[n])
-        legend.extend([scenario_name, scenario_name + ' total'])
-
-        scenario_dict[scenario_name] = df_scenario
-
-    # plot scenario totals
-    for n in range(len(locator_list)):
-        scenario_name = scenario_dict.keys()[n]
-        for i in range(len(graphs)):
-            plt.subplot(2, 3, axes[i])
-            plt.plot(scenario_dict[scenario_name][graphs[i] + fields[2]],
-                     scenario_dict[scenario_name][graphs[i] + fields[3]], 'o',
+            plt.plot(df_scenario[graphs[i] + fields[2]], df_scenario[graphs[i] + fields[3]], 'o',
                      color=color_palette[n],
-                     markersize=15, markeredgewidth=2, markeredgecolor='k')
+                     markersize=15)
         legend.extend([scenario_name, scenario_name + ' total'])
 
     # complete graphs
@@ -185,7 +174,7 @@ def calc_benchmark_targets(locator, config):
     targets = {}
     area_study = 0
 
-    factors = pd.read_excel(data_benchmark, sheet_name=categories[0]).set_index('code')
+    factors = pd.read_excel(data_benchmark, sheetname=categories[0]).set_index('code')
 
     for use in project_uses:
         if factors.loc[use, 'NRE_target_retrofit'] > 0 and factors.loc[use, 'CO2_target_retrofit'] > 0:
@@ -194,7 +183,7 @@ def calc_benchmark_targets(locator, config):
     for category in categories:
         # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
         # (instead of new building targets)
-        factors = pd.read_excel(data_benchmark, sheet_name=category).set_index('code').loc[project_uses]
+        factors = pd.read_excel(data_benchmark, sheetname=category).set_index('code').loc[project_uses]
         vt = factors.index
         pt = factors['NRE_target_retrofit']
         gt = factors['CO2_target_retrofit']
@@ -270,14 +259,14 @@ def calc_benchmark_today(locator, config):
     values_today = {}
     area_study = 0
 
-    factors = pd.read_excel(data_benchmark_today, sheet_name=categories[0])
+    factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy_and_demand:
             if factors['NRE_today'][i] > 0 and factors['CO2_today'][i] > 0:
                 area_study += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[factors['code'][i]]).sum()
 
     for category in categories:
-        factors = pd.read_excel(data_benchmark_today, sheet_name=category).set_index('code').loc[project_uses]
+        factors = pd.read_excel(data_benchmark_today, sheetname=category).set_index('code').loc[project_uses]
         vt = factors.index
         pt = factors['NRE_today']
         gt = factors['CO2_today']
