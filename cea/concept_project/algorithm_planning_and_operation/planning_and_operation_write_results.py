@@ -49,7 +49,7 @@ def write_results(locator, output_folder, scenario_name,
         beta,
         load_factor
 ):
-    with open(os.path.join(locator.get_mpc_results_folder(output_folder) + '.csv'), "wb") as csv_file:
+    with open(os.path.join(locator.get_mpc_results_folder(output_folder), 'output_folder.csv'), "wb") as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
 
         writer.writerow(['scenario', scenario_name])
