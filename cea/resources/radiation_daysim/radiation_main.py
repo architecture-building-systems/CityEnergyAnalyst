@@ -201,6 +201,9 @@ def main(config):
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
     rad = py2radiance.Rad(daysim_mat, locator.get_temporary_folder())
+    print("\tradiation_main: rad.base_file_path: {}".format(rad.base_file_path))
+    print("\tradiation_main: rad.data_folder_path: {}".format(rad.data_folder_path))
+    print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
     add_rad_mat(daysim_mat, building_surface_properties)
     # send terrain
     terrain2radiance(rad, geometry_terrain)
@@ -208,6 +211,7 @@ def main(config):
     buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
     # create scene out of all this
     rad.create_rad_input_file()
+    print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
     radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings)
