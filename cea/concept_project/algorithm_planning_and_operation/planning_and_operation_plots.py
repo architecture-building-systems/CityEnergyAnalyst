@@ -18,19 +18,18 @@ __status__ = "Production"
 plot_all_lines_on_streets = 0  # Plots all possible lines, even if not utilised
 plot_colors = [
     '#ffc130',
-    # '#ebbb53',
-    # '#d7b56d',
-    # '#beb086',
+    '#ebbb53',
+    '#d7b56d',
+    '#beb086',
     '#a3aa9c',
-    # '#82a5b2',
-    # '#519fc7',
-    # '#5c92c7',
+    '#82a5b2',
+    '#519fc7',
+    '#5c92c7',
     '#6984c5',
-    # '#7276c3',
-    # '#7969c1',
-    # '#7f58be',
-    '#8447bc'
-]
+    '#7276c3',
+    '#7969c1',
+    '#7f58be',
+    '#8447bc']*100
 
 font = {
     'family': 'Arial',
@@ -41,23 +40,10 @@ matplotlib.rc('font', **font)
 marker_size = 6
 
 
-def initial_network(
-        scenario_data_path,
-        scenario
-):
-    planning_and_operation_preprocess_network.calc_substation_location(
-        scenario_data_path,
-        scenario
-    )
-    df_nodes, tranches = planning_and_operation_preprocess_network.connect_building_to_grid(
-        scenario_data_path,
-        scenario
-    )
-    df_nodes_processed = planning_and_operation_preprocess_network.process_network(
-        df_nodes,
-        scenario_data_path,
-        scenario
-    )
+def initial_network(locator):
+    planning_and_operation_preprocess_network.calc_substation_location(locator)
+    df_nodes, tranches = planning_and_operation_preprocess_network.connect_building_to_grid(locator)
+    df_nodes_processed = planning_and_operation_preprocess_network.process_network(locator, df_nodes)
     (
         dict_length,
         dict_path
@@ -163,20 +149,13 @@ def plot_lines(
     return ax
 
 
-def plot_network_on_street(
-        m,
-        scenario_data_path,
-        scenario
-):
+def plot_network_on_street(locator, m):
     (
         df_nodes,
         tranches,
         dict_length,
         dict_path
-    ) = initial_network(
-        scenario_data_path,
-        scenario
-    )
+    ) = initial_network(locator)
 
     var_x = m.var_x.values()
 
@@ -198,10 +177,7 @@ def plot_network_on_street(
     (
         building_points,
         building_poly
-    ) = planning_and_operation_preprocess_network.calc_substation_location(
-        scenario_data_path,
-        scenario
-    )
+    ) = planning_and_operation_preprocess_network.calc_substation_location(locator)
     building_poly.plot(ax=ax, color='white', edgecolor='grey')
     for x, y, name in zip(building_points.geometry.x, building_points.geometry.y, building_points['Name']):
         ax.text(x, y, name, fontsize=8, horizontalalignment='center')
@@ -237,15 +213,8 @@ def plot_network_on_street(
     return fig
 
 
-def plot_network(
-        m,
-        scenario_data_path,
-        scenario
-):
-    df_nodes, tranches, dict_length, dict_path = initial_network(
-        scenario_data_path,
-        scenario
-    )
+def plot_network(locator, m):
+    df_nodes, tranches, dict_length, dict_path = initial_network(locator)
 
     var_x = m.var_x.values()
 
@@ -296,22 +265,8 @@ def plot_network(
     return fig
 
 
-def save_plots(
-        m,
-        scenario_data_path,
-        scenario,
-        results_path
-):
-    plot_network_on_street(
-        m,
-        scenario_data_path,
-        scenario
-    )
-    plt.savefig(os.path.join(results_path, 'electric_grid_street.pdf'))
-
-    plot_network(
-        m,
-        scenario_data_path,
-        scenario
-    )
-    plt.savefig(os.path.join(results_path, 'electric_grid_graph.pdf'))
+def save_plots(locator, m):
+    plot_network_on_street(locator, m)
+    plt.savefig(locator.get_mpc_results_district_plot_streets())
+    plot_network(locator, m)
+    plt.savefig(locator.get_mpc_results_district_plot_grid())

@@ -47,8 +47,8 @@ def initial_network(locator):
     )
 
 
-def get_line_parameters(locator):
-    df_line_parameter = pd.read_csv(os.path.join(scenario_data_path, 'electric_line_data.csv'))
+def get_line_parameters(locator, region):
+    df_line_parameter = pd.read_excel(locator.get_electrical_networks(region), "CABLING CATALOG")
     return df_line_parameter
 
 
@@ -246,30 +246,30 @@ def total_electric_load_per_building_rule(m, building, time):
 
 
 def main(locator, weather_path,
-        project_path,
-        scenario,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature,
-        alpha,
-        beta,
-        pricing_scheme,
-        constant_price,
-        min_max_source,
-        min_constant_temperature,
-        max_constant_temperature,
-        delta_set,
-        delta_setback,
-        power_factor,
-        approx_loss_hours,
-        voltage_nominal,
-        load_factor,
-        interest_rate
-):
+         project_path,
+         scenario,
+         region,
+         parameter_set,
+         time_start,
+         time_end,
+         time_step_ts,
+         set_temperature_goal,
+         constant_temperature,
+         alpha,
+         beta,
+         pricing_scheme,
+         constant_price,
+         min_max_source,
+         min_constant_temperature,
+         max_constant_temperature,
+         delta_set,
+         delta_setback,
+         power_factor,
+         approx_loss_hours,
+         voltage_nominal,
+         load_factor,
+         interest_rate
+         ):
     # Initialize Data
     (
         date_and_time_prediction,
@@ -295,22 +295,22 @@ def main(locator, weather_path,
         gross_floor_area_m2,
         price_vector
     ) = operation_main.get_optimization_inputs(locator, weather_path,
-        scenario,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature,
-        pricing_scheme,
-        constant_price,
-        min_max_source,
-        min_constant_temperature,
-        max_constant_temperature,
-        delta_set,
-        delta_setback
-    )
+                                               scenario,
+                                               region,
+                                               parameter_set,
+                                               time_start,
+                                               time_end,
+                                               time_step_ts,
+                                               set_temperature_goal,
+                                               constant_temperature,
+                                               pricing_scheme,
+                                               constant_price,
+                                               min_max_source,
+                                               min_constant_temperature,
+                                               max_constant_temperature,
+                                               delta_set,
+                                               delta_setback
+                                               )
 
     # Street network and Buildings
     (
@@ -319,15 +319,12 @@ def main(locator, weather_path,
         dict_length,
         dict_path,
         hourly_demand_per_building
-    ) = initial_network(
-        project_path,
-        scenario
-    )
+    ) = initial_network(locator)
     df_nodes = pd.DataFrame(points_on_line).drop(['geometry', 'Building', 'Name'], axis=1)
     del tranches, points_on_line
 
     # Line Parameters
-    df_line_parameter = get_line_parameters(locator)
+    df_line_parameter = get_line_parameters(locator, region)
     dict_line_tech_params = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)

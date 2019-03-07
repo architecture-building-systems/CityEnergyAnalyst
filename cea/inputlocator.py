@@ -590,6 +590,10 @@ class InputLocator(object):
         """db/Systems/thermal_networks.xls"""
         return self._get_region_specific_db_file(region, 'systems', 'thermal_networks.xls')
 
+    def get_electrical_networks(self, region):
+        """db/Systems/electrical_networks.xls"""
+        return self._get_region_specific_db_file(region, 'systems', 'electrical_networks.xls')
+
     def get_data_benchmark(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
@@ -1191,6 +1195,14 @@ class InputLocator(object):
     def get_mpc_results_building_definitions_file(self, file_name, output_folder="mpc-building"):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
         return os.path.join(self.get_mpc_results_building_definitions_folder(output_folder), file_name + ".csv")
+
+    def get_mpc_results_district_plot_streets(self, output_folder="mpc-district"):
+        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        return os.path.join(self.get_plots_folder(output_folder), "electric_grid_street.pdf")
+
+    def get_mpc_results_district_plot_grid(self, output_folder="mpc-district"):
+        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        return os.path.join(self.get_plots_folder(output_folder), "electric_grid_graph.pdf")
 
 
 class ReferenceCaseOpenLocator(InputLocator):

@@ -108,7 +108,7 @@ def planning_and_operation(locator, config):
     print('Processing: Write results')
     output_folder = "mpc-district"
     planning_and_operation_write_results.print_res(m)
-    planning_and_operation_write_results.write_results(locator, date_main, output_folder, scenario_name,
+    planning_and_operation_write_results.write_results(locator, output_folder, scenario_name,
         m,
         time_main,
         solver_name,
@@ -121,8 +121,8 @@ def planning_and_operation(locator, config):
         beta,
         load_factor
     )
-    planning_and_operation_plots.save_plots(m, project_path, scenario_name, results_path)
-    operation_write_results.main(locator, m, output_folder, date_main)
+    planning_and_operation_plots.save_plots(locator, m)
+    operation_write_results.main(locator, m, output_folder)
 
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
