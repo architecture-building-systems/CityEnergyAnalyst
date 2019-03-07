@@ -170,7 +170,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
 
         # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height, settings)
+        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height, config)
 
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
@@ -286,7 +286,7 @@ def burn_buildings(geometry, terrain_intersection_curves):
     return face
 
 
-def calc_solid(face_footprint, range_floors, flr2flr_height, settings):
+def calc_solid(face_footprint, range_floors, flr2flr_height, config):
 
     # create faces for every floor and extrude the solid
     moved_face_list = []
