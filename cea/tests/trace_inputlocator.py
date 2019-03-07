@@ -200,6 +200,11 @@ def meta_to_json(meta_set, meta_output_file):
                             attributes[attr] = (data[0], list(dtype))
                 contents['Sheet1'] = attributes
 
+            if file_type == 'tif' or file_type == 'tiff':
+
+                # To Do: Somekind of tif output
+                contents = {}
+
             if file_type == 'epw':
                 epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
                               'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
