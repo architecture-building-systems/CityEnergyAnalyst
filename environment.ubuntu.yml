@@ -65,7 +65,7 @@ dependencies:
 - shapely>=1.5.17
 - singledispatch=3.4.0.3=py27_0
 - sip=4.18=py27_1
-- six=1.10.0=py27_1
+- six=1.12.0=py27_1
 - sqlalchemy=1.1.11=py27_0
 - sqlite
 - ssl_match_hostname=3.5.0.1=py27_1
