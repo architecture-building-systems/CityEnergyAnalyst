@@ -132,7 +132,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     rad.initialise_daysim(daysim_dir)
 
     # calculate sensors
-    print " calculating and sending sensor points"
+    print "calculating and sending sensor points"
     sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
     sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
