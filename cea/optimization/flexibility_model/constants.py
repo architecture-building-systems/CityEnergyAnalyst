@@ -20,7 +20,6 @@ POWER_FACTOR = 0.9  # real power / apparent power
 APPROX_LOSS_HOURS = 0 #or 5518.2
 SOLVER_NAME = "gurobi"
 LOAD_FACTOR = 10.0  # TODO: This is a hack to get nicer results
-THREADS = 30
 TIME_LIMIT = 3600  # Interrupt solver after given time limit (set to 0 for unlimited)
 ALPHA = 1.0  # Factor for electricity costs
 BETA = 1.0 * (10 ** 6)  # Factor for set temperature tracking (if active, must be bigger than other terms)

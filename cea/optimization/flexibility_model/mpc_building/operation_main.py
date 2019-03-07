@@ -9,14 +9,14 @@ from pyomo.environ import *
 
 import cea.config
 import cea.inputlocator
-from cea.concept_project import model_building
-from cea.concept_project.algorithm_operation import operation_optimization
-from cea.concept_project.algorithm_operation import operation_preprocess_optimization
-from cea.concept_project.algorithm_operation import operation_write_results
-from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA
-from cea.concept_project.model_building import building_main
-from cea.concept_project.model_building import building_utils
-from cea.concept_project.model_building.building import Building
+from cea.optimization.flexibility_model import model_building
+from cea.optimization.flexibility_model.mpc_building import operation_optimization
+from cea.optimization.flexibility_model.mpc_building import operation_preprocess_optimization
+from cea.optimization.flexibility_model.mpc_building import operation_write_results
+from cea.optimization.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA
+from cea.optimization.flexibility_model.model_building import building_main
+from cea.optimization.flexibility_model.model_building import building_utils
+from cea.optimization.flexibility_model.model_building.building import Building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -30,10 +30,11 @@ __status__ = "Production"
 
 def operation(locator, config):
     # local variables
-    project_path = locator.get_project_path()  # path to project
     scenario_name = config.scenario_name  # scenario_name
     country = config.region
     weather_path = config.weather
+    threads = config.get_number_of_processes()
+
     time_start = config.mpc_building.time_start
     time_end = config.mpc_building.time_end
     set_temperature_goal = config.mpc_building.set_temperature_goal
@@ -51,7 +52,6 @@ def operation(locator, config):
     time_step_ts = TIME_STEP_TS
     solver_name = SOLVER_NAME
     time_limit = TIME_LIMIT
-    threads = THREADS
     alpha = ALPHA
     beta = BETA
 
@@ -82,22 +82,22 @@ def operation(locator, config):
         gross_floor_area_m2,
         price_vector
     ) = get_optimization_inputs(locator, weather_path,
-        scenario_name,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature,
-        pricing_scheme,
-        constant_price,
-        min_max_source,
-        min_constant_temperature,
-        max_constant_temperature,
-        delta_set,
-        delta_setback
-    )
+                                scenario_name,
+                                country,
+                                parameter_set,
+                                time_start,
+                                time_end,
+                                time_step_ts,
+                                set_temperature_goal,
+                                constant_temperature,
+                                pricing_scheme,
+                                constant_price,
+                                min_max_source,
+                                min_constant_temperature,
+                                max_constant_temperature,
+                                delta_set,
+                                delta_setback
+                                )
     print('Processing: Setup optimization model')
     m = operation_optimization.main(
         alpha,
@@ -140,29 +140,29 @@ def operation(locator, config):
     )
 
     print('Processing: Write results')
-    output_folder = "mpc-building" # this is an identifier for the location of the output folder
+    output_folder = "mpc-building"  # this is an identifier for the location of the output folder
     operation_write_results.main(locator, m, output_folder)
     print('Completed.')
     print('Total time: {:.2f} seconds'.format(time.clock() - t0))
 
 
 def get_optimization_inputs(locator, weather_path,
-        scenario,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature,
-        pricing_scheme,
-        constant_price,
-        min_max_source,
-        min_constant_temperature,
-        max_constant_temperature,
-        delta_set,
-        delta_setback
-):
+                            scenario,
+                            country,
+                            parameter_set,
+                            time_start,
+                            time_end,
+                            time_step_ts,
+                            set_temperature_goal,
+                            constant_temperature,
+                            pricing_scheme,
+                            constant_price,
+                            min_max_source,
+                            min_constant_temperature,
+                            max_constant_temperature,
+                            delta_set,
+                            delta_setback
+                            ):
     print('Processing: Load data & translate building model definitions')
     (
         prediction_horizon,
@@ -187,15 +187,15 @@ def get_optimization_inputs(locator, weather_path,
         Qcsmax_Wm2_dic,
         electricity_prices_MWh
     ) = building_main.main(locator, weather_path,
-        scenario,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature
-    )
+                           scenario,
+                           country,
+                           parameter_set,
+                           time_start,
+                           time_end,
+                           time_step_ts,
+                           set_temperature_goal,
+                           constant_temperature
+                           )
 
     print('Processing: Create building state space models')
     buildings_dic = {}

@@ -1,9 +1,8 @@
 from __future__ import division
 import matplotlib
 import matplotlib.pyplot as plt
-import os
 import re
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_preprocess_network
+from cea.optimization.flexibility_model.mpc_district import planning_and_operation_preprocess_network
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

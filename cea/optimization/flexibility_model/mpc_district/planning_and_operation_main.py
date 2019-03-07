@@ -8,11 +8,11 @@ from pyomo.environ import *
 
 import cea.config
 import cea.inputlocator
-from cea.concept_project.algorithm_operation import operation_write_results
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_optimization
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_plots
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_write_results
-from cea.concept_project.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, THREADS, TIME_LIMIT, ALPHA, BETA, \
+from cea.optimization.flexibility_model.mpc_building import operation_write_results
+from cea.optimization.flexibility_model.mpc_district import planning_and_operation_plots
+from cea.optimization.flexibility_model.mpc_district import planning_and_operation_write_results, \
+    planning_and_operation_optimization
+from cea.optimization.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA, \
     POWER_FACTOR, VOLTAGE_NOMINAL, INTEREST_RATE, LOAD_FACTOR, APPROX_LOSS_HOURS
 
 __author__ = "Sebastian Troitzsch"
@@ -26,12 +26,11 @@ __status__ = "Production"
 
 
 def planning_and_operation(locator, config):
-
-    #Local vars
-    project_path = locator.get_project_path()  # path to project_path : old name was scenario_path
-    scenario_name = config.scenario_name # scenario_name
+    # Local vars
+    scenario_name = config.scenario_name  # scenario_name
     country = config.region
     weather_path = config.weather
+    threads = config.get_number_of_processes()
 
     time_start = config.mpc_district.time_start
     time_end = config.mpc_district.time_end
@@ -50,7 +49,6 @@ def planning_and_operation(locator, config):
     time_step_ts = TIME_STEP_TS
     solver_name = SOLVER_NAME
     time_limit = TIME_LIMIT
-    threads = THREADS
     alpha = ALPHA
     beta = BETA
     power_factor = POWER_FACTOR
@@ -67,30 +65,29 @@ def planning_and_operation(locator, config):
 
     print('Processing: Setup models and optimization')
     m = planning_and_operation_optimization.main(locator, weather_path,
-        project_path,
-        scenario_name,
-        country,
-        parameter_set,
-        time_start,
-        time_end,
-        time_step_ts,
-        set_temperature_goal,
-        constant_temperature,
-        alpha,
-        beta,
-        pricing_scheme,
-        constant_price,
-        min_max_source,
-        min_constant_temperature,
-        max_constant_temperature,
-        delta_set,
-        delta_setback,
-        power_factor,
-        approx_loss_hours,
-        voltage_nominal,
-        load_factor,
-        interest_rate
-    )
+                                                 scenario_name,
+                                                 country,
+                                                 parameter_set,
+                                                 time_start,
+                                                 time_end,
+                                                 time_step_ts,
+                                                 set_temperature_goal,
+                                                 constant_temperature,
+                                                 alpha,
+                                                 beta,
+                                                 pricing_scheme,
+                                                 constant_price,
+                                                 min_max_source,
+                                                 min_constant_temperature,
+                                                 max_constant_temperature,
+                                                 delta_set,
+                                                 delta_setback,
+                                                 power_factor,
+                                                 approx_loss_hours,
+                                                 voltage_nominal,
+                                                 load_factor,
+                                                 interest_rate
+                                                 )
 
     print('Processing: Solve optimization')
     opt = SolverFactory(solver_name)  # Create a solver
@@ -109,18 +106,18 @@ def planning_and_operation(locator, config):
     output_folder = "mpc-district"
     planning_and_operation_write_results.print_res(m)
     planning_and_operation_write_results.write_results(locator, output_folder, scenario_name,
-        m,
-        time_main,
-        solver_name,
-        threads,
-        time_limit,
-        interest_rate,
-        voltage_nominal,
-        approx_loss_hours,
-        alpha,
-        beta,
-        load_factor
-    )
+                                                       m,
+                                                       time_main,
+                                                       solver_name,
+                                                       threads,
+                                                       time_limit,
+                                                       interest_rate,
+                                                       voltage_nominal,
+                                                       approx_loss_hours,
+                                                       alpha,
+                                                       beta,
+                                                       load_factor
+                                                       )
     planning_and_operation_plots.save_plots(locator, m)
     operation_write_results.main(locator, m, output_folder)
 

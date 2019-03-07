@@ -1,18 +1,16 @@
 from __future__ import division
 import pandas as pd
 import numpy as np
-import os
 from pyomo.environ import *
-from cea.concept_project.algorithm_planning_and_operation import planning_and_operation_preprocess_network
-from cea.concept_project.algorithm_operation import operation_main
-from cea.concept_project.algorithm_operation.operation_optimization import (  # Constraint rules for operation problem
+from cea.optimization.flexibility_model.mpc_district import planning_and_operation_preprocess_network
+from cea.optimization.flexibility_model.mpc_building import operation_main
+from cea.optimization.flexibility_model.mpc_building.operation_optimization import (  # Constraint rules for operation problem
     initial_state_condition_constraint_rule,
     minimal_maximal_output_constraint_rule,
     setback_controls_constraint_rule,
     state_space_equation_output_constraint_rule,
     state_space_equation_state_constraint_rule,
-    temperatures_absolute_value_constraint_rule,
-    maximal_emission_capacity_rule
+    temperatures_absolute_value_constraint_rule
 )
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -246,7 +244,6 @@ def total_electric_load_per_building_rule(m, building, time):
 
 
 def main(locator, weather_path,
-         project_path,
          scenario,
          region,
          parameter_set,

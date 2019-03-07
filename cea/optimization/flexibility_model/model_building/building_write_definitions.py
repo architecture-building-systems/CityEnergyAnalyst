@@ -7,7 +7,7 @@ import warnings
 import shutil
 import numpy as np
 import pandas as pd
-from cea.concept_project import model_building
+from cea.optimization.flexibility_model import model_building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -155,7 +155,7 @@ def main(locator, scenario,
 def prepare_folder(locator):
 
     # Copy file(s) from default building definition # TODO: Create these file(s) dynamically
-    shutil.copy(os.path.join(os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv' ),
+    shutil.copy(os.path.join(os.path.dirname(model_building.__file__), 'setup_data', 'building_zone_constraint_profiles.csv'),
                 locator.get_mpc_results_building_definitions_folder())
 
 

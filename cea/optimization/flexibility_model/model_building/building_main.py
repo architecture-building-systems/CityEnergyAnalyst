@@ -1,15 +1,14 @@
 from __future__ import division
 
 import datetime
-import os
 
 import pandas as pd
 
-from cea.concept_project.model_building import building_extract_cea_data
-from cea.concept_project.model_building import building_process_hvac_efficiencies
-from cea.concept_project.model_building import building_setup_district
-from cea.concept_project.model_building import building_write_definitions
-from cea.concept_project.model_building.constants import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
+from cea.optimization.flexibility_model.model_building import building_extract_cea_data
+from cea.optimization.flexibility_model.model_building import building_process_hvac_efficiencies
+from cea.optimization.flexibility_model.model_building import building_setup_district
+from cea.optimization.flexibility_model.model_building import building_write_definitions
+from cea.optimization.flexibility_model.model_building.constants import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
     PHI_5_MAX, FB, HP_ETA_EX_COOL, HP_AUXRATIO
 
 __author__ = "Sebastian Troitzsch"
@@ -102,41 +101,41 @@ def main(locator,
         wet_bulb_temperature_df,
         occupancy_probability_df
     ) = building_write_definitions.main(locator, scenario,
-        date_and_time_prediction,
-        time_start,
-        time_end,
-        time_step,
-        parameter_set,
-        internal_loads_df,
-        construction_envelope_systems_df,
-        leakage_envelope_systems_df,
-        window_envelope_systems_df,
-        roofs_envelope_systems_df,
-        wall_envelope_systems_df,
-        shading_envelope_systems_df,
-        zone_occupancy_df,
-        architecture_df,
-        weather_general_info,
-        weather_timeseries_initial_df,
-        occupancy_types,
-        occupancy_types_cardinal,
-        buildings_names,
-        building_geometry_all,
-        occupants_probability_dic,
-        lighting_appliances_probability_dic,
-        processes_probability_dic,
-        monthly_use_probability_df,
-        occupancy_density_m2_p,
-        gross_floor_area_m2,
-        mean_floor_height_m,
-        DELTA_P_DIM,
-        HE_E,
-        H_I,
-        DENSITY_AIR,
-        HEAT_CAPACITY_AIR,
-        supply_temperature_df,
-        emissions_cooling_type_dic
-    )
+                                        date_and_time_prediction,
+                                        time_start,
+                                        time_end,
+                                        time_step,
+                                        parameter_set,
+                                        internal_loads_df,
+                                        construction_envelope_systems_df,
+                                        leakage_envelope_systems_df,
+                                        window_envelope_systems_df,
+                                        roofs_envelope_systems_df,
+                                        wall_envelope_systems_df,
+                                        shading_envelope_systems_df,
+                                        zone_occupancy_df,
+                                        architecture_df,
+                                        weather_general_info,
+                                        weather_timeseries_initial_df,
+                                        occupancy_types,
+                                        occupancy_types_cardinal,
+                                        buildings_names,
+                                        building_geometry_all,
+                                        occupants_probability_dic,
+                                        lighting_appliances_probability_dic,
+                                        processes_probability_dic,
+                                        monthly_use_probability_df,
+                                        occupancy_density_m2_p,
+                                        gross_floor_area_m2,
+                                        mean_floor_height_m,
+                                        DELTA_P_DIM,
+                                        HE_E,
+                                        H_I,
+                                        DENSITY_AIR,
+                                        HEAT_CAPACITY_AIR,
+                                        supply_temperature_df,
+                                        emissions_cooling_type_dic
+                                        )
 
     (
         prediction_horizon,
@@ -169,28 +168,28 @@ def main(locator,
         Qcsmax_Wm2_dic,
         em_efficiency_mean_dic,
     ) = building_process_hvac_efficiencies.main(locator,
-        buildings_names,
-        footprint,
-        buildings_cardinal,
-        cooling_generation_df,
-        emission_systems_cooling_df,
-        emission_systems_controller_df,
-        generation_cooling_code_dic,
-        emissions_cooling_type_dic,
-        emissions_controller_type_dic,
-        set_temperatures_dic,
-        T_ext_cea_df,
-        wet_bulb_temperature_df,
-        prediction_horizon,
-        date_and_time_prediction,
-        occupancy_per_building_cardinal,
-        occupancy_per_building_list,
-        supply_temperature_df,
-        PHI_5_MAX,
-        FB,
-        HP_ETA_EX_COOL,
-        HP_AUXRATIO
-    )
+                                                buildings_names,
+                                                footprint,
+                                                buildings_cardinal,
+                                                cooling_generation_df,
+                                                emission_systems_cooling_df,
+                                                emission_systems_controller_df,
+                                                generation_cooling_code_dic,
+                                                emissions_cooling_type_dic,
+                                                emissions_controller_type_dic,
+                                                set_temperatures_dic,
+                                                T_ext_cea_df,
+                                                wet_bulb_temperature_df,
+                                                prediction_horizon,
+                                                date_and_time_prediction,
+                                                occupancy_per_building_cardinal,
+                                                occupancy_per_building_list,
+                                                supply_temperature_df,
+                                                PHI_5_MAX,
+                                                FB,
+                                                HP_ETA_EX_COOL,
+                                                HP_AUXRATIO
+                                                )
 
     return (
         prediction_horizon,
