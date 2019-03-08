@@ -128,7 +128,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
 
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
-    rad.initialise_daysim(daysim_dir)
+    rad.initialise_daysim(daysim_dir, settings.daysim_bin_directory)
 
     # calculate sensors
     print " calculating and sending sensor points"
