@@ -4,10 +4,12 @@ channels:
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - defaults
+  - dlr-sc
 dependencies:
   - geopandas
   - fiona
   - python=2.7
   - mkl-service
+  - pythonocc-core
   - pip:
     - numba
