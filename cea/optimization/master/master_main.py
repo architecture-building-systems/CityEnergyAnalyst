@@ -326,6 +326,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             DHN_network_list_selected.append(DHN_barcode)
 
         # Create Checkpoint if necessary
+        # The networks created for all the tested population is bigger than the selected population, as this is being
+        # used in plots scripts, they are exclusively separated with two variables, which are further used
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
