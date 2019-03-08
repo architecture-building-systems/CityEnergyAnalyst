@@ -135,7 +135,7 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_kiloton': emissions_kiloton_HOF,
                                   'prim_energy_TJ': prim_energy_TJ_HOF}).set_index("Name")
     for i, individual in enumerate(individual_names):
-        dict_network = data['DCN_list'][i]
+        dict_network = data['DCN_list_All'][i]
         if i == 0:
             df_network = pd.DataFrame({"network": dict_network}, index=[individual])
         else:
