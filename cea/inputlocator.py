@@ -49,15 +49,6 @@ class InputLocator(object):
             os.makedirs(folder)
         return folder
 
-    def get_default_arcgis_db(self):
-        """Returns the ArcGIS Default.gdb path to use."""
-        from cea.interfaces.arcgis.modules import arcpy
-        if not arcpy.env.workspace:
-            out_folder_path, out_name = os.path.split(tempfile.mktemp(suffix='.gdb'))
-            arcpy.CreateFileGDB_management(out_folder_path, out_name)
-            arcpy.env.workspace = os.path.join(out_folder_path, out_name)
-        return arcpy.env.workspace
-
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
@@ -877,6 +868,13 @@ class InputLocator(object):
     def get_demand_results_file(self, building_name, format='csv'):
         """scenario/outputs/data/demand/{building_name}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
+
+    def get_predefined_hourly_setpoints_folder(self, type_of_district_network):
+        return self._ensure_folder(self.scenario, 'inputs', 'predefined-hourly-setpoints', str(type_of_district_network))
+
+    def get_predefined_hourly_setpoints(self, building_name, type_of_district_network):
+        """scenario/outputs/data/demand/{building_name}_.csv"""
+        return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.csv')
 
     # THERMAL NETWORK
 

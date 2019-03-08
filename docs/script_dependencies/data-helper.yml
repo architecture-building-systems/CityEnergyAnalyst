@@ -1,0 +1,43 @@
+data-helper:
+  input:
+  - !!python/tuple
+    - get_archetypes_properties
+    - databases/CH/archetypes
+    - construction_properties.xlsx
+  - !!python/tuple
+    - get_archetypes_schedules
+    - databases/CH/archetypes
+    - occupancy_schedules.xlsx
+  - !!python/tuple
+    - get_building_age
+    - inputs/building-properties
+    - age.dbf
+  - !!python/tuple
+    - get_building_occupancy
+    - inputs/building-properties
+    - occupancy.dbf
+  output:
+  - !!python/tuple
+    - get_building_architecture
+    - inputs/building-properties
+    - architecture.dbf
+  - !!python/tuple
+    - get_building_comfort
+    - inputs/building-properties
+    - indoor_comfort.dbf
+  - !!python/tuple
+    - get_building_hvac
+    - inputs/building-properties
+    - technical_systems.dbf
+  - !!python/tuple
+    - get_building_internal
+    - inputs/building-properties
+    - internal_loads.dbf
+  - !!python/tuple
+    - get_building_restrictions
+    - inputs/building-properties
+    - restrictions.dbf
+  - !!python/tuple
+    - get_building_supply
+    - inputs/building-properties
+    - supply_systems.dbf

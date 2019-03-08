@@ -1,0 +1,75 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=3.503];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "radiation-daysim"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Zug.epw"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "envelope_systems.xls"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "district.shp"
+        "zone.shp"
+    }
+    subgraph cluster_3_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-properties";
+        "architecture.dbf"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/topography";
+        "terrain.tif"
+    }
+    subgraph cluster_5_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "{BUILDING}_insolation_Whm2.json"
+        "{BUILDING}_geometry.csv"
+    }
+    "architecture.dbf" -> "radiation-daysim"[label="(get_building_architecture)"]
+    "district.shp" -> "radiation-daysim"[label="(get_district_geometry)"]
+    "envelope_systems.xls" -> "radiation-daysim"[label="(get_envelope_systems)"]
+    "terrain.tif" -> "radiation-daysim"[label="(get_terrain)"]
+    "Zug.epw" -> "radiation-daysim"[label="(get_weather)"]
+    "zone.shp" -> "radiation-daysim"[label="(get_zone_geometry)"]
+    "radiation-daysim" -> "{BUILDING}_insolation_Whm2.json"[label="(get_radiation_building)"]
+    "radiation-daysim" -> "{BUILDING}_geometry.csv"[label="(get_radiation_metadata)"]
+    }

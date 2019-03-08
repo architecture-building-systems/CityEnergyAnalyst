@@ -95,8 +95,7 @@ def comfort_chart(data_frame, title, output_path, config, locator):
     traces_graph.extend(traces_relative_humidity)
 
     # create layout
-    trace_layout, layout = create_layout(title)
-    traces_graph.append(trace_layout)
+    layout = create_layout(title)
 
     # create table
     traces_table = calc_table(dict_graph)

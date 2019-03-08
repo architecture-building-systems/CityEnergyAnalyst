@@ -181,7 +181,7 @@ Thermal networks:
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout]
+  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
@@ -189,7 +189,8 @@ Thermal networks:
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network']
+               'general:number-of-cpus-to-keep-free', 'thermal-network',
+               'thermal-network-optimization:use-representative-week-per-month']
 
 - name: thermal-network-optimization
   label: Thermo network optimization
@@ -264,19 +265,19 @@ default:
   module: cea.utilities.compile_pyd_files
   parameters: []
 
-- name: config-editor
-  label: config-editor
-  description: config-editor
-  interfaces: [cli]
-  module: cea.interfaces.config_editor.config_editor
-  parameters: []
-
 - name: dashboard
   label: dashboard
   description: dashboard
   interfaces: [cli]
-  module: cea.dashboard.dashboard
+  module: cea.interfaces.dashboard.dashboard
   parameters: []
+
+- name: install-arcgis
+  label: install-arcgis
+  description: install-arcgis
+  interfaces: [cli]
+  module: cea.interfaces.arcgis.install_toolbox
+  parameters: ['general:debug']
 
 - name: excel-to-shapefile
   label: excel-to-shapefile
@@ -297,13 +298,6 @@ default:
   description: install-grasshopper
   interfaces: [cli]
   module: cea.interfaces.grasshopper.install_grasshopper
-  parameters: ['general:debug']
-
-- name: install-toolbox
-  label: install-toolbox
-  description: install-toolbox
-  interfaces: [cli]
-  module: cea.interfaces.arcgis.install_toolbox
   parameters: ['general:debug']
 
 - name: list-demand-graphs-fields

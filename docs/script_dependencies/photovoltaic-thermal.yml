@@ -1,0 +1,39 @@
+photovoltaic-thermal:
+  input:
+  - !!python/tuple
+    - get_radiation_building
+    - outputs/data/solar-radiation
+    - '{BUILDING}_insolation_Whm2.json'
+  - !!python/tuple
+    - get_radiation_metadata
+    - outputs/data/solar-radiation
+    - '{BUILDING}_geometry.csv'
+  - !!python/tuple
+    - get_supply_systems
+    - databases/CH/systems
+    - supply_systems.xls
+  - !!python/tuple
+    - get_weather
+    - ../../users/jack/documents/github/cityenergyanalyst/cea/databases/weather
+    - Zug.epw
+  - !!python/tuple
+    - get_zone_geometry
+    - inputs/building-geometry
+    - zone.shp
+  output:
+  - !!python/tuple
+    - PVT_metadata_results
+    - outputs/data/potentials/solar
+    - '{BUILDING}_PVT_sensors.csv'
+  - !!python/tuple
+    - PVT_results
+    - outputs/data/potentials/solar
+    - '{BUILDING}_PVT.csv'
+  - !!python/tuple
+    - PVT_total_buildings
+    - outputs/data/potentials/solar
+    - PVT_total_buildings.csv
+  - !!python/tuple
+    - PVT_totals
+    - outputs/data/potentials/solar
+    - PVT_total.csv

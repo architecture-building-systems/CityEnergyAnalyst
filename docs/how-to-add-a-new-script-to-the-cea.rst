@@ -11,7 +11,6 @@ The main steps you need to take are:
 #. develop your script.
 #. add your script to the ``scripts.yml`` file
 #. add a section to the ``default.config`` file for any parameters your script requires
-#. add an automated ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
 
 
 Step 1: Start with a template
@@ -116,8 +115,8 @@ Here is an example category with a script::
     - name: thermal-network
       label: Thermo-hydraulic network (branched)
       description: Solve the thermal hydraulic network
-      interfaces: [cli, arcgis, dashboard]
-      module: cea.technologies.thermal_network.thermal_network
+      interfaces: [cli, dashboard]
+      module: cea.technologies.thermal_network.thermal_network_matrix
       parameters: ['general:scenario', thermal-network]
 
 Note that whitespace is relevant in YAML - except for the newlines, I added them to make the structure easier to
@@ -192,8 +191,8 @@ Example::
 .. _kebab-case: http://wiki.c2.com/?KebabCase
 .. _snake_case: https://en.wikipedia.org/wiki/Snake_case
 
-Step 5: Add an ArcGIS interface
--------------------------------
+Step 5: Add an ArcGIS interface (optional)
+------------------------------------------
 
 In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
 in the ``scripts.yml`` file. The module :py:mod:`cea.interfaces.arcgis.CityEnergyAnalyst` creates subclasses of
