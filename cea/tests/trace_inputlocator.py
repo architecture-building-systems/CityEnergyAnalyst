@@ -68,7 +68,7 @@ def main(config):
                     if os.path.basename(filename).find(building) != -1:
                         building_specific_files.append(filename)
                         filename = filename.replace(building, buildings[0])
-                        relative_filename = relative_filename.replace(building, 'buildings[0]')
+                        relative_filename = relative_filename.replace(building, buildings[0])
                         meta_set.add((locator_method, filename))
                 if filename not in building_specific_files:
                     meta_set.add((locator_method, filename))
@@ -91,119 +91,23 @@ def main(config):
 def meta_to_json(meta_set, meta_output_file):
 
     import pandas
-    import json
     locator_meta = {}
 
     for locator_method, filename in meta_set:
-
-
-        description = eval('cea.inputlocator.InputLocator(cea.config).' + str(
-            locator_method) + '.__doc__')
         file_type = os.path.basename(filename).split('.')[1]
 
         if os.path.isfile(filename):
 
-            location = os.path.dirname(filename.replace('\\', '/'))
-            description = eval('cea.inputlocator.InputLocator(config.Configuration().scenario).' + str(
-                locator_method) + '.__doc__')
-
-            if file_type == 'xls' or file_type == 'xlsx':
-
-                xls = pandas.ExcelFile(filename, on_demand=True)
-                contents = dict((k, {}) for k in xls.sheet_names)
-
-                for sheet in contents:
-                    db = pandas.read_excel(filename, sheet_name=sheet, on_demand=True)
-
-                    # if the xls appears to be row indexed
-                    if 'Unnamed: 1' in db.columns:
-                        db = db.T
-                        new_cols = []
-                        for i in db.columns:
-                            if i == i:
-                                new_cols.append(i)
-                        db.index = range(len(db))
-                        db = db[new_cols]
-
-                    attributes = dict((k, ()) for k in db)
-
-                    for attr in attributes.keys():
-
-                        dtype = set()
-
-                        for data in zip(db[attr]):
-                            for i in range(0, len(data)):
-                                dtype.add(type(data[i]).__name__)
-
-                            attributes[attr] = (data[0], list(dtype))
-
-                    contents[sheet] = attributes
-
             if file_type == 'csv':
                 db = pandas.read_csv(filename)
-                contents = {}
-                attributes = dict((k, ()) for k in db)
-
-                for attr in attributes.keys():
-                    dtype = set()
-                    for data in zip(db[attr]):
-                        for i in range(0, len(data)):
-                            dtype.add(type(data[i]).__name__)
-                        attributes[attr] = (data[0], list(dtype))
-
-                contents['Sheet1'] = attributes
-
-            if file_type == 'dbf':
-                import pysal.core
-                db = pysal.open(filename, 'r')
-                contents = {}
-                attributes = dict((k, ()) for k in db.header)
-                dtype = set()
-
-                for attr in attributes.keys():
-                    data = db.by_col(attr)
-                    for i in data:
-                        dtype.add(type(i).__name__)
-
-                    attributes[attr] = (data[0], list(dtype))
-                contents['Sheet1'] = attributes
+                locator_meta[locator_method] = get_meta(db, filename, file_type)
 
             if file_type == 'json':
 
                 with open(filename, 'r') as f:
+                    import json
                     db = json.load(f)
-                    contents = {}
-                    attributes = dict((k, ()) for k in db.keys())
-
-                    for attr in attributes.keys():
-                        dtype = set()
-                        for data in zip(db[attr]):
-                            dtype.add(type(data[0]).__name__)
-                            attributes[attr] = (data[0], list(dtype))
-                contents['Sheet1'] = attributes
-
-            if file_type == 'shp':
-                import geopandas
-                db = geopandas.read_file(filename)
-                contents = {}
-                attributes = dict((k, ()) for k in db.keys())
-
-                for attr in attributes.keys():
-
-                    dtype = set()
-                    for data in zip(db[attr]):
-                        for i in range(0, len(data)):
-                            dtype.add(type(data[i]).__name__)
-                        if attr == 'geometry':
-                            attributes[attr] = ('((x1 y1, x2 y2, ...))', list(dtype))
-                        else:
-                            attributes[attr] = (data[0], list(dtype))
-                contents['Sheet1'] = attributes
-
-            if file_type == 'tif' or file_type == 'tiff':
-
-                # To Do: Somekind of tif output
-                contents = {}
+                    locator_meta[locator_method] = get_meta(db, filename, file_type)
 
             if file_type == 'epw':
                 epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
@@ -227,13 +131,113 @@ def meta_to_json(meta_set, meta_output_file):
                               'liq_precip_depth_mm (index = 33)',
                               'liq_precip_rate_Hour (index = 34)']
 
-                attributes = dict((k, ()) for k in epw_labels)
                 db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
-                contents = {}
+                locator_meta[locator_method] = get_meta(db, filename, file_type)
 
 
-        db_info = (description, filename, file_type, contents)
-        locator_meta[locator_method] = db_info
+            if file_type == 'xls' or file_type == 'xlsx':
+
+                xls = pandas.ExcelFile(filename, on_demand=True)
+                schema = dict((k, {}) for k in xls.sheet_names)
+
+                for sheet in schema:
+                    db = pandas.read_excel(filename, sheet_name=sheet, on_demand=True)
+                    # if the xls appears to have row keys
+                    if 'Unnamed: 1' in db.columns:
+                        db = db.T
+                        # filter the goddamn nans
+                        new_cols = []
+                        for i in db.columns:
+                            if i == i:
+                                new_cols.append(i)
+                        db.index = range(len(db))
+                        db = db[new_cols]
+
+                    for attr in db:
+                        dtype = set()
+                        for data in db[attr]:
+                            # sample_data only to contain valid values
+                            if data == data:
+                                sample_data = data
+                                # chnage unicode to SQL 'str'
+                                if type(data) == unicode:
+                                    dtype.add('str')
+                                else:
+                                    dtype.add(type(data).__name__)
+                            # declare nans
+                            if data != data:
+                                dtype.add(None)
+                        schema[sheet] = {
+                            'name': attr,
+                            'sample_value': sample_data,
+                            'types_found': list(dtype)
+                        }
+                    details = {
+                    'file_path' : filename,
+                    'file_type' : file_type,
+                    'schema' : schema
+                    }
+                    locator_meta[locator_method] = details
+
+            if file_type == 'dbf':
+                import pysal
+                db = pysal.open(filename, 'r')
+                schema = dict((k, ()) for k in db.header)
+                dtype = set()
+
+                for attr in schema:
+                    for data in db.by_col(attr):
+                        if data == data:
+                            sample_data = data
+                            if type(data) == unicode:
+                                dtype.add('str')
+                            else:
+                                dtype.add(type(data).__name__)
+                        # declare nans
+                        if data != data:
+                            dtype.add(None)
+                    schema = {
+                        'name': attr,
+                        'sample_value': sample_data,
+                        'types_found': list(dtype)
+                    }
+                details = {
+                    'file_path': filename,
+                    'file_type': file_type,
+                    'schema': schema
+                }
+                locator_meta[locator_method] = details
+
+            if file_type == 'shp':
+                import geopandas
+                db = geopandas.read_file(filename)
+
+                for attr in db:
+                    dtype = set()
+                    for data in db[attr]:
+                        if data == data:
+                            if attr == 'geometry':
+                                sample_data = '((x1 y1, x2 y2, ...))'
+                            else:
+                                sample_data = data
+                            if type(data) == unicode:
+                                dtype.add('str')
+                            else:
+                                dtype.add(type(data).__name__)
+                        # declare nans
+                        if data != data:
+                            dtype.add(None)
+                    schema = {
+                        'name': attr,
+                        'sample_value': sample_data,
+                        'types_found': list(dtype)
+                    }
+                details = {
+                    'file_path': filename,
+                    'file_type': file_type,
+                    'schema': schema,
+                }
+                locator_meta[locator_method] = details
 
     # methods = sorted(set([ms[0] for ms in meta_set]))
     #
@@ -247,7 +251,8 @@ def meta_to_json(meta_set, meta_output_file):
     #             locator_meta[method] = old_meta_data[method]
 
     with open(meta_output_file, 'w') as fp:
-        json.dump(locator_meta, fp, indent=4)
+        import yaml
+        yaml.dump(locator_meta, fp, indent=4)
 
 
 def create_graphviz_output(viz_set, graphviz_output_file):
@@ -284,6 +289,33 @@ def create_graphviz_output(viz_set, graphviz_output_file):
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     with open(graphviz_output_file, 'w') as f:
         f.write(digraph)
+
+
+def get_meta(db, filename, file_type):
+    for attr in db:
+        dtype = set()
+        for data in db[attr]:
+            # ensure sample_data is not nan
+            if data == data:
+                sample_data = data
+                if type(data) == unicode:
+                    dtype.add('str')
+                else:
+                    dtype.add(type(data).__name__)
+            # declare nans
+            if data != data:
+                dtype.add(None)
+            schema = {
+                'name': attr,
+                'sample_value': sample_data,
+                'types_found': list(dtype)
+            }
+    details = {
+        'file_path': filename,
+        'file_type': file_type,
+        'schema': schema
+    }
+    return details
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
