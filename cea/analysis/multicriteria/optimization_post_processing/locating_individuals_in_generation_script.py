@@ -166,15 +166,14 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_ton': emissions_ton_HOF,
                                   'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
-    dict_network = data['DCN_list']
-    print (len(dict_network))
+    dict_network = data['DCN_list_selected']
 
-    df_network = pd.DataFrame({'Name': individual_names_HOF, "network": dict_network}).set_index("Name")
+    df_network = pd.DataFrame({"network": dict_network})
 
 
 
     data_processed.append(
-        {'population': df_population, 'halloffame': df_halloffame, 'network': df_network,
+        {'population': df_population,  'network': df_network,
          'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
          'individual_barcode': def_individual_barcode})
 
