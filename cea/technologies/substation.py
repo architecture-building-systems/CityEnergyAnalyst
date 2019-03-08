@@ -754,7 +754,6 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     :param tho: out temperature hot stream
     :param tci: in temperature cold stream
     :param tco: out temperature cold stream
-    :param flag: heat: when using for the heating case, 'cool' otherwise
     :return:
         - dtm = logaritimic temperature difference
 
