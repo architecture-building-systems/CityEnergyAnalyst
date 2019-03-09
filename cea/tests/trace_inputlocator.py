@@ -83,15 +83,51 @@ def main(config):
 
     config.restricted_to = None
 
-    meta_to_json(meta_set, config.trace_inputlocator.meta_output_file)
+    meta_to_yaml(viz_set, meta_set, config.trace_inputlocator.meta_output_file)
     create_graphviz_output(viz_set, config.trace_inputlocator.graphviz_output_file)
     print 'Trace Complete'
 
+def get_updated_dependencies(viz_set, meta_output_file):
+    import yaml
+    dependencies = {}
 
-def meta_to_json(meta_set, meta_output_file):
+    for direction, script, locator_method, path, file in viz_set:
+        parent = []
+        child = []
+        if direction == 'output':
+            parent.append(script)
+        if direction == 'input':
+            child.append(script)
+        dependencies[locator_method] = {
+            'created_by': parent,
+            'used_by': child
+        }
+
+    methods = sorted(set([lm[2] for lm in viz_set]))
+
+    if os.path.exists(meta_output_file):
+        # merge existing data
+        with open(meta_output_file, 'r') as f:
+            old_dep_data = yaml.load(f)
+        for method in old_dep_data:
+            if method in methods:
+                if old_dep_data[method]['created_by']:
+                    for i in range(len(old_dep_data[method]['created_by'])):
+                        dependencies[method]['created_by'].append(old_dep_data[method]['created_by'][i])
+                if old_dep_data[method]['used_by']:
+                    for i in range(len(old_dep_data[method]['used_by'])):
+                        dependencies[method]['used_by'].append(old_dep_data[method]['used_by'][i])
+            if method not in methods:
+                # make sure not to overwrite newer data!
+                dependencies[method] = old_dep_data[method]
+    return dependencies
+
+
+def meta_to_yaml(viz_set, meta_set, meta_output_file):
 
     import pandas
     locator_meta = {}
+    dependencies = get_updated_dependencies(viz_set, meta_output_file)
 
     for locator_method, filename in meta_set:
         file_type = os.path.basename(filename).split('.')[1]
@@ -100,14 +136,14 @@ def meta_to_json(meta_set, meta_output_file):
 
             if file_type == 'csv':
                 db = pandas.read_csv(filename)
-                locator_meta[locator_method] = get_meta(db, filename, file_type)
+                locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
 
             if file_type == 'json':
 
                 with open(filename, 'r') as f:
                     import json
                     db = json.load(f)
-                    locator_meta[locator_method] = get_meta(db, filename, file_type)
+                    locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
 
             if file_type == 'epw':
                 epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
@@ -132,8 +168,7 @@ def meta_to_json(meta_set, meta_output_file):
                               'liq_precip_rate_Hour (index = 34)']
 
                 db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
-                locator_meta[locator_method] = get_meta(db, filename, file_type)
-
+                locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
 
             if file_type == 'xls' or file_type == 'xlsx':
 
@@ -159,7 +194,7 @@ def meta_to_json(meta_set, meta_output_file):
                             # sample_data only to contain valid values
                             if data == data:
                                 sample_data = data
-                                # chnage unicode to SQL 'str'
+                                # change unicode to SQL 'str'
                                 if type(data) == unicode:
                                     dtype.add('str')
                                 else:
@@ -167,15 +202,18 @@ def meta_to_json(meta_set, meta_output_file):
                             # declare nans
                             if data != data:
                                 dtype.add(None)
-                        schema[sheet] = {
-                            'name': attr,
-                            'sample_value': sample_data,
-                            'types_found': list(dtype)
-                        }
+
+                        schema[sheet][attr] = {
+                                'sample_value': sample_data,
+                                'types_found': list(dtype)
+                            }
+
                     details = {
                     'file_path' : filename,
                     'file_type' : file_type,
-                    'schema' : schema
+                    'schema' : schema,
+                    'created_by': dependencies[locator_method]['created_by'],
+                    'used_by': dependencies[locator_method]['used_by']
                     }
                     locator_meta[locator_method] = details
 
@@ -196,22 +234,23 @@ def meta_to_json(meta_set, meta_output_file):
                         # declare nans
                         if data != data:
                             dtype.add(None)
-                    schema = {
-                        'name': attr,
-                        'sample_value': sample_data,
-                        'types_found': list(dtype)
-                    }
+                        schema[attr] = {
+                                'sample_value': sample_data,
+                                'types_found': list(dtype)
+                            }
                 details = {
                     'file_path': filename,
                     'file_type': file_type,
-                    'schema': schema
+                    'schema': schema,
+                    'created_by': dependencies[locator_method]['created_by'],
+                    'used_by': dependencies[locator_method]['used_by']
                 }
                 locator_meta[locator_method] = details
 
             if file_type == 'shp':
                 import geopandas
                 db = geopandas.read_file(filename)
-
+                schema = {}
                 for attr in db:
                     dtype = set()
                     for data in db[attr]:
@@ -227,41 +266,40 @@ def meta_to_json(meta_set, meta_output_file):
                         # declare nans
                         if data != data:
                             dtype.add(None)
-                    schema = {
-                        'name': attr,
-                        'sample_value': sample_data,
-                        'types_found': list(dtype)
-                    }
+                        schema[attr] = {
+                                'sample_value': sample_data,
+                                'types_found': list(dtype)
+                            }
                 details = {
                     'file_path': filename,
                     'file_type': file_type,
                     'schema': schema,
+                    'created_by': dependencies[locator_method]['created_by'],
+                    'used_by': dependencies[locator_method]['used_by']
                 }
                 locator_meta[locator_method] = details
 
-    # methods = sorted(set([ms[0] for ms in meta_set]))
-    #
-    # if os.path.exists(meta_output_file):
-    #     # merge existing data
-    #     with open(meta_output_file, 'r') as f:
-    #         old_meta_data = json.load(f)
-    #     for method in old_meta_data.keys():
-    #         if not method in methods:
-    #             # make sure not to overwrite newer data!
-    #             locator_meta[method] = old_meta_data[method]
+    methods = sorted(set([lm[0] for lm in meta_set]))
+    import yaml
+    if os.path.exists(meta_output_file):
+        # merge existing data
+        with open(meta_output_file, 'r') as f:
+            old_loc_data = yaml.load(f)
+        for method in old_loc_data:
+            if method not in methods:
+                # make sure not to overwrite newer data!
+                locator_meta[method] = old_loc_data[method]
 
     with open(meta_output_file, 'w') as fp:
-        import yaml
         yaml.dump(locator_meta, fp, indent=4)
 
 
 def create_graphviz_output(viz_set, graphviz_output_file):
     # creating new variable to preserve original viz_set used by other methods
-    tracedata = set(sorted(viz_set))
-
+    tracedata = sorted(viz_set)
     # replacing any relative paths outside the case dir with the last three dirs in the path
     # this prevents long path names in digraph clusters
-    for i, (direction, script, method, path, file) in enumerate(tracedata):
+    for i, (direction, script, method, path, db) in enumerate(tracedata):
         if path.split('/')[0] == '..':
             path = path.rsplit('/', 3)
             del path[0]
@@ -291,7 +329,8 @@ def create_graphviz_output(viz_set, graphviz_output_file):
         f.write(digraph)
 
 
-def get_meta(db, filename, file_type):
+def get_meta(db, filename, file_type, dependencies):
+    schema = {}
     for attr in db:
         dtype = set()
         for data in db[attr]:
@@ -305,15 +344,16 @@ def get_meta(db, filename, file_type):
             # declare nans
             if data != data:
                 dtype.add(None)
-            schema = {
-                'name': attr,
+            schema[attr] = {
                 'sample_value': sample_data,
                 'types_found': list(dtype)
             }
     details = {
         'file_path': filename,
         'file_type': file_type,
-        'schema': schema
+        'schema': schema,
+        'created_by': dependencies['created_by'],
+        'used_by': dependencies['used_by']
     }
     return details
 
