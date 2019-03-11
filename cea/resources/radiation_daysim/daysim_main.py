@@ -129,7 +129,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
-    rad.initialise_daysim(daysim_dir, settings.daysim_bin_directory)
+    rad.initialise_daysim(daysim_dir, os.path.join(settings.daysim_bin_directory, ''))
     print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
     print("\tisolation_daysim: rad.hea_filename: {}".format(rad.hea_filename))
     print("\tisolation_daysim: rad.daysimdir_ies: {}".format(rad.daysimdir_ies))
