@@ -759,7 +759,7 @@ def calc_dTm_HEX(thi, tho, tci, tco):
 
     '''
     dT1 = thi - tco
-    dT2 = tho - tci
+    dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
 
     try:
         dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
