@@ -19,6 +19,7 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.utilities.physics import calc_wet_bulb_temperature
 from cea.technologies import heatpumps
 from cea.demand.transportation.matsim_data_import import FACILITY_TYPES
+from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
 
 from cea.utilities import reporting
 
