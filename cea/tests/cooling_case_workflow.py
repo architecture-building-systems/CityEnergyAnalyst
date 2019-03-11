@@ -33,14 +33,31 @@ def main():
     config.region = 'SG'
     config.weather = 'Singapore'
 
-    cea.api.data_helper(config=config)
-    print('-' * 80)
+    def run(script, **kwargs):
+        f = getattr(cea.api, script.replace('-', '_'))
+        f(config=config, **kwargs)
+        print('-' * 80)
 
-    cea.api.radiation_daysim(config=config)
-    print('-' * 80)
-
-    cea.api.demand(config=config)
-    print('-' * 80)
+    run('data-helper')
+    run('radiation-daysim')
+    run('demand')
+    run('emissions')
+    run('operation-costs')
+    run('network-layout', network_type='DC')
+    run('lake-potential')
+    run('sewage-potential')
+    run('photovoltaic')
+    run('solar-collector', type_scpanel='FP')
+    run('solar-collector', type_scpanel='ET')
+    run('photovoltaic-thermal', type_scpanel='FP')
+    run('photovoltaic-thermal', type_scpanel='ET')
+    run('thermal-network')
+    run('decentralized')
+    run('thermal-network-optimization')  # FIXME: what is this?!
+    run('optimization')
+    run('plots')
+    run('plots-supply-system')
+    run('plots-optimization')
 
     config_file = os.path.join(config.scenario, 'cea.config')
     config.save(config_file)
