@@ -108,7 +108,7 @@ def demand_calculation(locator, config):
         calc_demand_singleprocessing(building_properties, date, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output, region,  write_detailed_output, debug)
+                                     format_output, config, region,  write_detailed_output, debug)
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -145,7 +145,7 @@ def properties_and_schedule(locator, region, year, use_daysim_radiation, overrid
 def calc_demand_singleprocessing(building_properties, date, locator, list_building_names, usage_schedules,
                                  weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output, region,  write_detailed_output, debug):
+                                 format_output, config, region,  write_detailed_output, debug):
     num_buildings = len(list_building_names)
 
     for i, building in enumerate(list_building_names):
@@ -153,7 +153,7 @@ def calc_demand_singleprocessing(building_properties, date, locator, list_buildi
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator,
                                          use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output, region,  write_detailed_output, debug)
+                                         format_output, config, region,  write_detailed_output, debug)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
@@ -172,7 +172,7 @@ def calc_demand_multiprocessing(building_properties, date, locator, list_buildin
                                [building, bpr, weather_data, usage_schedules, date, locator,
                                 use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, region,  write_detailed_output, debug])
+                                format_output, config, region,  write_detailed_output, debug])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)

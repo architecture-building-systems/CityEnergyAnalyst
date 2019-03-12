@@ -104,8 +104,8 @@ Energy potentials:
   description: Use Daysim to calculate solar radiation for a scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.radiation_daysim.radiation_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', radiation-daysim]
-
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', 'general:debug',
+               radiation-daysim]
 
 Life cycle analysis:
 
@@ -181,15 +181,16 @@ Thermal networks:
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout]
+  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.thermal_network_matrix
+  module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network']
+               'general:number-of-cpus-to-keep-free', 'thermal-network',
+               'thermal-network-optimization:use-representative-week-per-month']
 
 - name: thermal-network-optimization
   label: Thermo network optimization

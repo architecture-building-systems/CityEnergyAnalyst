@@ -1,0 +1,19 @@
+operation-costs:
+  input:
+  - !!python/tuple
+    - get_building_supply
+    - inputs/building-properties
+    - supply_systems.dbf
+  - !!python/tuple
+    - get_life_cycle_inventory_supply_systems
+    - databases/CH/lifecycle
+    - LCA_infrastructure.xlsx
+  - !!python/tuple
+    - get_total_demand
+    - outputs/data/demand
+    - Total_demand.csv
+  output:
+  - !!python/tuple
+    - get_costs_operation_file
+    - outputs/data/costs
+    - operation_costs.csv
