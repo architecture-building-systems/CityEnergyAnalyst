@@ -51,7 +51,7 @@ def main(config):
         sys.settrace(create_trace_function(results_set))
         script_func(config)  # <------------------------------ this is where we run the script!
         sys.settrace(orig_trace)
-
+        print results_set
         for locator_method, filename in results_set:
             if os.path.isdir(filename):
                 continue
@@ -221,9 +221,10 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
                 import pysal
                 db = pysal.open(filename, 'r')
                 schema = dict((k, ()) for k in db.header)
-                dtype = set()
+
 
                 for attr in schema:
+                    dtype = set()
                     for data in db.by_col(attr):
                         if data == data:
                             sample_data = data

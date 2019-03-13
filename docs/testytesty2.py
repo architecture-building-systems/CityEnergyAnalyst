@@ -185,27 +185,40 @@ for locator_method, filename in meta_set:
                 'types_found': list(dtype)
             }
 
-    # if file_type == 'dbf':
-    #     db = pysal.open(filename, 'r')
-    #     schema = dict((k, ()) for k in db.header)
-    #     dtype = set()
-    #
-    #     for attr in schema:
-    #         for data in db.by_col(attr):
-    #             if data == data:
-    #                 sample_data = data
-    #                 if type(data) == unicode:
-    #                     dtype.add('str')
-    #                 else:
-    #                     dtype.add(type(data).__name__)
-    #             # declare nans
-    #             if data != data:
-    #                 dtype.add(None)
-    #         schema = {
-    #             'name': attr,
-    #             'sample_value': sample_data,
-    #             'types_found': list(dtype)
-    #         }
+    if file_type == 'dbf':
+        import pysal
+
+        db = pysal.open(filename, 'r')
+        schema = dict((k, ()) for k in db.header)
+
+
+        for attr in schema:
+            dtype = set()
+            for data in db.by_col(attr):
+                print data
+                print type(data).__name__
+
+                if data == data:
+                    sample_data = data
+                    if type(data) == unicode:
+                        dtype.add('str')
+                    else:
+                        dtype.add(type(data).__name__)
+                # declare nans
+                if data != data:
+                    dtype.add(None)
+                schema[attr] = {
+                    'sample_value': sample_data,
+                    'types_found': list(dtype)
+                }
+        details = {
+            'file_path': filename,
+            'file_type': file_type,
+            'schema': schema,
+            'created_by': dependencies[locator_method]['created_by'],
+            'used_by': dependencies[locator_method]['used_by']
+        }
+        locator_meta[locator_method] = details
 
     if file_type == 'json':
 
