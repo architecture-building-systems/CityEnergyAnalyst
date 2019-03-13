@@ -101,11 +101,14 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
         output_hcs.loc[:, 'Af_m2'] = total_demand_df['Af_m2'][name]
         output_hcs.loc[:, 'Vf_m3'] = floor_height_m * total_demand_df['Af_m2'][name]
         ## CO2 gain
-        calc_CO2_gains(output_df, reduced_tsd_df)
+        calc_CO2_gains(output_hcs, reduced_tsd_df)
         output_df1['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
+        output_hcs['V_CO2_max_m3'] = reduced_tsd_df['V_CO2_max_m3']
+        output_hcs['V_CO2_min_m3'] = reduced_tsd_df['V_CO2_min_m3']
         output_hcs['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
+
         output_hcs['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
         output_hcs['CO2_max_ppm'] = CO2_int_max_ppm
         output_hcs['m_ve_req'] = reduced_tsd_df['m_ve_required']
@@ -163,15 +166,18 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
     return building_names
 
 
-def calc_CO2_gains(output_df, reduced_tsd_df):
-    reduced_tsd_df['CO2_ext_ppm'] = CO2_env_ppm
+def calc_CO2_gains(output_hcs, reduced_tsd_df):
+    reduced_tsd_df['CO2_ext_ppm'] = CO2_env_ppm  # m3 CO2/m3
     # from occupants
     reduced_tsd_df['v_CO2_occupant_m3pers'] = calc_co2_from_occupants(reduced_tsd_df['people'])
     # from inlet air
-    reduced_tsd_df['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
+    reduced_tsd_df['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])  # kg/m3
     reduced_tsd_df['v_in_infil_window'] = (reduced_tsd_df['m_ve_inf'] + reduced_tsd_df['m_ve_window']) / \
                                           reduced_tsd_df['rho_air']
     reduced_tsd_df['v_CO2_infil_window_m3pers'] = reduced_tsd_df['v_in_infil_window'] * reduced_tsd_df['CO2_ext_ppm']
+    reduced_tsd_df['V_CO2_max_m3'] = output_hcs['Vf_m3'] * CO2_int_max_ppm
+    reduced_tsd_df['V_CO2_min_m3'] = output_hcs['Vf_m3'] * CO2_env_ppm
+    return np.nan
 
 
 def calc_sensible_gains(output_df, reduced_tsd_df):
@@ -187,6 +193,7 @@ def calc_sensible_gains(output_df, reduced_tsd_df):
     reduced_tsd_df['Q_gain_total_kWh'] = reduced_tsd_df['Q_gain_rad_kWh'] + reduced_tsd_df['Q_gain_env_kWh'] + \
                                          reduced_tsd_df[
                                              'Q_gain_int_kWh'] + reduced_tsd_df['Q_gain_occ_kWh']
+    return np.nan
 
 
 def calc_m_w_in_air(Troom_C, w_gperkg, Vf_m3):
