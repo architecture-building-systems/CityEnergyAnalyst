@@ -754,13 +754,12 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     :param tho: out temperature hot stream
     :param tci: in temperature cold stream
     :param tco: out temperature cold stream
-    :param flag: heat: when using for the heating case, 'cool' otherwise
     :return:
         - dtm = logaritimic temperature difference
 
     '''
     dT1 = thi - tco
-    dT2 = tho - tci
+    dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
 
     try:
         dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
