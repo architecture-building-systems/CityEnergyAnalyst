@@ -428,7 +428,9 @@ class Plots(object):
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        data_imports_exports_electricity_W = electricity_calculations_of_all_buildings(generation_pointer, individual_pointer, locator, config)
+        data_imports_exports_electricity_W = electricity_calculations_of_all_buildings(generation_pointer,
+                                                                                       individual_pointer, locator,
+                                                                                       config,,
         data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
