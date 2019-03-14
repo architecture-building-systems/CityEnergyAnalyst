@@ -30,6 +30,7 @@ scrum master, project owner, project sponsor and collaborators.
     * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
 
     Collaborators:
+    * Sebastian Troiztsch
     * Jose Bello
     * Kian Wee Chen
     * Jack Hawthorne
