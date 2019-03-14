@@ -249,7 +249,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
 
         # Initialization of variables
-        DHN_network_list = ["1" * nBuildings]
+        DHN_network_list = []
+        DCN_network_list = []
 
         g += 1
         print "Generation", g
