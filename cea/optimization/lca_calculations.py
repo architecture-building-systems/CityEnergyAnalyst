@@ -141,7 +141,7 @@ class lca_calculations(object):
         self.EL_PV_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['CO2']  # kg_CO2 / MJ_final
 
         if config.detailed_electricity_pricing:
-            self.ELEC_PRICE = electricity_costs['cost'].values # in USD_2015 per W
+            self.ELEC_PRICE = electricity_costs['cost_kWh'].values/1000 # in USD_2015 per W
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                             'costs_kWh'] / 1000
