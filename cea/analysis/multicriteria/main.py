@@ -288,7 +288,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                 dfBest = df[df["Best configuration"] == 1]
 
                 if dfBest['VCC to AHU_ARU_SCU Share'].iloc[0] == 1: #FIXME: Check for other options
-                    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+                    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Chiller")
                     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
                     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
                     Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
@@ -296,7 +296,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
                 if dfBest['single effect ACH to AHU_ARU_SCU Share (FP)'].iloc[0] == 1:
                     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                                 sheetname="Absorption_chiller")
+                                                                 sheet_name="Absorption_chiller")
                     Absorption_chiller_cost_data = Absorption_chiller_cost_data[
                         ['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%', 'LT_yr', 'O&M_%']]
                     Absorption_chiller_cost_data = Absorption_chiller_cost_data[
@@ -342,7 +342,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                 subsArray = np.array(df)
 
                 Q_max_W = np.amax(subsArray)
-                HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HEX")
+                HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="HEX")
                 HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
                 # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
                 # capacity for the corresponding technology from the database

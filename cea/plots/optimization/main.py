@@ -266,8 +266,10 @@ class Plots(object):
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]),
                                           columns=column_names)
-
-        data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+        try:
+            data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+        except IOError:
+            raise IOError("Please run the multi-criteria analysis tool first for the generation you would like to visualize")
 
         for individual_code in range(len(data_raw['individual_barcode'])):
 
@@ -566,8 +568,10 @@ class Plots(object):
         return analysis_fields_no_zero
 
     def preprocessing_multi_criteria_data(self, locator, generation):
-
-        data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+        try:
+            data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+        except IOError:
+            raise IOError("Please run the multi-criteria analysis tool first for the generation you would like to visualize")
 
         return data_multi_criteria
 
