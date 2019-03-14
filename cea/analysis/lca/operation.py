@@ -51,11 +51,11 @@ def lca_operation(locator, config):
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
     data_LCI = locator.get_life_cycle_inventory_supply_systems(config.region)
-    factors_heating = pd.read_excel(data_LCI, sheetname='HEATING')
-    factors_dhw = pd.read_excel(data_LCI, sheetname='DHW')
-    factors_cooling = pd.read_excel(data_LCI, sheetname='COOLING')
-    factors_electricity = pd.read_excel(data_LCI, sheetname='ELECTRICITY')
-    factors_resources = pd.read_excel(data_LCI, sheetname='RESOURCES')
+    factors_heating = pd.read_excel(data_LCI, sheet_name='HEATING')
+    factors_dhw = pd.read_excel(data_LCI, sheet_name='DHW')
+    factors_cooling = pd.read_excel(data_LCI, sheet_name='COOLING')
+    factors_electricity = pd.read_excel(data_LCI, sheet_name='ELECTRICITY')
+    factors_resources = pd.read_excel(data_LCI, sheet_name='RESOURCES')
 
     # local variables
     result_folder = locator.get_lca_emissions_results_folder()
