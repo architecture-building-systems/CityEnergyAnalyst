@@ -166,9 +166,9 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_ton': emissions_ton_HOF,
                                   'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
-    dict_network = data['DCN_list_selected']
+    dict_network = data['DCN_list_All']
 
-    df_network = pd.DataFrame({"network": dict_network})
+    df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
 
 
 
