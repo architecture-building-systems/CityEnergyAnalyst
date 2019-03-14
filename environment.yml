@@ -222,4 +222,9 @@ dependencies:
     - win-unicode-console==0.5
     - xlrd==1.2.0
     - xlwt==1.3.0
+    - mpmath==0.19
+    - sympy==1.3
+    - ephem==3.7.6.0
+    - timezonefinder==3.4.2
+    - deap==1.2.2
 
