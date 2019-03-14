@@ -4,12 +4,14 @@ This is the dashboard of CEA
 from __future__ import division
 from __future__ import print_function
 
-import pandas as pd
 import os
+
+import pandas as pd
+
 import cea.config
 import cea.inputlocator
-from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
 from cea.plots.solar_technology_potentials.all_tech_hourly_curve import all_tech_district_hourly
+from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
 from cea.plots.solar_technology_potentials.pv_monthly import pv_district_monthly
 from cea.plots.solar_technology_potentials.pvt_monthly import pvt_district_monthly
 from cea.plots.solar_technology_potentials.sc_monthly import sc_district_monthly
@@ -55,7 +57,7 @@ def plot_main(locator, config):
     plots.all_tech_district_hourly(category)
 
 
-class Plots():
+class Plots(object):
     def __init__(self, locator, buildings, weather, config):
         """
 
@@ -111,7 +113,6 @@ class Plots():
             return " for Building " + str(buildings[0])
         else:
             return " for Selected Buildings"
-
 
     def get_analysis_fields(self, analysis_fields):
 
@@ -249,7 +250,8 @@ class Plots():
 
     def pv_district_monthly(self, category):
         pv_title = "PV Electricity Potential for" + self.plot_title_tail
-        pv_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_photovoltaic_monthly', category)
+        pv_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_photovoltaic_monthly',
+                                                                category)
         if 'PV' in self.all_tech_analysis_fields:
             data = self.data_processed["data_hourly"].copy()
             pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
@@ -258,9 +260,9 @@ class Plots():
 
     def pvt_district_monthly(self, category):
         pvt_title = "PVT Electricity/Thermal Potential for" + self.plot_title_tail
-        pvt_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_photovoltaic_thermal_monthly', category)
+        pvt_output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_photovoltaic_thermal_monthly', category)
         if 'PVT' in self.all_tech_analysis_fields:
-
             data = self.data_processed["data_hourly"].copy()
             pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
             print('Photovoltaic-thermal panel results plotted')
@@ -268,7 +270,8 @@ class Plots():
 
     def sc_fp_district_monthly(self, category):
         sc_title = "Flat Plate SC Thermal Potential for" + self.plot_title_tail
-        sc_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_FP_solar_collector_monthly', category)
+        sc_output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_FP_solar_collector_monthly', category)
         if 'SC_FP' in self.all_tech_analysis_fields:
             data = self.data_processed["data_hourly"].copy()
             sc_district_monthly(data, self.sc_fp_analysis_fields, sc_title, sc_output_path)
@@ -277,7 +280,8 @@ class Plots():
 
     def sc_et_district_monthly(self, category):
         sc_title = "Evacuated Tube SC Thermal Potential for" + self.plot_title_tail
-        sc_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_ET_solar_collector_monthly', category)
+        sc_output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_ET_solar_collector_monthly', category)
         if 'SC_ET' in self.all_tech_analysis_fields:
             data = self.data_processed["data_hourly"].copy()
             sc_district_monthly(data, self.sc_et_analysis_fields, sc_title, sc_output_path)
@@ -286,14 +290,16 @@ class Plots():
 
     def all_tech_district_yearly(self, category):
         all_tech_title = "PV/SC/PVT Potential for" + self.plot_title_tail
-        all_tech_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_tech_yearly', category)
+        all_tech_output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_solar_tech_yearly', category)
         data = self.data_processed["data_yearly"].copy()
         all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_fp_analysis_fields,
                                  self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
 
     def all_tech_district_hourly(self, category):
         all_tech_title = "PV/SC/PVT Potential for" + self.plot_title_tail
-        all_tech_output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_tech_hourly', category)
+        all_tech_output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_solar_tech_hourly', category)
         data = self.data_processed["data_hourly"].copy()
         all_tech_district_hourly(data, self.all_tech_analysis_fields, all_tech_title, all_tech_output_path)
 

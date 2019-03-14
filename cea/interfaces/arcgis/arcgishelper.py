@@ -8,6 +8,7 @@ import cea.config
 import cea.scripts
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
+from cea.interfaces.arcgis import DEPRECATION_WARNING
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -216,6 +217,11 @@ def run_cli(script_name, **parameters):
     add_message('Executing: ' + ' '.join(command))
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
+
+    add_message('')
+    add_message(DEPRECATION_WARNING)
+    add_message('')
+
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
@@ -455,6 +461,13 @@ class PathParameterInfoBuilder(ParameterInfoBuilder):
         parameter.datatype = 'DEFolder'
         if self.cea_parameter._direction == 'output':
             parameter.direction = 'Output'
+        return parameter
+
+
+class ScenarioParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(ScenarioParameterInfoBuilder, self).get_parameter_info()
+        parameter.datatype = 'DEFolder'
         return parameter
 
 
@@ -779,6 +792,7 @@ def list_buildings(scenario):
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
+    cea.config.ScenarioParameter: ScenarioParameterInfoBuilder,
     cea.config.PathParameter: PathParameterInfoBuilder,
     cea.config.StringParameter: StringParameterInfoBuilder,
     cea.config.BooleanParameter: ScalarParameterInfoBuilder,

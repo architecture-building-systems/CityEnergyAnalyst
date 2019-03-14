@@ -228,6 +228,12 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     #. No solar panels on windows.
     """
 
+    def f(x):
+        if x <= 50:
+            return 0
+        else:
+            return x
+
     # read radiation file
     sensors_rad = pd.read_json(radiation_json_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
@@ -254,7 +260,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
-    sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0  # eliminate points when hourly production < 50 W/m2
+    sensors_rad_clean = sensors_rad_clean.applymap(lambda x: f(x))
 
     return max_annual_radiation, annual_radiation_threshold_Whperm2, sensors_rad_clean, sensors_metadata_clean
 

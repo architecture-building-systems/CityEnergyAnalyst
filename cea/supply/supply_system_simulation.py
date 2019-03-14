@@ -188,9 +188,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     PEN_MJoil += PEN_heating_MJoil
 
     # slave optimization of cooling networks
-    if gv.ZernezFlag == 1:
-        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
-    elif config.district_cooling_network and DCN_barcode.count("1") > 0:
+    if config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features,
                                                                                        prices, lca, config, reduced_timesteps_flag)
@@ -204,7 +202,8 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
 
     # District Electricity Calculations
-    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
@@ -221,7 +220,6 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     costs_USD += costs_additional_USD
     GHG_tonCO2 += GHG_additional_tonCO2
     PEN_MJoil += PEN_additional_MJoil
-
     costs_USD = (np.float64(costs_USD) / 1e6).round(2)  # $ to Mio$
     GHG_tonCO2 = (np.float64(GHG_tonCO2) / 1e6).round(2)  # kg to kilo-ton
     PEN_MJoil = (np.float64(PEN_MJoil) / 1e6).round(2)  # MJ to TJ

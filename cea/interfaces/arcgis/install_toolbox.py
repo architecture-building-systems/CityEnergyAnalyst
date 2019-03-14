@@ -1,8 +1,12 @@
+from __future__ import print_function
+
 """Install the toolbox into ArcGIS Desktop 10.4 and 10.5"""
 import sys
 import shutil
 import os.path
 import cea.config
+
+from cea.interfaces.arcgis import DEPRECATION_WARNING
 
 
 def main(config):
@@ -18,6 +22,10 @@ def main(config):
     - create the databases.pth file in the "My Toolboxes/cea" directory
     """
     # write out path to python.exe to the file cea_python.pth
+    print()
+    print(DEPRECATION_WARNING)
+    print()
+
     with open(os.path.expanduser('~/cea_python.pth'), 'w') as f:
         f.write(sys.executable)
 
@@ -46,11 +54,10 @@ def copy_library(toolbox_folder, debug=False):
     lib_src_folder = os.path.dirname(__file__)
     shutil.copy(os.path.join(lib_src_folder, 'arcgishelper.py'), lib_dst_folder)
     shutil.copy(os.path.join(lib_src_folder, 'modules.py'), lib_dst_folder)
+    shutil.copy(os.path.join(lib_src_folder, '__init__.py'), lib_dst_folder)
 
     # add `__init__.py` files to interfaces and arcgis folders
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
-        f.write('')
-    with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
     # during development, copy this file too

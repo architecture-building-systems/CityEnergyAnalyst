@@ -5,12 +5,10 @@ Extra costs to an individual
 """
 from __future__ import division
 import os
-import cea.technologies.solar.photovoltaic as pv
-import cea.technologies.solar.photovoltaic_thermal as pvt
-import cea.technologies.solar.solar_collector as stc
+
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK
+from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK, PIPELIFETIME, PIPEINTERESTRATE
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
@@ -20,6 +18,9 @@ import cea.technologies.heat_exchangers as hex
 import cea.technologies.thermal_network.thermal_network as network
 import cea.technologies.heatpumps as hp
 import cea.technologies.pumps as pumps
+import cea.technologies.solar.photovoltaic as pv
+import cea.technologies.solar.photovoltaic_thermal as pvt
+import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as storage
 
 __author__ = "Tim Vollrath"
@@ -492,14 +493,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         addcosts_Capex_USD += Capex_storage_USD
 
         # Costs from distribution configuration
-        if gv.ZernezFlag == 1:
-            NetworkCost_a_USD, NetworkCost_USD = network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv)
-            NetworkCost_a_USD = NetworkCost_a_USD * nBuildinNtw / len(buildList)
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-        else:
-            NetworkCost_USD = network_features.pipesCosts_DHN_USD
-            NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-            NetworkCost_a_USD = NetworkCost_USD * gv.PipeInterestRate * (1+ gv.PipeInterestRate) ** gv.PipeLifeTime / ((1+gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
+        NetworkCost_USD = network_features.pipesCosts_DHN_USD
+        NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
+        NetworkCost_a_USD = NetworkCost_USD * PIPEINTERESTRATE * (1+ PIPEINTERESTRATE) ** PIPELIFETIME / ((1+PIPEINTERESTRATE) ** PIPELIFETIME - 1)
         addcosts_Capex_a_USD += NetworkCost_a_USD
         addcosts_Capex_USD += NetworkCost_USD
 
@@ -550,7 +546,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
     # Pump operation costs
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, gv, locator, lca, config)
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, config)
     addcosts_Capex_a_USD += Capex_a_pump_USD
     addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
     addcosts_Capex_USD += Capex_pump_USD
@@ -580,6 +576,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Opex_fixed_SC": [Opex_fixed_SC],
         "Capex_a_PVT": [Capex_a_PVT_USD],
         "Opex_fixed_PVT": [Opex_fixed_PVT_USD],
+        "Capex_a_PV": [Capex_a_PV_USD],
+        "Opex_fixed_PV": [Opex_fixed_PV_USD],
         "Capex_a_Boiler_backup": [Capex_a_Boiler_backup_USD],
         "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup_USD],
         "Capex_a_storage_HEX": [Capex_a_HP_storage_USD],
@@ -621,6 +619,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_SC_ET_USD": [Capex_SC_ET_USD],
         "Capex_SC_FP_USD": [Capex_SC_FP_USD],
         "Capex_PVT": [Capex_PVT_USD],
+        "Capex_PV": [Capex_PV_USD],
         "Capex_Boiler_backup": [Capex_Boiler_backup_USD],
         "Capex_storage_HEX": [Capex_HP_storage_USD],
         "Capex_storage_HP": [Capex_storage_HP],
@@ -630,8 +629,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_Boiler_peak": [Capex_Boiler_peak_USD],
         "Capex_Lake": [Capex_Lake_USD],
         "Capex_Sewage": [Capex_Sewage_USD],
-        "Capex_pump": [Capex_pump_USD],
-
+        "Capex_pump": [Capex_pump_USD]
     })
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),

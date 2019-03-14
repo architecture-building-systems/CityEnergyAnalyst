@@ -11,7 +11,6 @@ import cea.globalvar
 import cea.config
 from cea.interfaces.arcgis.modules import arcpy
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
@@ -43,9 +42,9 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
 
     # figure out folder for the results based on file to analyze
     if locator.are_equal(file_to_analyze, locator.get_total_demand()):
-        path_results = locator.get_heatmaps_demand_folder()
+        path_results = locator._ensure_folder(locator.get_plots_folder('heatmaps'))
     elif locator.are_equal(os.path.dirname(file_to_analyze), locator.get_lca_emissions_results_folder()):
-        path_results = locator.get_heatmaps_emission_folder()
+        path_results = locator._ensure_folder(locator.get_plots_folder('heatmaps'))
     else:
         raise ValueError(
             'file_to_analyze must be either the demand totals file or a file in the emissions results folder: %s'
@@ -113,18 +112,22 @@ def get_gis_field(csv_field, gis_field_lookup):
         gis_field = ''.join(letters)
     return gis_field
 
-
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running heatmaps with scenario = %s' % config.scenario)
-    print('Running heatmaps with file-to-analyze = %s' % config.heatmaps.file_to_analyze)
-    print('Running heatmaps with analysis-fields = %s' % config.heatmaps.analysis_fields)
+    # print('Running heatmaps with file-to-analyze = %s' % config.heatmaps.file_to_analyze)
+    analysis_fields = ['QH_sys_MWhyr', 'QC_sys_MWhyr', 'E_sys_MWhyr']
+    # print('Running heatmaps with analysis-fields = %s' % config.heatmaps.analysis_fields)
+    file_to_analyze = locator.get_total_demand()
 
-    heatmaps(locator=locator, analysis_fields=config.heatmaps.analysis_fields,
-             file_to_analyze=config.heatmaps.file_to_analyze)
+    heatmaps(locator=locator, analysis_fields=analysis_fields, file_to_analyze=file_to_analyze)
 
+    analysis_fields = ['O_ghg_ton', 'O_ghg_kgm2', 'O_nre_pen_GJ', 'O_nre_pen_MJm2']
+    file_to_analyze = locator.get_lca_operation()
+
+    heatmaps(locator=locator, analysis_fields=analysis_fields, file_to_analyze=file_to_analyze)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -159,13 +159,16 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
 
 def calc_VCC_COP(config, load_types, centralized=True):
-    """	
-    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of	
-    auxiliary power demand for centralized and decentralized systems.	
-     Clark D (CUNDALL). Chiller energy efficiency 2013.	
-     :param load_types:	
-    :param centralized:	
-    :return:	
+    """
+    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
+    auxiliary power demand for centralized and decentralized systems.
+    This approximation only works in tropical climates
+
+    Clark D (CUNDALL). Chiller energy efficiency 2013.
+
+    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
+    :param centralized:
+    :return:
     """
     if centralized == True:
         g_value = G_VALUE_CENTRALIZED
@@ -182,10 +185,11 @@ def calc_VCC_COP(config, load_types, centralized=True):
         else:
             print 'Undefined cooling load_type for chiller COP calculation.'
     if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
-        T_evap = T_evap - DT_NETWORK_CENTRALIZED  # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        T_evap = T_evap - DT_NETWORK_CENTRALIZED
     # read weather data for condeser temperature calculation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
-    # calculate condenser temperature with static approach temperature assumptions
+    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
     T_cond = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
     # calculate chiller COP
     cop_chiller = g_value * T_evap / (T_cond - T_evap)
@@ -194,7 +198,9 @@ def calc_VCC_COP(config, load_types, centralized=True):
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
     else:
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
-    return cop_system
+
+    return cop_system, cop_chiller
+
 
 def main():
     Qc_W = 3.5

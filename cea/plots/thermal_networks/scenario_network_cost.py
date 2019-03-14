@@ -6,6 +6,15 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, COLOR
 
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def network_costs(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
@@ -37,30 +46,30 @@ def calc_graph(analysis_fields, data_frame):
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         base = 0
         width = 0.4
-        if field == "": #todo: input all opex cost names here
+        if field == "":  # todo: input all opex cost names here
             offset = 0.0
-        else: #all capex values
+        else:  # all capex values
             offset = -0.4
         trace = go.Bar(
-            base = base,
-            width = width,
-            offset = offset,
+            base=base,
+            width=width,
+            offset=offset,
             x=data_frame.index, y=y, name=field, text=total_perc_txt,
             marker=dict(color=COLOR[field.split(field, 1)[0]])
-            )
+        )
         graph.append(trace)
     return graph
 
-def calc_table(analysis_fields, data_frame):
 
-    #create values of table
+def calc_table(analysis_fields, data_frame):
+    # create values of table
     values_header = ['Scenarios']
-    for field in analysis_fields+['total']:
+    for field in analysis_fields + ['total']:
         values_header.append("delta " + field + "[$/yr]")
 
-    #create values of table
+    # create values of table
     values_cell = [data_frame.index]
-    for field in analysis_fields+['total']:
+    for field in analysis_fields + ['total']:
         cell = data_frame[field]
         cell = [
             str('{:20,.2f}'.format(x - cell[0])) + " (" + str(

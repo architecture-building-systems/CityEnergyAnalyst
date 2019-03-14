@@ -1,10 +1,19 @@
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-from plotly.offline import plot
 import plotly.graph_objs as go
+from plotly.offline import plot
+
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
+
+__author__ = "Lennart Rogenhofer"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Lennart Rogenhofer"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def loss_curve(data_frame, analysis_fields, title, output_path):
@@ -37,9 +46,9 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
             dict(count=1, label='1m', step='month', stepmode='backward'),
             dict(count=6, label='6m', step='month', stepmode='backward'),
             dict(count=1, label='1y', step='year', stepmode='backward'),
-            dict(step='all')])), rangeslider=dict(), type='date',range= [data_frame.index[0],
+            dict(step='all')])), rangeslider=dict(), type='date', range=[data_frame.index[0],
                                                                          data_frame.index[168]],
-                                                                          fixedrange=False))
+            fixedrange=False))
 
     fig = dict(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

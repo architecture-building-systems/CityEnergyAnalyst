@@ -50,7 +50,7 @@ Demand forecasting:
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
-               'general:number-of-cpus-to-keep-free', demand]
+               'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
 
 Energy potentials:
@@ -104,8 +104,8 @@ Energy potentials:
   description: Use Daysim to calculate solar radiation for a scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.radiation_daysim.radiation_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', radiation-daysim]
-
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing', 'general:debug',
+               radiation-daysim]
 
 Life cycle analysis:
 
@@ -145,6 +145,22 @@ Optimization:
                'general:district-heating-network', 'general:district-cooling-network',
                'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
+- name: mpc-building
+  label: MPC optimizer for buildings
+  description: model predictive control optimizer for buildings in isolation
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.flexibility_model.mpc_building.operation_main
+  parameters: ['general:scenario', 'general:scenario-name', 'general:region', 'general:weather',
+               'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'mpc-building']
+
+- name: mpc-district
+  label: MPC optimizer for an entire district
+  description: model predictive control optimizer for buildings in a district, accounting for grid constaints
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.flexibility_model.mpc_district.planning_and_operation_main
+  parameters: ['general:scenario', 'general:scenario-name', 'general:region', 'general:weather',
+               'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'mpc-district']
+
 Sensitivity analysis:
 
 - name: sensitivity-demand-analyze
@@ -160,7 +176,7 @@ Sensitivity analysis:
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_samples
   parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order', 'sensitivity-demand:grid-jump',
+               'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
                'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
 - name: sensitivity-demand-simulate
@@ -181,15 +197,24 @@ Thermal networks:
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout]
+  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
 
-- name: thermal-network-matrix
+- name: thermal-network
   label: Thermo-hydraulic network (branched)
   description: Solve the thermal hydraulic network
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.thermal_network_matrix
+  module: cea.technologies.thermal_network.thermal_network
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network']
+               'general:number-of-cpus-to-keep-free', 'thermal-network',
+               'thermal-network-optimization:use-representative-week-per-month']
+
+- name: thermal-network-optimization
+  label: Thermo network optimization
+  description: Optimize network design variables (plant locations, layout,...)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.technologies.thermal_network.thermal_network_optimization
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
 
 
 Utilities:
@@ -256,19 +281,19 @@ default:
   module: cea.utilities.compile_pyd_files
   parameters: []
 
-- name: config-editor
-  label: config-editor
-  description: config-editor
-  interfaces: [cli]
-  module: cea.interfaces.config_editor.config_editor
-  parameters: []
-
 - name: dashboard
   label: dashboard
   description: dashboard
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
   parameters: []
+
+- name: install-arcgis
+  label: install-arcgis
+  description: install-arcgis
+  interfaces: [cli]
+  module: cea.interfaces.arcgis.install_toolbox
+  parameters: ['general:debug']
 
 - name: excel-to-shapefile
   label: excel-to-shapefile
@@ -289,13 +314,6 @@ default:
   description: install-grasshopper
   interfaces: [cli]
   module: cea.interfaces.grasshopper.install_grasshopper
-  parameters: ['general:debug']
-
-- name: install-toolbox
-  label: install-toolbox
-  description: install-toolbox
-  interfaces: [cli]
-  module: cea.interfaces.arcgis.install_toolbox
   parameters: ['general:debug']
 
 - name: list-demand-graphs-fields

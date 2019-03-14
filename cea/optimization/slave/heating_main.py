@@ -172,7 +172,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices, lca, ground_temp[hour])
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices, lca, ground_temp[hour], config)
 
         Opex_var_HP_Sewage_USD[hour] = opex_output['Opex_var_HP_Sewage_USD']
         Opex_var_HP_Lake_USD[hour] = opex_output['Opex_var_HP_Lake_USD']
@@ -271,7 +271,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
-                                                         master_to_slave_vars.EL_TYPE, gv, prices, lca)
+                                                         master_to_slave_vars.EL_TYPE, prices, lca, hour)
             Opex_var_BackupBoiler_USD[hour], Opex_var_BackupBoiler_per_Wh_USD, Q_BackupBoiler_W[
                 hour], E_BackupBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_BackupBoiler_req_W[hour] = E_BackupBoiler_req_W_hour

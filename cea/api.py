@@ -13,7 +13,7 @@ def register_scripts():
     config = cea.config.Configuration()
 
     def script_wrapper(cea_script):
-        def script_runner(config=config, subprocess=False, **kwargs):
+        def script_runner(config=config, **kwargs):
             cea_script.print_script_configuration(config)
             option_list = cea_script.parameters
             module_path = cea_script.module
@@ -22,8 +22,9 @@ def register_scripts():
             for section, parameter in config.matching_parameters(option_list):
                 if parameter.name in kwargs:
                     parameter.set(kwargs[parameter.name])
-            if not subprocess:
-                script_module.main(config)
+            # run the script
+            script_module.main(config)
+        script_runner.__doc__ = "hello, world"
         return script_runner
 
     for cea_script in sorted(cea.scripts.list_scripts()):

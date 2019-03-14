@@ -677,7 +677,7 @@ def calc_properties_PV_db(database_path, config):
     :return: dict with Properties of the panel taken form the database
     """
     type_PVpanel = config.solar.type_PVpanel
-    data = pd.read_excel(database_path, sheetname="PV")
+    data = pd.read_excel(database_path, sheet_name="PV")
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -691,7 +691,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
@@ -761,8 +761,8 @@ def main(config):
 
     list_buildings_names = locator.get_zone_building_names()
 
-    data = gdf.from_file(locator.get_zone_geometry())
-    latitude, longitude = get_lat_lon_projected_shapefile(data)
+    hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
+    latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
@@ -771,14 +771,27 @@ def main(config):
         calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata,
                 latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
 
+    # aggregate results from all buildings
+    aggregated_annual_results = {}
     for i, building in enumerate(list_buildings_names):
-        data = pd.read_csv(locator.PV_results(building))
+        hourly_results_per_building = pd.read_csv(locator.PV_results(building))
         if i == 0:
-            df = data
+            aggregated_hourly_results_df = hourly_results_per_building
         else:
-            df = df + data
-    df = df.set_index('Date')
-    df.to_csv(locator.PV_totals(), index=True, float_format='%.2f')
+            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+
+        annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
+        panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
+        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        aggregated_annual_results[building] = building_annual_results
+
+    # save hourly results
+    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
+    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=True, float_format='%.2f')
+    # save annual results
+    aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, float_format='%.2f')
+
 
 
 if __name__ == '__main__':

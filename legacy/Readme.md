@@ -15,3 +15,10 @@ emissions. It was created as a requirement by a partner company. The use of the 
 heatmaps can be strongly misleading when we talk about energy consumption at the building and district scales.
 We do not recommend their use anymore, beyond a cool visualziation method. Heatmaps can be created in ArcGIS or QGIS, we recommend
 people interested in them, to use CEA outputs and those tools for this. But please handle with care.
+
+5. Arcgis_interface: It contains scripts to the old interface of CEA in ArcGIS.  We do not offer more support to this interface.
+
+6. Network_layout: It contains scripts to generate the layout of a thermal network with ArcGIS. A new script was developed in python.
+   the network layout was the last step for CEA to become full open source
+   
+7. config_editor: This was an initial interface to CEA. It is not anymore supported.

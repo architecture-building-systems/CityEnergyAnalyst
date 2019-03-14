@@ -3,7 +3,16 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def cost_analysis(data, generations, title, output_path):
