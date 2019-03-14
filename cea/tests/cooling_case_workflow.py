@@ -55,6 +55,7 @@ def main():
     run('decentralized')
     run('thermal-network-optimization')  # FIXME: what is this?!
     run('optimization')
+    run('multi-criteria-analysis')
     run('plots')
     run('plots-supply-system')
     run('plots-optimization')
