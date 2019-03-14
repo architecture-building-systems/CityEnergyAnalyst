@@ -8,6 +8,15 @@ import cea.globalvar
 import cea.inputlocator
 import cea.config
 
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def electrical_grid_calculations(dict_connected, config, locator):
     # ============================
     # Solve Problem

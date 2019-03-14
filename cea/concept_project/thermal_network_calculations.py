@@ -9,8 +9,17 @@ import pandas as pd
 from distutils.dir_util import copy_tree
 # from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.concept_project.network_layout_main import network_layout
-from cea.technologies.thermal_network import thermal_network_matrix
+from cea.technologies.thermal_network import thermal_network
 from cea.technologies.thermal_network import thermal_network_costs
+
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def thermal_network_calculations(individual, config, network_number, building_names):
     # ============================

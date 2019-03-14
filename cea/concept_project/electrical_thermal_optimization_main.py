@@ -21,7 +21,7 @@ from cea.concept_project.thermal_network_calculations import thermal_network_cal
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna"]
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"

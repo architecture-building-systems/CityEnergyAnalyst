@@ -11,6 +11,14 @@ from concept_parameters import *
 # Auxiliary functions for LP
 # ============================
 
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def initial_network(config, locator):
     """

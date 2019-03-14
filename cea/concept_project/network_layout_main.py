@@ -6,15 +6,14 @@ from cea.technologies.thermal_network.network_layout.steiner_spanning_tree impor
 import cea.config
 import os
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
+__email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
 
 def network_layout(config, locator, plant_building_names, input_path_name, output_name_network="", optimization_flag=False):
     # Local variables
