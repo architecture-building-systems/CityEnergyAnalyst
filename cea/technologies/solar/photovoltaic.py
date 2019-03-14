@@ -677,7 +677,7 @@ def calc_properties_PV_db(database_path, config):
     :return: dict with Properties of the panel taken form the database
     """
     type_PVpanel = config.solar.type_PVpanel
-    data = pd.read_excel(database_path, sheetname="PV")
+    data = pd.read_excel(database_path, sheet_name="PV")
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -691,7 +691,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
