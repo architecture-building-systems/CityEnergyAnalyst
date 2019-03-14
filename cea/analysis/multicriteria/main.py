@@ -74,6 +74,11 @@ def multi_criteria_main(locator, config):
     normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
                 max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
 
+    #in the case that all data is nan (division by 0 when all individuals have the same share.
+    if (max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity'])) == 0.0:
+        normalized_renewable_share = [1]*len(compiled_data['renewable_share_electricity'])
+
+
     compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
     compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
     compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
