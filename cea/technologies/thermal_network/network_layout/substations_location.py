@@ -3,14 +3,15 @@ This script calculates the location of substations in case we do not have it.
 it is estimated as the centroid of buildings.
 """
 
-
 from __future__ import division
-from geopandas import GeoDataFrame as gdf
-import cea.globalvar
-import cea.inputlocator
-import cea.config
+
 import os
 
+from geopandas import GeoDataFrame as gdf
+
+import cea.config
+import cea.globalvar
+import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno A. Fonseca"
@@ -22,12 +23,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings):
 
+def calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings):
     # # get coordinate system and project to WSG 84
     poly = gdf.from_file(input_buildings_shp)
     if connected_buildings != []:
-        #get only buildings
+        # get only buildings
         poly = poly.loc[poly['Name'].isin(connected_buildings)]
         poly = poly.reset_index(drop=True)
 
@@ -45,6 +46,8 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
     # saving result
     points.to_file(output_substations_shp, driver='ESRI Shapefile')
 
+    return points, poly
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
@@ -52,7 +55,6 @@ def main(config):
     input_buildings_shp = locator.get_zone_geometry()
     output_substations_shp = locator.get_connection_point()
     calc_substation_location(input_buildings_shp, output_substations_shp)
-
 
 
 if __name__ == '__main__':
