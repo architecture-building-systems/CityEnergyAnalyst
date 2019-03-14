@@ -202,7 +202,8 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
 
     # District Electricity Calculations
-    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2

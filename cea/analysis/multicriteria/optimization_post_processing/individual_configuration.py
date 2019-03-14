@@ -270,9 +270,9 @@ def calc_pv_costs(building, config, locator):
     pv_installed_building = pd.read_csv(locator.PV_results(building))[['E_PV_gen_kWh', 'Area_PV_m2']]
     pv_installed_area = pv_installed_building['Area_PV_m2'].max()
     pv_annual_production_kWh = pv_installed_building['E_PV_gen_kWh'].sum()
-    Capex_a_PV, Opex_a_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
-    Opex_a_PV = calc_opex_PV(pv_annual_production_kWh, pv_installed_area) + Opex_a_fixed_PV
-    return Capex_a_PV, Opex_a_PV, pv_installed_area
+    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = calc_Cinv_pv(pv_installed_area, locator, config)
+    Opex_a_PV_USD = calc_opex_PV(pv_annual_production_kWh, pv_installed_area) + Opex_fixed_PV_USD
+    return Capex_a_PV_USD, Opex_a_PV_USD, pv_installed_area
 
 
 def calc_opex_PV(pv_annual_production_kWh, pv_installed_area_m2):
@@ -283,9 +283,9 @@ def calc_opex_PV(pv_annual_production_kWh, pv_installed_area_m2):
     :return: 
     """
     P_nom_PV_W = (1000 * 0.16) * pv_installed_area_m2
-    Opex_a_PV = (pv_annual_production_kWh * calc_Crem_pv(P_nom_PV_W) / 100) * (
+    Opex_a_PV_USD = (pv_annual_production_kWh * calc_Crem_pv(P_nom_PV_W) / 100) * (
         -1)  # from cent to dollar, negative sign indicating income
-    return Opex_a_PV
+    return Opex_a_PV_USD
 
 
 def calc_CT_size_for_ACH(ACH_size_W):

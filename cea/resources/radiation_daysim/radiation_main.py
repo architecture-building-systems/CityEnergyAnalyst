@@ -195,7 +195,7 @@ def main(config):
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                    settings)
+                                                                                                               config)
 
     print("Sending the scene: geometry and materials to daysim")
     # send materials

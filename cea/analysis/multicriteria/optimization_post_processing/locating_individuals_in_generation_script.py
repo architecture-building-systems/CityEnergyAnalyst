@@ -138,11 +138,11 @@ def preprocessing_generations_data(locator, generations):
         data = json.load(fp)
     # get lists of data for performance values of the population
     costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                 data['population_fitness']]  # convert to millions
+                 data['tested_population_fitness']]  # convert to millions
     emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                     data['population_fitness']]  # convert to tons x 10^3
+                     data['tested_population_fitness']]  # convert to tons x 10^3
     prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                      data['population_fitness']]  # convert to gigajoules x 10^3
+                      data['tested_population_fitness']]  # convert to gigajoules x 10^3
     individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
     df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
@@ -150,7 +150,7 @@ def preprocessing_generations_data(locator, generations):
                                   }).set_index("Name")
 
     individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                           individual] for individual in data['testedPop']]
+                           individual] for individual in data['tested_population']]
     def_individual_barcode = pd.DataFrame({'Name': individual_names,
                                            'individual_barcode': individual_barcode}).set_index("Name")
 
@@ -166,9 +166,14 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_ton': emissions_ton_HOF,
                                   'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
+    dict_network = data['DCN_list_All']
+
+    df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
+
+
 
     data_processed.append(
-        {'population': df_population, 'halloffame': df_halloffame,
+        {'population': df_population,  'network': df_network,
          'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
          'individual_barcode': def_individual_barcode})
 
