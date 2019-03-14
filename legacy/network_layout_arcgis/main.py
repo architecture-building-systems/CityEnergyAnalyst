@@ -1,10 +1,11 @@
 import cea.globalvar
 import cea.inputlocator
-from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
-from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+from legacy.network_layout_arcgis.connectivity_potential import calc_connectivity_network
+from legacy.network_layout_arcgis.substations_location import calc_substation_location
+from legacy.network_layout_arcgis.steiner_spanning_tree import calc_steiner_spanning_tree
 import cea.config
 import os
+import tempfile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -15,7 +16,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def get_default_arcgis_db(self):
+def get_default_arcgis_db():
     """Returns the ArcGIS Default.gdb path to use."""
     from cea.interfaces.arcgis.modules import arcpy
     if not arcpy.env.workspace:
@@ -39,7 +40,7 @@ def network_layout(config, locator, plant_building_names, output_name_network=""
     path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     total_demand_location = locator.get_total_demand()
 
-    path_default_arcgis_db = locator.get_default_arcgis_db()
+    path_default_arcgis_db = get_default_arcgis_db()
     print('Path to ArcGIS workspace: %s' % path_default_arcgis_db)
 
     # Calculate points where the substations will be located

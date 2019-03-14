@@ -244,7 +244,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
             if 0 < distance < delta:
                 delta = distance
                 node_id = node[1].Name
-
+    pd.options.mode.chained_assignment = None #avoid warning
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
