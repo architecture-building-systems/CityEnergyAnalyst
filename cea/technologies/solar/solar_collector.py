@@ -776,7 +776,7 @@ def calc_properties_SC_db(database_path, config):
         type_SCpanel = 'SC2'
     else:
         raise ValueError('this panel type ', config.solar.type_SCpanel, 'is not in the database!')
-    data = pd.read_excel(database_path, sheetname="SC")
+    data = pd.read_excel(database_path, sheet_name="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -911,7 +911,7 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
     Lifetime 35 years
     """
 
-    SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="SC")
+    SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="SC")
     SC_cost_data[SC_cost_data['type'] == technology]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
@@ -977,7 +977,7 @@ def main(config):
                                        repeat(weather_data, building_count),
                                        repeat(date_local, building_count),
                                        list_buildings_names))
-        #locator, config, latitude, longitude, weather_data, date_local, building_name
+        #locator, config, latitude, longitude, weather_data, date_local, building
     else:
         print("Using single process")
         map(calc_SC_wrapper, izip(repeat(locator, building_count),
@@ -988,21 +988,32 @@ def main(config):
                                        repeat(date_local, building_count),
                                        list_buildings_names))
 
-
-    for i, building_name in enumerate(list_buildings_names):
-        sc_results = pd.read_csv(locator.SC_results(building_name, panel_type))
+    # aggregate results from all buildings
+    aggregated_annual_results = {}
+    for i, building in enumerate(list_buildings_names):
+        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type))
         if i == 0:
-            df = sc_results
-            temperature_sup = sc_results['T_SC_sup_C'].mean()
+            aggregated_hourly_results_df = hourly_results_per_building
+            temperature_sup = hourly_results_per_building['T_SC_sup_C'].mean()
         else:
-            df = df + sc_results
-    df = df.set_index('Date')
-    df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
+            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+
+        annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
+        panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
+        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        aggregated_annual_results[building] = building_annual_results
+
+    # save hourly results
+    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
+    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels
-    df['T_SC_sup_C'] = np.where(df['mcp_SC_kWperC'] != 0, temperature_sup, np.nan)
-    df['T_SC_re_C'] = np.where(df['mcp_SC_kWperC'] != 0, df['T_SC_sup_C'] + df['Q_SC_gen_kWh'] / df['mcp_SC_kWperC'],
+    aggregated_hourly_results_df['T_SC_sup_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0, temperature_sup, np.nan)
+    aggregated_hourly_results_df['T_SC_re_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0, aggregated_hourly_results_df['T_SC_sup_C'] + aggregated_hourly_results_df['Q_SC_gen_kWh'] / aggregated_hourly_results_df['mcp_SC_kWperC'],
                                np.nan)
-    df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
+    aggregated_hourly_results_df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
+    # save annual results
+    aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
+    aggregated_annual_results_df.to_csv(locator.SC_total_buildings(panel_type), index=True, float_format='%.2f')
 
 
 if __name__ == '__main__':

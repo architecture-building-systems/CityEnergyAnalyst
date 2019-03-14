@@ -95,7 +95,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, config):
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
+            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE[i] / PUMP_ETA
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
@@ -188,3 +188,5 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
 
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD
+
+

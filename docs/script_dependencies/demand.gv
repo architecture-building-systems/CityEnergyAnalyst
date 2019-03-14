@@ -1,0 +1,111 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=3.503];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "demand"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Zug.epw"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/archetypes";
+        "construction_properties.xlsx"
+        "occupancy_schedules.xlsx"
+        "system_controls.xlsx"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/lifecycle";
+        "LCA_infrastructure.xlsx"
+    }
+    subgraph cluster_3_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "envelope_systems.xls"
+        "emission_systems.xls"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
+    subgraph cluster_5_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-properties";
+        "age.dbf"
+        "architecture.dbf"
+        "indoor_comfort.dbf"
+        "technical_systems.dbf"
+        "internal_loads.dbf"
+        "occupancy.dbf"
+        "supply_systems.dbf"
+    }
+    subgraph cluster_6_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/demand";
+        "{BUILDING}.csv"
+        "Total_demand.csv"
+    }
+    subgraph cluster_7_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "{BUILDING}_insolation_Whm2.json"
+        "{BUILDING}_geometry.csv"
+    }
+    "construction_properties.xlsx" -> "demand"[label="(get_archetypes_properties)"]
+    "occupancy_schedules.xlsx" -> "demand"[label="(get_archetypes_schedules)"]
+    "system_controls.xlsx" -> "demand"[label="(get_archetypes_system_controls)"]
+    "age.dbf" -> "demand"[label="(get_building_age)"]
+    "architecture.dbf" -> "demand"[label="(get_building_architecture)"]
+    "indoor_comfort.dbf" -> "demand"[label="(get_building_comfort)"]
+    "technical_systems.dbf" -> "demand"[label="(get_building_hvac)"]
+    "internal_loads.dbf" -> "demand"[label="(get_building_internal)"]
+    "occupancy.dbf" -> "demand"[label="(get_building_occupancy)"]
+    "supply_systems.dbf" -> "demand"[label="(get_building_supply)"]
+    "envelope_systems.xls" -> "demand"[label="(get_envelope_systems)"]
+    "LCA_infrastructure.xlsx" -> "demand"[label="(get_life_cycle_inventory_supply_systems)"]
+    "{BUILDING}_insolation_Whm2.json" -> "demand"[label="(get_radiation_building)"]
+    "{BUILDING}_geometry.csv" -> "demand"[label="(get_radiation_metadata)"]
+    "emission_systems.xls" -> "demand"[label="(get_technical_emission_systems)"]
+    "Zug.epw" -> "demand"[label="(get_weather)"]
+    "zone.shp" -> "demand"[label="(get_zone_geometry)"]
+    "demand" -> "{BUILDING}.csv"[label="(get_demand_results_file)"]
+    "demand" -> "Total_demand.csv"[label="(get_total_demand)"]
+    }

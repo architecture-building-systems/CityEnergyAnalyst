@@ -22,7 +22,7 @@ import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
 import cea.technologies.substation as substation
 import cea.technologies.solar.solar_collector as solar_collector
-from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from math import ceil
 
 
@@ -242,7 +242,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             Absorption_chiller_cost_data['type'] == ACH_TYPE_SINGLE]
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
-        if config.decentralized.AHUflag:
+        if config.decentralized.ahuflag:
             print building_name + ' decentralized building simulation with configuration: AHU'
 
             # chiller operations for config 1-5
@@ -268,7 +268,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour], T_re_AHU_K[hour])
-                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -276,7 +276,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 VCC_to_AHU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
                                                                           T_re_AHU_K[hour], Qnom_VCC_W,
                                                                           number_of_VCC_chillers)
-                result_AHU[1][7] += lca.ELEC_PRICE * VCC_to_AHU_operation['wdot_W']  # CHF
+                result_AHU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_AHU_operation['wdot_W']  # CHF
                 result_AHU[1][8] += lca.EL_TO_CO2 * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_W[hour] = VCC_to_AHU_operation['q_cw_W']
@@ -289,7 +289,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W, locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_AHU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_AHU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -307,7 +307,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W, locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_AHU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_AHU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -337,7 +337,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_ARU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_ARU_K = np.zeros(8760)
 
-        if config.decentralized.ARUflag:
+        if config.decentralized.aruflag:
             print building_name, ' decentralized building simulation with configuration: ARU'
 
             if Qc_nom_combination_ARU_W <= max_VCC_chiller_size:
@@ -361,7 +361,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour], T_re_ARU_K[hour])
-                result_ARU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_ARU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_ARU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_ARU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -369,7 +369,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 VCC_to_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour],
                                                                           T_re_ARU_K[hour], Qnom_VCC_W,
                                                                           number_of_VCC_chillers)
-                result_ARU[1][7] += lca.ELEC_PRICE * VCC_to_ARU_operation['wdot_W']  # CHF
+                result_ARU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_ARU_operation['wdot_W']  # CHF
                 result_ARU[1][8] += lca.EL_TO_CO2 * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_ARU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_ARU_W[hour] = VCC_to_ARU_operation['q_cw_W']
@@ -385,7 +385,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_ARU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_ARU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_ARU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_ARU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_ARU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -408,7 +408,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_ARU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_ARU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_ARU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_ARU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_ARU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -442,7 +442,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_SCU_K = np.zeros(8760)
 
-        if config.decentralized.SCUflag:
+        if config.decentralized.scuflag :
             print building_name, ' decentralized building simulation with configuration: SCU'
 
 
@@ -467,7 +467,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour], T_re_SCU_K[hour])
-                result_SCU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_SCU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_SCU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_SCU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -475,7 +475,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
                                                                           T_re_SCU_K[hour], Qnom_VCC_W,
                                                                           number_of_VCC_chillers)
-                result_SCU[1][7] += lca.ELEC_PRICE * VCC_to_SCU_operation['wdot_W']  # CHF
+                result_SCU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_SCU_operation['wdot_W']  # CHF
                 result_SCU[1][8] += lca.EL_TO_CO2 * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_SCU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_SCU_W[hour] = VCC_to_SCU_operation['q_cw_W']
@@ -491,7 +491,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_SCU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -514,7 +514,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_SCU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -545,7 +545,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
 
-        if config.decentralized.AHUARUflag:
+        if config.decentralized.ahuaruflag:
             print building_name, ' decentralized building simulation with configuration: AHU + ARU'
 
             if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
@@ -569,7 +569,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour], T_re_AHU_ARU_K[hour])
-                result_AHU_ARU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU_ARU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_AHU_ARU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_AHU_ARU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -579,7 +579,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                               T_sup_AHU_ARU_K[hour],
                                                                               T_re_AHU_ARU_K[hour], Qnom_VCC_W,
                                                                               number_of_VCC_chillers)
-                result_AHU_ARU[1][7] += lca.ELEC_PRICE * VCC_to_AHU_ARU_operation['wdot_W']  # CHF
+                result_AHU_ARU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_AHU_ARU_operation['wdot_W']  # CHF
                 result_AHU_ARU[1][8] += lca.EL_TO_CO2 * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_ARU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_ARU_W[hour] = VCC_to_AHU_ARU_operation['q_cw_W']
@@ -595,7 +595,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_ARU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_AHU_ARU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_ARU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_AHU_ARU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -618,7 +618,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_ARU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_AHU_ARU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_ARU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_AHU_ARU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -649,7 +649,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
 
-        if config.decentralized.AHUSCUflag:
+        if config.decentralized.ahuscuflag:
             print building_name, ' decentralized building simulation with configuration: AHU + SCU'
 
 
@@ -674,7 +674,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_AHU_SCU_kgpers[hour], T_sup_AHU_SCU_K[hour], T_re_AHU_SCU_K[hour])
-                result_AHU_SCU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU_SCU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_AHU_SCU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_AHU_SCU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -683,7 +683,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                               T_sup_AHU_SCU_K[hour],
                                                                               T_re_AHU_SCU_K[hour], Qnom_VCC_W,
                                                                               number_of_VCC_chillers)
-                result_AHU_SCU[1][7] += lca.ELEC_PRICE * VCC_to_AHU_SCU_operation['wdot_W']  # CHF
+                result_AHU_SCU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_AHU_SCU_operation['wdot_W']  # CHF
                 result_AHU_SCU[1][8] += lca.EL_TO_CO2 * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_SCU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_SCU_W[hour] = VCC_to_AHU_SCU_operation['q_cw_W']
@@ -699,7 +699,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_AHU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_SCU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_AHU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -722,7 +722,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_effect_ACH_to_AHU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_AHU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_SCU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_AHU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -754,7 +754,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
 
-        if config.decentralized.ARUSCUflag:
+        if config.decentralized.aruscuflag:
             print building_name, ' decentralized building simulation with configuration: ARU + SCU'
 
             if Qc_nom_combination_ARU_SCU_W <= max_VCC_chiller_size:
@@ -777,7 +777,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_ARU_SCU_kgpers[hour], T_sup_ARU_SCU_K[hour], T_re_ARU_SCU_K[hour])
-                result_ARU_SCU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_ARU_SCU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_ARU_SCU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_ARU_SCU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -786,7 +786,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                               T_sup_ARU_SCU_K[hour],
                                                                               T_re_ARU_SCU_K[hour], Qnom_VCC_W,
                                                                               number_of_VCC_chillers)
-                result_ARU_SCU[1][7] += lca.ELEC_PRICE * VCC_to_ARU_SCU_operation['wdot_W']  # CHF
+                result_ARU_SCU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_ARU_SCU_operation['wdot_W']  # CHF
                 result_ARU_SCU[1][8] += lca.EL_TO_CO2 * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_ARU_SCU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_ARU_SCU_W[hour] = VCC_to_ARU_SCU_operation['q_cw_W']
@@ -802,7 +802,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = FP_to_single_ACH_to_ARU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_ARU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_ARU_SCU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_ARU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -825,7 +825,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_ARU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_ARU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_ARU_SCU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_ARU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -920,7 +920,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
                 # 0: DX
                 DX_operation = dx.calc_DX(mdot_AHU_ARU_SCU_kgpers[hour], T_sup_AHU_ARU_SCU_K[hour], T_re_AHU_ARU_SCU_K[hour])
-                result_AHU_ARU_SCU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU_ARU_SCU[0][7] += lca.ELEC_PRICE[hour] * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
                 result_AHU_ARU_SCU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
                 result_AHU_ARU_SCU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
@@ -930,7 +930,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                   T_re_AHU_ARU_SCU_K[hour],
                                                                                   Qnom_VCC_AHU_ARU_SCU_W,
                                                                                   number_of_VCC_AHU_ARU_SCU_chillers)
-                result_AHU_ARU_SCU[1][7] += lca.ELEC_PRICE * VCC_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
+                result_AHU_ARU_SCU[1][7] += lca.ELEC_PRICE[hour] * VCC_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
                 result_AHU_ARU_SCU[1][8] += lca.EL_TO_CO2 * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[1][9] += lca.EL_TO_OIL_EQ * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_ARU_SCU_W[hour] = VCC_to_AHU_ARU_SCU_operation['q_cw_W']
@@ -946,7 +946,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_FP_ACH_W = SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_AHU_ARU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_ARU_SCU[2][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_AHU_ARU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -971,7 +971,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               locator, config)
                 # add costs from electricity consumption
                 el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_ARU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
-                result_AHU_ARU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_ARU_SCU[3][7] += lca.ELEC_PRICE[hour] * el_for_ET_ACH_W  # CHF
                 result_AHU_ARU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
@@ -993,7 +993,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
                                                                           T_re_SCU_K[hour], Qnom_VCC_SCU_W,
                                                                           number_of_VCC_SCU_chillers)
-                result_AHU_ARU_SCU[4][7] += lca.ELEC_PRICE * (
+                result_AHU_ARU_SCU[4][7] += lca.ELEC_PRICE[hour] * (
                             VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W'])  # CHF
                 result_AHU_ARU_SCU[4][8] += lca.EL_TO_CO2 * (
                             VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
@@ -1014,7 +1014,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           locator, config)
 
                 el_for_FP_ACH_W = VCC_to_AHU_ARU_operation['wdot_W'] + FP_to_single_ACH_to_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
-                result_AHU_ARU_SCU[5][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_ARU_SCU[5][7] += lca.ELEC_PRICE[hour] * el_for_FP_ACH_W  # CHF
                 result_AHU_ARU_SCU[5][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[5][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + FP_to_single_ACH_to_SCU_operation['q_cw_W'])
@@ -1089,104 +1089,104 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         for hour in range(8760):
             # cooling towers operation
             # AHU
-            if config.decentralized.AHUflag:
+            if config.decentralized.ahuflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_W[hour], CT_VCC_to_AHU_nom_size_W)
-                result_AHU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_AHU_W[hour], CT_FP_to_single_ACH_to_AHU_nom_size_W)
-                result_AHU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_AHU_W[hour], CT_ET_to_single_ACH_to_AHU_nom_size_W)
-                result_AHU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # ARU
-            if config.decentralized.ARUflag:
+            if config.decentralized.aruflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_W[hour], CT_VCC_to_ARU_nom_size_W)
-                result_ARU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_ARU_W[hour], CT_FP_to_single_ACH_to_ARU_nom_size_W)
-                result_ARU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_ARU_W[hour], CT_ET_to_single_ACH_to_ARU_nom_size_W)
-                result_ARU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # SCU
-            if config.decentralized.SCUflag:
+            if config.decentralized.scuflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_SCU_W[hour], CT_VCC_to_SCU_nom_size_W)
-                result_SCU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_SCU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_SCU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_SCU_W[hour], CT_FP_to_single_ACH_to_SCU_nom_size_W)
-                result_SCU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_SCU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_SCU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_SCU_W[hour], CT_ET_to_single_ACH_to_SCU_nom_size_W)
-                result_SCU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_SCU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_SCU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # AHU+ARU
-            if config.decentralized.AHUARUflag:
+            if config.decentralized.ahuaruflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_W[hour], CT_VCC_to_AHU_ARU_nom_size_W)
-                result_AHU_ARU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_AHU_ARU_W[hour], CT_FP_to_single_ACH_to_AHU_ARU_nom_size_W)
-                result_AHU_ARU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_AHU_ARU_W[hour], CT_ET_to_single_ACH_to_AHU_ARU_nom_size_W)
-                result_AHU_ARU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # AHU+SCU
-            if config.decentralized.AHUSCUflag:
+            if config.decentralized.ahuscuflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_SCU_W[hour], CT_VCC_to_AHU_SCU_nom_size_W)
-                result_AHU_SCU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_SCU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_SCU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_tosingle_ACH_to_AHU_SCU_W[hour], CT_single_ACH_to_AHU_SCU_nom_size_W)
-                result_AHU_SCU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_SCU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_SCU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_AHU_SCU_W[hour], CT_ET_to_single_ACH_to_AHU_SCU_nom_size_W)
-                result_AHU_SCU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_SCU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_SCU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # ARU+SCU
-            if config.decentralized.ARUSCUflag:
+            if config.decentralized.aruscuflag:
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_SCU_W[hour], CT_VCC_to_ARU_SCU_nom_size_W)
-                result_ARU_SCU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU_SCU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU_SCU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_ARU_SCU_W[hour], CT_FP_to_single_ACH_to_ARU_SCU_nom_size_W)
-                result_ARU_SCU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU_SCU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_ARU_SCU_W[hour], CT_ET_to_single_ACH_to_ARU_SCU_nom_size_W)
-                result_ARU_SCU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_ARU_SCU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
@@ -1194,33 +1194,33 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
 
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_SCU_W[hour], CT_VCC_to_AHU_ARU_SCU_nom_size_W)
-                result_AHU_ARU_SCU[1][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[1][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU_SCU[1][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[1][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W[hour], CT_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W)
-                result_AHU_ARU_SCU[2][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[2][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU_SCU[2][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W[hour], CT_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W)
-                result_AHU_ARU_SCU[3][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[3][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU_SCU[3][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W)
-                result_AHU_ARU_SCU[4][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[4][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU_SCU[4][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[4][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
                 wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W)
-                result_AHU_ARU_SCU[5][7] += lca.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[5][7] += lca.ELEC_PRICE[hour] * wdot_W  # CHF
                 result_AHU_ARU_SCU[5][8] += lca.EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[5][9] += lca.EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # Boilers
             # AHU
-            if config.decentralized.AHUflag:
+            if config.decentralized.ahuflag:
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_AHU_W[hour], boiler_FP_to_single_ACH_to_AHU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_AHU_K[hour]) if q_boiler_FP_to_single_ACH_to_AHU_W[hour] > 0 else 0
@@ -1238,7 +1238,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 result_AHU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
 
             # ARU
-            if config.decentralized.ARUflag:
+            if config.decentralized.aruflag:
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_ARU_W[hour], boiler_FP_to_single_ACH_to_ARU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_ARU_K[hour]) if q_boiler_FP_to_single_ACH_to_ARU_W[
@@ -1259,7 +1259,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 result_ARU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
 
             # SCU
-            if config.decentralized.SCUflag:
+            if config.decentralized.scuflag :
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_SCU_W[hour], boiler_FP_to_single_ACH_to_SCU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_SCU_K[hour]) if q_boiler_FP_to_single_ACH_to_SCU_W[
@@ -1280,7 +1280,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 result_SCU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
 
             # AHU + ARU
-            if config.decentralized.AHUARUflag:
+            if config.decentralized.ahuaruflag:
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_AHU_ARU_W[hour], boiler_FP_to_single_ACH_to_AHU_ARU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_AHU_ARU_K[hour]) if q_boiler_FP_to_single_ACH_to_AHU_ARU_W[
@@ -1302,7 +1302,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
 
             # AHU + SCU
-            if config.decentralized.AHUSCUflag:
+            if config.decentralized.ahuscuflag:
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_AHU_SCU_W[hour], boiler_FP_to_single_ACH_to_AHU_SCU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_AHU_SCU_K[hour]) if q_boiler_FP_to_single_ACH_to_AHU_SCU_W[
@@ -1322,7 +1322,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 result_AHU_SCU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
 
             # ARU + SCU
-            if config.decentralized.ARUSCUflag:
+            if config.decentralized.aruscuflag:
 
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_FP_to_single_ACH_to_ARU_SCU_W[hour], boiler_FP_to_single_ACH_to_ARU_SCU_nom_size_W,
                                                     T_re_boiler_FP_to_single_ACH_to_ARU_SCU_K[hour]) if q_boiler_FP_to_single_ACH_to_ARU_SCU_W[
@@ -1376,7 +1376,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         ## Calculate Capex/Opex
         # AHU
         Inv_Costs_AHU = np.zeros((4, 1))
-        if config.decentralized.AHUflag:
+        if config.decentralized.ahuflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_W)
             Inv_Costs_AHU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
@@ -1398,7 +1398,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # ARU
         Inv_Costs_ARU = np.zeros((4, 1))
-        if config.decentralized.ARUflag:
+        if config.decentralized.aruflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_ARU_W)
             Inv_Costs_ARU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
@@ -1419,7 +1419,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # SCU
         Inv_Costs_SCU = np.zeros((4, 1))
-        if config.decentralized.SCUflag:
+        if config.decentralized.scuflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_SCU_W)
             Inv_Costs_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
@@ -1440,7 +1440,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # AHU + ARU
         Inv_Costs_AHU_ARU = np.zeros((4, 1))
-        if config.decentralized.AHUARUflag:
+        if config.decentralized.ahuaruflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_W)
             Inv_Costs_AHU_ARU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
@@ -1461,7 +1461,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # AHU + SCU
         Inv_Costs_AHU_SCU = np.zeros((4, 1))
-        if config.decentralized.AHUSCUflag:
+        if config.decentralized.ahuscuflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_SCU_W)
             Inv_Costs_AHU_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration
@@ -1483,7 +1483,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # ARU + SCU
         Inv_Costs_ARU_SCU = np.zeros((4, 1))
-        if config.decentralized.ARUSCUflag:
+        if config.decentralized.aruscuflag:
             # 0
             Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_ARU_SCU_W)
             Inv_Costs_ARU_SCU[0][0] = Capex_a_DX_USD + Opex_fixed_DX_USD  # FIXME: a dummy value to rule out this configuration

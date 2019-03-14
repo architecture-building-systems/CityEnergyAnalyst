@@ -514,7 +514,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     # nominal conditions network side
     cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)
     tco_0 = Qnom / cc_0 + tci_0
-    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
+    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
     Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
@@ -549,7 +549,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     # nominal conditions network side
     ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
     tho_0 = thi_0 - Qnom / ch_0
-    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
+    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat excahnge and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
@@ -746,7 +746,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     return np.float(tho_C), np.float(ch_kWperK)
 
 
-def calc_dTm_HEX(thi, tho, tci, tco, flag):
+def calc_dTm_HEX(thi, tho, tci, tco):
     '''
     This function estimates the logarithmic temperature difference between two streams
 
@@ -754,19 +754,15 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
     :param tho: out temperature hot stream
     :param tci: in temperature cold stream
     :param tco: out temperature cold stream
-    :param flag: heat: when using for the heating case, 'cool' otherwise
     :return:
         - dtm = logaritimic temperature difference
 
     '''
     dT1 = thi - tco
-    dT2 = tho - tci
+    dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
 
     try:
-        if flag == 'heat':
-            dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
-        else:
-            dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
     except ZeroDivisionError:
         raise Exception(thi, tco, tho, tci, "Check the emission_system database, there might be a problem with the selection of nominal temperatures")
 

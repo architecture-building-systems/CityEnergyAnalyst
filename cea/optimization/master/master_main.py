@@ -23,6 +23,7 @@ from deap import tools
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master import evaluation
 from itertools import repeat, izip
+from cea.optimization import supportFn
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -198,11 +199,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             pop = toolbox.population(n=config.optimization.initialind)
             for i in xrange(len(pop)):
                 for j in xrange(len(pop[i])):
-                    pop[i][j] = cp['population'][i][j]
+                    pop[i][j] = cp['nsga_selected_population'][i][j]
             DHN_network_list = DHN_network_list
             DCN_network_list = DCN_network_list
-            epsInd = cp["epsIndicator"]
-
 
             for ind in pop:
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
@@ -250,20 +249,21 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
 
         # Initialization of variables
-        DHN_network_list = ["1" * nBuildings]
+        DHN_network_list = []
+        DCN_network_list = []
 
         g += 1
         print "Generation", g
         offspring = list(pop)
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings)
+            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings, config)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mutations.mutFlip(mutant, proba, nBuildings)
-            mutant = mutations.mutShuffle(mutant, proba, nBuildings)
-            offspring.append(mutations.mutGU(mutant, proba))
+            mutant = mutations.mutFlip(mutant, proba, nBuildings, config)
+            mutant = mutations.mutShuffle(mutant, proba, nBuildings, config)
+            offspring.append(mutations.mutGU(mutant, proba, config))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
@@ -318,12 +318,22 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
 
         pop[:] = selection
 
+        DCN_network_list_selected = []
+        DHN_network_list_selected = []
+        for individual in pop:
+            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
+                                                                                                             building_names)
+            DCN_network_list_selected.append(DCN_barcode)
+            DHN_network_list_selected.append(DHN_barcode)
 
         # Create Checkpoint if necessary
+        # The networks created for all the tested population is bigger than the selected population, as this is being
+        # used in plots scripts, they are exclusively separated with two variables, which are further used
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
+                cp = dict(nsga_selected_population=pop, generation=g, DHN_List_All=DHN_network_list, DCN_list_All = DCN_network_list,
+                          DHN_list_selected=DHN_network_list_selected, DCN_list_selected=DCN_network_list_selected,
                           tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)

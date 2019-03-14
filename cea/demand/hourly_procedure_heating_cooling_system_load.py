@@ -258,6 +258,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
     x_ve_mech = tsd['x_ve_mech'][t]
     t_int_prev = tsd['T_int'][t - 1]
+    ta_hs_set = tsd['ta_hs_set'][t]
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
@@ -266,7 +267,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     # (2) The load of the central AC unit is determined by the air mass flows and fixed supply temperature
     # calc central ac unit load
     system_loads_ahu = airconditioning_model.central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex,
-                                                                               x_ve_mech, bpr)
+                                                                               x_ve_mech, ta_hs_set, t_int_prev, bpr)
     qh_sen_central_ac_load = system_loads_ahu['qh_sen_ahu']
 
     # (3) Check demand vs. central AC heating load
@@ -284,7 +285,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
         tsd['sys_status_aru'][t] = 'Off'
-        tsd['sys_status_ahu'][t] = 'On - over heating'
+        tsd['sys_status_ahu'][t] = 'On:over heating'
 
     elif 0.0 <= qh_sen_central_ac_load < qh_sen_rc_demand:
 
@@ -416,6 +417,11 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
 
+    # system status
+    tsd['sys_status_aru'][t] = 'On:T'
+    tsd['sys_status_ahu'][t] = 'no system'
+    tsd['sys_status_sen'][t] = 'no system'
+
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
@@ -513,6 +519,11 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     # TODO: check
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+
+    # system status
+    tsd['sys_status_ahu'][t] = 'On'
+    tsd['sys_status_aru'][t] = 'On:T/R'
+    tsd['sys_status_sen'][t] = 'no system'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -619,6 +630,11 @@ def calc_cool_loads_3for2(bpr, t, tsd):
 
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+
+    # system status
+    tsd['sys_status_ahu'][t] = 'On'
+    tsd['sys_status_aru'][t] = 'On:R'
+    tsd['sys_status_sen'][t] = 'On'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures

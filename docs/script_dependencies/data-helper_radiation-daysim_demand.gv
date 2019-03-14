@@ -1,0 +1,29 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap = false, fontname=arial];
+    "data-helper"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    "demand"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    "radiation-daysim"[shape=note, style=filled, color=white, fillcolor="#3FC0C2", fontname=arial, fontsize=20];
+    node [shape=box, style=filled, fillcolor="#E1F2F2", fontname=arial, fontsize=15, fixedsize=true, width=3.75]
+    "databases/CH/archetypes" -> "data-helper"
+    "inputs/building-properties" -> "data-helper"
+    "databases/CH/archetypes" -> "demand"
+    "inputs/building-properties" -> "demand"
+    "databases/CH/systems" -> "demand"
+    "databases/CH/lifecycle" -> "demand"
+    "outputs/data/solar-radiation" -> "demand"
+    "databases/CH/systems" -> "demand"
+    "cea/databases/weather" -> "demand"
+    "inputs/building-geometry" -> "demand"
+    "inputs/building-properties" -> "radiation-daysim"
+    "inputs/building-geometry" -> "radiation-daysim"
+    "databases/CH/systems" -> "radiation-daysim"
+    "inputs/topography" -> "radiation-daysim"
+    "cea/databases/weather" -> "radiation-daysim"
+    "inputs/building-geometry" -> "radiation-daysim"
+    "data-helper" -> "inputs/building-properties"
+    "demand" -> "outputs/data/demand"
+    "radiation-daysim" -> "outputs/data/solar-radiation"
+    {rank=same "databases/CH/lifecycle" "databases/CH/archetypes" "inputs/building-geometry" "databases/CH/systems"
+    "inputs/topography" "cea/databases/weather" "inputs/building-properties"}
+    }

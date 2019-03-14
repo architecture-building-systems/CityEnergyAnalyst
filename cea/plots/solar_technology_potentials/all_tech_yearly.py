@@ -1,10 +1,21 @@
 from __future__ import division
 from __future__ import print_function
 
+import math
+
 import plotly.graph_objs as go
 from plotly.offline import plot
+
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
-import math
+
+__author__ = "Shanshan Hsieh"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Shanshan Hsieh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
@@ -21,7 +32,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     Q_analysis_fields.extend(sc_et_Q_analysis_fields_used)
     pvt_E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[0:5])].tolist()
 
-    if pvt_E_analysis_fields_used: # checking if PVT is present, in some cooling cases PVT is not necessary to run
+    if pvt_E_analysis_fields_used:  # checking if PVT is present, in some cooling cases PVT is not necessary to run
         E_analysis_fields.extend(pvt_E_analysis_fields_used)
         pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
         Q_analysis_fields.extend(pvt_Q_analysis_fields_used)
