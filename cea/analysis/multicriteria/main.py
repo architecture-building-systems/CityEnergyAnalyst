@@ -61,23 +61,41 @@ def multi_criteria_main(locator, config):
 
     compiled_data = compiled_data.assign(individual=individual_list)
 
-    normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
-                max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
-    normalized_emissions = (compiled_data['total_emissions_kiloton'] - min(compiled_data['total_emissions_kiloton'])) / (
-                max(compiled_data['total_emissions_kiloton']) - min(compiled_data['total_emissions_kiloton']))
-    normalized_prim = (compiled_data['total_prim_energy_TJ'] - min(compiled_data['total_prim_energy_TJ'])) / (
+    if (max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio'])) > 1E-8:
+        normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
+                    max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
+    else:
+        normalized_TAC = [1] * len(compiled_data['TAC_Mio'])
+
+    if (max(compiled_data['total_emissions_kiloton']) - min(compiled_data['total_emissions_kiloton'])) > 1E-8:
+        normalized_emissions = (compiled_data['total_emissions_kiloton'] - min(compiled_data['total_emissions_kiloton'])) / (
+                    max(compiled_data['total_emissions_kiloton']) - min(compiled_data['total_emissions_kiloton']))
+    else:
+        normalized_emissions = [1] * len(compiled_data['total_emissions_kiloton'])
+
+    if (max(compiled_data['total_prim_energy_TJ']) - min(compiled_data['total_prim_energy_TJ'])) > 1E-8:
+        normalized_prim = (compiled_data['total_prim_energy_TJ'] - min(compiled_data['total_prim_energy_TJ'])) / (
                 max(compiled_data['total_prim_energy_TJ']) - min(compiled_data['total_prim_energy_TJ']))
-    normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
+    else:
+        normalized_prim = [1] * len(compiled_data['total_prim_energy_TJ'])
+
+    if (max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio'])) > 1E-8:
+        normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
                 max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
-    normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
+    else:
+        normalized_Capex_total = [1] * len(compiled_data['Capex_total_Mio'])
+
+    if (max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio'])) > 1E-8:
+        normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
                 max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio']))
-    normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
+    else:
+        normalized_Opex = [1] * len(compiled_data['Opex_total_Mio'])
+
+    if (max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity'])) > 1E-8:
+        normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
                 max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
-
-    #in the case that all data is nan (division by 0 when all individuals have the same share.
-    if (max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity'])) == 0.0:
-        normalized_renewable_share = [1]*len(compiled_data['renewable_share_electricity'])
-
+    else:
+        normalized_renewable_share = [1] * compiled_data['renewable_share_electricity']
 
     compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
     compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
