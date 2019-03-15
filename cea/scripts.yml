@@ -145,6 +145,22 @@ Optimization:
                'general:district-heating-network', 'general:district-cooling-network',
                'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
+- name: mpc-building
+  label: MPC optimizer for buildings
+  description: model predictive control optimizer for buildings in isolation
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.flexibility_model.mpc_building.operation_main
+  parameters: ['general:scenario', 'general:scenario-name', 'general:region', 'general:weather',
+               'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'mpc-building']
+
+- name: mpc-district
+  label: MPC optimizer for an entire district
+  description: model predictive control optimizer for buildings in a district, accounting for grid constaints
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.optimization.flexibility_model.mpc_district.planning_and_operation_main
+  parameters: ['general:scenario', 'general:scenario-name', 'general:region', 'general:weather',
+               'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'mpc-district']
+
 Sensitivity analysis:
 
 - name: sensitivity-demand-analyze

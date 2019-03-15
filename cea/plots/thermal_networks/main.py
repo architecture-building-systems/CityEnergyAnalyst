@@ -185,13 +185,13 @@ class Plots(object):
         for i in range(len(plant_nodes)):
             # This segment handles the unit conversion of the given temperatures. In the standard case, they should already be in deg C
             if pd.DataFrame(df_s[str(plant_nodes[i])]).min(axis=0).min() < 200:  # unit is already deg C
-                df['Supply_' + str(plant_nodes[i])] = pd.DataFrame(df_s[str(plant_nodes[i])])
+                df['Supply_' + str(plant_nodes[i])] = df_s[str(plant_nodes[i])]
             else:
-                df['Supply_' + str(plant_nodes[i])] = pd.DataFrame(df_s[str(plant_nodes[i])]) - 273.15
+                df['Supply_' + str(plant_nodes[i])] = df_s[str(plant_nodes[i])] - 273.15
             if pd.DataFrame(df_r[str(plant_nodes[i])]).min(axis=0).min() < 200:  # unit is already deg C
-                df['Return_' + str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])])
+                df['Return_' + str(plant_nodes[i])] = df_r[str(plant_nodes[i])]
             else:
-                df['Return_' + str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])]) - 273.15
+                df['Return_' + str(plant_nodes[i])] = df_r[str(plant_nodes[i])] - 273.15
         return {'Data': df, 'Plants': plant_nodes}
 
     def preprocessing_heat_loss(self):
