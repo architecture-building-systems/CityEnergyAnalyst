@@ -32,6 +32,8 @@ def main():
     config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
     config.region = 'SG'
     config.weather = 'Singapore'
+    config.district_cooling_network = False
+    config.thermal_network.network_type = 'DC'
 
     def run(script, **kwargs):
         f = getattr(cea.api, script.replace('-', '_'))
