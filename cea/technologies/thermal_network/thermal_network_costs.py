@@ -476,16 +476,16 @@ def calc_Ctot_cs_district(network_info):
     el_MWh = (Opex_var_pump + Opex_var_plant) / el_price_per_Wh / 1e6
 
     # store results
-    Capex_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
+    Capex_a_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
                   Capex_a_chiller + Capex_a_CT + Capex_a_hex
     Opex_total = Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Opex_tot_dis_loads + \
                  Opex_tot_dis_buildings + Opex_fixed_plant + Opex_fixed_hex
     Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                   Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Ctot_dis_loads + Ctot_dis_buildings + \
                   Opex_fixed_plant + Opex_fixed_hex
-    cost_storage_df.ix['total'][0] = Capex_total + Opex_total
+    cost_storage_df.ix['total'][0] = Capex_a_total + Opex_total
     cost_storage_df.ix['opex'][0] = Opex_total
-    cost_storage_df.ix['capex'][0] = Capex_total
+    cost_storage_df.ix['capex'][0] = Capex_a_total
     cost_storage_df.ix['capex_network'][0] = Capex_a_netw
     cost_storage_df.ix['capex_pump'][0] = Capex_a_pump
     cost_storage_df.ix['capex_hex'][0] = Capex_a_hex
@@ -500,7 +500,7 @@ def calc_Ctot_cs_district(network_info):
     cost_storage_df.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
     cost_storage_df.ix['el_network_MWh'][0] = el_MWh
 
-    return Capex_total, Opex_total, Costs_total, cost_storage_df
+    return Capex_a_total, Opex_total, Costs_total, cost_storage_df
 
 
 def find_cooling_systems_string(disconnected_systems):

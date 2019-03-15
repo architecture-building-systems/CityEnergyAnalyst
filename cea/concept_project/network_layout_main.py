@@ -29,15 +29,13 @@ def network_layout(config, locator, plant_building_names, input_path_name, outpu
     input_paths_shp = os.path.join(locator.get_electric_networks_folder() + '/' + input_path_name + '.shp')  # shapefile with the stations
 
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     total_demand_location = locator.get_total_demand()
 
     # Calculate points where the substations will be located
     calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
 
     # Claculate potential network
-    calc_connectivity_network(path_default_arcgis_db, input_paths_shp, output_substations_shp,
-                              path_potential_network)
+    calc_connectivity_network(input_paths_shp, output_substations_shp, path_potential_network)
 
     # calc minimum spanning tree and save results to disk
     output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)

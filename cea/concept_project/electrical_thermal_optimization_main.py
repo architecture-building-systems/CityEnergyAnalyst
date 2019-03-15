@@ -35,7 +35,7 @@ random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
 
-def objective_function(individual, individual_number, config, building_names):
+def objective_function(individual, individual_number, config, building_names, genCP):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -44,7 +44,7 @@ def objective_function(individual, individual_number, config, building_names):
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
     print ('cea optimization progress: individual ' + str(individual_number) )
-    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names)
+    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names, genCP)
     return total_annual_cost, total_annual_capex
 
 def objective_function_wrapper(args):
@@ -133,7 +133,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
-                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
+                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
+                                     repeat(genCP, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -230,7 +231,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
-                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
+                                     repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
+                                     repeat(genCP, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
