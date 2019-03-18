@@ -1,10 +1,10 @@
 SCRIPT,VARIABLE,DESCRIPTION,VALUES,TYPE
-data-helper,BIOGAS,Biogas gas restricted in the area. 0 = no, 1, yes,{0, 1},int
+data-helper,BIOGAS,"Biogas gas restricted in the area. 0 = no, 1, yes","{0, 1}",int
 data-helper,GEOTHERMAL,Share of foot-print area protected for geothermal exploration,{0.0...1},float
-data-helper,NATURALGAS,Natural gas restricted in the area. 0 = no, 1, yes,{0, 1},int
+data-helper,NATURALGAS,"Natural gas restricted in the area. 0 = no, 1, yes","{0, 1}",int
 data-helper,Name,Unique building ID. It must start with a letter.,alphanumeric,string
 data-helper,SOLAR,Share of solar rooftop area protected,{0.0...1},float
-data-helper,WATERBODY,Use of water bodies is restricted in the area. 0 = no, 1, yes,{0, 1},int
+data-helper,WATERBODY,"Use of water bodies is restricted in the area. 0 = no, 1, yes","{0, 1}",int
 data-helper,type_cs,Type of cooling supply system,{T0...Tn},string
 data-helper,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),{T1...Tn},string
 data-helper,type_dhw,Type of hot water supply system,{T0...Tn},string
@@ -258,9 +258,9 @@ demand,mcphs_sys_kWperC,Capacity flow rate (mass flow* specific heat Capacity) o
 demand,mcphs_sys_shu_kWperC,Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to sensible heating units (space heating).,{0.0...n},float
 demand,mcptw_kWperC,Capacity flow rate (mass flow* specific heat capaicty) of the fresh water,{0.0...n},float
 demand,mcpww_sys_kWperC,Capacity flow rate (mass flow* specific heat capaicty) of domestic hot water,{0.0...n},float
-demand,people,Predicted occupancy, number of people in building,{0...n},int
+demand,people,"Predicted occupancy, number of people in building",{0...n},int
 demand,people0,Nominal occupancy,{0...n},int
-demand,theta_o_C,Operative temperature in building (RC-model), used for comfort plotting,{0.0...n},float
+demand,theta_o_C,"Operative temperature in building (RC-model), used for comfort plotting",{0.0...n},float
 demand,x_int,Internal mass fraction of humidity (water/dry air),{0.0...n},float
 emissions,COAL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system,{0.0...n},float
 emissions,COAL_hs_ghg_ton,Emissions due to operational energy of the coal powered heating system,{0.0...n},float
@@ -498,8 +498,8 @@ primary_input,envelope,Year of last retrofit of building facades (0 if none),{0.
 primary_input,floors_ag,TODO,TODO,TODO
 primary_input,floors_bg,TODO,TODO,TODO
 primary_input,geometry,TODO,TODO,TODO
-primary_input,has-cooling-season,Defines whether the scenario has a cooling season.,{TRUE, FALSE},Boolean
-primary_input,has-heating-season,Defines whether the scenario has a heating season.,{TRUE, FALSE},Boolean
+primary_input,has-cooling-season,Defines whether the scenario has a cooling season.,"{TRUE, FALSE}",Boolean
+primary_input,has-heating-season,Defines whether the scenario has a heating season.,"{TRUE, FALSE}",Boolean
 primary_input,heating,TODO,TODO,TODO
 primary_input,heating-season-end,Last day of the heating season,mm-dd,date
 primary_input,heating-season-start,Day on which the heating season starts,mm-dd,date
@@ -519,7 +519,7 @@ primary_input,source_cs,TODO,TODO,TODO
 primary_input,source_dhw,TODO,TODO,TODO
 primary_input,source_el,TODO,TODO,TODO
 primary_input,source_hs,TODO,TODO,TODO
-primary_input,standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,{C, R},string
+primary_input,standard,"Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.","{C, R}",string
 primary_input,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,{T1...Tn},string
 primary_input,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,{T1...Tn},string
 primary_input,type_roof,Roof construction type (relates to values in Default Database Construction Properties),{T1...Tn},string
@@ -564,7 +564,7 @@ solar-collector,SC_walls_south_m2,Collector surface area on south facades.,{0.0.
 solar-collector,SC_walls_west_Q_kWh,Heat production from photovoltaic-thermal panels on west facades,{0.0...n},float
 solar-collector,SC_walls_west_m2,West facing wall collector surface area.,{0.0...n},float
 solar-collector,SURFACE,Unique surface ID for each building exterior surface.,{srf0...srfn},string
-solar-collector,TYPE,Surface typology.,{walls, windows, roofs},string
+solar-collector,TYPE,Surface typology.,"{walls, windows, roofs}",string
 solar-collector,T_SC_re_C,Collector heating supply temperature.,{0.0...n},float
 solar-collector,T_SC_sup_C,Collector heating supply temperature.,{0.0...n},float
 solar-collector,Xcoor,Describes the position of the x vector.,{0.0...n},float
@@ -576,9 +576,9 @@ solar-collector,Zdir,Directional scalar of the z vector.,{-1...1},float
 solar-collector,area_installed_module_m2,The area of the building surface covered by one solar panel,{0.0...n},float
 solar-collector,array_spacing_m,Spacing between solar arrays.,{0.0...n},float
 solar-collector,mcp_SC_kWperC,Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector.,{0.0...n},float
-solar-collector,orientation,Orientation of the surface (north, east, south, west or top),{north...},string
+solar-collector,orientation,"Orientation of the surface (north, east, south, west or top)",{north...},string
 solar-collector,surface,Unique surface ID for each building exterior surface.,{srf0...srfn},string
-solar-collector,surface_azimuth_deg,Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E),{0.0...n},float
+solar-collector,surface_azimuth_deg,"Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E)",{0.0...n},float
 solar-collector,tilt_deg,Tilt angle of roof or walls,{0.0...n},float
 solar-collector,total_rad_Whm2,Total radiative potential of a given surfaces area.,{0.0...n},float
 solar-collector,type_orientation,Concatenated surface type and orientation.,{type_orientation},string
