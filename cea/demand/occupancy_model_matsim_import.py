@@ -7,6 +7,7 @@ import cea.inputlocator
 import cea.config
 from cea.demand.transportation.matsim_data_import import FACILITY_TYPES
 
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Martin Mosteiro"]
@@ -22,11 +23,10 @@ SCHEDULES_INTERNAL_LOADS = ['Ea_Wm2', 'El_Wm2', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw
 PERSON_SCHEDULES = ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']
 ELECTRICAL_SCHEDULES = ['Ea_Wm2', 'El_Wm2']
 OTHER_SCHEDULES = ['Epro_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2']
-# PERSON_SCHEDULES = ['Ve', 'Qs', 'X', 'Vww', 'Vw']
-# ELECTRICAL_SCHEDULES = ['Ea', 'El']
-# OTHER_SCHEDULES = ['Epro', 'Ed', 'Qcre', 'Qhpro']
+MU_V = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67] # vector of mobility parameters for stochastic occupancy simulation from Sandoval (2015)
 
-def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, stochastic_occupancy):
+
+def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_stochastic_occupancy):
     """
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
@@ -60,9 +60,9 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, stoch
     :param archetype_values: occupant density, ventilation and internal loads for each archetypal occupancy type
     :type archetype_values: dict[str:array]
     
-    :param stochastic_occupancy: a boolean that states whether the stochastic occupancy model (True) or the 
+    :param use_stochastic_occupancy: a boolean that states whether the stochastic occupancy model (True) or the
         deterministic one (False) should be used
-    :type stochastic_occupancy: Boolean
+    :type use_stochastic_occupancy: Boolean
 
     :returns schedules: a dictionary containing the weighted average schedules for: occupancy; ventilation demand;
         sensible heat and moisture gains due to occupancy; electricity demand for appliances, lighting, processes,
@@ -76,141 +76,99 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, stoch
     # create a DataFrame to contain all schedules to be created
     building_schedules = pd.DataFrame(data=np.zeros((8760, len(archetype_values.columns))), index=range(8760),
                                       columns=archetype_values.columns)
-    # building_schedules = pd.DataFrame(data=np.zeros((8760, len(archetype_values.columns))), index=range(8760),
-    #                                   columns=[column.split('_')[0] for column in archetype_values.columns])
 
-    # define single schedules if transportation data is used
-    hospital_employees = 0
-    for user_type in ['student', 'employee', 'patient']:
-        if user_type in all_schedules.keys():
-            if user_type is not 'patient':
-                first = 0
-                for facility in FACILITY_TYPES[user_type]:
-                    if np.sum(pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) > 0:
-                        number_of_people = np.int(bpr.occupancy[facility] / np.sum(
-                            pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) * len(
-                            all_schedules[user_type]))
-                    else:
-                        number_of_people = 0
-                    for person in range(first, number_of_people):
-                        if facility != 'HOSPITAL':
-                            occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
+    if not use_stochastic_occupancy:
+        # define single schedules if transportation data is used
+        hospital_employees = 0
+        for user_type in ['student', 'employee', 'patient']:
+            if user_type in all_schedules.keys():
+                if user_type is not 'patient':
+                    first = 0
+                    for facility in FACILITY_TYPES[user_type]:
+                        if np.sum(pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) > 0:
+                            number_of_people = np.int(bpr.occupancy[facility] / np.sum(
+                                pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) * len(
+                                all_schedules[user_type]))
                         else:
-                            occupant_schedule = [np.array(all_schedules[user_type][person])] * 3
-                        building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
-                                                                    all_schedules[facility]['monthly'],
-                                                                    archetype_values.loc[facility])
-                    building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[facility],
-                                                                   archetype_values.loc[facility],
-                                                                   bpr.rc_model['Aef'] * bpr.occupancy[facility])
-                    if facility == 'HOSPITAL':
-                        hospital_employees = number_of_people
-                first += number_of_people
-            else:
-                number_of_people = np.int(bpr.rc_model['NFA_m2'] * bpr.occupancy['HOSPITAL'] *
-                                          archetype_values.loc['HOSPITAL', 'people'] - hospital_employees)
-                for i in range(number_of_people):
-                    # yearly_schedule = get_yearly_vectors(dates, all_schedules[user_type]['people'],
-                    #                                      all_schedules[user_type]['electricity'],
-                    #                                      all_schedules[user_type]['water'],
-                    #                                      all_schedules[user_type]['processes'],
-                    #                                      all_schedules[user_type]['monthly'])
-                    # building_schedules = add_single_schedules(building_schedules, yearly_schedule,
-                    #                                           archetype_values.loc['HOSPITAL'], bpr.rc_model['NFA_m2'],
-                    #                                           single_occupant_schedule=True)
-                    building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
-                                                                all_schedules['HOSPITAL']['monthly'],
-                                                                archetype_values.loc['HOSPITAL'])
-                # building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules['HOSPITAL'],
-                #                                                archetype_values.loc['HOSPITAL'],
-                #                                                bpr.rc_model['Aef'] * bpr.occupancy['HOSPITAL'])
-    # define single occupants' schedules for other uses
-    for use in list_uses: # all_schedules.keys():
-        if bpr.occupancy[use] > 0:
-            yearly_schedule = get_yearly_vectors(dates, all_schedules[use]['people'],
-                                                 all_schedules[use]['electricity'], all_schedules[use]['water'],
-                                                 all_schedules[use]['processes'], all_schedules[use]['monthly'])
-            building_schedules = add_single_schedules(building_schedules, yearly_schedule, archetype_values.loc[use],
-                                                      bpr.rc_model['NFA_m2'] * bpr.occupancy[use],
-                                                      bpr.rc_model['Aef'] * bpr.occupancy[use])
-                                                      # single_occupant_schedule=False)
-        # if use not in ['student', 'employee', 'patient']:
-        # number_of_people = np.int(bpr.rc_model['NFA_m2'] * bpr.occupancy[use] * archetype_values.loc[use, 'people'])
-        # for i in range(number_of_people):
-        #     yearly_schedule = get_yearly_vectors(dates, all_schedules[use]['people'],
-        #                                          all_schedules[use]['electricity'], all_schedules[use]['water'],
-        #                                          all_schedules[use]['processes'], all_schedules[use]['monthly'])
-        #     building_schedules = add_single_occupant_schedules(building_schedules, yearly_schedule,
-        #                                                        archetype_values.loc[use])
+                            number_of_people = 0
+                        for person in range(first, number_of_people):
+                            if facility != 'HOSPITAL':
+                                occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
+                            else:
+                                occupant_schedule = [np.array(all_schedules[user_type][person])] * 3
+                            yearly_schedule = get_yearly_occupancy(dates, occupant_schedule,
+                                                                   all_schedules['HOSPITAL']['monthly'])
+                            building_schedules = add_occupant_schedules(building_schedules, yearly_schedule,
+                                                                        archetype_values.loc[facility])
+                            # building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
+                            #                                             all_schedules[facility]['monthly'],
+                            #                                             archetype_values.loc[facility])
+                        building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[facility],
+                                                                       archetype_values.loc[facility],
+                                                                       bpr.rc_model['Aef'] * bpr.occupancy[facility])
+                        if facility == 'HOSPITAL':
+                            hospital_employees = number_of_people
+                    first += number_of_people
+                else:
+                    number_of_people = np.int(bpr.rc_model['NFA_m2'] * bpr.occupancy['HOSPITAL'] *
+                                              archetype_values.loc['HOSPITAL', 'people'] - hospital_employees)
+                    for i in range(number_of_people):
+                        yearly_schedule = get_yearly_occupancy(dates, occupant_schedule,
+                                                               all_schedules['HOSPITAL']['monthly'])
+                        building_schedules = add_occupant_schedules(building_schedules, yearly_schedule,
+                                                                    archetype_values.loc['HOSPITAL'])
+                        # building_schedules = add_occupant_schedules(building_schedules, dates, occupant_schedule,
+                        #                                             all_schedules['HOSPITAL']['monthly'],
+                        #                                             archetype_values.loc['HOSPITAL'])
+                    # building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules['HOSPITAL'],
+                    #                                                archetype_values.loc['HOSPITAL'],
+                    #                                                bpr.rc_model['Aef'] * bpr.occupancy['HOSPITAL'])
+        # define single occupants' schedules for other uses
+        for use in list_uses:
+            if bpr.occupancy[use] > 0:
+                yearly_schedule = get_yearly_vectors(dates, all_schedules[use]['people'],
+                                                     all_schedules[use]['electricity'], all_schedules[use]['water'],
+                                                     all_schedules[use]['processes'], all_schedules[use]['monthly'])
+                building_schedules = add_single_schedules(building_schedules, yearly_schedule, archetype_values.loc[use],
+                                                          bpr.rc_model['NFA_m2'] * bpr.occupancy[use],
+                                                          bpr.rc_model['Aef'] * bpr.occupancy[use])
 
+    else:
+        # use stochastic occupancy schedule generator
+        for use in list_uses:
+            if bpr.occupancy[use] > 0:
+                occupants_in_current_use = int(
+                    archetype_values.loc[use]['people'] * bpr.occupancy[use] * bpr.rc_model['NFA_m2'])
+                yearly_schedule = get_yearly_vectors(dates, all_schedules[use]['people'],
+                                                     all_schedules[use]['electricity'], all_schedules[use]['water'],
+                                                     all_schedules[use]['processes'], all_schedules[use]['monthly'])
+
+                for occupant in range(occupants_in_current_use):
+                    mu = MU_V[int(len(MU_V) * random.random())]
+                    occupant_schedule = calc_individual_occupant_schedule(mu, yearly_schedule[0])
+                    building_schedules = add_occupant_schedules(building_schedules, occupant_schedule,
+                                                                archetype_values.loc[use])
+                                                                # dates, occupant_schedule,
+                                                                # all_schedules[use]['monthly'],
+                                                                # archetype_values.loc[use])
+                building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[use],
+                                                               archetype_values.loc[use],
+                                                               bpr.rc_model['Aef'] * bpr.occupancy[use])
     for schedule in PERSON_SCHEDULES:
-        # normalizing_value = np.sum(
-        #     archetype_values[schedule].multiply(pd.Series(bpr.occupancy)).multiply(
-        #         archetype_values['people'])) * bpr.rc_model['NFA_m2']
         normalizing_value = np.sum(
             archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)).multiply(
                 archetype_values['people'])) / np.sum(pd.Series(bpr.occupancy).multiply(archetype_values['people']))
         if not np.isclose(normalizing_value, 0.0):
-            # building_schedules[schedule] *= comfort_and_loads[schedule] / normalizing_value
             building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
 
     for schedule in ELECTRICAL_SCHEDULES:
-        # normalizing_value = np.sum(
-        #     archetype_values[schedule].multiply(pd.Series(bpr.occupancy)).multiply(
-        #         archetype_values['electricity'])) * bpr.rc_model['NFA_m2']
-        normalizing_value = np.sum(archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)))  # * bpr.rc_model['NFA_m2']
+        normalizing_value = np.sum(archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)))
         if not np.isclose(normalizing_value, 0.0):
-            # building_schedules[schedule] *= bpr.internal_loads[schedule] / normalizing_value
-            # building_schedules[schedule] *= comfort_and_loads[schedule] / normalizing_value
-            building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value # * bpr.rc_model['Aef']
+            building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
 
     for schedule in OTHER_SCHEDULES:
-        # building_schedules[schedule] = calc_process_schedules(building_schedules, all_schedules, bpr, dates)
         building_schedules[schedule.split('_')[0]] = calc_process_schedules(building_schedules, all_schedules, bpr,
                                                                             dates)
-
-    # # calculate average occupant density for the building - TODO: needed?
-    # people_per_square_meter = 0
-    # for num in range(len(list_uses)):
-    #     people_per_square_meter += bpr.occupancy[list_uses[num]] * archetype_values['people'][num]
-    #
-    # # define schedules from archetypes
-    # for num in range(len(list_uses)):
-    #     use = list_uses[num]
-    #     if (archetype_values['people'][num] > 0.0) and (bpr.occupancy[list_uses[num]]> 0.0):
-    #         if bpr.rc_model['NFA_m2'] * archetype_values['people'][num] < 1.0:
-    #             people = 1
-    #         else:
-    #             people = np.int(bpr.rc_model['NFA_m2'] * archetype_values['people'][num])
-    #         for person in range(people):
-    #             yearly_schedule = get_yearly_vectors(dates, all_schedules[use]['people'],
-    #                                                  all_schedules[use]['electricity'], all_schedules[use]['water'],
-    #                                                  all_schedules[use]['processes'], all_schedules[use]['monthly'])
-    #
-    # # no need to calculate occupancy if people_per_square_meter == 0
-    # if people_per_square_meter > 0:
-    #     if stochastic_occupancy:
-    #         schedules = calc_stochastic_schedules(all_schedules, archetype_values, bpr, list_uses,
-    #                                               people_per_square_meter)
-    #     else:
-    #         schedules = calc_deterministic_schedules(all_schedules, archetype_values, bpr, list_uses,
-    #                                                  people_per_square_meter)
-    # else:
-    #     schedules = {}
-    #     # occupant-related schedules are 0 since there are no occupants
-    #     for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
-    #         schedules[schedule] = np.zeros(8760)
-    #     # electricity and process schedules may be greater than 0
-    #     codes = {'Ea': 1, 'El': 1}
-    #     for schedule in codes.keys():
-    #         schedules[schedule] = bpr.rc_model['Aef'] * \
-    #                               calc_remaining_schedules_deterministic(all_schedules,
-    #                                                                      archetype_values[schedule], list_uses,
-    #                                                                      bpr.occupancy, codes[schedule],
-    #                                                                      archetype_values['people'])
-    #     calc_process_schedules(schedules, all_schedules, bpr)
-    #
-    # return schedules
 
     return building_schedules
 
@@ -362,10 +320,6 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         schedules[schedule] = np.zeros(8760)
         normalizing_values[schedule] = 0.0
 
-    # vector of mobility parameters
-    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
-    len_mu_v = len(mu_v)
-
     for num in range(len(list_uses)):
         use = list_uses[num]
         current_share_of_use = bpr.occupancy[use]
@@ -375,7 +329,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
             archetype_schedule = archetype_schedules[num][0]
             for occupant in range(occupants_in_current_use):
-                mu = mu_v[int(len_mu_v * random.random())]
+                mu = MU_V[int(len(MU_V) * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
                 current_stochastic_schedule += occupant_pattern
                 schedules['people'] += occupant_pattern
@@ -463,7 +417,7 @@ def calc_individual_occupant_schedule(mu, archetype_schedule):
         pattern.append(next)
         state = next
 
-    return pattern
+    return np.array(pattern)
 
 
 def calculate_transition_probabilities(mu, P0, P1):
@@ -620,8 +574,9 @@ def make_normalized_stochastic_schedule(stochastic_schedule, deterministic_sched
 
     return stochastic_schedule / (unoccupied_times + (1 - unoccupied_times) * deterministic_schedule)
 
-def add_occupant_schedules(building_schedules, dates, occupant_schedule, monthly_schedule, archetype_values):
-    yearly_schedule = get_yearly_occupancy(dates, occupant_schedule, monthly_schedule)
+def add_occupant_schedules(building_schedules, yearly_schedule, archetype_values): #building_schedules, dates, occupant_schedule, monthly_schedule, archetype_values):
+
+    # yearly_schedule = get_yearly_occupancy(dates, occupant_schedule, monthly_schedule)
 
     building_schedules['people'] += yearly_schedule[0]
     for schedule in ['Qs', 'X', 'Ve']: # _Wp', 'X_ghp', 'Ve_lps']:
