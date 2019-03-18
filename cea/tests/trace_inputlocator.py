@@ -92,15 +92,15 @@ def get_updated_dependencies(viz_set, meta_output_file):
     dependencies = {}
 
     for direction, script, locator_method, path, file in viz_set:
-        parent = []
-        child = []
+        parent = set()
+        child = set()
         if direction == 'output':
-            parent.append(script)
+            parent.add(script)
         if direction == 'input':
-            child.append(script)
+            child.add(script)
         dependencies[locator_method] = {
-            'created_by': parent,
-            'used_by': child
+            'created_by': list(parent),
+            'used_by': list(child)
         }
 
     methods = sorted(set([lm[2] for lm in viz_set]))
