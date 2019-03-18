@@ -11,10 +11,10 @@ import cea.osmose.compare_el_usages as compare_el
 
 # import from config # TODO: add to config
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_IEHX']
+TECHS = ['HCS_coil']
 case = 'WTP_CBD_m_WP1_HOT'
-specified_buildings = ["B006"]
-timesteps = 168  # 168 (week)
+specified_buildings = ["B004"]
+timesteps = 24  # 168 (week)
 
 if timesteps == 168:
     start_t = 5040  # Average Annual 7/30-8/5: 5040-5207

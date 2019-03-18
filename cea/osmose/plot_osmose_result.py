@@ -4,7 +4,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import math
-from extract_demand_outputs import calc_m_dry_air
+from extract_demand_outputs import calc_m_dry_air, calc_w_from_rh
+import cea.osmose.exergy_calculation as calc_Ex
 
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_max_ppm = 800 / 1e6
@@ -29,17 +30,21 @@ def check_balance(results, building, building_result_path, tech):
 
 
 def check_CO2_bal(results, building, building_result_path, tech):
-    CO2_IN = (results.filter(like='m_oau_in').sum(axis=1) / results['rho_air']) * CO2_env_ppm * 3600 + results['co2_sto_discharge']
+    CO2_IN = (results.filter(like='m_oau_in').sum(axis=1) / results['rho_air']) * CO2_env_ppm * 3600 + \
+             results['co2_sto_discharge'] + results['co2_bui_inf_occ']
+    # CO2_IN = (results.filter(like='m_oau_in').sum(axis=1) / results['rho_air']) * CO2_env_ppm * 3600 + \
+    #          results['co2_sto_discharge'] + results['co2_bui_inf_occ']
     CO2_OUT = (results['m_oau_out'] / results['rho_air']) * CO2_max_ppm * 3600 + results['co2_sto_charge']
 
     Bui_CO2_bal = CO2_IN - CO2_OUT
-    if abs(Bui_CO2_bal.sum()) >= 1:
+    if abs(Bui_CO2_bal.sum() / CO2_IN.sum()) >= 0.01:
         print ('Bui_CO2_bal not zero...')
 
         # plotR
         co2_IN_dict = {}
         co2_IN_dict['m_infil_occupants'] = results['co2_bui_inf_occ']
-        co2_IN_dict['m_oau_in'] = (results.filter(like='m_oau_in').sum(axis=1) / results['rho_air']) * CO2_env_ppm * 3600
+        co2_IN_dict['m_oau_in'] = (results.filter(like='m_oau_in').sum(axis=1) / results[
+            'rho_air']) * CO2_env_ppm * 3600
         co2_IN_dict['co2_sto_discharge'] = results['co2_sto_discharge']
 
         air_OUT_dict = {}
@@ -59,7 +64,7 @@ def check_electricity_bal(results, building, building_result_path, tech):
                       results.filter(like='el_oau_in').sum(axis=1) + \
                       results.filter(like='el_oau_chi').sum(axis=1) + results['el_ct']
     Electricity_bal = Electricity_IN - Electricity_OUT
-    if abs(Electricity_bal.sum()) >= 1:
+    if abs(Electricity_bal.sum() / Electricity_OUT.sum()) >= 0.01:
         print('Electriicty_bal not zero...')
 
         el_IN_dict = {}
@@ -106,10 +111,12 @@ def check_bui_air_bal(results, building, building_result_path, tech):
 def check_bui_water_bal(results, building, building_result_path, tech):
     Bui_water_bal_IN = results['w_oau_out'] + results['w_lcu'] + results['w_sto_charge'] + results.filter(
         like='SU_dhu').sum(axis=1)
+    # Bui_water_bal_OUT = results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1) + results['w_sto_discharge'] \
+    #                     + results.filter(like='SU_hu').sum(axis=1)
     Bui_water_bal_OUT = results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1) + results['w_sto_discharge'] \
                         + results.filter(like='SU_hu').sum(axis=1)
     Bui_water_bal = Bui_water_bal_IN - Bui_water_bal_OUT
-    if abs(Bui_water_bal.sum()) >= 1e-3:
+    if abs(Bui_water_bal.sum() / Bui_water_bal_IN.sum()) >= 0.01:
         print ('Bui_water_bal not zero...')
 
         water_IN_dict = {}
@@ -137,7 +144,8 @@ def check_bui_energy_bal(results, building, building_result_path, tech):
     Bui_energy_bal_OUT = results['q_oau_sen_out'] + results['q_scu_sen'] + results['q_lcu_sen'] + results.filter(
         like='SU_Qc').sum(axis=1)
     Bui_energy_bal = Bui_energy_bal_IN - Bui_energy_bal_OUT
-    if abs(Bui_energy_bal.sum()) >= 1e-2:
+    if abs(
+            Bui_energy_bal.sum() / Bui_energy_bal_IN.sum()) >= 0.01:  # difference more than 1% of total sensible energy in
         print('Bui_energy_bal not zero...')
 
         energy_IN_dict = {}
@@ -217,9 +225,9 @@ def main(building, TECHS, building_result_path):
         air_flow_df = set_up_air_flow_df(results)
         plot_air_flow(air_flow_df, results, tech, building, building_result_path)
 
-        ## plot T_SA and w_SA
-        operation_df = set_up_operation_df(tech, results)
-        plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
+        # plot T_SA and w_SA
+        # operation_df = set_up_operation_df(tech, results)
+        # plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
 
         ## plot water balance
         humidity_df = set_up_humidity_df(tech, results)
@@ -246,6 +254,46 @@ def main(building, TECHS, building_result_path):
 
     print el_use_sum
     return
+
+
+def calc_min_exergy(results):
+    T_ref_C = results['T_ext']
+    w_ref_gperkg = results['w_ext']
+    # humidity set point
+    results['rh_RA'] = 0.6
+    w_RA = np.vectorize(calc_w_from_rh)(results['rh_RA'], results['T_RA'])  # g/kg d.a.
+
+    ## exergy of sensible heat transfer
+    Ex_Qc_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_bui'], results['T_RA'], T_ref_C)
+    # exergy of moist air
+    ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air)(results['T_ext'], results['w_ext'], T_ref_C, w_ref_gperkg)
+    ex_air_out = np.vectorize(calc_Ex.calc_exergy_moist_air)(results['T_RA'], w_RA, T_ref_C, w_ref_gperkg)
+    Ex_air_kWh = results['m_ve_min'] * (ex_air_in - ex_air_out) * 3600
+
+    ## exergy of water
+    m_w_RA_kg = np.vectorize(calc_m_w_RA)(results['M_dryair'], w_RA)
+    m_w_removed_kg = np.vectorize(m_w_removed_min)(results['m_ve_min'], results['w_ext'], w_RA,
+                                                   results['m_w_occ'], m_w_RA_kg)
+    ex_w_kJperkg = np.vectorize(calc_Ex.calc_exergy_liquid_water)(T_ref_C, w_ref_gperkg)
+    Ex_w_kWh = m_w_removed_kg * ex_w_kJperkg * 3600
+
+    # total
+    Ex_tot_kWh = Ex_Qc_kWh + Ex_air_kWh - Ex_w_kWh
+
+    return Ex_tot_kWh
+
+
+def calc_m_w_RA(M_air_room_kg, w_RA_gperkg):
+    m_w_RA_kg = M_air_room_kg * w_RA_gperkg / 1000
+    return m_w_RA_kg
+
+
+def m_w_removed_min(m_ve_min, w_ext, w_RA, m_w_occ, m_w_RA_kg):
+    m_w_air_in_kg = m_ve_min * w_ext / 1000
+    m_w_air_out_kg = m_ve_min * w_RA / 1000
+    m_w_occ_kg = m_w_occ / 1000
+    m_w_removed_min_kg = m_w_RA_kg + m_w_air_in_kg - m_w_air_out_kg + m_w_occ_kg
+    return m_w_removed_min_kg
 
 
 def analysis_chilled_water_usage(results, tech):
@@ -278,9 +326,10 @@ def set_up_hu_store_df(results):
                                                                     results['T_RA']) * 100
     return hu_store_df
 
+
 def set_up_co2_store_df(results):
     co2_store_df = pd.DataFrame()
-    co2_store_df['ppm'] = results['co2_storage']/results['Vf_m3']*1e6
+    co2_store_df['ppm'] = results['co2_storage'] / results['Vf_m3'] * 1e6
     co2_store_df['m3'] = results['co2_storage']
     return co2_store_df
 
@@ -369,8 +418,10 @@ def calc_el_stats(building, building_result_path, electricity_df, results, tech)
     output_df['qc_sys_oau'] = cooling_df['qc_sys_sen_oau'] + cooling_df['qc_sys_lat_oau']
     output_df['qc_sys_sen_total'] = cooling_df.filter(like='qc_sys_sen').sum(axis=1)
     output_df['qc_sys_lat_total'] = cooling_df.filter(like='qc_sys_lat').sum(axis=1)
+    # calculate minimum exergy required
+    output_df['Ex_min'] = calc_min_exergy(results)
 
-    # add total row in the bottom
+    # dd total row in the bottom
     total_df = pd.DataFrame(output_df.sum()).T
     output_df = output_df.append(total_df).reset_index().drop(columns='index')
 
@@ -390,6 +441,9 @@ def calc_el_stats(building, building_result_path, electricity_df, results, tech)
     # output_df['cop_scu'] = output_df['qc_sys_scu']/output_df['el_scu']
     # output_df['cop_lcu'] = output_df['qc_sys_lcu']/output_df['el_lcu']
     # output_df['cop_oau'] = output_df['qc_sys_oau']/output_df['el_oau']
+
+    # calculate exergy efficiency
+    output_df['eff_exergy'] = output_df['eff_exergy'] / output_df['el_total']
 
     # calculate the percentage used by each component
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
@@ -456,6 +510,10 @@ def set_up_heat_df(tech, results):
     heat_df['q_oau_sen_add'] = total_oau[total_oau < 0] * (-1)
     heat_df = heat_df.fillna(0)
 
+    Bui_energy_bal_IN = results['q_bui'] + results.filter(like='q_oau_sen_in').sum(axis=1) + results.filter(
+        like='SU_Qh').sum(axis=1)
+    Bui_energy_bal_OUT = results['q_oau_sen_out'] + results['q_scu_sen'] + results['q_lcu_sen'] + results.filter(
+        like='SU_Qc').sum(axis=1)
     # balance
     balance_in = results['q_bui'] + heat_df['q_oau_sen_add'] + results.filter(like='SU_Qh').sum(axis=1)
     balance_out = heat_df['q_lcu_sen'] + heat_df['q_scu_sen'] + heat_df['q_oau_sen'] + results.filter(like='SU_Qc').sum(
@@ -502,7 +560,8 @@ def set_up_air_flow_df(results):
     air_flow_df['infiltration'] = results['m_inf_in']
     if 'm_oau_in_by' in results.columns:
         air_flow_df['OAU_in_bypass'] = results.filter(like='m_oau_in_by').sum(axis=1)
-        air_flow_df['OAU_in'] = results.filter(like='m_oau_in').drop(columns=results.filter(like='m_oau_in_by').columns).sum(axis=1)
+        air_flow_df['OAU_in'] = results.filter(like='m_oau_in').drop(
+            columns=results.filter(like='m_oau_in_by').columns).sum(axis=1)
 
         balance = air_flow_df['OAU_in'] + air_flow_df['OAU_in_bypass'] + air_flow_df['infiltration'] - results[
             'm_oau_out']
@@ -512,7 +571,7 @@ def set_up_air_flow_df(results):
         balance = air_flow_df['OAU_in'] + air_flow_df['infiltration'] - results['m_oau_out']
 
     # testing for balance
-    if abs(balance.sum()) >= 10:
+    if abs(air_flow_df['OAU_in'].sum()) > 0 and abs(balance.sum()) >= 10:
         raise (ValueError, 'wrong air balance')
     return air_flow_df
 
@@ -615,6 +674,7 @@ def plot_hu_store(building, building_result_path, hu_store_df, tech):
     plt.close(fig)
     return np.nan
 
+
 def plot_co2_store(building, building_result_path, co2_store_df, tech):
     # extract parameters
     time_steps = co2_store_df.shape[0]
@@ -638,7 +698,7 @@ def plot_co2_store(building, building_result_path, co2_store_df, tech):
     plt.grid(True)
 
     plt.xlabel('Time [hr]', fontsize=14)
-    #plt.ylabel('CO2 concentration [ppm] ; CO2 volume [m3]', fontsize=14)
+    # plt.ylabel('CO2 concentration [ppm] ; CO2 volume [m3]', fontsize=14)
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'co2_store'))
@@ -927,7 +987,7 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    building = "B006"
+    building = "B004"
     tech = ["HCS_coil"]
-    building_result_path = "C:\Users\Shanshan\Documents\WP1_results\WTP_CBD_m_WP1_HOT\B006_168"
+    building_result_path = "C:\Users\Shanshan\Documents\WP1_results\WTP_CBD_m_WP1_HOT\B004_24"
     main(building, tech, building_result_path)
