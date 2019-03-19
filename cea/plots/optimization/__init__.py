@@ -431,3 +431,11 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         data_processed['indiv'] = individual_names
         data_processed.set_index('indiv', inplace=True)
         return data_processed
+
+    def preprocessing_multi_criteria_data(self):
+        try:
+            data_multi_criteria = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
+        except IOError:
+            raise IOError("Please run the multi-criteria analysis tool first for the generation {}".format(
+                self.generation))
+        return data_multi_criteria
