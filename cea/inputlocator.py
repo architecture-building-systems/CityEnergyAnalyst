@@ -64,7 +64,7 @@ class InputLocator(object):
 
     def get_electrical_and_thermal_network_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
-        return self._ensure_folder(self.scenario, 'outputs', 'electrical and thermal network', 'optimization')
+        return self._ensure_folder(self.scenario, 'outputs', 'electrical_and_thermal_network', 'optimization')
 
     def get_optimization_master_results_folder(self):
         """scenario/outputs/data/optimization/master
