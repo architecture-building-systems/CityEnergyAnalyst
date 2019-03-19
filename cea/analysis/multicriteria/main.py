@@ -370,7 +370,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Substation_costs_USD'] = substation_costs_a_USD
         data_costs['Substation_costs_Total_USD'] = substation_costs_total_USD
         # Electricity Details/Renewable Share
-        lca = lca_calculations(locator, config)
+        lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
 
         data_costs['Total_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
         data_costs['Electricity_for_hotwater_GW'] = (data_electricity['E_hotwater_total_W'].sum()) / 1000000000 # GW

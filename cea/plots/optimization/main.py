@@ -476,7 +476,7 @@ class Plots(object):
                 data_processed.loc[individual_code]['Capex_Decentralized_USD'] = data_mcda_ind['Capex_a_disconnected_USD']
                 data_processed.loc[individual_code]['Opex_Decentralized_USD'] = data_mcda_ind['Opex_total_disconnected_USD']
 
-                lca = lca_calculations(locator, config)
+                lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
 
                 data_processed.loc[individual_code]['Electricitycosts_for_hotwater_USD'] = (
                         data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE.mean())

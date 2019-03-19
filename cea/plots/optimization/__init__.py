@@ -39,6 +39,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         'network-type': 'plots-optimization:network-type',
         'multicriteria': 'plots-optimization:multicriteria',
         'scenario-name': 'general:scenario-name',
+        'region': 'general:region',
+        'detailed-electricity-pricing': 'general:detailed-electricity-pricing'
     }
 
     def __init__(self, project, parameters):
@@ -46,6 +48,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
         self.network_type = self.parameters['network-type']
+        self.region = self.parameters['region']
+        self.detailed_electricity_pricing = self.parameters['detailed_electricity_pricing']
 
         address_of_individuals_path = self.locator.get_address_of_individuals_of_a_generation(self.generation)
         if not os.path.exists(address_of_individuals_path):
@@ -348,7 +352,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
                 data_processed.loc[individual_code]['Capex_Decentralized_USD'] = data_mcda_ind['Capex_a_disconnected_USD']
                 data_processed.loc[individual_code]['Opex_Decentralized_USD'] = data_mcda_ind['Opex_total_disconnected_USD']
 
-                lca = lca_calculations(self.locator, self.config)
+                lca = lca_calculations(self.locator, self.region, self.detailed_electricity_pricing)
 
                 data_processed.loc[individual_code]['Electricitycosts_for_hotwater_USD'] = (
                         data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE.mean())
