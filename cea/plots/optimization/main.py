@@ -15,7 +15,7 @@ import cea.inputlocator
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
     locating_individuals_in_generation_script
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
@@ -476,7 +476,7 @@ class Plots(object):
                 data_processed.loc[individual_code]['Capex_Decentralized_USD'] = data_mcda_ind['Capex_a_disconnected_USD']
                 data_processed.loc[individual_code]['Opex_Decentralized_USD'] = data_mcda_ind['Opex_total_disconnected_USD']
 
-                lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
+                lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
 
                 data_processed.loc[individual_code]['Electricitycosts_for_hotwater_USD'] = (
                         data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE.mean())

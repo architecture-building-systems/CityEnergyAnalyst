@@ -20,7 +20,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-class lca_calculations(object):
+class LcaCalculations(object):
     def __init__(self, locator, region, detailed_electricity_pricing):
         heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="HEATING")
         cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="COOLING")
