@@ -95,7 +95,8 @@ def main(config):
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
 
-    webbrowser.open("http://localhost:5050/")
+    # FIXME: this needs to be replaced with a better solution
+    # webbrowser.open("http://localhost:5050/")
     app.run(host='localhost', port=5050, threaded=False)
 
 

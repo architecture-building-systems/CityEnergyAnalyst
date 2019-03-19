@@ -31,7 +31,7 @@ label = 'Optimization overview'
 
 class OptimizationOverviewPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "optimization-overview"
+    category_name = "optimization"
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
@@ -49,7 +49,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
         self.network_type = self.parameters['network-type']
         self.region = self.parameters['region']
-        self.detailed_electricity_pricing = self.parameters['detailed_electricity_pricing']
+        self.detailed_electricity_pricing = self.parameters['detailed-electricity-pricing']
 
         address_of_individuals_path = self.locator.get_address_of_individuals_of_a_generation(self.generation)
         if not os.path.exists(address_of_individuals_path):

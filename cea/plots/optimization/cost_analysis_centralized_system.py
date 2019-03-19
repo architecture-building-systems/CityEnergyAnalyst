@@ -3,10 +3,8 @@ from __future__ import print_function
 
 import cea.plots.optimization
 import plotly.graph_objs as go
-from plotly.offline import plot
 
-
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import NAMING, COLOR
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -29,13 +27,19 @@ class CostAnalysisCentralizedSystem(cea.plots.optimization.OptimizationOverviewP
                                 "Opex_Centralized_USD",
                                 "Opex_Decentralized_USD"]
         self.data = self.preprocessing_final_generation_data_cost_centralized()
-        self.layout = go.Layout(images=LOGO, title=self.title, barmode='relative',
+        self.layout = go.Layout(title=self.title, barmode='relative',
                                 yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     @property
     def title(self):
         return "CAPEX vs. OPEX of centralized system in generation {generation}".format(
             generation=self.parameters['generation'])
+
+    @property
+    def output_path(self):
+        return self.locator.get_timeseries_plots_file(
+            'gen{generation}_centralized_and_decentralized_costs_total'.format(generation=self.generation),
+            self.category_name)
 
     def calc_graph(self):
         graph = []
