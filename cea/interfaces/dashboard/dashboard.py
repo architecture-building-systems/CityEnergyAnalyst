@@ -20,11 +20,6 @@ def list_tools():
     return result
 
 
-def load_plots_data():
-    plots_yml = os.path.join(os.path.dirname(cea.plots.__file__), 'plots.yml')
-    return yaml.load(open(plots_yml).read())
-
-
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
     app = Flask(__name__, static_folder='base/static')
@@ -95,7 +90,6 @@ def main(config):
 
     # keep a copy of the configuration we're using
     app.cea_config = config
-    app.plots_data = load_plots_data()
 
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
@@ -103,7 +97,6 @@ def main(config):
 
     webbrowser.open("http://localhost:5050/")
     app.run(host='localhost', port=5050, threaded=False)
-
 
 
 if __name__ == '__main__':
