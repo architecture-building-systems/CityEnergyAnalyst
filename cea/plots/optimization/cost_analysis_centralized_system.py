@@ -16,12 +16,12 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class CostAnalysisCentralizedSystem(cea.plots.optimization.OptimizationOverviewPlotBase):
+class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
     name = "Cost analysis of centralized system"
 
     def __init__(self, project, parameters):
-        super(CostAnalysisCentralizedSystem, self).__init__(project, parameters)
+        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters)
         self.analysis_fields = ["Capex_Centralized_USD",
                                 "Capex_Decentralized_USD",
                                 "Opex_Centralized_USD",
