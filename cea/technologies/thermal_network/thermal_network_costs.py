@@ -444,7 +444,9 @@ def calc_Ctot_cs_district(network_info):
     """
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
-    lca = lca_calculations(network_info.locator, network_info.config)
+    detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
+    region = network_info.config.region
+    lca = lca_calculations(network_info.locator, region, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
     network_info.network_features = network_opt.network_opt_main(network_info.config,

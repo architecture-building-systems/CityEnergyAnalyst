@@ -66,7 +66,7 @@ def individual_evaluation(generation, level, size, variable_groups):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = lca_calculations(locator, config)
+    lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand,
