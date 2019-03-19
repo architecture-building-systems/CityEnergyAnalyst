@@ -283,7 +283,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DC_costs.csv
         Optimized network layout files for pipes of district heating networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(),
+        return os.path.join(self.get_electrical_and_thermal_network_optimization_slave_results_folder(generation_number),
                             str(network_type) + "_gen_" + str(generation_number) + "_ind_" + str(network_number) + "_costs.csv")
 
     def get_optimization_network_layout_pipes_file(self, network_type):

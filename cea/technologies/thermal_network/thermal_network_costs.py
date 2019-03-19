@@ -104,7 +104,7 @@ def calc_Ctot_network_pump(network_info):
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, _ = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var

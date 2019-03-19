@@ -59,6 +59,7 @@ def thermal_network_calculations(individual, config, network_number, building_na
 
     network_info.building_names = building_names
     network_info.number_of_buildings_in_district = len(building_names)
+    network_info.disconnected_buildings_index = disconnected_buildings_index
 
     total_annual_cost, total_annual_capex, total_annual_opex, cost_storage_df = thermal_network_costs.calc_Ctot_cs_district(network_info)
     total_demand = pd.read_csv(locator.get_total_demand())
