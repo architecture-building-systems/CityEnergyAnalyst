@@ -21,7 +21,7 @@ from cea.analysis.multicriteria.optimization_post_processing.individual_configur
 from cea.optimization.slave.natural_gas_main import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -892,7 +892,7 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
         data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
         data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
 
-        lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
+        lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
 
         data_processed.loc[0]['Electricitycosts_for_hotwater'] = data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
         data_processed.loc[0]['Electricitycosts_for_appliances'] = data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE

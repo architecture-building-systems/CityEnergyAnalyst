@@ -12,7 +12,7 @@ from cea.optimization.prices import Prices as Prices
 from cea.optimization.distribution import network_opt_main
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -59,7 +59,7 @@ def moo_optimization(locator, weather_file, gv, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = lca_calculations(locator, config.region, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
