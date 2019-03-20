@@ -43,7 +43,7 @@ def objective_function(individual, individual_number, config, building_names, ge
     """
     print ('cea optimization progress: individual ' + str(individual_number) )
     total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config, individual_number, building_names, genCP)
-    return total_annual_cost, total_annual_capex
+    return total_annual_capex, total_annual_opex
 
 def objective_function_wrapper(args):
     """
@@ -103,8 +103,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     for i in building_names: #DCN
         columns_of_saved_files.append(str(i) + ' DCN')
 
-    columns_of_saved_files.append('Total Annualized Cost')
     columns_of_saved_files.append('CAPEX Total')
+    columns_of_saved_files.append('OPEX Total')
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     # stats.register("avg", numpy.mean, axis=0)
@@ -157,8 +157,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
             saved_dataframe_for_each_generation['generation'][i] = genCP
             for j in range(len(columns_of_saved_files) - 4):
                 saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
-            saved_dataframe_for_each_generation['Total Annualized Cost'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[1]
+            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['OPEX Total'][i] = ind.fitness.values[1]
 
         saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(genCP))
 
@@ -246,8 +246,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         for i, ind in enumerate(invalid_ind):
             saved_dataframe_for_each_generation['individual'][i] = i
             saved_dataframe_for_each_generation['generation'][i] = g
-            saved_dataframe_for_each_generation['Total Annualized Cost'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[1]
+            saved_dataframe_for_each_generation['CAPEX Total'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['OPEX Total'][i] = ind.fitness.values[1]
 
         saved_dataframe_for_each_generation.to_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(g))
 
