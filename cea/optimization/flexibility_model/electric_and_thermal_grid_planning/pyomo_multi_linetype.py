@@ -11,7 +11,7 @@ from concept_parameters import *
 # Auxiliary functions for LP
 # ============================
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ =  "Thanh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"

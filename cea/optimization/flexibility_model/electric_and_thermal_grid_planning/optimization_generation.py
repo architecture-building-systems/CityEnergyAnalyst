@@ -5,7 +5,7 @@ Create individuals
 from __future__ import division
 import random
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ =  "Thanh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
