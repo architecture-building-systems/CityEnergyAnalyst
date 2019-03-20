@@ -685,13 +685,13 @@ def calc_properties_PV_db(database_path, config):
 
 # investment and maintenance costs
 # FIXME: it looks like this function is never used!!! (REMOVE)
-def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
+def calc_Cinv_pv(total_module_area_m2, locator, region, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(region), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()

@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import cea.inputlocator
 import json
+from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
     locating_individuals_in_generation_script
@@ -439,3 +440,36 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
             raise IOError("Please run the multi-criteria analysis tool first for the generation {}".format(
                 self.generation))
         return data_multi_criteria
+
+    def preprocessing_capacities_data(self):
+        data_generation = self.preprocessing_generations_data()
+        column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                        'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
+                        'Storage_thermal_kW', 'CT_kW', 'Buildings Connected Share']
+        individual_index = data_generation['individual_barcode'].index.values
+        capacities_of_generation = pd.DataFrame(np.zeros([len(individual_index), len(column_names)]),
+                                                columns=column_names)
+
+        for i, ind in enumerate(individual_index):
+
+            data_address_individual = self.data_address[self.data_address['individual_list'] == ind]
+
+            # points to the correct file to be referenced from optimization folders
+            generation_pointer = data_address_individual['generation_number_address'].values[0]
+            individual_pointer = data_address_individual['individual_number_address'].values[0]
+            district_supply_sys, building_connectivity = supply_system_configuration(generation_pointer,
+                                                                                     individual_pointer, self.locator,
+                                                                                     self.network_type, self.region)
+
+            for name in column_names:
+                if name is 'Buildings Connected Share':
+                    connected_buildings = len(building_connectivity.loc[building_connectivity.Type == "CENTRALIZED"])
+                    total_buildings = connected_buildings + len(
+                        building_connectivity.loc[building_connectivity.Type == "DECENTRALIZED"])
+                    capacities_of_generation.iloc[i][name] = np.float(connected_buildings * 100 / total_buildings)
+                else:
+                    capacities_of_generation.iloc[i][name] = district_supply_sys[name].sum()
+
+        capacities_of_generation['indiv'] = individual_index
+        capacities_of_generation.set_index('indiv', inplace=True)
+        return capacities_of_generation
