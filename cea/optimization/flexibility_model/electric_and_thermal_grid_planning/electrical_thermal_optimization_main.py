@@ -232,7 +232,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
                                      repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
-                                     repeat(genCP, len(invalid_ind))))
+                                     repeat(g, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -304,15 +304,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     return pop, logbook
 
 def main(config):
-
-    dict_connected = [{0: 1, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1}
-                      # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
-                      # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1},
-                      # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 1, 7: 1, 8: 1, 9: 0},
-                      # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 1, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
-                      # # {0: 0, 1: 1, 2: 1, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
-                      # {0: 1, 1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 0}
-                      ]
 
     t0 = time.clock()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
