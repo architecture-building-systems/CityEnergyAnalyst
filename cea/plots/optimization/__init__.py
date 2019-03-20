@@ -149,6 +149,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         except IOError:
             raise IOError("Please run the multi-criteria analysis tool first for the generation you would like to visualize")
 
+        lca = LcaCalculations(self.locator, self.region, self.detailed_electricity_pricing)
+        
         for individual_code in range(len(data_raw['individual_barcode'])):
 
             individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
@@ -353,8 +355,6 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
 
                 data_processed.loc[individual_code]['Capex_Decentralized_USD'] = data_mcda_ind['Capex_a_disconnected_USD']
                 data_processed.loc[individual_code]['Opex_Decentralized_USD'] = data_mcda_ind['Opex_total_disconnected_USD']
-
-                lca = LcaCalculations(self.locator, self.region, self.detailed_electricity_pricing)
 
                 data_processed.loc[individual_code]['Electricitycosts_for_hotwater_USD'] = (
                         data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE.mean())
