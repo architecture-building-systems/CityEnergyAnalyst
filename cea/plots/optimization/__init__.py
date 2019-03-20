@@ -4,8 +4,9 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 import os
-import cea.inputlocator
 import json
+import cea.plots
+import cea.config
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
@@ -473,3 +474,26 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         capacities_of_generation['indiv'] = individual_index
         capacities_of_generation.set_index('indiv', inplace=True)
         return capacities_of_generation
+
+
+if __name__ == '__main__':
+    # run all the plots in this category
+    config = cea.config.Configuration()
+    from cea.plots.categories import list_categories
+
+    for category in list_categories():
+        if category.label != label:
+            continue
+        print('category:', category.name, ':', category.label)
+        for plot_class in category.plots:
+            print('plot_class:', plot_class)
+            parameters = {
+                k: config.get(v) for k, v in plot_class.expected_parameters.items()
+            }
+            plot = plot_class(config.project, parameters=parameters)
+            assert plot.name, 'plot missing name: %s' % plot
+            assert plot.category_name == category.name
+            print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+
+            # plot the plot!
+            plot.plot()

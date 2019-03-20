@@ -99,7 +99,6 @@ class PlotCategory(object):
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
-    buildings = None
 
     for category in list_categories():
         print('category:', category.name, ':', category.label)
