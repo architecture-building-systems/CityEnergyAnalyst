@@ -28,7 +28,6 @@ from cea.optimization.master import check
 from cea.technologies import substation
 from cea.optimization.master import summarize_network
 from cea.optimization.lca_calculations import LcaCalculations
-from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.slave import natural_gas_main
 
 __author__ = "Sreepathi Bhargava Krishna"

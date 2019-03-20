@@ -181,7 +181,7 @@ class Plots(object):
             individual_pointer = data_address_individual['individual_number_address'].values[0]
             district_supply_sys, building_connectivity = supply_system_configuration(generation_pointer,
                                                                                      individual_pointer, locator,
-                                                                                     network_type, config)
+                                                                                     network_type, config.region)
 
             for name in column_names:
                 if name is 'Buildings Connected Share':

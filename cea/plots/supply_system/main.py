@@ -445,7 +445,7 @@ class Plots(object):
 
     def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
-        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, output_type_network, config)
+        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, output_type_network, config.region)
 
         return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 
