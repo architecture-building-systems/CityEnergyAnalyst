@@ -55,8 +55,6 @@ def get_pointers_to_correct_individual_generation(generation, individual, locato
 
 
 def locating_individuals_in_generation_script(generation, locator):
-    category = "optimization-detailed"
-
     data_generation = preprocessing_generations_data(locator, generation)
 
     individual_list = data_generation['final_generation']['individual_barcode'].axes[0]
