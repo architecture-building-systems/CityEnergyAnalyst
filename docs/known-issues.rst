@@ -16,6 +16,8 @@ The table below contains a number of the most common issues:
     ImportError: DLL load failed: The specified module could not be found."
     "`1709 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1709>`_", "daysim_main.py", "Error when running daysim_main.py: .wea weather file cannot be found"
 
+`FOR A LIST OF ALL KNOWN-ISSUES PLEASE CHECK THIS LINK <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?q=is%3Aopen+is%3Aissue+label%3A%22known+issue%22>`_
+
 Report a new issue
 ------------------
 
