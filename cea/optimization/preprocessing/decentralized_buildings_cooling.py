@@ -13,7 +13,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
     Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, ACH_TYPE_DOUBLE
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cooling_tower as cooling_tower
@@ -2064,7 +2064,7 @@ def main(config):
     building_name = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    lca = lca_calculations(locator, config)
+    lca = LcaCalculations(locator, config)
     disconnected_buildings_cooling_main(locator, building_names[0:1], config, prices, lca)
 
 

@@ -27,8 +27,7 @@ from cea.optimization.slave import cooling_main
 from cea.optimization.master import check
 from cea.technologies import substation
 from cea.optimization.master import summarize_network
-from cea.optimization.lca_calculations import lca_calculations
-from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.slave import natural_gas_main
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -496,7 +495,7 @@ def main(config):
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
     prices = Prices(locator, config)
-    lca = lca_calculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
