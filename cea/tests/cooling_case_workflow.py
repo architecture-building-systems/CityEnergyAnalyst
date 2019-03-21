@@ -35,6 +35,10 @@ def main():
     config.district_cooling_network = False
     config.thermal_network.network_type = 'DC'
 
+    config_file = os.path.join(config.scenario, 'cea.config')
+    config.save(config_file)
+    print('Configuration file saved to {config_file}'.format(config_file=config_file))
+
     def run(script, **kwargs):
         f = getattr(cea.api, script.replace('-', '_'))
         f(config=config, **kwargs)
@@ -58,13 +62,10 @@ def main():
     run('thermal-network-optimization')  # FIXME: what is this?!
     run('optimization')
     run('multi-criteria-analysis')
-    run('plots')
-    run('plots-supply-system')
-    run('plots-optimization')
+    run('plots', network_type='DC')
+    run('plots-supply-system', network_type='DC')
+    run('plots-optimization', network_type='DC')
 
-    config_file = os.path.join(config.scenario, 'cea.config')
-    config.save(config_file)
-    print('Configuration file saved to {config_file}'.format(config_file=config_file))
     print('done.')
 
 
