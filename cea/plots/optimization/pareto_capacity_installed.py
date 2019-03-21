@@ -3,17 +3,79 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-
+import cea.plots.optimization
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Bhargava Srepathi"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Bhargava Srepathi"]
+__credits__ = ["Bhargava Srepathi", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+    """Show a pareto curve installed capacity for a generation"""
+    name = "Capacity installed in a generation"
+
+    def __init__(self, project, parameters):
+        super(ParetoCapacityInstalledPlot, self).__init__(project, parameters)
+        self.data = self.preprocessing_capacities_data().copy()
+        self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W',
+                                                   'CHP_BG_capacity_W',
+                                                   'CHP_NG_capacity_W', 'Furnace_dry_capacity_W',
+                                                   'Furnace_wet_capacity_W',
+                                                   'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
+                                                   'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
+                                                   'Peak_boiler_NG_capacity_W', 'SC_ET_capacity_W', 'SC_FP_capacity_W',
+                                                   'Disconnected_Boiler_BG_capacity_W',
+                                                   'Disconnected_Boiler_NG_capacity_W',
+                                                   'Disconnected_FC_capacity_W',
+                                                   'Disconnected_GHP_capacity_W']
+        self.analysis_fields_individual_cooling = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                                                   'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
+                                                   'Storage_thermal_kW']
+        self.analysis_fields = (self.analysis_fields_individual_heating if self.network_type == 'DH'
+                                else self.analysis_fields_individual_cooling)
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
+        self.layout = go.Layout(title=self.title, barmode='stack',
+                                yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
+                                xaxis=dict(title='Point in the Pareto Curve'))
+
+    @property
+    def title(self):
+        return 'Capacity installed in generation {generation}'.format(
+            generation=self.parameters['generation'])
+
+    @property
+    def output_path(self):
+        return self.locator.get_timeseries_plots_file(
+            'gen{generation}_centralized_and_decentralized_capacities_installed'.format(generation=self.generation),
+            self.category_name)
+
+    def calc_graph(self):
+        # CALCULATE GRAPH FOR CONNECTED BUILDINGS
+        graph = []
+        data = self.data
+        analysis_fields = self.analysis_fields
+        data['total'] = data[analysis_fields].sum(axis=1)
+        data['Name'] = data.index.values
+        data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+        for field in analysis_fields:
+            y = data[field]
+            flag_for_unused_technologies = all(v == 0 for v in y)
+            if not flag_for_unused_technologies:
+                name = NAMING[field]
+                total_perc = (y / data['total'] * 100).round(2).values
+                total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
+                trace = go.Bar(x=data['Name'], y=y, text=total_perc_txt, name=name,
+                               marker=dict(color=COLOR[field]))
+                graph.append(trace)
+
+        # FIXME: CALCULATE GRAPH FOR DISCONNECTED BUILDINGS
+        return graph
 
 
 def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
@@ -89,3 +151,16 @@ def calc_top_three_technologies(analysis_fields, data_frame, fields):
     top_values = [x.split('_capacity', 1)[0] for x in top_values]
 
     return top_values
+
+
+if __name__ == '__main__':
+    config = cea.config.Configuration()
+
+    parameters = {
+        k: config.get(v) for k, v in ParetoCapacityInstalledPlot.expected_parameters.items()
+    }
+    plot = ParetoCapacityInstalledPlot(config.project, parameters=parameters)
+    print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+
+    # plot the plot!
+    plot.plot()

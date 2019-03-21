@@ -263,7 +263,7 @@ Visualization:
   description: Create plots for the results of the optimzation of an urban scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.plots.optimization.main
-  parameters: ['general:region', 'general:scenario', plots-optimization]
+  parameters: ['general:region', 'general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
 
 
 default:
