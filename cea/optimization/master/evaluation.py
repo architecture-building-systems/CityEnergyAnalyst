@@ -209,7 +209,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print ('PEN_cooling_MJoil = ' + str(PEN_cooling_MJoil))
 
     # District Electricity Calculations
-    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
