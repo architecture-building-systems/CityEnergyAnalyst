@@ -5,7 +5,7 @@ import pandas
 import yaml
 
 locator = cea.inputlocator.InputLocator(config.Configuration().scenario)
-output = os.path.join(os.path.dirname(cea.config.__file__), 'tests/trace_variables.csv')
+output = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
 
 # create dataframe from variables_gloss.csv without duplicates
 gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
@@ -34,11 +34,11 @@ for index in TRACE:
         scr = TRACE[index]['created_by'][0]
     for VAR in TRACE[index]['schema']:
         if VAR.find('srf') != -1:
-            VAR = VAR.replace(VAR,'srf1')
+            VAR = VAR.replace(VAR,'srf0')
         if VAR.find('PIPE') != -1:
-            VAR = VAR.replace(VAR,'PIPE1')
+            VAR = VAR.replace(VAR,'PIPE0')
         if VAR.find('NODE') != -1:
-            VAR = VAR.replace(VAR,'NODE1')
+            VAR = VAR.replace(VAR,'NODE0')
         if VAR.find('B0') != -1:
             VAR = VAR.replace(VAR,'B01')
         if TRACE[index]['file_type'] == 'epw':

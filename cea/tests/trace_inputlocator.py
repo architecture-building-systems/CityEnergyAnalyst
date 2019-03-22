@@ -8,6 +8,9 @@ import cea.config as config
 from datetime import datetime
 from jinja2 import Template
 import cea.inputlocator
+import pandas
+import yaml
+from dateutil.parser import parse
 
 
 def create_trace_function(results_set):
@@ -87,213 +90,52 @@ def main(config):
     create_graphviz_output(viz_set, config.trace_inputlocator.graphviz_output_file)
     print 'Trace Complete'
 
-def get_updated_dependencies(viz_set, meta_output_file):
-    import yaml
-    dependencies = {}
-
-    for direction, script, locator_method, path, file in viz_set:
-        parent = set()
-        child = set()
-        if direction == 'output':
-            parent.add(script)
-        if direction == 'input':
-            child.add(script)
-        dependencies[locator_method] = {
-            'created_by': list(parent),
-            'used_by': list(child)
-        }
-
-    methods = sorted(set([lm[2] for lm in viz_set]))
-
-    if os.path.exists(meta_output_file):
-        # merge existing data
-        with open(meta_output_file, 'r') as f:
-            old_dep_data = yaml.load(f)
-        for method in old_dep_data:
-            if method in methods:
-                if old_dep_data[method]['created_by']:
-                    for i in range(len(old_dep_data[method]['created_by'])):
-                        dependencies[method]['created_by'].append(old_dep_data[method]['created_by'][i])
-                if old_dep_data[method]['used_by']:
-                    for i in range(len(old_dep_data[method]['used_by'])):
-                        dependencies[method]['used_by'].append(old_dep_data[method]['used_by'][i])
-            if method not in methods:
-                # make sure not to overwrite newer data!
-                dependencies[method] = old_dep_data[method]
-    return dependencies
-
-
 def meta_to_yaml(viz_set, meta_set, meta_output_file):
 
-    import pandas
     locator_meta = {}
-    dependencies = get_updated_dependencies(viz_set, meta_output_file)
-
     for locator_method, filename in meta_set:
         file_type = os.path.basename(filename).split('.')[1]
 
         if os.path.isfile(filename):
-
-            if file_type == 'csv':
-                db = pandas.read_csv(filename)
-                locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
-
-            if file_type == 'json':
-
-                with open(filename, 'r') as f:
-                    import json
-                    db = json.load(f)
-                    locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
-
-            if file_type == 'epw':
-                epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
-                              'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
-                              'dewpoint_C (index = 7)',
-                              'relhum_percent (index = 8)', 'atmos_Pa (index = 9)', 'exthorrad_Whm2 (index = 10)',
-                              'extdirrad_Whm2 (index = 11)', 'horirsky_Whm2 (index = 12)',
-                              'glohorrad_Whm2 (index = 13)',
-                              'dirnorrad_Whm2 (index = 14)', 'difhorrad_Whm2 (index = 15)',
-                              'glohorillum_lux (index = 16)',
-                              'dirnorillum_lux (index = 17)', 'difhorillum_lux (index = 18)',
-                              'zenlum_lux (index = 19)',
-                              'winddir_deg (index = 20)', 'windspd_ms (index = 21)',
-                              'totskycvr_tenths (index = 22)',
-                              'opaqskycvr_tenths (index = 23)', 'visibility_km (index = 24)',
-                              'ceiling_hgt_m (index = 25)',
-                              'presweathobs (index = 26)', 'presweathcodes (index = 27)',
-                              'precip_wtr_mm (index = 28)',
-                              'aerosol_opt_thousandths (index = 29)', 'snowdepth_cm (index = 30)',
-                              'days_last_snow (index = 31)', 'Albedo (index = 32)',
-                              'liq_precip_depth_mm (index = 33)',
-                              'liq_precip_rate_Hour (index = 34)']
-
-                db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
-                locator_meta[locator_method] = get_meta(db, filename, file_type, dependencies[locator_method])
-
-            if file_type == 'xls' or file_type == 'xlsx':
-
-                xls = pandas.ExcelFile(filename, on_demand=True)
-                schema = dict((k, {}) for k in xls.sheet_names)
-
-                for sheet in schema:
-                    db = pandas.read_excel(filename, sheet_name=sheet, on_demand=True)
-                    # if the xls appears to have row keys
-                    if 'Unnamed: 1' in db.columns:
-                        db = db.T
-                        # filter the goddamn nans
-                        new_cols = []
-                        for i in db.columns:
-                            if i == i:
-                                new_cols.append(i)
-                        db.index = range(len(db))
-                        db = db[new_cols]
-
-                    for attr in db:
-                        dtype = set()
-                        for data in db[attr]:
-                            # sample_data only to contain valid values
-                            if data == data:
-                                sample_data = data
-                                # change unicode to SQL 'str'
-                                if type(data) == unicode:
-                                    dtype.add('str')
-                                else:
-                                    dtype.add(type(data).__name__)
-                            # declare nans
-                            if data != data:
-                                dtype.add(None)
-
-                        schema[sheet][attr] = {
-                                'sample_value': sample_data,
-                                'types_found': list(dtype)
-                            }
-
-                    details = {
-                    'file_path' : filename,
-                    'file_type' : file_type,
-                    'schema' : schema,
-                    'created_by': dependencies[locator_method]['created_by'],
-                    'used_by': dependencies[locator_method]['used_by']
-                    }
-                    locator_meta[locator_method] = details
-
-            if file_type == 'dbf':
-                import pysal
-                db = pysal.open(filename, 'r')
-                schema = dict((k, ()) for k in db.header)
-
-
-                for attr in schema:
-                    dtype = set()
-                    for data in db.by_col(attr):
-                        if data == data:
-                            sample_data = data
-                            if type(data) == unicode:
-                                dtype.add('str')
-                            else:
-                                dtype.add(type(data).__name__)
-                        # declare nans
-                        if data != data:
-                            dtype.add(None)
-                        schema[attr] = {
-                                'sample_value': sample_data,
-                                'types_found': list(dtype)
-                            }
-                details = {
-                    'file_path': filename,
-                    'file_type': file_type,
-                    'schema': schema,
-                    'created_by': dependencies[locator_method]['created_by'],
-                    'used_by': dependencies[locator_method]['used_by']
-                }
-                locator_meta[locator_method] = details
-
-            if file_type == 'shp':
-                import geopandas
-                db = geopandas.read_file(filename)
-                schema = {}
-                for attr in db:
-                    dtype = set()
-                    for data in db[attr]:
-                        if data == data:
-                            if attr == 'geometry':
-                                sample_data = '((x1 y1, x2 y2, ...))'
-                            else:
-                                sample_data = data
-                            if type(data) == unicode:
-                                dtype.add('str')
-                            else:
-                                dtype.add(type(data).__name__)
-                        # declare nans
-                        if data != data:
-                            dtype.add(None)
-                        schema[attr] = {
-                                'sample_value': sample_data,
-                                'types_found': list(dtype)
-                            }
-                details = {
-                    'file_path': filename,
-                    'file_type': file_type,
-                    'schema': schema,
-                    'created_by': dependencies[locator_method]['created_by'],
-                    'used_by': dependencies[locator_method]['used_by']
-                }
-                locator_meta[locator_method] = details
+            locator_meta[locator_method] = {}
+            locator_meta[locator_method]['schema'] = get_schema(r'%s' %filename, file_type)
+            locator_meta[locator_method]['file_path'] = filename
+            locator_meta[locator_method]['file_type'] = file_type
+            locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
+                    locator_method) + '.__doc__')
 
     methods = sorted(set([lm[0] for lm in meta_set]))
-    import yaml
+
+    outputs = set()
+    inputs = set()
+    for direction, script, locator_method, path, files in viz_set:
+        if direction == 'output':
+            outputs.add(script)
+        if direction == 'input':
+            inputs.add(script)
+        locator_meta[locator_method]['created_by'] = list(outputs)
+        locator_meta[locator_method]['used_by'] = list(inputs)
+
+
+    # merge existing data
+    methods = sorted(set([lm[2] for lm in viz_set]))
     if os.path.exists(meta_output_file):
-        # merge existing data
         with open(meta_output_file, 'r') as f:
-            old_loc_data = yaml.load(f)
-        for method in old_loc_data:
-            if method not in methods:
+            old_meta_data = yaml.load(f)
+        for method in old_meta_data:
+            if method in methods:
+                old_outputs = set(old_meta_data[method]['created_by'])
+                outputs.union(old_outputs)
+                locator_meta[method]['created_by'] = list(outputs)
+                old_inputs = set(old_meta_data[method]['used_by'])
+                inputs.union(old_inputs)
+                locator_meta[method]['used_by'] = list(inputs)
+            else:
                 # make sure not to overwrite newer data!
-                locator_meta[method] = old_loc_data[method]
+                locator_meta[method] = old_meta_data[method]
 
     with open(meta_output_file, 'w') as fp:
         yaml.dump(locator_meta, fp, indent=4)
-
 
 def create_graphviz_output(viz_set, graphviz_output_file):
     # creating new variable to preserve original viz_set used by other methods
@@ -330,33 +172,135 @@ def create_graphviz_output(viz_set, graphviz_output_file):
         f.write(digraph)
 
 
-def get_meta(db, filename, file_type, dependencies):
+def is_date(data):
+    # TODO replace hardcoded with a reference file
+    codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15']
+    if type(data) == unicode and data not in codes:
+        try:
+            parse(data)
+            return True
+        except ValueError:
+            return False
+
+
+def get_meta(df_series, attribute_name, variable_declaration):
+    types_found = set()
+    meta = {}
+    for data in df_series:
+        if data == data:
+            sample_data = data
+            if is_date(data):
+                types_found.add('date')
+            elif isinstance(data, basestring):
+                sample_data = data.encode('ascii', 'ignore')
+                types_found.add('string')
+            else:
+                types_found.add(type(data).__name__)
+        # declare nans
+        if data != data:
+            types_found.add(None)
+        if attribute_name in variable_declaration.index.values:
+            description = variable_declaration.loc[attribute_name, 'DESCRIPTION']
+            values = variable_declaration.loc[attribute_name, 'VALUES']
+            types_declared = variable_declaration.loc[attribute_name, 'TYPE']
+        else:
+            description = 'Not in variable_declaration.csv'
+            values = 'TODO'
+            types_declared = 'TODO'
+
+        meta = {
+            'sample_data': sample_data,
+            'description': description,
+            'types_found': list(types_found),
+            'types_declared': types_declared,
+            'values': values
+        }
+    return meta
+
+
+def get_schema(filename, file_type):
     schema = {}
-    for attr in db:
-        dtype = set()
-        for data in db[attr]:
-            # ensure sample_data is not nan
-            if data == data:
-                sample_data = data
-                if type(data) == unicode:
-                    dtype.add('str')
-                else:
-                    dtype.add(type(data).__name__)
-            # declare nans
-            if data != data:
-                dtype.add(None)
-            schema[attr] = {
-                'sample_value': sample_data,
-                'types_found': list(dtype)
-            }
-    details = {
-        'file_path': filename,
-        'file_type': file_type,
-        'schema': schema,
-        'created_by': dependencies['created_by'],
-        'used_by': dependencies['used_by']
-    }
-    return details
+    var_dec_path = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
+    variable_declaration = pandas.read_csv(var_dec_path).set_index(['VARIABLE'])
+    if file_type == 'xlsx' or file_type == 'xls':
+        db = pandas.read_excel(filename, sheet_name=None)
+        for sheet in db:
+            meta = {}
+            nested_df = db[sheet]
+            # if xls seems to have row attributes
+            if 'Unnamed: 1' in db[sheet].keys():
+                nested_df = db[sheet].T
+                # filter the goddamn nans
+                new_cols = []
+                for col in nested_df.columns:
+                    if col == col:
+                        new_cols.append(col)
+                # change index to numbered
+                nested_df.index = range(len(nested_df))
+                # select only non-nan columns
+                nested_df = nested_df[new_cols]
+            for attr in nested_df:
+                meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr, variable_declaration)
+            schema[sheet.encode('ascii', 'ignore')] = meta
+        return schema
+
+    if file_type == 'csv':
+        db = pandas.read_csv(filename)
+        for attr in db:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+        return schema
+
+    if file_type == 'json':
+        with open(filename, 'r') as f:
+            import json
+            db = json.load(f)
+        for attr in db:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+        return schema
+
+    if file_type == 'epw':
+        epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
+                      'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
+                      'dewpoint_C (index = 7)',
+                      'relhum_percent (index = 8)', 'atmos_Pa (index = 9)', 'exthorrad_Whm2 (index = 10)',
+                      'extdirrad_Whm2 (index = 11)', 'horirsky_Whm2 (index = 12)',
+                      'glohorrad_Whm2 (index = 13)',
+                      'dirnorrad_Whm2 (index = 14)', 'difhorrad_Whm2 (index = 15)',
+                      'glohorillum_lux (index = 16)',
+                      'dirnorillum_lux (index = 17)', 'difhorillum_lux (index = 18)',
+                      'zenlum_lux (index = 19)',
+                      'winddir_deg (index = 20)', 'windspd_ms (index = 21)',
+                      'totskycvr_tenths (index = 22)',
+                      'opaqskycvr_tenths (index = 23)', 'visibility_km (index = 24)',
+                      'ceiling_hgt_m (index = 25)',
+                      'presweathobs (index = 26)', 'presweathcodes (index = 27)',
+                      'precip_wtr_mm (index = 28)',
+                      'aerosol_opt_thousandths (index = 29)', 'snowdepth_cm (index = 30)',
+                      'days_last_snow (index = 31)', 'Albedo (index = 32)',
+                      'liq_precip_depth_mm (index = 33)',
+                      'liq_precip_rate_Hour (index = 34)']
+
+        db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
+        for attr in db:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+        return schema
+
+    if file_type == 'dbf':
+        import pysal
+        db = pysal.open(filename, 'r')
+        for attr in db.header:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr, variable_declaration)
+        return schema
+
+    if file_type == 'shp':
+        import geopandas
+        db = geopandas.read_file(filename)
+        for attr in db:
+            meta = get_meta(db.by_col(attr), attr, variable_declaration)
+            if attr == 'geometry':
+                meta['sample_data'] = '((x1 y1, x2 y2, ...))'
+            schema[attr.encode('ascii', 'ignore')] = meta
+    return schema
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
