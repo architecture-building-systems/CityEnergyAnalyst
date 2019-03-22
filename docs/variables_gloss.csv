@@ -172,8 +172,8 @@ standard;string;[-];Letter representing whereas the field represent construction
 Wall_ext_ag;float;[GJ];Typical embodied energy of the exterior above ground walls.;{0.0....n}
 Wall_ext_bg;float;[GJ];Typical embodied energy of the exterior below ground walls.;{0.0....n}
 Floor_int;float;[GJ];Typical embodied energy of the interior floor.;{0.0....n}
-Wall_int_sup;float;[GJ];;{0.0....n}
-Wall_int_nosup;float;[GJ];;{0.0....n}
+Wall_int_sup;float;[GJ];TODO;{0.0....n}
+Wall_int_nosup;float;[GJ];TODO;{0.0....n}
 Roof;float;[GJ];Typical embodied energy of the roof.;{0.0....n}
 Floor_g;float;[GJ];Typical embodied energy of the ground floor.;{0.0....n}
 Services;float;[GJ];Typical embodied energy of the building services.;{0.0....n}
@@ -246,7 +246,7 @@ mu;float;[-];Mu value;{0.0...n}
 stdv;float;[-];Standard Deviation;{0.0...n}
 min;float;[-];Minimum;{0.0...n}
 max;float;[-];Maximum;{0.0...n}
-reference;string;[-];;[-]
+reference;string;[-];TODO;[-]
 COAL_hs_kWh;float;[kWh];Coal consumption due to space heating;{0.0...n}
 COAL_ww_kWh;float;[kWh];Coal consumption due to hotwater;{0.0...n}
 DATE;date;[smalldatetime];Time stamp for each day of the year ascending in hour intervals.;YYYY-MM-DD hh:mm:ss

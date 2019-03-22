@@ -351,6 +351,40 @@ emissions,WOOD_ww_nre_pen_GJ,Operational primary energy demand (non-renewable) f
 emissions,WOOD_ww_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered domestic hot water system,{0.0...n},float
 lake-potential,hour,TODO,TODO,TODO
 lake-potential,lake_potential,TODO,TODO,TODO
+operation-costs,COAL_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,COAL_hs_cost_yr,Operation costs of coal due to space heating,TODO,TODO
+operation-costs,COAL_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,COAL_ww_cost_yr,Operation costs of coal due to hotwater,TODO,TODO
+operation-costs,DC_cdata_cost_m2yr,TODO,TODO,TODO
+operation-costs,DC_cdata_cost_yr,Operation costs due to space heating,TODO,TODO
+operation-costs,DC_cre_cost_m2yr,TODO,TODO,TODO
+operation-costs,DC_cre_cost_yr,Operation costs due to hotwater,TODO,TODO
+operation-costs,DC_cs_cost_m2yr,TODO,TODO,TODO
+operation-costs,DC_cs_cost_yr,Operation costs due to space cooling,TODO,TODO
+operation-costs,DH_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,DH_hs_cost_yr,Operation costs due to space heating,TODO,TODO
+operation-costs,DH_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,DH_ww_cost_yr,Operation costs due to hotwater,TODO,TODO
+operation-costs,GRID_cost_m2yr,Electricity supply from the grid,TODO,TODO
+operation-costs,GRID_cost_yr,Electricity supply from the grid,TODO,TODO
+operation-costs,NG_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,NG_hs_cost_yr,Operation costs of NG due to space heating,TODO,TODO
+operation-costs,NG_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,NG_ww_cost_yr,Operation costs of NG due to hotwater,TODO,TODO
+operation-costs,OIL_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,OIL_hs_cost_yr,Operation costs of oil due to space heating,TODO,TODO
+operation-costs,OIL_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,OIL_ww_cost_yr,Operation costs of oil due to hotwater,TODO,TODO
+operation-costs,PV_cost_m2yr,Electricity supply from PV,TODO,TODO
+operation-costs,PV_cost_yr,Electricity supply from PV,TODO,TODO
+operation-costs,SOLAR_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,SOLAR_hs_cost_yr,Operation costs due to solar collectors for hotwater,TODO,TODO
+operation-costs,SOLAR_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,SOLAR_ww_cost_yr,Operation costs due to solar collectors for space heating,TODO,TODO
+operation-costs,WOOD_hs_cost_m2yr,TODO,TODO,TODO
+operation-costs,WOOD_hs_cost_yr,Operation costs of wood due to space heating,TODO,TODO
+operation-costs,WOOD_ww_cost_m2yr,TODO,TODO,TODO
+operation-costs,WOOD_ww_cost_yr,Operation costs of wood due to hotwater,TODO,TODO
 photovoltaic,Area_PV_m2,TODO,TODO,TODO
 photovoltaic,Date,Date and time in hourly steps.,{yyyy-mm-dd hh:mm:ss-Z},date
 photovoltaic,E_PV_gen_kWh,TODO,TODO,TODO
@@ -471,8 +505,8 @@ primary_input,WALL,TODO,TODO,TODO
 primary_input,WINDOW,TODO,TODO,TODO
 primary_input,Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,{0.0....n},float
 primary_input,Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,{0.0....n},float
-primary_input,Wall_int_nosup,,{0.0....n},float
-primary_input,Wall_int_sup,,{0.0....n},float
+primary_input,Wall_int_nosup,TODO,{0.0....n},float
+primary_input,Wall_int_sup,TODO,{0.0....n},float
 primary_input,Weekday_1,Probability of maximum occupancy per hour in a weekday,{0.0...1},float
 primary_input,Weekday_2,Probability of use of lighting and appliances (daily) for each hour,{0.0...1},float
 primary_input,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,{0.0...1},float
@@ -507,7 +541,7 @@ primary_input,height_ag,Building total height above ground,{0.1...n},float
 primary_input,height_bg,Building total height below ground,{1.0...n},float
 primary_input,month,TODO,TODO,TODO
 primary_input,partitions,Year of last retrofit of internal wall partitions(0 if none),{0...n},int
-primary_input,reference,,[-],string
+primary_input,reference,TODO,[-],string
 primary_input,rhum_max_pc,TODO,TODO,TODO
 primary_input,rhum_min_pc,TODO,TODO,TODO
 primary_input,roof,Year of last retrofit of roof (0 if none),{0...n},int
@@ -536,7 +570,7 @@ primary_input,wwr_west,Window to wall ratio in in facades facing west,{0.0...1},
 primary_input,year_end,Upper limit of year interval where the building properties apply,{0...n},int
 primary_input,year_start,Lower limit of year interval where the building properties apply,{0...n},int
 primary_input,,TODO,TODO,TODO
-radiation-daysim,srf1,TODO,TODO,TODO
+radiation-daysim,srf0,TODO,TODO,TODO
 sewage-potential,Qsw_kW,TODO,TODO,TODO
 sewage-potential,tin_HP_C,TODO,TODO,TODO
 sewage-potential,tin_sw_C,TODO,TODO,TODO
@@ -587,9 +621,9 @@ thermal-network,Building,TODO,TODO,TODO
 thermal-network,D_ext_m,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,{0.0...n},float
 thermal-network,D_ins_m,Defines the pipe insulation diameter for the nominal diameter (DN) bin.,{0.0...n},float
 thermal-network,D_int_m,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,{0.0...n},float
-thermal-network,NODE1,TODO,TODO,TODO
+thermal-network,NODE0,TODO,TODO,TODO
 thermal-network,NONE,TODO,TODO,TODO
-thermal-network,PIPE1,TODO,TODO,TODO
+thermal-network,PIPE0,TODO,TODO,TODO
 thermal-network,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,alphanumeric,string
 thermal-network,Pipe_DN_x,TODO,TODO,TODO
 thermal-network,Pipe_DN_y,TODO,TODO,TODO
