@@ -27,8 +27,7 @@ from cea.optimization.slave import cooling_main
 from cea.optimization.master import check
 from cea.technologies import substation
 from cea.optimization.master import summarize_network
-from cea.optimization.lca_calculations import lca_calculations
-from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.slave import natural_gas_main
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -202,7 +201,8 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0.0, 0.0, 0.0
 
     # District Electricity Calculations
-    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+    costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
@@ -495,7 +495,7 @@ def main(config):
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
     prices = Prices(locator, config)
-    lca = lca_calculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
