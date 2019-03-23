@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import time
 import pandas as pd
 import os
 import subprocess
@@ -11,9 +12,8 @@ import cea.osmose.compare_el_usages as compare_el
 
 # import from config # TODO: add to config
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_coil']
-case = 'WTP_CBD_m_WP1_HOT'
-specified_buildings = ["B004"]
+TECHS = ['HCS_IEHX']
+specified_buildings = ["B003"]
 timesteps = 24  # 168 (week)
 
 if timesteps == 168:
@@ -27,7 +27,7 @@ result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_results"
 new_calculation = False
 
 
-def main():
+def main(case):
     # make folder to save results
     path_to_case_folder = os.path.join(result_destination, case)
     make_directory(path_to_case_folder, new_calculation)
@@ -45,13 +45,18 @@ def main():
     for building in building_names:
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
         for tech in TECHS:
+            t = time.localtime()
+            print time.strftime("%H:%M", t)
+            t0 = time.clock()
             exec_osmose(tech, osmose_project_path)
+            time_elapsed = time.clock() - t0
+            print round(time_elapsed,0), ' s for running: ', tech, '\n'
 
         #plot results
         building_timestep_tag = building + "_" + str(timesteps)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         plot_results.main(building, TECHS, building_result_path)
-        compare_el.main(building, building_result_path)
+        # compare_el.main(building, building_result_path)
 
     start_ampl_license(ampl_lic_path, "stop")
 
@@ -105,21 +110,32 @@ def exec_osmose(tech, osmose_project_path):
 
     p = subprocess.Popen(["lua", (frontend_path)], cwd=project_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    print "running Lua: ", frontend_file
+    print "running: ", frontend_file
     output, err = p.communicate()
 
     if err.decode('utf-8') is not '':
-        print(err.decode('utf-8'))
+        # print(err.decode('utf-8'))
         if err.decode('utf-8').startswith('WARNING:'):
-            print 'warning', err.decode('utf-8')
+            print 'warning' #, err.decode('utf-8')
         elif err.decode('utf-8').startswith('pandoc: Could not find image'):
-            print 'warning', err.decode('utf-8')
+            print 'warning' #, err.decode('utf-8')
         else:
             print "ERROR"
 
-    print(output.decode('utf-8'))
+    # print(output.decode('utf-8'))
+
+    # print OutMsg
+    result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
+    run_folder = os.listdir(result_path)[len(os.listdir(result_path))-1]
+    OutMsg_path = os.path.join(result_path,run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
+    f = open(OutMsg_path, "r")
+    print tech, run_folder, "OutMsg: ", f.readline()
+
     return 'ok', output.decode('utf-8')
 
 
 if __name__ == '__main__':
-    main()
+    #cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
+    for case in cases:
+        main(case)

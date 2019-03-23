@@ -29,13 +29,15 @@ floor_height_m = 2.5  # FIXME: read from CEA
 v_CO2_Lpers = 0.0048  # [L/s/person]
 rho_CO2_kgperm3 = 1.98  # [kg/m3]
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
-CO2_int_max_ppm = 800 / 1e6  # [m3 CO2/m3]
+CO2_ve_min_ppm = 1200 / 1e6  # [m3 CO2/m3]
+CO2_room_max_ppm = 800 / 1e6
+CO2_room_ppm = 1000 / 1e6
 Pair_Pa = 101325
 Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 
 RH_max = 70  # %
-RH_min = 40  # %
+RH_min = 45  # %
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
@@ -90,10 +92,10 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
         output_hcs['T_ext'] = reduced_tsd_df['T_ext']
         output_hcs['T_ext_wb'] = reduced_tsd_df['T_ext_wetbulb']
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
-        if ('OFF' in case) or ('RET' in case):
-            output_hcs['w_RA'] = 10.2
+        if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
+            output_hcs['w_RA'] = 10.29  # 24C with 55% RH
         elif 'RES' in case:
-            output_hcs['w_RA'] = 13
+            output_hcs['w_RA'] = 13.1  # 28C with 55% RH
         output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_tsd_df['rh_ext'],
                                                            reduced_tsd_df['T_ext'])  # g/kg d.a.
@@ -110,16 +112,18 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
             'v_CO2_occupant_m3pers']
 
         output_hcs['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
-        output_hcs['CO2_max_ppm'] = CO2_int_max_ppm
+        output_hcs['CO2_max_ppm'] = CO2_room_max_ppm
         output_hcs['m_ve_req'] = reduced_tsd_df['m_ve_required']
         output_hcs['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
         reduced_tsd_df['rho_air_int'] = np.vectorize(calc_moist_air_density)(reduced_tsd_df['T_int'] + 273.15,
                                                                              reduced_tsd_df['x_int'])
         output_hcs['M_dry_air'] = np.vectorize(calc_m_dry_air)(output_hcs['Vf_m3'], reduced_tsd_df['rho_air_int'],
                                                                reduced_tsd_df['x_int'])
+        output_hcs['CO2_ve_min_ppm'] = CO2_ve_min_ppm
         output_hcs['m_ve_min'] = np.vectorize(
-            calc_m_exhaust_from_CO2)(output_hcs['CO2_max_ppm'], output_hcs['CO2_ext_ppm'],
+            calc_m_exhaust_from_CO2)(output_hcs['CO2_ve_min_ppm'], output_hcs['CO2_ext_ppm'],
                                      output_hcs['v_CO2_in_infil_occupant_m3pers'], output_hcs['rho_air'])
+        output_hcs['m_ve_max'] = output_hcs['m_ve_min'] * 3
         output_hcs['rh_max'] = RH_max
         output_hcs['rh_min'] = RH_min
         output_hcs['w_max'] = np.vectorize(calc_w_from_rh)(output_hcs['rh_max'], reduced_tsd_df['T_int'])
@@ -147,7 +151,13 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
             # output input_T1
             input_T_df = pd.DataFrame()
             input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
+            input_T_df['T_ext'] = reduced_tsd_df['T_ext']
             input_T_df.T.to_csv(path_to_osmose_project_inputT(str(i + 1)), header=False)
+        # output input_T0
+        input_T0_df = pd.DataFrame()
+        input_T0_df['T_ext_C'] = reduced_tsd_df['T_ext']
+        input_T0_df['OAU_T_SA'] = 12.6
+        input_T0_df.T.to_csv(path_to_osmose_project_inputT(str(0)), header=False)
 
         # write outputs
         output_df1.T.to_csv(path_to_osmose_project_bui(name), header=False)
@@ -175,7 +185,7 @@ def calc_CO2_gains(output_hcs, reduced_tsd_df):
     reduced_tsd_df['v_in_infil_window'] = (reduced_tsd_df['m_ve_inf'] + reduced_tsd_df['m_ve_window']) / \
                                           reduced_tsd_df['rho_air']
     reduced_tsd_df['v_CO2_infil_window_m3pers'] = reduced_tsd_df['v_in_infil_window'] * reduced_tsd_df['CO2_ext_ppm']
-    reduced_tsd_df['V_CO2_max_m3'] = output_hcs['Vf_m3'] * CO2_int_max_ppm
+    reduced_tsd_df['V_CO2_max_m3'] = output_hcs['Vf_m3'] * CO2_room_max_ppm
     reduced_tsd_df['V_CO2_min_m3'] = output_hcs['Vf_m3'] * CO2_env_ppm
     return np.nan
 
