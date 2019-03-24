@@ -11,13 +11,14 @@ import cea.osmose.plot_osmose_result as plot_results
 import cea.osmose.compare_el_usages as compare_el
 
 # import from config # TODO: add to config
-# TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_IEHX']
-specified_buildings = ["B003"]
-timesteps = 24  # 168 (week)
+#TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
+TECHS = ['HCS_LD']
+#specified_buildings = ["B002","B005","B007","B009"]
+specified_buildings = ["B001"]
+timesteps = 168  # 168 (week)
 
 if timesteps == 168:
-    start_t = 5040  # Average Annual 7/30-8/5: 5040-5207
+    start_t = 5064  # Average Annual 7/30-8/5: 5040-5207, 4872(SAT)
 elif timesteps == 24:
     start_t = 3240  # 5/16: 3240,
 
@@ -56,10 +57,8 @@ def main(case):
         building_timestep_tag = building + "_" + str(timesteps)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         plot_results.main(building, TECHS, building_result_path)
-        # compare_el.main(building, building_result_path)
-
-    start_ampl_license(ampl_lic_path, "stop")
-
+        compare_el.main(building, building_result_path)
+    #start_ampl_license(ampl_lic_path, "stop")
     return np.nan
 
 
@@ -135,7 +134,10 @@ def exec_osmose(tech, osmose_project_path):
 
 
 if __name__ == '__main__':
-    #cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET']
+    #cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
     for case in cases:
         main(case)
+
+    # stop ampl license
+    start_ampl_license(ampl_lic_path, "stop")
