@@ -30,18 +30,23 @@ v_CO2_Lpers = 0.0048  # [L/s/person]
 rho_CO2_kgperm3 = 1.98  # [kg/m3]
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_ve_min_ppm = 1200 / 1e6  # [m3 CO2/m3]
-CO2_room_max_ppm = 800 / 1e6
-CO2_room_ppm = 1000 / 1e6
+
+CO2_room_max_ppm = 900 / 1e6
+CO2_room_min_ppm = 400 / 1e6
+CO2_room_ppm = 1200 / 1e6
+
 Pair_Pa = 101325
 Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 
-RH_max = 70  # %
-RH_min = 45  # %
+RH_max = 80  # %
+RH_min = 50  # %
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
 T_interval = 0.65  # 0.5
+
+N_m_ve_max = 3
 
 
 # T_low_C = 14.5
@@ -123,7 +128,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
         output_hcs['m_ve_min'] = np.vectorize(
             calc_m_exhaust_from_CO2)(output_hcs['CO2_ve_min_ppm'], output_hcs['CO2_ext_ppm'],
                                      output_hcs['v_CO2_in_infil_occupant_m3pers'], output_hcs['rho_air'])
-        output_hcs['m_ve_max'] = output_hcs['m_ve_min'] * 3
+        output_hcs['m_ve_max'] = output_hcs['m_ve_min'] * N_m_ve_max
         output_hcs['rh_max'] = RH_max
         output_hcs['rh_min'] = RH_min
         output_hcs['w_max'] = np.vectorize(calc_w_from_rh)(output_hcs['rh_max'], reduced_tsd_df['T_int'])
@@ -186,7 +191,7 @@ def calc_CO2_gains(output_hcs, reduced_tsd_df):
                                           reduced_tsd_df['rho_air']
     reduced_tsd_df['v_CO2_infil_window_m3pers'] = reduced_tsd_df['v_in_infil_window'] * reduced_tsd_df['CO2_ext_ppm']
     reduced_tsd_df['V_CO2_max_m3'] = output_hcs['Vf_m3'] * CO2_room_max_ppm
-    reduced_tsd_df['V_CO2_min_m3'] = output_hcs['Vf_m3'] * CO2_env_ppm
+    reduced_tsd_df['V_CO2_min_m3'] = output_hcs['Vf_m3'] * CO2_room_min_ppm
     return np.nan
 
 
