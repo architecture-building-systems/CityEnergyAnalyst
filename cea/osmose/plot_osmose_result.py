@@ -772,7 +772,7 @@ def plot_co2_store(building, building_result_path, co2_store_df, tech):
     line3, = ax1.plot(x_ticks, co2_store_df['co2_RA_ppm'], '-o', color='darkred', linewidth=2, markersize=4,
                       label='RA_ppm')
     ax1.set_ylabel('CO2 concentration [ppm]', fontsize=14)
-    ax1.set(xlim=(1, time_steps), ylim=(1, 1800))
+    ax1.set(xlim=(1, time_steps), ylim=(1, 1400))
     ax1.legend(loc='upper left')
     # line 2
     ax2 = ax1.twinx()
