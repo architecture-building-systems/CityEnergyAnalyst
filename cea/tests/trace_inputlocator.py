@@ -12,6 +12,8 @@ import pandas
 import yaml
 from dateutil.parser import parse
 
+var_dec_path = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
+variable_declaration = pandas.read_csv(var_dec_path).set_index(['VARIABLE'])
 
 def create_trace_function(results_set):
     """results_set is a set of tuples (locator, filename)"""
@@ -54,7 +56,7 @@ def main(config):
         sys.settrace(create_trace_function(results_set))
         script_func(config)  # <------------------------------ this is where we run the script!
         sys.settrace(orig_trace)
-        print results_set
+
         for locator_method, filename in results_set:
             if os.path.isdir(filename):
                 continue
@@ -83,7 +85,7 @@ def main(config):
                 viz_set.add(('output', script_name, locator_method, file_path, file_name))
             else:
                 viz_set.add(('input', script_name, locator_method, file_path, file_name))
-
+    print viz_set
     config.restricted_to = None
 
     meta_to_yaml(viz_set, meta_set, config.trace_inputlocator.meta_output_file)
@@ -105,9 +107,7 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
                     locator_method) + '.__doc__')
 
 
-    methods = sorted(set([lm[0] for lm in meta_set]))
     #get the dependencies from viz_set
-
     for direction, script, locator_method, path, files in viz_set:
         outputs = set()
         inputs = set()
@@ -117,9 +117,6 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
             inputs.add(script)
         locator_meta[locator_method]['created_by'] = list(outputs)
         locator_meta[locator_method]['used_by'] = list(inputs)
-
-
-
 
     # merge existing data
     methods = sorted(set([lm[2] for lm in viz_set]))
@@ -208,7 +205,7 @@ def get_meta(df_series, attribute_name, variable_declaration):
     for data in df_series:
         sample_data = data
         if data == data:
-            sample_data = data
+            # sample_data = data
             if is_date(data):
                 types_found.add('date')
             elif isinstance(data, basestring):
@@ -240,8 +237,6 @@ def get_meta(df_series, attribute_name, variable_declaration):
 
 def get_schema(filename, file_type):
     schema = {}
-    var_dec_path = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
-    variable_declaration = pandas.read_csv(var_dec_path).set_index(['VARIABLE'])
     if file_type == 'xlsx' or file_type == 'xls':
         db = pandas.read_excel(filename, sheet_name=None)
         for sheet in db:
