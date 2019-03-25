@@ -20,8 +20,8 @@ def initial_network(config, locator):
     return points_on_line_processed, tranches, dict_length, dict_path
 
 
-def plot_complete(m):
-    points_on_line, tranches, dict_length, dict_path = initial_network()
+def plot_complete(m, config, locator, network_number, generation):
+    points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
     var_x = m.var_x.values()
 
     # Plotting Graph
@@ -33,7 +33,7 @@ def plot_complete(m):
     ax2.set_axis_off()
 
     # Plotting Buildings
-    building_points, building_poly = gia.calc_substation_location()
+    building_points, building_poly = gia.calc_substation_location(config, locator)
     building_poly.plot(ax=ax1, color='white', edgecolor='grey')
 
     for x in var_x:
@@ -72,11 +72,11 @@ def plot_complete(m):
 
         ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
 
-    plt.show()
+    plt.savefig(locator.get_concept_network_plot_complete(network_number, generation))
 
 
-def plot_network_on_street(m):
-    points_on_line, tranches, dict_length, dict_path = initial_network()
+def plot_network_on_street(m, config, locator, network_number, generation):
+    points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
     var_x = m.var_x.values()
 
     # Plotting Graph
@@ -88,7 +88,7 @@ def plot_network_on_street(m):
     ax2.set_axis_off()
 
     # Plotting Buildings
-    building_points, building_poly = gia.calc_substation_location()
+    building_points, building_poly = gia.calc_substation_location(config, locator)
     building_poly.plot(ax=ax1, color='white', edgecolor='grey')
 
     # Plotting Lines
@@ -136,11 +136,11 @@ def plot_network_on_street(m):
 
         ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
 
-    plt.show()
+    plt.savefig(locator.get_concept_network_on_streets(network_number, generation))
 
 
-def plot_network(m):
-    points_on_line, tranches, dict_length, dict_path = initial_network()
+def plot_network(m, config, locator, network_number, generation):
+    points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
     var_x = m.var_x.values()
 
     # Plotting Graph
@@ -186,4 +186,4 @@ def plot_network(m):
         # else:  # intersection
         #     ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
 
-    plt.show()
+    plt.savefig(locator.get_concept_network_plot(network_number, generation))
