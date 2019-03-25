@@ -104,17 +104,21 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
                     locator_method) + '.__doc__')
 
-    methods = sorted(set([lm[0] for lm in meta_set]))
 
-    outputs = set()
-    inputs = set()
+    methods = sorted(set([lm[0] for lm in meta_set]))
+    #get the dependencies from viz_set
+
     for direction, script, locator_method, path, files in viz_set:
+        outputs = set()
+        inputs = set()
         if direction == 'output':
             outputs.add(script)
         if direction == 'input':
             inputs.add(script)
         locator_meta[locator_method]['created_by'] = list(outputs)
         locator_meta[locator_method]['used_by'] = list(inputs)
+
+
 
 
     # merge existing data
@@ -124,12 +128,13 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
             old_meta_data = yaml.load(f)
         for method in old_meta_data:
             if method in methods:
+                new_outputs = set(locator_meta[method]['created_by'])
                 old_outputs = set(old_meta_data[method]['created_by'])
-                outputs.union(old_outputs)
-                locator_meta[method]['created_by'] = list(outputs)
+                locator_meta[method]['created_by'] = list(new_outputs.union(old_outputs))
+
+                new_inputs = set(locator_meta[method]['created_by'])
                 old_inputs = set(old_meta_data[method]['used_by'])
-                inputs.union(old_inputs)
-                locator_meta[method]['used_by'] = list(inputs)
+                locator_meta[method]['used_by'] = list(new_inputs.union(old_inputs))
             else:
                 # make sure not to overwrite newer data!
                 locator_meta[method] = old_meta_data[method]
