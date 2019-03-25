@@ -1,11 +1,10 @@
-from __future__ import division
-from __future__ import print_function
-
 """
 Lists the plots by category. See ``cea/plots/__init__.py`` for documentation on how plots are organized and
 the conventions for adding new plots.
 """
 
+from __future__ import division
+from __future__ import print_function
 import pkgutil
 import importlib
 import inspect
