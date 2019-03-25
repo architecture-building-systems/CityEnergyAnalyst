@@ -8,8 +8,6 @@ import numpy as np
 import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
-import cea.inputlocator
-import cea.plots.demand
 import cea.config
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 

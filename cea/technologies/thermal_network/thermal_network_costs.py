@@ -13,7 +13,7 @@ import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cooling_tower as CTModel
 from cea.optimization.constants import PUMP_ETA
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 
@@ -446,7 +446,9 @@ def calc_Ctot_cs_district(network_info):
     """
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
-    lca = lca_calculations(network_info.locator, network_info.config)
+    detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
+    region = network_info.config.region
+    lca = LcaCalculations(network_info.locator, region, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
     network_info.network_features = network_opt.network_opt_main(network_info.config,
