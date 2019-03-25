@@ -12,7 +12,7 @@ baseurl: /jszip
 
 layouts_dir: ./documentation/_layouts
 permalink: none
-exclude: ['bin', 'README.md', 'node_modules']
+exclude: ['bin', 'output_files.md', 'node_modules']
 
 
 kramdown:

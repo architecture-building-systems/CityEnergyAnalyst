@@ -125,11 +125,11 @@ function bumpTask(complete) {
     // Write these to their own files, then build the output
     fs.writeFileSync('package.json', JSON.stringify(package, null, 2));
     fs.writeFileSync('bower.json', JSON.stringify(bower, null, 2));
-    
+
     var oldCDN = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/'+oldVersion+'/Chart.min.js',
       newCDN = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/'+newVersion+'/Chart.min.js';
-    
-    gulp.src(['./README.md'])
+
+    gulp.src(['./output_files.md'])
       .pipe(replace(oldCDN, newCDN))
       .pipe(gulp.dest('./'));
 
