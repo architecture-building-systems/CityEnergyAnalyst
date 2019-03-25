@@ -284,7 +284,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     df = pd.read_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(0))
     for i in range(config.optimization.ngen):
         df = df.append(pd.read_csv(locator.get_electrical_and_thermal_network_optimization_individuals_in_generation(i+1)))
-    df.to_csv(locator.get_optimization_all_individuals())
+    df.to_csv(locator.get_electrical_and_thermal_network_optimization_all_individuals())
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     with open(locator.get_electrical_and_thermal_network_optimization_checkpoint_final(), "wb") as fp:
