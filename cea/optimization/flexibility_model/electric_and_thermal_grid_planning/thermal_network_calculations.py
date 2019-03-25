@@ -32,7 +32,7 @@ def thermal_network_calculations(individual, config, network_number, building_na
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     copy_tree(locator.get_networks_folder(), locator.get_electric_networks_folder()) # resetting the streets layout to the scenario default
 
-    m = electrical_grid_calculations(dict_connected, config, locator)
+    m = electrical_grid_calculations(dict_connected, config, locator, network_number, generation)
 
     electrical_grid_file_name = 'electrical_grid'
     thermal_network_file_name = 'electrical_grid_as_streets'

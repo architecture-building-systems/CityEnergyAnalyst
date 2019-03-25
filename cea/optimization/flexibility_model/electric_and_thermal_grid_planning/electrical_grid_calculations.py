@@ -4,6 +4,7 @@ import time
 from concept_parameters import *
 import cea.inputlocator
 import cea.config
+import cea.optimization.flexibility_model.electric_and_thermal_grid_planning.plot_functions as pf
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -14,7 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def electrical_grid_calculations(dict_connected, config, locator):
+def electrical_grid_calculations(dict_connected, config, locator, network_number, generation):
     # ============================
     # Solve Problem
     # ============================
@@ -37,15 +38,15 @@ def electrical_grid_calculations(dict_connected, config, locator):
     #     opt.solve(instance)
 
     # m.display()  # Display the results
-
-    # Print objective function values
+    #
+    # # Print objective function values
     # for cost_type in [m.var_costs.values()][0]:
     #     print cost_type, cost_type.value
     # print '\n'
 
-    # pf.plot_network_on_street(m)
-    # pf.plot_complete(m)
-    # pf.plot_network(m)
+    # pf.plot_network_on_street(m, config, locator, network_number, generation)
+    pf.plot_complete(m, config, locator, network_number, generation)
+    # pf.plot_network(m, config, locator, network_number, generation)
 
     return m
 

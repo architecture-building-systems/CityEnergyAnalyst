@@ -54,13 +54,10 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
     t0 = time.clock()
 
-    genCP = config.optimization.recoverycheckpoint
+    genCP = config.electrical_thermal_optimization.recoverycheckpoint
 
-    # genCP = 2
-    # NDIM = 30
-    # MU = 500
-    CXPB = 0.5
-    MUTPB = 0.2
+    CXPB = config.electrical_thermal_optimization.crossoverprobability
+    MUTPB = config.electrical_thermal_optimization.mutationprobability
 
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
