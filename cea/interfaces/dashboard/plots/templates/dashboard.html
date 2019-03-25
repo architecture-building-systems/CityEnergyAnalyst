@@ -132,7 +132,9 @@
               <label class="control-label" for="cea-plot-category">Category</label>
               <select class="form-control" id="cea-plot-category" name="category">
                 {% for category in categories %}
-                  <option value="{{ category }}">{{ categories[category]['label'] }}</option>
+                  <option value="{{ category }}" {% if category == "demand" %}selected{% endif %}>
+                    {{ categories[category]['label'] }}
+                  </option>
                 {% endfor %}
               </select>
               <label class="control-label" for="cea-plot-name">Plot</label>

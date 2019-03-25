@@ -296,7 +296,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     # Solar technologies
 
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
-    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
+    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config.region)
     addcosts_Capex_a_USD += Capex_a_PV_USD
     addcosts_Opex_fixed_USD += Opex_fixed_PV_USD
     addcosts_Capex_USD += Capex_PV_USD
@@ -629,8 +629,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_Boiler_peak": [Capex_Boiler_peak_USD],
         "Capex_Lake": [Capex_Lake_USD],
         "Capex_Sewage": [Capex_Sewage_USD],
-        "Capex_pump": [Capex_pump_USD],
-
+        "Capex_pump": [Capex_pump_USD]
     })
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
