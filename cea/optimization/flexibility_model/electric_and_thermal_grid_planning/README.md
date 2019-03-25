@@ -19,3 +19,6 @@ Electric and Thermal Grid Planning:
    - Buildings connected to the DCN or not (for all the buildings in the scenario)
    - CAPEX total
    - Opex total
+   
+   
+7. The scripts also generate plots corresponding to the networks on streets in each `generation` folder
