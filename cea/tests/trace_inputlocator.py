@@ -174,7 +174,8 @@ def create_graphviz_output(viz_set, graphviz_output_file):
 
 def is_date(data):
     # TODO replace hardcoded with a reference file
-    codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15']
+    codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15'
+             'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25']
     if type(data) == unicode and data not in codes:
         try:
             parse(data)
@@ -182,11 +183,25 @@ def is_date(data):
         except ValueError:
             return False
 
+def replace_repetitive_attr(attr):
+    scenario = cea.config.Configuration('general:scenario').__getattr__('scenario')
+    buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
+    if attr.find('srf') != -1:
+        attr = attr.replace(attr, 'srf0')
+    if attr.find('PIPE') != -1:
+        attr = attr.replace(attr, 'PIPE0')
+    if attr.find('NODE') != -1:
+        attr = attr.replace(attr, 'NODE0')
+    if attr in buildings:
+        attr = attr.replace(attr, 'B01')
+    return attr
+
 
 def get_meta(df_series, attribute_name, variable_declaration):
     types_found = set()
     meta = {}
     for data in df_series:
+        sample_data = data
         if data == data:
             sample_data = data
             if is_date(data):
@@ -247,6 +262,7 @@ def get_schema(filename, file_type):
     if file_type == 'csv':
         db = pandas.read_csv(filename)
         for attr in db:
+            attr = replace_repetitive_attr(attr)
             schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
         return schema
 
@@ -255,6 +271,7 @@ def get_schema(filename, file_type):
             import json
             db = json.load(f)
         for attr in db:
+            attr = replace_repetitive_attr(attr)
             schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
         return schema
 
@@ -296,7 +313,8 @@ def get_schema(filename, file_type):
         import geopandas
         db = geopandas.read_file(filename)
         for attr in db:
-            meta = get_meta(db.by_col(attr), attr, variable_declaration)
+            attr = replace_repetitive_attr(attr)
+            meta = get_meta(db[attr], attr, variable_declaration)
             if attr == 'geometry':
                 meta['sample_data'] = '((x1 y1, x2 y2, ...))'
             schema[attr.encode('ascii', 'ignore')] = meta
