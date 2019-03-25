@@ -47,7 +47,7 @@ def thermal_network_calculations(individual, config, network_number, building_na
 
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name)
-    # thermal_network.main(config)
+    thermal_network.main(config)
     # total_annual_cost, total_annual_capex, total_annual_opex = 0.0, 0.0, 0.0
     network_type = config.thermal_network.network_type
     gv = cea.globalvar.GlobalVariables()

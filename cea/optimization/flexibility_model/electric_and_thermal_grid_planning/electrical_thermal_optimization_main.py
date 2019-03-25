@@ -193,8 +193,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
             pop = toolbox.select(pop, len(pop))  # assigning crowding distance
 
-    proba, sigmap = PROBA, SIGMAP
-
     # Evolution starts !
 
     g = genCP
