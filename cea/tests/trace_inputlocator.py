@@ -12,9 +12,6 @@ import pandas
 import yaml
 from dateutil.parser import parse
 
-var_dec_path = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
-variable_declaration = pandas.read_csv(var_dec_path).set_index(['VARIABLE'])
-
 def create_trace_function(results_set):
     """results_set is a set of tuples (locator, filename)"""
     def trace_function(frame, event, arg):
@@ -42,8 +39,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
 
-    viz_set = set()  # set used for graphviz output -> {(direction, script, locator_method, path, file)}
-    meta_set = set() # set used for locator_meta dict -> {locator_method : (description, filename, file_type, contents)}
+    trace_data = set()  # set used for graphviz output -> {(direction, script, locator_method, path, file)}
     building_specific_files = [] # list containing all building specific files e.g. B01.csv or B07_insolation.dbf
 
 
@@ -74,41 +70,40 @@ def main(config):
                         building_specific_files.append(filename)
                         filename = filename.replace(building, buildings[0])
                         relative_filename = relative_filename.replace(building, buildings[0])
-                        meta_set.add((locator_method, filename))
-                if filename not in building_specific_files:
-                    meta_set.add((locator_method, filename))
 
             relative_filename = str(relative_filename)
             file_path = os.path.dirname(relative_filename)
             file_name = os.path.basename(relative_filename)
             if script_start < mtime:
-                viz_set.add(('output', script_name, locator_method, file_path, file_name))
+                trace_data.add(('output', script_name, locator_method, file_path, file_name))
             else:
-                viz_set.add(('input', script_name, locator_method, file_path, file_name))
-    print viz_set
+                trace_data.add(('input', script_name, locator_method, file_path, file_name))
+    print trace_data
     config.restricted_to = None
 
-    meta_to_yaml(viz_set, meta_set, config.trace_inputlocator.meta_output_file)
-    create_graphviz_output(viz_set, config.trace_inputlocator.graphviz_output_file)
+    meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
+    create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
     print 'Trace Complete'
 
-def meta_to_yaml(viz_set, meta_set, meta_output_file):
+def meta_to_yaml(trace_data, meta_output_file):
 
     locator_meta = {}
-    for locator_method, filename in meta_set:
-        file_type = os.path.basename(filename).split('.')[1]
 
+    for direction, script, locator_method, path, files in trace_data:
+        filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
+        file_type = os.path.basename(files).split('.')[1]
         if os.path.isfile(filename):
             locator_meta[locator_method] = {}
-            locator_meta[locator_method]['schema'] = get_schema(r'%s' %filename, file_type)
+            locator_meta[locator_method]['created_by'] = []
+            locator_meta[locator_method]['used_by'] = []
+            locator_meta[locator_method]['schema'] = get_schema(r'%s' % filename, file_type)
             locator_meta[locator_method]['file_path'] = filename
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
                     locator_method) + '.__doc__')
 
-
-    #get the dependencies from viz_set
-    for direction, script, locator_method, path, files in viz_set:
+    #get the dependencies from trace_data
+    for direction, script, locator_method, path, files in trace_data:
         outputs = set()
         inputs = set()
         if direction == 'output':
@@ -119,7 +114,7 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
         locator_meta[locator_method]['used_by'] = list(inputs)
 
     # merge existing data
-    methods = sorted(set([lm[2] for lm in viz_set]))
+    methods = sorted(set([lm[2] for lm in trace_data]))
     if os.path.exists(meta_output_file):
         with open(meta_output_file, 'r') as f:
             old_meta_data = yaml.load(f)
@@ -129,7 +124,7 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
                 old_outputs = set(old_meta_data[method]['created_by'])
                 locator_meta[method]['created_by'] = list(new_outputs.union(old_outputs))
 
-                new_inputs = set(locator_meta[method]['created_by'])
+                new_inputs = set(locator_meta[method]['used_by'])
                 old_inputs = set(old_meta_data[method]['used_by'])
                 locator_meta[method]['used_by'] = list(new_inputs.union(old_inputs))
             else:
@@ -139,9 +134,9 @@ def meta_to_yaml(viz_set, meta_set, meta_output_file):
     with open(meta_output_file, 'w') as fp:
         yaml.dump(locator_meta, fp, indent=4)
 
-def create_graphviz_output(viz_set, graphviz_output_file):
-    # creating new variable to preserve original viz_set used by other methods
-    tracedata = sorted(viz_set)
+def create_graphviz_output(trace_data, graphviz_output_file):
+    # creating new variable to preserve original trace_data used by other methods
+    tracedata = sorted(trace_data)
     # replacing any relative paths outside the case dir with the last three dirs in the path
     # this prevents long path names in digraph clusters
     for i, (direction, script, method, path, db) in enumerate(tracedata):
@@ -175,7 +170,7 @@ def create_graphviz_output(viz_set, graphviz_output_file):
 
 
 def is_date(data):
-    # TODO replace hardcoded with a reference file
+    # TODO replace hardcoded with a reference
     codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15'
              'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25']
     if type(data) == unicode and data not in codes:
@@ -186,7 +181,7 @@ def is_date(data):
             return False
 
 def replace_repetitive_attr(attr):
-    scenario = cea.config.Configuration('general:scenario').__getattr__('scenario')
+    scenario = cea.config.Configuration().__getattr__('scenario')
     buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
     if attr.find('srf') != -1:
         attr = attr.replace(attr, 'srf0')
@@ -199,39 +194,23 @@ def replace_repetitive_attr(attr):
     return attr
 
 
-def get_meta(df_series, attribute_name, variable_declaration):
+def get_meta(df_series, attribute_name):
     types_found = set()
     meta = {}
     for data in df_series:
-        sample_data = data
         if data == data:
-            # sample_data = data
+            meta['sample_data'] = data
             if is_date(data):
                 types_found.add('date')
             elif isinstance(data, basestring):
-                sample_data = data.encode('ascii', 'ignore')
+                meta['sample_data'] = data.encode('ascii', 'ignore')
                 types_found.add('string')
             else:
                 types_found.add(type(data).__name__)
         # declare nans
         if data != data:
             types_found.add(None)
-        if attribute_name in variable_declaration.index.values:
-            description = variable_declaration.loc[attribute_name, 'DESCRIPTION']
-            values = variable_declaration.loc[attribute_name, 'VALUES']
-            types_declared = variable_declaration.loc[attribute_name, 'TYPE']
-        else:
-            description = 'Not in variable_declaration.csv'
-            values = 'TODO'
-            types_declared = 'TODO'
-
-        meta = {
-            'sample_data': sample_data,
-            'description': description,
-            'types_found': list(types_found),
-            'types_declared': types_declared,
-            'values': values
-        }
+    meta['types_found'] = list(types_found)
     return meta
 
 
@@ -255,7 +234,7 @@ def get_schema(filename, file_type):
                 # select only non-nan columns
                 nested_df = nested_df[new_cols]
             for attr in nested_df:
-                meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr, variable_declaration)
+                meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr)
             schema[sheet.encode('ascii', 'ignore')] = meta
         return schema
 
@@ -263,7 +242,7 @@ def get_schema(filename, file_type):
         db = pandas.read_csv(filename)
         for attr in db:
             attr = replace_repetitive_attr(attr)
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
     if file_type == 'json':
@@ -272,7 +251,7 @@ def get_schema(filename, file_type):
             db = json.load(f)
         for attr in db:
             attr = replace_repetitive_attr(attr)
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
     if file_type == 'epw':
@@ -299,14 +278,14 @@ def get_schema(filename, file_type):
 
         db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
         for attr in db:
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr, variable_declaration)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
     if file_type == 'dbf':
         import pysal
         db = pysal.open(filename, 'r')
         for attr in db.header:
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr, variable_declaration)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
         return schema
 
     if file_type == 'shp':
@@ -314,7 +293,7 @@ def get_schema(filename, file_type):
         db = geopandas.read_file(filename)
         for attr in db:
             attr = replace_repetitive_attr(attr)
-            meta = get_meta(db[attr], attr, variable_declaration)
+            meta = get_meta(db[attr], attr)
             if attr == 'geometry':
                 meta['sample_data'] = '((x1 y1, x2 y2, ...))'
             schema[attr.encode('ascii', 'ignore')] = meta
