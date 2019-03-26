@@ -15,11 +15,10 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
 def connect_building_to_grid(config, locator):
     # import/ export paths
     input_substations_shp = locator.get_electric_substation_output_location()
-    input_streets_shp = locator.get_streets_input_location()
+    input_streets_shp = locator.get_street_network()
 
     # Import data
     building_points = gdf.from_file(input_substations_shp)
@@ -238,7 +237,6 @@ def create_length_complete_dict(points_on_line, tranches):
 
 
 def main():
-    calc_substation_location()
     points_on_line, tranches = connect_building_to_grid()
     points_on_line_processed = process_network(points_on_line)
     dict_length, dict_path = create_length_dict(points_on_line_processed, tranches)

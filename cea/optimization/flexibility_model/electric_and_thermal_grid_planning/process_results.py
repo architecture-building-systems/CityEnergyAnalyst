@@ -6,8 +6,8 @@ import networkx as nx
 import shapely
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 from cea.utilities.standarize_coordinates import get_projected_coordinate_system
+import get_initial_network as gia
 
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.pyomo_multi_linetype import initial_network
 from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -19,6 +19,31 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+def initial_network(config, locator):
+    """
+    Initiate data of main problem
+
+    :param None
+    :type Nonetype
+
+    :returns: points_on_line: information about every node in study case
+    :rtype: GeoDataFrame
+    :returns: tranches
+    :rtype: GeoDataFrame
+    :returns: dict_length
+    :rtype: dictionary
+    :returns: dict_path: list of edges between two nodes
+    :rtype: dictionary
+    """
+
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    calc_substation_location(input_buildings_shp, output_substations_shp, [])
+    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
+    points_on_line_processed = gia.process_network(points_on_line, config, locator)
+    dict_length, dict_path = gia.create_length_complete_dict(points_on_line_processed, tranches)
+
+    return points_on_line_processed, tranches, dict_length, dict_path
 
 def find_gridpath(m, dict_path):
     """
@@ -197,7 +222,7 @@ def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     :rtype: Nonetype
     """
 
-    input_street_shp = locator.get_streets_input_location()
+    input_street_shp = locator.get_street_network()
     output_path_shp = locator.get_electric_network_output_location(name)
 
     geometry = [shapely.geometry.LineString(json.loads(g)) for g in list_geotranch]

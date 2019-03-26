@@ -33,7 +33,7 @@ def network_layout(config, locator, plant_building_names, input_path_name, outpu
         input_buildings_shp = locator.get_zone_geometry()
         output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
     elif input_path_name =='electrical_grid':
-        path_streets_shp = os.path.join(locator.get_electric_networks_folder() + '/' + input_path_name + '.shp')
+        path_streets_shp = locator.get_electric_network_output_location(input_path_name)
         input_buildings_shp = locator.get_zone_geometry()
         output_substations_shp = locator.get_electric_substation_output_location()
 
