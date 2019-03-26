@@ -1,52 +1,24 @@
+import random
+import time
+
+import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-import utm
-import time
 from shapely.geometry import LineString, Point
-import random
-import networkx as nx
-from concept_parameters import *
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_substation_location(config, locator):
-    #import/ export paths
-    input_buildings_shp = locator.get_substation_input_location()
-    output_substations_shp = locator.get_substation_output_location()
-
-    poly = gdf.from_file(input_buildings_shp)
-    poly = poly.to_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-    lon = poly.geometry[0].centroid.coords.xy[0][0]
-    lat = poly.geometry[0].centroid.coords.xy[1][0]
-
-    # get coordinate system and re project to UTM
-    utm_data = utm.from_latlon(lat, lon)
-    zone = utm_data[2]
-    south_or_north = utm_data[3]
-    code_projection = "+proj=utm +zone=" + str(zone) + south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    poly = poly.to_crs(code_projection)
-
-    # create points
-    points = poly.copy()
-    points.geometry = poly['geometry'].centroid
-
-    # saving result
-    points.to_file(output_substations_shp, driver='ESRI Shapefile')
-
-    return points, poly
-
-
 def connect_building_to_grid(config, locator):
-    #import/ export paths
-    input_substations_shp = locator.get_substation_output_location()
-    input_streets_shp = locator.get_streets_input_location()
+    # import/ export paths
+    input_substations_shp = locator.get_electric_substation_output_location()
+    input_streets_shp = locator.get_street_network()
 
     # Import data
     building_points = gdf.from_file(input_substations_shp)
@@ -112,9 +84,9 @@ def connect_building_to_grid(config, locator):
         filtered_points.sort_values(by='distance', inplace=True)
 
         # Create new Lines
-        for idx1 in range(0, len(filtered_points)-1):
+        for idx1 in range(0, len(filtered_points) - 1):
             start = filtered_points.iloc[idx1][0]
-            end = filtered_points.iloc[idx1+1][0]
+            end = filtered_points.iloc[idx1 + 1][0]
             newline = LineString([start, end])
             tranches_list.append(newline)
 
@@ -170,12 +142,12 @@ def process_network(points_on_line, config, locator):
     random.seed(1000)
 
     for idx, node in points_on_line.iterrows():
-            if node['Building'] is not None:
-                # if random.random() < 0.08:
-                if idx == 0:
-                    points_on_line.loc[idx, 'Type'] = 'PLANT'
-                else:
-                    points_on_line.loc[idx, 'Type'] = 'CONSUMER'
+        if node['Building'] is not None:
+            # if random.random() < 0.08:
+            if idx == 0:
+                points_on_line.loc[idx, 'Type'] = 'PLANT'
+            else:
+                points_on_line.loc[idx, 'Type'] = 'CONSUMER'
 
     return points_on_line
 
@@ -265,7 +237,6 @@ def create_length_complete_dict(points_on_line, tranches):
 
 
 def main():
-    calc_substation_location()
     points_on_line, tranches = connect_building_to_grid()
     points_on_line_processed = process_network(points_on_line)
     dict_length, dict_path = create_length_dict(points_on_line_processed, tranches)

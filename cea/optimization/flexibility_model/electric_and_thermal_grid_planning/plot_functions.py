@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import get_initial_network as gia
+from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.pyomo_multi_linetype import initial_network
+from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 import re
 
 __author__ =  "Thanh"
@@ -11,16 +13,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def initial_network(config, locator):
-    gia.calc_substation_location(config, locator)
-    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
-    points_on_line_processed = gia.process_network(points_on_line, config, locator)
-    dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
-
-    return points_on_line_processed, tranches, dict_length, dict_path
-
 
 def plot_complete(m, config, locator, network_number, generation):
+
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
     var_x = m.var_x.values()
 
@@ -33,7 +28,9 @@ def plot_complete(m, config, locator, network_number, generation):
     ax2.set_axis_off()
 
     # Plotting Buildings
-    building_points, building_poly = gia.calc_substation_location(config, locator)
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    building_points, building_poly = calc_substation_location(input_buildings_shp,output_substations_shp, [])
     building_poly.plot(ax=ax1, color='white', edgecolor='grey')
 
     for x in var_x:
@@ -88,7 +85,9 @@ def plot_network_on_street(m, config, locator, network_number, generation):
     ax2.set_axis_off()
 
     # Plotting Buildings
-    building_points, building_poly = gia.calc_substation_location(config, locator)
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    building_points, building_poly = calc_substation_location(input_buildings_shp, output_substations_shp, [])
     building_poly.plot(ax=ax1, color='white', edgecolor='grey')
 
     # Plotting Lines
@@ -140,6 +139,7 @@ def plot_network_on_street(m, config, locator, network_number, generation):
 
 
 def plot_network(m, config, locator, network_number, generation):
+
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
     var_x = m.var_x.values()
 
