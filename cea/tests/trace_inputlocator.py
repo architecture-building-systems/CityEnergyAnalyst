@@ -173,7 +173,7 @@ def is_date(data):
     # TODO replace hardcoded with a reference
     codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15'
              'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25','m','m2','m3']
-    if type(data) == unicode and data not in codes:
+    if isinstance(data, basestring) and data not in codes:
         try:
             parse(data)
             return True
@@ -190,7 +190,7 @@ def replace_repetitive_attr(attr):
     if attr.find('NODE') != -1:
         attr = attr.replace(attr, 'NODE0')
     if attr in buildings:
-        attr = attr.replace(attr, 'B01')
+        attr = attr.replace(attr, buildings[0])
     return attr
 
 

@@ -22,6 +22,7 @@ def meta_to_yaml(trace_data, meta_output_file):
         filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
         file_type = os.path.basename(files).split('.')[1]
         if os.path.isfile(filename):
+
             locator_meta[locator_method] = {}
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
@@ -101,8 +102,8 @@ def create_graphviz_output(trace_data, graphviz_output_file):
 def is_date(data):
     # TODO replace hardcoded with a reference
     codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15'
-             'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25']
-    if type(data) == unicode and data not in codes:
+             'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25','m','m2','m3']
+    if isinstance(data, basestring) and data not in codes:
         try:
             parse(data)
             return True
@@ -119,7 +120,7 @@ def replace_repetitive_attr(attr):
     if attr.find('NODE') != -1:
         attr = attr.replace(attr, 'NODE0')
     if attr in buildings:
-        attr = attr.replace(attr, 'B01')
+        attr = attr.replace(attr, buildings[0])
     return attr
 
 
@@ -132,6 +133,8 @@ def get_meta(df_series, attribute_name):
             if is_date(data):
                 types_found.add('date')
             elif isinstance(data, basestring):
+                print attribute_name
+                print data
                 meta['sample_data'] = data.encode('ascii', 'ignore')
                 types_found.add('string')
             else:
