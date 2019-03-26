@@ -1,24 +1,28 @@
 from __future__ import division
-import time
-import get_initial_network as gia
-import pandas as pd
-import numpy as np
-from pyomo.environ import *
-from concept_parameters import *
 
+import time
+
+import numpy as np
+import pandas as pd
+from pyomo.environ import *
+
+import get_initial_network as gia
+from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
+from concept_parameters import *
 
 # ============================
 # Auxiliary functions for LP
 # ============================
 
-__author__ =  "Thanh"
+__author__ = "Thanh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
+
 
 def initial_network(config, locator):
     """
@@ -36,11 +40,14 @@ def initial_network(config, locator):
     :returns: dict_path: list of edges between two nodes
     :rtype: dictionary
     """
-    
-    gia.calc_substation_location(config, locator)
+
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    calc_substation_location(input_buildings_shp, output_substations_shp, [])
     points_on_line, tranches = gia.connect_building_to_grid(config, locator)
     points_on_line_processed = gia.process_network(points_on_line, config, locator)
     dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
+
     return points_on_line_processed, tranches, dict_length, dict_path
 
 
@@ -56,9 +63,9 @@ def annuity_factor(n, i):
     :returns: a: annuity factor
     :rtype: float
     """
-    
+
     a = (1 + i) ** n * i / ((1 + i) ** n - 1)
-    
+
     return a
 
 
@@ -85,15 +92,17 @@ def get_peak_electric_demand(points_on_line):
                                       + node['Epro0_kW']
                                       + node['Eaux0_kW']
                                       + node['E_ww0_kW'])
-            
+
             thermally_disconn_peak_el = (thermally_conn_peak_el
                                          + node['E_hs0_kW']
                                          + node['E_cs0_kW'])
 
-            dict_peak_el['thermally_conn_peak_el'][idx_node] = thermally_conn_peak_el / (S_BASE*10**3)  # kW/MW
-            dict_peak_el['thermally_disconn_peak_el'][idx_node] = thermally_disconn_peak_el / (S_BASE*10**3)  # kW / MW
+            dict_peak_el['thermally_conn_peak_el'][idx_node] = thermally_conn_peak_el / (S_BASE * 10 ** 3)  # kW/MW
+            dict_peak_el['thermally_disconn_peak_el'][idx_node] = thermally_disconn_peak_el / (
+                        S_BASE * 10 ** 3)  # kW / MW
 
     return dict_peak_el
+
 
 # ============================
 # Objective function for LP
@@ -120,7 +129,7 @@ def cost_rule(m, cost_type):
         for (i, j) in m.set_edge:
             for t in m.set_linetypes:
                 c_inv_electric += 2.0 * (m.var_x[i, j, t] * m.dict_length[i, j]) \
-                         * m.dict_line_tech[t]['SGD_per_m'] * m.dict_line_tech[t]['annuity_factor']
+                                  * m.dict_line_tech[t]['price_sgd_per_m'] * m.dict_line_tech[t]['annuity_factor']
         return m.var_costs['inv_electric'] == c_inv_electric
 
     elif cost_type == 'om_electric':
@@ -132,7 +141,8 @@ def cost_rule(m, cost_type):
         #                 * m.dict_line_tech[t]['om_factor']
 
         # each om factor is the same
-        return m.var_costs['om_electric'] == m.var_costs['inv_electric'] * m.dict_line_tech[0]['om_factor']  # TODO Differentiation of types
+        return m.var_costs['om_electric'] == m.var_costs['inv_electric'] * m.dict_line_tech[0][
+            'om_factor']  # TODO Differentiation of types
 
     elif cost_type == 'losses':
         c_losses = 0.0
@@ -141,7 +151,7 @@ def cost_rule(m, cost_type):
                 c_losses += (m.var_power_over_line[i, j, t] * I_BASE) ** 2 \
                             * m.dict_length[i, j] * (m.dict_line_tech[t]['r_ohm_per_km'] / 1000.0) \
                             * APPROX_LOSS_HOURS \
-                            * (ELECTRICITY_COST * (10**(-3)))
+                            * (ELECTRICITY_COST * (10 ** (-3)))
 
         return m.var_costs['losses'] == c_losses
 
@@ -151,6 +161,7 @@ def cost_rule(m, cost_type):
 
 def obj_rule(m):
     return sum(m.var_costs[cost_type] for cost_type in m.set_cost_type)
+
 
 # ============================
 # Constraint rules
@@ -177,7 +188,7 @@ def power_balance_rule(m, i):
         p_node_in += m.var_power_sub[i]
 
     p_node_out += m.dict_connected[i] * float(m.dict_peak_el['thermally_conn_peak_el'][i])
-    p_node_out += (1-m.dict_connected[i]) * float(m.dict_peak_el['thermally_disconn_peak_el'][i])
+    p_node_out += (1 - m.dict_connected[i]) * float(m.dict_peak_el['thermally_disconn_peak_el'][i])
 
     for j in m.set_nodes:
         if i != j and i < j:
@@ -210,9 +221,9 @@ def power_over_line_rule(m, i, j, t):
     """
 
     power_over_line = ((
-                        ((m.var_theta[i] - m.var_theta[j])*np.pi/180)  # rad to degree
-                        / (m.dict_length[i, j] * m.dict_line_tech[t]['x_ohm_per_km'] / 1000)
-                        )
+                               ((m.var_theta[i] - m.var_theta[j]) * np.pi / 180)  # rad to degree
+                               / (m.dict_length[i, j] * m.dict_line_tech[t]['x_ohm_per_km'] / 1000)
+                       )
                        + m.var_slack[i, j, t])
     return m.var_power_over_line[i, j, t] == power_over_line
 
@@ -230,7 +241,7 @@ def slack_voltage_angle_rule(m, i):
     :rtype: pyomo rule
     """
 
-    return m.var_theta[i] == 0.0   # Voltage angle of slack has to be zero
+    return m.var_theta[i] == 0.0  # Voltage angle of slack has to be zero
 
 
 def slack_pos_rule(m, i, j, t):
@@ -291,9 +302,9 @@ def power_over_line_rule_pos_rule(m, i, j, t):
     :rtype: pyomo rule
     """
 
-    power_line_limit = m.var_x[i, j, t]\
-                       * (m.dict_line_tech[t]['I_max_A'] * V_BASE*10**3) \
-                       / (S_BASE*10**6)
+    power_line_limit = m.var_x[i, j, t] \
+                       * (m.dict_line_tech[t]['I_max_A'] * V_BASE * 10 ** 3) \
+                       / (S_BASE * 10 ** 6)
     return m.var_power_over_line[i, j, t] <= power_line_limit
 
 
@@ -315,9 +326,9 @@ def power_over_line_rule_neg_rule(m, i, j, t):
     :rtype: pyomo rule
     """
 
-    power_line_limit = (-1) * m.var_x[i, j, t]\
-                       * (m.dict_line_tech[t]['I_max_A'] * V_BASE*10**3) \
-                       / (S_BASE*10**6)
+    power_line_limit = (-1) * m.var_x[i, j, t] \
+                       * (m.dict_line_tech[t]['I_max_A'] * V_BASE * 10 ** 3) \
+                       / (S_BASE * 10 ** 6)
     return m.var_power_over_line[i, j, t] >= power_line_limit
 
 
@@ -376,7 +387,7 @@ def main(dict_connected, config, locator):
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
     # Line Parameters
-    df_line_parameter = pd.read_csv(locator.get_electric_line_data())
+    df_line_parameter = pd.read_excel(locator.get_electrical_networks(config.region), "CABLING CATALOG")
     dict_line_tech = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
@@ -388,7 +399,7 @@ def main(dict_connected, config, locator):
         'inv_electric',  # investment costs for electric network
         # 'om_electric',  # operation and maintenance cost for electric network
         # 'losses',  # cost for power losses in lines
-        ]
+    ]
 
     # ============================
     # Index data

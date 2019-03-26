@@ -1191,13 +1191,13 @@ class InputLocator(object):
     def get_electric_networks_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'electric_networks')
 
-    def get_substation_input_location(self):
+    def get_electric_substation_input_location(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'zone.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_substation_output_location(self):
+    def get_electric_substation_output_location(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path =  os.path.join(self.get_electric_networks_folder(), 'nodes_buildings.shp')
         self.check_cpg(shapefile_path)
@@ -1209,14 +1209,11 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_streets_output_location(self, name):
+    def get_electric_network_output_location(self, name):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path =  os.path.join(self.get_electric_networks_folder(), name + '.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
-
-    def get_electric_line_data(self):
-        return os.path.join(self.get_electric_networks_folder(), 'electric_line_data.csv')
 
 
     #RETROFIT POTENTIAL
