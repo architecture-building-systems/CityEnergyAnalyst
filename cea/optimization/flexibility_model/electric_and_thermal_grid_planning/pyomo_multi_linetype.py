@@ -26,7 +26,7 @@ __status__ = "Production"
 
 def initial_network(config, locator):
     """
-    Initiate data of main problem
+    Initiate data of main problem (not all the dict_length is included in this case)
 
     :param None
     :type Nonetype
