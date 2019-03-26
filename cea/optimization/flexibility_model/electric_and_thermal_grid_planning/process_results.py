@@ -1,23 +1,24 @@
-import re
 import json
+import re
+
 import geopandas as gpd
-import shapely
 import networkx as nx
-from concept_parameters import *
+import shapely
+from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standarize_coordinates import get_projected_coordinate_system
 import get_initial_network as gia
 
-from cea.utilities.standarize_coordinates import get_projected_coordinate_system
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
-from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
+
 def initial_network(config, locator):
     """
     Initiate data of main problem
@@ -35,13 +36,14 @@ def initial_network(config, locator):
     :rtype: dictionary
     """
 
-    gia.calc_substation_location(config, locator)
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    calc_substation_location(input_buildings_shp, output_substations_shp, [])
     points_on_line, tranches = gia.connect_building_to_grid(config, locator)
     points_on_line_processed = gia.process_network(points_on_line, config, locator)
     dict_length, dict_path = gia.create_length_complete_dict(points_on_line_processed, tranches)
 
     return points_on_line_processed, tranches, dict_length, dict_path
-
 
 def find_gridpath(m, dict_path):
     """
@@ -183,7 +185,9 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network, conf
     :rtype: list(float, float)
     """
 
-    building_centroids, poly = gia.calc_substation_location(config, locator)
+    input_buildings_shp = locator.get_electric_substation_input_location()
+    output_substations_shp = locator.get_electric_substation_output_location()
+    building_centroids, poly = calc_substation_location(input_buildings_shp, output_substations_shp, [])
 
     list_connected = []
     for idx_connected, connected in enumerate(dict_connected):
@@ -218,8 +222,8 @@ def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     :rtype: Nonetype
     """
 
-    input_street_shp = locator.get_streets_input_location()
-    output_path_shp = locator.get_streets_output_location(name)
+    input_street_shp = locator.get_street_network()
+    output_path_shp = locator.get_electric_network_output_location(name)
 
     geometry = [shapely.geometry.LineString(json.loads(g)) for g in list_geotranch]
 
@@ -231,7 +235,8 @@ def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     gdf.to_file(output_path_shp, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator, dict_connected):
+def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator,
+                                             dict_connected):
     """
     This function converts the results of the grid optimization and generates a thermal network. Grid and thermal
     network are written as shp files to folder \\inputs\\networks\\
@@ -263,7 +268,8 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     list_geo_thermal_network = set_to_list_geo(set_thermal_network, points_on_line)
 
     # Connect centroid of every THERMAL consumer building to thermal network
-    list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator, dict_connected)
+    list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator,
+                                                          dict_connected)
 
     print ('list_geo_thermal_network')
 

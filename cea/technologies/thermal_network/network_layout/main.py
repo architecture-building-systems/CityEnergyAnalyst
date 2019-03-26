@@ -23,13 +23,19 @@ def network_layout(config, locator, plant_building_names, input_path_name, outpu
     pipe_diameter_default = config.network_layout.pipe_diameter
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
-    input_buildings_shp = locator.get_zone_geometry()
     connected_buildings = config.network_layout.buildings
     disconnected_building_names = config.thermal_network.disconnected_buildings
-    output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     total_demand_location = locator.get_total_demand()
+
+    if input_path_name=='streets': #point to default location of streets file
+        path_streets_shp = locator.get_street_network()  # shapefile with the stations
+        input_buildings_shp = locator.get_zone_geometry()
+        output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
+    elif input_path_name =='electrical_grid':
+        path_streets_shp = locator.get_electric_network_output_location(input_path_name)
+        input_buildings_shp = locator.get_zone_geometry()
+        output_substations_shp = locator.get_electric_substation_output_location()
 
     # Calculate points where the substations will be located
     calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)

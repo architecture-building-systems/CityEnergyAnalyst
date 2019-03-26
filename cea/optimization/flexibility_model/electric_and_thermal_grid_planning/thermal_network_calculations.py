@@ -1,25 +1,30 @@
 from __future__ import division
+
 import time
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning import process_results
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import electrical_grid_calculations
+from distutils.dir_util import copy_tree
+
+import pandas as pd
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
-import cea.config
-import pandas as pd
-from distutils.dir_util import copy_tree
-# from cea.technologies.thermal_network.network_layout.main import network_layout
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.network_layout_main import network_layout
+from cea.optimization.flexibility_model.electric_and_thermal_grid_planning import process_results
+from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
+    electrical_grid_calculations
 from cea.technologies.thermal_network import thermal_network
 from cea.technologies.thermal_network import thermal_network_costs
+# from cea.technologies.thermal_network.network_layout.main import network_layout
+from cea.technologies.thermal_network.network_layout.main import network_layout
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna", "Thanh"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
+
 
 def thermal_network_calculations(individual, config, network_number, building_names, generation):
     # ============================
@@ -30,20 +35,18 @@ def thermal_network_calculations(individual, config, network_number, building_na
     for i in range(len(building_names)):
         dict_connected[i] = individual[i]
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    copy_tree(locator.get_networks_folder(), locator.get_electric_networks_folder()) # resetting the streets layout to the scenario default
 
     m = electrical_grid_calculations(dict_connected, config, locator, network_number, generation)
-
     electrical_grid_file_name = 'electrical_grid'
     thermal_network_file_name = 'electrical_grid_as_streets'
     default_streets_file_name = 'streets'
-
     input_path_name = electrical_grid_file_name
 
     # ============================
     # Create shape file of the thermal network based on the buildings connected, which is further processed
     # ============================
-    process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator, dict_connected)
+    process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name,
+                                                             config, locator, dict_connected)
 
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name)
@@ -61,7 +64,8 @@ def thermal_network_calculations(individual, config, network_number, building_na
     network_info.number_of_buildings_in_district = len(building_names)
     network_info.disconnected_buildings_index = disconnected_buildings_index
 
-    total_annual_cost, total_annual_capex, total_annual_opex, cost_storage_df = thermal_network_costs.calc_Ctot_cs_district(network_info)
+    total_annual_cost, total_annual_capex, total_annual_opex, cost_storage_df = thermal_network_costs.calc_Ctot_cs_district(
+        network_info)
     total_demand = pd.read_csv(locator.get_total_demand())
     length_m, average_diameter_m = thermal_network_costs.calc_network_size(network_info)
 
@@ -97,15 +101,19 @@ def thermal_network_calculations(individual, config, network_number, building_na
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
-    cost_output.to_csv(locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number, generation))
+    cost_output.to_csv(
+        locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number,
+                                                                   generation))
 
-    print (locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number, generation))
+    print (
+        locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number,
+                                                                   generation))
     print total_annual_cost, total_annual_capex, total_annual_opex
 
     return total_annual_cost, total_annual_capex, total_annual_opex
 
-def main(config):
 
+def main(config):
     dict_connected = [{0: 1, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1}
                       # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 0},
                       # # {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 1, 8: 1, 9: 1},
