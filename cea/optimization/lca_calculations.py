@@ -20,15 +20,14 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-class lca_calculations(object):
-    def __init__(self, locator, config):
-        config.restricted_to = None  # FIXME: remove this later
-        heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="HEATING")
-        cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="COOLING")
-        electricity_costs = pd.read_excel(locator.get_electricity_costs(config.region), sheetname="ELECTRICITY")
-        dhw_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="DHW")
-        resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region),
-                                      sheetname="RESOURCES")
+class LcaCalculations(object):
+    def __init__(self, locator, region, detailed_electricity_pricing):
+        heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="HEATING")
+        cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="COOLING")
+        electricity_costs = pd.read_excel(locator.get_electricity_costs(region), sheet_name="ELECTRICITY")
+        dhw_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="DHW")
+        resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region),
+                                      sheet_name="RESOURCES")
 
         self.ETA_FINAL_TO_USEFUL = 0.9  # assume 90% system efficiency in terms of CO2 emissions and overhead emissions (\
         self.CC_SIGMA = 4 / 5
@@ -52,7 +51,7 @@ class lca_calculations(object):
         self.SOLARCOLLECTORS_TO_OIL = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'CO2']  # MJ_oil / MJ_useful
 
-        if pd.read_excel(locator.get_archetypes_system_controls(config.region))['has-heating-season'].item():
+        if pd.read_excel(locator.get_archetypes_system_controls(region))['has-heating-season'].item():
             # HEATING
             self.BG_BACKUPBOILER_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                 'CO2']  # kg_CO2 / MJ_useful
@@ -140,8 +139,8 @@ class lca_calculations(object):
             'PEN']  # MJ_oil / MJ_final
         self.EL_PV_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['CO2']  # kg_CO2 / MJ_final
 
-        if config.detailed_electricity_pricing:
-            self.ELEC_PRICE = electricity_costs['cost'].values # in USD_2015 per W
+        if detailed_electricity_pricing:
+            self.ELEC_PRICE = electricity_costs['cost_kWh'].values/1000 # in USD_2015 per W
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                             'costs_kWh'] / 1000

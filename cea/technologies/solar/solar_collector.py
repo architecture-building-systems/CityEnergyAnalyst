@@ -1,10 +1,8 @@
-from __future__ import print_function
-from __future__ import division
-
 """
 solar collectors
 """
-
+from __future__ import print_function
+from __future__ import division
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 import numpy as np
 import pandas as pd
@@ -776,7 +774,7 @@ def calc_properties_SC_db(database_path, config):
         type_SCpanel = 'SC2'
     else:
         raise ValueError('this panel type ', config.solar.type_SCpanel, 'is not in the database!')
-    data = pd.read_excel(database_path, sheetname="SC")
+    data = pd.read_excel(database_path, sheet_name="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -911,7 +909,7 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
     Lifetime 35 years
     """
 
-    SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="SC")
+    SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="SC")
     SC_cost_data[SC_cost_data['type'] == technology]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
