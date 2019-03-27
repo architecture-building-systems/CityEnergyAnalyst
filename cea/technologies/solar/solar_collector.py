@@ -1,10 +1,8 @@
-from __future__ import print_function
-from __future__ import division
-
 """
 solar collectors
 """
-
+from __future__ import print_function
+from __future__ import division
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 import numpy as np
 import pandas as pd

@@ -1,8 +1,7 @@
-from __future__ import print_function
-
 """
 Radiation engine and geometry handler for CEA
 """
+from __future__ import print_function
 from __future__ import division
 import pandas as pd
 import time
