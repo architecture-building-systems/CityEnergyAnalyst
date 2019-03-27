@@ -8,6 +8,7 @@ from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 from cea.utilities.standarize_coordinates import get_projected_coordinate_system
 import get_initial_network as gia
 
+from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -235,8 +236,8 @@ def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     gdf.to_file(output_path_shp, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name, config, locator,
-                                             dict_connected):
+def electrical_network_layout_to_shapefile(m, electrical_grid_file_name, thermal_network_file_name, config, locator,
+                                           dict_connected):
     """
     This function converts the results of the grid optimization and generates a thermal network. Grid and thermal
     network are written as shp files to folder \\inputs\\networks\\
@@ -248,6 +249,7 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     :rtype: Nonetype
     """
 
+    #CREATE THE ELECTRICAL NETWORK FILE
     # Initiate data of main problem
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
@@ -257,24 +259,34 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     # Convert set of (startnode, endnode) to a list of coordinate data of each node
     list_geo_grid = set_to_list_geo(set_grid, points_on_line)
 
-    print ('list geo grid')
-
-    print (list_geo_grid)
-
-    # Find path of edges on GRID network between THERMAL consumer and plant node
-    set_thermal_network = find_thermal_network_path(m, points_on_line, set_grid, dict_length, dict_connected)
-
-    # Convert set of (startnode, endnode) to a list of coordinate data of each node
-    list_geo_thermal_network = set_to_list_geo(set_thermal_network, points_on_line)
-
-    # Connect centroid of every THERMAL consumer building to thermal network
-    list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator,
-                                                          dict_connected)
-
-    print ('list_geo_thermal_network')
-
-    print (list_geo_thermal_network)
-
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
     write_coordinates_to_shp_file(config, locator, list_geo_grid, electrical_grid_file_name)
-    write_coordinates_to_shp_file(config, locator, list_geo_thermal_network, thermal_network_file_name)
+
+    # CREATE THE ELECTRICAL NETWORK FILE AS STREETS
+    # from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
+    # path_streets_shp = locator.get_electric_network_output_location(electrical_grid_file_name)
+    # path_connection_point_buildings_shp = locator.get_electric_substation_output_location()
+    # path_potential_network = locator.get_electric_network_output_location(thermal_network_file_name)
+    # calc_connectivity_network(path_streets_shp, path_connection_point_buildings_shp, path_potential_network)
+
+    # # # Find path of edges on GRID network between THERMAL consumer and plant node
+    # set_thermal_network = find_thermal_network_path(m, points_on_line, set_grid, dict_length, dict_connected)
+    #
+    # # Convert set of (startnode, endnode) to a list of coordinate data of each node
+    # list_geo_thermal_network = set_to_list_geo(set_thermal_network, points_on_line)
+    #
+    # # Connect centroid of every THERMAL consumer building to thermal network
+    # list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network, config, locator,
+    #                                                       dict_connected)
+    #
+    # print ('list_geo_thermal_network')
+    #
+    # print (list_geo_thermal_network)
+    #
+    # # Write grid.shp and thermal_network.shp on base of list of coordinate data
+    # write_coordinates_to_shp_file(config, locator, list_geo_thermal_network, thermal_network_file_name)
+
+
+def thermal_network_layout_to_shapefile(config, input_path_name, locator):
+    connected_building_names = []  # Placeholder, this is only used in Network optimization
+    network_layout(config, locator, connected_building_names, input_path_name)

@@ -13,7 +13,7 @@ from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.elect
 from cea.technologies.thermal_network import thermal_network
 from cea.technologies.thermal_network import thermal_network_costs
 # from cea.technologies.thermal_network.network_layout.main import network_layout
-from cea.technologies.thermal_network.network_layout.main import network_layout
+
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -35,13 +35,14 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     # ============================
     # Create shape file of the thermal network based on the buildings connected, which is further processed
     # ============================
-    process_results.creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name,
-                                                             config, locator, dict_connected)
+    process_results.electrical_network_layout_to_shapefile(m, electrical_grid_file_name, thermal_network_file_name,
+                                                           config, locator, dict_connected)
 
-    connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names, input_path_name)
+    process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
+
+
     thermal_network.main(config)
-    # total_annual_cost, total_annual_capex, total_annual_opex = 0.0, 0.0, 0.0
+
     network_type = config.thermal_network.network_type
     gv = cea.globalvar.GlobalVariables()
     network_info = thermal_network_costs.Thermal_Network(locator, config, network_type, gv)
@@ -101,6 +102,7 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     print total_annual_cost, total_annual_capex, total_annual_opex
 
     return total_annual_cost, total_annual_capex, total_annual_opex
+
 
 
 def main(config):
