@@ -1,7 +1,6 @@
 from __future__ import division
 
 import time
-from distutils.dir_util import copy_tree
 
 import pandas as pd
 
@@ -26,17 +25,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def thermal_network_calculations(individual, config, network_number, building_names, generation):
-    # ============================
-    # Solve the electrical grid problem, and decide on the best electrical line types and lengths. It is an optimization
-    # problem for a fixed demand
-    # ============================
-    dict_connected = {}
-    for i in range(len(building_names)):
-        dict_connected[i] = individual[i]
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+def thermal_network_calculations(m, dict_connected, locator, individual, config, network_number, building_names, generation):
 
-    m = electrical_grid_calculations(dict_connected, config, locator, network_number, generation)
     electrical_grid_file_name = 'electrical_grid'
     thermal_network_file_name = 'electrical_grid_as_streets'
     default_streets_file_name = 'streets'

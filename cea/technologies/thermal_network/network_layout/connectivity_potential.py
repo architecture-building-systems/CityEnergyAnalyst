@@ -379,8 +379,6 @@ def create_terminals(buiding_centroids, crs, street_network):
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
 
-
-
     lines_to_buildings = lines_to_buildings.append(street_network).reset_index(drop=True)
     lines_to_buildings.crs = crs
     return lines_to_buildings

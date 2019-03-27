@@ -15,6 +15,8 @@ import cea
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
+    electric_network_optimization
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.optimization_generation import generate_main
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.thermal_network_calculations import \
     thermal_network_calculations
@@ -35,7 +37,7 @@ random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
 
-def objective_function(individual, individual_number, config, building_names, genCP):
+def objective_function(individual, individual_number, locator, config, building_names, generation):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -44,9 +46,16 @@ def objective_function(individual, individual_number, config, building_names, ge
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
     print ('cea optimization progress: individual ' + str(individual_number))
-    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(individual, config,
+
+    # run optimization for electric network (all buildings connected)
+    m, dict_connected = electric_network_optimization(locator, building_names, config, generation, individual,
+                                                      network_number=individual_number)
+    #save the network in a shapefile
+
+    total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(m, dict_connected, locator,
+                                                                                            individual, config,
                                                                                             individual_number,
-                                                                                            building_names, genCP)
+                                                                                            building_names, generation)
     return total_annual_capex, total_annual_opex
 
 
@@ -60,7 +69,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     t0 = time.clock()
 
     genCP = config.electrical_thermal_optimization.recoverycheckpoint
-
     CXPB = config.electrical_thermal_optimization.crossoverprobability
     MUTPB = config.electrical_thermal_optimization.mutationprobability
 
@@ -129,6 +137,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
                                      repeat(genCP, len(invalid_ind))))
 
