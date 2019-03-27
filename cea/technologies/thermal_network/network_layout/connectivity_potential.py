@@ -343,13 +343,15 @@ def one_linestring_per_intersection(lines, crs):
     """
     lines_merged = linemerge(lines)
 
-    # intersecting multiline with its bounding box somehow triggers a first
-    bounding_box = box(*lines_merged.bounds)
+    # intersecting multiline with its bounding box somehow triggers a first intersection
+    try:
+        bounding_box = box(*lines_merged.bounds)
+        lines_merged = lines_merged.intersection(bounding_box)
+    except:
+        #if the bounding_box fails, then revert to lines merge.
+        print('bounding box method did not work, falling to more simple method, no need to worry')
 
-    # perform linemerge (one linestring between each crossing only)
-    # if this fails, write function to perform this on a bbox-grid and then
     # merge the result
-    lines_merged = lines_merged.intersection(bounding_box)
     lines_merged = linemerge(lines_merged)
 
     lines = [line for line in lines_merged]
