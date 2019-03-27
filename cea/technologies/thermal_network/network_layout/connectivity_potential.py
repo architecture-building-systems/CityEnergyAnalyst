@@ -349,7 +349,7 @@ def one_linestring_per_intersection(lines, crs):
         lines_merged = lines_merged.intersection(bounding_box)
     except:
         #if the bounding_box fails, then revert to lines merge.
-        print('bounding box method did not work, falling to more simple method, no need to worry')
+        print('bounding box method did not work, falling to a more simple method, no need to worry')
 
     # merge the result
     lines_merged = linemerge(lines_merged)
