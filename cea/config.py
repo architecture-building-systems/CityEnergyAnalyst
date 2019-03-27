@@ -1,9 +1,9 @@
-from __future__ import print_function
-
 """
 Manage configuration information for the CEA. The Configuration class is built dynamically based on the type information
 in ``default.config``.
 """
+from __future__ import print_function
+
 import os
 import re
 import json

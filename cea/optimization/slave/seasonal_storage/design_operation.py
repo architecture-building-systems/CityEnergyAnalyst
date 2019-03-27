@@ -1,13 +1,13 @@
-    # -*- coding: utf-8 -*-
-""" 
-
-Storage Design And Operation  
-    This File is called by "Storage_Optimizer_incl_Losses_main.py" (Optimization Routine) and 
-    will operate the storage according to the inputs given by the main file.
-    
-    The operation data is stored 
-            
+# -*- coding: utf-8 -*-
 """
+Storage Design And Operation
+    This File is called by "Storage_Optimizer_incl_Losses_main.py" (Optimization Routine) and
+    will operate the storage according to the inputs given by the main file.
+
+    The operation data is stored
+
+"""
+
 from __future__ import division
 import pandas as pd
 import os

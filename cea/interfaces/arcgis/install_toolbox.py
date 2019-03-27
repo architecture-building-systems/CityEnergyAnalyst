@@ -1,6 +1,5 @@
-from __future__ import print_function
-
 """Install the toolbox into ArcGIS Desktop 10.4 and 10.5"""
+from __future__ import print_function
 import sys
 import shutil
 import os.path
