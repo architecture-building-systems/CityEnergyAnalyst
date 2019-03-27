@@ -214,59 +214,65 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, bu
 
 
 def main(building, TECHS, building_result_path):
+
     el_use_sum = {}
     for tech in TECHS:
-        results = pd.read_csv(path_to_osmose_results(building_result_path, tech), header=None).T.reset_index()
-        results = results.rename(columns=results.iloc[0])[1:]
-        results = results.fillna(0)
-        el_use_sum[tech] = results['SU_elec'].sum()
+        osmose_result_file = path_to_osmose_results(building_result_path, tech)
+        if os.path.isfile(osmose_result_file):
+            results = pd.read_csv(osmose_result_file, header=None).T.reset_index()
+            results = results.rename(columns=results.iloc[0])[1:]
+            results = results.fillna(0)
+            el_use_sum[tech] = results['SU_elec'].sum()
 
-        # check balance
-        print 'checking balance for: ', tech
-        check_balance(results, building, building_result_path, tech)
+            # check balance
+            print 'checking balance for: ', tech
+            check_balance(results, building, building_result_path, tech)
 
-        if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
-            chiller_count = 1  # do nothing
-        elif tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
-            chiller_count = analysis_chilled_water_usage(results, tech)
-            chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech))
+            if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
+                chiller_count = 1  # do nothing
+            elif tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
+                chiller_count = analysis_chilled_water_usage(results, tech)
+                chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech))
 
-        ## plot air flows
-        air_flow_df = set_up_air_flow_df(results)
-        plot_air_flow(air_flow_df, results, tech, building, building_result_path)
+            ## plot air flows
+            air_flow_df = set_up_air_flow_df(results)
+            plot_air_flow(air_flow_df, results, tech, building, building_result_path)
 
-        # plot T_SA and w_SA
-        if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
-            operation_df = np.nan  # do nothing
+            # plot T_SA and w_SA
+            if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
+                operation_df = np.nan  # do nothing
+            else:
+                operation_df = set_up_operation_df(tech, results)
+                plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
+
+            ## plot water balance
+            humidity_df = set_up_humidity_df(tech, results)
+            plot_water_balance(building, building_result_path, humidity_df, results, tech)
+            # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
+
+            ## plot humidity level (storage)
+            hu_store_df = set_up_hu_store_df(results)
+            plot_hu_store(building, building_result_path, hu_store_df, tech)
+
+            ## plot co2 level (storage)
+            co2_store_df = set_up_co2_store_df(results)
+            plot_co2_store(building, building_result_path, co2_store_df, tech)
+
+            ## plot heat balance
+            heat_df = set_up_heat_df(tech, results)
+            plot_heat_balance(building, building_result_path, heat_df, results, tech)
+
+            ## plot electricity usage
+            plot_electricity_usage(building, building_result_path, results, tech)
+            electricity_df = set_up_electricity_df(tech, results)
+            ex_df = calc_el_stats(building, building_result_path, electricity_df, results, tech)
+            plot_electricity_usages(building, building_result_path, electricity_df, results, tech)
+
+            ## plot exergy loads
+            plot_exergy_loads(building, building_result_path, ex_df, results, tech)
+
         else:
-            operation_df = set_up_operation_df(tech, results)
-            plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
-
-        ## plot water balance
-        humidity_df = set_up_humidity_df(tech, results)
-        plot_water_balance(building, building_result_path, humidity_df, results, tech)
-        # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
-
-        ## plot humidity level (storage)
-        hu_store_df = set_up_hu_store_df(results)
-        plot_hu_store(building, building_result_path, hu_store_df, tech)
-
-        ## plot co2 level (storage)
-        co2_store_df = set_up_co2_store_df(results)
-        plot_co2_store(building, building_result_path, co2_store_df, tech)
-
-        ## plot heat balance
-        heat_df = set_up_heat_df(tech, results)
-        plot_heat_balance(building, building_result_path, heat_df, results, tech)
-
-        ## plot electricity usage
-        plot_electricity_usage(building, building_result_path, results, tech)
-        electricity_df = set_up_electricity_df(tech, results)
-        ex_df = calc_el_stats(building, building_result_path, electricity_df, results, tech)
-        plot_electricity_usages(building, building_result_path, electricity_df, results, tech)
-
-        ## plot exergy loads
-        plot_exergy_loads(building, building_result_path, ex_df, results, tech)
+            print 'Cannot find ' , osmose_result_file
 
     print el_use_sum
     return
@@ -1129,12 +1135,12 @@ def p_ws_from_t(t_celsius):
 
 if __name__ == '__main__':
     # buildings = ["B001","B002","B003"]
-    buildings = ["B003"]
-    tech = ["HCS_coil"]
-    folder_path = "C:\\Users\\Shanshan\\Documents\\WP1_results\\WTP_CBD_m_WP1_RET"
+    buildings = ["B009"]
+    tech = ["HCS_LD"]
+    folder_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation\\WTP_CBD_m_WP1_OFF"
 
     for building in buildings:
-        building_time = building + "_24"
+        building_time = building + "_168"
         building_result_path = os.path.join(folder_path, building_time)
         # building_result_path = os.path.join(building_result_path, "status_quo")
         print building_result_path
