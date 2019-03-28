@@ -134,7 +134,8 @@ Optimization:
   description: Run decentralized building optimization
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.preprocessing.decentralized_building_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized',
+               'general:detailed-electricity-pricing']
 
 
 - name: supply-system-simulation
