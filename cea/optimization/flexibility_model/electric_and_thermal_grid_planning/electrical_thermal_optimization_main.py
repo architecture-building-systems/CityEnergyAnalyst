@@ -194,7 +194,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
             fitnesses = toolbox.map(toolbox.evaluate,
                                     izip(invalid_ind, range(len(invalid_ind)),
-                                         repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind))))
+                                         repeat(locator, len(invalid_ind)),
+                                         repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
+                                         repeat(genCP, len(invalid_ind))))
 
             function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
             # linking every individual with the corresponding fitness, this also keeps a track of the number of function
@@ -236,8 +238,9 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)), repeat(building_names, len(invalid_ind)),
-                                     repeat(g, len(invalid_ind))))
+                                     repeat(genCP, len(invalid_ind))))
 
         function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
