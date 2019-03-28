@@ -46,7 +46,7 @@ def main(config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
 
     disconnected_building_main(locator=locator, building_names=building_names, config=config, prices=prices, lca=lca)
 
