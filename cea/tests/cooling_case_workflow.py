@@ -21,19 +21,20 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main():
-    working_dir = os.path.join(tempfile.gettempdir(),
-                               datetime.datetime.now().strftime('%Y-%d-%m-%H-%M-%S-cooling-case-workflow'))
-    os.mkdir(working_dir)
-    cea.api.extract_reference_case(destination=working_dir, case='cooling')
-    print('-' * 80)
+def main(config):
+    if not config:
+        working_dir = os.path.join(tempfile.gettempdir(),
+                                   datetime.datetime.now().strftime('%Y-%d-%m-%H-%M-%S-cooling-case-workflow'))
+        os.mkdir(working_dir)
+        cea.api.extract_reference_case(destination=working_dir, case='cooling')
+        print('-' * 80)
 
-    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
-    config.region = 'SG'
-    config.weather = 'Singapore'
-    config.district_cooling_network = True
-    config.thermal_network.network_type = 'DC'
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
+        config.region = 'SG'
+        config.weather = 'Singapore'
+        config.district_cooling_network = True
+        config.thermal_network.network_type = 'DC'
 
     config_file = os.path.join(config.scenario, 'cea.config')
     config.save(config_file)
@@ -70,4 +71,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)

@@ -345,3 +345,10 @@ default:
   interfaces: [cli]
   module: cea.tests.trace_inputlocator
   parameters: ['general:scenario', trace-inputlocator]
+
+- name: cooling-case-workflow
+  label: cooling case workflow
+  description: Run the cooling case from start to end to test the cea
+  interfaces: [cli]
+  module: cea.test.cooling_case_workflow
+  parameters: []
