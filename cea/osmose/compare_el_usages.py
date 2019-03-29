@@ -4,9 +4,12 @@ import pandas as pd
 import os
 import operator
 import matplotlib.pyplot as plt
+import math
+
+CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
 
 
-def main(building, building_result_path):
+def main(building, building_result_path, case):
     # get paths to chiller_T_tech_df and el csv
     paths = path_to_elec_csv_files(building_result_path)
     chiller_paths = path_to_chiller_csv_files(building_result_path)
@@ -26,10 +29,19 @@ def main(building, building_result_path):
     # get chiller_T_tech_df df from all tech
     chiller_T_all_tech_df = get_chiller_T_from_all_techs(chiller_paths)
     plot_chiller_temperatures_bar(chiller_T_all_tech_df, building, building_result_path)
-    plot_chiller_temperatures_scatter(chiller_T_all_tech_df, building, building_result_path)
+    plot_chiller_temperatures_scatter(chiller_T_all_tech_df, building, building_result_path, case)
 
+    # # plot T_SA, w_SA
+    # plot_T_w_scatter(compare_df, building, building_result_path)
 
     return
+
+
+def plot_T_w_scatter(compare_df, building, building_result_path):
+    T_SA = compare_df
+    w_SA = compare_df
+
+    return np.nan
 
 
 def get_chiller_T_from_all_techs(chiller_paths):
@@ -72,14 +84,23 @@ def plot_chiller_temperatures_bar(chiller_df, building, building_result_path):
     return np.nan
 
 
-def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path):
+def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path, case):
     chiller_dict = chiller_df.T.to_dict()
 
     # sort two level dict with the value of key in second level
     sorted_dict = sort_dict_with_second_level_key(chiller_dict)
 
     # x axis (keys of the first level dict)
-    x_labels = list(chiller_dict.keys())
+    chiller_dict_keys = list(chiller_dict.keys())
+    x_labels = []
+    for i in ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']:
+        if i in chiller_dict_keys:
+            x_labels.append(i)
+    x_labels_shown = []
+    label_dict = {'HCS_coil': 'Config|1', 'HCS_ER0': 'Config|2', 'HCS_3for2': 'Config|3', 'HCS_LD': 'Config|4',
+                  'HCS_IEHX': 'Config|5'}
+    for i in x_labels:
+        x_labels_shown.append(label_dict[i])
     x_values = list(range(len(x_labels)))
     # lookup table mapping category
     lookup_table = dict((v, k) for k, v in enumerate(x_labels))
@@ -90,21 +111,23 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     x, y, anno = zip(*points)
     y_float = tuple(map(lambda i: float(i), y))
     # y axis (keys of the second level dict)
-    y_values = [float(i) for i in chiller_df.columns]
+    y_values = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
+    #y_values = [float(i) for i in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
-    area = tuple(map(lambda x: 10 * (x), anno))
+    area = tuple(map(lambda x: 10 * x, anno))
 
     # format the plt
     plt.figure()
-    plt.title(building)
+    case_name = case.split('_')[4]
+    plt.title(CASE_TABLE[case_name] + ' ' + building, fontsize=18)
     # plt.xlabel('x')
-    plt.ylabel('Chilled water temperature [C]')
-    plt.xticks(x_values, x_labels)
-    plt.yticks(y_values, y_labels)
+    plt.ylabel('Chilled water temperature [C]', fontsize=18)
+    plt.xticks(x_values, x_labels_shown, fontsize=18)
+    plt.yticks(y_values, y_labels, fontsize=18)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.5, max(y_values) + 0.5])
-    plt.scatter(x, y_float, s=area)
+    plt.scatter(x, y_float, s=area, c='#39617E')
     # plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
@@ -166,6 +189,7 @@ def path_to_save_chiller_t(building, building_result_path):
     path_to_file = os.path.join(building_result_path, filename)
     return path_to_file
 
+
 def path_to_save_chw_scatter(building, building_result_path):
     filename = building + '_chw_scatter.png'
     path_to_file = os.path.join(building_result_path, filename)
@@ -173,6 +197,21 @@ def path_to_save_chw_scatter(building, building_result_path):
 
 
 if __name__ == '__main__':
-    building = "B001"
-    building_result_path = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WTP_CBD_m_WP1_RET\\B001_168'
-    main(building, building_result_path)
+    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    # buildings = ["B002"]
+    timestep = "168"
+    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_RET']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_combo'
+
+    for case in cases:
+        print case
+        case_folder = os.path.join(result_folder, case)
+        for building in buildings:
+            building_result_path = os.path.join(case_folder, building + "_" + timestep)
+            # building_result_path = os.path.join(building_result_path, 'reduced') #FIXME
+            if os.path.isdir(building_result_path):
+                main(building, building_result_path, case)
+                print building
+            else:
+                'cannot find ', building_result_path

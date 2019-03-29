@@ -10,6 +10,7 @@ import cea.osmose.exergy_calculation as calc_Ex
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_max_ppm = 800 / 1e6
 
+CONFIG_TABLE = {'HCS_coil':'Config|1','HCS_ER0':'Config|2','HCS_3for2':'Config|3','HCS_LD':'Config|4','HCS_IEHX':'Config|5'}
 
 # from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 
@@ -214,7 +215,6 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, bu
 
 
 def main(building, TECHS, building_result_path):
-
     el_use_sum = {}
     for tech in TECHS:
         osmose_result_file = path_to_osmose_results(building_result_path, tech)
@@ -245,7 +245,7 @@ def main(building, TECHS, building_result_path):
                 operation_df = set_up_operation_df(tech, results)
                 plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
 
-            ## plot water balance
+            # plot water balance
             humidity_df = set_up_humidity_df(tech, results)
             plot_water_balance(building, building_result_path, humidity_df, results, tech)
             # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
@@ -265,17 +265,24 @@ def main(building, TECHS, building_result_path):
             ## plot electricity usage
             plot_electricity_usage(building, building_result_path, results, tech)
             electricity_df = set_up_electricity_df(tech, results)
-            ex_df = calc_el_stats(building, building_result_path, electricity_df, results, tech)
-            plot_electricity_usages(building, building_result_path, electricity_df, results, tech)
-
+            ex_df = calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech)
+            plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
+            result_WED = results.iloc[72:96]
+            electricity_df_WED = electricity_df.iloc[72:96]
+            plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
+            electricity_df_SAT = electricity_df.iloc[144:168]
+            result_SAT = results.iloc[144:168]
+            plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
             ## plot exergy loads
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
 
         else:
-            print 'Cannot find ' , osmose_result_file
+            print 'Cannot find ', osmose_result_file
 
     print el_use_sum
     return
+
+
 
 
 def calc_min_exergy(results):
@@ -375,11 +382,11 @@ def set_up_hu_store_df(results):
             w_room_kgperkg[i] = W_room_kg[i] / M_room_kg[i]
             RH[i] = calc_RH_from_w(w_gperkg_0, T_RA_C[i])
         else:
-            water_added_kgperhr = (w_gain_kgpers[i] - w_lcu_out[i] - m_air_out[i] * w_room_kgperkg[i-1]) * 3600
+            water_added_kgperhr = (w_gain_kgpers[i] - w_lcu_out[i] - m_air_out[i] * w_room_kgperkg[i - 1]) * 3600
             W_room_kg[i] = W_room_kg[i - 1] + water_added_kgperhr
             w_room_kgperkg[i] = W_room_kg[i] / M_room_kg[i]
-            RH[i] = calc_RH_from_w(w_room_kgperkg[i]*1000, T_RA_C[i])
-    hu_store_df['RH'] = RH*100
+            RH[i] = calc_RH_from_w(w_room_kgperkg[i] * 1000, T_RA_C[i])
+    hu_store_df['RH'] = RH * 100
     hu_store_df['w'] = W_room_kg / M_room_kg * 1000
     return hu_store_df
 
@@ -485,7 +492,7 @@ def set_up_electricity_df(tech, results):
 #     return electricity_df
 
 
-def calc_el_stats(building, building_result_path, electricity_df, results, tech):
+def calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech):
     output_df = electricity_df.copy()
     # calculate electricity used in each technology
     output_df['el_total'] = output_df.sum(axis=1)
@@ -510,6 +517,9 @@ def calc_el_stats(building, building_result_path, electricity_df, results, tech)
     ex_df['eff_exergy'] = (output_df['Ex_min'] / output_df['el_total']).values
     # get Qh
     output_df['Qh'] = results['SU_Qh']
+    # get T,w
+    output_df['T_SA'] = operation_df['T_SA']
+    output_df['w_SA'] = operation_df['w_SA']
 
     ## add total row in the bottom
     total_df = pd.DataFrame(output_df.sum()).T
@@ -531,6 +541,12 @@ def calc_el_stats(building, building_result_path, electricity_df, results, tech)
     # output_df['cop_scu'] = output_df['qc_sys_scu']/output_df['el_scu']
     # output_df['cop_lcu'] = output_df['qc_sys_lcu']/output_df['el_lcu']
     # output_df['cop_oau'] = output_df['qc_sys_oau']/output_df['el_oau']
+
+    # calculate mean T_SA, w_SA
+    T_SA_mean = operation_df['T_SA'].ix[0:index - 1].replace(0, np.nan).mean(skipna=True)
+    output_df.at[index, 'T_SA'] = T_SA_mean
+    w_SA_mean = operation_df['w_SA'].ix[0:index - 1].replace(0, np.nan).mean(skipna=True)
+    output_df.at[index, 'w_SA'] = w_SA_mean
 
     # calculate exergy efficiency
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
@@ -945,11 +961,15 @@ def plot_electricity_usage(building, building_result_path, results, tech):
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'el_usage'))
 
 
-def plot_electricity_usages(building, building_result_path, electricity_df, results, tech):
-    electricity_per_area_df = electricity_df * 1000 / results['Af_m2'][1]
+def plot_electricity_usages(building, building_result_path, electricity_df, results, tech, day):
+    t_0 = results.index.min()
+    t_end = results.index.max()
+    # reset index
+    Af_m2 = results['Af_m2'].mean()
+    electricity_per_area_df = electricity_df * 1000 / Af_m2
     # extract parameters
-    time_steps = results.shape[0] - 1
-    x_ticks = results.index.values
+    time_steps = electricity_df.shape[0]
+    x_ticks = electricity_df.index.values
     fig_size = set_figsize(time_steps)
     x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
 
@@ -970,27 +990,35 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
         ax.bar(x_ticks, electricity_per_area_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + electricity_per_area_df[column]
-    ax.set(xlabel='Time [hr]', ylabel='Electricity Use [Wh/m2]', xlim=(1, time_steps), ylim=(0, 35))
+    ax.set(xlabel='Time [hr]', ylabel='Electricity Use [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 35))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
     ax.set_xticks(x_ticks_shown)
     ax.legend(loc='upper left')
     # plot line
     ax1 = ax.twinx()
-    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / results['Af_m2'][1])
+    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2)
     ax1.plot(x_ticks, total_el_float, '-o', linewidth=2, markersize=4, label='total electricity use', color='steelblue')
     ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
     ax.legend(loc='upper right')
-    plt.title(building + '_' + tech, fontsize=14)
+
+    if day != '':
+        name = CONFIG_TABLE[tech]
+        plt.title(name +' ' + building + ' ' + day, fontsize=14)
+    else:
+        plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     # plot layout
-    fig.savefig(path_to_save_fig(building, building_result_path, tech, 'el_usages'))
+    filename = 'el_usages_' + day
+    fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
+    return np.nan
 
 
 def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
+    Af_m2 = results['Af_m2'].mean()
     eff_exergy = exergy_df['eff_exergy'].values
     del exergy_df['eff_exergy']
-    exergy_per_area_df = exergy_df * 1000 / results['Af_m2'][1]
+    exergy_per_area_df = exergy_df * 1000 / Af_m2
     # extract parameters
     time_steps = results.shape[0] - 1
     x_ticks = results.index.values
@@ -1084,6 +1112,7 @@ def plot_supply_temperature_humidity(building, building_result_path, operation_d
 ## auxiliary functions
 def set_xtick_shown(x_ticks, time_steps):
     reduced_x_ticks = np.insert(np.arange(0, time_steps, 12)[1:], 0, 1)
+    x_ticks_24 = np.arange(1,25,1) #FIXME
     x_ticks_shown = x_ticks if time_steps <= 24 else reduced_x_ticks
     return x_ticks_shown
 
@@ -1134,14 +1163,17 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    # buildings = ["B001","B002","B003"]
-    buildings = ["B009"]
-    tech = ["HCS_LD"]
-    folder_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation\\WTP_CBD_m_WP1_OFF"
-
-    for building in buildings:
-        building_time = building + "_168"
-        building_result_path = os.path.join(folder_path, building_time)
-        # building_result_path = os.path.join(building_result_path, "status_quo")
-        print building_result_path
-        main(building, tech, building_result_path)
+    #buildings = ["B002"]
+    buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
+    tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
+    #tech = ["HCS_coil"]
+    cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
+    for case in cases:
+        folder_path = os.path.join(result_path, case)
+        for building in buildings:
+            building_time = building + "_168"
+            building_result_path = os.path.join(folder_path, building_time)
+            # building_result_path = os.path.join(building_result_path, "SU")
+            print building_result_path
+            main(building, tech, building_result_path)

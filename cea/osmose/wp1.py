@@ -13,8 +13,8 @@ import cea.osmose.compare_el_usages as compare_el
 # import from config # TODO: add to config
 #TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
 TECHS = ['HCS_LD']
-#specified_buildings = ["B002","B005","B007","B009"]
-specified_buildings = ["B001"]
+#specified_buildings = ["B005"]
+specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
 timesteps = 168  # 168 (week)
 
 if timesteps == 168:
@@ -37,10 +37,10 @@ def main(case):
     building_names = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, start_t, timesteps,
                                                                                specified_buildings)
 
-    # start ampl license
+    ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
 
-    # run osmose
+    ## run osmose
     write_string_to_txt(path_to_case_folder, osmose_project_path, "path_to_case_folder.txt")  # osmose input
     write_value_to_csv(timesteps, osmose_project_path, "timesteps.csv")  # osmose input
     for building in building_names:
@@ -56,8 +56,9 @@ def main(case):
         #plot results
         building_timestep_tag = building + "_" + str(timesteps)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
+        #building_result_path = os.path.join(building_result_path, "reduced")
         plot_results.main(building, TECHS, building_result_path)
-        compare_el.main(building, building_result_path)
+        #compare_el.main(building, building_result_path)
     #start_ampl_license(ampl_lic_path, "stop")
     return np.nan
 
@@ -128,16 +129,15 @@ def exec_osmose(tech, osmose_project_path):
     run_folder = os.listdir(result_path)[len(os.listdir(result_path))-1]
     OutMsg_path = os.path.join(result_path,run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
     f = open(OutMsg_path, "r")
-    print tech, run_folder, "OutMsg: ", f.readline()
+    print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline()
 
     return 'ok', output.decode('utf-8')
 
 
 if __name__ == '__main__':
+    #cases = ['WTP_CBD_m_WP1_RET']
     cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET']
-    #cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
     for case in cases:
         main(case)
-
     # stop ampl license
     start_ampl_license(ampl_lic_path, "stop")

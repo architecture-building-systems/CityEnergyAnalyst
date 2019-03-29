@@ -40,7 +40,7 @@ Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 
 RH_max = 80  # %
-RH_min = 50  # %
+RH_min = 40  # %
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
@@ -156,7 +156,7 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
             # output input_T1
             input_T_df = pd.DataFrame()
             input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
-            input_T_df['T_ext'] = reduced_tsd_df['T_ext']
+            input_T_df['T_ext_C'] = reduced_tsd_df['T_ext']
             input_T_df.T.to_csv(path_to_osmose_project_inputT(str(i + 1)), header=False)
         # output input_T0
         input_T0_df = pd.DataFrame()

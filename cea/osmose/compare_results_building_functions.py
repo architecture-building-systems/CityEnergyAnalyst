@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def main(path_result_folder, cases, time_steps):
     # get names
     building_names_to_analyse, case_names = get_building_and_case_names(cases, path_result_folder, time_steps)#FIXME: to improve
-    building_names_to_analyse = ['B001', 'B002', 'B005', 'B007'] #FIXME: temporary
+    building_names_to_analyse = building_names_to_analyse
     # get cop from buildings in all cases
     cop_in_all_cases_dict = {}
     qc_in_all_cases_dict = {}
@@ -149,6 +149,6 @@ def path_to_save_compare_plots(building, path_result_folder):
 
 if __name__ == '__main__':
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
     time_steps = 168
     main(path_result_folder, cases, time_steps)

@@ -98,6 +98,16 @@ def calc_exergy_liquid_water(T_water_C, T_ref_C, RH):
     # print 'exergy_water at T_ref_C:', T_ref_C,'RH:',RH*100, ':', -Rv * T_ref_K * math.log(RH)
     return ex_liquid_water_kJperkg
 
+def water_exergy_pyromat(T_water_C, T_ref_C):
+    T_water_K = T_water_C + 273.15
+    T_ref_K = T_ref_C + 273.15
+    water = pm.get('mp.H2O')
+    h_water_kJperkg = water.h(T_water_K)[0]
+    s_water_kJperkgK = water.s(T_water_K)[0]
+    ex_water = h_water_kJperkg - T_ref_K*s_water_kJperkgK
+    ex_water_0 = water.h(T_ref_K)[0] - T_ref_K*water.s(T_ref_K)[0]
+    return ex_water
+
 
 def calc_w_sat(T):
     # Antoine Equation
@@ -190,6 +200,14 @@ def calc_water_enthalpy(T_water_C):
     return h_kJperkg
 
 
+def calc_exergy_condensation(T_ref_K, T_vapor_K, T_cond_K, h_fg_water):
+    h_fg_water_kJperkg = 2450  # at Tcond
+    part1 = c_vapor_kJperkgK * ((T_vapor_K - T_cond_K) - T_ref_K * math.log(T_vapor_K / T_cond_K))
+    part2 = h_fg_water_kJperkg - T_ref_K * h_fg_water_kJperkg / T_cond_K
+    ex_kJperkg = part1 + part2
+    return ex_kJperkg
+
+
 if __name__ == '__main__':
     # indoor air set points
     # T_air_C = 24
@@ -216,18 +234,29 @@ if __name__ == '__main__':
     ####################################################################
     T_water_C = 12
     T_ref_C = 35.8
+    T_ref_K = T_ref_C + 273.15
     w_0_gperkg = 19.746
-    ex_water = calc_exergy_liquid_water(T_water_C, T_ref_C, w_0_gperkg)
+    RH = 0.8
+    ex_water = calc_exergy_liquid_water(T_water_C, T_ref_C, RH)
     print 'Ex,water: ', ex_water, ' [kJ/kg]'  #
+    print "exergy water form pyromat: ", water_exergy_pyromat(T_water_C, T_ref_C)
     ex_latent = calc_ex_latent(T_ref_C, w_0_gperkg)
     print 'ex latent: ', ex_latent * (-0.7)
+    T_room_K = 25 + 273.15
+    T_water_K = T_water_C + 273.15
+    ex_condensation = calc_exergy_condensation(T_ref_K, T_room_K, T_water_K, h_fg_water=2450)
+    print 'ex condensation: ', ex_condensation
 
-    s_water = calc_water_entropy(40)
-    h_water = calc_water_enthalpy(40)
+    s_water = calc_water_entropy(T_water_C)
+    h_water = calc_water_enthalpy(T_water_C)
     print s_water, h_water
     ###############################################################
-    water = pm.get('ig.H2O')
-    T = 50 + 273.15
-    print "entropy of water(g): ", water.s(T=T, p=1.013)
-    water_2 = pm.get('mp.H2O')
-    print "entropy of water(l): ", water_2.s(T=T, p=1.013)
+    water_liquid = pm.get('mp.H2O')
+    water_gas = pm.get('ig.H2O')
+    T = 20 + 273.15
+    print "entropy of water(l): ", water_liquid.s(T=T, p=1.013)
+    print "enthalpy of water: ", water_liquid.h(T=T)
+    print "isobaric specific heat water(l): ", water_liquid.cp()
+    print "cp (vapor): ", water_gas.cp(T=T)
+
+    # print pm.config
