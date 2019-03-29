@@ -42,11 +42,16 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(locator, weather_path,
-         region,
-         time_start,
-         time_end
-         ):
+def main(locator, weather_path, region, time_start, time_end):
+    """
+    extracts building information from cea case study (zone.shp and building properties...)
+    :param locator:
+    :param weather_path:
+    :param region:
+    :param time_start: specified in config.mpc_district.time_start
+    :param time_end: specified in config.mpc_district.time_end
+    :return:
+    """
     (
         internal_loads_df,
         indoor_comfort_df,
@@ -96,6 +101,7 @@ def main(locator, weather_path,
         zone_occupancy_df,
         occupancy_types
     )
+    # restructure all the files into pandas dataframe format
     (
         occupants_probability_dic,
         lighting_appliances_probability_dic,
@@ -125,7 +131,9 @@ def main(locator, weather_path,
         zone_df,
         floors_cardinal_df
     )
+    # get cooling/heating seasons
     system_controls_df = process_system_controls_file(system_controls_ini_df)
+    # get building cooling systems
     (
         supply_temperature_df,
         emissions_cooling_type_dic,
@@ -146,14 +154,16 @@ def main(locator, weather_path,
         occupancy_types,
         zone_occupancy_df
     )
+
+    # get the internal/external temperature within the time-steps
     (
         T_int_cea_dic,
         T_ext_cea_df
     ) = get_temperatures(locator,
-        buildings_names,
-        time_start,
-        time_end
-    )
+                         buildings_names,
+                         time_start,
+                         time_end
+                         )
 
     return (
         internal_loads_df,
@@ -208,6 +218,13 @@ def main(locator, weather_path,
 def extract_cea_databases_files(locator,
                                 region
                                 ):
+    """
+    extract archetype database of the case study
+    :param locator:
+    :param region:
+    :return:
+    """
+
     # Get data
     internal_loads_df = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS')
     indoor_comfort_df = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT')
@@ -255,6 +272,11 @@ def extract_cea_databases_files(locator,
 
 
 def extract_cea_inputs_files(locator):
+    """
+    extract information from the zones in the case study
+    :param locator:
+    :return:
+    """
     # Get dataframes
     zone_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
@@ -280,7 +302,12 @@ def extract_cea_building_geometry(locator, buildings_names):
 
 
 def process_weather_file(weather_path):
-    # This function deals with the fact that the weather file has an .epw format that is non-pandas dataframe ready.
+    """
+    This function deals with the fact that the weather file has an .epw format that is non-pandas dataframe ready.
+    :param weather_path:
+    :return:
+    """
+
     # Get data
     with open(weather_path, 'rb') as f:
         reader = csv.reader(f)
@@ -344,6 +371,14 @@ def process_occupancy_schedules(
         occupancy_types,
         occupancy_types_cardinal
 ):
+    """
+    This function makes the data from the occupancy schedule file more readable and pandas dataframe-ready.
+    :param locator:
+    :param region:
+    :param occupancy_types:
+    :param occupancy_types_cardinal:
+    :return:
+    """
     # This function makes the data from the occupancy schedule file more readable and pandas dataframe-ready.
     # Get data
     book = xlrd.open_workbook(locator.get_archetypes_schedules(region))
@@ -472,6 +507,12 @@ def extract_common_parameters(
         internal_loads_df,
         zone_occupancy_df
 ):
+    """
+    get building names and occupancy types
+    :param internal_loads_df:
+    :param zone_occupancy_df:
+    :return:
+    """
     occupancy_types_full = internal_loads_df.index
     occupancy_types = zone_occupancy_df.columns
     buildings_names = zone_occupancy_df.index
@@ -488,6 +529,13 @@ def calculate_cardinals(
         zone_occupancy_df,
         occupancy_types
 ):
+    """
+    get all occupancy types presented each building in a district
+    :param internal_loads_df:
+    :param zone_occupancy_df:
+    :param occupancy_types: occupancy types in each building
+    :return:
+    """
     occupancy_types_full_cardinal = internal_loads_df.shape[0]
     buildings_cardinal = zone_occupancy_df.shape[0]
     occupancy_types_cardinal = len(occupancy_types)
@@ -545,7 +593,12 @@ def calculate_mean_floor_height(
 
 
 def process_system_controls_file(system_controls_ini_df):
-    # This function extracts the data in a format that will be easier to handle afterwards.
+    """
+    This function extracts the data in a format that will be easier to handle afterwards.
+    :param system_controls_ini_df:
+    :return:
+    """
+
     heating_season_start_month = (
             int(system_controls_ini_df.loc[0]['heating-season-start'][0])
             * 10
