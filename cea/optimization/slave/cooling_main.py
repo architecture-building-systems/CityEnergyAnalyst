@@ -144,12 +144,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         UA_HEX_tank_charge_WperK = 0
         V_tank_m3 = 0
 
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Chiller")
     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                 sheetname="Absorption_chiller")
+                                                 sheet_name="Absorption_chiller")
     Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
     max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 

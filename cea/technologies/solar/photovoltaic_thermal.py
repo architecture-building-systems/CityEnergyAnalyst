@@ -620,7 +620,7 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     FIXME: handle multiple technologies when cost calculations are done
     """
     PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
-    PVT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+    PVT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="PV")
     technology_code = list(set(PVT_cost_data['code']))
     PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

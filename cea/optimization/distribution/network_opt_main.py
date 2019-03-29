@@ -60,7 +60,7 @@ class network_opt_main(object):
             pipe_length = edges_file['pipe length'].values
 
             for i in range(len(internal_diameter)):
-                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]

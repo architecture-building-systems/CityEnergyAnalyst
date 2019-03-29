@@ -114,7 +114,7 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     Capex_VCC_USD = 0
 
     if qcold_W > 0:
-        VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == technology_type]
         max_chiller_size = max(VCC_cost_data['cap_max'].values)
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

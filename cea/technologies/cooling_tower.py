@@ -94,7 +94,7 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
     Capex_CT_USD = 0.0
 
     if CT_size_W > 0:
-        CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
+        CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="CT")
         CT_cost_data = CT_cost_data[CT_cost_data['code'] == technology_type]
         max_chiller_size = max(CT_cost_data['cap_max'].values)
 

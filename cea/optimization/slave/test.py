@@ -3,7 +3,7 @@
 def main():
     import pandas as pd
 
-    data = pd.read_excel(r'C:\Users\JimenoF\Desktop/Admin data Sep.xlsx', sheetname='Admin Sep Raw data')
+    data = pd.read_excel(r'C:\Users\JimenoF\Desktop/Admin data Sep.xlsx', sheet_name='Admin Sep Raw data')
     index = pd.date_range('9/1/2016', periods=1392, freq='30min')
 
     series = pd.Series(data['KWH'].values, index=index)
