@@ -14,21 +14,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def generate_main(nBuildings, config):
+def generate_main(nBuildings):
 
-    if config.district_heating_network:
-        heating_network_block = [0] * nBuildings
-        for i in range(nBuildings):
-            choice_buildCon = random.randint(0, 1)
-            heating_network_block[i] = choice_buildCon
-        individual = heating_network_block
-
-    # DCN
-    if config.district_cooling_network:
-        cooling_network_block = [0] * nBuildings
-        for j in range(nBuildings):
-            choice_buildCon = random.randint(0, 1)
-            cooling_network_block[j] = choice_buildCon
-        individual = cooling_network_block
+    network_block = [0] * nBuildings
+    for i in range(nBuildings):
+        choice_buildCon = random.randint(0, 1)
+        network_block[i] = choice_buildCon
+    individual = network_block
 
     return individual
