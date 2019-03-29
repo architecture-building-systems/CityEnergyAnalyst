@@ -350,5 +350,5 @@ default:
   label: cooling case workflow
   description: Run the cooling case from start to end to test the cea
   interfaces: [cli]
-  module: cea.test.cooling_case_workflow
+  module: cea.tests.cooling_case_workflow
   parameters: []
