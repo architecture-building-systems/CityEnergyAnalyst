@@ -40,8 +40,11 @@ def initial_network(config, locator):
     input_buildings_shp = locator.get_electric_substation_input_location()
     output_substations_shp = locator.get_electric_substation_output_location()
     calc_substation_location(input_buildings_shp, output_substations_shp, [])
+    # connect building nodes to street
     points_on_line, tranches = gia.connect_building_to_grid(config, locator)
+    # write node types (consumer/plant) in the attribute table
     points_on_line_processed = gia.process_network(points_on_line, config, locator)
+    # get lengths of all edges
     dict_length, dict_path = gia.create_length_complete_dict(points_on_line_processed, tranches)
 
     return points_on_line_processed, tranches, dict_length, dict_path
