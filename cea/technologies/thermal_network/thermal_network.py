@@ -948,7 +948,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         A = edge_node_df.drop(edge_node_df.index[0], 0)  # solution matrix A without loop equations (kirchhoff 2)
         b_init = np.nan_to_num(mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], 1).transpose())
         # solution vector b of node demands
-        mass_flow_edge = np.linalg.lstsq(A, b_init)[0].transpose()[0]  # solve system
+        mass_flow_edge = np.linalg.lstsq(A, b_init, rcond=-1)[0].transpose()[0]  # solve system
 
         # setup iterations for implicit matrix solver
         tolerance = 0.01  # tolerance for mass flow convergence
@@ -1256,10 +1256,10 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     # ToDo: does not apply for looped networks
     edge_node_transpose = np.transpose(edge_node_df.values)
     pressure_nodes_supply__pa = np.round(
-        np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1))[0]),
+        np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1),rcond=-1)[0]),
         decimals=5)
     pressure_nodes_return__pa = np.round(
-        np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1))[0]),
+        np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1),rcond=-1)[0]),
         decimals=5)
     return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
            pressure_loss_total_kw, pressure_loss_pipes_kW[0], pressure_loss_substations_kW
