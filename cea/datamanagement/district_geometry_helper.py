@@ -4,21 +4,21 @@ This script extracts surrounding buildings of the zone geometry from Open street
 from __future__ import division
 from __future__ import print_function
 
+import math
 import os
 
+import numpy as np
 import osmnx as ox
+import shapely.geometry as geometry
 from geopandas import GeoDataFrame as Gdf
 from geopandas import overlay
-from shapely.ops import cascaded_union, polygonize
 from scipy.spatial import Delaunay
-import numpy as np
-import math
-import fiona
-import shapely.geometry as geometry
+from shapely.ops import cascaded_union, polygonize
+from cea.demand import constants
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -28,8 +28,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
 
 
 def alpha_shape(points, alpha):
@@ -51,8 +49,8 @@ def alpha_shape(points, alpha):
         if (i, j) in edges or (j, i) in edges:
             # already added
             return
-        edges.add( (i, j) )
-        edge_points.append(coords[ [i, j] ])
+        edges.add((i, j))
+        edge_points.append(coords[[i, j]])
 
     coords = np.array([point.coords[0] for point in points])
 
@@ -67,20 +65,20 @@ def alpha_shape(points, alpha):
         pc = coords[ic]
 
         # Lengths of sides of triangle
-        a = math.sqrt((pa[0]-pb[0])**2 + (pa[1]-pb[1])**2)
-        b = math.sqrt((pb[0]-pc[0])**2 + (pb[1]-pc[1])**2)
-        c = math.sqrt((pc[0]-pa[0])**2 + (pc[1]-pa[1])**2)
+        a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
+        b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
+        c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
 
         # Semiperimeter of triangle
-        s = (a + b + c)/2.0
+        s = (a + b + c) / 2.0
 
         # Area of triangle by Heron's formula
-        area = math.sqrt(s*(s-a)*(s-b)*(s-c))
-        circum_r = a*b*c/(4.0*area)
+        area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+        circum_r = a * b * c / (4.0 * area)
 
         # Here's the radius filter.
-        #print circum_r
-        if circum_r < 1.0/alpha:
+        # print circum_r
+        if circum_r < 1.0 / alpha:
             add_edge(edges, edge_points, coords, ia, ib)
             add_edge(edges, edge_points, coords, ib, ic)
             add_edge(edges, edge_points, coords, ic, ia)
@@ -91,7 +89,6 @@ def alpha_shape(points, alpha):
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
-    import matplotlib.pyplot as plt
     geometry_without_holes = zone_gdf.convex_hull
     geometry_without_holes_gdf = Gdf(geometry=geometry_without_holes.values)
     geometry_without_holes_gdf["one_class"] = "buildings"
@@ -99,9 +96,6 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     geometry_merged_final = Gdf(geometry=geometry_merged.convex_hull)
     new_buffer = Gdf(geometry=geometry_merged_final.buffer(buffer_m))
     area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
-    area.plot()
-    plt.show()
-    x=1
 
     # THIS IS ANOTHER METHOD, NOT FUNCTIONAL THOUGH
     # from shapely.ops import Point
@@ -121,7 +115,29 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     # area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
     # area.plot()
 
-    return area
+    return area, geometry_merged_final
+
+
+def clean_attributes(shapefile, buildings_height, buildings_floors):
+
+    #local variables
+    no_buildings = shapefile.shape[0]
+    if buildings_height is None and buildings_floors is None:
+        print('you have not indicated a height/numer of floors for the buildings surrounding your area of analysis, '
+              'we are reverting to data stored in Open Street Maps (It might not be accurrate at all')
+        data_osm_floors1 = shapefile['building:levels'].fillna(0)
+        data_osm_floors2 = shapefile['roof:levels'].fillna(0)
+        data_floors_sum = [x + y for x, y in zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
+        data_floors_sum_with_nan = [np.nan if x<=0.0 else x for x in data_floors_sum]
+        data_osm_floors_joined = math.ceil(np.nanmedian(data_floors_sum_with_nan)) #median so we get close to the worse case
+        shapefile["floors_ag"] = [x if x is not None else data_osm_floors_joined for x in shapefile['building:levels'].values]
+        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F  # average height per floor in m
+        shapefile["description"] = shapefile['addr:housename']
+        shapefile["type"] = shapefile['building']
+        shapefile["Name"] = ["CEA"+str(x+1000) for x in range(no_buildings)] #start in a big number to avoid potential confusion\
+
+        result = shapefile[["Name", "height_ag", "floors_ag", "description", "type", "geometry"]]
+    return result
 
 
 def geometry_extractor_osm(locator, config):
@@ -131,51 +147,34 @@ def geometry_extractor_osm(locator, config):
     """
 
     # local variables:
-    buffer_m = 100
+    buffer_m = config.district_helper.buffer
+    buildings_height = config.district_helper.height_ag
+    buildings_floors = config.district_helper.floors_ag
     shapefile_out_path = locator.get_district_geometry()
     zone = Gdf.from_file(locator.get_zone_geometry())
 
-    #trnasform zone file to geographic coordinates
+    # trnasform zone file to geographic coordinates
     zone = zone.to_crs(get_geographic_coordinate_system())
     lon = zone.geometry[0].centroid.coords.xy[0][0]
     lat = zone.geometry[0].centroid.coords.xy[1][0]
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
-    #get a polygon of the surrounding area
-    polygon = calc_surrounding_area(zone, buffer_m)
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer, area_zone_geometry = calc_surrounding_area(zone, buffer_m)
+    area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
+    area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
-    #get and clean the streets
-    data = ox.footprints.create_footprints_gdf(polygon=polygon)
+    # get and clean the streets
+    data = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
 
-    #project coordinate system
+    # project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
-    #clean data and save to shapefile
-    data.loc[:, "highway"] = [x[0] if type(x) == list else x for x in data["highway"].values]
-    data.loc[:, "name"] = [x[0] if type(x) == list else x for x in data["name"].values]
-    data.fillna(value="Unknown", inplace=True)
-    data[['geometry', "name", "highway"]].to_file(shapefile_out_path)
+    # clean attributes of height, name and number of floors
+    result = clean_attributes(data, buildings_height, buildings_floors)
 
-    ##THIS IS ONE METHOD KEEP IT JUST IN CASE. IT IS FUNCTIONAL, BUT LESS EFECTIVE THAN THE ONE ABOVE
-    # bounding_box = 'way(' + lat_min + ',' + lon_min + ',' + lat_max + ',' + lon_max + ')'
-    # query = bounding_box + '["highway"];(._;>;);out body;'
-    # api = overpy.Overpass()
-    # # fetch all ways and nodes
-    # result = api.query(query)
-    # schema = {'geometry': 'LineString', 'properties': {'Name': 'str:80'}}
-    # with fiona.open(shapefile_out_path, 'w', crs=crs,
-    #                 driver='ESRI Shapefile', schema=schema) as output:
-    #     for way in result.ways:
-    #         # the shapefile geometry use (lon,lat)
-    #         line = {'type': 'LineString', 'coordinates': [(node.lon, node.lat) for node in way.nodes]}
-    #         prop = {'Name': way.tags.get("name", "n/a")}
-    #         output.write({'geometry': line, 'properties': prop})
-    # #project coordinates
-    # data = Gdf.from_file(shapefile_out_path)
-    # data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))
-    # data.to_file(shapefile_out_path)
-
-    # get_projected_coordinate_system(float(lat_min), float(lon_min))
+    # save to shapefile
+    result.to_file(shapefile_out_path)
 
 
 def main(config):
