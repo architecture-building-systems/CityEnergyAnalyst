@@ -29,7 +29,7 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How to study building retrofits in the CEA?  <https://docs.google.com/presentation/d/1UNWl_XRJzXwKqV61DpQDC_i41pKmCgzdWaDcDVu7skU/edit?usp=sharing>`__.
 #. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__.
 #. :doc:`how-to-prepare-inputs-for-network-simulation`.
-#. :doc:`hot-to-run-thermal-network-optimization`.
+#. :doc:`how-to-run-thermal-network-optimization`.
 
 
 For developers
@@ -41,6 +41,7 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-create-user-stories`.
 #. :doc:`how-to-report-bugs`.
 #. :doc:`how-to-use-github`.
+#. :doc:`script-input-outputs`.
 #. :doc:`how-to-name-variables`.
 #. :doc:`how-to-add-a-new-script-to-the-cea`.
 #. :doc:`how-to-test-the-cea`.

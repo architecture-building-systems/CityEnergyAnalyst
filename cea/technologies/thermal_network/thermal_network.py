@@ -1,9 +1,7 @@
-from __future__ import print_function
-
 """
 Hydraulic - thermal network
 """
-
+from __future__ import print_function
 from __future__ import division
 import time
 import numpy as np
@@ -306,6 +304,7 @@ class ThermalNetwork(object):
 
         # The direction of flow is then corrected
         # keep track if there was a change for the iterative process
+        pd.options.mode.chained_assignment = None #avoid warnings of copies
         changed = [True] * node_mass_flows_df.shape[1]
         while any(changed):
             for i in range(node_mass_flows_df.shape[1]):

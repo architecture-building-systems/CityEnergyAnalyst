@@ -1,9 +1,9 @@
-from __future__ import print_function
-
 """
 Manage configuration information for the CEA. The Configuration class is built dynamically based on the type information
 in ``default.config``.
 """
+from __future__ import print_function
+
 import os
 import re
 import json
@@ -223,7 +223,7 @@ class Section(object):
         assert name == name.lower(), 'Section names must be lowercase'
         self.name = name
         self.config = config
-        self.parameters = collections.OrderedDict([(pn, construct_parameter(pn, self, config))
+        self.parameters = collections.OrderedDict([(pn.lower(), construct_parameter(pn.lower(), self, config))
                                                    for pn in config.default_config.options(self.name)
                                                    if not '.' in pn])
 
@@ -267,7 +267,7 @@ def construct_parameter(parameter_name, section, config):
     :param config: The Configuration instance this parameter belongs to
     :type config: Configuration
     """
-    assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase'
+    assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase: {}:{}'.format(parameter_name, section.name)
     try:
         parameter_type = config.default_config.get(section.name, parameter_name + '.type')
     except ConfigParser.NoOptionError:

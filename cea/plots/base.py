@@ -1,11 +1,9 @@
-from __future__ import division
-from __future__ import print_function
-
 """
-Implements base classes to derive plot classes from. The code in py:mod:`cea.plots.categories` uses 
+Implements base classes to derive plot classes from. The code in py:mod:`cea.plots.categories` uses
 py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category.
 """
-
+from __future__ import division
+from __future__ import print_function
 import os
 import plotly.graph_objs
 import plotly.offline
@@ -92,7 +90,9 @@ class PlotBase(object):
 
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
-        fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
+        graph = self.calc_graph()
+        layout = self.layout
+        fig = plotly.graph_objs.Figure(data=graph, layout=layout)
         plotly.offline.plot(fig, auto_open=auto_open, filename=self.output_path)
         print("Plotted %s to %s" % (self.name, self.output_path))
 

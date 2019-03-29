@@ -27,7 +27,7 @@ from cea.optimization.constants import  SIZING_MARGIN, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO
 import cea.technologies.pumps as pumps
 from math import log, ceil
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -71,7 +71,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     t0 = time.time()
-    lca = lca_calculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
     print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine

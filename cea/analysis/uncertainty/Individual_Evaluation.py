@@ -14,7 +14,7 @@ import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.evaluation as evaluation
 import json
 import csv
-from cea.optimization.lca_calculations import lca_calculations
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.prices import Prices as Prices
 
 
@@ -66,7 +66,7 @@ def individual_evaluation(generation, level, size, variable_groups):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = lca_calculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand,

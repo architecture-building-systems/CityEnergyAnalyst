@@ -1,5 +1,5 @@
 """
-This is the dashboard of CEA
+Show a Pareto curve plot for individuals in a given generation.
 """
 from __future__ import division
 from __future__ import print_function
@@ -7,18 +7,87 @@ from __future__ import print_function
 import numpy as np
 import plotly.graph_objs as go
 from plotly.offline import plot
-
+import cea.plots.optimization
 from cea.plots.variable_naming import LOGO, NAMING
 
 __author__ = "Bhargava Srepathi"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Bhargava Srepathi"]
+__credits__ = ["Bhargava Srepathi", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+    """Show a pareto curve for a single generation"""
+    name = "Pareto curve for a generation"
+
+    def __init__(self, project, parameters):
+        super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters)
+        self.analysis_fields = ['individual',
+                                'TAC_Mio',
+                                'total_emissions_kiloton',
+                                'total_prim_energy_TJ',
+                                'renewable_share_electricity',
+                                'Capex_total_Mio',
+                                'Opex_total_Mio']
+        self.objectives = ['TAC_Mio', 'total_emissions_kiloton', 'total_prim_energy_TJ']
+        self.data = self.preprocessing_multi_criteria_data()
+        # NOTE: self.layout is set during the call to calc_graph
+
+    @property
+    def title(self):
+        return 'Pareto curve for generation {generation}'.format(
+            generation=self.parameters['generation'])
+
+    @property
+    def output_path(self):
+        return self.locator.get_timeseries_plots_file('gen{generation}_pareto_curve'.format(generation=self.generation),
+                                                      self.category_name)
+
+    def calc_graph(self):
+        xs = self.data[self.objectives[0]].values
+        ys = self.data[self.objectives[1]].values
+        zs = self.data[self.objectives[2]].values
+        individual_names = self.data['individual'].values
+
+        xmin = min(xs)
+        ymin = min(ys)
+        zmin = min(zs)
+        xmax = max(xs)
+        ymax = max(ys)
+        zmax = max(zs)
+        ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
+                                      [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
+
+        graph = []
+        trace = go.Scatter(x=xs, y=ys, mode='markers', name='data', text=individual_names,
+                           marker=dict(size='12', color=zs,
+                                       colorbar=go.ColorBar(title='Primary Energy [TJ]', titleside='bottom'),
+                                       colorscale='Jet', showscale=True, opacity=0.8))
+        graph.append(trace)
+
+        # Insert scatter points of MCDA assessment.
+        _, table = calc_table(self.data, self.analysis_fields)
+        xs = table[self.objectives[0]].values
+        ys = table[self.objectives[1]].values
+        name = table["Attribute"].values
+        trace = go.Scatter(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
+                           marker=dict(size='20', color='white', line=dict(
+                               color='black',
+                               width=2)))
+        graph.append(trace)
+
+        self.layout = go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
+                                xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]', domain=[0, 1],
+                                           range=ranges_some_room_for_graph[0]),
+                                yaxis=dict(title='GHG emissions [kton CO2-eq]', domain=[0.3, 1.0],
+                                           range=ranges_some_room_for_graph[1]))
+        return graph
+
+
+# FIXME: the stuff below is legacy from the `cea plots-optimization` script
 
 def pareto_curve(data, objectives, analysis_fields, title, output_path):
     # CALCULATE GRAPH

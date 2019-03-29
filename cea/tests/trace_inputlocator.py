@@ -3,11 +3,8 @@ Trace the InputLocator calls in a selection of scripts.
 """
 import sys
 import os
-
 import cea.config
 import cea.api
-import pprint
-from collections import defaultdict
 from datetime import datetime
 from jinja2 import Template
 import cea.inputlocator
@@ -37,7 +34,7 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    trace_data = set()  # {(direction, script, locator_method, file)}
+    trace_data = set()  # {(direction, script, locator_method, path, file)}
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     for script_name in config.trace_inputlocator.scripts:
@@ -63,10 +60,13 @@ def main(config):
                 # remove "B01", "B02" etc. from filenames -> "BXX"
                 relative_filename = relative_filename.replace(building, '{BUILDING}')
             relative_filename = str(relative_filename)
+            file_path = os.path.dirname(relative_filename)
+            file_name = os.path.basename(relative_filename)
             if script_start < mtime:
-                trace_data.add(('output', script_name, locator_method, relative_filename))
+                trace_data.add(('output', script_name, locator_method, file_path, file_name))
             else:
-                trace_data.add(('input', script_name, locator_method, relative_filename))
+                trace_data.add(('input', script_name, locator_method, file_path, file_name))
+
 
     config.restricted_to = None
     create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
@@ -74,10 +74,36 @@ def main(config):
 
 
 def create_graphviz_output(trace_data, graphviz_output_file):
+    # creating new variable to preserve original trace_data used by other methods
+    tracedata = sorted(trace_data)
+
+    # replacing any relative paths outside the case dir with the last three dirs in the path
+    # this prevents long path names in digraph clusters
+    for i, (direction, script, method, path, file) in enumerate(tracedata):
+        if path.split('/')[0] == '..':
+            path = path.rsplit('/', 3)
+            del path[0]
+            path = '/'.join(path)
+            tracedata[i] = list(tracedata[i])
+            tracedata[i][3] = path
+            tracedata[i] = tuple(tracedata[i])
+
+    # set of unique scripts
+    scripts = sorted(set([td[1] for td in tracedata]))
+
+    # set of common dirs for each file accessed by the script(s)
+    db_group = sorted(set(td[3] for td in tracedata))
+
+    # float containing the node width for the largest file name
+    if max(len(td[4]) for td in tracedata)*0.113 > 3.5:
+        width = max(len(td[4]) for td in tracedata)*0.113
+    else:
+        width = 3.5
+
+    # jinja2 template setup and execution
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
-    scripts = sorted(set([td[1] for td in trace_data]))
-    digraph = template.render(trace_data=trace_data, scripts=scripts)
+    digraph = template.render(tracedata=tracedata, scripts=scripts, db_group=db_group, width=width)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
     with open(graphviz_output_file, 'w') as f:
@@ -89,9 +115,9 @@ def create_yaml_output(trace_data, yaml_output_file):
     import yaml
     scripts = sorted(set([td[1] for td in trace_data]))
     yml_data = {}  # script -> inputs, outputs
-    for direction, script, locator, file in trace_data:
+    for direction, script, locator, path, file in trace_data:
         yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
-        yml_data[script][direction].append((locator, file))
+        yml_data[script][direction].append((locator, path, file))
     for script in scripts:
         yml_data[script]['input'] = sorted(yml_data[script]['input'])
         yml_data[script]['output'] = sorted(yml_data[script]['output'])
