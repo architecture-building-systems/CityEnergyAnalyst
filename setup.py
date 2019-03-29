@@ -17,7 +17,8 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['SALib',
+INSTALL_REQUIRES = ['SALib=1.2',
+					'ephem',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',

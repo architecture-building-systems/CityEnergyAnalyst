@@ -1,3 +1,7 @@
+"""
+Databases verification
+This tool is used as to check the format of each database
+"""
 from __future__ import division
 from __future__ import print_function
 

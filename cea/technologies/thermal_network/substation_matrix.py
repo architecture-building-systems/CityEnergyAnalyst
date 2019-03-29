@@ -518,7 +518,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
         # nominal conditions network side
         cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
         tco_0 = Qnom / cc_0 + tci_0
-    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
+    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
     Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
 
@@ -550,7 +550,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
         # nominal conditions network side
         ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * eff)  # FIXME
         tho_0 = thi_0 - Qnom / ch_0
-    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
+    dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     return Area_HEX_heating, UA_heating
@@ -765,7 +765,7 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
     return Q, t_return, abs(mcp_return), abs(ch)
 
 
-def calc_dTm_HEX(thi, tho, tci, tco, flag):
+def calc_dTm_HEX(thi, tho, tci, tco):
     '''
     This function estimates the logarithmic temperature difference between two streams
 
@@ -782,10 +782,7 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
     if dT1 == dT2:
         dTm = dT1
     else:
-        if flag == 'heat':
-            dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
-        else:
-            dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
     return abs(dTm.real)
 
 
