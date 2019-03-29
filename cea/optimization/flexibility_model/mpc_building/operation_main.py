@@ -37,13 +37,19 @@ def operation(locator, config):
 
     time_start = config.mpc_building.time_start
     time_end = config.mpc_building.time_end
+    # build linear model based on set points in cea/ constant_temperature/ or set-point & set-back temperatures
     set_temperature_goal = config.mpc_building.set_temperature_goal
+    # specify the temperature for set_temperature_goal = constant_temperature
     constant_temperature = config.mpc_building.constant_temperature
-    pricing_scheme = config.mpc_building.pricing_scheme
+    pricing_scheme = config.mpc_building.pricing_scheme # constant or dynamic prices
+    # specify the el. price for pricing_scheme = constant_price
     constant_price = config.mpc_building.constant_price
+    ## specify temperature control strategies
     min_max_source = config.mpc_building.min_max_source
+    # specify temperature range if min_max_source = constant
     min_constant_temperature = config.mpc_building.min_constant_temperature
     max_constant_temperature = config.mpc_building.max_constant_temperature
+    # specify allowable temperature difference from the set/set-back temperatures if min_max_source = occupancy
     delta_set = config.mpc_building.delta_set
     delta_setback = config.mpc_building.delta_setback
 
@@ -52,8 +58,8 @@ def operation(locator, config):
     time_step_ts = TIME_STEP_TS
     solver_name = SOLVER_NAME
     time_limit = TIME_LIMIT
-    alpha = ALPHA
-    beta = BETA
+    alpha = ALPHA # factor for electricity cost, normally "1"
+    beta = BETA # factor for penalty of violating the set-points
 
     t0 = time.clock()
     date_main = datetime.datetime.now()
@@ -198,6 +204,8 @@ def get_optimization_inputs(locator, weather_path,
                            )
 
     print('Processing: Create building state space models')
+    # get the original set-points and the corresponding cooling demands of all zones
+    # these are the input to create linearized cooling demand model of each zone in each building
     buildings_dic = {}
     for building in buildings_names:
         # Update database from CSV files
@@ -214,6 +222,7 @@ def get_optimization_inputs(locator, weather_path,
         building_utils.calculate_irradiation_surfaces(conn, weather_type='Create-Singaproe', irradiation_model='disc')
         # TODO: Automatically take first existing weather type
 
+        # get linearized cooling demand models for all zones in a building
         building_scenario_name = scenario + '/' + building
         buildings_dic[building] = Building(conn, building_scenario_name)
         conn.close()

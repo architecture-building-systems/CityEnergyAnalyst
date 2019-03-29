@@ -30,9 +30,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+# create fitness function for minimization
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
+# the optimization will start from the same set of individuals if random_seed is specified
 random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
@@ -50,7 +52,6 @@ def objective_function(individual, individual_number, locator, config, building_
     # run optimization for electric network (all buildings connected)
     m, dict_connected = electric_network_optimization(locator, building_names, config, generation, individual,
                                                       network_number=individual_number)
-    #save the network in a shapefile
 
     total_annual_cost, total_annual_capex, total_annual_opex = thermal_network_calculations(m, dict_connected, locator,
                                                                                             individual, config,
@@ -87,13 +88,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
 
     toolbox = base.Toolbox()
 
-    toolbox.register("generate", generate_main, nBuildings, config)
+    toolbox.register("generate", generate_main, nBuildings)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function_wrapper)
-    toolbox.register("select", tools.selNSGA2)
-    toolbox.register("mate", tools.cxTwoPoint)
-    toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+    toolbox.register("select", tools.selNSGA2) # default function from deap toolbox
+    toolbox.register("mate", tools.cxTwoPoint) # default function from deap toolbox
+    toolbox.register("mutate", tools.mutFlipBit, indpb=0.05) # default function from deap toolbox
 
     # Initialization of variables
     DHN_network_list = ["1" * nBuildings]
@@ -113,6 +114,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, config):
     columns_of_saved_files.append('CAPEX Total')
     columns_of_saved_files.append('OPEX Total')
 
+    # gathers some stats for future analysis
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     # stats.register("avg", numpy.mean, axis=0)
     # stats.register("std", numpy.std, axis=0)

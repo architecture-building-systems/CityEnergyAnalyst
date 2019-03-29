@@ -27,13 +27,23 @@ def electric_network_optimization(locator, building_names, config, generation, i
     for i in range(len(building_names)):
         dict_connected[i] = individual[i]
 
-    # the reason why we send disconnected buiuldings is to calculate the demand of the grid. THis will influence the size of the electrical lines
-    # This algortihm will always connect all buildings to the electrical grid.
+    # Optimize the line type, substation locations, routes of electrical grid
     m = electrical_grid_calculations(dict_connected, config, locator, network_number, generation)
     return m, dict_connected
 
 
 def electrical_grid_calculations(dict_connected, config, locator, network_number, generation):
+    """
+    The reason why we send disconnected buildings is to calculate the electricity demand on the grid. This will
+    influence the size of the electrical lines.
+    All buildings are connected to the electrical grid.
+    :param dict_connected:
+    :param config:
+    :param locator:
+    :param network_number:
+    :param generation:
+    :return:
+    """
     # ============================
     # Solve Problem
     # ============================
@@ -50,18 +60,14 @@ def electrical_grid_calculations(dict_connected, config, locator, network_number
               symbolic_solver_labels=True
               )
 
-    # for i in xrange(100):
-    #     parameter = i
-    #     instance = create_model(parameter)
-    #     opt.solve(instance)
+    m.display()  # Display the results
 
-    # m.display()  # Display the results
-    #
-    # # Print objective function values
-    # for cost_type in [m.var_costs.values()][0]:
-    #     print cost_type, cost_type.value
-    # print '\n'
+    # Print objective function values
+    for cost_type in [m.var_costs.values()][0]:
+        print cost_type, cost_type.value
+    print '\n'
 
+    ## select which plots to generate
     # pf.plot_network_on_street(m, config, locator, network_number, generation)
     pf.plot_complete(m, config, locator, network_number, generation)
     # pf.plot_network(m, config, locator, network_number, generation)
@@ -70,10 +76,12 @@ def electrical_grid_calculations(dict_connected, config, locator, network_number
 
 
 if __name__ == '__main__':
+    # example with 10 buildings
     dict_connected = {0: 1, 1: 1, 2: 0,
                       3: 1, 4: 0, 5: 1,
                       6: 0, 7: 1, 8: 1,
                       9: 1}
+    # example with 24 buildings
     dict_connected = {0: 1, 1: 1, 2: 0,
                       3: 1, 4: 0, 5: 1,
                       6: 0, 7: 1, 8: 1,
@@ -82,12 +90,6 @@ if __name__ == '__main__':
                       15: 1, 16: 1, 17: 1,
                       18: 1, 19: 1, 20: 1,
                       21: 1, 22: 1, 23: 1}
-    #                        , 10: 1, 11: 1,
-    #                   12: 1, 13: 1, 14: 1,
-    #                   15: 1, 16: 1, 17: 1,
-    #                   18: 1, 19: 1, 20: 1,
-    #                   21: 1, 22: 1, 23: 1,
-    #                   }
 
     t0 = time.clock()
     config = cea.config.Configuration()

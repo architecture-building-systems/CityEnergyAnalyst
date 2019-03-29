@@ -27,6 +27,7 @@ __status__ = "Production"
 
 def thermal_network_calculations(m, dict_connected, locator, individual, config, network_number, building_names, generation):
 
+    # names of the .shp files
     electrical_grid_file_name = 'electrical_grid'
     thermal_network_file_name = 'electrical_grid_as_streets'
     default_streets_file_name = 'streets'
