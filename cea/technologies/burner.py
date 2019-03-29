@@ -102,7 +102,7 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
 
     if Q_design_W > 0:
 
-        boiler_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Boiler")
+        boiler_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Boiler")
         boiler_cost_data = boiler_cost_data[boiler_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database

@@ -29,7 +29,7 @@ def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
 
     """
     if V_tank_m3 > 0:
-        storage_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="TES")
+        storage_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="TES")
         storage_cost_data = storage_cost_data[storage_cost_data['code'] == technology_type]
 
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
