@@ -40,10 +40,11 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
 
     process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
 
-
+    #override flags of thermal_network main
+    network_type = config.electrical_thermal_optimization.network_type
+    config.thermal_network.network_type = network_type
     thermal_network.main(config)
 
-    network_type = config.thermal_network.network_type
     gv = cea.globalvar.GlobalVariables()
     network_info = thermal_network_costs.Thermal_Network(locator, config, network_type, gv)
     disconnected_buildings_index = []
@@ -93,11 +94,11 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
     cost_output.to_csv(
-        locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number,
+        locator.get_optimization_network_layout_costs_file_concept(network_type, network_number,
                                                                    generation))
 
     print (
-        locator.get_optimization_network_layout_costs_file_concept(config.thermal_network.network_type, network_number,
+        locator.get_optimization_network_layout_costs_file_concept(network_type, network_number,
                                                                    generation))
     print total_annual_cost, total_annual_capex, total_annual_opex
 
