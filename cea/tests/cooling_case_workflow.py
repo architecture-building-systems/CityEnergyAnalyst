@@ -32,7 +32,7 @@ def main():
     config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
     config.region = 'SG'
     config.weather = 'Singapore'
-    config.district_cooling_network = False
+    config.district_cooling_network = True
     config.thermal_network.network_type = 'DC'
 
     config_file = os.path.join(config.scenario, 'cea.config')
