@@ -15,6 +15,7 @@ from geopandas import overlay
 from scipy.spatial import Delaunay
 from shapely.ops import cascaded_union, polygonize
 from cea.demand import constants
+import matplotlib.pyplot as plt
 
 import cea.config
 import cea.inputlocator
@@ -115,7 +116,7 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     # area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
     # area.plot()
 
-    return area, geometry_merged_final
+    return area
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors):
@@ -129,15 +130,23 @@ def clean_attributes(shapefile, buildings_height, buildings_floors):
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x<=0.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = math.ceil(np.nanmedian(data_floors_sum_with_nan)) #median so we get close to the worse case
-        shapefile["floors_ag"] = [x if x is not None else data_osm_floors_joined for x in shapefile['building:levels'].values]
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F  # average height per floor in m
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan))) #median so we get close to the worse case
+        shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in shapefile['building:levels'].values]
+        shapefile["floors_bg"] = [0]*no_buildings #no info about
+        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        shapefile["height_bg"] = shapefile["floors_bg"] * constants.H_F  # average height per floor in m
         shapefile["description"] = shapefile['addr:housename']
         shapefile["type"] = shapefile['building']
         shapefile["Name"] = ["CEA"+str(x+1000) for x in range(no_buildings)] #start in a big number to avoid potential confusion\
-
-        result = shapefile[["Name", "height_ag", "floors_ag", "description", "type", "geometry"]]
+        result = shapefile[["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "type", "geometry"]]
     return result
+
+def erase_no_surrounding_areas(all_district, area_buffer):
+    polygon = area_buffer.geometry[0]
+    all_district.within(polygon)
+    subset = all_district[all_district.within(polygon)]
+    return subset
+
 
 
 def geometry_extractor_osm(locator, config):
@@ -160,18 +169,19 @@ def geometry_extractor_osm(locator, config):
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
-    area_with_buffer, area_zone_geometry = calc_surrounding_area(zone, buffer_m)
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
     area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
     area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
-    # get and clean the streets
-    data = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
+    # get footprints of all the district
+    all_district = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
 
-    # project coordinate system
-    data = data.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    # erase overlapping area
+    district = erase_no_surrounding_areas(all_district, area_with_buffer)
 
     # clean attributes of height, name and number of floors
-    result = clean_attributes(data, buildings_height, buildings_floors)
+    result = clean_attributes(district, buildings_height, buildings_floors)
+    result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save to shapefile
     result.to_file(shapefile_out_path)
