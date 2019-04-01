@@ -396,9 +396,10 @@ def main(dict_connected, config, locator):
 
     # Cost types
     cost_types = [
-        'inv_electric',  # investment costs for electric network
-        # 'om_electric',  # operation and maintenance cost for electric network
-        # 'losses',  # cost for power losses in lines
+        # Select cost types that you wish to include in the objective function
+        'inv_electric',  # annual investment costs of electric lines, substations, and transformers
+        'om_electric',  # operation and maintenance cost for electric network
+        'losses',  # cost for power losses in lines
     ]
 
     # ============================
