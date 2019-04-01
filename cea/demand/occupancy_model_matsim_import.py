@@ -7,7 +7,6 @@ import cea.inputlocator
 import cea.config
 from cea.demand.transportation.matsim_data_import import FACILITY_TYPES
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Martin Mosteiro"]
@@ -24,6 +23,7 @@ PERSON_SCHEDULES = ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']
 ELECTRICAL_SCHEDULES = ['Ea_Wm2', 'El_Wm2']
 OTHER_SCHEDULES = ['Epro_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2']
 MU_V = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67] # vector of mobility parameters for stochastic occupancy simulation from Sandoval (2015)
+VACATION_WEEKS = 5.14
 
 
 def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_stochastic_occupancy):
@@ -87,17 +87,19 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                     for facility in FACILITY_TYPES[user_type]:
                         if np.sum(pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) > 0:
                             number_of_people = np.int(bpr.occupancy[facility] / np.sum(
-                                pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) * len(
-                                all_schedules[user_type]))
+                                pd.Series(bpr.occupancy)[FACILITY_TYPES[user_type]]) * len(all_schedules[user_type]))
                         else:
                             number_of_people = 0
                         for person in range(first, number_of_people):
+                            person_schedule = all_schedules[user_type][np.random.randint(first, number_of_people)]
                             if facility != 'HOSPITAL':
-                                occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
+                                # occupant_schedule = [np.array(all_schedules[user_type][person]), np.zeros(24), np.zeros(24)]
+                                occupant_schedule = [np.array(person_schedule), np.zeros(24), np.zeros(24)]
                             else:
-                                occupant_schedule = [np.array(all_schedules[user_type][person])] * 3
-                            yearly_schedule = get_yearly_occupancy(dates, occupant_schedule,
-                                                                   all_schedules['HOSPITAL']['monthly'])
+                                # occupant_schedule = [np.array(all_schedules[user_type][person])] * 3
+                                occupant_schedule = [np.array(person_schedule)] * 3
+                            yearly_schedule = get_yearly_occupancy_single_person(dates, occupant_schedule,
+                                                                                 all_schedules[facility]['monthly'])
                             building_schedules = add_occupant_schedules(building_schedules, yearly_schedule,
                                                                         archetype_values.loc[facility])
                             building_schedules = add_appliance_schedules(building_schedules,
@@ -105,14 +107,14 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                                                                          archetype_values.loc[facility],
                                                                          np.min(all_schedules[facility]['electricity']))
                         building_schedules = add_lighting_schedules(building_schedules, dates, all_schedules[facility],
-                                                                       archetype_values.loc[facility],
-                                                                       bpr.rc_model['Aef'] * bpr.occupancy[facility])
+                                                                   archetype_values.loc[facility],
+                                                                   bpr.rc_model['Aef'] * bpr.occupancy[facility])
                         # building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[facility],
                         #                                                archetype_values.loc[facility],
                         #                                                bpr.rc_model['Aef'] * bpr.occupancy[facility])
                         if facility == 'HOSPITAL':
                             hospital_employees = number_of_people
-                    first += number_of_people
+                        first += number_of_people
                 else:
                     number_of_people = np.int(bpr.rc_model['NFA_m2'] * bpr.occupancy['HOSPITAL'] *
                                               archetype_values.loc['HOSPITAL', 'people'] - hospital_employees)
@@ -689,6 +691,61 @@ def get_yearly_occupancy(dates, daily_schedules, month_schedule):
 
     return occ, dhw
 
+def number_of_weeks_unoccupied(month_schedule):
+    days_per_month = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10:31, 11: 30, 12: 31}
+    number_of_weeks = 0.0
+    for month in days_per_month.keys():
+        number_of_weeks += (1 - month_schedule[month - 1]) * days_per_month[month] / 7.0
+
+    return number_of_weeks
+
+def get_yearly_occupancy_single_person(dates, daily_schedules, month_schedule):
+    occ, dhw = ([] for i in range(2))
+    standard_absence = number_of_weeks_unoccupied(month_schedule)
+
+    if daily_schedules[0].sum() != 0:
+        dhw_weekday_max = daily_schedules[0].sum() ** -1
+    else:
+        dhw_weekday_max = 0
+
+    if daily_schedules[1].sum() != 0:
+        dhw_sat_max = daily_schedules[1].sum() ** -1
+    else:
+        dhw_sat_max = 0
+
+    if daily_schedules[2].sum() != 0:
+        dhw_sun_max = daily_schedules[2].sum() ** -1
+    else:
+        dhw_sun_max = 0
+
+    long_absence = False
+    absences = []
+    for date in dates:
+        month_year = month_schedule[date.month - 1]
+        hour_day = date.hour
+        dayofweek = date.dayofweek
+        if not np.isclose(standard_absence, 0.0):
+            if date.dayofweek == 1 and date.hour == 0:
+                if np.random.random() < (1 - month_year) * VACATION_WEEKS / standard_absence:
+                    long_absence = True
+                    absences.append(date)
+                else:
+                    long_absence = False
+        if not long_absence:
+            if 0 <= dayofweek < 5:  # weekday
+                occ.append(daily_schedules[0][hour_day])  # * month_year)
+                dhw.append(daily_schedules[0][hour_day] * dhw_weekday_max)  # * month_year) # normalized dhw demand flow rates
+            elif dayofweek is 5:  # saturday
+                occ.append(daily_schedules[1][hour_day])  # * month_year)
+                dhw.append(daily_schedules[1][hour_day] * dhw_sat_max)  # * month_year)  # normalized dhw demand flow rates
+            else:  # sunday
+                occ.append(daily_schedules[2][hour_day])  # * month_year)
+                dhw.append(daily_schedules[2][hour_day] * dhw_sun_max)  # * month_year) # normalized dhw demand flow rates
+        else:  # long absence
+            occ.append(0.0)
+            dhw.append(0.0)  # normalized dhw demand flow rates
+
+    return occ, dhw
 
 def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
     """
