@@ -35,6 +35,7 @@ INSTALL_REQUIRES = ['SALib==1.2',
                     'setuptools',
                     'sphinx',
                     'twine',
+                    'timezonefinder',
                     'utm',
                     'xlrd',
                     'xlwt']

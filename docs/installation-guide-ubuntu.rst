@@ -3,7 +3,8 @@
 Installation guide for Ubuntu
 =============================
 
-Follow these instructions to install the CEA on a Linux system (tested with Ubuntu 16.04 LTS)
+Follow these instructions to install the CEA on a Linux system (feedback on these steps are welcome, they are based
+on experiences writing a Dockerfile and there might be some updates for actually installing on a Desktop system)
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -18,6 +19,18 @@ Prerequisites
   - ``apt-get install git``
 
 #. Download and install `Daysim <https://daysim.ning.com/page/download>`__.
+  - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``
+  - ``mkdir build``
+  - ``cd build``
+  - (if you don't have cmake installed, you can use ``apt-get install cmake`` to install it. Other packages that might
+    be of interest are: ``apt-get install build-essential libgl1-mesa-dev freeglut3-dev`)
+  - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install``
+  - copy the ``CMakeLists.txt`` file from the ``docker`` folder in the CityEnergyAnalyst
+    repository (see below) to the Daysim repository and run
+  - (from the ``build`` directory created above)
+  - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim``
+  - ``make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* $HOME/Daysim/bin``
+  - Daysim is now installed in the folder ``~/Daysim/bin``
 
 Installation
 ~~~~~~~~~~~~
@@ -33,9 +46,5 @@ home directory (``~``):
 - create the conda environment: ``conda env create --file environment.ubuntu.yml``
 - activate the conda environment: ``source activate cea``
 - install the CEA to the conda environment: ``pip install -e .``
-- add this to your environment: ``export MKL_THREADING_LAYER=GNU``
-
-  - either type that out every time before you start using the CEA or add it to your ``~/.bashrc``
-
 - test the CEA: ``cea test``
 
