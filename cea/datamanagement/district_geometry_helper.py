@@ -14,11 +14,10 @@ from geopandas import GeoDataFrame as Gdf
 from geopandas import overlay
 from scipy.spatial import Delaunay
 from shapely.ops import cascaded_union, polygonize
-from cea.demand import constants
-import matplotlib.pyplot as plt
 
 import cea.config
 import cea.inputlocator
+from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -120,33 +119,64 @@ def calc_surrounding_area(zone_gdf, buffer_m):
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors):
-
-    #local variables
+    # local variables
     no_buildings = shapefile.shape[0]
+    list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
         print('you have not indicated a height/numer of floors for the buildings surrounding your area of analysis, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurrate at all')
+              'we are reverting to data stored in Open Street Maps (It might not be accurate at all, Warning!, '
+              'if we do not find data in OSM we asume 3 floors and 1 roof in every building')
+
+        # Check which attributes the OSM has, Sometimes it does not have any.
+        if 'building:levels' not in list_of_columns:
+            shapefile['building:levels'] = [3] * no_buildings
+        if 'roof:levels' not in list_of_columns:
+            shapefile['roof:levels'] = [1] * no_buildings
+
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x<=0.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan))) #median so we get close to the worse case
-        shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in shapefile['building:levels'].values]
-        shapefile["floors_bg"] = [0]*no_buildings #no info about
+        data_floors_sum = [x + y for x, y in
+                           zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
+        data_floors_sum_with_nan = [np.nan if x <= 0.0 else x for x in data_floors_sum]
+        data_osm_floors_joined = int(
+            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
+                                  shapefile['building:levels'].values]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-        shapefile["height_bg"] = shapefile["floors_bg"] * constants.H_F  # average height per floor in m
+    elif buildings_height is None and buildings_floors is not None:
+        shapefile["floors_ag"] = [buildings_floors] * no_buildings
+        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+    elif buildings_height is not None and buildings_floors is None:
+        shapefile["height_ag"] = [buildings_height] * no_buildings
+        shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+    else:  # both are not none
+        shapefile["height_ag"] = [buildings_height] * no_buildings
+        shapefile["floors_ag"] = [buildings_floors] * no_buildings
+
+    #add description
+    if "description" in list_of_columns:
+        shapefile["description"] = shapefile['description']
+    elif 'addr:housename' in list_of_columns:
         shapefile["description"] = shapefile['addr:housename']
-        shapefile["type"] = shapefile['building']
-        shapefile["Name"] = ["CEA"+str(x+1000) for x in range(no_buildings)] #start in a big number to avoid potential confusion\
-        result = shapefile[["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "type", "geometry"]]
+    elif 'amenity' in list_of_columns:
+        shapefile["description"] = shapefile['amenity']
+    else:
+        shapefile["description"] = [np.nan]*no_buildings
+
+    shapefile["type"] = shapefile['building']
+    shapefile["Name"] = ["CEA" + str(x + 1000) for x in
+                         range(no_buildings)]  # start in a big number to avoid potential confusion\
+    result = shapefile[
+        ["Name", "height_ag", "floors_ag", "description", "type", "geometry"]]
+
     return result
+
 
 def erase_no_surrounding_areas(all_district, area_buffer):
     polygon = area_buffer.geometry[0]
     all_district.within(polygon)
     subset = all_district[all_district.within(polygon)]
     return subset
-
 
 
 def geometry_extractor_osm(locator, config):
@@ -177,7 +207,7 @@ def geometry_extractor_osm(locator, config):
     all_district = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
 
     # erase overlapping area
-    district = erase_no_surrounding_areas(all_district, area_with_buffer)
+    district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
 
     # clean attributes of height, name and number of floors
     result = clean_attributes(district, buildings_height, buildings_floors)
