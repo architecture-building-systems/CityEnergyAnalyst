@@ -47,7 +47,7 @@ def create_new_project(locator, config):
     # apply coordinate system of terrain into zone and save zone to disk.
     terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
     driver = gdal.GetDriverByName('GTiff')
-    verify_input_terrain(driver, locator.get_terrain(), terrain)
+    verify_input_terrain(terrain)
     driver.CreateCopy(locator.get_terrain(), terrain)
 
     # now create the district file if it does not exist
