@@ -28,6 +28,20 @@ Data Management:
   module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
+- name: district-helper
+  label: District helper
+  description: Query district geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.district_helper
+  parameters: ['general:scenario', district-helper]
+
+- name: streets-helper
+  label: Streets helper
+  description: Query streets geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.streets_helper
+  parameters: ['general:scenario', streets-helper]
+
 - name: data-helper
   label: Data helper
   description: Query characteristics of buildings and systems from statistical data
