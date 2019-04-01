@@ -49,6 +49,27 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df):
         raise Exception('one of more buildings have a negative floor below ground. This is not possible'
                         'to simulate in CEA at the moment. Please verify your Zone or District file')
 
+def assert_input_geometry_acceptable_values_floor_height_district(district_df):
+
+    # Rule 0. nothing can be negative
+    rule0 = district_df.where(district_df < 0.0).any().any()
+    if rule0:
+        raise Exception('There are negative values in your geometry. This is not possible to simulate in CEA at the moment'
+                        ' Please verify your Zone or District shapefile file')
+
+    # Rule 1. Floors above ground cannot be less than 1 or negative.
+    rule1_1 = district_df['floors_ag'].where(district_df['floors_ag'] < 1).any()
+    rule1_2 = district_df['height_ag'].where(district_df['height_ag'] < 1.0).any()
+    if rule1_1 or rule1_2:
+        raise Exception('one of more buildings have less than one floor above ground or the height above ground is less than 1 meter.'
+                        ' This is not possible to simulate in CEA at the moment. Please verify your Zone or District shapefile file')
+
+    # Rule 2. Where floor height is less than 1m on average above ground.
+    district_df['rule2'] = district_df['height_ag'] / district_df['floors_ag']
+    rule2 = district_df['rule2'].where(district_df['rule2'] <= 1.0).any()
+    if rule2:
+        raise Exception('one of more buildings have less report less than 1m height per floor. This is not possible'
+                        'to simulate in CEA at the moment. Please verify your Zone or District shapefile file')
 
 def verify_input_geometry_zone(zone_df):
 
@@ -64,7 +85,7 @@ def verify_input_geometry_district(district_df):
     assert_columns_names(district_df, COLUMNS_DISTRICT_GEOMETRY)
 
     # Verification 2. verify if the floor_height ratio is correct
-    assert_input_geometry_acceptable_values_floor_height(district_df)
+    assert_input_geometry_acceptable_values_floor_height_district(district_df)
 
 def verify_input_occupancy(occupancy_df):
 
