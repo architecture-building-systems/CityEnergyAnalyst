@@ -53,7 +53,6 @@ def geometry_extractor_osm(locator, config):
         lat_min = bounding_box_district_file[1]
         lon_max = bounding_box_district_file[2]
         lat_max = bounding_box_district_file[3]
-        crs = get_geographic_coordinate_system()
     elif len(list_of_bounding_box) == 4:
         print("generating streets from your bounding box")
         # the list is not empty, the user has indicated a specific set of coordinates
