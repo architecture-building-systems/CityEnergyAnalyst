@@ -21,19 +21,25 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(_):
-    working_dir = os.path.join(tempfile.gettempdir(),
+def main(config):
+    if not config.cooling_case_workflow.scenario:
+        working_dir = os.path.join(tempfile.gettempdir(),
                                datetime.datetime.now().strftime('%Y-%d-%m-%H-%M-%S-cooling-case-workflow'))
-    os.mkdir(working_dir)
-    cea.api.extract_reference_case(destination=working_dir, case='cooling')
-    print('-' * 80)
+        os.mkdir(working_dir)
+        cea.api.extract_reference_case(destination=working_dir, case='cooling')
+        print('-' * 80)
 
-    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
-    config.region = 'SG'
-    config.weather = 'Singapore'
-    config.district_cooling_network = True
-    config.thermal_network.network_type = 'DC'
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
+        config.region = 'SG'
+        config.weather = 'Singapore'
+        config.district_cooling_network = True
+        config.thermal_network.network_type = 'DC'
+    else:
+        # load the saved config
+        workflow_scenario = config.cooling_case_workflow.scenario
+        config = cea.config.Configuration(os.path.join(workflow_scenario, 'cea.config'))
+        config.scenario = workflow_scenario
 
     config_file = os.path.join(config.scenario, 'cea.config')
     config.save(config_file)
@@ -44,30 +50,42 @@ def main(_):
         f(config=config, **kwargs)
         print('-' * 80)
 
-    run('data-helper')
-    run('radiation-daysim')
-    run('demand')
-    run('emissions')
-    run('operation-costs')
-    run('network-layout', network_type='DC')
-    run('lake-potential')
-    run('sewage-potential')
-    run('photovoltaic')
-    run('solar-collector', type_scpanel='FP')
-    run('solar-collector', type_scpanel='ET')
-    run('photovoltaic-thermal', type_scpanel='FP')
-    run('photovoltaic-thermal', type_scpanel='ET')
-    run('thermal-network')
-    run('decentralized')
-    run('thermal-network-optimization')  # FIXME: what is this?!
-    run('optimization')
-    run('multi-criteria-analysis')
-    run('plots', network_type='DC')
-    run('plots-supply-system', network_type='DC')
-    run('plots-optimization', network_type='DC')
+    scripts_to_run = [
+        ('data-helper', {}),
+        ('radiation-daysim', {}),
+        ('demand', {}),
+        ('emissions', {}),
+        ('operation-costs', {}),
+        ('network-layout', {'network_type': 'DC'}),
+        ('lake-potential', {}),
+        ('sewage-potential', {}),
+        ('photovoltaic', {}),
+        ('solar-collector', {'type_scpanel': 'FP'}),
+        ('solar-collector', {'type_scpanel': 'ET'}),
+        ('photovoltaic-thermal', {'type_scpanel': 'FP'}),
+        ('photovoltaic-thermal', {'type_scpanel': 'ET'}),
+        ('thermal-network', {'network_type': 'DC'}),
+        ('decentralized', {}),
+        ('thermal-network-optimization', {'network_type': 'DC'}),
+        ('optimization', {}),
+        ('multi-criteria-analysis', {}),
+        ('plots', {'network_type': 'DC'}),
+        ('plots-supply-system', {'network_type': 'DC'}),
+        ('plots-optimization', {'network_type': 'DC'}),
+        ]
+
+    # skip steps already performed
+    scripts_to_run = scripts_to_run[config.cooling_case_workflow.last:]
+
+    for script, kwargs in scripts_to_run:
+        start_time = datetime.datetime.now()
+        run(script, **kwargs)
+        print("Execution time: %.2fs" % (datetime.datetime.now() - start_time).total_seconds())
+        config.cooling_case_workflow.last += 1
+        config.save(config_file)
 
     print('done.')
 
 
 if __name__ == '__main__':
-    main(None)
+    main(cea.config.Configuration())

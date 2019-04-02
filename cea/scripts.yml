@@ -216,7 +216,8 @@ Thermal networks:
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.thermal_network_optimization
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization',
+               'network-layout:network-type']
 
 
 Utilities:
@@ -351,4 +352,4 @@ default:
   description: Run the cooling case from start to end to test the cea
   interfaces: [cli]
   module: cea.tests.cooling_case_workflow
-  parameters: ['general:scenario']
+  parameters: ['cooling-case-workflow:scenario']
