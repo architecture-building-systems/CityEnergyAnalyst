@@ -28,7 +28,7 @@ Data Management:
   module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
-- name: terrain-helper
+- name: terrain-hel§per
   label: Terrain helper
   description: Creates a fixed elevation terrain file (good for most applications)
   interfaces: [cli, arcgis, dashboard]
@@ -39,7 +39,7 @@ Data Management:
   label: District helper
   description: Query district geometry from Open Street Maps
   interfaces: [cli, arcgis, dashboard]
-  module: cea.datamanagement.district_helper
+  module: cea.datamanagement.district_geometry_helper
   parameters: ['general:scenario', district-helper]
 
 - name: streets-helper
