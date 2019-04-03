@@ -17,10 +17,10 @@ Prerequisites
 -------------
 #. Install the license of Gurobi in your computer. you can obtain one in gurobi.com for free for academic purposes.
 #. Add Gurobi package to the cea environment
-   - do conda env update
-   - do activate cea
-   - do grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-     (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
+   #.open anaconda
+   #.do ``conda env update``
+   #.do ``activate cea``
+   #.do ``grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`` (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
 #. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
 
 
@@ -33,6 +33,13 @@ Steps
 
 Outputs
 -------
+In the evaluation of each individual, all the following aspects of thermal network and electricity grid design are saved.
+The results can be found in ``...scenario\outputs\electrical_and_thermal_network\optimization``
+
+Individuals
+^^^^^^^^^^^
+The individuals generated are saved in `scenario\outputs\electrical_and_thermal_network\optimization\slave\geneneration_number`.
+
 Thermal Network Design
 ^^^^^^^^^^^^^^^^^^^^^^
 #. Buildings connected to thermal networks
@@ -49,8 +56,14 @@ Electricity Grid Design
 
 
 
+Check Points
+^^^^^^^^^^^^
+When the optimization is interrupted, the intermediate results can be found in ```scenario\outputs\electrical_and_thermal_network\optimization\master``
+
+
 Calculation flowchart
 ---------------------
+
 .. image:: flowchart_thermal_electric_network_planning.png
     :align: center
 
