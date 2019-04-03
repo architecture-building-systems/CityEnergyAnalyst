@@ -80,6 +80,7 @@ def main(config):
     for script, kwargs in scripts_to_run:
         start_time = datetime.datetime.now()
         run(script, **kwargs)
+        config.restrict_to(None)
         print("Execution time: %.2fs" % (datetime.datetime.now() - start_time).total_seconds())
         config.cooling_case_workflow.last += 1
         config.save(config_file)

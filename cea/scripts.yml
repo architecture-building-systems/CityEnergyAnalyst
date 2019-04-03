@@ -352,4 +352,4 @@ default:
   description: Run the cooling case from start to end to test the cea
   interfaces: [cli]
   module: cea.tests.cooling_case_workflow
-  parameters: ['cooling-case-workflow:scenario']
+  parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
