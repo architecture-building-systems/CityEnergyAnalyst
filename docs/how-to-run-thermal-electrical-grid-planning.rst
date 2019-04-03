@@ -75,4 +75,4 @@ Calculation flowchart
 
 Limitation
 ----------
-#. The objective function only includes the costs of thermal networks. The costs of electrical grid should be included in the future.
+#. The objective function inside the **Main optimization** block only includes the costs of thermal networks. And the costs of electrical grid is minimized seperately inside the **Electric Grid Optimization** block. The **Main optimization** can also include the cost of the electric grid in the objective function.
