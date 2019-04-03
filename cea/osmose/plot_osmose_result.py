@@ -267,12 +267,13 @@ def main(building, TECHS, building_result_path):
             electricity_df = set_up_electricity_df(tech, results)
             ex_df = calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech)
             plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
-            result_WED = results.iloc[72:96]
-            electricity_df_WED = electricity_df.iloc[72:96]
-            plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
-            electricity_df_SAT = electricity_df.iloc[144:168]
-            result_SAT = results.iloc[144:168]
-            plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
+            if results.shape[0] > 24:
+                result_WED = results.iloc[72:96]
+                electricity_df_WED = electricity_df.iloc[72:96]
+                plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
+                electricity_df_SAT = electricity_df.iloc[144:168]
+                result_SAT = results.iloc[144:168]
+                plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
             ## plot exergy loads
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
 
@@ -1165,14 +1166,15 @@ def p_ws_from_t(t_celsius):
 if __name__ == '__main__':
     #buildings = ["B002"]
     buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-    tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
-    #tech = ["HCS_coil"]
-    cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
+    #tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
+    tech = ["HCS_coil"]
+    #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_HOT"]
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_168"
+            building_time = building + "_24"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
