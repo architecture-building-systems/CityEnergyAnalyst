@@ -7,7 +7,7 @@ from __future__ import print_function
 
 
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
-COLUMNS_DISTRICT_GEOMETRY = ['Name', 'height_ag', 'floors_ag', 'floors_bg']
+COLUMNS_DISTRICT_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 COLUMNS_ZONE_OCCUPANCY = ['MULTI_RES', 'OFFICE', 'RETAIL', 'SCHOOL', 'HOTEL', 'GYM', 'HOSPITAL', 'INDUSTRIAL',
                           'RESTAURANT','SINGLE_RES', 'SERVERROOM', 'SWIMMING', 'FOODSTORE', 'LIBRARY', 'COOLROOM', 'PARKING']

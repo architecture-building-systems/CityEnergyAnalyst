@@ -115,7 +115,7 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     # area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
     # area.plot()
 
-    return area
+    return area, geometry_merged_final
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors):
@@ -199,7 +199,7 @@ def geometry_extractor_osm(locator, config):
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
-    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+    area_with_buffer, _ = calc_surrounding_area(zone, buffer_m)
     area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
     area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
