@@ -13,7 +13,10 @@ from __future__ import division
 
 # see https://github.com/Theano/Theano/issues/6568 for reasoning behind the following two lines
 import os
-# os.environ["MKL_THREADING_LAYER"] = "GNU"  # FIXME: I think this can be removed now
+
+if os.name == 'nt':
+    # It seems this is only needed on Windows, by pymc3
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
 
 import pymc3
 import seaborn as seaborn
