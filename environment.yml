@@ -134,6 +134,7 @@ dependencies:
   - xerces-c=3.2.2=hc56fc5f_0
   - xz=5.2.4=h3cc03e0_4
   - zlib=1.2.11=h3cc03e0_3
+  - osmnx=0.9=py_1
   - pip:
     - alabaster==0.7.12
     - attrs==19.1.0
