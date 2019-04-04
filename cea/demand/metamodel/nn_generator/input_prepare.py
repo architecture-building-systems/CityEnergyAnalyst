@@ -100,7 +100,6 @@ def input_prepare_main(list_building_names, locator, target_parameters, nn_delay
 
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
