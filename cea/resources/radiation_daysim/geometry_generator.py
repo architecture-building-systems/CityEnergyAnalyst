@@ -134,10 +134,22 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
     # path to database of architecture properties
     architecture_dbf_path = locator.get_building_architecture()
 
-    # read district shapefile and names of buildings of the zone of analysis
-    district_building_records = gdf.from_file(district_shp_path).set_index('Name')
+    # read district shapefile and names of buildings of the district and the zone of analysis
+    district_building_records = gdf.from_file(district_shp_path)
+    zone_building_records = gdf.from_file(zone_shp_path)
+    zone_building_names = zone_building_records['Name'].values
+
+    #calculate district geometry (These are the surroundings of the zone oif interest and we simplify it to speet up computations)
+    #first make sure that the district file does not contain buildings in the zone, if it does then erase them
+    district_building_records = district_building_records.loc[~district_building_records["Name"].isin(zone_building_names)]
+    district_building_records.reset_index(inplace=True, drop=True)
+
+    #now append to the district building records, those of the zone
+    district_building_records = district_building_records.append(zone_building_records, ignore_index = True)
+    district_building_records.set_index('Name', inplace=True)
     district_building_names = district_building_records.index.values
-    zone_building_names = locator.get_zone_building_names()
+
+    # Read architecture properties
     architecture_wwr = gdf.from_file(architecture_dbf_path).set_index('Name')
 
     #make shell out of tin_occface_list and create OCC object
@@ -148,6 +160,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
     #empty list where to store the closed geometries
     geometry_3D_zone = []
     geometry_3D_surroundings = []
+
 
     for name in district_building_names:
         print('Generating geometry for building %(name)s' % locals())
@@ -167,6 +180,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                                                             preserve_topology=True)
 
         # burn buildings footprint into the terrain and return the location of the new face
+        print('burning building ', name)
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
 
         # create floors and form a solid
@@ -281,7 +295,10 @@ def burn_buildings(geometry, terrain_intersection_curves):
     inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
 
     # reconstruct the footprint with the elevation
-    loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
+    try:
+        loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
+    except:
+        raise ValueError('ERROR: this usually happens when buildings do not overlap with the terrain, try to check if this is the case')
     face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
     return face
 
