@@ -54,7 +54,6 @@ def calc_Cinv_DX(Q_design_W):
     Assume the same cost as gas boilers.
     :type Q_design_W : float
     :param Q_design_W: Design Load of Boiler in [W]
-    :param gV: globalvar.py
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
