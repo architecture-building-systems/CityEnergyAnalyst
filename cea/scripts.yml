@@ -217,7 +217,7 @@ Thermal networks:
   module: cea.technologies.thermal_network.thermal_network_optimization
   parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization',
-               'network-layout:network-type']
+               'network-layout']
 
 
 Utilities:
