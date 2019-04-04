@@ -28,7 +28,7 @@ Data Management:
   module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
-- name: terrain-hel§per
+- name: terrain-helper
   label: Terrain helper
   description: Creates a fixed elevation terrain file (good for most applications)
   interfaces: [cli, arcgis, dashboard]
