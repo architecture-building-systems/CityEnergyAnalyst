@@ -2,9 +2,9 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
-import cea.globalvar
 import cea.inputlocator
 import cea.config
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -663,11 +663,11 @@ def calc_average(last, current, share_of_use):
 def main(config):
     from cea.demand.building_properties import BuildingProperties
 
-    gv = cea.globalvar.GlobalVariables()
-    gv.config = config
+    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
     building_properties = BuildingProperties(locator, True, config.region, False)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
