@@ -20,7 +20,7 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_network_linear(LengthNetwork, gV):
+def calc_Cinv_network_linear(LengthNetwork, gv):
     """
     calculate annualised network investment cost with a linearized function.
 
@@ -33,8 +33,8 @@ def calc_Cinv_network_linear(LengthNetwork, gV):
     """
 
     InvC = 0
-    InvC = LengthNetwork * gV.PipeCostPerMeterInv
-    InvCa = InvC * gV.PipeInterestRate * (1+ gV.PipeInterestRate) ** gV.PipeLifeTime / ((1+gV.PipeInterestRate) ** gV.PipeLifeTime - 1)
+    InvC = LengthNetwork * gv.PipeCostPerMeterInv
+    InvCa = InvC * gv.PipeInterestRate * (1 + gv.PipeInterestRate) ** gv.PipeLifeTime / ((1 + gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
 
     return InvCa, InvC
 
