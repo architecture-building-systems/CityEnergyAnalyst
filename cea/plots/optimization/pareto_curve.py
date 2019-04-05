@@ -23,8 +23,8 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
     """Show a pareto curve for a single generation"""
     name = "Pareto curve for a generation"
 
-    def __init__(self, project, parameters):
-        super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ['individual',
                                 'TAC_Mio',
                                 'total_emissions_kiloton',

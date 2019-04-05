@@ -20,8 +20,8 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
     name = "Cost analysis of centralized system"
 
-    def __init__(self, project, parameters):
-        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Capex_Centralized_USD",
                                 "Capex_Decentralized_USD",
                                 "Opex_Centralized_USD",

@@ -39,8 +39,8 @@ class DemandPlotBase(cea.plots.PlotBase):
     # cache hourly_loads results to avoid recalculating it every time
     _cache = {}
 
-    def __init__(self, project, parameters):
-        super(DemandPlotBase, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(DemandPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('new_basic', 'demand')
 
