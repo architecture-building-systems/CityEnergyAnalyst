@@ -45,8 +45,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         'detailed-electricity-pricing': 'general:detailed-electricity-pricing'
     }
 
-    def __init__(self, project, parameters):
-        super(OptimizationOverviewPlotBase, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(OptimizationOverviewPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
         self.network_type = self.parameters['network-type']

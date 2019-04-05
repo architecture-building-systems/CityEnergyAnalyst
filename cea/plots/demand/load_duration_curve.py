@@ -19,8 +19,8 @@ __status__ = "Production"
 class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Load Duration Curve"
 
-    def __init__(self, project, parameters):
-        super(LoadDurationCurvePlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(LoadDurationCurvePlot, self).__init__(project, parameters, cache)
         self.data = self.hourly_loads
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",

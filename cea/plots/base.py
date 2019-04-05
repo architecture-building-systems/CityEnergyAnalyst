@@ -33,7 +33,8 @@ class PlotBase(object):
     def id(cls):
         return cls.name.lower().replace(' ', '-')  # use for js/html etc.
 
-    def __init__(self, project, parameters):
+    def __init__(self, project, parameters, cache):
+        self.cache = cache  # a PlotCache implementation for reading cached data
         self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data

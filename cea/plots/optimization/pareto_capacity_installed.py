@@ -20,8 +20,8 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlo
     """Show a pareto curve installed capacity for a generation"""
     name = "Capacity installed in a generation"
 
-    def __init__(self, project, parameters):
-        super(ParetoCapacityInstalledPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(ParetoCapacityInstalledPlot, self).__init__(project, parameters, cache)
         self.data = self.preprocessing_capacities_data().copy()
         self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W',
                                                    'CHP_BG_capacity_W',
