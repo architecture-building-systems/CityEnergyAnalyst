@@ -5,7 +5,7 @@ Analysis:
   description: Multicriteria analysis
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.multicriteria.main
-  parameters: ['general:scenario', 'general:region', multi-criteria,
+  parameters: ['general:scenario', 'general:region', 'general:detailed-electricity-pricing', multi-criteria,
                'thermal-network:network-names', 'thermal-network:network-type']
 
 

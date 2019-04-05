@@ -68,7 +68,7 @@ def main(config):
         ('decentralized', {}),
         ('thermal-network-optimization', {'network_type': 'DC'}),
         ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),
-        ('multi-criteria-analysis', {}),
+        ('multi-criteria-analysis', {'generations': 2}),
         ('plots', {'network_type': 'DC'}),
         ('plots-supply-system', {'network_type': 'DC'}),
         ('plots-optimization', {'network_type': 'DC'}),
