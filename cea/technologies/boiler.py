@@ -84,8 +84,6 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     :type T_return_to_boiler_K : float
     :param T_return_to_boiler_K: return temperature to Boiler (from DH network)
 
-    :param gV: globalvar.py
-
     :rtype C_boil_therm : float
     :returns C_boil_therm: Total generation cost for required load (per hour) in CHF
 
@@ -178,8 +176,6 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
     :type Q_design_W : float
     :param Q_design_W: Design Load of Boiler in [W]
-
-    :param gV: globalvar.py
 
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost

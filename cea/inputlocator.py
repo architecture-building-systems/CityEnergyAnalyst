@@ -805,7 +805,7 @@ class InputLocator(object):
 
     def get_sensitivity_plots_file(self, parameter):
         """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
-        return os.path.join(self.scenario, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
+        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'sensitivity'), '%s.pdf' % parameter)
 
     ## POTENTIALS #FIXME: find better placement for these two locators
 
