@@ -23,7 +23,7 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
 
     name = "Centralized costs per generation unit"
 
-    def __init__(self, project, parameters, cache:
+    def __init__(self, project, parameters, cache):
         super(CentralizedCostsPerGenerationUnitPlot, self).__init__(project, parameters, cache)
         self.data = self.preprocessing_final_generation_data_cost_centralized()
         self.layout = go.Layout(title=self.title, barmode='relative',
