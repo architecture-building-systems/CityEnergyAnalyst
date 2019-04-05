@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import print_function
-from __future__ import print_function
 from __future__ import division
 import os
 import pandas as pd
@@ -131,7 +128,17 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
 
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
-    rad.initialise_daysim(daysim_dir)
+    print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
+    rad.initialise_daysim(daysim_dir, os.path.join(settings.daysim_bin_directory, ''))
+    print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
+    print("\tisolation_daysim: rad.hea_filename: {}".format(rad.hea_filename))
+    print("\tisolation_daysim: rad.daysimdir_ies: {}".format(rad.daysimdir_ies))
+    print("\tisolation_daysim: rad.daysimdir_pts: {}".format(rad.daysimdir_pts))
+    print("\tisolation_daysim: rad.daysimdir_rad: {}".format(rad.daysimdir_rad))
+    print("\tisolation_daysim: rad.daysimdir_res: {}".format(rad.daysimdir_res))
+    print("\tisolation_daysim: rad.daysimdir_tmp: {}".format(rad.daysimdir_tmp))
+    print("\tisolation_daysim: rad.daysimdir_wea: {}".format(rad.daysimdir_wea))
+
 
     # calculate sensors
     print("Calculating and sending sensor points")
@@ -139,6 +146,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
+    print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))
 
     num_sensors = sum(sensors_number_zone)
     print("Starting Daysim simulation starts for buildings {buildings}".format(buildings=names_zone))
