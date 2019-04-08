@@ -10,11 +10,12 @@ import os
 import time
 import hashlib
 import pandas as pd
+import cPickle
 
 
 class NullPlotCache(object):
     """A dummy cache that doesn't cache anything - for comparing performance of PlotCache"""
-    def lookup(self, _, __, producer):
+    def lookup(self, data_path, plot, producer):
         return producer()
 
 
@@ -64,5 +65,5 @@ class PlotCache(object):
 
     def load_cached_value(self, data_path, parameters):
         """Load a Dataframe from disk"""
-        return pd.read_pickle(self.cache_timestamp(data_path, parameters))
+        return pd.read_pickle(self._cached_data_file(data_path, parameters))
 

@@ -33,7 +33,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                 'Capex_total_Mio',
                                 'Opex_total_Mio']
         self.objectives = ['TAC_Mio', 'total_emissions_kiloton', 'total_prim_energy_TJ']
-        self.data = self.preprocessing_multi_criteria_data()
+        self.input_files = [self.locator.get_multi_criteria_analysis(self.generation)]
         # NOTE: self.layout is set during the call to calc_graph
 
     @property
@@ -47,10 +47,11 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                                       self.category_name)
 
     def calc_graph(self):
-        xs = self.data[self.objectives[0]].values
-        ys = self.data[self.objectives[1]].values
-        zs = self.data[self.objectives[2]].values
-        individual_names = self.data['individual'].values
+        data = self.preprocessing_multi_criteria_data()
+        xs = data[self.objectives[0]].values
+        ys = data[self.objectives[1]].values
+        zs = data[self.objectives[2]].values
+        individual_names = data['individual'].values
 
         xmin = min(xs)
         ymin = min(ys)
@@ -69,7 +70,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         graph.append(trace)
 
         # Insert scatter points of MCDA assessment.
-        _, table = calc_table(self.data, self.analysis_fields)
+        _, table = calc_table(data, self.analysis_fields)
         xs = table[self.objectives[0]].values
         ys = table[self.objectives[1]].values
         name = table["Attribute"].values
