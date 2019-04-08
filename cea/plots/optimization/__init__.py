@@ -501,7 +501,7 @@ if __name__ == '__main__':
     from cea.plots.cache import NullPlotCache, PlotCache
     import time
 
-    def plot_optimization_category(cache):
+    def plot_category(cache):
         for category in list_categories():
             if category.label != label:
                 continue
@@ -526,13 +526,13 @@ if __name__ == '__main__':
     # test plots with cache
     t0 = time.time()
     for i in range(3):
-        plot_optimization_category(plot_cache)
+        plot_category(plot_cache)
     time_with_cache = (time.time() - t0) / 3
 
     # test plots without cache
     t0 = time.time()
     for i in range(3):
-        plot_optimization_category(null_plot_cache)
+        plot_category(null_plot_cache)
     time_without_cache = (time.time() - t0) / 3
 
     print('Average without cache: %.2f seconds' % time_without_cache)
