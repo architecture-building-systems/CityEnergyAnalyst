@@ -127,7 +127,7 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     plt.yticks(y_values, y_labels, fontsize=18)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.5, max(y_values) + 0.5])
-    plt.scatter(x, y_float, s=area, c='#39617E')
+    plt.scatter(x, y_float, s=area, c='#14453D')
     # plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
@@ -197,13 +197,13 @@ def path_to_save_chw_scatter(building, building_result_path):
 
 
 if __name__ == '__main__':
-    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    # buildings = ["B002"]
-    timestep = "168"
-    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    # cases = ['WTP_CBD_m_WP1_RET']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_combo'
-
+    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    buildings = ["B002","B003", "B006"]
+    timestep = "24"
+    #cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
+    #result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_combo'
+    result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
         case_folder = os.path.join(result_folder, case)

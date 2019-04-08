@@ -5,27 +5,21 @@ import pandas as pd
 import os
 import subprocess
 import csv
+import cea.osmose.settings as settings
 
 import cea.osmose.extract_demand_outputs as extract_demand_outputs
 import cea.osmose.plot_osmose_result as plot_results
 import cea.osmose.compare_el_usages as compare_el
 
-# import from config # TODO: add to config
-#TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-TECHS = ['HCS_LD']
-#specified_buildings = ["B005"]
-specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-timesteps = 168  # 168 (week)
-
-if timesteps == 168:
-    start_t = 5064  # Average Annual 7/30-8/5: 5040-5207, 4872(SAT)
-elif timesteps == 24:
-    start_t = 3240  # 5/16: 3240,
-
-osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
-ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
-result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-new_calculation = False
+# import from settings # TODO: add to config
+TECHS = settings.TECHS
+specified_buildings = settings.specified_buildings
+timesteps = settings.timesteps
+start_t = settings.start_t
+osmose_project_path = settings.osmose_project_path
+ampl_lic_path = settings.ampl_lic_path
+result_destination = settings.result_destination
+new_calculation = settings.new_calculation
 
 
 def main(case):
@@ -106,7 +100,7 @@ def start_ampl_license(ampl_lic_path, action):
 def exec_osmose(tech, osmose_project_path):
     frontend_file = tech + "_frontend.lua"
     frontend_path = osmose_project_path + "\\" + frontend_file
-    project_path = "C:\\OSMOSE_projects\\hcs_windows"
+    project_path = os.path.dirname(osmose_project_path)
 
     p = subprocess.Popen(["lua", (frontend_path)], cwd=project_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)

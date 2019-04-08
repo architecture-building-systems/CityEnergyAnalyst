@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from cea.utilities.physics import calc_rho_air
 from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
+import cea.osmose.settings as settings
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Qww_sys_kWh', 'Qcdata_sys_kWh',
                              'Qcs_sen_ahu_kWh', 'Qcs_sen_aru_kWh', 'Qcs_sen_scu_kWh', 'Qcs_sen_sys_kWh',
@@ -275,21 +276,21 @@ def path_to_total_demand(case):
 
 def path_to_osmose_project_bui(building_name):
     format = 'csv'
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
+    path_to_folder = settings.osmose_project_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
     return path_to_file
 
 
 def path_to_osmose_project_hcs(building_name, extension):
     format = 'csv'
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
+    path_to_folder = settings.osmose_project_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
     return path_to_file
 
 
 def path_to_osmose_project_inputT(number):
     format = 'csv'
-    path_to_folder = 'C:\\OSMOSE_projects\\hcs_windows\\Projects'
+    path_to_folder = settings.osmose_project_path
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 

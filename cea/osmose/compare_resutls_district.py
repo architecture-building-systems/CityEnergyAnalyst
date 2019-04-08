@@ -19,7 +19,7 @@ def main(path_result_folder, case, time_steps):
         building = path.split('\\')[6].split('_')[0]
         el_compare_df = pd.read_csv(path, index_col=0)
         list_of_labels = []
-        for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean', 'eff_exergy']:
+        for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean', 'eff_exergy', 'Qh', 'cop_Qh']:
             list_of_labels.append(el_compare_df.loc[label])
         building_result_df = pd.concat(list_of_labels, axis=1)
         building_result_df = building_result_df.sort_values(by=['el_total']).T
@@ -61,7 +61,9 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     x_ticks = range(len(techs))  # FIXME
     # set colors
     number_of_stacks = len(qc_all_tech_per_building_dict.keys())
-    colors = plt.cm.Set2(np.linspace(0, 1, number_of_stacks))
+    # colors = plt.cm.Set2(np.linspace(0, 1, number_of_stacks))
+    #colors = ['#14453D','#3C875A','#BACCCC']  # OLIVE, GRASS, GREY
+    colors = ['#14453D','#4D9169','#BACCCC']  # OLIVE, GRASS, GREY
     i = 0
     KEY_TABLE = {'qc_sys_oau': 'OAU', 'qc_sys_scu': 'SCU', 'qc_sys_lcu': 'RAU'}
     for key in qc_all_tech_per_building_dict.keys():
@@ -229,10 +231,11 @@ def path_to_save_total_heat_supplied_fig(building, time_steps, path_district_res
 
 
 if __name__ == '__main__':
-    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
-        time_steps = 168
+        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
+        time_steps = 24
         main(path_result_folder, case, time_steps)

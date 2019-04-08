@@ -10,7 +10,9 @@ import cea.osmose.exergy_calculation as calc_Ex
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_max_ppm = 800 / 1e6
 
-CONFIG_TABLE = {'HCS_coil':'Config|1','HCS_ER0':'Config|2','HCS_3for2':'Config|3','HCS_LD':'Config|4','HCS_IEHX':'Config|5'}
+CONFIG_TABLE = {'HCS_coil': 'Config|1', 'HCS_ER0': 'Config|2', 'HCS_3for2': 'Config|3', 'HCS_LD': 'Config|4',
+                'HCS_IEHX': 'Config|5'}
+
 
 # from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 
@@ -284,8 +286,6 @@ def main(building, TECHS, building_result_path):
     return
 
 
-
-
 def calc_min_exergy(results):
     T_ref_C = results['T_ext']
     w_ref_gperkg = results['w_ext']
@@ -518,6 +518,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     ex_df['eff_exergy'] = (output_df['Ex_min'] / output_df['el_total']).values
     # get Qh
     output_df['Qh'] = results['SU_Qh']
+    output_df['el_tot_with_Qh'] = output_df['Qh'] + output_df['el_total']
     # get T,w
     output_df['T_SA'] = operation_df['T_SA']
     output_df['w_SA'] = operation_df['w_SA']
@@ -538,6 +539,9 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     cop_system_mean = output_df['cop_system'].ix[0:index - 1].replace(0, np.nan).mean(skipna=True)
     output_df['cop_system_mean'] = output_df['cop_system']
     output_df.at[index, 'cop_system_mean'] = cop_system_mean
+    # calculate cop with Qh
+    output_df['cop_Qh'] = output_df['qc_sys_total'] / output_df['el_tot_with_Qh']
+
     # output_df = output_df.set_value(index, 'cop_system_mean', cop_system_mean)
     # output_df['cop_scu'] = output_df['qc_sys_scu']/output_df['el_scu']
     # output_df['cop_lcu'] = output_df['qc_sys_lcu']/output_df['el_lcu']
@@ -960,6 +964,7 @@ def plot_electricity_usage(building, building_result_path, results, tech):
     plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'el_usage'))
+    return np.nan
 
 
 def plot_electricity_usages(building, building_result_path, electricity_df, results, tech, day):
@@ -1005,7 +1010,7 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
 
     if day != '':
         name = CONFIG_TABLE[tech]
-        plt.title(name +' ' + building + ' ' + day, fontsize=14)
+        plt.title(name + ' ' + building + ' ' + day, fontsize=14)
     else:
         plt.title(building + '_' + tech, fontsize=14)
     # plt.show()
@@ -1113,7 +1118,7 @@ def plot_supply_temperature_humidity(building, building_result_path, operation_d
 ## auxiliary functions
 def set_xtick_shown(x_ticks, time_steps):
     reduced_x_ticks = np.insert(np.arange(0, time_steps, 12)[1:], 0, 1)
-    x_ticks_24 = np.arange(1,25,1) #FIXME
+    x_ticks_24 = np.arange(1, 25, 1)  # FIXME
     x_ticks_shown = x_ticks if time_steps <= 24 else reduced_x_ticks
     return x_ticks_shown
 
@@ -1164,12 +1169,13 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    #buildings = ["B002"]
-    buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-    #tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
-    tech = ["HCS_coil"]
-    #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_HOT"]
+    buildings = ["B002","B003", "B006"]
+    # buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
+    #tech = ["HCS_ER0"]
+    tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
+    # cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_RET"]
+    #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
     result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         folder_path = os.path.join(result_path, case)
