@@ -52,7 +52,7 @@ class SlaveData(object):
 
         # Furnace
         self.Furnace_Q_max_W = 0.0
-        self.Furn_Moist_type = "wet"  # gV.Furn_Moist_type # set the moisture content of wood chips, either "dry" or "wet"
+        self.Furn_Moist_type = "wet"  # set the moisture content of wood chips, either "dry" or "wet"
 
         # GAS TURBINE VARIABLES
         # self.gt_size = 1.0E6 # in Watt
