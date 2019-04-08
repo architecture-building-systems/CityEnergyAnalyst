@@ -32,18 +32,21 @@ class PlotCache(object):
     def _cached_data_file(self, data_path, parameters):
         return os.path.join(self.project, '.cache', data_path, self._parameter_hash(parameters))
 
+    def _cached_div_file(self, data_path, parameters):
+        return self.cached_data_file(data_path, parameters) + '.div'
+
     def lookup(self, data_path, plot, producer):
-        if self.cache_timestamp(data_path, plot.parameters) < self.newest_dependency(plot.input_files):
+        cache_timestamp = self.cache_timestamp(self._cached_data_file(data_path, plot.parameters))
+        if cache_timestamp < self.newest_dependency(plot.input_files):
             return self.store_cached_value(data_path, plot.parameters, producer)
         return self.load_cached_value(data_path, plot.parameters)
 
-    def cache_timestamp(self, data_path, parameters):
+    def cache_timestamp(self, path):
         """Return a timestamp (like ``os.path.getmtime``) to compare to. Returns 0 if there is no data in the cache"""
-        data_file = self._cached_data_file(data_path, parameters)
-        if not os.path.exists(data_file):
+        if not os.path.exists(path):
             return 0
         else:
-            return os.path.getmtime(data_file)
+            return os.path.getmtime(path)
 
     def newest_dependency(self, input_files):
         """Returns the newest timestamp (``os.path.getmtime`` and ``time.time()``) of the input_files - the idea being,
@@ -67,3 +70,23 @@ class PlotCache(object):
         """Load a Dataframe from disk"""
         return pd.read_pickle(self._cached_data_file(data_path, parameters))
 
+
+class MemoryPlotCache(PlotCache):
+    """Extend the PlotCache to also keep a copy of the cache in memory"""
+    def __init__(self, project):
+        super(MemoryPlotCache, self).__init__(project)
+        self._cache = {}  # _cached_data_file -> df
+
+    def load_cached_value(self, data_path, parameters):
+        """Check memory cache before loading from disk"""
+        key = self._cached_data_file(data_path, parameters)
+        if not key in self._cache:
+            self._cache[key] = super(MemoryPlotCache, self).load_cached_value(data_path, parameters)
+        return self._cache[key]
+
+    def store_cached_value(self, data_path, parameters, producer):
+        """Update memory cache when storing to disk"""
+        data = super(MemoryPlotCache, self).store_cached_value(data_path, parameters, producer)
+        key = self._cached_data_file(data_path, parameters)
+        self._cache[key] = data
+        return data

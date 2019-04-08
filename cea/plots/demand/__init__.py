@@ -145,7 +145,7 @@ if __name__ == '__main__':
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
-    from cea.plots.cache import NullPlotCache, PlotCache
+    from cea.plots.cache import NullPlotCache, PlotCache, MemoryPlotCache
     import time
 
     def plot_category(cache):
@@ -169,6 +169,7 @@ if __name__ == '__main__':
 
     null_plot_cache = NullPlotCache()
     plot_cache = PlotCache(config.project)
+    memory_plot_cache = MemoryPlotCache(config.project)
 
     # test plots with cache
     t0 = time.time()
@@ -176,11 +177,18 @@ if __name__ == '__main__':
         plot_category(plot_cache)
     time_with_cache = (time.time() - t0) / 3
 
-    # test plots without cache
+    # test plots with memory cache
     t0 = time.time()
     for i in range(3):
-        plot_category(null_plot_cache)
-    time_without_cache = (time.time() - t0) / 3
+        plot_category(memory_plot_cache)
+    time_with_memory_cache = (time.time() - t0) / 3
 
-    print('Average without cache: %.2f seconds' % time_without_cache)
+    # test plots without cache
+    # t0 = time.time()
+    # for i in range(3):
+    #     plot_category(null_plot_cache)
+    # time_without_cache = (time.time() - t0) / 3
+
+    # print('Average without cache: %.2f seconds' % time_without_cache)
     print('Average with cache: %.2f seconds' % time_with_cache)
+    print('Average with memory cache: %.2f seconds' % time_with_memory_cache)
