@@ -1,13 +1,13 @@
-    # -*- coding: utf-8 -*-
-""" 
-
-Storage Design And Operation  
-    This File is called by "Storage_Optimizer_incl_Losses_main.py" (Optimization Routine) and 
-    will operate the storage according to the inputs given by the main file.
-    
-    The operation data is stored 
-            
+# -*- coding: utf-8 -*-
 """
+Storage Design And Operation
+    This File is called by "Storage_Optimizer_incl_Losses_main.py" (Optimization Routine) and
+    will operate the storage according to the inputs given by the main file.
+
+    The operation data is stored
+
+"""
+
 from __future__ import division
 import pandas as pd
 import os
@@ -32,7 +32,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :param STORE_DATA:
     :param master_to_slave_vars:
     :param P_HP_max_W:
-    :param gV:
     :type CSV_NAME:
     :type SOLCOL_TYPE:
     :type T_storage_old_K:

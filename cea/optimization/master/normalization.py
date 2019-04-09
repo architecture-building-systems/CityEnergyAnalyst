@@ -147,18 +147,18 @@ def normalize_epsIndicator(locator, generation):
 
 
 
-def decentralizeCosts(individual, locator, gV):
+def decentralizeCosts(individual, locator, gv):
     """
     :param individual: list of all parameters corresponding to an individual configuration
     :param locator: locator set to the scenario
-    :param gV: global variables
+    :param gv: global variables
     :type individual: list
     :type locator: string
-    :type gV: class
+    :type gv: class
     :return: costsDisc
     :rtype: float
     """
-    indCombi = sFn.individual_to_barcode(individual, gV)
+    indCombi = sFn.individual_to_barcode(individual, gv)
     buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
     costsDisc = 0
 

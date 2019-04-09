@@ -48,10 +48,8 @@ def calcQmax(file_name, path):
     Calculates the peak heating power in fName file
     :param file_name: name of the csv file
     :param path: path to the file
-    :param gV: global variables
     :type file_name: string
     :type path: string
-    :type gV: class
     :return: Qmax: maximum heating power [W]
     :rtype: float
     """
@@ -66,9 +64,7 @@ def individual_to_barcode(individual, building_list):
     Reads the 0-1 combination of connected/disconnected buildings
     and creates a list of strings type barcode i.e. ("12311111123012")
     :param individual: list containing the combination of connected/disconnected buildings
-    :param gV: global variables
     :type individual: list
-    :type gV: class
     :return: indCombi: list of strings
     :rtype: list
     """

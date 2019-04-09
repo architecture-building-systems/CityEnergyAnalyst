@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 plot results of optimization
-=========================================
 """
 
 from __future__ import division
@@ -32,13 +30,12 @@ __status__ = "Production"
 reload(norm)
 reload(sFn)
 
-"""
-=========================================
-plot results of multicriteria comparing all scenarios
-=========================================
-"""
+
 
 def plot_multicriteria_scenarios(indRef, SQ_area, pop, pathX, listIndex, savelocation, type_analysis):
+    """
+    plot results of multicriteria comparing all scenarios
+    """
 
     if type_analysis == "inter":
         Area_buildings = pd.read_csv(pathX.pathRaw+'//'+'Total.csv',usecols=['Af']).values.sum()        
@@ -434,7 +431,6 @@ def test_graphs_optimization(config):
     # print "Network Optimization \n"
     # finalDir = CodePath + "distribution/"
     # ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, header)
-    # gV = glob.globalVariables()
     # print "Compute electricity needs for all buildings"
     # elecCosts, elecCO2, elecPrim = elecMain.elecOp(pathX, gV)
     # print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
