@@ -234,10 +234,19 @@ def matsim_population_reader(locator, building_properties):
                 else:
                     students = 0
                 buildings[building_names[i]] = copy.deepcopy(building_schedules)
-                buildings[building_names[i]]['employee'] = buildings[facility]['employee'][
-                                                           first_employee:first_employee+employees]
-                buildings[building_names[i]]['student'] = buildings[facility]['student'][
-                                                          first_student:first_student+students]
+                # buildings[building_names[i]]['employee'] = buildings[facility]['employee'][
+                #                                            first_employee:first_employee+employees]
+                # buildings[building_names[i]]['student'] = buildings[facility]['student'][
+                #                                           first_student:first_student+students]
+                for j in range(employees):
+                    k = np.random.randint(len(buildings[facility]['employee']))
+                    # buildings[building_names[i]]['employee'] = buildings[facility]['employee'][k]
+                    buildings[building_names[i]]['employee'].append(buildings[facility]['employee'][k])
+                for j in range(students):
+                    k = np.random.randint(len(buildings[facility]['student']))
+                    # buildings[building_names[i]]['student'] = buildings[facility]['student'][k]
+                    buildings[building_names[i]]['student'].append(buildings[facility]['student'][k])
+
                 first_student += students
                 first_employee += employees
             buildings.pop(facility)
