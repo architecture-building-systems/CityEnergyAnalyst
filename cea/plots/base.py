@@ -1,11 +1,9 @@
-from __future__ import division
-from __future__ import print_function
-
 """
-Implements base classes to derive plot classes from. The code in py:mod:`cea.plots.categories` uses 
+Implements base classes to derive plot classes from. The code in py:mod:`cea.plots.categories` uses
 py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category.
 """
-
+from __future__ import division
+from __future__ import print_function
 import os
 import plotly.graph_objs
 import plotly.offline

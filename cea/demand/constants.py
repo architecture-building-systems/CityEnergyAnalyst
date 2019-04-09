@@ -15,9 +15,9 @@ __status__ = "Production"
 # all values are refactored from legacy Globalvars unless stated otherwise
 
 # DEFAULT BUILDING GEOMETRY
-H_F = 3  # average height per floor in m
+H_F = 3.0  # average height per floor in m
 E_S = 0.9  # fraction of GFA that has electricity in every building
-D = 20  # in mm the diameter of the pipe to calculate losses
+D = 20.0  # in mm the diameter of the pipe to calculate losses
 
 # SOLAR
 RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
@@ -26,7 +26,7 @@ F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
 
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
-DELTA_P_DIM = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
+DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
                  # according to DIN 1946-6
 SHIELDING_CLASS = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind

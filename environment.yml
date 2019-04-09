@@ -137,6 +137,7 @@ dependencies:
   - xerces-c=3.2.2=hc56fc5f_0
   - xz=5.2.4=h3cc03e0_4
   - zlib=1.2.11=h3cc03e0_3
+  - osmnx=0.9=py_1
   - pip:
     - alabaster==0.7.12
     - babel==2.6.0
@@ -144,7 +145,6 @@ dependencies:
     - backports.shutil-which==3.5.2
     - bleach==3.1.0
     - chardet==3.0.4
-    - cityenergyanalyst==2.9.0
     - cloudpickle==0.6.1
     - colorama==0.4.1
     - configparser==3.5.0

@@ -1,9 +1,7 @@
-from __future__ import print_function
-
 """
 Hydraulic - thermal network
 """
-
+from __future__ import print_function
 from __future__ import division
 import time
 import numpy as np
