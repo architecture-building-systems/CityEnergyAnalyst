@@ -32,7 +32,20 @@ Prerequisites
 
 Steps
 -----
-#. Assign optimization parameters in ``cea.config``
+#. Assign optimization parameters in ``cea.config``::
+      
+      [electrical-thermal-optimization]
+      network-type = DH or DC
+      initialind = number of individuals at the start of the optimization (parameter for genetic algorithm)
+      halloffame = number of individuals to be stored in hall of fame
+      ngen = number of generations in the optimization (parameter for genetic algorithm)
+      fcheckpoint = frequency for the saving of checkpoints
+      maxtime = maximum allowed time in seconds, 604800 is equivalent of 7 days
+      recoverycheckpoint = in case the optimization stops, it can be resumed from this checkpoint
+      random-seed = random seed to make it easy to replicate the results of the scenarios
+      crossoverprobability = for optimization crossover
+      mutationprobability = for optimization mutation
+
 #. Run `cea\optimization\flexibility_model\electric_and_thermal_grid_planning\electrical_thermal_optimization_main.py`
 #. Check results from optimization in ``...scenario\outputs\electrical_and_thermal_network\optimization``
 
