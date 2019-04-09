@@ -2,7 +2,12 @@
 
 How to Run MPC Building Toolbox
 ===============================
-The MPC Building Toolbox utilize Model Predictive Control (MPC) algorithms to minimize the electricity costs for cooling in buildings. When the hourly electricity prices are flunctuating, it is possible to explore the opportunities to shift the cooling loads by precooling the buildings. 
+The MPC Building Toolbox utilize Model Predictive Control (MPC) algorithms to minimize the electricity costs for cooling in buildings. When the hourly electricity prices are flunctuating, it is possible to explore the opportunities to shift the cooling loads by precooling the buildings (as shown in the figure below). 
+
+.. image:: flexible_loads.png
+      :width: 250
+      :align: center
+    
 
 
 Input
@@ -45,10 +50,6 @@ Steps
 
 #. Run `cea\optimization\flexibility_model\mpc_building\operation_main.py`
 #. Check results from optimization in ``...scenario\outputs\mpc-building``
-
-Note
-"""""
-There are three main settings that a user can defined in the MPC model.
 
 Outputs
 -------
