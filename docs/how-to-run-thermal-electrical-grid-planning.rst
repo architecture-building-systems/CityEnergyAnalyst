@@ -46,7 +46,9 @@ Steps
       crossoverprobability = for optimization crossover
       mutationprobability = for optimization mutation
 
-#. Run `cea\optimization\flexibility_model\electric_and_thermal_grid_planning\electrical_thermal_optimization_main.py`
+#. Update the electricity price database with the hourly electricity prices for your cases. The database is located here: ``..\CityEnergyAnalyst\cea\databases\Region\systems\electricity_costs.xlsx``
+
+#. Run ``electrical_thermal_optimization_main.py`` under this path ``cea\optimization\flexibility_model\electric_and_thermal_grid_planning\electrical_thermal_optimization_main.py``
 #. Check results from optimization in ``...scenario\outputs\electrical_and_thermal_network\optimization``
 
 
