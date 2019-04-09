@@ -3,8 +3,10 @@
 How to Run MPC District Toolbox
 ===============================
 The MPC District Toolbox finds the micro-grid design with the lowest investment and operaiton costs. 
-The optimization in done in two stages, first, the planning (or design) of the electrical network, and second, the optimization of building temperature setpoints in order to decrease electricity costs.
-The second part is directly calling the MPC Building Toolbox in CEA. A detailed workflow is shown in the bottom of this page.
+The optimization in done in two stages, first, the planning (or design) of the electrical network, and second, the optimization of building temperature setpoints in order to decrease electricity costs. A detailed workflow is shown in the bottom of this page.
+
+
+The second part is directly calling the MPC Building Toolbox in CEA, please see :doc:`how-to-run-MPC-building` to learn more about MPC Building. 
 
 
 
