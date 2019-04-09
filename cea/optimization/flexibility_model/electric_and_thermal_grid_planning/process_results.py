@@ -4,8 +4,8 @@ import re
 import geopandas as gpd
 import networkx as nx
 import shapely
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
-from cea.utilities.standarize_coordinates import get_projected_coordinate_system
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system
 import get_initial_network as gia
 
 from cea.technologies.thermal_network.network_layout.main import network_layout
