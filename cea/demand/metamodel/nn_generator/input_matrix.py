@@ -374,7 +374,6 @@ def get_array_HVAC_variables(building):
 
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = 'B001'
     settings = config.demand

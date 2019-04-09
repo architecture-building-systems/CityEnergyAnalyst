@@ -431,7 +431,6 @@ def test_graphs_optimization(config):
     # print "Network Optimization \n"
     # finalDir = CodePath + "distribution/"
     # ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, header)
-    # gV = glob.globalVariables()
     # print "Compute electricity needs for all buildings"
     # elecCosts, elecCO2, elecPrim = elecMain.elecOp(pathX, gV)
     # print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
