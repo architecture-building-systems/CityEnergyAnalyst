@@ -84,6 +84,8 @@ The results of the electricity grid costs and sizes is saved in ``output_folder.
 Calculation flowchart
 ---------------------
 
+** Please note: To maintain linearity, the cooling demand is calculated by a linearized model instead of the CEA demand module. 
+
 .. image:: flowchart_mpc_district.png
     :align: center
 
