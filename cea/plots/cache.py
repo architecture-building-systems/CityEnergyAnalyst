@@ -54,6 +54,7 @@ class PlotCache(object):
             with open(div_file, 'w') as div_fp:
                 div_fp.write(plot_div)
         else:
+            print('Loading plot_div from cache: {div_file}'.format(div_file=div_file))
             with open(div_file, 'r') as div_fp:
                 plot_div = div_fp.read()
         return plot_div
