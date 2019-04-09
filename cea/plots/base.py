@@ -99,6 +99,9 @@ class PlotBase(object):
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
+        return self.cache.lookup_plot_div(self, self._plot_div_producer)
+
+    def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div

@@ -32,14 +32,31 @@ class PlotCache(object):
     def _cached_data_file(self, data_path, parameters):
         return os.path.join(self.project, '.cache', data_path, self._parameter_hash(parameters))
 
-    def _cached_div_file(self, data_path, parameters):
-        return self.cached_data_file(data_path, parameters) + '.div'
+    def _cached_div_file(self, plot):
+        data_path = os.path.join(plot.category_name, plot.id())
+        return self._cached_data_file(data_path, plot.parameters) + '.div'
 
     def lookup(self, data_path, plot, producer):
         cache_timestamp = self.cache_timestamp(self._cached_data_file(data_path, plot.parameters))
         if cache_timestamp < self.newest_dependency(plot.input_files):
             return self.store_cached_value(data_path, plot.parameters, producer)
         return self.load_cached_value(data_path, plot.parameters)
+
+    def lookup_plot_div(self, plot, producer):
+        """Lookup the cache of a plot created with plot.plot_div()"""
+        div_file = self._cached_div_file(plot)
+        cache_timestamp = self.cache_timestamp(div_file)
+        if cache_timestamp < self.newest_dependency(plot.input_files):
+            plot_div = producer()
+            folder = os.path.dirname(div_file)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            with open(div_file, 'w') as div_fp:
+                div_fp.write(plot_div)
+        else:
+            with open(div_file, 'r') as div_fp:
+                plot_div = div_fp.read()
+        return plot_div
 
     def cache_timestamp(self, path):
         """Return a timestamp (like ``os.path.getmtime``) to compare to. Returns 0 if there is no data in the cache"""
