@@ -16,8 +16,10 @@ Assumptions
 
 Prerequisites
 -------------
-#. Install the license of Gurobi in your computer. you can obtain one in gurobi.com for free for academic purposes.
-#. Add Gurobi package to the cea environment::
+1. Install the license of Gurobi on your computer. you can obtain one in `gurobi.com
+<http://www.gurobi.com/registration/download-reg>`_ for free for academic purposes.
+
+2. Add Gurobi package to the cea environment::
    
    *open anaconda
    *do ``conda env update``
@@ -25,7 +27,7 @@ Prerequisites
    *do ``grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`` 
    (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
    
-#. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
+3. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
 
 
 Steps
