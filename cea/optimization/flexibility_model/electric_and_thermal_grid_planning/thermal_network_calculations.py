@@ -43,6 +43,8 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
 
     #override flags of thermal_network main
     network_type = config.electrical_thermal_optimization.network_type
+    if network_type != 'DC':
+        raise ValueError('This optimization procedure is not ready for district heating yet!')
     config.thermal_network.network_type = network_type
     thermal_network.main(config)
 
@@ -62,14 +64,11 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     total_demand = pd.read_csv(locator.get_total_demand())
     length_m, average_diameter_m = thermal_network_costs.calc_network_size(network_info)
 
-    if network_type == 'DC':
-        annual_demand_district_MWh = total_demand['Qcs_sys_MWhyr'].sum()
-        annual_demand_disconnected_MWh = 0
-        for building_index in disconnected_buildings_index:
-            annual_demand_disconnected_MWh += total_demand.ix[building_index, 'Qcs_sys_MWhyr']
-        annual_demand_network_MWh = annual_demand_district_MWh - annual_demand_disconnected_MWh
-    else:
-        raise ValueError('This optimization procedure is not ready for district heating yet!')
+    annual_demand_district_MWh = total_demand['Qcs_sys_MWhyr'].sum()
+    annual_demand_disconnected_MWh = 0
+    for building_index in disconnected_buildings_index:
+        annual_demand_disconnected_MWh += total_demand.ix[building_index, 'Qcs_sys_MWhyr']
+    annual_demand_network_MWh = annual_demand_district_MWh - annual_demand_disconnected_MWh
 
     cost_output = {}
     cost_output['total_annual_cost'] = round(cost_storage_df.ix['total'][0], 2)
