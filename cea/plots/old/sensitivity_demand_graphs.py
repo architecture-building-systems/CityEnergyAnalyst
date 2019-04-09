@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import EllipseCollection
 from matplotlib.backends.backend_pdf import PdfPages
+import cea.config
+import cea.inputlocator
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -84,16 +86,14 @@ def graph(locator, parameters, method, samples):
         plt.clf()
         pdf.close()
 
-def run_as_script():
-    import cea.globalvar
-    import cea.inputlocator as inputlocator
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr']
     method = 'sobol' # method
     samples = 1000
     graph(locator, output_parameters, method, samples)
 
+
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

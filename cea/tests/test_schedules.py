@@ -12,7 +12,6 @@ import ConfigParser
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
-from cea.datamanagement.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 from cea.globalvar import GlobalVariables
@@ -39,7 +38,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
 
-        architecture_DB = get_database(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
+        architecture_DB = pd.read_excel(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
@@ -94,8 +93,8 @@ def get_test_config_path():
 def calculate_test_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
-    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE').T['density'].values[:1][0])
-    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM').T['density'].values[:1][0])
+    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE', index_col=0).T['density'].values[:1][0])
+    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM', index_col=0).T['density'].values[:1][0])
     calculated_results = calculate_average_multiuse(
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),

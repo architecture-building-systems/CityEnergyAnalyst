@@ -63,7 +63,13 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
             terminal_nodes = [i for i in terminal_nodes if i != disconnected_building]
 
     # calculate steiner spanning tree of undirected graph
-    mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
+    try:
+        mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
+    except:
+        raise ValueError('There was an error while creating the Steiner tree. '
+                         'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
+                         'the Steiner tree does not support disconnected graphs.')
+
     nx.write_shp(mst_non_directed, output_network_folder)
 
     # populate fields Building, Type, Name

@@ -166,7 +166,6 @@ def calc_Cinv_ACH(qcold_W, locator, ACH_type, config):
     Annualized investment costs for the vapor compressor chiller
     :type qcold_W : float
     :param qcold_W: peak cooling demand in [W]
-    :param gV: globalvar.py
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
     """
