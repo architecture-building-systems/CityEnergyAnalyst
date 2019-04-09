@@ -17,13 +17,13 @@ The investment costs of a micro-grid include: the substations, electricity grid(
 
 Constraints
 """""""""""
-  *Capacity limits corresponding to electric grids, line types.
-  *Range of the building temperature according to thermal comfort standard.
+  * Capacity limits corresponding to electric grids, line types.
+  * Range of the building temperature according to thermal comfort standard.
 Variables
 """""""""
-  *Which buildings are connected to the micro-grid.
-  *The capacities of substations, electricity grid(line), transformers. 
-  *Hourly temperature set-points for each function in the building
+  * Which buildings are connected to the micro-grid.
+  * The capacities of substations, electricity grid(line), transformers. 
+  * Hourly temperature set-points for each function in the building
 
 
 Inputs
@@ -74,6 +74,8 @@ The results from the optimization are saved for each building. In ``Bxxx_outputs
 * Hourly temperature set-points for each function in the building
 * Hourly air flows
 * Hourly electricity consumption for cooling
+
+The results of the electricity grid costs and sizes is saved in ``output_folder.csv``
 
 
 
