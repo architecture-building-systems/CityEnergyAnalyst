@@ -31,6 +31,7 @@ These are a collection of tutorials related to the specific use of one or more o
 #. :doc:`how-to-prepare-inputs-for-network-simulation`.
 #. :doc:`how-to-run-thermal-network-optimization`.
 #. :doc:`how-to-run-thermal-electrical-grid-planning`
+#. :doc:`how-to-run-MPC-building`
 
 
 For developers
