@@ -16,8 +16,10 @@ Assumptions
 
 Prerequisites
 -------------
-#. Install the license of Gurobi in your computer. you can obtain one in gurobi.com for free for academic purposes.
-#. Add Gurobi package to the cea environment::
+1. Install the license of Gurobi on your computer. you can obtain one in `gurobi.com
+<http://www.gurobi.com/registration/download-reg>`_ for free for academic purposes.
+
+2. Add Gurobi package to the cea environment::
    
    *open anaconda
    *do ``conda env update``
@@ -25,12 +27,25 @@ Prerequisites
    *do ``grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`` 
    (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
    
-#. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
+3. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
 
 
 Steps
 -----
-#. Assign optimization parameters in ``cea.config``
+#. Assign optimization parameters in ``cea.config``::
+      
+      [electrical-thermal-optimization]
+      network-type = DH or DC
+      initialind = number of individuals at the start of the optimization (parameter for genetic algorithm)
+      halloffame = number of individuals to be stored in hall of fame
+      ngen = number of generations in the optimization (parameter for genetic algorithm)
+      fcheckpoint = frequency for the saving of checkpoints
+      maxtime = maximum allowed time in seconds, 604800 is equivalent of 7 days
+      recoverycheckpoint = in case the optimization stops, it can be resumed from this checkpoint
+      random-seed = random seed to make it easy to replicate the results of the scenarios
+      crossoverprobability = for optimization crossover
+      mutationprobability = for optimization mutation
+
 #. Run `cea\optimization\flexibility_model\electric_and_thermal_grid_planning\electrical_thermal_optimization_main.py`
 #. Check results from optimization in ``...scenario\outputs\electrical_and_thermal_network\optimization``
 
