@@ -62,6 +62,7 @@ The results from the optimization are saved for each building. In ``Bxxx_outputs
 
 Calculation flowchart
 ---------------------
+** Please note: To maintain linearity, the cooling demand is calculated by a linearized model instead of the CEA demand module. 
 
 .. image:: flowchart_mpc_building.png
     :align: center
