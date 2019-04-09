@@ -29,7 +29,8 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How to study building retrofits in the CEA?  <https://docs.google.com/presentation/d/1UNWl_XRJzXwKqV61DpQDC_i41pKmCgzdWaDcDVu7skU/edit?usp=sharing>`__.
 #. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__.
 #. :doc:`how-to-prepare-inputs-for-network-simulation`.
-#. :doc:`hot-to-run-thermal-network-optimization`.
+#. :doc:`how-to-run-thermal-network-optimization`.
+#. :doc:`how-to-run-thermal-electrical-grid-planning`
 
 
 For developers
