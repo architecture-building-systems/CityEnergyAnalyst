@@ -37,8 +37,6 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     :param t_re_K: return temeprature from the minisplit unit (hot)
     :type tsource_K : float
     :param tsource_K: temperature of the source
-    :param gV: globalvar.py
-
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
     :rtype qcolddot : float
@@ -88,9 +86,6 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
     :param T_DH_sup_K: supply temperature to the DHN (hot)
     :type T_re_K : float
     :param T_re_K: return temeprature from the DHN (cold)
-    :type tground_K : float
-    :param tground_K: ground temperature
-    :param gV: globalvar.py
 
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
@@ -127,9 +122,6 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     qcolddot_W =  qhotdot_W - wdot_W
 
-    #if qcolddot > gV.GHP_CmaxSize:
-    #    raise ModelError
-
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
 def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
@@ -144,8 +136,6 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     :param t_re_K: return temeprature from the DHN (cold)
     :type COP: float
     :param COP: coefficient of performance of GSHP
-    :param gV: globalvar.py
-
     :rtype C_GHP_el: float
     :returns C_GHP_el: electricity cost of GSHP operation
 
@@ -178,8 +168,6 @@ def GHP_Op_max(tsup_K, tground_K, nProbes):
     :param tground_K: ground temperature
     :type nProbes: float
     :param nProbes: bumber of probes
-    :param gV: globalvar.py
-
     :rtype qhotdot: float
     :returns qhotdot: heating energy provided from GHSP
     :rtype COP: float
@@ -205,8 +193,6 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
     :param tret_K: return temeprature from the DHN (cold)
     :type tlake : float
     :param tlake: lake temperature
-    :param gV: globalvar.py
-
     :rtype C_HPL_el: float
     :returns C_HPL_el: electricity cost of Lake HP operation
 
@@ -243,8 +229,6 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     :param t_re_K: return temeprature from the DHN (cold)
     :type t_lake_K : float
     :param t_lake_K: lake temperature
-    :param gV: globalvar.py
-
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
     :rtype qcolddot : float
@@ -290,8 +274,6 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     :param t_re_K: return temeprature from the DHN (cold)
     :type t_sup_sew_K : float
     :param t_sup_sew_K: sewage supply temperature
-    :param gV: globalvar.py
-
     :rtype C_HPSew_el_pure: float
     :returns C_HPSew_el_pure: electricity cost of sewage water HP operation
 

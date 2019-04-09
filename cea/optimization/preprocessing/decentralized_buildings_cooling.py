@@ -2064,7 +2064,7 @@ def main(config):
     building_name = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
     disconnected_buildings_cooling_main(locator, building_names[0:1], config, prices, lca)
 
 

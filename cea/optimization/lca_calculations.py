@@ -22,10 +22,10 @@ __status__ = "Production"
 
 class LcaCalculations(object):
     def __init__(self, locator, region, detailed_electricity_pricing):
-        heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="HEATING")
-        cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="COOLING")
+        # heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="HEATING")
+        # cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="COOLING")
         electricity_costs = pd.read_excel(locator.get_electricity_costs(region), sheet_name="ELECTRICITY")
-        dhw_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="DHW")
+        # dhw_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), sheet_name="DHW")
         resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region),
                                       sheet_name="RESOURCES")
 

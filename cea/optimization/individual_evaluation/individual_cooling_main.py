@@ -71,7 +71,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     t0 = time.time()
-    lca = LcaCalculations(locator, config)
+    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
     print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine

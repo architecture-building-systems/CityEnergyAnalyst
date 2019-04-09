@@ -28,6 +28,27 @@ Data Management:
   module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
+- name: terrain-helper
+  label: Terrain helper
+  description: Creates a fixed elevation terrain file (good for most applications)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.terrain_helper
+  parameters: ['general:scenario', terrain-helper]
+
+- name: district-helper
+  label: District helper
+  description: Query district geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.district_geometry_helper
+  parameters: ['general:scenario', district-helper]
+
+- name: streets-helper
+  label: Streets helper
+  description: Query streets geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.streets_helper
+  parameters: ['general:scenario', streets-helper]
+
 - name: data-helper
   label: Data helper
   description: Query characteristics of buildings and systems from statistical data
@@ -134,7 +155,8 @@ Optimization:
   description: Run decentralized building optimization
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.preprocessing.decentralized_building_main
-  parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized',
+               'general:detailed-electricity-pricing']
 
 
 - name: supply-system-simulation
