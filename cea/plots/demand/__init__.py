@@ -99,7 +99,7 @@ class DemandPlotBase(cea.plots.PlotBase):
         Returns the hourly loads, summed up for all the builidngs being considered by the plot. Uses the PlotCache
         to speed up ``self._calculate_hourly_loads()``
         """
-        return self.cache.lookup(data_path=os.path.join(label, 'hourly_loads'),
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
                                  plot=self, producer=self._calculate_hourly_loads)
 
     def _calculate_hourly_loads(self):

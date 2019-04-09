@@ -80,7 +80,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_processed
 
     def preprocessing_final_generation_data_cost_centralized(self):
-        return self.cache.lookup(data_path=os.path.join(label, 'preprocessing_final_generation_data_cost_centralized'),
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_final_generation_data_cost_centralized'),
                                  plot=self, producer=self._preprocessing_final_generation_data_cost_centralized)
 
     def _preprocessing_final_generation_data_cost_centralized(self):
@@ -445,7 +445,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_processed
 
     def preprocessing_multi_criteria_data(self):
-        return self.cache.lookup(data_path=os.path.join(label, 'preprocessing_multi_criteria_data'),
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_multi_criteria_data'),
                                  plot=self, producer=self._preprocessing_multi_criteria_data)
 
     def _preprocessing_multi_criteria_data(self):
@@ -457,7 +457,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_multi_criteria
 
     def preprocessing_capacities_data(self):
-        return self.cache.lookup(data_path=os.path.join(label, 'preprocessing_capacities_data'),
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_capacities_data'),
                                  plot=self, producer=self._preprocessing_capacities_data)
 
     def _preprocessing_capacities_data(self):
