@@ -100,7 +100,7 @@ class Dashboard(object):
         """Add a new plot to the dashboard"""
         plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
         parameters = plot_class.get_default_parameters(self.config)
-        plot = plot_class(self.config.project, parameters)
+        plot = plot_class(self.config.project, parameters, self.cache)
         self.plots.append(plot)
 
     def remove_plot(self, plot_index):
