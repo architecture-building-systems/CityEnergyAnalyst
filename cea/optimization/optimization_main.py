@@ -2,7 +2,9 @@
 multi-objective optimization of supply systems for the CEA
 """
 
+from __future__ import print_function
 from __future__ import division
+
 import os
 import pandas as pd
 import cea.config
@@ -47,7 +49,7 @@ def moo_optimization(locator, weather_file, gv, config):
     :param locator: path to input locator
     :param weather_file: path to weather file
     :param gv: global variables class
-    :type locator: string
+    :type locator: cea.inputlocator.InputLocator
     :type weather_file: string
     :type gv: class
 
@@ -64,19 +66,20 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
-    print "PRE-PROCESSING"
+    print("PRE-PROCESSING")
     extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config,
-                                                                             prices, lca)
+                                                                                  weather_file, gv, config,
+                                                                                  prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    print "NETWORK OPTIMIZATION"
+    print("NETWORK OPTIMIZATION")
     network_features = network_opt_main.network_opt_main(config, locator)
 
     # optimize conversion systems
-    print "CONVERSION AND STORAGE OPTIMIZATION"
-    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                   network_features, gv, config, prices, lca)
+    print("CONVERSION AND STORAGE OPTIMIZATION")
+    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2,
+                                                        extra_primary_energy, solar_features,
+                                                        network_features, gv, config, prices, lca)
 
 
 # ============================
@@ -93,7 +96,7 @@ def main(config):
     weather_file = config.weather
 
     try:
-        if not demand_files_exist(config, locator):
+        if not demand_files_exist(locator):
             raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
 
         if not os.path.exists(locator.get_total_demand()):
@@ -107,11 +110,11 @@ def main(config):
                 raise ValueError(
                     "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
 
-        if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
+        if not os.path.exists(locator.SC_totals(panel_type='FP')):
             raise ValueError(
                 "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
 
-        if not os.path.exists(locator.SC_totals(panel_type = 'ET')):
+        if not os.path.exists(locator.SC_totals(panel_type='ET')):
             raise ValueError(
                 "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
 
@@ -130,14 +133,17 @@ def main(config):
         print(err.message)
         sys.exit(1)
 
-    print (config.optimization.initialind)
+    print(config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
-    print 'test_optimization_main() succeeded'
+    print('test_optimization_main() succeeded')
 
-def demand_files_exist(config, locator):
-    # verify that the necessary demand files exist
-    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in locator.get_zone_building_names())
+
+def demand_files_exist(locator):
+    """verify that the necessary demand files exist"""
+    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in
+               locator.get_zone_building_names())
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
