@@ -75,7 +75,7 @@ def new_dashboard(config, cache):
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
-    dashboards = read_dashboards(config)
+    dashboards = read_dashboards(config, cache)
     dashboards.append(default_dashboard(config, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
@@ -83,7 +83,8 @@ def new_dashboard(config, cache):
 
 def delete_dashboard(config, dashboard_index):
     """Remove the dashboard with that index from the dashboard configuration file"""
-    dashboards = read_dashboards(config)
+    import cea.plots.cache
+    dashboards = read_dashboards(config, cea.plots.cache.NullPlotCache())
     dashboards.pop(dashboard_index)
     write_dashboards(config, dashboards)
 
