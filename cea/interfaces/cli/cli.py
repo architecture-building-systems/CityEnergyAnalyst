@@ -12,7 +12,6 @@ import datetime
 import ConfigParser
 import cea.config
 import cea.scripts
-import cea.datamanagement.copy_default_databases
 
 
 __author__ = "Daren Thomas"
