@@ -3,7 +3,7 @@
 
 from __future__ import division
 import numpy as np
-from cea.demand import control_ventilation_systems, constants
+from cea.demand import control_ventilation_systems, constants, control_heating_cooling_systems
 from cea.utilities import physics
 
 __author__ = "Gabriel Happle"
@@ -206,10 +206,14 @@ def calc_m_ve_required(bpr, tsd):
 
     m_ve_required_people = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
 
-    if region in {'SG'}:
+    if control_heating_cooling_systems.has_3for2_cooling_system(bpr) \
+            or control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
         # 0.6 l/s/m2 minimum ventilation rate according to Singapore standard SS 553
+        # air conditioning systems supply the higher rate between minimum flow per area and required ventilation for
+        #  people during occupied hours. The minimum flow rate ensures dilution of pollutants inside the building
+        # This applies to buildings with air-conditioning systems for cooling
         # [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
-        m_ve_required_min = 0.6 * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+        m_ve_required_min = constants.MIN_VENTILATION_RATE * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
         m_ve_required = [req_min if 0.0 < req_peop < req_min else req_peop for req_min, req_peop in zip(m_ve_required_min, m_ve_required_people)]
         m_ve_required = np.asarray(m_ve_required) # convert list to array
 
