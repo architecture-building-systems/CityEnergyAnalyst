@@ -56,13 +56,6 @@ Data Management:
   module: cea.datamanagement.data_helper
   parameters: ['general:scenario', 'general:region', data-helper]
 
-- name: copy-default-databases
-  label: Copy default databases
-  description: Copy the default databases (archetypes) to the scenario for the selected region (does not replace existing files)
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.datamanagement.copy_default_databases
-  parameters: ['general:scenario', 'general:region']
-
 
 Demand forecasting:
 
