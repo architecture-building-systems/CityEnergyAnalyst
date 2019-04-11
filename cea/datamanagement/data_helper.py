@@ -27,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def get_technology_related_databases(locator, region):
-    technology_database_cea = locator._get_region_specific_db_file(region)
+    technology_database_cea = locator.get_region_specific_db_file(region)
     output_directory = locator.get_technology_folder()
 
     from distutils.dir_util import copy_tree
