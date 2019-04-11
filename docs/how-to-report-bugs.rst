@@ -1,7 +1,7 @@
 :orphan:
 
-How to report a Bug
-===================
+How to report a Bug?
+====================
 
 a bug describes an existing feature (that would ideally have been developed as part of a user story) that does not fill the need it should, as in, it does not accomplish what it should be.
 
