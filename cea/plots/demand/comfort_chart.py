@@ -35,7 +35,7 @@ XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     name = "Comfort Chart"
 
-    expected_parameters = dict(cea.plots.demand.DemandPlotBase.expected_parameters,
+    expected_parameters = dict(cea.plots.demand.DemandSingleBuildingPlotBase.expected_parameters,
                                region='general:region')
 
     def __init__(self, project, parameters, cache):
