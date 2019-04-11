@@ -17,7 +17,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-class HeatingResetSchedulePlot(cea.plots.demand.DemandPlotBase):
+class HeatingResetSchedulePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     name = "Heating Reset Schedule"
 
     def __init__(self, project, parameters, cache):

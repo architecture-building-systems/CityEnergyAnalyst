@@ -32,7 +32,7 @@ YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
 
-class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
+class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     name = "Comfort Chart"
 
     expected_parameters = dict(cea.plots.demand.DemandPlotBase.expected_parameters,
