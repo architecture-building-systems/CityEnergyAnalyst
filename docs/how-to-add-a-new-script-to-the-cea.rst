@@ -159,7 +159,7 @@ This file has the same sections and parameters as the ``cea.config`` file in the
 includes additional information like parameter type and a description of the parameter.
 
 The configuration is split up into sections. The main section ``[general]`` contains parameters that are considered
-global to most scripts, e.g. ``scenario``, ``weather``, ``region``, ``multiprocessing``. All other parameters reside
+global to most scripts, e.g. ``scenario``, ``weather``,  ``multiprocessing``. All other parameters reside
 in a section with the same name as the script that uses them (e.g. ``[demand]``, ``[data-helper]`` etc.) with exceptions
 for tools that are closely related and share parameters (e.g. ``[solar]`` for ``photovoltaic``, ``solar-collector`` and
 ``photovoltaic-thermal``, ``[dbf-tools]`` for ``dbf-to-excel`` and ``excel-to-dbf``).
