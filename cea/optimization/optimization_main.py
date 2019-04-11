@@ -59,7 +59,7 @@ def moo_optimization(locator, weather_file, gv, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
