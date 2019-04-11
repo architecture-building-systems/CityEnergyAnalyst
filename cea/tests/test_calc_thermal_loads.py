@@ -38,7 +38,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(cls.locator, cls.config, True, True, True, True, True, True)
+        cea.datamanagement.data_helper.data_helper(cls.locator, cls.config, True, True, True, True, True, True, True)
 
         use_daysim_radiation = cls.config.demand.use_daysim_radiation
         cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.locator, cls.region,
