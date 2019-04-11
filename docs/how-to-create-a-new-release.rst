@@ -1,7 +1,7 @@
 :orphan:
 
-How to create a new release
-===========================
+How to create a new release?
+============================
 
 This section describes the steps necessary to create a new release of the City Energy Analyst (CEA).
 
