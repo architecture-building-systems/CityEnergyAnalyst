@@ -5,7 +5,7 @@ Deterministic
 ^^^^^^^^^^^^^
 
 CEA includes deterministic schedules for 18 building functions (such as residential, office, school...)
-derived from SIA standard 2024 [1]. Schedules stored in ``occupancy_schedules.xlsx`` are generally separated into decimal probabilities for the following,
+derived from SIA standard 2024 [1]_. Schedules stored in ``occupancy_schedules.xlsx`` are generally separated into decimal probabilities for the following,
 with i denoting the building function:
 
 - P \ :sub:`occupancy,i` : hourly probability of occupancy
