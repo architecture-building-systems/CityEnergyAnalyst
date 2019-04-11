@@ -16,7 +16,6 @@ import pandas as pd
 
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.demand_main import properties_and_schedule
-from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
