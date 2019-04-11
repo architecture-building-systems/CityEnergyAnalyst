@@ -20,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
+class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     name = "Energy balance"
 
     def __init__(self, project, parameters, cache):
