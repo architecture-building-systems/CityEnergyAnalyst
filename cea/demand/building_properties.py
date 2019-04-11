@@ -18,8 +18,6 @@ from cea.utilities.dbf import dbf_to_dataframe
 # import constants
 H_F = constants.H_F
 E_S = constants.E_S
-F_F = constants.F_F
-F_F_SG = constants.F_F_SG
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -865,7 +863,7 @@ def get_envelope_properties(locator, prop_architecture):
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall', 'U_base']
-    fields_win = ['Name', 'e_win', 'G_win', 'U_win']
+    fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
@@ -891,10 +889,6 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 
     # load gv
     thermal_resistance_surface = RSE
-    if region in {'SG'}:
-        window_frame_fraction = F_F_SG
-    else:
-        window_frame_fraction = F_F
 
     if use_daysim_radiation:
 
@@ -903,8 +897,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 
         # for every building
         for building_name in locator.get_zone_building_names():
-            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
-                                     window_frame_fraction)
+            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
             list_Isol.append(I_sol)
 
         result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
@@ -923,15 +916,14 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 
         array_Isol_all_buildings_W = [
             calc_Isol_arcgis(I_sol_average_Wperm2_dict[name], prop_rc_model.ix[name], prop_envelope.ix[name],
-                             window_frame_fraction, thermal_resistance_surface) for name in solar.index]
+                              thermal_resistance_surface) for name in solar.index]
 
         result = pd.DataFrame({'Name': solar.index, 'I_sol': array_Isol_all_buildings_W})
 
     return result
 
 
-def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
-                     window_frame_fraction):
+def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface):
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -941,7 +933,6 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     :param prop_envelope: contains the building envelope properties.
     :param prop_rc_model: RC model properties of a building by name.
     :param thermal_resistance_surface: Thermal resistance of building element.
-    :param window_frame_fraction: Fraction of area that concerns the window frame.
 
     :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
     :rtype: np.array
@@ -994,7 +985,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
                  for surface in geometry_data_windows.index]
 
-    I_sol_win = np.array([x * y * (1 - window_frame_fraction) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
+    I_sol_win = np.array([x * y * (1 -  prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
@@ -1002,7 +993,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     return I_sol
 
 
-def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_fraction, thermal_resistance_surface):
+def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resistance_surface):
     """
     This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
     for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
@@ -1019,7 +1010,7 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_f
 
     Asol_wall = prop_rc_model['Aop_sup'] * prop_envelope.a_wall * thermal_resistance_surface * prop_rc_model['U_wall']
     Asol_roof = prop_rc_model['Aroof'] * prop_envelope.a_roof * thermal_resistance_surface * prop_rc_model['U_roof']
-    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - window_frame_fraction)
+    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - prop_envelope.F_F)
 
     I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
 
