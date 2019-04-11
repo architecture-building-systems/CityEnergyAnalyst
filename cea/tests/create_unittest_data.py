@@ -35,7 +35,7 @@ def main(output_file):
 
     # run properties script
     import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True)
+    cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True, True)
 
     region = config.region
     year = weather_data['year'][0]
