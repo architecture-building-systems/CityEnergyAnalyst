@@ -431,7 +431,7 @@ if __name__ == "__main__":
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
     extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
