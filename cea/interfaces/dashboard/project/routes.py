@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, current_app, request, redirect, jsonify, url_for
 import os
 import cea.inputlocator
+import cea.plots.cache
 
 blueprint = Blueprint(
     'project_blueprint',
@@ -42,6 +43,7 @@ def route_save():
     cea_config.district_heating_network = 'district-heating-network' in request.form
     cea_config.district_cooling_network = 'district-cooling-network' in request.form
     cea_config.save()
+    current_app.plot_cache = cea.plots.cache.PlotCache(cea_config.project)
     return redirect(url_for('project_blueprint.route_show'))
 
 

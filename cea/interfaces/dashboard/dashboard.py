@@ -2,8 +2,8 @@ from flask import Flask
 
 import cea.config
 import cea.plots
+import cea.plots.cache
 
-import yaml
 import os
 
 
@@ -22,6 +22,7 @@ def list_tools():
 
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
+    plot_cache = cea.plots.cache.PlotCache(config.project)
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'DEBUG': True,
                              'SECRET_KEY': 'secret'})
@@ -33,7 +34,7 @@ def main(config):
 
     @app.context_processor
     def dashboards_processor():
-        dashboards = cea.plots.read_dashboards(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
         return dict(dashboards=dashboards)
 
     @app.template_filter('escapejs')
@@ -53,7 +54,7 @@ def main(config):
             u'\u2029': '\\u2029'
         }
         # Escape every ASCII character with a value less than 32.
-        escapes.update(('%c' % z, '\\u%04X' % z) for z in xrange(32))
+        escapes.update(('%c' % z, '\\u%04X' % z) for z in range(32))
 
         retval = []
         for char in text:
@@ -81,7 +82,6 @@ def main(config):
     import plots.routes
     import inputs.routes
     import project.routes
-    import webbrowser
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
@@ -90,13 +90,13 @@ def main(config):
 
     # keep a copy of the configuration we're using
     app.cea_config = config
+    app.plot_cache = plot_cache
 
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
 
     # FIXME: this needs to be replaced with a better solution
-    # webbrowser.open("http://localhost:5050/")
     app.run(host='localhost', port=5050, threaded=False)
 
 
