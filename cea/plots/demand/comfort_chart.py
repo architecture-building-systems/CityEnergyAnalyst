@@ -37,8 +37,8 @@ class ComfortChartPlot(cea.plots.demand.DemandPlotBase):
 
     expected_parameters = dict(cea.plots.demand.DemandPlotBase.expected_parameters)
 
-    def __init__(self, project, parameters):
-        super(ComfortChartPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(ComfortChartPlot, self).__init__(project, parameters, cache)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]

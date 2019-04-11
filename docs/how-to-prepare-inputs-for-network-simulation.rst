@@ -1,7 +1,7 @@
 :orphan:
 
-How to Prepare Inputs for Thermal Network Simulation
-====================================================
+How to Prepare Inputs for Thermal Network Simulation?
+=====================================================
 
 The thermal network tool in CEA simulates thermal and hydraulic losses from network operation.
 To run the simulation, two input files are required:

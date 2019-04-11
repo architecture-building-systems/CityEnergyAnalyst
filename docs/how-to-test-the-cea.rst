@@ -1,7 +1,7 @@
 :orphan:
 
-How to test the CEA
-===================
+How to test the CEA?
+====================
 
 This document explains how to test the CEA during the development of the software. It is meant for developers interested
 in extending the software as well as a documentation of the process used for quality ensurance.

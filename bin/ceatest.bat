@@ -1,12 +1,14 @@
 rem script used to test the cea by the jenkins
 rem creates a conda environment (deleting the old one first)
 
-call conda env remove -y -q --name ceatest
-call conda env create -q --name ceatest
+rem removing conda environment creation temporarily
+rem call conda env remove -y -q --name ceatest
+rem call conda env create -q --name ceatest
 
-call activate ceatest
+rem call activate ceatest
+call activate cea
 
-pip.exe install .
+pip.exe install -e .
 
 rem where cea
 
