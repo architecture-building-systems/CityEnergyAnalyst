@@ -70,7 +70,6 @@ def demand_calculation(locator, config):
 
     # LOCAL VARIABLES
     multiprocessing = config.multiprocessing
-    region = config.region
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     use_daysim_radiation = config.demand.use_daysim_radiation
