@@ -1,7 +1,7 @@
 :orphan:
 
-How to use the configuration editor
-===================================
+How to use the configuration editor?
+====================================
 
 CEA counts with a configuration file from where you can update all settings of the CEA collection of tools.
 We have created an editor
