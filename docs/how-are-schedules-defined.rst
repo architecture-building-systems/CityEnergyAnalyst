@@ -46,7 +46,7 @@ Stochastic
 ^^^^^^^^^^
 
 In addition to this deterministic model, CEA includes the option of using the occupant presence model
-of Page et al [1]_. as an alternative occupant modeling option in the tool. In this model, each occupant's
+of Page et al [2]_. as an alternative occupant modeling option in the tool. In this model, each occupant's
 presence is modeled as a two-state Markov process. Transition probabilities between the states
 “absence” (state 0) and “presence” (state 1) are defined at each hour of the year for each user in the
 area. For an occupant in a space with function i, the probability of an occupant being in the space in
