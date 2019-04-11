@@ -1,7 +1,7 @@
 :orphan:
 
-How to add a new script
-=======================
+How to add a new script?
+========================
 
 So you want to extend the CEA? This guide will get you up and running!
 
