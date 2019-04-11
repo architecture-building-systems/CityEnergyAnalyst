@@ -144,21 +144,21 @@ def properties_and_schedule(locator, year, use_daysim_radiation, override_variab
 def calc_demand_singleprocessing(building_properties, date, locator, list_building_names, usage_schedules,
                                  weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output, config, region,  write_detailed_output, debug):
+                                 format_output, config, write_detailed_output, debug):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator,
                                          use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output, config, region,  write_detailed_output, debug)
+                                         format_output, config, write_detailed_output, debug)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
 def calc_demand_multiprocessing(building_properties, date, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
-                                config, region,  write_detailed_output, debug):
+                                config, write_detailed_output, debug):
     number_of_processes = config.get_number_of_processes()
     print("Using %i CPU's" % number_of_processes)
     pool = mp.Pool(number_of_processes)
@@ -170,7 +170,7 @@ def calc_demand_multiprocessing(building_properties, date, locator, list_buildin
                                [building, bpr, weather_data, usage_schedules, date, locator,
                                 use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, config, region,  write_detailed_output, debug])
+                                format_output, config, write_detailed_output, debug])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)
@@ -183,7 +183,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with weather file %s' % config.weather)
-    print('Running demand calculation for region %s' % config.region)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
