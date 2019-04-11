@@ -214,7 +214,16 @@ def calc_m_ve_required(bpr, tsd):
         # This applies to buildings with air-conditioning systems for cooling
         # [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
         m_ve_required_min = constants.MIN_VENTILATION_RATE * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
-        m_ve_required = [req_min if 0.0 < req_peop < req_min else req_peop for req_min, req_peop in zip(m_ve_required_min, m_ve_required_people)]
+        # we want this not to affect the air flows during the heating season
+        m_ve_required = []
+        for t in range(0,8760):
+            if 0.0 < m_ve_required_people[t] < m_ve_required_min[t] and \
+                control_heating_cooling_systems.is_cooling_season(t, bpr):
+                m_ve_required.append(m_ve_required_min[t])
+            else:
+                m_ve_required.append(m_ve_required_people[t])
+
+        #m_ve_required = [req_min if 0.0 < req_peop < req_min else req_peop for req_min, req_peop in zip(m_ve_required_min, m_ve_required_people)]
         m_ve_required = np.asarray(m_ve_required) # convert list to array
 
     else:
