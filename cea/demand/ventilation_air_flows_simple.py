@@ -192,7 +192,7 @@ def calc_theta_ve_mech(bpr, tsd, t):
     return
 
 
-def calc_m_ve_required(bpr, tsd, region):
+def calc_m_ve_required(bpr, tsd):
     """
     Calculate required outdoor air ventilation rate according to occupancy
 

@@ -87,7 +87,7 @@ def demand_calculation(locator, config):
     year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation,
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation,
                                                                         override_variables)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
@@ -102,12 +102,12 @@ def demand_calculation(locator, config):
         calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output, config, region,  write_detailed_output, debug)
+                                    format_output, config, write_detailed_output, debug)
     else:
         calc_demand_singleprocessing(building_properties, date, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output, config, region,  write_detailed_output, debug)
+                                     format_output, config, write_detailed_output, debug)
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -124,17 +124,17 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def properties_and_schedule(locator, region, year, use_daysim_radiation, override_variables=False):
+def properties_and_schedule(locator, year, use_daysim_radiation, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     # building properties model
 
-    building_properties = BuildingProperties(locator, use_daysim_radiation, region, override_variables)
+    building_properties = BuildingProperties(locator, use_daysim_radiation, override_variables)
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
 
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
         archetype_values['people'], 'archetype_values': archetype_values}
