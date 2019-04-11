@@ -697,6 +697,26 @@ class MultiChoiceParameter(ChoiceParameter):
         return choices
 
 
+class SingleBuildingParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'SingleBuildingParameter'
+
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        return locator.get_zone_building_names()
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
+
+
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
     typename = 'BuildingsParameter'
