@@ -96,38 +96,7 @@ def main(config):
     weather_file = config.weather
 
     try:
-        if not demand_files_exist(locator):
-            raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
-
-        if not os.path.exists(locator.get_total_demand()):
-            raise ValueError("Missing total demand of the scenario. Consider running demand script first.")
-
-        if not os.path.exists(locator.PV_totals()):
-            raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first.")
-
-        if config.district_heating_network:
-            if not os.path.exists(locator.PVT_totals()):
-                raise ValueError(
-                    "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
-
-        if not os.path.exists(locator.SC_totals(panel_type='FP')):
-            raise ValueError(
-                "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
-
-        if not os.path.exists(locator.SC_totals(panel_type='ET')):
-            raise ValueError(
-                "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
-
-        if not os.path.exists(locator.get_sewage_heat_potential()):
-            raise ValueError(
-                "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
-
-        if not os.path.exists(locator.get_lake_potential()):
-            raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
-
-        if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
-            raise ValueError(
-                "Missing thermal network simulation results. Consider running thermal network simulation script first.")
+        check_input_files(config, locator)
     except ValueError as err:
         import sys
         print(err.message)
@@ -137,6 +106,39 @@ def main(config):
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
     print('test_optimization_main() succeeded')
+
+
+def check_input_files(config, locator):
+    """
+    Raise a ``ValueError`` if any of the required input files are missing.
+    :param cea.config.Configuration config: The config object to use
+    :param cea.config.InputLocator locator: The input locator to use
+    :return: None
+    """
+    if not demand_files_exist(locator):
+        raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
+    if not os.path.exists(locator.get_total_demand()):
+        raise ValueError("Missing total demand of the scenario. Consider running demand script first.")
+    if not os.path.exists(locator.PV_totals()):
+        raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first.")
+    if config.district_heating_network:
+        if not os.path.exists(locator.PVT_totals()):
+            raise ValueError(
+                "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
+    if not os.path.exists(locator.SC_totals(panel_type='FP')):
+        raise ValueError(
+            "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
+    if not os.path.exists(locator.SC_totals(panel_type='ET')):
+        raise ValueError(
+            "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
+    if not os.path.exists(locator.get_sewage_heat_potential()):
+        raise ValueError(
+            "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
+    if not os.path.exists(locator.get_lake_potential()):
+        raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
+    if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
+        raise ValueError(
+            "Missing thermal network simulation results. Consider running thermal network simulation script first.")
 
 
 def demand_files_exist(locator):
