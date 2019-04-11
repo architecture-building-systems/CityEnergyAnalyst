@@ -16,8 +16,6 @@ def route_show():
     """Show the project inputs form."""
     cea_config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(cea_config.scenario)
-    regions = list(cea_config.sections['general'].parameters['region']._choices)
-    selected_region = cea_config.region
     scenario = cea_config.scenario
     weather = cea_config.weather
     multiprocessing = cea_config.multiprocessing
@@ -26,7 +24,7 @@ def route_show():
     parameters = cea_config.sections['general'].parameters.values()
     weather_dict = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
 
-    return render_template('project.html', parameters=parameters, weather_dict=weather_dict, regions=regions, selected_region=selected_region,
+    return render_template('project.html', parameters=parameters, weather_dict=weather_dict,
                            weather=weather, weather_names=weather_names, multiprocessing=multiprocessing)
 
 
@@ -37,7 +35,6 @@ def route_save():
     print(request.form)
     cea_config.scenario_name = request.form['scenario-name']
     cea_config.project = request.form['project']
-    cea_config.region = request.form['region']
     cea_config.weather = request.form['weather']
     cea_config.number_of_cpus_to_keep_free = int(request.form['number-of-cpus-to-keep-free'])
     cea_config.multiprocessing = 'multiprocessing' in request.form
