@@ -526,8 +526,7 @@ class InputLocator(object):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
     def _get_region_specific_db_file(self, region):
-        """Copy a region-specific file from the database to a scenario, overwriting any existing one
-        if it doesn't exist there yet and return the full path to the copy"""
+        """get path to CEA databases according to the region"""
         technology_folder = os.path.join(self.db_path, region)
         if not os.path.exists(technology_folder):
             raise Exception("you are trying to get the technology database from a location that cea does not support")
