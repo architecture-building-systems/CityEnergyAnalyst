@@ -142,6 +142,7 @@ class DemandPlotBase(cea.plots.PlotBase):
 
 
 class DemandSingleBuildingPlotBase(DemandPlotBase):
+    """A base class for demand plots that only work on a single building"""
     expected_parameters = {
         'building': 'plots:building',
         'scenario-name': 'general:scenario-name',
