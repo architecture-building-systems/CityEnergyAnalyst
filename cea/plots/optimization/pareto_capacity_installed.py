@@ -20,9 +20,8 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlo
     """Show a pareto curve installed capacity for a generation"""
     name = "Capacity installed in a generation"
 
-    def __init__(self, project, parameters):
-        super(ParetoCapacityInstalledPlot, self).__init__(project, parameters)
-        self.data = self.preprocessing_capacities_data().copy()
+    def __init__(self, project, parameters, cache):
+        super(ParetoCapacityInstalledPlot, self).__init__(project, parameters, cache)
         self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W',
                                                    'CHP_BG_capacity_W',
                                                    'CHP_NG_capacity_W', 'Furnace_dry_capacity_W',
@@ -39,10 +38,11 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlo
                                                    'Storage_thermal_kW']
         self.analysis_fields = (self.analysis_fields_individual_heating if self.network_type == 'DH'
                                 else self.analysis_fields_individual_cooling)
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         self.layout = go.Layout(title=self.title, barmode='stack',
                                 yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
                                 xaxis=dict(title='Point in the Pareto Curve'))
+        self.input_files = [self.locator.get_optimization_all_individuals(),
+                            ]
 
     @property
     def title(self):
@@ -58,8 +58,8 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlo
     def calc_graph(self):
         # CALCULATE GRAPH FOR CONNECTED BUILDINGS
         graph = []
-        data = self.data
-        analysis_fields = self.analysis_fields
+        data = self.preprocessing_capacities_data()
+        analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         data['total'] = data[analysis_fields].sum(axis=1)
         data['Name'] = data.index.values
         data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left

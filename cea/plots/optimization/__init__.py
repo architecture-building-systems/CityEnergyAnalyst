@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import os
 import json
-import cea.plots
 import cea.config
+import cea.plots
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
@@ -45,8 +45,14 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         'detailed-electricity-pricing': 'general:detailed-electricity-pricing'
     }
 
-    def __init__(self, project, parameters):
-        super(OptimizationOverviewPlotBase, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        """
+
+        :param project: The project to base plots on (some plots span scenarios)
+        :param parameters: The plot parameters as, e.g., per the dashboard.yml file
+        :param cea.plots.PlotCache cache: a PlotCache instance for speeding up plotting
+        """
+        super(OptimizationOverviewPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
         self.network_type = self.parameters['network-type']
@@ -74,6 +80,10 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_processed
 
     def preprocessing_final_generation_data_cost_centralized(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_final_generation_data_cost_centralized'),
+                                 plot=self, producer=self._preprocessing_final_generation_data_cost_centralized)
+
+    def _preprocessing_final_generation_data_cost_centralized(self):
         data_raw = self.preprocessing_generations_data()
         total_demand = pd.read_csv(self.locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -435,6 +445,10 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_processed
 
     def preprocessing_multi_criteria_data(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_multi_criteria_data'),
+                                 plot=self, producer=self._preprocessing_multi_criteria_data)
+
+    def _preprocessing_multi_criteria_data(self):
         try:
             data_multi_criteria = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
         except IOError:
@@ -443,6 +457,10 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         return data_multi_criteria
 
     def preprocessing_capacities_data(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_capacities_data'),
+                                 plot=self, producer=self._preprocessing_capacities_data)
+
+    def _preprocessing_capacities_data(self):
         data_generation = self.preprocessing_generations_data()
         column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
                         'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
@@ -480,20 +498,42 @@ if __name__ == '__main__':
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
+    from cea.plots.cache import NullPlotCache, PlotCache
+    import time
 
-    for category in list_categories():
-        if category.label != label:
-            continue
-        print('category:', category.name, ':', category.label)
-        for plot_class in category.plots:
-            print('plot_class:', plot_class)
-            parameters = {
-                k: config.get(v) for k, v in plot_class.expected_parameters.items()
-            }
-            plot = plot_class(config.project, parameters=parameters)
-            assert plot.name, 'plot missing name: %s' % plot
-            assert plot.category_name == category.name
-            print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+    def plot_category(cache):
+        for category in list_categories():
+            if category.label != label:
+                continue
+            print('category:', category.name, ':', category.label)
+            for plot_class in category.plots:
+                print('plot_class:', plot_class)
+                parameters = {
+                    k: config.get(v) for k, v in plot_class.expected_parameters.items()
+                }
+                plot = plot_class(config.project, parameters=parameters, cache=cache)
+                assert plot.name, 'plot missing name: %s' % plot
+                assert plot.category_name == category.name
+                print('plot:', plot.name, '/', plot.id(), '/', plot.title)
 
-            # plot the plot!
-            plot.plot()
+                # plot the plot!
+                plot.plot()
+
+
+    null_plot_cache = NullPlotCache()
+    plot_cache = PlotCache(config.project)
+
+    # test plots with cache
+    t0 = time.time()
+    for i in range(3):
+        plot_category(plot_cache)
+    time_with_cache = (time.time() - t0) / 3
+
+    # test plots without cache
+    t0 = time.time()
+    for i in range(3):
+        plot_category(null_plot_cache)
+    time_without_cache = (time.time() - t0) / 3
+
+    print('Average without cache: %.2f seconds' % time_without_cache)
+    print('Average with cache: %.2f seconds' % time_with_cache)

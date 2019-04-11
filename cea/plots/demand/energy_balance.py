@@ -23,8 +23,8 @@ __status__ = "Production"
 class EnergyBalancePlot(cea.plots.demand.DemandPlotBase):
     name = "Energy balance"
 
-    def __init__(self, project, parameters):
-        super(EnergyBalancePlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(EnergyBalancePlot, self).__init__(project, parameters, cache)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.analysis_fields = ['I_sol_kWh',
