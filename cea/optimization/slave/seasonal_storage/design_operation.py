@@ -32,7 +32,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :param STORE_DATA:
     :param master_to_slave_vars:
     :param P_HP_max_W:
-    :param gV:
     :type CSV_NAME:
     :type SOLCOL_TYPE:
     :type T_storage_old_K:

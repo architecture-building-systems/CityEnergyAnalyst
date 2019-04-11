@@ -3,51 +3,60 @@
 Installation guide for Ubuntu
 =============================
 
-Follow these instructions to install the CEA on a Linux system (tested with Ubuntu 16.04 LTS)
+Follow these instructions to install the CEA on a Linux system (tested on Ubuntu 18.04.2 LTS with minimal installation
+configuration)
 
 Prerequisites
 ~~~~~~~~~~~~~
 
-#. Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
-#. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-#. Download and install `Miniconda(64-bit) for Python 2.7 <https://conda.io/miniconda.html>`__.
-#. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__.
-   OR your own favorite editor.
-#. Download and install `DAYSIM version >= 4.0 <https://daysim.ning.com/page/download>`__.
+#. Anaconda2 or Miniconda2
+
+  - ``mkdir tmp``
+  - ``cd tmp``
+    - all further prerequisiste installation assumes you're in the folder ``~/tmp``
+  - ``curl -O https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh``
+    - if curl is not installed, try ``sudo apt-get install curl``
+  - ``bash Miniconda2-latest-Linux-x86_64.sh`` (defaults are fine)
+
+#. git
+
+  - ``sudo apt-get update``
+    - (updates the list of packages known to apt-get)
+  - ``sudo apt-get install git``
+
+#. Download and install `Daysim <https://daysim.ning.com/page/download>`__.
+  - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``
+  - ``mkdir build``
+  - ``cd build``
+  - if you don't have cmake installed, you can use ``sudo apt-get install cmake`` to install it.
+    - Other packages that are missing in minimal setup of Ubuntu and need to be installedwith apt-get are:
+      - ``sudo apt-get install build-essential`` (for error "No CMAKE_CXX_Compiler could be found.")
+      - ``sudo apt-get install libgl1-mesa-dev`` (for error "Could NOT find OpenGL")
+      - ``sudo apt-get install freeglut3-dev`` (for error "GL/glu.h: No such file or directory" while running ``make`` below)
+  - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim``
+  - ``make``
+  - ``make install``
+  - open the file ``~/tmp/Daysim/CMakeLists.txt`` in your favorite text editor (the one that comes with Ubuntu is fine)
+    - add a line just below the line "project (daysim VERSION 5.2.0)": ``add_definitions(-DDAYSIM)``
+    - save and return to terminal
+  - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim``
+  - ``make``
+  - ``mv ./bin/rtrace ./bin/rtrace_dc``
+  - ``cp ./bin/* $HOME/Daysim/bin``
+  - Daysim is now installed in the folder ``~/Daysim/bin``
 
 Installation
 ~~~~~~~~~~~~
 
 This guide walks you through the steps of installing the CEA on Ubuntu 16. Start by opening a terminal and navigating
-to a folder to use for the installation. In this guide, we assume you are using ``~/tmp`` and starting out in your
-home directory (``~``):
+to a folder to use for the installation. In this guide, we assume you are installing projects in your
+home directory (``~``), but any other folder could do:
 
-- create a folder for working in: ``mkdir tmp``
-- navigate to that folder: ``cd tmp``
-- download the installation script: ``curl -O https://repo.continuum.io/archive/Anaconda2-5.0.1-Linux-x86_64.sh``
-
-  - *NOTE*: The actual link will change as new versions of Anaconda2 are released. You can find the newest link here:
-    https://www.anaconda.com/download/#linux
-
-- run the installation script: ``bash Anaconda2-5.0.1-Linux-x86_64.sh``
-
-  - *NOTE*: make sure to replace with the version you actually downloaded
-  - follow instructions (hint, you can use the space key to view the license one page at a time)
-  - use the default settings unless you know what you're doing
-  - except for  the question: "Do you wish the installer to prepend the Anaconda2 install location to PATH in your /home/user/.bashrc ? [yes|no]"
-
-    - this is probably a good idea to agree to.
-    - then, either start a new terminal as suggested or do ``source ~/.bashrc``
-
+- navigate to the project folder: ``cd ~``
 - clone the CEA repository: ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
-- navigate to that folder: ``cd CityEnergyAnalyst``
-- *FIXME*: this step needs to be removed when merging to master: ``git checkout 951-chisqprob-is-deprecated``
+- navigate to the repository folder: ``cd CityEnergyAnalyst``
 - create the conda environment: ``conda env create --file environment.ubuntu.yml``
-- activate the conda environment: ``source activate cea``
-- install the CEA to the conda environment: ``pip install -e .[dev]``
-- add this to your environment: ``export MKL_THREADING_LAYER=GNU``
-
-  - either type that out every time before you start using the CEA or add it to your ``~/.bashrc``
-
+- activate the conda environment: ``conda activate cea``
+- install the CEA to the conda environment: ``pip install -e .``
 - test the CEA: ``cea test``
 

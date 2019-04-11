@@ -14,8 +14,8 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
     """Implement the load-curve-supply plot"""
     name = "Load Curve Supply"
 
-    def __init__(self, project, parameters):
-        super(LoadCurveSupplyPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(LoadCurveSupplyPlot, self).__init__(project, parameters, cache)
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data,
                                                          ["DH_hs_kWh", "DH_ww_kWh",

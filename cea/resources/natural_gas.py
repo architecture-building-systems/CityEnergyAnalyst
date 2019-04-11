@@ -16,13 +16,13 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_gas(PnomGas, gV):
+def calc_Cinv_gas(PnomGas, gv):
     """
     Calculate investment cost of natural gas connections.
 
     :param PnomGas: peak natural gas supply in [W]
     :type PnomGas: float
-    :param gV: globalvar.py
+    :param gv: globalvar.py
 
     :returns InvCa:
     :rtype InvCa:
@@ -30,6 +30,6 @@ def calc_Cinv_gas(PnomGas, gV):
     """
 
     InvCa = 0
-    InvCa = gV.GasConnectionCost * PnomGas # from Energie360 - Zurich
+    InvCa = gv.GasConnectionCost * PnomGas # from Energie360 - Zurich
 
     return InvCa
