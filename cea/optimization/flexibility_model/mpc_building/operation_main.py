@@ -31,7 +31,6 @@ __status__ = "Production"
 def operation(locator, config):
     # local variables
     scenario_name = config.scenario_name  # scenario_name
-    country = config.region
     weather_path = config.weather
     threads = config.get_number_of_processes()
 
@@ -83,7 +82,6 @@ def operation(locator, config):
         price_vector
     ) = get_optimization_inputs(locator, weather_path,
                                 scenario_name,
-                                country,
                                 parameter_set,
                                 time_start,
                                 time_end,
@@ -148,7 +146,6 @@ def operation(locator, config):
 
 def get_optimization_inputs(locator, weather_path,
                             scenario,
-                            country,
                             parameter_set,
                             time_start,
                             time_end,
@@ -188,7 +185,6 @@ def get_optimization_inputs(locator, weather_path,
         electricity_prices_MWh
     ) = building_main.main(locator, weather_path,
                            scenario,
-                           country,
                            parameter_set,
                            time_start,
                            time_end,

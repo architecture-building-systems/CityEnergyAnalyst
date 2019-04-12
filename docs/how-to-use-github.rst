@@ -1,7 +1,7 @@
 :orphan:
 
-How to Use Github
-=================
+How to Use Github?
+==================
 
 Welcome to the CEA development team! This guide will explain the main workflow of CEA, including basic functions 
 and formatting preferences of the Zenhub plugin and Github Desktop.
