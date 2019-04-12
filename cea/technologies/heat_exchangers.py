@@ -38,7 +38,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
     """
     if Q_design_W > 0:
-        HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HEX")
+        HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="HEX")
         HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -76,7 +76,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     Used in thermal_network_optimization.
     """
     ## read in cost values from database
-    HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(network_info.config.region),
+    HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(),
                                sheetname='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']

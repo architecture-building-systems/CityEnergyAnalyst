@@ -25,7 +25,7 @@ __status__ = "Production"
 
 
 
-def input_prepare_main(list_building_names, locator, target_parameters, nn_delay, climatic_variables, region, year,
+def input_prepare_main(list_building_names, locator, target_parameters, nn_delay, climatic_variables, year,
                        use_daysim_radiation,use_stochastic_occupancy):
 
     '''
@@ -40,7 +40,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, nn_delay
     weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
     #   transpose the weather array
     weather_array = np.transpose(np.asarray(weather_data))
-    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
     # ***tag (#) lines 40-68 if you DO NOT want multiprocessing***
     # multiprocessing pool
     pool = mp.Pool()
@@ -52,7 +52,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, nn_delay
     from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
     for building_name in list_building_names:
         job = pool.apply_async(input_prepare_multi_processing,
-                               [building_name, locator, target_parameters, nn_delay,climatic_variables,region,year,
+                               [building_name, locator, target_parameters, nn_delay,climatic_variables,year,
                                 use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
                                 building_properties, schedules_dict, date])
         joblist.append(job)
@@ -81,7 +81,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, nn_delay
     # from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
     # for counter, building_name in enumerate(list_building_names):
     #     NN_input_ready, NN_target_ready =input_prepare_multi_processing(building_name, gv, locator, target_parameters,
-    #                                                                     nn_delay,climatic_variables,region,
+    #                                                                     nn_delay,climatic_variables,
     #                                                                     year,use_daysim_radiation,use_stochastic_occupancy,
     #                                                                     weather_array, weather_data,
     #                                                                     building_properties, schedules_dict, date)
@@ -105,14 +105,13 @@ def main(config):
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
-    region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
     input_prepare_main(list_building_names, locator, target_parameters, nn_delay=config.neural_network.nn_delay,
-                       climatic_variables=config.neural_network.climatic_variables,region = config.region,
+                       climatic_variables=config.neural_network.climatic_variables,
                        year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation,
                        use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 

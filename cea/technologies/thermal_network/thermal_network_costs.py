@@ -445,8 +445,7 @@ def calc_Ctot_cs_district(network_info):
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
     detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
-    region = network_info.config.region
-    lca = LcaCalculations(network_info.locator, region, detailed_electricity_pricing)
+    lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
     network_info.network_features = network_opt.network_opt_main(network_info.config,
@@ -554,7 +553,6 @@ def main(config):
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
     print('Running thermal network cost calculation with weather file %s' % config.weather)
-    print('Running thermal network cost calculation for region %s' % config.region)
     print('Network costs of %s:' % network_type)
 
 
