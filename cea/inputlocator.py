@@ -26,21 +26,8 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario):
         self.scenario = scenario
-        self.db_path = self.find_db_path()
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
-
-    @staticmethod
-    def find_db_path():
-        """The path to the databases file is either a subfolder of the folder containing inputlocator.py
-        (normal mode, part of the cea) or needs to be read from a file `databases.pth` (ArcGIS mode)"""
-        db_path = os.path.join(os.path.dirname(__file__), 'databases')
-        if os.path.exists(db_path):
-            return db_path
-        else:
-            databases_pth = os.path.join(os.path.dirname(__file__), 'databases.pth')
-            assert os.path.exists(databases_pth), 'File not found: %s' % databases_pth
-            with open(databases_pth) as f:
-                return f.read().strip()
 
     @staticmethod
     def _ensure_folder(*components):
@@ -58,6 +45,10 @@ class InputLocator(object):
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
+
+    def get_technology_folder(self):
+        """Returns the inputs folder of a scenario"""
+        return self._ensure_folder(self.get_input_folder(), "technology")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
@@ -651,84 +642,76 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
-    def _get_region_specific_db_file(self, region, folder, filename):
-        """Copy a region-specific file from the database to a scenario, overwriting any existing one
-        if it doesn't exist there yet and return the full path to the copy"""
-        result_folder = self._ensure_folder(self.scenario, 'databases', region, folder)
-        result_file = os.path.join(result_folder, filename)
+    def get_region_specific_db_file(self, region):
+        """get path to CEA databases according to the region"""
+        technology_folder = os.path.join(self.db_path, region)
+        if not os.path.exists(technology_folder):
+            raise Exception("you are trying to get the technology database from a location that cea does not support")
+        return technology_folder
 
-        # copy it from the database, overwriting the existing file
-        if not os.path.exists(result_file):
-            if region == 'custom':
-                raise cea.CustomDatabaseNotFound('Custom database not found: %(result_file)s' % locals())
-
-            shutil.copyfile(os.path.join(self.db_path, region, folder, filename), result_file)
-
-        return result_file
-
-    def get_archetypes_properties(self, region):
+    def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'archetypes', 'construction_properties.xlsx')
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_schedules(self, region):
+    def get_archetypes_schedules(self):
         """Returns the database of schedules to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'archetypes', 'occupancy_schedules.xlsx')
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'occupancy_schedules.xlsx')
 
-    def get_archetypes_system_controls(self, region):
+    def get_archetypes_system_controls(self):
         """ Returns the database of region-specific system control parameters. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario.
 
         :param region:
         :return:
         """
-        return self._get_region_specific_db_file(region, 'archetypes', 'system_controls.xlsx')
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'system_controls.xlsx')
 
-    def get_supply_systems(self, region):
+    def get_supply_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'systems', 'supply_systems.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'supply_systems.xls')
 
-    def get_life_cycle_inventory_supply_systems(self, region):
+    def get_life_cycle_inventory_supply_systems(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_infrastructure.xlsx')
+        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_infrastructure.xlsx')
 
-    def get_electricity_costs(self, region):
+    def get_electricity_costs(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'systems', 'electricity_costs.xlsx')
+        return os.path.join(self.get_technology_folder(), 'systems', 'electricity_costs.xlsx')
 
-    def get_life_cycle_inventory_building_systems(self, region):
+    def get_life_cycle_inventory_building_systems(self):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_buildings.xlsx')
+        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_technical_emission_systems(self, region):
+    def get_technical_emission_systems(self):
         """databases/Systems/emission_systems.csv"""
-        return self._get_region_specific_db_file(region, 'systems', 'emission_systems.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'emission_systems.xls')
 
-    def get_envelope_systems(self, region):
+    def get_envelope_systems(self):
         """databases/Systems/emission_systems.csv"""
-        return self._get_region_specific_db_file(region, 'systems', 'envelope_systems.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'envelope_systems.xls')
 
-    def get_thermal_networks(self, region):
+    def get_thermal_networks(self):
         """db/Systems/thermal_networks.xls"""
-        return self._get_region_specific_db_file(region, 'systems', 'thermal_networks.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'thermal_networks.xls')
 
-    def get_electrical_networks(self, region):
+    def get_electrical_networks(self):
         """db/Systems/electrical_networks.xls"""
-        return self._get_region_specific_db_file(region, 'systems', 'electrical_networks.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'electrical_networks.xls')
 
-    def get_data_benchmark(self, region):
+    def get_data_benchmark(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'benchmarks', 'benchmark_2000W.xls')
+        return os.path.join(self.get_technology_folder(), 'benchmarks', 'benchmark_2000W.xls')
 
-    def get_uncertainty_db(self, region):
+    def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return self._get_region_specific_db_file(region, 'uncertainty', 'uncertainty_distributions.xls')
+        return os.path.join(self.get_technology_folder(), 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')

@@ -42,16 +42,10 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(locator, weather_path, region, time_start, time_end):
-    """
-    extracts building information from cea case study (zone.shp and building properties...)
-    :param locator:
-    :param weather_path:
-    :param region:
-    :param time_start: specified in config.mpc_district.time_start
-    :param time_end: specified in config.mpc_district.time_end
-    :return:
-    """
+def main(locator, weather_path,
+         time_start,
+         time_end
+         ):
     (
         internal_loads_df,
         indoor_comfort_df,
@@ -66,9 +60,7 @@ def main(locator, weather_path, region, time_start, time_end):
         emission_systems_controller_df,
         system_controls_ini_df,
         cooling_generation_df
-    ) = extract_cea_databases_files(locator,
-                                    region
-                                    )
+    ) = extract_cea_databases_files(locator)
     (
         zone_occupancy_df,
         zone_df,
@@ -109,7 +101,6 @@ def main(locator, weather_path, region, time_start, time_end):
         monthly_use_probability_df,
         occupancy_density_m2_p
     ) = process_occupancy_schedules(locator,
-                                    region,
                                     occupancy_types,
                                     occupancy_types_cardinal
                                     )
@@ -214,31 +205,21 @@ def main(locator, weather_path, region, time_start, time_end):
         T_ext_cea_df
     )
 
-
-def extract_cea_databases_files(locator,
-                                region
-                                ):
-    """
-    extract archetype database of the case study
-    :param locator:
-    :param region:
-    :return:
-    """
-
+def extract_cea_databases_files(locator):
     # Get data
-    internal_loads_df = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS')
-    indoor_comfort_df = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT')
-    construction_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'CONSTRUCTION')
-    leakage_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'LEAKAGE')
-    window_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'WINDOW')
-    roofs_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'ROOF')
-    wall_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'WALL')
-    shading_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(region), 'SHADING')
-    emission_systems_heating_df = pd.read_excel(locator.get_technical_emission_systems(region), 'heating')
-    emission_systems_cooling_df = pd.read_excel(locator.get_technical_emission_systems(region), 'cooling')
-    emission_systems_controller_df = pd.read_excel(locator.get_technical_emission_systems(region), 'controller')
-    system_controls_ini_df = pd.read_excel(locator.get_archetypes_system_controls(region), 'heating_cooling')
-    cooling_generation_df = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), 'COOLING')
+    internal_loads_df = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
+    indoor_comfort_df = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
+    construction_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
+    leakage_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
+    window_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
+    roofs_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
+    wall_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'WALL')
+    shading_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
+    emission_systems_heating_df = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
+    emission_systems_cooling_df = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
+    emission_systems_controller_df = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
+    system_controls_ini_df = pd.read_excel(locator.get_archetypes_system_controls(), 'heating_cooling')
+    cooling_generation_df = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), 'COOLING')
 
     # Set index
     internal_loads_df.set_index('Code', inplace=True)
@@ -367,7 +348,6 @@ def process_weather_file(weather_path):
 
 def process_occupancy_schedules(
         locator,
-        region,
         occupancy_types,
         occupancy_types_cardinal
 ):
@@ -381,7 +361,7 @@ def process_occupancy_schedules(
     """
     # This function makes the data from the occupancy schedule file more readable and pandas dataframe-ready.
     # Get data
-    book = xlrd.open_workbook(locator.get_archetypes_schedules(region))
+    book = xlrd.open_workbook(locator.get_archetypes_schedules())
 
     # Get occupancy types schedules
     occupancy_schedules = {}

@@ -65,7 +65,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0
     else:
         # read chiller operation parameters from database
-        chiller_prop = pd.read_excel(locator.get_supply_systems(config.region),
+        chiller_prop = pd.read_excel(locator.get_supply_systems(),
                                                      sheet_name="Absorption_chiller")
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
@@ -173,7 +173,7 @@ def calc_Cinv_ACH(qcold_W, locator, ACH_type, config):
     Opex_fixed_ACH_USD = 0
     Capex_ACH_USD = 0
     if qcold_W > 0:
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="Absorption_chiller")
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
         max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 

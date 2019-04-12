@@ -336,7 +336,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     Capex_HP_USD = 0
 
     if HP_Size > 0:
-        HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="HP")
+        HP_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HP")
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -401,8 +401,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvCa : float
         annualized investment costs in EUROS/a
     """
-
-    GHP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="HP")
+    GHP_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HP")
     technology_code = list(set(GHP_cost_data['code']))
     GHP_cost_data[GHP_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -425,8 +424,8 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
 
     Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_GHP_USD = Capex_a_GHP_USD * Inv_OM
-
-    BH_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="BH")
+    
+    BH_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="BH")
     technology_code = list(set(BH_cost_data['code']))
     BH_cost_data[BH_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -455,5 +454,3 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     Capex_GHP_total_USD = InvC_BH + InvC_GHP
 
     return Capex_a_GHP_total_USD, Opex_fixed_GHP_total_USD, Capex_GHP_total_USD
-
-
