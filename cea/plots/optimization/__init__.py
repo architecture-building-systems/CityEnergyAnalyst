@@ -41,7 +41,6 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         'network-type': 'plots-optimization:network-type',
         'multicriteria': 'plots-optimization:multicriteria',
         'scenario-name': 'general:scenario-name',
-        'region': 'general:region',
         'detailed-electricity-pricing': 'general:detailed-electricity-pricing'
     }
 
@@ -56,7 +55,6 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
         self.network_type = self.parameters['network-type']
-        self.region = self.parameters['region']
         self.detailed_electricity_pricing = self.parameters['detailed-electricity-pricing']
 
         address_of_individuals_path = self.locator.get_address_of_individuals_of_a_generation(self.generation)
@@ -159,7 +157,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         except IOError:
             raise IOError("Please run the multi-criteria analysis tool first for the generation you would like to visualize")
 
-        lca = LcaCalculations(self.locator, self.region, self.detailed_electricity_pricing)
+        lca = LcaCalculations(self.locator,  self.detailed_electricity_pricing)
 
         for individual_code in range(len(data_raw['individual_barcode'])):
 
@@ -478,7 +476,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
             individual_pointer = data_address_individual['individual_number_address'].values[0]
             district_supply_sys, building_connectivity = supply_system_configuration(generation_pointer,
                                                                                      individual_pointer, self.locator,
-                                                                                     self.network_type, self.region)
+                                                                                     self.network_type)
 
             for name in column_names:
                 if name is 'Buildings Connected Share':
