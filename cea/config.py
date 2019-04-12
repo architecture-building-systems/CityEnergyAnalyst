@@ -759,7 +759,6 @@ def main():
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)
     print(config.scenario_plots.scenarios)
-    print(config.get('general:region'))
     print(config.get('plots:buildings'))
     print(config.get_parameter('general:scenario-name')._choices)
 

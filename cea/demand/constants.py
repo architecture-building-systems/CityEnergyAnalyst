@@ -21,8 +21,8 @@ D = 20.0  # in mm the diameter of the pipe to calculate losses
 
 # SOLAR
 RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
-F_F = 0.2  # Frame area faction coefficient
-F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
+#F_F = 0.2  # Frame area faction coefficient
+#F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
 
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
@@ -31,6 +31,7 @@ DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey bu
 SHIELDING_CLASS = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
 P_FAN = 0.55  # specific fan consumption in W/m3/h
+MIN_VENTILATION_RATE = 0.6  # l/s/m2 [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
 
 # pumps ?
 # TODO: Document

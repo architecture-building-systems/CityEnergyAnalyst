@@ -484,7 +484,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
 
     # read in HEX pressure loss values from database
-    HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
+    HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(),
                                sheetname='HEX', index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
@@ -503,13 +503,13 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
                                           izip(range(start_t, stop_t),
                                                repeat(thermal_network, times=(stop_t - start_t)),
-                                               repeat(thermal_network.config.region, times=(stop_t - start_t))))
+                                               ))
         pool.close()
         pool.join()
     else:
         hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                     repeat(thermal_network, times=(stop_t - start_t)),
-                                     repeat(thermal_network.config.region, times=(stop_t - start_t)))
+                                     repeat(thermal_network, times=(stop_t - start_t))
+                                     )
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -827,7 +827,7 @@ def hourly_thermal_calculation_wrapper(args):
     return hourly_thermal_calculation(*args)
 
 
-def hourly_thermal_calculation(t, thermal_network, region):
+def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -1107,7 +1107,7 @@ def assign_pipes_to_edges(thermal_network, set_diameter):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(thermal_network.config.region), sheetname=['PIPING CATALOG'])[
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])[
         'PIPING CATALOG']
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
@@ -1616,7 +1616,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
 
     """
 
-    region = config.region
     # create empty DataFrames to store results
     if config.thermal_network_optimization.use_representative_week_per_month:
         thermal_network.edge_mass_flow_df = pd.DataFrame(
@@ -2016,7 +2015,6 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
     """
 
     # Identify time steps of highest 50 demands
-    region = config.region
     if thermal_network.network_type == 'DH':
         if config.thermal_network_optimization.use_representative_week_per_month:
             heating_sum = np.zeros(2016)
@@ -2278,8 +2276,7 @@ def solve_network_temperatures(thermal_network, t):
         k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
                                                         thermal_network.locator, thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
-                                                        thermal_network.network_type,
-                                                        thermal_network.config.region)  # [kW/K]
+                                                        thermal_network.network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
@@ -2336,8 +2333,7 @@ def solve_network_temperatures(thermal_network, t):
                 k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.locator,
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
-                                                                thermal_network.network_type,
-                                                                thermal_network.config.region)  # [kW/K]
+                                                                thermal_network.network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
@@ -2402,8 +2398,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                 thermal_network.locator,
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
-                                                                thermal_network.network_type,
-                                                                thermal_network.config.region)  # [kW/K]
+                                                                thermal_network.network_type)  # [kW/K]
 
                 t_return_nodes_2__k, \
                 q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t],
@@ -3063,7 +3058,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
 
 def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pipe_properties_df, temperature__k,
-                                                network_type, region):
+                                                network_type):
     """
     This function calculates the aggregated heat conduction coefficients of all the pipes.
     Following the reference from [Wang et al., 2016].
@@ -3103,7 +3098,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     """
 
     L_pipe = edge_df['pipe length']
-    material_properties = pd.read_excel(locator.get_thermal_networks(region), sheetname=['MATERIAL PROPERTIES'])[
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname=['MATERIAL PROPERTIES'])[
         'MATERIAL PROPERTIES']
     material_properties = material_properties.set_index(material_properties['material'].values)
     conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
