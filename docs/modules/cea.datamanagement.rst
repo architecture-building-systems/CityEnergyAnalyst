@@ -33,4 +33,28 @@ cea.datamanagement.databases\_verification module
     :undoc-members:
     :show-inheritance:
 
+cea.datamanagement.district\_geometry\_helper module
+----------------------------------------------------
+
+.. automodule:: cea.datamanagement.district_geometry_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.streets\_helper module
+-----------------------------------------
+
+.. automodule:: cea.datamanagement.streets_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.terrain\_helper module
+-----------------------------------------
+
+.. automodule:: cea.datamanagement.terrain_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
