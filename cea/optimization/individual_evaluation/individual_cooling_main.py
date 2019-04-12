@@ -71,7 +71,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     t0 = time.time()
-    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
     print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine
@@ -150,11 +150,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
         UA_HEX_tank_charge_WperK = 0
         V_tank_m3 = 0
 
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Chiller")
     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
-    Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
+    Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(),
                                                  sheetname="Absorption_chiller",
                                                  usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e',
                                                           'IR_%',

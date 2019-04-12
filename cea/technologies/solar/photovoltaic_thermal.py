@@ -75,8 +75,8 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(), config)
     print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -620,7 +620,7 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     FIXME: handle multiple technologies when cost calculations are done
     """
     PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
-    PVT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+    PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="PV")
     technology_code = list(set(PVT_cost_data['code']))
     PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
