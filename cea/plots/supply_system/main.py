@@ -430,7 +430,7 @@ class Plots(object):
 
         data_imports_exports_electricity_W = electricity_calculations_of_all_buildings(generation_pointer,
                                                                                        individual_pointer, locator,
-                                                                                       config,,
+                                                                                       config)
         data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
@@ -445,7 +445,7 @@ class Plots(object):
 
     def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
-        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, output_type_network, config.region)
+        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, output_type_network)
 
         return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 
@@ -892,7 +892,7 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
         data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
         data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
 
-        lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+        lca = LcaCalculations(locator, config.detailed_electricity_pricing)
 
         data_processed.loc[0]['Electricitycosts_for_hotwater'] = data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
         data_processed.loc[0]['Electricitycosts_for_appliances'] = data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
