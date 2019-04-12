@@ -9,14 +9,6 @@ cea.datamanagement package
 Submodules
 ----------
 
-cea.datamanagement.copy\_default\_databases module
---------------------------------------------------
-
-.. automodule:: cea.datamanagement.copy_default_databases
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.datamanagement.create\_new\_project module
 ----------------------------------------------
 

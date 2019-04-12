@@ -46,7 +46,7 @@ __status__ = "Production"
 
 def main(locator,
          weather_path,
-         scenario, region,
+         scenario,
          parameter_set,
          time_start,
          time_end,
@@ -113,7 +113,6 @@ def main(locator,
         T_int_cea_dic,
         T_ext_cea_df
     ) = building_extract_cea_data.main(locator, weather_path,
-                                       region,
                                        time_start,
                                        time_end
                                        )
@@ -182,7 +181,7 @@ def main(locator,
         T_int_cea_dic
     )
 
-    electricity_prices_MWh = pd.read_excel(locator.get_electricity_costs(region), "ELECTRICITY")
+    electricity_prices_MWh = pd.read_excel(locator.get_electricity_costs(), "ELECTRICITY")
     electricity_prices_MWh["PRICE ($/MWh)"] = electricity_prices_MWh["cost_kWh"]*1000
     electricity_prices_MWh["our_datetime"] = pd.date_range(start='1/1/2005', periods=8760)
     electricity_prices_MWh.set_index('our_datetime', inplace=True)

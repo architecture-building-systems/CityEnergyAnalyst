@@ -70,7 +70,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(), config)
     print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -909,7 +909,7 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
     Lifetime 35 years
     """
 
-    SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheet_name="SC")
+    SC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="SC")
     SC_cost_data[SC_cost_data['type'] == technology]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
@@ -955,7 +955,7 @@ def main(config):
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems(), config)
     panel_type = panel_properties['type']
 
     # weather data
