@@ -647,8 +647,15 @@ class ScenarioNameParameter(ChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list of scenarios in the project
-        return [folder for folder in os.listdir(self.config.project)
-                if os.path.isdir(os.path.join(self.config.project, folder))]
+        def is_valid_scenario(folder_name):
+            fodler_path = os.path.join(self.config.project, folder_name)
+            return all([
+                os.path.isdir(fodler_path),  # a scenario must be a valid path
+                not folder_name.startswith('.'), # a scenario can't start with a . like `.config`
+                ])
+
+        return [folder_name for folder_name in os.listdir(self.config.project)
+                if is_valid_scenario(folder_name)]
 
 
 class ScenarioParameter(Parameter):
@@ -752,7 +759,6 @@ def main():
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)
     print(config.scenario_plots.scenarios)
-    print(config.get('general:region'))
     print(config.get('plots:buildings'))
     print(config.get_parameter('general:scenario-name')._choices)
 
