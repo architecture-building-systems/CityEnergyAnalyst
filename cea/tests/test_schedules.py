@@ -14,7 +14,7 @@ from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
-from cea.globalvar import GlobalVariables
+from cea.utilities import epwreader
 import cea.config
 from cea.demand.building_properties import BuildingProperties
 
@@ -57,11 +57,11 @@ class TestScheduleCreation(unittest.TestCase):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
         stochastic_occupancy = config.demand.use_stochastic_occupancy
-        gv = GlobalVariables()
-        gv.config = config
 
-
-        date = pd.date_range(gv.date_start, periods=8760, freq='H')
+        # get year from weather file
+        weather_data = epwreader.epw_reader(config.weather)[['year']]
+        year = weather_data['year'][0]
+        date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
 
         building_properties = BuildingProperties(locator, False, False)
         bpr = building_properties['B01']
@@ -116,8 +116,6 @@ def create_test_data():
     test_config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    gv = GlobalVariables()
-    gv.config = config
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
@@ -125,8 +123,11 @@ def create_test_data():
     bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-    gv = GlobalVariables()
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    # get year from weather file
+    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy
     calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
