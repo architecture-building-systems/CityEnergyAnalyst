@@ -45,8 +45,8 @@ def initial_network(locator):
     )
 
 
-def get_line_parameters(locator, region):
-    df_line_parameter = pd.read_excel(locator.get_electrical_networks(region), "CABLING CATALOG")
+def get_line_parameters(locator):
+    df_line_parameter = pd.read_excel(locator.get_electrical_networks(), "CABLING CATALOG")
     return df_line_parameter
 
 
@@ -245,7 +245,6 @@ def total_electric_load_per_building_rule(m, building, time):
 
 def main(locator, weather_path,
          scenario,
-         region,
          parameter_set,
          time_start,
          time_end,
@@ -293,7 +292,6 @@ def main(locator, weather_path,
         price_vector
     ) = operation_main.get_optimization_inputs(locator, weather_path,
                                                scenario,
-                                               region,
                                                parameter_set,
                                                time_start,
                                                time_end,
@@ -321,7 +319,7 @@ def main(locator, weather_path,
     del tranches, points_on_line
 
     # Line Parameters
-    df_line_parameter = get_line_parameters(locator, region)
+    df_line_parameter = get_line_parameters(locator)
     dict_line_tech_params = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
