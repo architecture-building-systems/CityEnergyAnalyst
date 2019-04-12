@@ -22,10 +22,9 @@ __status__ = "Production"
 def operation_costs(locator, config):
 
     # get local variables
-    region = config.region
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
-    data_LCI = locator.get_life_cycle_inventory_supply_systems(region)
+    data_LCI = locator.get_life_cycle_inventory_supply_systems()
     factors_heating = pd.read_excel(data_LCI, sheet_name='HEATING')
     factors_dhw = pd.read_excel(data_LCI, sheet_name='DHW')
     factors_cooling = pd.read_excel(data_LCI, sheet_name='COOLING')

@@ -17,8 +17,8 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['SALib==1.2',
-					'ephem',
+INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
+				    'ephem',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',
@@ -34,8 +34,8 @@ INSTALL_REQUIRES = ['SALib==1.2',
                     'seaborn',
                     'setuptools',
                     'sphinx',
+                    'timezonefinder==3.4.2',  # last version to work with python2
                     'twine',
-                    'timezonefinder',
                     'utm',
                     'xlrd',
                     'xlwt']

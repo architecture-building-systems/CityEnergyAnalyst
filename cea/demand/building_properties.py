@@ -18,8 +18,6 @@ from cea.utilities.dbf import dbf_to_dataframe
 # import constants
 H_F = constants.H_F
 E_S = constants.E_S
-F_F = constants.F_F
-F_F_SG = constants.F_F_SG
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -35,7 +33,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, use_daysim_radiation, region, override_variables=False):
+    def __init__(self, locator, use_daysim_radiation, override_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -44,9 +42,6 @@ class BuildingProperties(object):
 
         :param use_daysim_radiation: from config
         :type use_daysim_radiation: bool
-
-        :param region: region from config
-        :type region: str
 
         :param override_variables: override_variables from config
         :type override_variables: str
@@ -72,14 +67,14 @@ class BuildingProperties(object):
         prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
 
         # GET SYSTEMS EFFICIENCIES
-        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building, region).set_index(
+        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index(
             'Name')
 
         # get temperatures of operation
-        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac, region).set_index('Name')
+        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
 
         # get envelope properties
-        prop_envelope = get_envelope_properties(locator, prop_architectures, region).set_index('Name')
+        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
         if override_variables:
@@ -94,7 +89,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, use_daysim_radiation)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -700,11 +695,11 @@ class SolarProperties(object):
         self.I_sol = solar['I_sol']
 
 
-def get_properties_supply_sytems(locator, properties_supply, region):
-    supply_heating = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "HEATING")
-    supply_cooling = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING")
-    supply_dhw = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW")
-    supply_electricity = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "ELECTRICITY")
+def get_properties_supply_sytems(locator, properties_supply):
+    supply_heating = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "HEATING")
+    supply_cooling = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "COOLING")
+    supply_dhw = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "DHW")
+    supply_electricity = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "ELECTRICITY")
 
     df_emission_heating = properties_supply.merge(supply_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = properties_supply.merge(supply_cooling, left_on='type_cs', right_on='code')
@@ -724,7 +719,7 @@ def get_properties_supply_sytems(locator, properties_supply, region):
     return result
 
 
-def get_properties_technical_systems(locator, prop_HVAC, region):
+def get_properties_technical_systems(locator, prop_HVAC):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up properties
@@ -788,11 +783,11 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(region), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(region), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(region), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(region), 'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(region), 'ventilation')
+    prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
+    prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
+    prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
@@ -818,7 +813,7 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region),
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(),
                                                  true_values=['True', 'TRUE', 'true'],
                                                  false_values=['False', 'FALSE', 'false', u'FALSE'],
                                                  dtype={'has-heating-season': bool,
@@ -829,7 +824,7 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     return result
 
 
-def get_envelope_properties(locator, prop_architecture, region):
+def get_envelope_properties(locator, prop_architecture):
     """
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
@@ -849,12 +844,12 @@ def get_envelope_properties(locator, prop_architecture, region):
     :rtype: DataFrame
 
     """
-    prop_roof = pd.read_excel(locator.get_envelope_systems(region), 'ROOF')
-    prop_wall = pd.read_excel(locator.get_envelope_systems(region), 'WALL')
-    prop_win = pd.read_excel(locator.get_envelope_systems(region), 'WINDOW')
-    prop_shading = pd.read_excel(locator.get_envelope_systems(region), 'SHADING')
-    prop_construction = pd.read_excel(locator.get_envelope_systems(region), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_envelope_systems(region), 'LEAKAGE')
+    prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
+    prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
+    prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
+    prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
+    prop_construction = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
+    prop_leakage = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')
@@ -868,7 +863,7 @@ def get_envelope_properties(locator, prop_architecture, region):
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall', 'U_base']
-    fields_win = ['Name', 'e_win', 'G_win', 'U_win']
+    fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
@@ -879,7 +874,7 @@ def get_envelope_properties(locator, prop_architecture, region):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -894,10 +889,6 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
     # load gv
     thermal_resistance_surface = RSE
-    if region in {'SG'}:
-        window_frame_fraction = F_F_SG
-    else:
-        window_frame_fraction = F_F
 
     if use_daysim_radiation:
 
@@ -906,8 +897,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
         # for every building
         for building_name in locator.get_zone_building_names():
-            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
-                                     window_frame_fraction)
+            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
             list_Isol.append(I_sol)
 
         result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
@@ -926,15 +916,14 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
         array_Isol_all_buildings_W = [
             calc_Isol_arcgis(I_sol_average_Wperm2_dict[name], prop_rc_model.ix[name], prop_envelope.ix[name],
-                             window_frame_fraction, thermal_resistance_surface) for name in solar.index]
+                              thermal_resistance_surface) for name in solar.index]
 
         result = pd.DataFrame({'Name': solar.index, 'I_sol': array_Isol_all_buildings_W})
 
     return result
 
 
-def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
-                     window_frame_fraction):
+def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface):
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -944,7 +933,6 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     :param prop_envelope: contains the building envelope properties.
     :param prop_rc_model: RC model properties of a building by name.
     :param thermal_resistance_surface: Thermal resistance of building element.
-    :param window_frame_fraction: Fraction of area that concerns the window frame.
 
     :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
     :rtype: np.array
@@ -997,7 +985,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
                  for surface in geometry_data_windows.index]
 
-    I_sol_win = np.array([x * y * (1 - window_frame_fraction) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
+    I_sol_win = np.array([x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
@@ -1005,7 +993,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     return I_sol
 
 
-def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_fraction, thermal_resistance_surface):
+def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resistance_surface):
     """
     This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
     for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
@@ -1022,7 +1010,7 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_f
 
     Asol_wall = prop_rc_model['Aop_sup'] * prop_envelope.a_wall * thermal_resistance_surface * prop_rc_model['U_wall']
     Asol_roof = prop_rc_model['Aroof'] * prop_envelope.a_roof * thermal_resistance_surface * prop_rc_model['U_roof']
-    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - window_frame_fraction)
+    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - prop_envelope.F_F)
 
     I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
 

@@ -16,7 +16,7 @@ Cost analysis:
   description: Calculate energy costs due to building operation
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.costs.operation_costs
-  parameters: ['general:scenario', 'general:region']
+  parameters: ['general:scenario', ]
 
 
 Data Management:
@@ -56,13 +56,6 @@ Data Management:
   module: cea.datamanagement.data_helper
   parameters: ['general:scenario', data-helper]
 
-- name: copy-default-databases
-  label: Copy default databases
-  description: Copy the default databases (archetypes) to the scenario for the selected region (does not replace existing files)
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.datamanagement.copy_default_databases
-  parameters: ['general:scenario', 'general:region']
-
 
 Demand forecasting:
 
@@ -71,7 +64,7 @@ Demand forecasting:
   description: Calculate the Demand
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
-  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
 
@@ -207,7 +200,7 @@ Sensitivity analysis:
   description: Simulate demand for sensitivity analysis samples
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_simulate
-  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
                'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
                'sensitivity-demand:sample-index', 'demand']

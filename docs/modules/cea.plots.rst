@@ -33,6 +33,14 @@ cea.plots.base module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.cache module
+----------------------
+
+.. automodule:: cea.plots.cache
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.categories module
 ---------------------------
 

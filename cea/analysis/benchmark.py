@@ -177,7 +177,7 @@ def calc_benchmark_targets(locator, config):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark = locator.get_data_benchmark(config.region)
+    data_benchmark = locator.get_data_benchmark()
     occupancy_and_demand = occupancy.merge(demand, on='Name').set_index('Name')
     project_uses = list(occupancy.drop('Name', axis=1).columns)
 
@@ -262,7 +262,7 @@ def calc_benchmark_today(locator, config):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark_today = locator.get_data_benchmark(config.region)
+    data_benchmark_today = locator.get_data_benchmark()
     occupancy_and_demand = occupancy.merge(demand, on='Name')
     project_uses = list(occupancy.drop('Name', axis=1).columns)
 

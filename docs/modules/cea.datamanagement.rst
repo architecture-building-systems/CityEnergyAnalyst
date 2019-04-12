@@ -9,14 +9,6 @@ cea.datamanagement package
 Submodules
 ----------
 
-cea.datamanagement.copy\_default\_databases module
---------------------------------------------------
-
-.. automodule:: cea.datamanagement.copy_default_databases
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.datamanagement.create\_new\_project module
 ----------------------------------------------
 
@@ -37,6 +29,30 @@ cea.datamanagement.databases\_verification module
 -------------------------------------------------
 
 .. automodule:: cea.datamanagement.databases_verification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.district\_geometry\_helper module
+----------------------------------------------------
+
+.. automodule:: cea.datamanagement.district_geometry_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.streets\_helper module
+-----------------------------------------
+
+.. automodule:: cea.datamanagement.streets_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.terrain\_helper module
+-----------------------------------------
+
+.. automodule:: cea.datamanagement.terrain_helper
     :members:
     :undoc-members:
     :show-inheritance:

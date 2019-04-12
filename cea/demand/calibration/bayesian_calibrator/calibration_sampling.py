@@ -62,10 +62,9 @@ def sampling_main(locator, config):
     building_load = config.single_calibration.load
     override_file = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
     override_file = pd.DataFrame(index=override_file.index)
-    region = config.region
 
     # Generate latin hypercube samples
-    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables, region)
+    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
 
     # Run demand calulation for every latin sample
     cv_rmse_list = []
@@ -164,7 +163,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running single building sampler for scenario %s' % config.scenario)
     print('Running single building sampler with weather file %s' % config.weather)
-    print('Running single building sampler for region %s' % config.region)
     print('Running single building sampler with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running single building sampler with multiprocessing=%s' % config.multiprocessing)

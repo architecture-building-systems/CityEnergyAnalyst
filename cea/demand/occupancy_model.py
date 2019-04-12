@@ -2,9 +2,9 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
-import cea.globalvar
 import cea.inputlocator
 import cea.config
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -586,7 +586,7 @@ def read_schedules(use, archetypes_schedules):
 
 
 # read schedules and archetypal values from excel file
-def schedule_maker(region, dates, locator, list_uses):
+def schedule_maker(dates, locator, list_uses):
     """
     Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
     demands.
@@ -606,9 +606,9 @@ def schedule_maker(region, dates, locator, list_uses):
     """
 
     # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index(
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index(
         'Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index(
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index(
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
@@ -617,7 +617,7 @@ def schedule_maker(region, dates, locator, list_uses):
 
     for use in list_uses:
         # read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use, index_col=0).T
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use, index_col=0).T
 
         # read lists of every daily profile
         occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
@@ -663,19 +663,20 @@ def calc_average(last, current, share_of_use):
 def main(config):
     from cea.demand.building_properties import BuildingProperties
 
-    gv = cea.globalvar.GlobalVariables()
-    gv.config = config
+    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    building_properties = BuildingProperties(locator, True, config.region, False)
+    building_properties = BuildingProperties(locator, True, False)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
 
     # calculate schedules
-    archetype_schedules, archetype_values = schedule_maker(config.region, date, locator, list_uses)
+    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
     return calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, use_stochastic_occupancy)
 
 

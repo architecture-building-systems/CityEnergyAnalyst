@@ -19,8 +19,8 @@ __status__ = "Production"
 class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
     name = "Energy Use Intensity"
 
-    def __init__(self, project, parameters):
-        super(EnergyUseIntensityPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(EnergyUseIntensityPlot, self).__init__(project, parameters, cache)
         self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
