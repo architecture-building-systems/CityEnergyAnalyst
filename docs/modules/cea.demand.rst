@@ -145,6 +145,14 @@ cea.demand.sensible\_loads module
     :undoc-members:
     :show-inheritance:
 
+cea.demand.set\_point\_from\_predefined\_file module
+----------------------------------------------------
+
+.. automodule:: cea.demand.set_point_from_predefined_file
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.demand.space\_emission\_systems module
 ------------------------------------------
 

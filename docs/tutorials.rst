@@ -15,6 +15,7 @@ These are a collection of tutorials we consider essential for new users. We sugg
 #. :doc:`new-project-guide`
 #. :doc:`cea-workflow-guide`
 #. `How to create your own input geometry? <https://cityenergyanalyst.com/creating-multiple-scenarios#create-new-geometry>`__
+#. :doc:`how-are-schedules-defined`
 
 Advanced
 ---------
