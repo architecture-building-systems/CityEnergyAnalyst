@@ -16,7 +16,7 @@ Cost analysis:
   description: Calculate energy costs due to building operation
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.costs.operation_costs
-  parameters: ['general:scenario', ]
+  parameters: ['general:scenario']
 
 
 Data Management:
