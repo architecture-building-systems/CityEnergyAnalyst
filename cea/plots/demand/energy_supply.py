@@ -20,7 +20,7 @@ class EnergySupplyPlot(cea.plots.demand.DemandPlotBase):
                                 'DC_cdata_MWhyr', 'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr',
                                 'COAL_hs_MWhyr', 'OIL_hs_MWhyr', 'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr']
-        self.data = self.yearly_loads
+        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         self.layout = go.Layout(barmode='stack',
                                 yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
