@@ -19,7 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def latin_sampler(locator, num_samples, variables, region):
+def latin_sampler(locator, num_samples, variables):
     """
     This script creates a matrix of m x n samples using the latin hypercube sampler.
     for this, it uses the database of probability distribtutions stored in locator.get_uncertainty_db()
@@ -37,7 +37,7 @@ def latin_sampler(locator, num_samples, variables, region):
 
     # get probability density function PDF of variables of interest
     variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS','SYSTEMS')
-    database = pd.concat([pd.read_excel(locator.get_uncertainty_db(region), group, axis=1)
+    database = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1)
                           for group in variable_groups])
     pdf_list = database[database['name'].isin(variables)].set_index('name')
 
