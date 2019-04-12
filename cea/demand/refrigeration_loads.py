@@ -51,12 +51,12 @@ def calc_Qcre_sys(bpr, tsd, schedules):
 
     return tsd
 
-def calc_Qref(locator, bpr, tsd, region):
+def calc_Qref(locator, bpr, tsd):
     """
     it calculates final loads
     """
     # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "COOLING").set_index('code')
     type_system = bpr.supply['type_cs']
     energy_source = data_systems.loc[type_system, 'source_cs']
 

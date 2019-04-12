@@ -20,7 +20,7 @@ from cea.utilities import reporting
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, config, region, write_detailed_output, debug):
+                       temperatures_output, format_output, config, write_detailed_output, debug):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -84,7 +84,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # CALCULATE REFRIGERATION LOADS
     if refrigeration_loads.has_refrigeration_load(bpr):
         tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
-        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, region)
+        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd)
     else:
         tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
         tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
@@ -104,7 +104,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
             tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
-            tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd, region)  # final need for cooling
+            tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
             tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
@@ -112,7 +112,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         #CALCULATE HEATING AND COOLING DEMAND
         tsd = calc_set_points(bpr, date, tsd, building_name, config, locator)  # calculate the setpoints for every hour
-        tsd = calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, region)  #end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation)  #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -338,9 +338,9 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, region):
+def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     # get ventilation flows
-    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
+    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
 
     # end-use demand calculation
