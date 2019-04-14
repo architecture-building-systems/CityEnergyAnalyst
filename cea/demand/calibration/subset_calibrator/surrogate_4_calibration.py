@@ -64,7 +64,7 @@ def simulate_demand_sample(locator, building_name, output_parameters, config):
 
     return  new_calcs #cv_rmse, rmse
 
-def latin_sampler(locator, num_samples, variables, region):
+def latin_sampler(locator, num_samples, variables):
     """
     This script creates a matrix of m x n samples using the latin hypercube sampler.
     for this, it uses the database of probability distribtutions stored in locator.get_uncertainty_db()
@@ -80,7 +80,7 @@ def latin_sampler(locator, num_samples, variables, region):
 
     # get probability density function PDF of variables of interest
     variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')
-    database = pd.concat([pd.read_excel(locator.get_uncertainty_db(region), group, axis=1)
+    database = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1)
                                                 for group in variable_groups])
     pdf_list = database[database['name'].isin(variables)].set_index('name')
 
@@ -141,7 +141,7 @@ def prep_NN_inputs(NN_input,NN_target,NN_delays):
 
     return NN_input_ready, NN_target_ready
 
-def sampling_main(locator, variables, building_name, building_load, region, config):
+def sampling_main(locator, variables, building_name, building_load, config):
     """
     This script creates samples using a lating Hypercube sample of 5 variables of interest.
     then runs the demand calculation of CEA for all the samples. It delivers a json file storing
@@ -164,7 +164,7 @@ def sampling_main(locator, variables, building_name, building_load, region, conf
     """
 
     # create list of samples with a LHC sampler and save to disk
-    samples, pdf_list = latin_sampler(locator, subset_samples, variables, region)
+    samples, pdf_list = latin_sampler(locator, subset_samples, variables)
     np.save(locator.get_calibration_samples(building_name), samples)
 
     # create problem and save to disk as json
@@ -396,7 +396,6 @@ def run_as_script(config):
     variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af'] #uncertain variables
     building_name = 'B155066' # intended building
     building_load = 'Qhsf_kWh' # target of prediction
-    region= config.region
     sampling_main(locator, variables, building_name, building_load, config)
 
 

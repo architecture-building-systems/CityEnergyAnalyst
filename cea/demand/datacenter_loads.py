@@ -57,12 +57,12 @@ def calc_Qcdata_sys(tsd):
 
     return tsd
 
-def calc_Qcdataf(locator, bpr, tsd, region):
+def calc_Qcdataf(locator, bpr, tsd):
     """
     it calculates final loads
     """
     # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "COOLING").set_index('code')
     type_system = bpr.supply['type_cs']
     energy_source = data_systems.loc[type_system, "source_cs"]
 
@@ -74,15 +74,15 @@ def calc_Qcdataf(locator, bpr, tsd, region):
                 t_source = (tsd['T_ext_wetbulb'] + 273)
 
             # heat pump energy
-            tsd['E_data'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
+            tsd['E_cdata'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
                                                                 (tsd['Tcdata_sys_re'] + 273), t_source)
             # final to district is zero
             tsd['DC_cdata'] = np.zeros(8760)
     elif energy_source == "DC":
         tsd['DC_cdata'] = tsd['Qcdata_sys']
-        tsd['E_data'] = np.zeros(8760)
+        tsd['E_cdata'] = np.zeros(8760)
     else:
-        tsd['E_data'] = np.zeros(8760)
+        tsd['E_cdata'] = np.zeros(8760)
         tsd['DC_cdata'] = np.zeros(8760)
     return tsd
 

@@ -1,6 +1,6 @@
 :orphan:
 
-How to Run Thermal Network Optimization in CEA.
+How to Run Thermal Network Optimization in CEA?
 ===============================================
 Independently from the CEA optimization for energy systems, it is also possible to only optimize thermal networks in districts.
 Different from the CEA optimization for energy systems, this tool is design to answer more detailed questions regarding network design in a timely manner.
