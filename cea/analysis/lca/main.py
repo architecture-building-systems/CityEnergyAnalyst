@@ -1,3 +1,7 @@
+"""
+Emissions analysis (LCA)
+This script is used to calculate the LCA
+"""
 
 from __future__ import division
 

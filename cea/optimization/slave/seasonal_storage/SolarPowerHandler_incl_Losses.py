@@ -1,7 +1,5 @@
-""" Slave Sub Function - Treat solar power!"""
-
 """
-
+Slave Sub Function - Treat solar power!
 In this file, all sub-functions are stored that are used for storage design and operation. 
 They are called by either the operation or optimization of storage.
 """

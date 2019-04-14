@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===========================
+
 storage sizing
-===========================
+
 This script sizes the storage and in a second part, it will plot the results of iteration.
 Finally, the storage operation is performed with the parameters found in the storage optimization
 All results are saved in the folder of "locator.get_optimization_slave_results_folder()".
