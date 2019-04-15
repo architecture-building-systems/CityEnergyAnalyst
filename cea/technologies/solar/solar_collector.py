@@ -20,6 +20,7 @@ from cea.technologies.solar import constants
 from geopandas import GeoDataFrame as gdf
 from numba import jit
 from itertools import izip, repeat
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -117,7 +118,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
              'SC_roofs_top_m2': 0, 'SC_roofs_top_Q_kWh': 0, 'SC_roofs_top_Tout_C': 0,
              'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0, 'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
              'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0},
-            index=range(8760))
+            index=range(HOURS_IN_YEAR))
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -157,7 +158,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
     T_in_C = get_t_in_sc(config)
-    Tin_array_C = np.zeros(8760) + T_in_C
+    Tin_array_C = np.zeros(HOURS_IN_YEAR) + T_in_C
 
     # create lists to store results
     list_results_from_SC = [0 for i in range(number_groups)]
@@ -168,7 +169,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
     total_aux_el_kWh = [0 for i in range(number_groups)]
     total_Qh_output_kWh = [0 for i in range(number_groups)]
 
-    potential = pd.DataFrame(index=[range(8760)])
+    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['SC_' + panel_orientation + '_Q_kWh'] = 0
@@ -325,25 +326,32 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
-    specific_flows_kgpers = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area_m2 / 3600,
-                             (np.zeros(8760) + mB_max_r) * aperture_area_m2 / 3600,
-                             (np.zeros(8760) + mB_min_r) * aperture_area_m2 / 3600, np.zeros(8760),
-                             np.zeros(8760)]  # in kg/s
-    specific_pressure_losses_Pa = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area_m2,
-                                   (np.zeros(8760) + dP3) * aperture_area_m2,
-                                   (np.zeros(8760) + dP4) * aperture_area_m2, np.zeros(8760), np.zeros(8760)]  # in Pa
+    specific_flows_kgpers = [np.zeros(HOURS_IN_YEAR), (np.zeros(HOURS_IN_YEAR) + mB0_r) * aperture_area_m2 / 3600,
+                             (np.zeros(HOURS_IN_YEAR) + mB_max_r) * aperture_area_m2 / 3600,
+                             (np.zeros(HOURS_IN_YEAR) + mB_min_r) * aperture_area_m2 / 3600, np.zeros(HOURS_IN_YEAR),
+                             np.zeros(HOURS_IN_YEAR)]  # in kg/s
+    specific_pressure_losses_Pa = [np.zeros(HOURS_IN_YEAR), (np.zeros(HOURS_IN_YEAR) + dP2) * aperture_area_m2,
+                                   (np.zeros(HOURS_IN_YEAR) + dP3) * aperture_area_m2,
+                                   (np.zeros(HOURS_IN_YEAR) + dP4) * aperture_area_m2, np.zeros(HOURS_IN_YEAR),
+                                   np.zeros(HOURS_IN_YEAR)]  # in Pa
 
     # generate empty lists to store results
-    temperature_out_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_in_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_mean_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
-                          np.zeros(8760)]
-    supply_out_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_losses_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
-                                np.zeros(8760)]
-    supply_out_total_kW = np.zeros(8760)
-    mcp_kWperK = np.zeros(8760)
+    temperature_out_C = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                         np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    temperature_in_C = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                        np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    temperature_mean_C = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                          np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                          np.zeros(HOURS_IN_YEAR)]
+    supply_out_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                     np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    supply_losses_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                        np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    auxiliary_electricity_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                                np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                                np.zeros(HOURS_IN_YEAR)]
+    supply_out_total_kW = np.zeros(HOURS_IN_YEAR)
+    mcp_kWperK = np.zeros(HOURS_IN_YEAR)
 
     # calculate absorbed radiation
     tilt_rad = radians(tilt_angle_deg)
@@ -364,7 +372,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for time in range(8760):
+        for time in range(HOURS_IN_YEAR):
             Mfl_kgpers = calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C,
                                          aperture_area_m2, specific_flows_kgpers[flow], time)
 
@@ -463,6 +471,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
     return result
 
+
 @jit(nopython=True)
 def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
                                  Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
@@ -511,7 +520,6 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
 @jit(nopython=True)
 def calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
                 q_rad_Wperm2, Mfl_kgpers):
-
     # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
 
     Tfl[1] = 0  # mean fluid temperature from the last timestep
@@ -589,6 +597,7 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
                 auxiliary_electricity_kW[flow][i] = calc_Eaux_panels(specific_flows_kgpers[flow][i],
                                                                      specific_pressure_losses_Pa[flow][i],
                                                                      pipe_lengths, aperture_area_m2)
+
 
 @jit(nopython=True)
 def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
@@ -872,13 +881,13 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     Energy and Buildings, 2016.
     """
 
-    mass_flow_opt = np.empty(8760)
-    dP_opt = np.empty(8760)
+    mass_flow_opt = np.empty(HOURS_IN_YEAR)
+    dP_opt = np.empty(HOURS_IN_YEAR)
     const = Area_a / 3600
     mass_flow_all_kgpers = [m1 * const, m2 * const, m3 * const, m4 * const]  # [kg/s]
     dP_all_Pa = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # [Pa]
     balances = [abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
-    for time in range(8760):
+    for time in range(HOURS_IN_YEAR):
         balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
         max_heat_production = np.max(balances_time)
         ix_max_heat_production = np.where(balances_time == max_heat_production)
@@ -896,7 +905,7 @@ def calc_optimal_mass_flow_2(m, q, dp):
     :return m: hourly mass flow rate [kg/s]
     :return dp: hourly pressure drop [Pa]
     """
-    for time in range(8760):
+    for time in range(HOURS_IN_YEAR):
         if q[time] <= 0:
             m[time] = 0
             dp[time] = 0
@@ -975,16 +984,16 @@ def main(config):
                                        repeat(weather_data, building_count),
                                        repeat(date_local, building_count),
                                        list_buildings_names))
-        #locator, config, latitude, longitude, weather_data, date_local, building
+        # locator, config, latitude, longitude, weather_data, date_local, building
     else:
         print("Using single process")
         map(calc_SC_wrapper, izip(repeat(locator, building_count),
-                                       repeat(config, building_count),
-                                       repeat(latitude, building_count),
-                                       repeat(longitude, building_count),
-                                       repeat(weather_data, building_count),
-                                       repeat(date_local, building_count),
-                                       list_buildings_names))
+                                  repeat(config, building_count),
+                                  repeat(latitude, building_count),
+                                  repeat(longitude, building_count),
+                                  repeat(weather_data, building_count),
+                                  repeat(date_local, building_count),
+                                  list_buildings_names))
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
@@ -1003,11 +1012,16 @@ def main(config):
 
     # save hourly results
     aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
-    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
+    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
+        aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels
-    aggregated_hourly_results_df['T_SC_sup_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0, temperature_sup, np.nan)
-    aggregated_hourly_results_df['T_SC_re_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0, aggregated_hourly_results_df['T_SC_sup_C'] + aggregated_hourly_results_df['Q_SC_gen_kWh'] / aggregated_hourly_results_df['mcp_SC_kWperC'],
-                               np.nan)
+    aggregated_hourly_results_df['T_SC_sup_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0,
+                                                          temperature_sup, np.nan)
+    aggregated_hourly_results_df['T_SC_re_C'] = np.where(aggregated_hourly_results_df['mcp_SC_kWperC'] != 0,
+                                                         aggregated_hourly_results_df['T_SC_sup_C'] +
+                                                         aggregated_hourly_results_df['Q_SC_gen_kWh'] /
+                                                         aggregated_hourly_results_df['mcp_SC_kWperC'],
+                                                         np.nan)
     aggregated_hourly_results_df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T

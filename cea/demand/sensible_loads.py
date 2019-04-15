@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
 from cea.demand import control_heating_cooling_systems, constants
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -201,27 +202,27 @@ def calc_temperatures_emission_systems(bpr, tsd):
     if not control_heating_cooling_systems.has_heating_system(bpr):
         # if no heating system
 
-        tsd['Ths_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_ahu'] = np.zeros(8760)
-        tsd['Ths_sys_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_aru'] = np.zeros(8760)
-        tsd['Ths_sys_sup_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_shu'] = np.zeros(8760) * np.nan # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_shu'] = np.zeros(8760)
+        tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Ths_sys_sup_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Ths_sys_sup_shu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_shu'] = np.zeros(HOURS_IN_YEAR) * np.nan # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_shu'] = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
         # if radiator heating system
         Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
         Qhs_sys_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
-        tsd['Ths_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_ahu'] = np.zeros(8760)
-        tsd['Ths_sys_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_aru'] = np.zeros(8760)
+        tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Ths_sys_sup_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhs_sys'], tsd['T_int'], Qhs_sys_0, Ta_heating_0,
                                                                        bpr.building_systems['Ths_sup_shu_0'],
@@ -277,20 +278,20 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcphs_sys_aru'] = mcphs
 
         # SHU
-        tsd['Ths_sup_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_shu'] = np.zeros(8760)
+        tsd['Ths_sup_shu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_shu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_shu'] = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
         Qhs_sys_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
-        tsd['Ths_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_ahu'] = np.zeros(8760)
-        tsd['Ths_sys_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Ths_sys_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphs_sys_aru'] = np.zeros(8760)
+        tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Ths_sys_sup_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Ths_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhs_sys'], tsd['theta_m'], Qhs_sys_0,
                                                                       bpr.building_systems['Ths_sup_shu_0'],
@@ -310,15 +311,15 @@ def calc_temperatures_emission_systems(bpr, tsd):
     if not control_heating_cooling_systems.has_cooling_system(bpr):
         # if no heating system
 
-        tsd['Tcs_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_ahu'] = np.zeros(8760)
-        tsd['Tcs_sys_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_aru'] = np.zeros(8760)
-        tsd['Tcs_sys_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_scu'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Tcs_sys_sup_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Tcs_sys_sup_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_scu'] = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
 
@@ -365,16 +366,16 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcs_sys_aru'] = mcpcs
 
         # SCU
-        tsd['Tcs_sys_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_scu'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_scu'] = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
         # AHU
-        tsd['Tcs_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_ahu'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
 
         # ARU
         # consider losses according to loads of systems
@@ -400,9 +401,9 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcs_sys_aru'] = mcpcs
 
         # SCU
-        tsd['Tcs_sys_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_scu'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_scu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_scu'] = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
 
@@ -489,14 +490,14 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcs_sys_scu'] = mcpcs
 
         # AHU
-        tsd['Tcs_sys_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_ahu'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_ahu'] = np.zeros(HOURS_IN_YEAR)
 
         # ARU
-        tsd['Tcs_sys_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcs_sys_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcpcs_sys_aru'] = np.zeros(8760)
+        tsd['Tcs_sys_sup_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcs_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
 
     else:
         raise Exception('Cooling system not defined in function: "calc_temperatures_emission_systems"')
@@ -555,7 +556,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         qhs_sen_ahu_incl_em_ls / np.nanmax(qhs_sen_ahu_incl_em_ls)) * (Lv * Y)
 
     else:
-        Qhs_d_ls_ahu = np.zeros(8760)
+        Qhs_d_ls_ahu = np.zeros(HOURS_IN_YEAR)
 
     if np.any(tsd['Qhs_sen_aru'] > 0):
         frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
@@ -565,7 +566,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         qhs_sen_aru_incl_em_ls / np.nanmax(qhs_sen_aru_incl_em_ls)) * (
                            Lv * Y)
     else:
-        Qhs_d_ls_aru = np.zeros(8760)
+        Qhs_d_ls_aru = np.zeros(HOURS_IN_YEAR)
 
     if np.any(tsd['Qhs_sen_shu'] > 0):
         frac_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
@@ -575,7 +576,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         qhs_sen_shu_incl_em_ls / np.nanmax(qhs_sen_shu_incl_em_ls)) * (
                            Lv * Y)
     else:
-        qhs_d_ls_shu = np.zeros(8760)
+        qhs_d_ls_shu = np.zeros(HOURS_IN_YEAR)
 
     if np.any(tsd['Qcs_sen_ahu'] < 0):
         frac_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
@@ -584,7 +585,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         qcs_d_ls_ahu = ((tsc_ahu + trc_ahu) / 2 - tamb) * (qcs_sen_ahu_incl_em_ls / np.nanmin(qcs_sen_ahu_incl_em_ls))\
                        * (Lv * Y)
     else:
-        qcs_d_ls_ahu = np.zeros(8760)
+        qcs_d_ls_ahu = np.zeros(HOURS_IN_YEAR)
 
     if np.any(tsd['Qcs_sen_aru'] < 0):
         frac_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
@@ -593,7 +594,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         qcs_d_ls_aru = ((tsc_aru + trc_aru) / 2 - tamb) * (qcs_sen_aru_incl_em_ls / np.nanmin(qcs_sen_aru_incl_em_ls))\
                         * (Lv * Y)
     else:
-        qcs_d_ls_aru = np.zeros(8760)
+        qcs_d_ls_aru = np.zeros(HOURS_IN_YEAR)
 
     if np.any(tsd['Qcs_sen_scu'] < 0):
         frac_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
@@ -602,7 +603,7 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
         Qcs_d_ls_scu = ((tsc_scu + trc_scu) / 2 - tamb) * (qcs_sen_scu_incl_em_ls / np.nanmin(qcs_sen_scu_incl_em_ls)) * (
         Lv * Y)
     else:
-        Qcs_d_ls_scu = np.zeros(8760)
+        Qcs_d_ls_scu = np.zeros(HOURS_IN_YEAR)
 
     tsd['Qhs_dis_ls'] = Qhs_d_ls_ahu + Qhs_d_ls_aru + qhs_d_ls_shu
     tsd['Qcs_dis_ls'] = qcs_d_ls_ahu + qcs_d_ls_aru + Qcs_d_ls_scu

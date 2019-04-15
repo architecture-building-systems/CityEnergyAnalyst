@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import math
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -39,8 +40,8 @@ def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
 
     T_max = max(T_ambient_C) + 273.15 # to K
     T_avg = np.mean(T_ambient_C) + 273.15 # to K
-    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil)) # soil constants
-    Tg = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / 8760 ) - e )
-           for i in range(8760)]
+    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil)) # soil constants
+    Tg = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / HOURS_IN_YEAR ) - e )
+           for i in range(HOURS_IN_YEAR)]
 
     return Tg
