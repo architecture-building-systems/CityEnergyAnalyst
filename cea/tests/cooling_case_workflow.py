@@ -35,6 +35,7 @@ def main(config):
         config.weather = 'Singapore'
         config.district_cooling_network = True
         config.thermal_network.network_type = 'DC'
+        config.data_helper.region = 'SG'
     else:
         # load the saved config
         workflow_scenario = config.cooling_case_workflow.scenario
@@ -66,12 +67,12 @@ def main(config):
         ('photovoltaic-thermal', {'type_scpanel': 'ET'}),
         ('thermal-network', {'network_type': 'DC'}),
         ('decentralized', {}),
-        ('thermal-network-optimization', {'network_type': 'DC'}),
+        ('thermal-network-optimization', {'network_type': 'DC','use_representative_week_per_month': True}),
         ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),
         ('multi-criteria-analysis', {'generations': 2}),
-        ('plots', {'network_type': 'DC'}),
-        ('plots-supply-system', {'network_type': 'DC'}),
-        ('plots-optimization', {'network_type': 'DC'}),
+        ('plots', {'network_type': 'DC', 'generations':2}),
+        #('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
+        ('plots-optimization', {'network_type': 'DC','generations':2}),
         ]
 
     # skip steps already performed
