@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -77,12 +78,12 @@ def calc_Qcdataf(locator, bpr, tsd):
             tsd['E_data'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
                                                                 (tsd['Tcdata_sys_re'] + 273), t_source)
             # final to district is zero
-            tsd['DC_cdata'] = np.zeros(8760)
+            tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
     elif energy_source == "DC":
         tsd['DC_cdata'] = tsd['Qcdata_sys']
-        tsd['E_data'] = np.zeros(8760)
+        tsd['E_data'] = np.zeros(HOURS_IN_YEAR)
     else:
-        tsd['E_data'] = np.zeros(8760)
-        tsd['DC_cdata'] = np.zeros(8760)
+        tsd['E_data'] = np.zeros(HOURS_IN_YEAR)
+        tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
     return tsd
 

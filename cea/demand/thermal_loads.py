@@ -3,10 +3,8 @@
 Demand model of thermal loads
 """
 from __future__ import division
-
 import numpy as np
 import pandas as pd
-
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -14,8 +12,8 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
 from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
-
 from cea.utilities import reporting
+from cea.constants import HOURS_IN_YEAR
 
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
@@ -38,7 +36,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     * each element of the 'list_uses' entry represents a building occupancy type.
     * each element of the 'schedules' entry represents the schedules for a building occupancy type.
     * the schedules for a building occupancy type are a 4-tuple (occupancy, electricity, domestic hot water,
-      probability of use), with each element of the 4-tuple being a list of hourly values (8760 values).
+      probability of use), with each element of the 4-tuple being a list of hourly values (HOURS_IN_YEAR values).
 
 
     Side effect include a number of files in two folders:
@@ -66,7 +64,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :param usage_schedules: dict containing schedules and function names of buildings.
     :type usage_schedules: dict
 
-    :param date: the dates (hours) of the year (8760)
+    :param date: the dates (hours) of the year (HOURS_IN_YEAR)
     :type date: pandas.tseries.index.DatetimeIndex
 
     :param locator:
@@ -86,9 +84,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
         tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd)
     else:
-        tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
-        tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
-        tsd['E_cre'] = np.zeros(8760)
+        tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(HOURS_IN_YEAR)
+        tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
 
@@ -106,9 +104,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
             tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
-            tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
-            tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
-            tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
+            tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
+            tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+            tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
 
         #CALCULATE HEATING AND COOLING DEMAND
         tsd = calc_set_points(bpr, date, tsd, building_name, config, locator)  # calculate the setpoints for every hour
@@ -137,11 +135,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd = hotwater_loads.calc_Qwwf(bpr, tsd) #final
         else:
             tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
-            tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(8760)
-            tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
-            tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(8760)
-            tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] =  tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
+            tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
+            tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+            tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] =  tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
 
             # CALCULATE SUM OF HEATING AND COOLING LOADS
         tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
@@ -217,18 +215,18 @@ def calc_Qcs_sys(bpr, tsd):
                                                                     (tsd['Tcs_sys_re_scu'] + 273), t_source)
                 # sum
                 tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
-                tsd['DC_cs'] = np.zeros(8760)
+                tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
-            tsd['E_cs'] = np.zeros(8760)
-            tsd['DC_cs'] = np.zeros(8760)
+            tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     elif scale_technology == "DISTRICT":
         tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
-        tsd['E_cs'] = np.zeros(8760)
+        tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
-        tsd['DC_cs'] = np.zeros(8760)
-        tsd['E_cs'] = np.zeros(8760)
+        tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     return tsd
@@ -247,78 +245,78 @@ def calc_Qhs_sys(bpr, tsd):
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
             tsd['E_hs'] =  tsd['Qhs_sys']/efficiency_average_year
-            tsd['SOLAR_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NATURALGAS":
             tsd['NG_hs'] = tsd['Qhs_sys']/efficiency_average_year
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_hs'] = tsd['Qhs_sys']/efficiency_average_year
-            tsd['WOOD_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
-            tsd['NG_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_hs'] = tsd['Qhs_sys']/efficiency_average_year
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "WOOD":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_hs'] = tsd['Qhs_sys']/efficiency_average_year
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "SOLAR":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['SOLAR_hs'] =  tsd['Qhs_sys']/efficiency_average_year
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     elif scale_technology == "DISTRICT":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_hs'] = tsd['Qhs_sys']/efficiency_average_year
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
-            tsd['NG_hs'] = np.zeros(8760)
-            tsd['COAL_hs'] = np.zeros(8760)
-            tsd['OIL_hs'] = np.zeros(8760)
-            tsd['WOOD_hs'] = np.zeros(8760)
-            tsd['DH_hs'] = np.zeros(8760)
-            tsd['E_hs'] = np.zeros(8760)
-            tsd['SOLAR_hs'] = np.zeros(8760)
+            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     return tsd
@@ -501,12 +499,12 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields.extend(nan_fields_electricity)
     nan_fields.extend(TSD_KEYS_PEOPLE)
 
-    tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
+    tsd.update(dict((x, np.zeros(HOURS_IN_YEAR) * np.nan) for x in nan_fields))
 
     # initialize system status log
-    tsd['sys_status_ahu'] = np.chararray(8760, itemsize=20)
-    tsd['sys_status_aru'] = np.chararray(8760, itemsize=20)
-    tsd['sys_status_sen'] = np.chararray(8760, itemsize=20)
+    tsd['sys_status_ahu'] = np.chararray(HOURS_IN_YEAR, itemsize=20)
+    tsd['sys_status_aru'] = np.chararray(HOURS_IN_YEAR, itemsize=20)
+    tsd['sys_status_sen'] = np.chararray(HOURS_IN_YEAR, itemsize=20)
     tsd['sys_status_ahu'][:] = 'unknown'
     tsd['sys_status_aru'][:] = 'unknown'
     tsd['sys_status_sen'][:] = 'unknown'
@@ -561,14 +559,14 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Qgain_wind', 'Qgain_vent'
                    'Q_cool_ref', 'q_cs_lat_peop']
 
-    tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
+    tsd.update(dict((x, np.zeros(HOURS_IN_YEAR)) for x in zero_fields))
 
     tsd['T_int'] = tsd['T_ext'].copy()
 
     return tsd
 
 
-HOURS_IN_YEAR = 8760
+HOURS_IN_YEAR = HOURS_IN_YEAR
 HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
 
 

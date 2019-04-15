@@ -7,6 +7,7 @@ import math
 import cea.inputlocator
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -28,8 +29,8 @@ def epw_reader(weather_path):
 
     result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
     result = result.loc[0:8759]
-    result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=8760, freq='H'))
-    result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=8760, freq='H').dayofyear
+    result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H'))
+    result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['skycover'] = result['ratio_diffhout'].fillna(1)
     result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
