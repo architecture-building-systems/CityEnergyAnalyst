@@ -5,7 +5,7 @@ Analysis:
   description: Multicriteria analysis
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.multicriteria.main
-  parameters: ['general:scenario', multi-criteria,
+  parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria,
                'thermal-network:network-names', 'thermal-network:network-type']
 
 
@@ -16,7 +16,7 @@ Cost analysis:
   description: Calculate energy costs due to building operation
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.costs.operation_costs
-  parameters: ['general:scenario', ]
+  parameters: ['general:scenario']
 
 
 Data Management:
@@ -141,7 +141,7 @@ Optimization:
   module: cea.optimization.optimization_main
   parameters: ['general:scenario', 'general:weather', 'general:district-heating-network',
                'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
-               'optimization', 'decentralized']
+               'optimization', 'decentralized', 'general:detailed-electricity-pricing', 'general:multiprocessing']
 
 - name: decentralized
   label: Decentralized supply system
@@ -230,7 +230,8 @@ Thermal networks:
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.thermal_network_optimization
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
-               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization']
+               'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization',
+               'network-layout', 'general:detailed-electricity-pricing']
 
 
 Utilities:
@@ -359,3 +360,10 @@ default:
   interfaces: [cli]
   module: cea.tests.trace_inputlocator
   parameters: ['general:scenario', trace-inputlocator]
+
+- name: cooling-case-workflow
+  label: cooling case workflow
+  description: Run the cooling case from start to end to test the cea
+  interfaces: [cli]
+  module: cea.tests.cooling_case_workflow
+  parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
