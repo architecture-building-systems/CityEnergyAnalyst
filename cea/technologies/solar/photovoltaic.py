@@ -759,7 +759,10 @@ def main(config):
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
 
-    list_buildings_names = locator.get_zone_building_names()
+    if config.solar.buildings == []:
+        list_buildings_names = locator.get_zone_building_names()
+    else:
+        list_buildings_names = config.solar.buildings
 
     hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
