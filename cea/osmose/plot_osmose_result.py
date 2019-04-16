@@ -25,7 +25,7 @@ def check_balance(results, building, building_result_path, tech):
     # Bui_air_bal
     check_bui_air_bal(results, building, building_result_path, tech)
     # Bui_co2_bal
-    check_CO2_bal(results, building, building_result_path, tech)
+    #check_CO2_bal(results, building, building_result_path, tech)
 
     check_electricity_bal(results, building, building_result_path, tech)
 
