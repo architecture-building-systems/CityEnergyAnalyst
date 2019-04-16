@@ -28,7 +28,7 @@ def epw_reader(weather_path):
                   'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
     result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
-    result = result.loc[0:8759]
+    result = result.loc[0:HOURS_IN_YEAR]
     result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H'))
     result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
