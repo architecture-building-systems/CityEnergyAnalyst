@@ -387,7 +387,7 @@ def main(dict_connected, config, locator):
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
 
     # Line Parameters
-    df_line_parameter = pd.read_excel(locator.get_electrical_networks(config.region), "CABLING CATALOG")
+    df_line_parameter = pd.read_excel(locator.get_electrical_networks(), "CABLING CATALOG")
     dict_line_tech = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
