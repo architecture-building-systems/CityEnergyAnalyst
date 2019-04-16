@@ -22,11 +22,8 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-
-    # print out all configuration variables used by this script
-    print("Running extract-reference-case with destination =  %s" % config.extract_reference_case.destination)
-
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    reference_case = 'reference-case-{case}.zip'.format(case=config.extract_reference_case.case)
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), reference_case))
     archive.extractall(config.extract_reference_case.destination)
 
 
