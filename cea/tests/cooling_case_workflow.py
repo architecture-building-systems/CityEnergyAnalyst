@@ -31,7 +31,6 @@ def main(config):
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
-        config.region = 'SG'
         config.weather = 'Singapore'
         config.district_cooling_network = True
         config.thermal_network.network_type = 'DC'
