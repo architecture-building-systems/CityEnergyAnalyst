@@ -72,7 +72,7 @@ def main(config):
         ('multi-criteria-analysis', {'generations': 2}),
         ('plots', {'network_type': 'DC', 'generations':2}),
         #('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
-        ('plots-optimization', {'network_type': 'DC','generations':2}),
+        ('plots-optimization', {'network_type': 'DC','generation':2}),
         ]
 
     # skip steps already performed
