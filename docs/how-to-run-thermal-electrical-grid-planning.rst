@@ -32,6 +32,7 @@ Prerequisites
 
 Steps
 -----
+#. Run demand simulation of the case study you wish to optimize.
 #. Assign optimization parameters in ``cea.config``::
       
       [electrical-thermal-optimization]
