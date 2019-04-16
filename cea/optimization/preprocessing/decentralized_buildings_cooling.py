@@ -25,7 +25,7 @@ from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_G
     Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
-
+from cea.constants import HOURS_IN_YEAR
 
 def disconnected_buildings_cooling_main(locator, building_names, config, prices, lca):
     """
@@ -227,13 +227,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to AHU
         result_AHU[3][3] = 1
 
-        q_CT_VCC_to_AHU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_AHU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_AHU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_AHU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_AHU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_AHU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_AHU_K = np.zeros(8760)
+        q_CT_VCC_to_AHU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_AHU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_AHU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_AHU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_AHU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_AHU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_AHU_K = np.zeros(HOURS_IN_YEAR)
 
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
@@ -265,7 +265,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 number_of_ACH_chillers = int(ceil(Qc_nom_combination_AHU_W / max_ACH_chiller_size))
                 Qnom_ACH_W = Qc_nom_combination_AHU_W / number_of_ACH_chillers
 
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_K[hour] = T_re_AHU_K[hour] if T_re_AHU_K[hour] > 0 else T_sup_AHU_K[hour]
 
@@ -342,13 +342,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to ARU
         result_ARU[3][3] = 1
 
-        q_CT_VCC_to_ARU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_ARU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_ARU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_ARU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_ARU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_ARU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_ARU_K = np.zeros(8760)
+        q_CT_VCC_to_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_ARU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_ARU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_ARU_K = np.zeros(HOURS_IN_YEAR)
 
         if config.decentralized.aruflag:
             print building_name, ' decentralized building simulation with configuration: ARU'
@@ -368,7 +368,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qnom_ACH_W = Qc_nom_combination_ARU_W / number_of_ACH_chillers
 
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_ARU_K[hour] = T_re_ARU_K[hour] if T_re_ARU_K[hour] > 0 else T_sup_AHU_K[hour]
 
@@ -447,13 +447,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to SCU
         result_SCU[3][3] = 1
 
-        q_CT_VCC_to_SCU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_SCU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_SCU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_SCU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_SCU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_SCU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_SCU_K = np.zeros(8760)
+        q_CT_VCC_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_SCU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_SCU_K = np.zeros(HOURS_IN_YEAR)
 
         if config.decentralized.scuflag:
             print building_name, ' decentralized building simulation with configuration: SCU'
@@ -473,7 +473,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qnom_ACH_W = Qc_nom_combination_SCU_W / number_of_ACH_chillers
 
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_SCU_K[hour] = T_re_SCU_K[hour] if T_re_SCU_K[hour] > 0 else T_sup_SCU_K[hour]
 
@@ -552,13 +552,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to AHU & ARU
         result_AHU_ARU[3][3] = 1
 
-        q_CT_VCC_to_AHU_ARU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_AHU_ARU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_AHU_ARU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_AHU_ARU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_AHU_ARU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
+        q_CT_VCC_to_AHU_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_AHU_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_AHU_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_AHU_ARU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_AHU_ARU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_AHU_ARU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_AHU_ARU_K = np.zeros(HOURS_IN_YEAR)
 
         if config.decentralized.ahuaruflag:
             print building_name, ' decentralized building simulation with configuration: AHU + ARU'
@@ -578,7 +578,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qnom_ACH_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_chillers
 
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_ARU_K[hour] = T_re_AHU_ARU_K[hour] if T_re_AHU_ARU_K[hour] > 0 else T_sup_AHU_ARU_K[hour]
 
@@ -663,13 +663,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to AHU & SCU
         result_AHU_SCU[3][3] = 1
 
-        q_CT_VCC_to_AHU_SCU_W = np.zeros(8760)
-        q_CT_FP_tosingle_ACH_to_AHU_SCU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_AHU_SCU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_AHU_SCU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_AHU_SCU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
+        q_CT_VCC_to_AHU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_tosingle_ACH_to_AHU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_AHU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_AHU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_AHU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_AHU_SCU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_AHU_SCU_K = np.zeros(HOURS_IN_YEAR)
 
         if config.decentralized.ahuscuflag:
             print building_name, ' decentralized building simulation with configuration: AHU + SCU'
@@ -689,7 +689,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qnom_ACH_W = Qc_nom_combination_AHU_SCU_W / number_of_ACH_chillers
 
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_SCU_K[hour] = T_re_AHU_SCU_K[hour] if T_re_AHU_SCU_K[hour] > 0 else T_sup_AHU_SCU_K[hour]
 
@@ -774,13 +774,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # config 3: single-effect ACH with ET to ARU & SCU
         result_ARU_SCU[3][3] = 1
 
-        q_CT_VCC_to_ARU_SCU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_ARU_SCU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_ARU_SCU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_ARU_SCU_W = np.zeros(8760)
-        q_burner_ET_to_single_ACH_to_ARU_SCU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
+        q_CT_VCC_to_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_to_single_ACH_to_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_ARU_SCU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_ARU_SCU_K = np.zeros(HOURS_IN_YEAR)
 
         if config.decentralized.aruscuflag:
             print building_name, ' decentralized building simulation with configuration: ARU + SCU'
@@ -799,7 +799,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 number_of_ACH_chillers = int(ceil(Qc_nom_combination_ARU_SCU_W / max_ACH_chiller_size))
                 Qnom_ACH_W = Qc_nom_combination_ARU_SCU_W / number_of_ACH_chillers
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_ARU_SCU_K[hour] = T_re_ARU_SCU_K[hour] if T_re_ARU_SCU_K[hour] > 0 else T_sup_ARU_SCU_K[hour]
 
@@ -889,17 +889,17 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_ARU_SCU[5][4] = 1
         result_AHU_ARU_SCU[5][6] = 1
 
-        q_CT_VCC_to_AHU_ARU_SCU_W = np.zeros(8760)
-        q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = np.zeros(8760)
-        q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(8760)
-        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
-        q_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
-        q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
-        q_burner_ET_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
-        q_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W = np.zeros(8760)
-        T_re_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_K = np.zeros(8760)
-        T_re_boiler_ET_to_single_ACH_to_AHU_ARU_SCU_K = np.zeros(8760)
-        T_re_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_K = np.zeros(8760)
+        q_CT_VCC_to_AHU_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_burner_ET_single_ACH_to_AHU_ARU_SCU_W = np.zeros(HOURS_IN_YEAR)
+        q_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_ET_to_single_ACH_to_AHU_ARU_SCU_K = np.zeros(HOURS_IN_YEAR)
+        T_re_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_K = np.zeros(HOURS_IN_YEAR)
 
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
 
@@ -948,7 +948,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_AHU_ARU_chillers
 
             # chiller operations for config 1-5
-            for hour in range(8760):  # TODO: vectorize
+            for hour in range(HOURS_IN_YEAR):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_ARU_SCU_K[hour] = T_re_AHU_ARU_SCU_K[hour] if T_re_AHU_ARU_SCU_K[hour] > 0 else \
                     T_sup_AHU_ARU_SCU_K[hour]
@@ -1140,7 +1140,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W = boiler_FP_to_single_ACH_to_SCU_nom_size_W
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             # cooling towers operation
             # AHU
             if config.decentralized.ahuflag:

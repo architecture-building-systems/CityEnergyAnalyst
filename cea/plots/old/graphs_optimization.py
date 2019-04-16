@@ -17,6 +17,7 @@ import cea.config
 import cea.inputlocator
 import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -361,14 +362,14 @@ def Elec_ImportExport(individual, locator):
     # Extract Electricity needs
     buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
 
-    allElec = np.zeros((8760,1))
+    allElec = np.zeros((HOURS_IN_YEAR,1))
 
     for build in buildList:
         buildFileRaw = locator.pathRaw + "/" + build + ".csv"
         builddf = pd.read_csv(buildFileRaw, usecols = ["Ealf", "Eauxf", "Ecaf", "Edataf", "Epf"])
         buildarray = np.array(builddf)
 
-        for i in range(8760):
+        for i in range(HOURS_IN_YEAR):
             allElec[i,0] += np.sum(buildarray[i,:])*1000
     print sum(allElec)
 
@@ -381,7 +382,7 @@ def Elec_ImportExport(individual, locator):
     # Compute Import / Export
     imp = 0
     exp = 0
-    for i in range(8760):
+    for i in range(HOURS_IN_YEAR):
         delta = allElec[i,0] - EsolarArray[i,0]
         if delta > 0:
             imp += delta

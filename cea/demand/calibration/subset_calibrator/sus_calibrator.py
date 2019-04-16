@@ -23,6 +23,7 @@ import cea.inputlocator
 import cea.globalvar
 import cea.config
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,7 +47,7 @@ def ss_measurment_loader(locator):
     path_to_measuements=os.path.join(path_to_measuements_pre, "building-metering\yearly")
     building_names_with_measurement=find_buildings_with_measurements(path_to_measuements,suffix=".csv")
     total_building_measured=len(building_names_with_measurement)
-    all_measurements_matrix=np.empty([8760,total_building_measured])
+    all_measurements_matrix=np.empty([HOURS_IN_YEAR,total_building_measured])
     counter=0
     for i in (building_names_with_measurement):
         file_path_measures = os.path.join(path_to_measuements, i + "." + "csv")
