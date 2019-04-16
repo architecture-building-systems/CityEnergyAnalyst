@@ -14,13 +14,9 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
 from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
-
-<<<<<<< HEAD
-=======
 from cea.utilities import reporting
 
 
->>>>>>> master
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output, config, region, write_detailed_output, debug):
