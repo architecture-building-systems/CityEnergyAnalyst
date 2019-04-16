@@ -38,6 +38,7 @@ def main(case):
     write_string_to_txt(path_to_case_folder, osmose_project_path, "path_to_case_folder.txt")  # osmose input
     write_value_to_csv(timesteps, osmose_project_path, "timesteps.csv")  # osmose input
     for building in building_names:
+        print building, ' in ', case
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
         for tech in TECHS:
             t = time.localtime()
