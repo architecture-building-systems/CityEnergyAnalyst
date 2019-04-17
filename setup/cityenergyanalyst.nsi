@@ -60,6 +60,7 @@ Section "Dummy Section" SecDummy
 SetOutPath "$INSTDIR"
 
 ;Download the CityEnergyAnalyst conda environment
+DetailPrint "Downloading ${CEA_ENV_FILENAME}"
 inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
 Pop $R0 ;Get the return value
 StrCmp $R0 "OK" download_ok
@@ -70,7 +71,8 @@ download_ok:
 
 
 # unzip python environment to ${INSTDIR}\Dependencies
-Nsis7z::Extract ${CEA_ENV_FILENAME} "Installing Python %s..."
+DetailPrint "Extracting ${CEA_ENV_FILENAME}"
+Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
 Delete ${CEA_ENV_FILENAME}
 
 nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
