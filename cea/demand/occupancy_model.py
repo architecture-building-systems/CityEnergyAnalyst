@@ -5,6 +5,7 @@ import random
 import cea.inputlocator
 import cea.config
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -77,7 +78,7 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
         schedules = {}
         # occupant-related schedules are 0 since there are no occupants
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
-            schedules[schedule] = np.zeros(8760)
+            schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         # electricity and process schedules may be greater than 0
         for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro']:
             codes = {'Ea': 1, 'El': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3,'Qcre': 3}
@@ -128,7 +129,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     schedules = {}
     normalizing_values = {}
     for schedule in ['people'] + occupant_schedules + electricity_schedules + water_schedules + process_schedules:
-        schedules[schedule] = np.zeros(8760, dtype=float)
+        schedules[schedule] = np.zeros(HOURS_IN_YEAR, dtype=float)
         normalizing_values[schedule] = 0.0
     for num in range(len(list_uses)):
         if bpr.occupancy[list_uses[num]] > 0:
@@ -147,7 +148,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
 
     for label in occupant_schedules:
         if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(8760)
+            schedules[label] = np.zeros(HOURS_IN_YEAR)
         else:
             schedules[label] = schedules[label] / normalizing_values[label]
 
@@ -210,7 +211,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     schedules = {}
     normalizing_values = {}
     for schedule in ['people'] + occupant_schedules + electricity_schedules + water_schedules + process_schedules:
-        schedules[schedule] = np.zeros(8760)
+        schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         normalizing_values[schedule] = 0.0
 
     # vector of mobility parameters
@@ -219,7 +220,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
     for num in range(len(list_uses)):
         current_share_of_use = bpr.occupancy[list_uses[num]]
-        current_stochastic_schedule = np.zeros(8760)
+        current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
         if current_share_of_use > 0:
             occupants_in_current_use = int(
                 archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
@@ -274,7 +275,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
     for label in occupant_schedules + electricity_schedules + process_schedules + water_schedules:
         if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(8760)
+            schedules[label] = np.zeros(HOURS_IN_YEAR)
         else:
             schedules[label] /= normalizing_values[label]
 
@@ -393,7 +394,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     :return: normalized schedule for a given occupancy type
     """
 
-    current_schedule = np.zeros(8760)
+    current_schedule = np.zeros(HOURS_IN_YEAR)
     normalizing_value = 0.0
     for num in range(len(list_uses)):
         if archetype_values[num] != 0:  # do not consider when the value is 0
@@ -665,10 +666,10 @@ def main(config):
 
     weather_data = epwreader.epw_reader(config.weather)[['year']]
     year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    date = pd.date_range(gv.date_start, periods=HOURS_IN_YEAR, freq='H')
     building_properties = BuildingProperties(locator, True, False)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']

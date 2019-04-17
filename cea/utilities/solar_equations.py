@@ -11,6 +11,7 @@ import collections
 from math import *
 from timezonefinder import TimezoneFinder
 import pytz
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -89,7 +90,7 @@ SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 
 def calc_datetime_local_from_weather_file(weather_data, latitude, longitude):
     # read date from the weather file
     year = weather_data['year'][0]
-    datetime = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+    datetime = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
     # get local time zone
     etc_timezone = get_local_etc_timezone(latitude, longitude)

@@ -14,6 +14,7 @@ from cea.technologies.boiler import cond_boiler_op_cost
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -90,79 +91,79 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
         TretsewArray_K = np.array(HPSew_Data['ts_C']) + 273
 
     # Initiation of the variables
-    Opex_var_HP_Sewage_USD = np.zeros(8760)
-    Opex_var_HP_Lake_USD = np.zeros(8760)
-    Opex_var_GHP_USD = np.zeros(8760)
-    Opex_var_CHP_USD = np.zeros(8760)
-    Opex_var_Furnace_USD = np.zeros(8760)
-    Opex_var_BaseBoiler_USD = np.zeros(8760)
-    Opex_var_PeakBoiler_USD = np.zeros(8760)
+    Opex_var_HP_Sewage_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_HP_Lake_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_GHP_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_CHP_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_Furnace_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_BaseBoiler_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_PeakBoiler_USD = np.zeros(HOURS_IN_YEAR)
 
-    source_HP_Sewage = np.zeros(8760)
-    source_HP_Lake = np.zeros(8760)
-    source_GHP = np.zeros(8760)
-    source_CHP = np.zeros(8760)
-    source_Furnace = np.zeros(8760)
-    source_BaseBoiler = np.zeros(8760)
-    source_PeakBoiler = np.zeros(8760)
+    source_HP_Sewage = np.zeros(HOURS_IN_YEAR)
+    source_HP_Lake = np.zeros(HOURS_IN_YEAR)
+    source_GHP = np.zeros(HOURS_IN_YEAR)
+    source_CHP = np.zeros(HOURS_IN_YEAR)
+    source_Furnace = np.zeros(HOURS_IN_YEAR)
+    source_BaseBoiler = np.zeros(HOURS_IN_YEAR)
+    source_PeakBoiler = np.zeros(HOURS_IN_YEAR)
 
-    Q_HPSew_gen_W = np.zeros(8760)
-    Q_HPLake_gen_W = np.zeros(8760)
-    Q_GHP_gen_W = np.zeros(8760)
-    Q_CHP_gen_W = np.zeros(8760)
-    Q_Furnace_gen_W = np.zeros(8760)
-    Q_BaseBoiler_gen_W = np.zeros(8760)
-    Q_PeakBoiler_gen_W = np.zeros(8760)
-    Q_uncovered_W = np.zeros(8760)
+    Q_HPSew_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_HPLake_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_GHP_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_Furnace_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_BaseBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_PeakBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_uncovered_W = np.zeros(HOURS_IN_YEAR)
 
-    E_HPSew_req_W = np.zeros(8760)
-    E_HPLake_req_W = np.zeros(8760)
-    E_GHP_req_W = np.zeros(8760)
-    E_CHP_gen_W = np.zeros(8760)
-    E_Furnace_gen_W = np.zeros(8760)
-    E_BaseBoiler_req_W = np.zeros(8760)
-    E_PeakBoiler_req_W = np.zeros(8760)
+    E_HPSew_req_W = np.zeros(HOURS_IN_YEAR)
+    E_HPLake_req_W = np.zeros(HOURS_IN_YEAR)
+    E_GHP_req_W = np.zeros(HOURS_IN_YEAR)
+    E_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
+    E_Furnace_gen_W = np.zeros(HOURS_IN_YEAR)
+    E_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+    E_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    NG_used_HPSew_W = np.zeros(8760)
-    NG_used_HPLake_W = np.zeros(8760)
-    NG_used_GHP_W = np.zeros(8760)
-    NG_used_CHP_W = np.zeros(8760)
-    NG_used_Furnace_W = np.zeros(8760)
-    NG_used_BaseBoiler_W = np.zeros(8760)
-    NG_used_PeakBoiler_W = np.zeros(8760)
-    NG_used_BackupBoiler_W = np.zeros(8760)
+    NG_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_GHP_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_CHP_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_Furnace_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
+    NG_used_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
 
 
-    BG_used_HPSew_W = np.zeros(8760)
-    BG_used_HPLake_W = np.zeros(8760)
-    BG_used_GHP_W = np.zeros(8760)
-    BG_used_CHP_W = np.zeros(8760)
-    BG_used_Furnace_W = np.zeros(8760)
-    BG_used_BaseBoiler_W = np.zeros(8760)
-    BG_used_PeakBoiler_W = np.zeros(8760)
+    BG_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_GHP_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_CHP_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_Furnace_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
+    BG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    Wood_used_HPSew_W = np.zeros(8760)
-    Wood_used_HPLake_W = np.zeros(8760)
-    Wood_used_GHP_W = np.zeros(8760)
-    Wood_used_CHP_W = np.zeros(8760)
-    Wood_used_Furnace_W = np.zeros(8760)
-    Wood_used_BaseBoiler_W = np.zeros(8760)
-    Wood_used_PeakBoiler_W = np.zeros(8760)
+    Wood_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_GHP_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_CHP_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_Furnace_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
+    Wood_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    Q_coldsource_HPSew_W = np.zeros(8760)
-    Q_coldsource_HPLake_W = np.zeros(8760)
-    Q_coldsource_GHP_W = np.zeros(8760)
-    Q_coldsource_CHP_W = np.zeros(8760)
-    Q_coldsource_Furnace_W = np.zeros(8760)
-    Q_coldsource_BaseBoiler_W = np.zeros(8760)
-    Q_coldsource_PeakBoiler_W = np.zeros(8760)
+    Q_coldsource_HPSew_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_HPLake_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_GHP_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_CHP_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_Furnace_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
+    Q_coldsource_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    Q_excess_W = np.zeros(8760)
+    Q_excess_W = np.zeros(HOURS_IN_YEAR)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
                                                          'windspd_ms', 'skytemp_C']]
     ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
-    for hour in range(8760):
+    for hour in range(HOURS_IN_YEAR):
         Q_therm_req_W = Q_missing_W[hour]
         # cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
         #                                                                                     :], \
@@ -247,27 +248,27 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     # sum up the uncovered demand, get average and peak load
     Q_uncovered_design_W = np.amax(Q_uncovered_W)
     Q_uncovered_annual_W = np.sum(Q_uncovered_W)
-    Opex_var_BackupBoiler_USD = np.zeros(8760)
-    Q_BackupBoiler_W = np.zeros(8760)
-    E_BackupBoiler_req_W = np.zeros(8760)
+    Opex_var_BackupBoiler_USD = np.zeros(HOURS_IN_YEAR)
+    Q_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
+    E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    Opex_var_Furnace_wet_USD = np.zeros(8760)
-    Opex_var_Furnace_dry_USD = np.zeros(8760)
-    Opex_var_CHP_NG_USD = np.zeros(8760)
-    Opex_var_CHP_BG_USD = np.zeros(8760)
-    Opex_var_BaseBoiler_NG_USD = np.zeros(8760)
-    Opex_var_BaseBoiler_BG_USD = np.zeros(8760)
-    Opex_var_PeakBoiler_NG_USD = np.zeros(8760)
-    Opex_var_PeakBoiler_BG_USD = np.zeros(8760)
-    Opex_var_BackupBoiler_NG_USD = np.zeros(8760)
-    Opex_var_BackupBoiler_BG_USD = np.zeros(8760)
+    Opex_var_Furnace_wet_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_Furnace_dry_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_CHP_NG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_CHP_BG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_BaseBoiler_NG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_BaseBoiler_BG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_PeakBoiler_NG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_PeakBoiler_BG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_BackupBoiler_NG_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_BackupBoiler_BG_USD = np.zeros(HOURS_IN_YEAR)
 
-    Opex_var_PV_USD = np.zeros(8760)
-    Opex_var_PVT_USD = np.zeros(8760)
-    Opex_var_SC_USD = np.zeros(8760)
+    Opex_var_PV_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_PVT_USD = np.zeros(HOURS_IN_YEAR)
+    Opex_var_SC_USD = np.zeros(HOURS_IN_YEAR)
 
     if Q_uncovered_design_W != 0:
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,

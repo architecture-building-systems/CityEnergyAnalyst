@@ -24,7 +24,7 @@ from cea.optimization.constants import SIZING_MARGIN, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME
 import cea.technologies.pumps as pumps
 from math import log, ceil
-
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -98,12 +98,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     arrayData = np.array(df)
 
     # total cooling requirements based on the Heat Recovery Flag
-    Q_cooling_req_W = np.zeros(8760)
+    Q_cooling_req_W = np.zeros(HOURS_IN_YEAR)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
-        for hour in range(8760):  # summing cooling loads of space cooling, refrigeration and data center
+        for hour in range(HOURS_IN_YEAR):  # summing cooling loads of space cooling, refrigeration and data center
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][1]
     else:
-        for hour in range(8760):  # only including cooling loads of space cooling and refrigeration
+        for hour in range(HOURS_IN_YEAR):  # only including cooling loads of space cooling and refrigeration
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
@@ -221,43 +221,43 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         stop_t = 3624
     timesteps = range(start_t, stop_t)
 
-    calfactor_buildings = np.zeros(8760)
+    calfactor_buildings = np.zeros(HOURS_IN_YEAR)
     TotalCool = 0
-    Qc_from_Lake_W = np.zeros(8760)
-    Qc_from_VCC_W = np.zeros(8760)
-    Qc_from_ACH_W = np.zeros(8760)
-    Qc_from_storage_tank_W = np.zeros(8760)
-    Qc_from_VCC_backup_W = np.zeros(8760)
+    Qc_from_Lake_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_VCC_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_ACH_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_storage_tank_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_VCC_backup_W = np.zeros(HOURS_IN_YEAR)
 
-    Qc_req_from_CT_W = np.zeros(8760)
-    Qh_req_from_CCGT_W = np.zeros(8760)
-    Qh_from_CCGT_W = np.zeros(8760)
-    E_gen_CCGT_W = np.zeros(8760)
+    Qc_req_from_CT_W = np.zeros(HOURS_IN_YEAR)
+    Qh_req_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
+    Qh_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
+    E_gen_CCGT_W = np.zeros(HOURS_IN_YEAR)
 
-    opex_var_Lake_USD = np.zeros(8760)
-    opex_var_VCC_USD = np.zeros(8760)
-    opex_var_ACH_USD = np.zeros(8760)
-    opex_var_VCC_backup_USD = np.zeros(8760)
-    opex_var_CCGT_USD = np.zeros(8760)
-    opex_var_CT_USD = np.zeros(8760)
-    E_used_Lake_W = np.zeros(8760)
-    E_used_VCC_W = np.zeros(8760)
-    E_used_VCC_backup_W = np.zeros(8760)
-    E_used_ACH_W = np.zeros(8760)
-    E_used_CT_W = np.zeros(8760)
-    co2_Lake_kgCO2 = np.zeros(8760)
-    co2_VCC_kgCO2 = np.zeros(8760)
-    co2_ACH_kgCO2 = np.zeros(8760)
-    co2_VCC_backup_kgCO2 = np.zeros(8760)
-    co2_CCGT_kgCO2 = np.zeros(8760)
-    co2_CT_kgCO2 = np.zeros(8760)
-    prim_energy_Lake_MJ = np.zeros(8760)
-    prim_energy_VCC_MJ = np.zeros(8760)
-    prim_energy_ACH_MJ = np.zeros(8760)
-    prim_energy_VCC_backup_MJ = np.zeros(8760)
-    prim_energy_CCGT_MJ = np.zeros(8760)
-    prim_energy_CT_MJ = np.zeros(8760)
-    NG_used_CCGT_W = np.zeros(8760)
+    opex_var_Lake_USD = np.zeros(HOURS_IN_YEAR)
+    opex_var_VCC_USD = np.zeros(HOURS_IN_YEAR)
+    opex_var_ACH_USD = np.zeros(HOURS_IN_YEAR)
+    opex_var_VCC_backup_USD = np.zeros(HOURS_IN_YEAR)
+    opex_var_CCGT_USD = np.zeros(HOURS_IN_YEAR)
+    opex_var_CT_USD = np.zeros(HOURS_IN_YEAR)
+    E_used_Lake_W = np.zeros(HOURS_IN_YEAR)
+    E_used_VCC_W = np.zeros(HOURS_IN_YEAR)
+    E_used_VCC_backup_W = np.zeros(HOURS_IN_YEAR)
+    E_used_ACH_W = np.zeros(HOURS_IN_YEAR)
+    E_used_CT_W = np.zeros(HOURS_IN_YEAR)
+    co2_Lake_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    co2_VCC_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    co2_ACH_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    co2_VCC_backup_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    co2_CCGT_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    co2_CT_kgCO2 = np.zeros(HOURS_IN_YEAR)
+    prim_energy_Lake_MJ = np.zeros(HOURS_IN_YEAR)
+    prim_energy_VCC_MJ = np.zeros(HOURS_IN_YEAR)
+    prim_energy_ACH_MJ = np.zeros(HOURS_IN_YEAR)
+    prim_energy_VCC_backup_MJ = np.zeros(HOURS_IN_YEAR)
+    prim_energy_CCGT_MJ = np.zeros(HOURS_IN_YEAR)
+    prim_energy_CT_MJ = np.zeros(HOURS_IN_YEAR)
+    NG_used_CCGT_W = np.zeros(HOURS_IN_YEAR)
     calfactor_total = 0
 
     for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
@@ -301,9 +301,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         reduced_prim_MJ = np.sum(prim_energy_Lake_MJ) + np.sum(prim_energy_VCC_MJ) + np.sum(prim_energy_ACH_MJ) + np.sum(
         prim_energy_VCC_backup_MJ)
 
-        costs_a_USD += reduced_costs_USD*(8760/(stop_t-start_t))
-        CO2_kgCO2 += reduced_CO2_kgCO2*(8760/(stop_t-start_t))
-        prim_MJ += reduced_prim_MJ*(8760/(stop_t-start_t))
+        costs_a_USD += reduced_costs_USD*(HOURS_IN_YEAR/(stop_t-start_t))
+        CO2_kgCO2 += reduced_CO2_kgCO2*(HOURS_IN_YEAR/(stop_t-start_t))
+        prim_MJ += reduced_prim_MJ*(HOURS_IN_YEAR/(stop_t-start_t))
     else:
         costs_a_USD += np.sum(opex_var_Lake_USD) + np.sum(opex_var_VCC_USD) + np.sum(opex_var_ACH_USD) + np.sum(opex_var_VCC_backup_USD)
         CO2_kgCO2 += np.sum(co2_Lake_kgCO2) + np.sum(co2_Lake_kgCO2) + np.sum(co2_ACH_kgCO2) + np.sum(co2_VCC_backup_kgCO2)
@@ -335,9 +335,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
             reduced_CO2_kgCO2 = np.sum(co2_CT_kgCO2)
             reduced_prim_MJ = np.sum(prim_energy_CT_MJ)
 
-            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
-            CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
-            prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (HOURS_IN_YEAR / (stop_t - start_t))
+            CO2_kgCO2 += reduced_CO2_kgCO2 * (HOURS_IN_YEAR / (stop_t - start_t))
+            prim_MJ += reduced_prim_MJ * (HOURS_IN_YEAR / (stop_t - start_t))
         else:
             costs_a_USD += np.sum(opex_var_CT_USD)
             CO2_kgCO2 += np.sum(co2_CT_kgCO2)
@@ -391,9 +391,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
             reduced_CO2_kgCO2 = np.sum(co2_CCGT_kgCO2)
             reduced_prim_MJ = np.sum(prim_energy_CCGT_MJ)
 
-            costs_a_USD += reduced_costs_USD * (8760 / (stop_t - start_t))
-            CO2_kgCO2 += reduced_CO2_kgCO2 * (8760 / (stop_t - start_t))
-            prim_MJ += reduced_prim_MJ * (8760 / (stop_t - start_t))
+            costs_a_USD += reduced_costs_USD * (HOURS_IN_YEAR / (stop_t - start_t))
+            CO2_kgCO2 += reduced_CO2_kgCO2 * (HOURS_IN_YEAR / (stop_t - start_t))
+            prim_MJ += reduced_prim_MJ * (HOURS_IN_YEAR / (stop_t - start_t))
         else:
             costs_a_USD += np.sum(opex_var_CCGT_USD)
             CO2_kgCO2 += np.sum(co2_CCGT_kgCO2)
