@@ -9,6 +9,8 @@
 # !define CEA_ENV_FILENAME "cea.7z"
 !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/USmeJGf3PnjksFc/download"
 !define CEA_ENV_FILENAME "Dependencies.7z"
+!define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
+!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -17,8 +19,9 @@
 !include "cea_version.txt"
 
 Name "${CEA_TITLE} ${VER}"
+
 !define MUI_FILE "savefile"
-!define MUI_BRANDINGTEXT "City Energy Analyst ${VER}"
+!define MUI_BRANDINGTEXT "${CEA_TITLE} ${VER}"
 CRCCheck On
 
 
@@ -42,6 +45,7 @@ RequestExecutionLevel user
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -55,32 +59,48 @@ RequestExecutionLevel user
 ;--------------------------------
 ;Installer Sections
 
-Section "Dummy Section" SecDummy
+Section "Base Installation" Base_Installation_Section
 
-SetOutPath "$INSTDIR"
+    SetOutPath "$INSTDIR"
 
-;Download the CityEnergyAnalyst conda environment
-DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-Pop $R0 ;Get the return value
-StrCmp $R0 "OK" download_ok
-    MessageBox MB_OK "Download failed: $R0"
-    Quit
-download_ok:
-    # get on with life...
+    # install cmder (incl. git and bash... woohoo!!)
+    File /r "Dependencies"
+    SetOutPath "$INSTDIR\Dependencies\cmder"
+    Nsis7z::ExtractWithDetails "cmder.7z" "Installing CEA Console %s..."
+    Delete "cmder.7z"
+    SetOutPath "$INSTDIR"
 
 
-# unzip python environment to ${INSTDIR}\Dependencies
-DetailPrint "Extracting ${CEA_ENV_FILENAME}"
-Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
-Delete ${CEA_ENV_FILENAME}
+    ;Download the CityEnergyAnalyst conda environment
+    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
+    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
+    Pop $R0 ;Get the return value
+    StrCmp $R0 "OK" download_ok
+        MessageBox MB_OK "Download failed: $R0"
+        Quit
+    download_ok:
+        # get on with life...
 
-nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
-nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
+    # unzip python environment to ${INSTDIR}\Dependencies
+    DetailPrint "Extracting ${CEA_ENV_FILENAME}"
+    Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
+    Delete ${CEA_ENV_FILENAME}
+
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
 
 
-;Create uninstaller
-WriteUninstaller "$INSTDIR\Uninstall.exe"
+    ;Create uninstaller
+    WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+Section "Developer version" Clone_Repository_Section
+
+    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
+    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
+    DetailPrint "Binding CEA to repository"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
