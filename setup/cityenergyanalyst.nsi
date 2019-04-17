@@ -71,6 +71,13 @@ Section "Base Installation" Base_Installation_Section
     Delete "cmder.7z"
     SetOutPath "$INSTDIR"
 
+    # make sure cmder can access our python (and the cea command)
+    DetailPrint "Setting up CEA Console"
+    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
+    FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
+    FileClose $0
+
 
     ;Download the CityEnergyAnalyst conda environment
     DetailPrint "Downloading ${CEA_ENV_FILENAME}"
