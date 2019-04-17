@@ -61,7 +61,7 @@ RequestExecutionLevel user
 ;Installer Sections
 
 Section "Base Installation" Base_Installation_Section
-
+    SectionIn RO  # this section is required
     SetOutPath "$INSTDIR"
 
     # install cmder (incl. git and bash... woohoo!!)
@@ -100,6 +100,10 @@ Section "Base Installation" Base_Installation_Section
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
