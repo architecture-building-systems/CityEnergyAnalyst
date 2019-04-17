@@ -19,6 +19,8 @@ from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 import warnings
+from cea.constants import HOURS_IN_YEAR
+
 warnings.filterwarnings("ignore")
 
 
@@ -127,7 +129,7 @@ def demand_calculation(locator, config):
 def properties_and_schedule(locator, year, use_daysim_radiation, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
-    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     # building properties model
 
     building_properties = BuildingProperties(locator, use_daysim_radiation, override_variables)
