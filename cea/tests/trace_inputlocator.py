@@ -79,10 +79,11 @@ def main(config):
             else:
                 trace_data.add(('input', script_name, locator_method, file_path, file_name))
     print trace_data
+    scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
 
     meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
-    create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
+    create_graphviz_output(trace_data, os.path.join(cea.config.Configuration().__getattr__('scenario'), 'outputs//'+'_'.join(scripts)+'.gv'))
     print 'Trace Complete'
 
 def meta_to_yaml(trace_data, meta_output_file):
