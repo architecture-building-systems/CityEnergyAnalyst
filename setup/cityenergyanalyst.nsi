@@ -4,16 +4,19 @@
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
-# download miniconda from here:
-!define MINICONDA "https://repo.continuum.io/miniconda/Miniconda2-latest-Windows-x86_64.exe"
+# download CEA conda env from here (FIXME: update to a more sane download URL)
+# !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
+# !define CEA_ENV_FILENAME "cea.7z"
+!define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/USmeJGf3PnjksFc/download"
+!define CEA_ENV_FILENAME "Dependencies.7z"
 
-!define CEA "City Energy Analyst"
+!define CEA_TITLE "City Energy Analyst"
 
 # figure out the version based on cea\__init__.py
 !system "get_version.exe"
 !include "cea_version.txt"
 
-Name "${CEA} ${VER}"
+Name "${CEA_TITLE} ${VER}"
 !define MUI_FILE "savefile"
 !define MUI_BRANDINGTEXT "City Energy Analyst ${VER}"
 CRCCheck On
@@ -56,33 +59,23 @@ Section "Dummy Section" SecDummy
 
 SetOutPath "$INSTDIR"
 
-;ADD YOUR OWN FILES HERE...
-inetc::get ${MINICONDA} miniconda.exe
+;Download the CityEnergyAnalyst conda environment
+inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
 Pop $R0 ;Get the return value
 StrCmp $R0 "OK" download_ok
     MessageBox MB_OK "Download failed: $R0"
     Quit
 download_ok:
     # get on with life...
-# install miniconda...
-nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
-
-# use conda to install some stuff
-SetOutPath "$INSTDIR"
-File "..\environment.yml"
-
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" env create -f "$INSTDIR\environment.yml"'
-nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\pip.exe" install cityenergyanalyst==${VER}'
-nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\cea.exe" install-toolbox'
 
 
-# next, copy the *.pyd files, as they are not provided by pypi
-# SetOutPath "$INSTDIR\Lib\site-packages\cea\demand"
-# File "..\cea\demand\rc_model_sia_cc.pyd"
-# SetOutPath "$INSTDIR\Lib\site-packages\cea\technologies"
-# File "..\cea\technologies\calc_radiator.pyd"
-# File "..\cea\technologies\storagetank_cc.pyd"
-# SetOutPath "$INSTDIR"
+# unzip python environment to ${INSTDIR}\Dependencies
+Nsis7z::Extract ${CEA_ENV_FILENAME} "Installing Python %s..."
+Delete ${CEA_ENV_FILENAME}
+
+nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
+nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
+
 
 ;Create uninstaller
 WriteUninstaller "$INSTDIR\Uninstall.exe"
