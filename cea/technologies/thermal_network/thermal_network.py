@@ -852,8 +852,6 @@ def hourly_thermal_calculation(t, thermal_network):
     :return csv_outputs: DataFrame with calculated values
     :return edge_mass_flow_df_kgs: updated edge mass flows
     """
-    locator = thermal_network.locator
-
     print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
           thermal_network.network_name, '...  time step', t)
 
