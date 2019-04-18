@@ -26,7 +26,8 @@ Each perato-optimum solution implies a unique energy supply system configuration
 energy supply technologies and sizes.
 All possible configurations that is incorporated in the CEA is presented in this figure:
 
-add figure
+.. image:: flowchart_thermal_electric_network_planning.png
+    :align: center
 
 Supply technology selection and sizing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
