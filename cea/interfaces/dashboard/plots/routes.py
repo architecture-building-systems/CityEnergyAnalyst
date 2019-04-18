@@ -131,9 +131,10 @@ def route_post_plot_parameters(dashboard_index, plot_index):
     dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]
-    parameters = []
+    print('route_post_plot_parameters: expected_parameters: {}'.format(plot.expected_parameters.items()))
     for pname, fqname in plot.expected_parameters.items():
         parameter = current_app.cea_config.get_parameter(fqname)
+        print('route_post_plot_parameters: fqname={fqname}, pname={pname}'.format(fqname=fqname, pname=pname))
         if isinstance(parameter, MultiChoiceParameter):
             plot.parameters[pname] = parameter.decode(','.join(request.form.getlist(pname)))
         else:
