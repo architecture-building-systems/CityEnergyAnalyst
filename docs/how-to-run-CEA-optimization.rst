@@ -11,9 +11,10 @@ Objectives
 ----------
 This tool utilize genetic algorithms to identify energy supply system configurations that minimize the three
 objectives:
-- **min. Costs**: annualized capital costs and operational costs
-- **min. Emissions**: annual green house gas emissions from the technology operation
-- **min. Primary Energy**: annual primary energy consumptions
+
+- min. Costs: annualized capital costs and operational costs
+- min. Emissions: annual green house gas emissions from the technology operation
+- min. Primary Energy: annual primary energy consumptions
 
 The results from the optimization is a collection of pareto-optimum solutions.
 
@@ -42,7 +43,7 @@ The buildings that are not connected to the thermal networks are supplied by dec
 at buildings.
 
 
-Steps to run the tool
+Steps to Run The Tool
 ---------------------
 
 #. Do Step 1, 2, 3, 5, 9 in :doc:`cea-workflow-guide`
@@ -58,10 +59,14 @@ Optimization Parameters
 -----------------------
 For this optimization, the users can adjust four optimization parameters or use the default numbers.
 
-- number of individuals (float): default 6
-- number of mutation (float): default 20
-- number of generations: default 20
-- lucky few: default 1
+- initialind: number of individuals. Default 3 individuals.
+- halloffame: number of individuals to store in the hall of fame. Default 20 individuals.
+- ngen: number of generations. Default 3 generations.
+- fcheckpoint: frequency to save a checkpoint. Default 1 generation.
+- maxtime: time to terminate the optimization if unfinished
+- recoverycheckpoint = to resume the optimization from a check point.
+- random-seed = Random seed to make it easy to replicate the results of the scenarios. Default 0.
+
 
 These parameters are case-study dependent and need to be tuned based on the user requirement. The default values
 provided are to act like a beacon in the research.
@@ -76,15 +81,19 @@ runs and take the best out of it and also note the worst result you might get fr
 
 More on what's behind the scene
 -------------------------------
-1. Want to know how to understand the result files?
+
+Want to know how to understand the result files?
+""""""""""""""""""""""""""""""""""""""""""""""""
 There are tremendous amount of information that is generated through the optimization process.
 Your go-to file to start with is `case study\optimization\slave\All_individuals.csv`. This files includes objectives
 and variables of all individuals evaluated by the optimization.
 To navigate through the rest of the files in the `case study\optimization` folder, please refer to :doc:`files-generated-by-the-cea`.
 
-2. Want to know more about the master and slave structure of this optimization?
+
+Want to know more about the master and slave structure?
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 This optimization follows a bi-level structure. In the master level, the configurations are determined, and the
 slave level, the hourly operation is determined. To dig more into the structure of this optimization, please refer to
-these workflow diagrams:
+these `workflow diagrams<https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/docs/optimization_workflow/CEA-optimization-workflow.pdf>`_ .
 
-https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/docs/optimization_workflow/CEA-optimization-workflow.pdf
+
