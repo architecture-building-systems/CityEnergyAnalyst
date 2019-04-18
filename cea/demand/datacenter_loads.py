@@ -75,15 +75,15 @@ def calc_Qcdataf(locator, bpr, tsd):
                 t_source = (tsd['T_ext_wetbulb'] + 273)
 
             # heat pump energy
-            tsd['E_data'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
+            tsd['E_cdata'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
                                                                 (tsd['Tcdata_sys_re'] + 273), t_source)
             # final to district is zero
             tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
     elif energy_source == "DC":
         tsd['DC_cdata'] = tsd['Qcdata_sys']
-        tsd['E_data'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
     else:
-        tsd['E_data'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
         tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
     return tsd
 
