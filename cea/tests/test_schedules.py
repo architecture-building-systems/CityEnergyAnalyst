@@ -17,6 +17,7 @@ from cea.demand.occupancy_model import schedule_maker
 from cea.utilities import epwreader
 import cea.config
 from cea.demand.building_properties import BuildingProperties
+from cea.constants import HOURS_IN_YEAR
 
 REFERENCE_TIME = 3456
 
@@ -61,7 +62,7 @@ class TestScheduleCreation(unittest.TestCase):
         # get year from weather file
         weather_data = epwreader.epw_reader(config.weather)[['year']]
         year = weather_data['year'][0]
-        date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+        date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
         building_properties = BuildingProperties(locator, False, False)
         bpr = building_properties['B01']
@@ -126,7 +127,7 @@ def create_test_data():
     # get year from weather file
     weather_data = epwreader.epw_reader(config.weather)[['year']]
     year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy

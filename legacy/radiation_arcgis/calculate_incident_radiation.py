@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from cea.constants import HOURS_IN_YEAR
 
 
 def calculate_incident_radiation(radiation, radiation_csv):
@@ -11,8 +12,7 @@ def calculate_incident_radiation(radiation, radiation_csv):
     """
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
-    hours_in_year = 8760
-    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
+    column_names = ['T%i' % (i + 1) for i in range(HOURS_IN_YEAR)]
     for column in column_names:
         # transform all the points of solar radiation into Wh
         radiation[column] = radiation[column] * radiation['Awall_all']

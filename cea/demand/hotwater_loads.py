@@ -11,6 +11,7 @@ from math import pi
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
 import pandas as pd
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -66,9 +67,9 @@ def calc_water_temperature(T_ambient_C, depth_m):
     T_max = max(T_ambient_C) + 273.15  # to K
     T_avg = np.mean(T_ambient_C) + 273.15  # to K
     e = depth_m * math.sqrt(
-        (math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil))  # soil constants
-    Tg = [(T_avg + (T_max - T_avg) * math.exp(-e) * math.cos((2 * math.pi * (i + 1) / 8760) - e)) - 274
-          for i in range(8760)]
+        (math.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil))  # soil constants
+    Tg = [(T_avg + (T_max - T_avg) * math.exp(-e) * math.cos((2 * math.pi * (i + 1) / HOURS_IN_YEAR) - e)) - 274
+          for i in range(HOURS_IN_YEAR)]
 
     return Tg  # in C
 
@@ -155,78 +156,78 @@ def calc_Qwwf(bpr, tsd):
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
             tsd['E_ww'] =  tsd['Qww_sys']/ efficiency_average_year
-            tsd['SOLAR_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NATURALGAS":
             tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
-            tsd['NG_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "WOOD":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "SOLAR":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['SOLAR_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
     elif scale_technology == "DISTRICT":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
-            tsd['NG_ww'] = np.zeros(8760)
-            tsd['COAL_ww'] = np.zeros(8760)
-            tsd['OIL_ww'] = np.zeros(8760)
-            tsd['WOOD_ww'] = np.zeros(8760)
-            tsd['DH_ww'] = np.zeros(8760)
-            tsd['E_ww'] = np.zeros(8760)
-            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
 
@@ -319,7 +320,7 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y):
 
 def calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr):
     """
-    Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
+    Calculates the heat flows within a fully mixed water storage tank for HOURS_IN_YEAR time-steps.
     :param T_ext_C: external temperature in [C]
     :param T_int_C: room temperature in [C]
     :param Qww: hourly DHW demand in [Wh]
@@ -334,16 +335,16 @@ def calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_di
     :type Qww_dis_ls_nr: ndarray
     :return:
     """
-    Qww_sys = np.zeros(8760)
-    Qww_st_ls = np.zeros(8760)
-    Tww_tank_C = np.zeros(8760)
-    Qd = np.zeros(8760)
+    Qww_sys = np.zeros(HOURS_IN_YEAR)
+    Qww_st_ls = np.zeros(HOURS_IN_YEAR)
+    Tww_tank_C = np.zeros(HOURS_IN_YEAR)
+    Qd = np.zeros(HOURS_IN_YEAR)
     # calculate DHW tank size [in m3] based on the peak DHW demand in the building
     V_tank_m3 = Vww.max()  # size the tank with the highest flow rate
     T_tank_start_C = TWW_SETPOINT  # assume the tank temperature at timestep 0 is at the dhw set point
 
     if V_tank_m3 > 0:
-        for k in range(8760):
+        for k in range(HOURS_IN_YEAR):
             area_tank_surface_m2 = storage_tank.calc_tank_surface_area(V_tank_m3)
             Q_tank_discharged_W = Qww[k] + Qww_dis_ls_r[k] + Qww_dis_ls_nr[k]
             Qww_st_ls[k], Qd[k], Qww_sys[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k],
@@ -354,7 +355,7 @@ def calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_di
                                                                'hot_water')
             T_tank_start_C = Tww_tank_C[k]  # update the tank temperature at the beginning of the next time step
     else:
-        for k in range(8760):
+        for k in range(HOURS_IN_YEAR):
             Tww_tank_C[k] = np.nan
     return Tww_tank_C, Qww_sys
 

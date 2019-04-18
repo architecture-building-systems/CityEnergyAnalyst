@@ -19,6 +19,7 @@ from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
 from cea.plots.thermal_networks.loss_curve import loss_curve
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
 from cea.plots.thermal_networks.network_plot import network_plot
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -223,7 +224,7 @@ class Plots(object):
         if len(df.columns.values) > 1:  # sum of all plants
             df = df.sum(axis=1)
         df[df == 0] = np.nan
-        df = np.reshape(df.values, (8760, 1))  # necessary to avoid errors from shape mismatch
+        df = np.reshape(df.values, (HOURS_IN_YEAR, 1))  # necessary to avoid errors from shape mismatch
         rel = absolute_loss.values / df * 100  # calculate relative value in %
         rel = np.nan_to_num(rel)  # remove nan or inf values to avoid runtime error
         # if relative losses are more than 100% temperature requirements are not met. All produced heat is lost.
