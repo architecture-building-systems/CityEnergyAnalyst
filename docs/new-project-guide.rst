@@ -1,7 +1,7 @@
 :orphan:
 
-Create a new project
-====================
+How to create a new project?
+============================
 
 
 This guide presents a few steps about how to create a new project in CEA. 

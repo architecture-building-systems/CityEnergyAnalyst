@@ -28,7 +28,6 @@ __status__ = "Production"
 def planning_and_operation(locator, config):
     # Local vars
     scenario_name = config.scenario_name  # scenario_name
-    country = config.region
     weather_path = config.weather
     threads = config.get_number_of_processes()
 
@@ -66,7 +65,6 @@ def planning_and_operation(locator, config):
     print('Processing: Setup models and optimization')
     m = planning_and_operation_optimization.main(locator, weather_path,
                                                  scenario_name,
-                                                 country,
                                                  parameter_set,
                                                  time_start,
                                                  time_end,

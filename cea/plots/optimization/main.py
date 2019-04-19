@@ -181,7 +181,7 @@ class Plots(object):
             individual_pointer = data_address_individual['individual_number_address'].values[0]
             district_supply_sys, building_connectivity = supply_system_configuration(generation_pointer,
                                                                                      individual_pointer, locator,
-                                                                                     network_type, config.region)
+                                                                                     network_type)
 
             for name in column_names:
                 if name is 'Buildings Connected Share':
@@ -476,7 +476,7 @@ class Plots(object):
                 data_processed.loc[individual_code]['Capex_Decentralized_USD'] = data_mcda_ind['Capex_a_disconnected_USD']
                 data_processed.loc[individual_code]['Opex_Decentralized_USD'] = data_mcda_ind['Opex_total_disconnected_USD']
 
-                lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+                lca = LcaCalculations(locator, config.detailed_electricity_pricing)
 
                 data_processed.loc[individual_code]['Electricitycosts_for_hotwater_USD'] = (
                         data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE.mean())

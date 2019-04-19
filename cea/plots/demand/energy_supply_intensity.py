@@ -9,8 +9,8 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
     name = "Energy Supply Intensity"
 
-    def __init__(self, project, parameters):
-        super(EnergySupplyIntensityPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(EnergySupplyIntensityPlot, self).__init__(project, parameters, cache)
         self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data, ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr',
                                                                      'SOLAR_hs_MWhyr', "DC_cs_MWhyr", 'DC_cdata_MWhyr',

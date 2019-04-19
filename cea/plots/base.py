@@ -33,7 +33,8 @@ class PlotBase(object):
     def id(cls):
         return cls.name.lower().replace(' ', '-')  # use for js/html etc.
 
-    def __init__(self, project, parameters):
+    def __init__(self, project, parameters, cache):
+        self.cache = cache  # a PlotCache implementation for reading cached data
         self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
         self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
@@ -98,6 +99,9 @@ class PlotBase(object):
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
+        return self.cache.lookup_plot_div(self, self._plot_div_producer)
+
+    def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div

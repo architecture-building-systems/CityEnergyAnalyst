@@ -26,9 +26,15 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def get_technology_related_databases(locator, region):
+    technology_database_cea = locator.get_region_specific_db_file(region)
+    output_directory = locator.get_technology_folder()
+
+    from distutils.dir_util import copy_tree
+    copy_tree(technology_database_cea, output_directory)
 
 def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag,
-                prop_supply_systems_flag, prop_restrictions_flag):
+                prop_supply_systems_flag, prop_restrictions_flag, technology_flag):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -56,14 +62,19 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     """
 
     # get occupancy and age files
+    region_database = config.data_helper.region
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     list_uses = list(building_occupancy_df.drop(['Name'], axis=1).columns)  # parking excluded in U-Values
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
+    #get technology database
+    if technology_flag:
+        get_technology_related_databases(locator, region_database)
+
     # get occupant densities from archetypes schedules
     occupant_densities = {}
     for use in list_uses:
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(config.region), use, index_col=0).T
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use, index_col=0).T
         area_per_occupant = archetypes_schedules['density'].values[:1][0]
         if area_per_occupant > 0:
             occupant_densities[use] = 1 / area_per_occupant
@@ -81,7 +92,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get properties about the construction and architecture
     if prop_architecture_flag:
-        architecture_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'ARCHITECTURE')
+        architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                             x['year_end'], x['standard']), axis=1)
         categories_df['cat_built'] = calc_category(architecture_DB, categories_df, 'built', 'C')
@@ -101,7 +112,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get properties about types of HVAC systems
     if prop_hvac_flag:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(config.region), 'HVAC')
+        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                             x['year_end'], x['standard']), axis=1)
 
@@ -116,7 +127,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
     if prop_comfort_flag:
-        comfort_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'INDOOR_COMFORT')
+        comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
 
         # define comfort
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
@@ -130,7 +141,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
-        internal_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'INTERNAL_LOADS')
+        internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
 
         # define comfort
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
@@ -144,7 +155,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
     if prop_supply_systems_flag:
-        supply_DB = pd.read_excel(locator.get_archetypes_properties(config.region), 'SUPPLY')
+        supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
         supply_DB['Code'] = supply_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
 
@@ -159,10 +170,11 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
     if prop_restrictions_flag:
+        new_names_df = names_df.copy() #this to avoid that the dataframe is reused
         COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
         for field in COLUMNS_ZONE_RESTRICTIONS:
-            names_df[field] = 0
-        dataframe_to_dbf(names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
+            new_names_df[field] = 0
+        dataframe_to_dbf(new_names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
 
 
 def calc_code(code1, code2, code3, code4):
@@ -374,14 +386,15 @@ def main(config):
     """
 
     print('Running data-helper with scenario = %s' % config.scenario)
-    print('Running data-helper with archetypes = %s' % config.data_helper.archetypes)
+    print('Running data-helper with archetypes = %s' % config.data_helper.databases)
 
-    prop_architecture_flag = 'architecture' in config.data_helper.archetypes
-    prop_hvac_flag = 'HVAC' in config.data_helper.archetypes
-    prop_comfort_flag = 'comfort' in config.data_helper.archetypes
-    prop_internal_loads_flag = 'internal-loads' in config.data_helper.archetypes
-    prop_supply_systems_flag = 'supply' in config.data_helper.archetypes
-    prop_restrictions_flag = 'restrictions' in config.data_helper.archetypes
+    prop_architecture_flag = 'architecture' in config.data_helper.databases
+    prop_hvac_flag = 'HVAC' in config.data_helper.databases
+    prop_comfort_flag = 'comfort' in config.data_helper.databases
+    prop_internal_loads_flag = 'internal-loads' in config.data_helper.databases
+    prop_supply_systems_flag = 'supply' in config.data_helper.databases
+    prop_restrictions_flag = 'restrictions' in config.data_helper.databases
+    technology_flag = 'technology' in config.data_helper.databases
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
@@ -389,7 +402,8 @@ def main(config):
                 prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
                 prop_internal_loads_flag=prop_internal_loads_flag,
                 prop_supply_systems_flag=prop_supply_systems_flag,
-                prop_restrictions_flag=prop_restrictions_flag)
+                prop_restrictions_flag=prop_restrictions_flag,
+                technology_flag=technology_flag)
 
 
 if __name__ == '__main__':

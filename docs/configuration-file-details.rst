@@ -79,7 +79,7 @@ a help text "Path to the scenario to run" - which is stored in the ``help`` attr
 
 Some subclasses of :py:class:`cea.config.Parameter` have additional configuration, like the `cea.config.ChoiceParameter`::
 
-    [general]
+    [data-helper]
     region = CH
     region.type = ChoiceParameter
     region.choices = CH SIN custom

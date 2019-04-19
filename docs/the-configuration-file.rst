@@ -15,7 +15,7 @@ Setting values in the configuration file
 ----------------------------------------
 
 The most important values to set when working with the CEA are probably those under the ``[general]`` section,
-specifically ``scenario``, ``weather`` and ``region``.
+specifically ``scenario``, and ``weather``
 
 Open the ``cea.config`` file with a text editor (``notebook.exe`` will do just fine) and update the values.
 

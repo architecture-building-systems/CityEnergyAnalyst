@@ -29,7 +29,7 @@ def disconnected_building_main(locator, building_names, config, prices, lca):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
-    controls = pd.read_excel(locator.get_archetypes_system_controls(config.region))
+    controls = pd.read_excel(locator.get_archetypes_system_controls())
     if controls['has-cooling-season'].item() or controls['has-heating-season'].item():
         if controls['has-cooling-season'].item():
             decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
@@ -46,7 +46,7 @@ def main(config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config.region, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
 
     disconnected_building_main(locator=locator, building_names=building_names, config=config, prices=prices, lca=lca)
 
