@@ -36,11 +36,8 @@ class DemandPlotBase(cea.plots.PlotBase):
         'scenario-name': 'general:scenario-name',
     }
 
-    # cache hourly_loads results to avoid recalculating it every time
-    _cache = {}
-
-    def __init__(self, project, parameters):
-        super(DemandPlotBase, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(DemandPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('new_basic', 'demand')
 
@@ -94,35 +91,25 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cs_kWh',
                                        'E_cdata_kWh',
                                        'E_cre_kWh']
+        self.input_files = [self.locator.get_total_demand()]  # all these scripts depend on demand
 
     @property
     def hourly_loads(self):
         """
-        Returns the hourly loads, summed up for all the builidngs being considered by the plot.
-        Stores the result in ``self._cache`` since the reduce operation takes a lot of time.
+        Returns the hourly loads, summed up for all the builidngs being considered by the plot. Uses the PlotCache
+        to speed up ``self._calculate_hourly_loads()``
         """
-        m_time = os.path.getmtime(self.locator.get_total_demand())  # when was demand script last run?
-        buildings_key = ','.join(self.buildings)  # key for looking up in the cache
-        if buildings_key in self._cache:
-            # only load hourly_loads once, based on {buildings, mtime}
-            cache_mtime, result = self._cache[buildings_key]
-            if m_time == cache_mtime:
-                # cached result is still up-to-date!
-                return result
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
+                                 plot=self, producer=self._calculate_hourly_loads)
 
-        # no cached result - calculate from scratch and cache for further use
-        print('no cache found for', buildings_key, m_time)
+    def _calculate_hourly_loads(self):
         def add_fields(df1, df2):
             """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
             df1[self.demand_analysis_fields] += df2[self.demand_analysis_fields]
             return df1
-
-        # cache these results for later
-        result = functools.reduce(add_fields,
-                                 (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
-                                  self.buildings)).set_index('DATE')
-        self._cache[buildings_key] = (m_time, result)
-        return result
+        return functools.reduce(add_fields,
+                                (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
+                                 self.buildings)).set_index('DATE')
 
     @property
     def yearly_loads(self):
@@ -152,3 +139,68 @@ class DemandPlotBase(cea.plots.PlotBase):
             prefix = 'District'
         fname = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
         return self.locator.get_timeseries_plots_file(fname, self.category_path)
+
+
+class DemandSingleBuildingPlotBase(DemandPlotBase):
+    """A base class for demand plots that only work on a single building"""
+    expected_parameters = {
+        'building': 'plots:building',
+        'scenario-name': 'general:scenario-name',
+    }
+
+    def __init__(self, project, parameters, cache):
+        parameters['buildings'] = [parameters['building']]
+        super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
+
+
+if __name__ == '__main__':
+    # run all the plots in this category
+    config = cea.config.Configuration()
+    from cea.plots.categories import list_categories
+    from cea.plots.cache import NullPlotCache, PlotCache, MemoryPlotCache
+    import time
+
+    def plot_category(cache):
+        for category in list_categories():
+            if category.label != label:
+                continue
+            print('category:', category.name, ':', category.label)
+            for plot_class in category.plots:
+                print('plot_class:', plot_class)
+                parameters = {
+                    k: config.get(v) for k, v in plot_class.expected_parameters.items()
+                }
+                plot = plot_class(config.project, parameters=parameters, cache=cache)
+                assert plot.name, 'plot missing name: %s' % plot
+                assert plot.category_name == category.name
+                print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+
+                # plot the plot!
+                plot.plot()
+
+
+    null_plot_cache = NullPlotCache()
+    plot_cache = PlotCache(config.project)
+    memory_plot_cache = MemoryPlotCache(config.project)
+
+    # test plots with cache
+    t0 = time.time()
+    for i in range(3):
+        plot_category(plot_cache)
+    time_with_cache = (time.time() - t0) / 3
+
+    # test plots with memory cache
+    t0 = time.time()
+    for i in range(3):
+        plot_category(memory_plot_cache)
+    time_with_memory_cache = (time.time() - t0) / 3
+
+    # test plots without cache
+    # t0 = time.time()
+    # for i in range(3):
+    #     plot_category(null_plot_cache)
+    # time_without_cache = (time.time() - t0) / 3
+
+    # print('Average without cache: %.2f seconds' % time_without_cache)
+    print('Average with cache: %.2f seconds' % time_with_cache)
+    print('Average with memory cache: %.2f seconds' % time_with_memory_cache)

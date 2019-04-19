@@ -17,11 +17,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-class HeatingResetSchedulePlot(cea.plots.demand.DemandPlotBase):
+class HeatingResetSchedulePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     name = "Heating Reset Schedule"
 
-    def __init__(self, project, parameters):
-        super(HeatingResetSchedulePlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(HeatingResetSchedulePlot, self).__init__(project, parameters, cache)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]

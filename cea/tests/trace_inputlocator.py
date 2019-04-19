@@ -3,12 +3,14 @@ Trace the InputLocator calls in a selection of scripts.
 """
 import sys
 import os
-import cea.config
 import cea.api
+import cea.config as config
 from datetime import datetime
 from jinja2 import Template
 import cea.inputlocator
-
+import pandas
+import yaml
+from dateutil.parser import parse
 
 def create_trace_function(results_set):
     """results_set is a set of tuples (locator, filename)"""
@@ -34,8 +36,12 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    trace_data = set()  # {(direction, script, locator_method, path, file)}
     locator = cea.inputlocator.InputLocator(config.scenario)
+
+
+    trace_data = set()  # set used for graphviz output -> {(direction, script, locator_method, path, file)}
+    building_specific_files = [] # list containing all building specific files e.g. B01.csv or B07_insolation.dbf
+
 
     for script_name in config.trace_inputlocator.scripts:
         script_func = getattr(cea.api, script_name.replace('-', '_'))
@@ -51,14 +57,20 @@ def main(config):
             if os.path.isdir(filename):
                 continue
             if locator_method == 'get_temporary_file':
-                # this file is probably already deleted (hopefully?)
+                # this file is probably already deleted (hopefully?) it's not
                 continue
-            print("{}, {}".format(locator_method, filename))
+
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
-            for building in locator.get_zone_building_names():
-                # remove "B01", "B02" etc. from filenames -> "BXX"
-                relative_filename = relative_filename.replace(building, '{BUILDING}')
+
+            if os.path.isfile(filename):
+                buildings = locator.get_zone_building_names()
+                for building in buildings:
+                    if os.path.basename(filename).find(building) != -1:
+                        building_specific_files.append(filename)
+                        filename = filename.replace(building, buildings[0])
+                        relative_filename = relative_filename.replace(building, buildings[0])
+
             relative_filename = str(relative_filename)
             file_path = os.path.dirname(relative_filename)
             file_name = os.path.basename(relative_filename)
@@ -66,20 +78,69 @@ def main(config):
                 trace_data.add(('output', script_name, locator_method, file_path, file_name))
             else:
                 trace_data.add(('input', script_name, locator_method, file_path, file_name))
-
-
+    print trace_data
+    scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
-    create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
-    create_yaml_output(trace_data, config.trace_inputlocator.yaml_output_file)
 
+    meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
+    create_graphviz_output(trace_data, os.path.join(cea.config.Configuration().__getattr__('scenario'), 'outputs//'+'_'.join(scripts)+'.gv'))
+    print 'Trace Complete'
+
+def meta_to_yaml(trace_data, meta_output_file):
+
+    locator_meta = {}
+
+    for direction, script, locator_method, path, files in trace_data:
+        filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
+        file_type = os.path.basename(files).split('.')[1]
+        if os.path.isfile(filename):
+            locator_meta[locator_method] = {}
+            locator_meta[locator_method]['created_by'] = []
+            locator_meta[locator_method]['used_by'] = []
+            locator_meta[locator_method]['schema'] = get_schema(r'%s' % filename, file_type)
+            locator_meta[locator_method]['file_path'] = filename
+            locator_meta[locator_method]['file_type'] = file_type
+            locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
+                    locator_method) + '.__doc__')
+
+    #get the dependencies from trace_data
+    for direction, script, locator_method, path, files in trace_data:
+        outputs = set()
+        inputs = set()
+        if direction == 'output':
+            outputs.add(script)
+        if direction == 'input':
+            inputs.add(script)
+        locator_meta[locator_method]['created_by'] = list(outputs)
+        locator_meta[locator_method]['used_by'] = list(inputs)
+
+    # merge existing data
+    methods = sorted(set([lm[2] for lm in trace_data]))
+    if os.path.exists(meta_output_file):
+        with open(meta_output_file, 'r') as f:
+            old_meta_data = yaml.load(f)
+        for method in old_meta_data:
+            if method in methods:
+                new_outputs = set(locator_meta[method]['created_by'])
+                old_outputs = set(old_meta_data[method]['created_by'])
+                locator_meta[method]['created_by'] = list(new_outputs.union(old_outputs))
+
+                new_inputs = set(locator_meta[method]['used_by'])
+                old_inputs = set(old_meta_data[method]['used_by'])
+                locator_meta[method]['used_by'] = list(new_inputs.union(old_inputs))
+            else:
+                # make sure not to overwrite newer data!
+                locator_meta[method] = old_meta_data[method]
+
+    with open(meta_output_file, 'w') as fp:
+        yaml.dump(locator_meta, fp, indent=4)
 
 def create_graphviz_output(trace_data, graphviz_output_file):
     # creating new variable to preserve original trace_data used by other methods
     tracedata = sorted(trace_data)
-
     # replacing any relative paths outside the case dir with the last three dirs in the path
     # this prevents long path names in digraph clusters
-    for i, (direction, script, method, path, file) in enumerate(tracedata):
+    for i, (direction, script, method, path, db) in enumerate(tracedata):
         if path.split('/')[0] == '..':
             path = path.rsplit('/', 3)
             del path[0]
@@ -105,35 +166,139 @@ def create_graphviz_output(trace_data, graphviz_output_file):
     template = Template(open(template_path, 'r').read())
     digraph = template.render(tracedata=tracedata, scripts=scripts, db_group=db_group, width=width)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
-    print(digraph)
     with open(graphviz_output_file, 'w') as f:
         f.write(digraph)
 
 
-def create_yaml_output(trace_data, yaml_output_file):
-    """Create a yml-style output of the trace-data for further processing"""
-    import yaml
-    scripts = sorted(set([td[1] for td in trace_data]))
-    yml_data = {}  # script -> inputs, outputs
-    for direction, script, locator, path, file in trace_data:
-        yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
-        yml_data[script][direction].append((locator, path, file))
-    for script in scripts:
-        yml_data[script]['input'] = sorted(yml_data[script]['input'])
-        yml_data[script]['output'] = sorted(yml_data[script]['output'])
+def is_date(data):
+    # TODO replace hardcoded with a reference
+    codes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15'
+             'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25','m','m2','m3']
+    if isinstance(data, basestring) and data not in codes:
+        try:
+            parse(data)
+            return True
+        except ValueError:
+            return False
 
-    if os.path.exists(yaml_output_file):
-        # merge existing data
-        with open(yaml_output_file, 'r') as f:
-            old_yml_data = yaml.load(f)
-        for script in old_yml_data.keys():
-            if not script in scripts:
-                # make sure not to overwrite newer data!
-                yml_data[script] = old_yml_data[script]
+def replace_repetitive_attr(attr):
+    scenario = cea.config.Configuration().__getattr__('scenario')
+    buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
+    if attr.find('srf') != -1:
+        attr = attr.replace(attr, 'srf0')
+    if attr.find('PIPE') != -1:
+        attr = attr.replace(attr, 'PIPE0')
+    if attr.find('NODE') != -1:
+        attr = attr.replace(attr, 'NODE0')
+    if attr in buildings:
+        attr = attr.replace(attr, buildings[0])
+    return attr
 
-    with open(yaml_output_file, 'w') as f:
-        yaml.dump(yml_data, f, default_flow_style=False)
 
+def get_meta(df_series, attribute_name):
+    types_found = set()
+    meta = {}
+    for data in df_series:
+        if data == data:
+            meta['sample_data'] = data
+            if is_date(data):
+                types_found.add('date')
+            elif isinstance(data, basestring):
+                meta['sample_data'] = data.encode('ascii', 'ignore')
+                types_found.add('string')
+            else:
+                types_found.add(type(data).__name__)
+        # declare nans
+        if data != data:
+            types_found.add(None)
+    meta['types_found'] = list(types_found)
+    return meta
+
+
+def get_schema(filename, file_type):
+    schema = {}
+    if file_type == 'xlsx' or file_type == 'xls':
+        db = pandas.read_excel(filename, sheet_name=None)
+        for sheet in db:
+            meta = {}
+            nested_df = db[sheet]
+            # if xls seems to have row attributes
+            if 'Unnamed: 1' in db[sheet].keys():
+                nested_df = db[sheet].T
+                # filter the goddamn nans
+                new_cols = []
+                for col in nested_df.columns:
+                    if col == col:
+                        new_cols.append(col)
+                # change index to numbered
+                nested_df.index = range(len(nested_df))
+                # select only non-nan columns
+                nested_df = nested_df[new_cols]
+            for attr in nested_df:
+                meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr)
+            schema[sheet.encode('ascii', 'ignore')] = meta
+        return schema
+
+    if file_type == 'csv':
+        db = pandas.read_csv(filename)
+        for attr in db:
+            attr = replace_repetitive_attr(attr)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        return schema
+
+    if file_type == 'json':
+        with open(filename, 'r') as f:
+            import json
+            db = json.load(f)
+        for attr in db:
+            attr = replace_repetitive_attr(attr)
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        return schema
+
+    if file_type == 'epw':
+        epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
+                      'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
+                      'dewpoint_C (index = 7)',
+                      'relhum_percent (index = 8)', 'atmos_Pa (index = 9)', 'exthorrad_Whm2 (index = 10)',
+                      'extdirrad_Whm2 (index = 11)', 'horirsky_Whm2 (index = 12)',
+                      'glohorrad_Whm2 (index = 13)',
+                      'dirnorrad_Whm2 (index = 14)', 'difhorrad_Whm2 (index = 15)',
+                      'glohorillum_lux (index = 16)',
+                      'dirnorillum_lux (index = 17)', 'difhorillum_lux (index = 18)',
+                      'zenlum_lux (index = 19)',
+                      'winddir_deg (index = 20)', 'windspd_ms (index = 21)',
+                      'totskycvr_tenths (index = 22)',
+                      'opaqskycvr_tenths (index = 23)', 'visibility_km (index = 24)',
+                      'ceiling_hgt_m (index = 25)',
+                      'presweathobs (index = 26)', 'presweathcodes (index = 27)',
+                      'precip_wtr_mm (index = 28)',
+                      'aerosol_opt_thousandths (index = 29)', 'snowdepth_cm (index = 30)',
+                      'days_last_snow (index = 31)', 'Albedo (index = 32)',
+                      'liq_precip_depth_mm (index = 33)',
+                      'liq_precip_rate_Hour (index = 34)']
+
+        db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
+        for attr in db:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        return schema
+
+    if file_type == 'dbf':
+        import pysal
+        db = pysal.open(filename, 'r')
+        for attr in db.header:
+            schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
+        return schema
+
+    if file_type == 'shp':
+        import geopandas
+        db = geopandas.read_file(filename)
+        for attr in db:
+            attr = replace_repetitive_attr(attr)
+            meta = get_meta(db[attr], attr)
+            if attr == 'geometry':
+                meta['sample_data'] = '((x1 y1, x2 y2, ...))'
+            schema[attr.encode('ascii', 'ignore')] = meta
+    return schema
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

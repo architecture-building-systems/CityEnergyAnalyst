@@ -1,7 +1,7 @@
 :orphan:
 
-How to Prepare Inputs for Thermal Network Simulation
-====================================================
+How to Prepare Inputs for Thermal Network Simulation?
+=====================================================
 
 The thermal network tool in CEA simulates thermal and hydraulic losses from network operation.
 To run the simulation, two input files are required:
@@ -24,7 +24,7 @@ Edges.shp
     :align: center
 
 - **Shape**: Polyline (Geometry Type)
-- **Type_mat (String)**: material of the pipes (default T1), more types can be found in databases>region>systems>thermal_networks.xls
+- **Type_mat (String)**: material of the pipes (default T1), more types can be found in technologies>systems>thermal_networks.xls
 - **Pipe_DN (String)**: 150 (this is an initial guess, it will be updated after the simulation).
 - **Type (String)**: Pipe number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``"PIPE"&[FID]``).
 

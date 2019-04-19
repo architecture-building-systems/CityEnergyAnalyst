@@ -8,14 +8,14 @@ import cea.plots.demand
 import plotly.graph_objs as go
 
 from cea.plots.variable_naming import NAMING, COLOR
-
+from cea.constants import HOURS_IN_YEAR
 
 class LoadDurationCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
     """Implement the load-duration-curve-supply plot"""
     name = "Load Duration Curve Supply"
 
-    def __init__(self, project, parameters):
-        super(LoadDurationCurveSupplyPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(LoadDurationCurveSupplyPlot, self).__init__(project, parameters, cache)
         self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = self.remove_unused_fields(self.data,
                                                          ["DH_hs_kWh", "DH_ww_kWh", 'SOLAR_ww_kWh', 'SOLAR_hs_kWh',
@@ -28,7 +28,7 @@ class LoadDurationCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         graph = []
-        duration = range(8760)
+        duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
         for field in self.analysis_fields:
             name = NAMING[field]

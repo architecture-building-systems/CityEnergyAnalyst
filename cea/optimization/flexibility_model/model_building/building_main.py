@@ -33,6 +33,7 @@ from cea.optimization.flexibility_model.model_building import building_setup_dis
 from cea.optimization.flexibility_model.model_building import building_write_definitions
 from cea.optimization.flexibility_model.model_building.constants import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
     PHI_5_MAX, FB, HP_ETA_EX_COOL, HP_AUXRATIO
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -46,7 +47,7 @@ __status__ = "Production"
 
 def main(locator,
          weather_path,
-         scenario, region,
+         scenario,
          parameter_set,
          time_start,
          time_end,
@@ -113,7 +114,6 @@ def main(locator,
         T_int_cea_dic,
         T_ext_cea_df
     ) = building_extract_cea_data.main(locator, weather_path,
-                                       region,
                                        time_start,
                                        time_end
                                        )
@@ -182,9 +182,9 @@ def main(locator,
         T_int_cea_dic
     )
 
-    electricity_prices_MWh = pd.read_excel(locator.get_electricity_costs(region), "ELECTRICITY")
+    electricity_prices_MWh = pd.read_excel(locator.get_electricity_costs(), "ELECTRICITY")
     electricity_prices_MWh["PRICE ($/MWh)"] = electricity_prices_MWh["cost_kWh"]*1000
-    electricity_prices_MWh["our_datetime"] = pd.date_range(start='1/1/2005', periods=8760)
+    electricity_prices_MWh["our_datetime"] = pd.date_range(start='1/1/2005', periods=HOURS_IN_YEAR)
     electricity_prices_MWh.set_index('our_datetime', inplace=True)
 
     (

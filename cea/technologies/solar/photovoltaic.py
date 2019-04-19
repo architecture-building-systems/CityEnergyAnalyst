@@ -18,6 +18,7 @@ from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
 import cea.config
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -66,7 +67,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -101,7 +102,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
             {'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0, 'PV_walls_south_m2': 0,
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
-             'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
+             'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
         final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -160,7 +161,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     total_el_output_PV_kWh = [0 for i in range(number_groups)]
     total_radiation_kWh = [0 for i in range(number_groups)]
 
-    potential = pd.DataFrame(index=[range(8760)])
+    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PV_' + panel_orientation + '_E_kWh'] = 0
@@ -685,13 +686,13 @@ def calc_properties_PV_db(database_path, config):
 
 # investment and maintenance costs
 # FIXME: it looks like this function is never used!!! (REMOVE)
-def calc_Cinv_pv(total_module_area_m2, locator, region, technology=0):
+def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_supply_systems(region), sheet_name="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
