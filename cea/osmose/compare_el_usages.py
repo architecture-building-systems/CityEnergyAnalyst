@@ -5,8 +5,13 @@ import os
 import operator
 import matplotlib.pyplot as plt
 import math
+from cea.osmose.plot_osmose_result import path_to_elec_unit_csv, set_figsize, set_xtick_shown, path_to_save_fig
 
 CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
+# CONFIG_TABLE = {'coil': 'OAU|1', 'ER0': 'OAU|2', '3for2': 'OAU|3', 'LD': 'OAU|4',
+#                 'IEHX': 'OAU|5'}
+CONFIG_TABLE = {'coil': 'Config|1', 'ER0': 'Config|2', '3for2': 'Config|3', 'LD': 'Config|4',
+                'IEHX': 'Config|5'}
 
 
 def main(building, building_result_path, case):
@@ -32,15 +37,28 @@ def main(building, building_result_path, case):
     plot_chiller_temperatures_scatter(chiller_T_all_tech_df, building, building_result_path, case)
 
     # # plot T_SA, w_SA
-    # plot_T_w_scatter(compare_df, building, building_result_path)
+    plot_el_compare(building, building_result_path, compare_df)
 
     return
 
 
-def plot_T_w_scatter(compare_df, building, building_result_path):
-    T_SA = compare_df
-    w_SA = compare_df
-
+def plot_T_w_scatter(ax, compare_df):
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    color_codes = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3'}
+    # anno_colors = tuple(map(lambda i: color_codes[i], anno))
+    tech_list = ['coil', 'ER0', '3for2', 'LD', 'IEHX']
+    for tech in tech_list:
+        if tech in compare_df.columns:  # otherwise, don't plot
+            T_SA = compare_df[tech]['T_SA']
+            w_SA = compare_df[tech]['w_SA']
+            label = CONFIG_TABLE[tech]
+            color = color_codes[tech]
+            ax.scatter(w_SA, T_SA, s=70, c=color, label=label)
+    ax.legend(loc="lower left",ncol=3,bbox_to_anchor=(-0.05,0.6),fontsize='small',columnspacing=0.05)
+    ax.set(xlabel='Humidity Ratio [g/kg air]', ylabel='Temperature [C]', ylim=(14, 20))
+    ax.set_title('OAU Supply Air Conditions ')
+    # plt.show()
     return np.nan
 
 
@@ -81,7 +99,7 @@ def plot_chiller_temperatures_bar(chiller_df, building, building_result_path):
     ax.set(xlabel='Temperature [C]', ylabel='Frequency [%]', ylim=(0, 100))
     # plt.show()
     fig.savefig(path_to_save_chiller_t(building, building_result_path))
-    return np.nan
+    return ax
 
 
 def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path, case):
@@ -112,7 +130,7 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     y_float = tuple(map(lambda i: float(i), y))
     # y axis (keys of the second level dict)
     y_values = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
-    #y_values = [float(i) for i in chiller_df.columns]
+    # y_values = [float(i) for i in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
     area = tuple(map(lambda x: 10 * x, anno))
@@ -127,10 +145,97 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     plt.yticks(y_values, y_labels, fontsize=18)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.5, max(y_values) + 0.5])
-    plt.scatter(x, y_float, s=area, c='#14453D')
+    plt.scatter(x, y_float, s=area, c='#454545') # navy: #14453
     # plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
+
+
+def plot_el_compare(building, building_result_path, compare_df):
+    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(9.5, 4.5))
+
+    # ax1.set_visible(False)
+    ax1 = plot_T_w_scatter(ax1, compare_df)
+
+    # ax2
+    config = 'Config|1'
+    tech = 'HCS_coil'
+    if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+        el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+        el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+        ax2 = plot_electricity_usages_units(ax2, el_per_unit_df, config)
+        ax2.set(ylabel='Electricity Use [Wh/m2]')
+        ax2.yaxis.label.set_size(10)
+    # ax3
+    config = 'Config|2'
+    tech = 'HCS_ER0'
+    if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+        el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+        el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+        ax3 = plot_electricity_usages_units(ax3, el_per_unit_df, config)
+        ax3.legend(loc=(0.2,-0.35), ncol=3, fontsize='small', columnspacing=0.1)
+    # ax4
+    config = 'Config|3'
+    tech = 'HCS_3for2'
+    if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+        el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+        el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+        ax4 = plot_electricity_usages_units(ax4, el_per_unit_df, config)
+        ax4.set(ylabel='Electricity Use [Wh/m2]')
+        ax4.yaxis.label.set_size(10)
+        ax4.set(xlabel='Time [hr]')
+        ax4.xaxis.label.set_size(10)
+    # ax5
+    config = 'Config|4'
+    tech = 'HCS_LD'
+    if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+        el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+        el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+        ax5 = plot_electricity_usages_units(ax5, el_per_unit_df, config)
+        ax5.set(xlabel='Time [hr]')
+        ax5.xaxis.label.set_size(10)
+        ax5.legend(loc="upper",ncol=3,fontsize='small',columnspacing=0.05)
+    # ax6
+    config = 'Config|5'
+    tech = 'HCS_IEHX'
+    if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+        el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+        el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+        ax6 = plot_electricity_usages_units(ax6, el_per_unit_df, config)
+        ax6.set(xlabel='Time [hr]')
+        ax6.xaxis.label.set_size(10)
+
+    # plot layout
+    filename = 'el_usages_compare_' + 'WED'
+    #plt.legend()
+    plt.tight_layout()
+    #plt.show()
+    fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
+    return np.nan
+
+
+def plot_electricity_usages_units(ax, el_per_unit_df, config):
+    el_per_unit_df = el_per_unit_df.set_index(pd.Series(range(1, 25, 1)))
+    x_ticks = el_per_unit_df.index.values
+    # plotting
+    bar_width = 0.5
+    opacity = 1
+    #color_table = {'OAU': '#14453D', 'LCU': '#4D9169', 'SCU': '#BACCCC'}
+    color_table = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'}
+    # initialize the vertical-offset for the stacked bar chart
+    y_offset = np.zeros(el_per_unit_df.shape[0])
+    # plot bars
+    unit_table = {'OAU': 'el_oau', 'LCU': 'el_lcu', 'SCU': 'el_scu'}
+    for unit in unit_table.keys():
+        column = unit_table[unit]
+        ax.bar(x_ticks, el_per_unit_df[column], bar_width, bottom=y_offset, alpha=opacity, color=color_table[unit],
+               label=unit)
+        y_offset = y_offset + el_per_unit_df[column]
+    ax.set(xlim=(1,24),ylim=(0, 35))
+    ax.set_xticks(range(1,25,4))
+    # ax.legend(loc='upper left')
+    ax.set_title(config)
+    return ax
 
 
 def sort_dict_with_second_level_key(two_level_dict):
@@ -197,13 +302,13 @@ def path_to_save_chw_scatter(building, building_result_path):
 
 
 if __name__ == '__main__':
-    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    buildings = ["B002","B003", "B006"]
-    timestep = "24"
-    #cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET']
-    #result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_combo'
-    result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    #buildings = ["B003"]
+    timestep = "168"
+    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    #cases = ['WTP_CBD_m_WP1_RET']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0421'
+    # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
         case_folder = os.path.join(result_folder, case)
