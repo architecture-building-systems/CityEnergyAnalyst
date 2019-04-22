@@ -25,7 +25,7 @@ def check_balance(results, building, building_result_path, tech):
     # Bui_air_bal
     check_bui_air_bal(results, building, building_result_path, tech)
     # Bui_co2_bal
-    #check_CO2_bal(results, building, building_result_path, tech)
+    # check_CO2_bal(results, building, building_result_path, tech)
 
     check_electricity_bal(results, building, building_result_path, tech)
 
@@ -267,6 +267,7 @@ def main(building, TECHS, building_result_path):
             ## plot electricity usage
             plot_electricity_usage(building, building_result_path, results, tech)
             electricity_df = set_up_electricity_df(tech, results)
+            aggregate_el_by_units(tech, electricity_df, results, building, building_result_path)
             ex_df = calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech)
             plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
             if results.shape[0] > 24:
@@ -456,12 +457,39 @@ def set_up_electricity_df(tech, results):
     # ct
     electricity_df['el_ct'] = results['el_ct']
 
+    ## calculate balance
     balance = electricity_df.sum(axis=1) - results['SU_elec']
     balance = balance[abs(balance) > 1e-2]
     if abs(balance.sum()) > 1:
         print('electricity balance:', balance)
 
     return electricity_df
+
+
+def aggregate_el_by_units(tech, electricity_df, results, building, building_result_path):
+    Af_m2 = results['Af_m2'].mean()
+    el_per_unit_df = pd.DataFrame()
+    ## aggregate electricity usage per unit
+    q_ct_lcu = results['q_chi_lt']
+    q_ct_scu = results['q_chi_ht']
+    q_ct_oau = results.filter(like='q_oau_chi').sum(axis=1)
+    q_ct_total = q_ct_lcu + q_ct_scu + q_ct_oau
+
+    el_per_unit_df['el_lcu'] = results['el_chi_lt'] + results['el_lcu_fan'] + \
+                               results['el_ct'] * (q_ct_lcu / q_ct_total).fillna(0)
+    el_per_unit_df['el_scu'] = results['el_chi_ht'] + results['el_scu_pump'] + \
+                               results['el_ct'] * (q_ct_scu / q_ct_total).fillna(0)
+    if tech == 'HCS_LD':
+        el_per_unit_df['el_oau'] = electricity_df['el_aux_oau'] + electricity_df['el_hp_oau']
+    else:
+        el_per_unit_df['el_oau'] = electricity_df['el_aux_oau'] + electricity_df['el_chi_oau'] + \
+                                   results['el_ct'] * (q_ct_oau / q_ct_total).fillna(0)
+    el_per_unit_df['el_total'] = results['SU_elec']
+    el_per_unit_df = el_per_unit_df*1000/Af_m2
+    el_per_unit_df.to_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+    return np.nan
+
+
 
 
 # def set_up_electricity_per_area_df(tech, results, building):
@@ -1147,6 +1175,10 @@ def path_to_elec_csv(building, building_result_path, tech):
     path_to_file = os.path.join(building_result_path, '%s_%s_el.csv' % (building, tech))
     return path_to_file
 
+def path_to_elec_unit_csv(building, building_result_path, tech):
+    path_to_file = os.path.join(building_result_path, '%s_%s_el_kWh_m2.csv' % (building, tech))
+    return path_to_file
+
 
 def path_to_chiller_csv(building, building_result_path, tech):
     path_to_file = os.path.join(building_result_path, '%s_%s_chiller.csv' % (building, tech))
@@ -1169,18 +1201,19 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    buildings = ["B002","B003", "B006"]
-    # buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-    #tech = ["HCS_ER0"]
-    tech = ["HCS_ER0","HCS_3for2","HCS_IEHX","HCS_coil","HCS_LD"]
-    # cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_RET"]
-    #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    buildings = ["B006","B007","B008","B009","B010"]
+    #buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
+    tech = ["HCS_3for2"]
+    #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
+    #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_HOT"]
+    # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
+    #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_24"
+            building_time = building + "_168"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
