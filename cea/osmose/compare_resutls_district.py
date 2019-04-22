@@ -27,14 +27,20 @@ def main(path_result_folder, case, time_steps):
         all_cop_dict[building] = el_compare_df.loc['cop_system_mean'].to_dict()  # FIXME
         all_exergy_eff_dict[building] = (el_compare_df.loc['eff_exergy'] * 100).to_dict()
 
-        # write qc all tech to one dict
+        ## write qc all tech to one dict
         qc_all_tech_per_building_dict = {}
-        qc_sys_total = el_compare_df.loc['qc_sys_total']
+        # change order of columns
+        new_column_list = []
+        for tech in ['coil','ER0','3for2','LD','IEHX']:
+            if tech in el_compare_df.columns:
+                new_column_list.append(tech)
+        ordered_el_compare_df = el_compare_df[new_column_list]
+        qc_sys_total = ordered_el_compare_df.loc['qc_sys_total']
         for label in ['qc_sys_scu', 'qc_sys_lcu', 'qc_sys_oau']:
-            qc_sys_scu_percent = el_compare_df.loc[label] / qc_sys_total
+            qc_sys_scu_percent = ordered_el_compare_df.loc[label] / qc_sys_total
             qc_all_tech_per_building_dict[label] = qc_sys_scu_percent
         # plot qc box plot
-        techs = el_compare_df.columns
+        techs = ordered_el_compare_df.columns
         plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case)
 
     all_results_df = pd.concat(all_results_dict).round(2)
@@ -58,23 +64,27 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     number_of_columns = len(techs)
     y_offset = np.zeros(number_of_columns)
     # plot bars
-    x_ticks = range(len(techs))  # FIXME
+    x_ticks = range(len(techs))
     # set colors
-    number_of_stacks = len(qc_all_tech_per_building_dict.keys())
-    # colors = plt.cm.Set2(np.linspace(0, 1, number_of_stacks))
-    #colors = ['#14453D','#3C875A','#BACCCC']  # OLIVE, GRASS, GREY
-    colors = ['#14453D','#4D9169','#BACCCC']  # OLIVE, GRASS, GREY
+    #COLOR_TABLE = {'OAU': '#14453D', 'RAU': '#4D9169', 'SCU': '#BACCCC'}  # # OLIVE, GRASS, GREY
+    COLOR_TABLE = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'} # Grey scale
     i = 0
     KEY_TABLE = {'qc_sys_oau': 'OAU', 'qc_sys_scu': 'SCU', 'qc_sys_lcu': 'RAU'}
     for key in qc_all_tech_per_building_dict.keys():
         stack_label = KEY_TABLE[key]
         x_values = x_ticks
         bar_values = qc_all_tech_per_building_dict[key]
-        ax.bar(x_values, bar_values, bar_width, bottom=y_offset, alpha=opacity, color=colors[i], label=stack_label)
+        ax.bar(x_values, bar_values, bar_width, bottom=y_offset, alpha=opacity, color=COLOR_TABLE[stack_label],
+               label=stack_label)
         y_offset = y_offset + qc_all_tech_per_building_dict[key]
         i = i + 1
     ax.set(ylabel='% of heat removed', xlim=(-0.5, 4.5), ylim=(0, 1))
-    ax.set_xticklabels(np.append(([0]), techs.values), fontsize=18)
+    label_dict = {'coil': 'Config|1', 'ER0': 'Config|2', '3for2': 'Config|3', 'LD': 'Config|4', 'IEHX': 'Config|5'}
+    x_tick_shown = [0]
+    for tech in techs:
+        x_tick_shown.append(label_dict[tech])
+    ax.set_xticklabels(x_tick_shown)
+    #ax.set_xticklabels(np.append(([0]), label_dict[techs.values]), fontsize=18)
     ax.xaxis.label.set_size(18)
     ax.yaxis.label.set_size(18)
     ax.legend(loc='lower right')
@@ -231,11 +241,11 @@ def path_to_save_total_heat_supplied_fig(building, time_steps, path_district_res
 
 
 if __name__ == '__main__':
-    # cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    #cases = ['WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
-        time_steps = 24
+        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
+        time_steps = 168
         main(path_result_folder, case, time_steps)
