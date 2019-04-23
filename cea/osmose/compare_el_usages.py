@@ -225,7 +225,7 @@ def plot_electricity_usages_units(ax, el_per_unit_df, config):
     # initialize the vertical-offset for the stacked bar chart
     y_offset = np.zeros(el_per_unit_df.shape[0])
     # plot bars
-    unit_table = {'OAU': 'el_oau', 'LCU': 'el_lcu', 'SCU': 'el_scu'}
+    unit_table = {'OAU': 'el_oau', 'RAU': 'el_lcu', 'SCU': 'el_scu'}
     for unit in unit_table.keys():
         column = unit_table[unit]
         ax.bar(x_ticks, el_per_unit_df[column], bar_width, bottom=y_offset, alpha=opacity, color=color_table[unit],
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     timestep = "168"
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     #cases = ['WTP_CBD_m_WP1_RET']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0421'
+    result_folder = 'C:\\Users\\Zhongming\\Documents\\WP1_results'
     # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
