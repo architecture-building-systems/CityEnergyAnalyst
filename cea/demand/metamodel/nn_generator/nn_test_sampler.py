@@ -29,13 +29,13 @@ from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 from geopandas import GeoDataFrame as Gdf
 
 def sampling_single(locator, random_variables, target_parameters, list_building_names, config,
-                    nn_delay, climatic_variables, region, year, use_daysim_radiation,use_stochastic_occupancy):
+                    nn_delay, climatic_variables, year, use_daysim_radiation,use_stochastic_occupancy):
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
 
     bld_counter = 0
     # create list of samples with a LHC sampler and save to disk (*.csv)
-    samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
+    samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables)
     for building_name in (list_building_names):
         np.save(locator.get_calibration_folder(), samples)
         building_load = config.single_calibration.load
@@ -71,7 +71,7 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
 
     #   prepare the inputs for feeding into the neural network
     urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
-                                                                nn_delay, climatic_variables, region, year,
+                                                                nn_delay, climatic_variables, year,
                                                                 use_daysim_radiation,use_stochastic_occupancy)
 
     return urban_input_matrix, urban_taget_matrix
@@ -86,7 +86,7 @@ def main(config):
                                                              list_building_names, config=config,
                                                              nn_delay=config.neural_network.nn_delay,
                                                              climatic_variables=config.neural_network.climatic_variables,
-                                                             region=config.region, year=config.neural_network.year,
+                                                             year=config.neural_network.year,
                                                              use_daysim_radiation=settings.use_daysim_radiation,
                                                              use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 

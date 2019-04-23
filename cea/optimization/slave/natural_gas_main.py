@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -26,9 +27,9 @@ __status__ = "Production"
 
 def natural_gas_imports(master_to_slave_vars, locator, config):
 
-    NG_total_heating_W = np.zeros(8760)
-    NG_total_cooling_W = np.zeros(8760)
-    NG_total_W = np.zeros(8760)
+    NG_total_heating_W = np.zeros(HOURS_IN_YEAR)
+    NG_total_cooling_W = np.zeros(HOURS_IN_YEAR)
+    NG_total_W = np.zeros(HOURS_IN_YEAR)
     storage_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
     date = storage_data.DATE.values
 
@@ -43,7 +44,7 @@ def natural_gas_imports(master_to_slave_vars, locator, config):
         NG_used_PeakBoiler_W = data_heating["NG_used_PeakBoiler_W"]
         NG_used_BackupBoiler_W = data_heating["NG_used_BackupBoiler_W"]
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             NG_total_heating_W[hour] = NG_used_HPSew_W[hour] + NG_used_HPLake_W[hour] + NG_used_GHP_W[hour] + \
                                        NG_used_CHP_W[hour] + NG_used_Furnace_W[hour] + NG_used_BaseBoiler_W[hour] + \
                                        NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
@@ -55,10 +56,10 @@ def natural_gas_imports(master_to_slave_vars, locator, config):
 
         # Natural Gas supply for the CCGT plant
         NG_used_CCGT_W = data_cooling['NG_used_CCGT_W']
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             NG_total_cooling_W[hour] = NG_used_CCGT_W[hour]
 
-    for hour in range(8760):
+    for hour in range(HOURS_IN_YEAR):
         NG_total_W[hour] = NG_total_heating_W[hour] + NG_total_cooling_W[hour]
 
 

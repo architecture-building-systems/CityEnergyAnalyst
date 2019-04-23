@@ -11,6 +11,7 @@ import inspect
 import cea.plots
 import cea.config
 import cea.inputlocator
+import cea.plots.cache
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -35,6 +36,8 @@ def list_categories():
             continue
         try:
             yield PlotCategory(module)
+        except GeneratorExit:
+            return
         except:
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
@@ -98,6 +101,7 @@ class PlotCategory(object):
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
+    cache = cea.plots.cache.NullPlotCache()
 
     for category in list_categories():
         print('category:', category.name, ':', category.label)
@@ -106,7 +110,7 @@ if __name__ == '__main__':
             parameters = {
                 k: config.get(v) for k, v in plot_class.expected_parameters.items()
             }
-            plot = plot_class(config.project, parameters=parameters)
+            plot = plot_class(config.project, parameters=parameters, cache=cache)
             assert plot.name, 'plot missing name: %s' % plot
             assert plot.category_name == category.name
             print('plot:', plot.name, '/', plot.id(), '/', plot.title)

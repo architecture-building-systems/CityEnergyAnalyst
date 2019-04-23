@@ -1,0 +1,5174 @@
+PVT_metadata_results:
+    created_by: [photovoltaic-thermal]
+    description: scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_PVT_sensors.csv
+    file_type: csv
+    schema:
+        AREA_m2:
+            sample_data: 4.89
+            types_found: [float]
+        BUILDING:
+            sample_data: B001
+            types_found: [string]
+        B_deg:
+            sample_data: 0.38
+            types_found: [float]
+        CATB:
+            sample_data: !!python/long '3'
+            types_found: [long]
+        CATGB:
+            sample_data: !!python/long '10'
+            types_found: [long]
+        CATteta_z:
+            sample_data: !!python/long '5'
+            types_found: [long]
+        SURFACE:
+            sample_data: srf809
+            types_found: [string]
+        TYPE:
+            sample_data: roofs
+            types_found: [string]
+        Xcoor:
+            sample_data: 371706.17
+            types_found: [float]
+        Xdir:
+            sample_data: 0.0
+            types_found: [float]
+        Ycoor:
+            sample_data: 140269.48
+            types_found: [float]
+        Ydir:
+            sample_data: 0.0
+            types_found: [float]
+        Zcoor:
+            sample_data: 29.01
+            types_found: [float]
+        Zdir:
+            sample_data: 1.0
+            types_found: [float]
+        area_installed_module_m2:
+            sample_data: 4.87
+            types_found: [float]
+        array_spacing_m:
+            sample_data: 0.01
+            types_found: [float]
+        orientation:
+            sample_data: top
+            types_found: [string]
+        surface:
+            sample_data: srf809
+            types_found: [string]
+        surface_azimuth_deg:
+            sample_data: 0.0
+            types_found: [float]
+        tilt_deg:
+            sample_data: 0.0
+            types_found: [float]
+        total_rad_Whm2:
+            sample_data: !!python/long '1445247'
+            types_found: [long]
+        type_orientation:
+            sample_data: roofs_top
+            types_found: [string]
+    used_by: []
+PVT_results:
+    created_by: [photovoltaic-thermal]
+    description: scenario/outputs/data/potentials/solar/{building_name}_SC.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_PVT.csv
+    file_type: csv
+    schema:
+        Area_PVT_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        Date:
+            sample_data: '2005-12-31 23:00:00+08:00'
+            types_found: [date]
+        E_PVT_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Eaux_PVT_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        PVT_walls_east_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_m2:
+            sample_data: 0.0
+            types_found: [float]
+        Q_PVT_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_PVT_l_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        T_PVT_re_C:
+            sample_data: 35.27
+            types_found: [float, null]
+        T_PVT_sup_C:
+            sample_data: 35.0
+            types_found: [float]
+        mcp_PVT_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+PVT_total_buildings:
+    created_by: [photovoltaic-thermal]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\PVT_total_buildings.csv
+    file_type: csv
+    schema:
+        Area_PVT_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        E_PVT_gen_kWh:
+            sample_data: 528845.12
+            types_found: [float]
+        Eaux_PVT_kWh:
+            sample_data: 1218.06
+            types_found: [float]
+        PVT_roofs_top_E_kWh:
+            sample_data: 528845.12
+            types_found: [float]
+        PVT_roofs_top_Q_kWh:
+            sample_data: 1866927.14
+            types_found: [float]
+        PVT_roofs_top_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        PVT_walls_east_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_m2:
+            sample_data: 0.0
+            types_found: [float]
+        Q_PVT_gen_kWh:
+            sample_data: 1866927.14
+            types_found: [float]
+        Q_PVT_l_kWh:
+            sample_data: 40665.72
+            types_found: [float]
+        'Unnamed: 0':
+            sample_data: B010
+            types_found: [string]
+        radiation_kWh:
+            sample_data: 5979301.61
+            types_found: [float]
+    used_by: []
+PVT_totals:
+    created_by: [photovoltaic-thermal]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\PVT_total.csv
+    file_type: csv
+    schema:
+        Area_PVT_m2:
+            sample_data: 54100.05
+            types_found: [float]
+        Date:
+            sample_data: 2005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:00
+            types_found: [date]
+        E_PVT_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Eaux_PVT_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_roofs_top_m2:
+            sample_data: 36080.73
+            types_found: [float]
+        PVT_walls_east_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_east_m2:
+            sample_data: 3425.3
+            types_found: [float]
+        PVT_walls_north_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_north_m2:
+            sample_data: 1964.11
+            types_found: [float]
+        PVT_walls_south_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_south_m2:
+            sample_data: 6772.26
+            types_found: [float]
+        PVT_walls_west_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PVT_walls_west_m2:
+            sample_data: 5857.65
+            types_found: [float]
+        Q_PVT_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_PVT_l_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        T_PVT_re_C:
+            sample_data: 35.46
+            types_found: [float, null]
+        T_PVT_sup_C:
+            sample_data: 35.0
+            types_found: [float]
+        mcp_PVT_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+PV_metadata_results:
+    created_by: [photovoltaic]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_PV_sensors.csv
+    file_type: csv
+    schema:
+        AREA_m2:
+            sample_data: 4.89
+            types_found: [float]
+        BUILDING:
+            sample_data: B001
+            types_found: [string]
+        B_deg:
+            sample_data: 0.38
+            types_found: [float]
+        CATB:
+            sample_data: !!python/long '3'
+            types_found: [long]
+        CATGB:
+            sample_data: !!python/long '10'
+            types_found: [long]
+        CATteta_z:
+            sample_data: !!python/long '5'
+            types_found: [long]
+        SURFACE:
+            sample_data: srf809
+            types_found: [string]
+        TYPE:
+            sample_data: roofs
+            types_found: [string]
+        Xcoor:
+            sample_data: 371706.17
+            types_found: [float]
+        Xdir:
+            sample_data: 0.0
+            types_found: [float]
+        Ycoor:
+            sample_data: 140269.48
+            types_found: [float]
+        Ydir:
+            sample_data: 0.0
+            types_found: [float]
+        Zcoor:
+            sample_data: 29.01
+            types_found: [float]
+        Zdir:
+            sample_data: 1.0
+            types_found: [float]
+        area_installed_module_m2:
+            sample_data: 4.87
+            types_found: [float]
+        array_spacing_m:
+            sample_data: 0.01
+            types_found: [float]
+        orientation:
+            sample_data: top
+            types_found: [string]
+        surface:
+            sample_data: srf809
+            types_found: [string]
+        surface_azimuth_deg:
+            sample_data: 0.0
+            types_found: [float]
+        tilt_deg:
+            sample_data: 0.0
+            types_found: [float]
+        total_rad_Whm2:
+            sample_data: !!python/long '1445247'
+            types_found: [long]
+        type_orientation:
+            sample_data: roofs_top
+            types_found: [string]
+    used_by: []
+PV_results:
+    created_by: [photovoltaic]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_PV.csv
+    file_type: csv
+    schema:
+        Area_PV_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        Date:
+            sample_data: '2005-12-31 23:00:00+08:00'
+            types_found: [date]
+        E_PV_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_roofs_top_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_roofs_top_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        PV_walls_east_E_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_east_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_north_E_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_north_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_south_E_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_south_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_west_E_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        PV_walls_west_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+PV_total_buildings:
+    created_by: [photovoltaic]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\PV_total_buildings.csv
+    file_type: csv
+    schema:
+        Area_PV_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        E_PV_gen_kWh:
+            sample_data: 524685.94
+            types_found: [float]
+        PV_roofs_top_E_kWh:
+            sample_data: 524685.94
+            types_found: [float]
+        PV_roofs_top_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        PV_walls_east_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_east_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_north_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_north_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_south_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_south_m2:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_west_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_west_m2:
+            sample_data: 0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_data: B010
+            types_found: [string]
+        radiation_kWh:
+            sample_data: 5979301.61
+            types_found: [float]
+    used_by: []
+PV_totals:
+    created_by: [photovoltaic]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\PV_total.csv
+    file_type: csv
+    schema:
+        Area_PV_m2:
+            sample_data: 54100.05
+            types_found: [float]
+        Date:
+            sample_data: 2005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:00
+            types_found: [date]
+        E_PV_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_roofs_top_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_roofs_top_m2:
+            sample_data: 36080.73
+            types_found: [float]
+        PV_walls_east_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_east_m2:
+            sample_data: 3425.3
+            types_found: [float]
+        PV_walls_north_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_north_m2:
+            sample_data: 1964.11
+            types_found: [float]
+        PV_walls_south_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_south_m2:
+            sample_data: 6772.26
+            types_found: [float]
+        PV_walls_west_E_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_walls_west_m2:
+            sample_data: 5857.65
+            types_found: [float]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+SC_metadata_results:
+    created_by: [solar-collector]
+    description: scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_SC_ET_sensors.csv
+    file_type: csv
+    schema:
+        AREA_m2:
+            sample_data: 0.32
+            types_found: [float]
+        BUILDING:
+            sample_data: B001
+            types_found: [string]
+        B_deg:
+            sample_data: 0.38
+            types_found: [float]
+        CATB:
+            sample_data: !!python/long '3'
+            types_found: [long]
+        CATGB:
+            sample_data: !!python/long '9'
+            types_found: [long]
+        CATteta_z:
+            sample_data: !!python/long '5'
+            types_found: [long]
+        SURFACE:
+            sample_data: srf808
+            types_found: [string]
+        TYPE:
+            sample_data: roofs
+            types_found: [string]
+        Xcoor:
+            sample_data: 371606.94
+            types_found: [float]
+        Xdir:
+            sample_data: 0.0
+            types_found: [float]
+        Ycoor:
+            sample_data: 140248.07
+            types_found: [float]
+        Ydir:
+            sample_data: 0.0
+            types_found: [float]
+        Zcoor:
+            sample_data: 29.01
+            types_found: [float]
+        Zdir:
+            sample_data: 1.0
+            types_found: [float]
+        area_installed_module_m2:
+            sample_data: 0.32
+            types_found: [float]
+        array_spacing_m:
+            sample_data: 0.01
+            types_found: [float]
+        orientation:
+            sample_data: top
+            types_found: [string]
+        surface:
+            sample_data: srf808
+            types_found: [string]
+        surface_azimuth_deg:
+            sample_data: 0.0
+            types_found: [float]
+        tilt_deg:
+            sample_data: 0.0
+            types_found: [float]
+        total_rad_Whm2:
+            sample_data: !!python/long '1260149'
+            types_found: [long]
+        type_orientation:
+            sample_data: roofs_top
+            types_found: [string]
+    used_by: []
+SC_results:
+    created_by: [solar-collector]
+    description: scenario/outputs/data/potentials/solar/{building_name}_SC.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\B001_SC_ET.csv
+    file_type: csv
+    schema:
+        Area_SC_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        Date:
+            sample_data: '2005-12-31 23:00:00+08:00'
+            types_found: [date]
+        Eaux_SC_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_SC_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_SC_l_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_roofs_top_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_roofs_top_m2:
+            sample_data: 5636.54
+            types_found: [float]
+        SC_walls_east_Q_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_east_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_north_Q_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_north_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_south_Q_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_south_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_west_Q_kWh:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        SC_walls_west_m2:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        T_SC_re_C:
+            sample_data: 100.83
+            types_found: [float, null]
+        T_SC_sup_C:
+            sample_data: 100.0
+            types_found: [float]
+        mcp_SC_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+SC_total_buildings:
+    created_by: [solar-collector]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\SC_ET_total_buildings.csv
+    file_type: csv
+    schema:
+        Area_SC_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        Eaux_SC_kWh:
+            sample_data: 8188.86
+            types_found: [float]
+        Q_SC_gen_kWh:
+            sample_data: 1614530.65
+            types_found: [float]
+        Q_SC_l_kWh:
+            sample_data: 102001.68
+            types_found: [float]
+        SC_roofs_top_Q_kWh:
+            sample_data: 1614530.65
+            types_found: [float]
+        SC_roofs_top_m2:
+            sample_data: 4063.77
+            types_found: [float]
+        SC_walls_east_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_east_m2:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_north_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_north_m2:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_south_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_south_m2:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_west_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_west_m2:
+            sample_data: 0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_data: B010
+            types_found: [string]
+        radiation_kWh:
+            sample_data: 6014465.91
+            types_found: [float]
+    used_by: []
+SC_totals:
+    created_by: [solar-collector]
+    description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials/solar\SC_ET_total.csv
+    file_type: csv
+    schema:
+        Area_SC_m2:
+            sample_data: 48048.36
+            types_found: [float]
+        Date:
+            sample_data: 2005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:002005-12-31 23:00:00+08:002005-12-31
+                23:00:00+08:002005-12-31 23:00:00+08:00
+            types_found: [date]
+        Eaux_SC_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_SC_gen_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_SC_l_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_roofs_top_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_roofs_top_m2:
+            sample_data: 36080.73
+            types_found: [float]
+        SC_walls_east_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_east_m2:
+            sample_data: 2152.08
+            types_found: [float]
+        SC_walls_north_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_north_m2:
+            sample_data: 1327.11
+            types_found: [float]
+        SC_walls_south_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_south_m2:
+            sample_data: 4535.57
+            types_found: [float]
+        SC_walls_west_Q_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SC_walls_west_m2:
+            sample_data: 3952.89
+            types_found: [float]
+        T_SC_re_C:
+            sample_data: 101.12
+            types_found: [float, null]
+        T_SC_sup_C:
+            sample_data: 100.0
+            types_found: [float, null]
+        mcp_SC_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        radiation_kWh:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+get_archetypes_properties:
+    created_by: []
+    description: "Returns the database of construction properties to be used by the\
+        \ data-helper. These are copied\n        to the scenario if they are not yet\
+        \ present, based on the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/archetypes\construction_properties.xlsx
+    file_type: xlsx
+    schema:
+        ARCHITECTURE:
+            Es:
+                sample_data: 0.9
+                types_found: [float]
+            Hs:
+                sample_data: 0.9
+                types_found: [float]
+            Ns:
+                sample_data: 0.9
+                types_found: [float]
+            building_use:
+                sample_data: LIBRARY
+                types_found: [string]
+            standard:
+                sample_data: R
+                types_found: [string]
+            type_cons:
+                sample_data: T3
+                types_found: [string]
+            type_leak:
+                sample_data: T1
+                types_found: [string]
+            type_roof:
+                sample_data: T4
+                types_found: [string]
+            type_shade:
+                sample_data: T1
+                types_found: [string]
+            type_wall:
+                sample_data: T5
+                types_found: [string]
+            type_win:
+                sample_data: T4
+                types_found: [string]
+            void_deck:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            wwr_east:
+                sample_data: 0.31
+                types_found: [float]
+            wwr_north:
+                sample_data: 0.31
+                types_found: [float]
+            wwr_south:
+                sample_data: 0.31
+                types_found: [float]
+            wwr_west:
+                sample_data: 0.31
+                types_found: [float]
+            year_end:
+                sample_data: !!python/long '2030'
+                types_found: [long]
+            year_start:
+                sample_data: !!python/long '2021'
+                types_found: [long]
+        HVAC:
+            building_use:
+                sample_data: LIBRARY
+                types_found: [string]
+            standard:
+                sample_data: R
+                types_found: [string]
+            type_cs:
+                sample_data: T3
+                types_found: [string]
+            type_ctrl:
+                sample_data: T3
+                types_found: [string]
+            type_dhw:
+                sample_data: T2
+                types_found: [string]
+            type_hs:
+                sample_data: T3
+                types_found: [string]
+            type_vent:
+                sample_data: T1
+                types_found: [string]
+            year_end:
+                sample_data: !!python/long '2030'
+                types_found: [long]
+            year_start:
+                sample_data: !!python/long '2021'
+                types_found: [long]
+        INDOOR_COMFORT:
+            Code:
+                sample_data: LIBRARY
+                types_found: [string]
+            Tcs_set_C:
+                sample_data: !!python/long '26'
+                types_found: [long]
+            Tcs_setb_C:
+                sample_data: !!python/long '28'
+                types_found: [long]
+            Ths_set_C:
+                sample_data: !!python/long '21'
+                types_found: [long]
+            Ths_setb_C:
+                sample_data: !!python/long '12'
+                types_found: [long]
+            Ve_lps:
+                sample_data: 10.0
+                types_found: [float]
+            rhum_max_pc:
+                sample_data: !!python/long '70'
+                types_found: [long]
+            rhum_min_pc:
+                sample_data: !!python/long '30'
+                types_found: [long]
+        INTERNAL_LOADS:
+            Code:
+                sample_data: LIBRARY
+                types_found: [string]
+            Ea_Wm2:
+                sample_data: 2.0
+                types_found: [float]
+            Ed_Wm2:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            El_Wm2:
+                sample_data: 6.9
+                types_found: [float]
+            Epro_Wm2:
+                sample_data: 0.0
+                types_found: [float]
+            Qcre_Wm2:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            Qhpro_Wm2:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            Qs_Wp:
+                sample_data: !!python/long '70'
+                types_found: [long]
+            Vw_lpd:
+                sample_data: !!python/long '4'
+                types_found: [long]
+            Vww_lpd:
+                sample_data: !!python/long '2'
+                types_found: [long]
+            X_ghp:
+                sample_data: !!python/long '80'
+                types_found: [long]
+        SUPPLY:
+            building_use:
+                sample_data: LIBRARY
+                types_found: [string]
+            standard:
+                sample_data: R
+                types_found: [string]
+            type_cs:
+                sample_data: T3
+                types_found: [string]
+            type_dhw:
+                sample_data: T3
+                types_found: [string]
+            type_el:
+                sample_data: T1
+                types_found: [string]
+            type_hs:
+                sample_data: T3
+                types_found: [string]
+            year_end:
+                sample_data: !!python/long '2030'
+                types_found: [long]
+            year_start:
+                sample_data: !!python/long '2021'
+                types_found: [long]
+    used_by: [data-helper, demand]
+get_archetypes_schedules:
+    created_by: []
+    description: "Returns the database of schedules to be used by the data-helper.\
+        \ These are copied\n        to the scenario if they are not yet present, based\
+        \ on the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/archetypes\occupancy_schedules.xlsx
+    file_type: xlsx
+    schema:
+        COOLROOM:
+            Saturday_1:
+                sample_data: 0.2
+                types_found: [float]
+            Saturday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.2
+                types_found: [float]
+            Sunday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.2
+                types_found: [float]
+            Weekday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 0
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [float, null]
+        FOODSTORE:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [int, float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [int, float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 3
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        GYM:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 5
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [float, null]
+        HOSPITAL:
+            Saturday_1:
+                sample_data: 0.44000000000000006
+                types_found: [float]
+            Saturday_2:
+                sample_data: 0.16000000000000003
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.055932203389830536
+                types_found: [float]
+            Saturday_4:
+                sample_data: 0.04814408381660312
+                types_found: [float]
+            Sunday_1:
+                sample_data: 0.44000000000000006
+                types_found: [float]
+            Sunday_2:
+                sample_data: 0.16000000000000003
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.055932203389830536
+                types_found: [float]
+            Sunday_4:
+                sample_data: 0.04814408381660312
+                types_found: [float]
+            Weekday_1:
+                sample_data: 0.44000000000000006
+                types_found: [float]
+            Weekday_2:
+                sample_data: 0.16000000000000003
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.055932203389830536
+                types_found: [float]
+            Weekday_4:
+                sample_data: 0.24835995322162058
+                types_found: [float]
+            density:
+                sample_data: 8
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [int, float, null]
+        HOTEL:
+            Saturday_1:
+                sample_data: 0.91
+                types_found: [float]
+            Saturday_2:
+                sample_data: 0.91
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.91
+                types_found: [float]
+            Sunday_1:
+                sample_data: 0.91
+                types_found: [float]
+            Sunday_2:
+                sample_data: 0.91
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.91
+                types_found: [float]
+            Weekday_1:
+                sample_data: 0.91
+                types_found: [float]
+            Weekday_2:
+                sample_data: 0.91
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.91
+                types_found: [float]
+            density:
+                sample_data: 10
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        INDUSTRIAL:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_4:
+                sample_data: 0.04814408381660312
+                types_found: [float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_4:
+                sample_data: 0.03426676492262343
+                types_found: [float]
+            Weekday_1:
+                sample_data: 0.2
+                types_found: [float]
+            Weekday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_4:
+                sample_data: 0.24835995322162058
+                types_found: [float]
+            density:
+                sample_data: 10
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [float, null]
+        LAB:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_4:
+                sample_data: 0.04814408381660312
+                types_found: [float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_4:
+                sample_data: 0.03426676492262343
+                types_found: [float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.2
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_4:
+                sample_data: 0.24835995322162058
+                types_found: [float]
+            density:
+                sample_data: 20
+                types_found: [int, null]
+            month:
+                sample_data: 0.8
+                types_found: [float, null]
+        LIBRARY:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 5
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        MULTI_RES:
+            Saturday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.20930232558139536
+                types_found: [float]
+            Sunday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.18947368421052632
+                types_found: [float]
+            Weekday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.1919191919191919
+                types_found: [float]
+            density:
+                sample_data: 40
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        MUSEUM:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 10
+                types_found: [int, null]
+            month:
+                sample_data: 0.8
+                types_found: [float, null]
+        OFFICE:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 14
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        PARKING:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 0
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        RESTAURANT:
+            Saturday_1:
+                sample_data: 0.17
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.35500000000000004
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.17
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.17
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.35500000000000004
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.17
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.17
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.35500000000000004
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.17
+                types_found: [int, float]
+            density:
+                sample_data: 2
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        RETAIL:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [int, float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [int, float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 5
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        SCHOOL:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 10
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [float, null]
+        SERVERROOM:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 1.0
+                types_found: [int, float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 1.0
+                types_found: [int, float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 1.0
+                types_found: [int, float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 0
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [int, float, null]
+        SINGLE_RES:
+            Saturday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.20930232558139536
+                types_found: [float]
+            Sunday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.18947368421052632
+                types_found: [float]
+            Weekday_1:
+                sample_data: 1.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.1919191919191919
+                types_found: [float]
+            density:
+                sample_data: 60
+                types_found: [int, null]
+            month:
+                sample_data: 0.6
+                types_found: [float, null]
+        SWIMMING:
+            Saturday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Saturday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Saturday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Sunday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Sunday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_1:
+                sample_data: 0.0
+                types_found: [int, float]
+            Weekday_2:
+                sample_data: 0.1
+                types_found: [float]
+            Weekday_3:
+                sample_data: 0.0
+                types_found: [int, float]
+            density:
+                sample_data: 20
+                types_found: [int, null]
+            month:
+                sample_data: 1.0
+                types_found: [float, null]
+    used_by: [data-helper, demand]
+get_archetypes_system_controls:
+    created_by: []
+    description: " Returns the database of region-specific system control parameters.\
+        \ These are copied\n        to the scenario if they are not yet present, based\
+        \ on the configured region for the scenario.\n\n        :param region:\n \
+        \       :return:\n        "
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/archetypes\system_controls.xlsx
+    file_type: xlsx
+    schema:
+        heating_cooling:
+            cooling-season-end:
+                sample_data: !!python/unicode '09-15'
+                types_found: [date]
+            cooling-season-start:
+                sample_data: !!python/unicode '05-15'
+                types_found: [date]
+            has-cooling-season:
+                sample_data: true
+                types_found: [bool]
+            has-heating-season:
+                sample_data: true
+                types_found: [bool]
+            heating-season-end:
+                sample_data: !!python/unicode '05-14'
+                types_found: [date]
+            heating-season-start:
+                sample_data: !!python/unicode '09-16'
+                types_found: [date]
+    used_by: [demand]
+get_building_age:
+    created_by: []
+    description: scenario/inputs/building-properties/age.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\age.dbf
+    file_type: dbf
+    schema:
+        HVAC:
+            sample_data: 0
+            types_found: [int]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        basement:
+            sample_data: 0
+            types_found: [int]
+        built:
+            sample_data: 2018
+            types_found: [int]
+        envelope:
+            sample_data: 0
+            types_found: [int]
+        partitions:
+            sample_data: 0
+            types_found: [int]
+        roof:
+            sample_data: 0
+            types_found: [int]
+        windows:
+            sample_data: 0
+            types_found: [int]
+    used_by: [data-helper, emissions, demand]
+get_building_architecture:
+    created_by: [data-helper]
+    description: "scenario/inputs/building-properties/architecture.dbf\n        This\
+        \ file is generated by the data-helper script.\n        This file is used\
+        \ in the embodied energy script (cea/embodied.py)\n        and the demand\
+        \ script (cea/demand_main.py)"
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\architecture.dbf
+    file_type: dbf
+    schema:
+        Es:
+            sample_data: 0.9
+            types_found: [float]
+        Hs:
+            sample_data: 0.84
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        Ns:
+            sample_data: 1.0
+            types_found: [float]
+        type_cons:
+            sample_data: T2
+            types_found: [string]
+        type_leak:
+            sample_data: T1
+            types_found: [string]
+        type_roof:
+            sample_data: T7
+            types_found: [string]
+        type_shade:
+            sample_data: T1
+            types_found: [string]
+        type_wall:
+            sample_data: T7
+            types_found: [string]
+        type_win:
+            sample_data: T10
+            types_found: [string]
+        void_deck:
+            sample_data: 0
+            types_found: [int]
+        wwr_east:
+            sample_data: 0.59
+            types_found: [float]
+        wwr_north:
+            sample_data: 0.59
+            types_found: [float]
+        wwr_south:
+            sample_data: 0.59
+            types_found: [float]
+        wwr_west:
+            sample_data: 0.59
+            types_found: [float]
+    used_by: [radiation-daysim, emissions, demand]
+get_building_comfort:
+    created_by: [data-helper]
+    description: scenario/inputs/building-properties/indoor_comfort.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\indoor_comfort.dbf
+    file_type: dbf
+    schema:
+        Name:
+            sample_data: B010
+            types_found: [string]
+        Tcs_set_C:
+            sample_data: 24
+            types_found: [int]
+        Tcs_setb_C:
+            sample_data: 37
+            types_found: [int]
+        Ths_set_C:
+            sample_data: 10
+            types_found: [int]
+        Ths_setb_C:
+            sample_data: 10
+            types_found: [int]
+        Ve_lps:
+            sample_data: 13.528116605751025
+            types_found: [float]
+        rhum_max_pc:
+            sample_data: 70
+            types_found: [int]
+        rhum_min_pc:
+            sample_data: 30
+            types_found: [int]
+    used_by: [demand]
+get_building_hvac:
+    created_by: [data-helper]
+    description: scenario/inputs/building-properties/technical_systems.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\technical_systems.dbf
+    file_type: dbf
+    schema:
+        Name:
+            sample_data: B010
+            types_found: [string]
+        type_cs:
+            sample_data: T3
+            types_found: [string]
+        type_ctrl:
+            sample_data: T2
+            types_found: [string]
+        type_dhw:
+            sample_data: T0
+            types_found: [string]
+        type_hs:
+            sample_data: T0
+            types_found: [string]
+        type_vent:
+            sample_data: T1
+            types_found: [string]
+    used_by: [demand]
+get_building_internal:
+    created_by: [data-helper]
+    description: scenario/inputs/building-properties/internal_loads.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\internal_loads.dbf
+    file_type: dbf
+    schema:
+        Ea_Wm2:
+            sample_data: 11.27
+            types_found: [float]
+        Ed_Wm2:
+            sample_data: 0.0
+            types_found: [float]
+        El_Wm2:
+            sample_data: 14.485
+            types_found: [float]
+        Epro_Wm2:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        Qcre_Wm2:
+            sample_data: 0.0
+            types_found: [float]
+        Qhpro_Wm2:
+            sample_data: 0.0
+            types_found: [float]
+        Qs_Wp:
+            sample_data: 70.79263728037344
+            types_found: [float]
+        Vw_lpd:
+            sample_data: 15.145537011757455
+            types_found: [float]
+        Vww_lpd:
+            sample_data: 2.588401074463869
+            types_found: [float]
+        X_ghp:
+            sample_data: 83.69457043462945
+            types_found: [float]
+    used_by: [demand]
+get_building_occupancy:
+    created_by: []
+    description: scenario/inputs/building-properties/building_occupancy.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\occupancy.dbf
+    file_type: dbf
+    schema:
+        COOLROOM:
+            sample_data: 0
+            types_found: [int]
+        FOODSTORE:
+            sample_data: 0
+            types_found: [int]
+        GYM:
+            sample_data: 0
+            types_found: [int]
+        HOSPITAL:
+            sample_data: 0
+            types_found: [int]
+        HOTEL:
+            sample_data: 0.0
+            types_found: [float]
+        INDUSTRIAL:
+            sample_data: 0
+            types_found: [int]
+        LIBRARY:
+            sample_data: 0
+            types_found: [int]
+        MULTI_RES:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        OFFICE:
+            sample_data: 0.7
+            types_found: [float]
+        PARKING:
+            sample_data: 0
+            types_found: [int]
+        RESTAURANT:
+            sample_data: 0.1
+            types_found: [float]
+        RETAIL:
+            sample_data: 0.2
+            types_found: [float]
+        SCHOOL:
+            sample_data: 0
+            types_found: [int]
+        SERVERROOM:
+            sample_data: 0
+            types_found: [int]
+        SINGLE_RES:
+            sample_data: 0
+            types_found: [int]
+        SWIMMING:
+            sample_data: 0
+            types_found: [int]
+    used_by: [data-helper, emissions, demand]
+get_building_restrictions:
+    created_by: [data-helper]
+    description: scenario/inputs/building-properties/technical_systems.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\restrictions.dbf
+    file_type: dbf
+    schema:
+        BIOGAS:
+            sample_data: 0
+            types_found: [int]
+        GEOTHERMAL:
+            sample_data: 0
+            types_found: [int]
+        NATURALGAS:
+            sample_data: 0
+            types_found: [int]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        SOLAR:
+            sample_data: 0
+            types_found: [int]
+        WATERBODY:
+            sample_data: 0
+            types_found: [int]
+    used_by: []
+get_building_supply:
+    created_by: [data-helper]
+    description: scenario/inputs/building-properties/building_supply.dbf
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\supply_systems.dbf
+    file_type: dbf
+    schema:
+        Name:
+            sample_data: B010
+            types_found: [string]
+        type_cs:
+            sample_data: T3
+            types_found: [string]
+        type_dhw:
+            sample_data: T4
+            types_found: [string]
+        type_el:
+            sample_data: T6
+            types_found: [string]
+        type_hs:
+            sample_data: T0
+            types_found: [string]
+    used_by: [demand, operation-costs, emissions]
+get_costs_operation_file:
+    created_by: [operation-costs]
+    description: scenario/outputs/data/costs/{load}_cost_operation.pdf
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/costs\operation_costs.csv
+    file_type: csv
+    schema:
+        COAL_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        GRID_cost_m2yr:
+            sample_data: 27.24
+            types_found: [float]
+        GRID_cost_yr:
+            sample_data: 1332201.0
+            types_found: [float]
+        NFA_m2:
+            sample_data: 48914.39
+            types_found: [float]
+        NG_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        OIL_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        PV_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        PV_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_cost_m2yr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_cost_yr:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+get_data_benchmark:
+    created_by: []
+    description: "Returns the database of life cycle inventory for supply systems.\
+        \ These are copied\n        to the scenario if they are not yet present, based\
+        \ on the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/SG/benchmarks\benchmark_2000W.xls
+    file_type: xls
+    schema:
+        EMBODIED:
+            CO2_target_new:
+                sample_data: 3.368983957219251
+                types_found: [float, null]
+            CO2_target_retrofit:
+                sample_data: 2.0588235294117645
+                types_found: [float, null]
+            CO2_today:
+                sample_data: 2.8
+                types_found: [float]
+            Description:
+                sample_data: 'Gebudeparkmodell 2016: Bibliotheken, Museen, usw.'
+                types_found: [string, null]
+            NRE_target_new:
+                sample_data: 46.469387755102034
+                types_found: [float, null]
+            NRE_target_retrofit:
+                sample_data: 25.346938775510203
+                types_found: [float, null]
+            NRE_today:
+                sample_data: 41.4
+                types_found: [float]
+            PEN_target_new:
+                sample_data: 66.87062937062936
+                types_found: [float, null]
+            PEN_target_retrofit:
+                sample_data: 31.206293706293707
+                types_found: [float, null]
+            PEN_today:
+                sample_data: 51.0
+                types_found: [float]
+            code:
+                sample_data: MUSEUM
+                types_found: [string]
+        MOBILITY:
+            CO2_target_new:
+                sample_data: 40.0
+                types_found: [float]
+            CO2_target_retrofit:
+                sample_data: 40.0
+                types_found: [float]
+            CO2_today:
+                sample_data: 90.0
+                types_found: [float]
+            Description:
+                sample_data: 'Assumed: same as RETAIL'
+                types_found: [string]
+            NRE_target_new:
+                sample_data: !!python/long '850'
+                types_found: [long]
+            NRE_target_retrofit:
+                sample_data: !!python/long '850'
+                types_found: [long]
+            NRE_today:
+                sample_data: 1460.0
+                types_found: [float]
+            PEN_target_new:
+                sample_data: !!python/long '900'
+                types_found: [long]
+            PEN_target_retrofit:
+                sample_data: !!python/long '900'
+                types_found: [long]
+            PEN_today:
+                sample_data: !!python/long '1550'
+                types_found: [long]
+            code:
+                sample_data: MUSEUM
+                types_found: [string]
+        OPERATION:
+            CO2_target_new:
+                sample_data: 5.936767783214273
+                types_found: [float]
+            CO2_target_retrofit:
+                sample_data: 7.246928211021759
+                types_found: [float]
+            CO2_today:
+                sample_data: 33.2
+                types_found: [float]
+            Description:
+                sample_data: 'Gebaeudeparkmodell 2016: Bibliotheken, Museen, usw.
+                    (ist)'
+                types_found: [string]
+            NRE_target_new:
+                sample_data: 409.74614621297553
+                types_found: [float]
+            NRE_target_retrofit:
+                sample_data: 430.86859519256734
+                types_found: [float]
+            NRE_today:
+                sample_data: 1275.48
+                types_found: [float]
+            PEN_target_new:
+                sample_data: 851.8767418273
+                types_found: [float]
+            PEN_target_retrofit:
+                sample_data: 887.5410774916356
+                types_found: [float]
+            PEN_today:
+                sample_data: 1604.52
+                types_found: [float]
+            code:
+                sample_data: MUSEUM
+                types_found: [string]
+        TOTAL:
+            CO2_target_new:
+                sample_data: 49.30575174043352
+                types_found: [float]
+            CO2_target_retrofit:
+                sample_data: 49.30575174043352
+                types_found: [float]
+            CO2_today:
+                sample_data: 126.0
+                types_found: [float]
+            Description:
+                sample_data: 'Calculated: based on the Top-Down Method for SIA 2040'
+                types_found: [string, null]
+            NRE_target_new:
+                sample_data: 1306.2155339680776
+                types_found: [float]
+            NRE_target_retrofit:
+                sample_data: 1306.2155339680776
+                types_found: [float]
+            NRE_today:
+                sample_data: 2776.88
+                types_found: [float]
+            PEN_target_new:
+                sample_data: 1818.7473711979292
+                types_found: [float]
+            PEN_target_retrofit:
+                sample_data: 1818.7473711979294
+                types_found: [float]
+            PEN_today:
+                sample_data: 3205.52
+                types_found: [float]
+            code:
+                sample_data: MUSEUM
+                types_found: [string]
+    used_by: [emissions]
+get_demand_results_file:
+    created_by: [demand]
+    description: scenario/outputs/data/demand/{building_name}.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/demand\B001.csv
+    file_type: csv
+    schema:
+        COAL_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        DATE:
+            sample_data: '2005-12-31 23:00:00'
+            types_found: [date]
+        DC_cdata_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        E_cdata_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        E_cre_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        E_cs_kWh:
+            sample_data: 440.94800000000004
+            types_found: [float]
+        E_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        E_sys_kWh:
+            sample_data: 148.92
+            types_found: [float]
+        E_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Eal_kWh:
+            sample_data: 148.842
+            types_found: [float]
+        Eaux_kWh:
+            sample_data: 0.078
+            types_found: [float]
+        Edata_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Epro_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        GRID_kWh:
+            sample_data: 589.868
+            types_found: [float]
+        I_rad_kWh:
+            sample_data: 18.764
+            types_found: [float]
+        I_sol_and_I_rad_kWh:
+            sample_data: -18.764
+            types_found: [float]
+        I_sol_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B001
+            types_found: [string]
+        OIL_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        PV_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        QC_sys_kWh:
+            sample_data: 2543.288
+            types_found: [float]
+        QH_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_gain_lat_peop_kWh:
+            sample_data: 140.069
+            types_found: [float]
+        Q_gain_sen_app_kWh:
+            sample_data: 22.811999999999998
+            types_found: [float]
+        Q_gain_sen_base_kWh:
+            sample_data: -11.894
+            types_found: [float]
+        Q_gain_sen_data_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_gain_sen_light_kWh:
+            sample_data: 113.427
+            types_found: [float]
+        Q_gain_sen_peop_kWh:
+            sample_data: 171.55
+            types_found: [float]
+        Q_gain_sen_pro_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Q_gain_sen_roof_kWh:
+            sample_data: -5.0969999999999995
+            types_found: [float]
+        Q_gain_sen_vent_kWh:
+            sample_data: 4.081
+            types_found: [float]
+        Q_gain_sen_wall_kWh:
+            sample_data: -15.867
+            types_found: [float]
+        Q_gain_sen_wind_kWh:
+            sample_data: -13.807
+            types_found: [float]
+        Q_loss_sen_ref_kWh:
+            sample_data: -0.0
+            types_found: [float]
+        Qcdata_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcdata_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_dis_ls_kWh:
+            sample_data: -0.315
+            types_found: [float]
+        Qcs_em_ls_kWh:
+            sample_data: -40.324
+            types_found: [float]
+        Qcs_kWh:
+            sample_data: -2502.649
+            types_found: [float]
+        Qcs_lat_ahu_kWh:
+            sample_data: -1684.351
+            types_found: [float]
+        Qcs_lat_aru_kWh:
+            sample_data: -75.188
+            types_found: [float]
+        Qcs_lat_sys_kWh:
+            sample_data: 1759.539
+            types_found: [float]
+        Qcs_sen_ahu_kWh:
+            sample_data: -528.237
+            types_found: [float]
+        Qcs_sen_aru_kWh:
+            sample_data: -214.87400000000002
+            types_found: [float]
+        Qcs_sen_scu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_sys_kWh:
+            sample_data: -743.1110000000001
+            types_found: [float]
+        Qcs_sys_ahu_kWh:
+            sample_data: -2241.475
+            types_found: [float]
+        Qcs_sys_aru_kWh:
+            sample_data: -301.813
+            types_found: [float]
+        Qcs_sys_kWh:
+            sample_data: 2543.288
+            types_found: [float]
+        Qcs_sys_scu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhpro_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_dis_ls_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_em_ls_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_ahu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_aru_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_ahu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_aru_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_shu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_ahu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_aru_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_shu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qww_sys_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        T_ext_C:
+            sample_data: 24.2
+            types_found: [float]
+        T_int_C:
+            sample_data: 24.0
+            types_found: [float]
+        Tcdata_sys_re_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcdata_sys_sup_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcre_sys_re_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcre_sys_sup_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcs_sys_re_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcs_sys_re_ahu_C:
+            sample_data: 23.855999999999998
+            types_found: [float]
+        Tcs_sys_re_aru_C:
+            sample_data: 23.359
+            types_found: [float]
+        Tcs_sys_re_scu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcs_sys_sup_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tcs_sys_sup_ahu_C:
+            sample_data: 7.5
+            types_found: [float]
+        Tcs_sys_sup_aru_C:
+            sample_data: 7.5
+            types_found: [float]
+        Tcs_sys_sup_scu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_re_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_re_ahu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_re_aru_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_re_shu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_sup_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_sup_ahu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_sup_aru_C:
+            sample_data: 0.0
+            types_found: [float]
+        Ths_sys_sup_shu_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tww_sys_re_C:
+            sample_data: 0.0
+            types_found: [float]
+        Tww_sys_sup_C:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        mcpcdata_sys_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcpcre_sys_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcpcs_sys_ahu_kWperC:
+            sample_data: 137.041
+            types_found: [float]
+        mcpcs_sys_aru_kWperC:
+            sample_data: 19.031
+            types_found: [float]
+        mcpcs_sys_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcpcs_sys_scu_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcphs_sys_ahu_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcphs_sys_aru_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcphs_sys_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcphs_sys_shu_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcptw_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        mcpww_sys_kWperC:
+            sample_data: 0.0
+            types_found: [float]
+        people:
+            sample_data: 2350.0
+            types_found: [float]
+        theta_o_C:
+            sample_data: 24.708000000000002
+            types_found: [float]
+        x_int:
+            sample_data: 7.385
+            types_found: [float]
+    used_by: [sewage-potential, thermal-network]
+get_edge_mass_flow_csv_file:
+    created_by: [thermal-network]
+    file_path: C:\reference-case-open\baseline\outputs\data\optimization\network\layout\Nominal_EdgeMassFlow_at_design_DH__kgpers.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: 0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_value: !!python/long '8759'
+            types_found: [long]
+    used_by: []
+get_district_geometry:
+    created_by: []
+    description: scenario/inputs/building-geometry/district.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\district.shp
+    file_type: shp
+    schema:
+        Name:
+            sample_data: B019
+            types_found: [string]
+        floors_ag:
+            sample_data: !!python/long '8'
+            types_found: [long]
+        floors_bg:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        geometry:
+            sample_data: ((x1 y1, x2 y2, ...))
+            types_found: [Polygon]
+        height_ag:
+            sample_data: !!python/long '28'
+            types_found: [long]
+        height_bg:
+            sample_data: !!python/long '0'
+            types_found: [long]
+    used_by: [radiation-daysim]
+get_envelope_systems:
+    created_by: []
+    description: databases/Systems/emission_systems.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/systems\envelope_systems.xls
+    file_type: xls
+    schema:
+        CONSTRUCTION:
+            Cm_Af:
+                sample_data: !!python/long '300000'
+                types_found: [long]
+            Description:
+                sample_data: Heavy construction
+                types_found: [string]
+            code:
+                sample_data: T3
+                types_found: [string]
+        LEAKAGE:
+            Description:
+                sample_data: Very Leaky
+                types_found: [string]
+            code:
+                sample_data: T6
+                types_found: [string]
+            n50:
+                sample_data: !!python/long '6'
+                types_found: [long]
+        ROOF:
+            Description:
+                sample_data: concrete or rock pebbles finishing - Singapore
+                types_found: [string]
+            U_roof:
+                sample_data: 0.6
+                types_found: [float]
+            a_roof:
+                sample_data: 0.6
+                types_found: [float]
+            code:
+                sample_data: T7
+                types_found: [string]
+            e_roof:
+                sample_data: 0.94
+                types_found: [float]
+            r_roof:
+                sample_data: 0.4
+                types_found: [float]
+        SHADING:
+            Description:
+                sample_data: venetian blinds
+                types_found: [string]
+            code:
+                sample_data: T2
+                types_found: [string]
+            rf_sh:
+                sample_data: 0.15
+                types_found: [float]
+        WALL:
+            Description:
+                sample_data: concrete block exposed- NTU
+                types_found: [string]
+            U_base:
+                sample_data: 1.7
+                types_found: [float]
+            U_wall:
+                sample_data: 3.2
+                types_found: [float]
+            a_wall:
+                sample_data: 0.6
+                types_found: [float]
+            code:
+                sample_data: T6
+                types_found: [string]
+            e_wall:
+                sample_data: 0.95
+                types_found: [float]
+            r_wall:
+                sample_data: 0.4
+                types_found: [float]
+        WINDOW:
+            Description:
+                sample_data: window - SinBERBest Office
+                types_found: [string]
+            G_win:
+                sample_data: 0.2
+                types_found: [float]
+            U_win:
+                sample_data: 2.2
+                types_found: [float]
+            code:
+                sample_data: T10
+                types_found: [string]
+            e_win:
+                sample_data: 0.89
+                types_found: [float]
+    used_by: [radiation-daysim, demand]
+get_lake_potential:
+    created_by: [lake-potential]
+    description: null
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials\Lake_potential.csv
+    file_type: csv
+    schema:
+        hour:
+            sample_data: !!python/long '8759'
+            types_found: [long]
+        lake_potential:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+get_lca_embodied:
+    created_by: [emissions]
+    description: scenario/outputs/data/emissions/Total_LCA_embodied.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/emissions\Total_LCA_embodied.csv
+    file_type: csv
+    schema:
+        E_ghg_kgm2:
+            sample_data: 6.27
+            types_found: [float]
+        E_ghg_ton:
+            sample_data: 306.75
+            types_found: [float]
+        E_nre_pen_GJ:
+            sample_data: 3555.48
+            types_found: [float]
+        E_nre_pen_MJm2:
+            sample_data: 72.69
+            types_found: [float]
+        GFA_m2:
+            sample_data: 48914.39
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+    used_by: []
+get_lca_mobility:
+    created_by: [emissions]
+    description: scenario/outputs/data/emissions/Total_LCA_mobility.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/emissions\Total_LCA_mobility.csv
+    file_type: csv
+    schema:
+        GFA_m2:
+            sample_data: 48914.39
+            types_found: [float]
+        M_ghg_kgm2:
+            sample_data: 57.93
+            types_found: [float]
+        M_ghg_ton:
+            sample_data: 2833.61
+            types_found: [float]
+        M_nre_pen_GJ:
+            sample_data: 47921.42
+            types_found: [float]
+        M_nre_pen_MJm2:
+            sample_data: 979.7
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+    used_by: []
+get_lca_operation:
+    created_by: [emissions]
+    description: scenario/outputs/data/emissions/Total_LCA_operation.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/emissions\Total_LCA_operation.csv
+    file_type: csv
+    schema:
+        COAL_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        GFA_m2:
+            sample_data: 48914.39
+            types_found: [float]
+        GFA_m2.1:
+            sample_data: 48914.39
+            types_found: [float]
+        GRID_ghg_kgm2:
+            sample_data: 85.63
+            types_found: [float]
+        GRID_ghg_ton:
+            sample_data: 4188.44
+            types_found: [float]
+        GRID_nre_pen_GJ:
+            sample_data: 80347.71
+            types_found: [float]
+        GRID_nre_pen_MJm2:
+            sample_data: 1642.62
+            types_found: [float]
+        NG_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        Name.1:
+            sample_data: B010
+            types_found: [string]
+        OIL_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        O_ghg_kgm2:
+            sample_data: 85.63
+            types_found: [float]
+        O_ghg_ton:
+            sample_data: 4188.44
+            types_found: [float]
+        O_nre_pen_GJ:
+            sample_data: 80347.71
+            types_found: [float]
+        O_nre_pen_MJm2:
+            sample_data: 1642.62
+            types_found: [float]
+        PV_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        PV_ghg_kgm2.1:
+            sample_data: 0.0
+            types_found: [float]
+        PV_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        PV_ghg_ton.1:
+            sample_data: 0.0
+            types_found: [float]
+        PV_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        PV_nre_pen_GJ.1:
+            sample_data: 0.0
+            types_found: [float]
+        PV_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        PV_nre_pen_MJm2.1:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_ghg_kgm2:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_ghg_ton:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_nre_pen_GJ:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_nre_pen_MJm2:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: []
+get_life_cycle_inventory_building_systems:
+    created_by: []
+    description: "Returns the database of life cycle inventory for buildings systems.\
+        \ These are copied\n        to the scenario if they are not yet present, based\
+        \ on the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/SG/lifecycle\LCA_buildings.xlsx
+    file_type: xlsx
+    schema:
+        EMBODIED_EMISSIONS:
+            Excavation:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            Floor_g:
+                sample_data: !!python/long '44'
+                types_found: [long]
+            Floor_int:
+                sample_data: !!python/long '8'
+                types_found: [long]
+            Roof:
+                sample_data: !!python/long '47'
+                types_found: [long]
+            Services:
+                sample_data: !!python/long '7'
+                types_found: [long]
+            Wall_ext_ag:
+                sample_data: !!python/long '35'
+                types_found: [long]
+            Wall_ext_bg:
+                sample_data: !!python/long '49'
+                types_found: [long]
+            Wall_int_nosup:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            Wall_int_sup:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            Win_ext:
+                sample_data: !!python/long '85'
+                types_found: [long]
+            building_use:
+                sample_data: LIBRARY
+                types_found: [string]
+            standard:
+                sample_data: R
+                types_found: [string]
+            year_end:
+                sample_data: !!python/long '2030'
+                types_found: [long]
+            year_start:
+                sample_data: !!python/long '2021'
+                types_found: [long]
+        EMBODIED_ENERGY:
+            Excavation:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            Floor_g:
+                sample_data: !!python/long '551'
+                types_found: [long]
+            Floor_int:
+                sample_data: !!python/long '102'
+                types_found: [long]
+            Roof:
+                sample_data: !!python/long '598'
+                types_found: [long]
+            Services:
+                sample_data: !!python/long '108'
+                types_found: [long]
+            Wall_ext_ag:
+                sample_data: !!python/long '428'
+                types_found: [long]
+            Wall_ext_bg:
+                sample_data: !!python/long '633'
+                types_found: [long]
+            Wall_int_nosup:
+                sample_data: !!python/long '72'
+                types_found: [long]
+            Wall_int_sup:
+                sample_data: !!python/long '72'
+                types_found: [long]
+            Win_ext:
+                sample_data: !!python/long '1273'
+                types_found: [long]
+            building_use:
+                sample_data: LIBRARY
+                types_found: [string]
+            standard:
+                sample_data: R
+                types_found: [string]
+            year_end:
+                sample_data: !!python/long '2030'
+                types_found: [long]
+            year_start:
+                sample_data: !!python/long '2021'
+                types_found: [long]
+    used_by: [emissions]
+get_life_cycle_inventory_supply_systems:
+    created_by: []
+    description: "Returns the database of life cycle inventory for supply systems.\
+        \ These are copied\n        to the scenario if they are not yet present, based\
+        \ on the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/SG/lifecycle\LCA_infrastructure.xlsx
+    file_type: xlsx
+    schema:
+        COOLING:
+            Description:
+                sample_data: district cooling - natural gas-fired boiler for absorption
+                    chiller
+                types_found: [string]
+            code:
+                sample_data: T25
+                types_found: [string]
+            eff_cs:
+                sample_data: 0.8
+                types_found: [float]
+            reference:
+                sample_data: educated guess
+                types_found: [string]
+            scale_cs:
+                sample_data: DISTRICT
+                types_found: [string]
+            source_cs:
+                sample_data: NATURALGAS
+                types_found: [string]
+        DHW:
+            Description:
+                sample_data: solar collector
+                types_found: [string]
+            code:
+                sample_data: T7
+                types_found: [string]
+            eff_dhw:
+                sample_data: 0.7
+                types_found: [float]
+            reference:
+                sample_data: educated guess
+                types_found: [string]
+            scale_dhw:
+                sample_data: BUILDING
+                types_found: [string]
+            source_dhw:
+                sample_data: SOLAR
+                types_found: [string]
+        ELECTRICITY:
+            Description:
+                sample_data: Singaporean consumer mix
+                types_found: [string]
+            code:
+                sample_data: T6
+                types_found: [string]
+            eff_el:
+                sample_data: 0.99
+                types_found: [float]
+            reference:
+                sample_data: educated guess
+                types_found: [string]
+            scale_el:
+                sample_data: CITY
+                types_found: [string]
+            source_el:
+                sample_data: GRID
+                types_found: [string]
+        HEATING:
+            Description:
+                sample_data: solar collector
+                types_found: [string]
+            code:
+                sample_data: T7
+                types_found: [string]
+            eff_hs:
+                sample_data: 0.7
+                types_found: [float]
+            reference:
+                sample_data: educated guess
+                types_found: [string]
+            scale_hs:
+                sample_data: BUILDING
+                types_found: [string]
+            source_hs:
+                sample_data: SOLAR
+                types_found: [string]
+        RESOURCES:
+            CO2:
+                sample_data: 0.0001
+                types_found: [float]
+            Description:
+                sample_data: Solar
+                types_found: [string]
+            PEN:
+                sample_data: 0.0001
+                types_found: [float]
+            code:
+                sample_data: SOLAR
+                types_found: [string]
+            costs_kWh:
+                sample_data: 0.0001
+                types_found: [float]
+            reference:
+                sample_data: PEN and CO2 zero equivalent due to renewable technology,
+                    cost from CEA, costs in USD-2015
+                types_found: [string, null]
+    used_by: [demand, operation-costs, emissions]
+get_network_layout_edges_shapefile:
+    created_by: [thermal-network, network-layout]
+    description: scenario/inputs/network/DH or DC/network-edges.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/networks/DC\edges.shp
+    file_type: shp
+    schema:
+        Name:
+            sample_data: PIPE24
+            types_found: [string]
+        Pipe_DN:
+            sample_data: !!python/long '150'
+            types_found: [long]
+        Type_mat:
+            sample_data: T1
+            types_found: [string]
+        geometry:
+            sample_data: ((x1 y1, x2 y2, ...))
+            types_found: [LineString]
+        weight:
+            sample_data: 38.071335688888716
+            types_found: [float, null]
+    used_by: []
+get_network_layout_nodes_shapefile:
+    created_by: [network-layout]
+    description: scenario/inputs/network/DH or DC/network-nodes.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/networks/DC\nodes.shp
+    file_type: shp
+    schema:
+        Building:
+            sample_data: NONE
+            types_found: [string]
+        Name:
+            sample_data: NODE25
+            types_found: [string]
+        Type:
+            sample_data: PLANT
+            types_found: [string]
+        geometry:
+            sample_data: ((x1 y1, x2 y2, ...))
+            types_found: [Point]
+    used_by: [thermal-network]
+get_network_node_types_csv_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Nodes.csv
+    file_type: csv
+    schema:
+        Building:
+            sample_value: NONE
+            types_found: [str]
+        Name:
+            sample_value: NODE25
+            types_found: [str]
+        Q_hex_h_ahu:
+            sample_value: 223.0
+            types_found: [float, null]
+        Q_hex_h_aru:
+            sample_value: 46.0
+            types_found: [float, null]
+        Q_hex_h_shu:
+            sample_value: 0.0
+            types_found: [float, null]
+        Q_hex_h_ww:
+            sample_value: 59.0
+            types_found: [float, null]
+        Q_hex_plant_kW:
+            sample_value: 0.0
+            types_found: [float]
+        Type:
+            sample_value: NONE
+            types_found: [str]
+        'Unnamed: 0':
+            sample_value: !!python/long '30'
+            types_found: [long]
+        coordinates:
+            sample_value: (463411.2481, 5225358.972)
+            types_found: [str]
+    used_by: []
+get_node_mass_flow_csv_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\Nominal_NodeMassFlow_at_design_DH__kgpers.csv
+    file_type: csv
+    schema:
+        NODE0:
+            sample_value: 0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_value: !!python/long '8759'
+            types_found: [long]
+    used_by: []
+get_optimization_network_edge_list_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Edges.csv
+    file_type: csv
+    schema:
+        D_ext_m:
+            sample_value: 0.1397
+            types_found: [float]
+        D_ins_m:
+            sample_value: 0.25
+            types_found: [float]
+        D_int_m:
+            sample_value: 0.1325
+            types_found: [float]
+        Name:
+            sample_value: PIPE29
+            types_found: [str]
+        Pipe_DN_x:
+            sample_value: 125.0
+            types_found: [float]
+        Pipe_DN_y:
+            sample_value: 125.0
+            types_found: [float]
+        Type_mat:
+            sample_value: T1
+            types_found: [str]
+        Vdot_max_m3s:
+            sample_value: 0.045743321706281266
+            types_found: [float]
+        Vdot_min_m3s:
+            sample_value: 0.004149258372439969
+            types_found: [float]
+        coordinates:
+            sample_value: (463249.0418, 5225404.0336)
+            types_found: [str]
+        end node:
+            sample_value: NODE5
+            types_found: [str]
+        geometry:
+            sample_value: LINESTRING (463249.0418 5225404.0336, 463248.0418 5225403.0336)
+            types_found: [str]
+        mdot_max_kgs:
+            sample_value: 45.65183506286871
+            types_found: [float]
+        mdot_min_kgs:
+            sample_value: 4.1409598556950895
+            types_found: [float]
+        pipe length:
+            sample_value: 1.4142135623730951
+            types_found: [float]
+        start node:
+            sample_value: NODE30
+            types_found: [str]
+    used_by: []
+get_optimization_network_edge_node_matrix_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__EdgeNode.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: -0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_value: NODE30
+            types_found: [str]
+    used_by: []
+get_optimization_network_layout_massflow_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__MassFlow_kgs.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: 0.0
+            types_found: [float]
+    used_by: []
+get_optimization_network_layout_plant_heat_requirement_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Plant_heat_requirement_kW.csv
+    file_type: csv
+    schema:
+        NONE:
+            sample_value: 302.6
+            types_found: [float]
+    used_by: []
+get_optimization_network_layout_ploss_system_edges_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__ploss_System_edges_kW.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: 0.0
+            types_found: [float]
+    used_by: []
+get_optimization_network_layout_pressure_drop_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__P_DeltaP_Pa.csv
+    file_type: csv
+    schema:
+        pressure_loss_return_Pa:
+            sample_value: 33939.863
+            types_found: [float]
+        pressure_loss_substations_Pa:
+            sample_value: 15266.503999999999
+            types_found: [float]
+        pressure_loss_supply_Pa:
+            sample_value: 31133.083
+            types_found: [float]
+        pressure_loss_total_Pa:
+            sample_value: 80339.451
+            types_found: [float]
+    used_by: []
+get_optimization_network_layout_qloss_system_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__qloss_System_kW.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: 0.0
+            types_found: [float]
+    used_by: []
+get_optimization_network_layout_return_temperature_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__T_Return_K.csv
+    file_type: csv
+    schema:
+        NODE0:
+            sample_value: 309.611
+            types_found: [float]
+get_optimization_network_layout_supply_temperature_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__T_Supply_K.csv
+    file_type: csv
+    schema:
+        NODE0:
+            sample_value: 341.471
+            types_found: [float]
+get_optimization_network_node_list_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Nodes.csv
+    file_type: csv
+    schema:
+        Building:
+            sample_value: NONE
+            types_found: [str]
+        Name:
+            sample_value: NODE25
+            types_found: [str]
+        Q_hex_h_ahu:
+            sample_value: 223.0
+            types_found: [float, null]
+        Q_hex_h_aru:
+            sample_value: 46.0
+            types_found: [float, null]
+        Q_hex_h_shu:
+            sample_value: 0.0
+            types_found: [float, null]
+        Q_hex_h_ww:
+            sample_value: 59.0
+            types_found: [float, null]
+        Q_hex_plant_kW:
+            sample_value: 0.0
+            types_found: [float]
+        Type:
+            sample_value: NONE
+            types_found: [str]
+        'Unnamed: 0':
+            sample_value: !!python/long '30'
+            types_found: [long]
+        coordinates:
+            sample_value: (463411.2481, 5225358.972)
+            types_found: [str]
+    used_by: []
+get_optimization_network_substation_ploss_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__ploss_Substations_kW.csv
+    file_type: csv
+    schema:
+        B001:
+            sample_value: 0.0
+            types_found: [float]
+    used_by: []
+get_radiation_building:
+    created_by: [radiation-daysim]
+    description: scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/solar-radiation\B001_insolation_Whm2.json
+    file_type: json
+    schema:
+        srf0:
+            sample_data: 0.0
+            types_found: [float]
+    used_by: [photovoltaic, photovoltaic-thermal, solar-collector, demand]
+get_radiation_metadata:
+    created_by: [radiation-daysim]
+    description: scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/solar-radiation\B001_geometry.csv
+    file_type: csv
+    schema:
+        AREA_m2:
+            sample_data: 4.888679593457344
+            types_found: [float]
+        BUILDING:
+            sample_data: B001
+            types_found: [string]
+        SURFACE:
+            sample_data: srf809
+            types_found: [string]
+        TYPE:
+            sample_data: roofs
+            types_found: [string]
+        Xcoor:
+            sample_data: 371706.16910259466
+            types_found: [float]
+        Xdir:
+            sample_data: 0.0
+            types_found: [float]
+        Ycoor:
+            sample_data: 140269.47920131625
+            types_found: [float]
+        Ydir:
+            sample_data: 0.0
+            types_found: [float]
+        Zcoor:
+            sample_data: 29.01
+            types_found: [float]
+        Zdir:
+            sample_data: 1.0
+            types_found: [float]
+        orientation:
+            sample_data: top
+            types_found: [string]
+    used_by: [photovoltaic, photovoltaic-thermal, solar-collector, demand]
+get_sewage_heat_potential:
+    created_by: [sewage-potential]
+    description: null
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/potentials\SWP.csv
+    file_type: csv
+    schema:
+        Qsw_kW:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        tin_HP_C:
+            sample_data: 42.768
+            types_found: [float]
+        tin_sw_C:
+            sample_data: 42.768
+            types_found: [float]
+        tout_HP_C:
+            sample_data: 42.768
+            types_found: [float]
+        tout_sw_C:
+            sample_data: 42.768
+            types_found: [float]
+        ts_C:
+            sample_data: 42.768
+            types_found: [float]
+    used_by: []
+get_street_network:
+    created_by: []
+    description: null
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/networks\streets.shp
+    file_type: shp
+    schema:
+        FID:
+            sample_data: !!python/long '16'
+            types_found: [long]
+        geometry:
+            sample_data: ((x1 y1, x2 y2, ...))
+            types_found: [LineString]
+    used_by: [network-layout]
+get_supply_systems:
+    created_by: []
+    description: "Returns the database of supply systems for cost analysis. These\
+        \ are copied\n        to the scenario if they are not yet present, based on\
+        \ the configured region for the scenario."
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/systems\supply_systems.xls
+    file_type: xls
+    schema:
+        Absorption_chiller:
+            Description:
+                sample_data: LiBr triple effect
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            a_e:
+                sample_data: -2.14
+                types_found: [float]
+            a_g:
+                sample_data: -2.14
+                types_found: [float]
+            assumption:
+                sample_data: IR_%
+                types_found: [string]
+            b:
+                sample_data: 0.6424
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: !!python/long '1628200'
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '116300'
+                types_found: [long]
+            code:
+                sample_data: ACH5
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e_e:
+                sample_data: 3.29
+                types_found: [float]
+            e_g:
+                sample_data: 3.29
+                types_found: [float]
+            el_W:
+                sample_data: 6.55
+                types_found: [float]
+            m_cw:
+                sample_data: 62.0
+                types_found: [float]
+            m_hw:
+                sample_data: 10.0
+                types_found: [float]
+            r_e:
+                sample_data: -1171.7
+                types_found: [float]
+            r_g:
+                sample_data: -504.2
+                types_found: [float]
+            s_e:
+                sample_data: 14.6
+                types_found: [float]
+            s_g:
+                sample_data: 7.05
+                types_found: [float]
+            type:
+                sample_data: triple
+                types_found: [string]
+            unit:
+                sample_data: W
+                types_found: [string]
+        BH:
+            Description:
+                sample_data: borehole
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '50'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                types_found: [null]
+            b:
+                sample_data: 47.427937915742795
+                types_found: [float]
+            c:
+                sample_data: 0.74
+                types_found: [float]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: BH1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        Boiler:
+            Description:
+                sample_data: condensing boiler
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: 93126.38580931263
+                types_found: [float]
+            assumption:
+                types_found: [null]
+            b:
+                sample_data: 0.015521064301552106
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '320000'
+                types_found: [long]
+            code:
+                sample_data: BO1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        CCGT:
+            Description:
+                sample_data: combined cycle gas turbine
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '6'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '3'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                types_found: [null]
+            b:
+                sample_data: 555.8316008316009
+                types_found: [float]
+            c:
+                sample_data: 0.5967
+                types_found: [float]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: CCGT1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        CT:
+            Description:
+                sample_data: centralized cooling tower
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '15'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: 1457.3
+                types_found: [float]
+            assumption:
+                sample_data: all
+                types_found: [string]
+            b:
+                sample_data: 0.0161
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '10000000'
+                types_found: [long]
+            code:
+                sample_data: CT1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        Chiller:
+            Description:
+                sample_data: vapor compression chiller
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: 0.0
+                types_found: [float]
+            assumption:
+                sample_data: IR_%
+                types_found: [string]
+            b:
+                sample_data: 0.360631104
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: CH3
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        FC:
+            ' Assumptions':
+                sample_data: everything
+                types_found: [string, null]
+            Description:
+                sample_data: solid oxide fuel cell
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '10'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            b:
+                sample_data: 13.721413721413722
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: FC1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        Furnace:
+            Description:
+                sample_data: furnace combined with ORC
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                types_found: [null]
+            b:
+                sample_data: 0.7427937915742794
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: !!python/long '10000000'
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1000000'
+                types_found: [long]
+            code:
+                sample_data: FU1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        HEX:
+            Currency:
+                sample_data: USD-2015
+                types_found: [string]
+            Description:
+                sample_data: District substation heat exchanger
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: 3381.0
+                types_found: [float]
+            a_p:
+                sample_data: !!python/long '5056'
+                types_found: [long]
+            assumption:
+                sample_data: Values under 1 and above 50 are assumptions, as no datasheet
+                    values are available in this area. a_p to e_p denote the pressure
+                    drop in Pa
+                types_found: [string, null]
+            b:
+                sample_data: 229.8
+                types_found: [float]
+            b_p:
+                sample_data: 319.9
+                types_found: [float]
+            c:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            c_p:
+                sample_data: 0.4153
+                types_found: [float]
+            cap_max:
+                sample_data: !!python/long '500'
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            code:
+                sample_data: HEX2
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            d_p:
+                sample_data: !!python/long '-1271'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e_p:
+                sample_data: 0.006833
+                types_found: [float]
+            unit:
+                sample_data: m^2
+                types_found: [string]
+        HP:
+            Description:
+                sample_data: water-water heat pump
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '6'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                types_found: [null]
+            b:
+                sample_data: 9.859201773835919
+                types_found: [float]
+            c:
+                sample_data: 1.0
+                types_found: [float]
+            cap_max:
+                sample_data: !!python/long '20000000'
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1000000'
+                types_found: [long]
+            code:
+                sample_data: HP2
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: -0.547150776053215
+                types_found: [float]
+            unit:
+                sample_data: W
+                types_found: [string]
+        PV:
+            Description:
+                sample_data: generic amorphous silicon panel
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            PV_Bref:
+                sample_data: 0.0026
+                types_found: [float]
+            PV_a0:
+                sample_data: 1.10044085
+                types_found: [float]
+            PV_a1:
+                sample_data: -0.06142323
+                types_found: [float]
+            PV_a2:
+                sample_data: -0.00442732
+                types_found: [float]
+            PV_a3:
+                sample_data: 0.000631504
+                types_found: [float]
+            PV_a4:
+                sample_data: -1.9184e-05
+                types_found: [float]
+            PV_n:
+                sample_data: 0.08
+                types_found: [float]
+            PV_noct:
+                sample_data: 38.1
+                types_found: [float]
+            PV_th:
+                sample_data: 0.002
+                types_found: [float]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                sample_data: IR_%, capacity
+                types_found: [string]
+            b:
+                sample_data: 2.598752598752599
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '200000'
+                types_found: [long]
+            code:
+                sample_data: PV3
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            misc_losses:
+                sample_data: 0.1
+                types_found: [float]
+            module_length_m:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            type:
+                sample_data: PV
+                types_found: [string]
+            unit:
+                sample_data: W
+                types_found: [string]
+        PVT:
+            Description:
+                sample_data: generic PVT
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                sample_data: IR_%
+                types_found: [string]
+            b:
+                sample_data: 5.197505197505198
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: PVT1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        Piping:
+            'Currency ':
+                sample_data: USD-2015
+                types_found: [string]
+            Description:
+                sample_data: DN20
+                types_found: [string]
+            Diameter_max:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            Diameter_min:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            Investment:
+                sample_data: 491.5286645384411
+                types_found: [float]
+            Unit:
+                sample_data: mm
+                types_found: [string]
+            assumption:
+                sample_data: https://www.bfs.admin.ch/bfs/de/home/statistiken/preise.assetdetail.4924986.html
+                types_found: [string, null]
+        Pricing:
+            Description:
+                sample_data: mwst
+                types_found: [string]
+            assumption:
+                types_found: [null]
+            currency:
+                sample_data: USD-2015
+                types_found: [string, null]
+            value:
+                sample_data: 0.08
+                types_found: [float]
+        Pump:
+            Description:
+                sample_data: generic pump
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '6'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                sample_data: all
+                types_found: [string]
+            b:
+                sample_data: 1.016839916839917
+                types_found: [float]
+            c:
+                sample_data: 0.8873
+                types_found: [float]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '37000'
+                types_found: [long]
+            code:
+                sample_data: PU1
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            unit:
+                sample_data: W
+                types_found: [string]
+        SC:
+            C_eff:
+                sample_data: !!python/long '39000'
+                types_found: [long]
+            Cp_fluid:
+                sample_data: !!python/long '3680'
+                types_found: [long]
+            Description:
+                sample_data: evacuated tube
+                types_found: [string]
+            IAM_d:
+                sample_data: 0.91
+                types_found: [float]
+            IR_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '20'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '5'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            aperture_area_ratio:
+                sample_data: 0.655
+                types_found: [float]
+            assumption:
+                sample_data: IR_%
+                types_found: [string]
+            b:
+                sample_data: 2130.977130977131
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            c1:
+                sample_data: 0.89
+                types_found: [float]
+            c2:
+                sample_data: 0.0199
+                types_found: [float]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            code:
+                sample_data: SC2
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            dP1:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            dP2:
+                sample_data: 2825.9464271206075
+                types_found: [float]
+            dP3:
+                sample_data: 7771.352674581671
+                types_found: [float]
+            dP4:
+                sample_data: 706.4866067801519
+                types_found: [float]
+            e:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            mB0_r:
+                sample_data: 88.2
+                types_found: [float]
+            mB_max_r:
+                sample_data: 147.12
+                types_found: [float]
+            mB_min_r:
+                sample_data: 33.1
+                types_found: [float]
+            module_area_m2:
+                sample_data: 4.322
+                types_found: [float]
+            module_length_m:
+                sample_data: !!python/long '2'
+                types_found: [long]
+            n0:
+                sample_data: 0.721
+                types_found: [float]
+            t_max:
+                sample_data: !!python/long '196'
+                types_found: [long]
+            type:
+                sample_data: ET
+                types_found: [string]
+            unit:
+                sample_data: m2
+                types_found: [string]
+        TES:
+            Description:
+                sample_data: short-term storage tank
+                types_found: [string]
+            IR_%:
+                sample_data: !!python/long '6'
+                types_found: [long]
+            LT_yr:
+                sample_data: !!python/long '25'
+                types_found: [long]
+            O&M_%:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            a:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            assumption:
+                sample_data: cap_min, cap_max
+                types_found: [string]
+            b:
+                sample_data: 699.4740796393689
+                types_found: [float]
+            c:
+                sample_data: !!python/long '1'
+                types_found: [long]
+            cap_max:
+                sample_data: 10000000000
+                types_found: [long]
+            cap_min:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            code:
+                sample_data: TES2
+                types_found: [string]
+            currency:
+                sample_data: USD-2015
+                types_found: [string]
+            d:
+                sample_data: !!python/long '0'
+                types_found: [long]
+            e:
+                sample_data: 0.0
+                types_found: [float]
+            'unit ':
+                sample_data: m3
+                types_found: [string]
+    used_by: [thermal-network, photovoltaic, photovoltaic-thermal, solar-collector]
+get_technical_emission_systems:
+    created_by: []
+    description: databases/Systems/emission_systems.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\databases/CH/systems\emission_systems.xls
+    file_type: xls
+    schema:
+        controller:
+            Description:
+                sample_data: room temperature control (electromagnetically/electronically).
+                types_found: [string]
+            code:
+                sample_data: T4
+                types_found: [string]
+            dT_Qcs:
+                sample_data: 1.8
+                types_found: [float]
+            dT_Qhs:
+                sample_data: 1.8
+                types_found: [float]
+        cooling:
+            Description:
+                sample_data: 'central AC (6/15) '
+                types_found: [string]
+            Qcsmax_Wm2:
+                sample_data: !!python/long '500'
+                types_found: [long]
+            Tc_sup_air_ahu_C:
+                sample_data: 16.0
+                types_found: [float, null]
+            Tc_sup_air_aru_C:
+                sample_data: 16.0
+                types_found: [float, null]
+            Tscs0_ahu_C:
+                sample_data: 7.5
+                types_found: [float, null]
+            Tscs0_aru_C:
+                sample_data: 7.5
+                types_found: [float, null]
+            Tscs0_scu_C:
+                sample_data: 18.0
+                types_found: [float, null]
+            code:
+                sample_data: T3
+                types_found: [string]
+            dTcs0_ahu_C:
+                sample_data: 7.0
+                types_found: [float, null]
+            dTcs0_aru_C:
+                sample_data: 7.0
+                types_found: [float, null]
+            dTcs0_scu_C:
+                sample_data: 3.0
+                types_found: [float, null]
+            dTcs_C:
+                sample_data: 0.5
+                types_found: [float]
+        dhw:
+            Description:
+                sample_data: 'High temperature in the tropics (60/25) '
+                types_found: [string]
+            Qwwmax_Wm2:
+                sample_data: !!python/long '500'
+                types_found: [long]
+            Tsww0_C:
+                sample_data: !!python/long '60'
+                types_found: [long]
+            code:
+                sample_data: T4
+                types_found: [string]
+        heating:
+            Description:
+                sample_data: 'Floor heating (40/35) '
+                types_found: [string]
+            Qhsmax_Wm2:
+                sample_data: !!python/long '150'
+                types_found: [long]
+            Th_sup_air_ahu_C:
+                sample_data: 36.0
+                types_found: [float, null]
+            Th_sup_air_aru_C:
+                sample_data: 36.0
+                types_found: [float, null]
+            Tshs0_ahu_C:
+                sample_data: 40.0
+                types_found: [float, null]
+            Tshs0_aru_C:
+                sample_data: 40.0
+                types_found: [float, null]
+            Tshs0_shu_C:
+                sample_data: 40.0
+                types_found: [float, null]
+            code:
+                sample_data: T4
+                types_found: [string]
+            dThs0_ahu_C:
+                sample_data: 20.0
+                types_found: [float, null]
+            dThs0_aru_C:
+                sample_data: 20.0
+                types_found: [float, null]
+            dThs0_shu_C:
+                sample_data: 5.0
+                types_found: [float, null]
+            dThs_C:
+                sample_data: -0.9
+                types_found: [float]
+        ventilation:
+            Description:
+                sample_data: Window ventilation - no night flushing
+                types_found: [string]
+            ECONOMIZER:
+                sample_data: false
+                types_found: [bool]
+            HEAT_REC:
+                sample_data: false
+                types_found: [bool]
+            MECH_VENT:
+                sample_data: false
+                types_found: [bool]
+            NIGHT_FLSH:
+                sample_data: false
+                types_found: [bool]
+            WIN_VENT:
+                sample_data: true
+                types_found: [bool]
+            code:
+                sample_data: T3
+                types_found: [string]
+    used_by: [demand]
+get_thermal_demand_csv_file:
+    created_by: [thermal-network]
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\Aggregated_Demand_DH__Wh.csv
+    file_type: csv
+    schema:
+        B001:
+            sample_value: 0.0
+            types_found: [float]
+        'Unnamed: 0':
+            sample_value: !!python/long '8759'
+            types_found: [long]
+    used_by: []
+get_thermal_networks:
+    created_by: []
+    file_path: c:\reference-case-open\WTP_CBD_h\databases\CH\systems\thermal_networks.xls
+    file_type: xls
+    schema:
+        !!python/unicode 'MATERIAL PROPERTIES':
+            !!python/unicode 'Cp_JkgK':
+                sample_value: !!python/long '550'
+                types_found: [long]
+            !!python/unicode 'code':
+                sample_value: !!python/unicode 'T5'
+                types_found: [str]
+            !!python/unicode 'lambda_WmK':
+                sample_value: 0.38
+                types_found: [float]
+            !!python/unicode 'material':
+                sample_value: !!python/unicode 'PEX'
+                types_found: [str]
+            !!python/unicode 'rho_kgm3':
+                sample_value: !!python/long '938'
+                types_found: [long]
+        !!python/unicode 'PIPING CATALOG':
+            !!python/unicode 'D_ext_m':
+                sample_value: 1.52869695
+                types_found: [float]
+            !!python/unicode 'D_ins_m':
+                sample_value: 1.9947486772999998
+                types_found: [float]
+            !!python/unicode 'D_int_m':
+                sample_value: 1.4941228500000001
+                types_found: [float]
+            !!python/unicode 'Pipe_DN':
+                sample_value: !!python/long '1500'
+                types_found: [long]
+            !!python/unicode 'Vdot_max_m3s':
+                sample_value: 10.76274617420937
+                types_found: [float]
+            !!python/unicode 'Vdot_min_m3s':
+                sample_value: 0.5169956864157574
+                types_found: [float]
+    used_by: [thermal-network]
+get_terrain:
+    created_by: []
+    description: scenario/inputs/topography/terrain.tif
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/topography\terrain.tif
+    file_type: tif
+    schema: {}
+    used_by: [radiation-daysim]
+get_total_demand:
+    created_by: [demand]
+    description: scenario/outputs/data/demand/Total_demand.csv
+    file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/demand\Total_demand.csv
+    file_type: csv
+    schema:
+        Af_m2:
+            sample_data: 41088.084
+            types_found: [float]
+        Aroof_m2:
+            sample_data: 4076.199
+            types_found: [float]
+        COAL_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        COAL_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cdata_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cre_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        DC_cs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        DH_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        DH_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        E_cdata0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        E_cdata_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        E_cre0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        E_cre_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        E_cs0_kW:
+            sample_data: 1577.5620000000001
+            types_found: [float]
+        E_cs_MWhyr:
+            sample_data: 4216.749
+            types_found: [float]
+        E_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        E_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        E_sys0_kW:
+            sample_data: 913.715
+            types_found: [float]
+        E_sys_MWhyr:
+            sample_data: 4664.590999999999
+            types_found: [float]
+        E_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        E_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Eal0_kW:
+            sample_data: 913.148
+            types_found: [float]
+        Eal_MWhyr:
+            sample_data: 4657.619000000001
+            types_found: [float]
+        Eaux0_kW:
+            sample_data: 3.907
+            types_found: [float]
+        Eaux_MWhyr:
+            sample_data: 6.972
+            types_found: [float]
+        Edata0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Edata_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Epro0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Epro_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        GFA_m2:
+            sample_data: 48914.385
+            types_found: [float]
+        GRID0_kW:
+            sample_data: 2487.5820000000003
+            types_found: [float]
+        GRID_MWhyr:
+            sample_data: 8881.34
+            types_found: [float]
+        NFA_m2:
+            sample_data: 48914.385
+            types_found: [float]
+        NG_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        NG_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        NG_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Name:
+            sample_data: B010
+            types_found: [string]
+        OIL_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        OIL_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        PV0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        PV_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        QC_sys0_kW:
+            sample_data: 5651.345
+            types_found: [float]
+        QC_sys_MWhyr:
+            sample_data: 19034.678
+            types_found: [float]
+        QH_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        QH_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcdata0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcdata_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcdata_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcdata_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcre_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_MWhyr:
+            sample_data: -18681.528000000002
+            types_found: [float]
+        Qcs_dis_ls0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_dis_ls_MWhyr:
+            sample_data: -4.622
+            types_found: [float]
+        Qcs_em_ls0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_em_ls_MWhyr:
+            sample_data: -348.528
+            types_found: [float]
+        Qcs_lat_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_lat_ahu_MWhyr:
+            sample_data: -9048.286
+            types_found: [float]
+        Qcs_lat_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_lat_aru_MWhyr:
+            sample_data: -1059.479
+            types_found: [float]
+        Qcs_lat_sys0_kW:
+            sample_data: 3797.1540000000005
+            types_found: [float]
+        Qcs_lat_sys_MWhyr:
+            sample_data: 10107.766
+            types_found: [float]
+        Qcs_sen_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_ahu_MWhyr:
+            sample_data: -2766.322
+            types_found: [float]
+        Qcs_sen_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_aru_MWhyr:
+            sample_data: -5807.441
+            types_found: [float]
+        Qcs_sen_scu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_scu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sen_sys_MWhyr:
+            sample_data: -8573.763
+            types_found: [float]
+        Qcs_sys0_kW:
+            sample_data: 5651.345
+            types_found: [float]
+        Qcs_sys_MWhyr:
+            sample_data: 19034.678
+            types_found: [float]
+        Qcs_sys_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sys_ahu_MWhyr:
+            sample_data: -11928.566
+            types_found: [float]
+        Qcs_sys_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sys_aru_MWhyr:
+            sample_data: -7106.111999999999
+            types_found: [float]
+        Qcs_sys_scu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcs_sys_scu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhpro_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhpro_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_dis_ls0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_dis_ls_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_em_ls0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_em_ls_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_ahu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_aru_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_lat_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_ahu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_aru_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_shu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_shu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sen_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_ahu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_ahu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_aru0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_aru_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_shu0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qhs_sys_shu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qww_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qww_sys_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        SOLAR_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_hs_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        WOOD_ww_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        people0:
+            sample_data: 5665.0
+            types_found: [float]
+    used_by: [sewage-potential, emissions, operation-costs, network-layout]
+get_weather:
+    created_by: []
+    description: "weather/{name}.epw Returns the path to a weather file with the name\
+        \ ``name``. This can either be one\n        of the pre-configured weather\
+        \ files (see ``get_weather_names``) or a path to an existing weather file.\n\
+        \        Returns the default weather file if no other file can be resolved."
+    file_path: c:\reference-case-open\WTP_CBD_h\../../users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather\Singapore.epw
+    file_type: epw
+    schema:
+        Albedo (index = 32):
+            sample_data: 0.2
+            types_found: [float]
+        aerosol_opt_thousandths (index = 29):
+            sample_data: 0.24100000000000002
+            types_found: [float]
+        atmos_Pa (index = 9):
+            sample_data: !!python/long '100889'
+            types_found: [long]
+        ceiling_hgt_m (index = 25):
+            sample_data: !!python/long '99999'
+            types_found: [long]
+        datasource (index = 5):
+            sample_data: '*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?*?'
+            types_found: [string]
+        day (index = 2):
+            sample_data: !!python/long '31'
+            types_found: [long]
+        days_last_snow (index = 31):
+            sample_data: !!python/long '88'
+            types_found: [long]
+        dewpoint_C (index = 7):
+            sample_data: 22.6
+            types_found: [float]
+        difhorillum_lux (index = 18):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        difhorrad_Whm2 (index = 15):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        dirnorillum_lux (index = 17):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        dirnorrad_Whm2 (index = 14):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        drybulb_C (index = 6):
+            sample_data: 24.2
+            types_found: [float]
+        extdirrad_Whm2 (index = 11):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        exthorrad_Whm2 (index = 10):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        glohorillum_lux (index = 16):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        glohorrad_Whm2 (index = 13):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        horirsky_Whm2 (index = 12):
+            sample_data: !!python/long '402'
+            types_found: [long]
+        hour (index = 3):
+            sample_data: !!python/long '24'
+            types_found: [long]
+        liq_precip_depth_mm (index = 33):
+            sample_data: 0.0
+            types_found: [float]
+        liq_precip_rate_Hour (index = 34):
+            sample_data: 99.0
+            types_found: [float]
+        minute (index = 4):
+            sample_data: !!python/long '60'
+            types_found: [long]
+        month (index = 1):
+            sample_data: !!python/long '12'
+            types_found: [long]
+        opaqskycvr_tenths (index = 23):
+            sample_data: !!python/long '6'
+            types_found: [long]
+        precip_wtr_mm (index = 28):
+            sample_data: !!python/long '45'
+            types_found: [long]
+        presweathcodes (index = 27):
+            sample_data: !!python/long '999999999'
+            types_found: [long]
+        presweathobs (index = 26):
+            sample_data: !!python/long '9'
+            types_found: [long]
+        relhum_percent (index = 8):
+            sample_data: !!python/long '91'
+            types_found: [long]
+        snowdepth_cm (index = 30):
+            sample_data: !!python/long '0'
+            types_found: [long]
+        totskycvr_tenths (index = 22):
+            sample_data: !!python/long '6'
+            types_found: [long]
+        visibility_km (index = 24):
+            sample_data: !!python/long '9999'
+            types_found: [long]
+        winddir_deg (index = 20):
+            sample_data: !!python/long '133'
+            types_found: [long]
+        windspd_ms (index = 21):
+            sample_data: 0.1
+            types_found: [float]
+        year (index = 0):
+            sample_data: !!python/long '2005'
+            types_found: [long]
+        zenlum_lux (index = 19):
+            sample_data: !!python/long '9999'
+            types_found: [long]
+    used_by: [radiation-daysim, photovoltaic, photovoltaic-thermal, solar-collector,
+        demand, thermal-network]
+get_zone_geometry:
+    created_by: []
+    description: scenario/inputs/building-geometry/zone.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\zone.shp
+    file_type: shp
+    schema:
+        Name:
+            sample_data: B010
+            types_found: [string]
+        floors_ag:
+            sample_data: !!python/long '12'
+            types_found: [long]
+        floors_bg:
+            sample_data: !!python/long '0'
+            types_found: [long]
+        geometry:
+            sample_data: ((x1 y1, x2 y2, ...))
+            types_found: [Polygon]
+        height_ag:
+            sample_data: !!python/long '42'
+            types_found: [long]
+        height_bg:
+            sample_data: !!python/long '0'
+            types_found: [long]
+    used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation-daysim,
+        demand, solar-collector]
