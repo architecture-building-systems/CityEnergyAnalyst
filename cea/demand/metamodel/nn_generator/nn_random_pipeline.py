@@ -31,7 +31,7 @@ from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_r
 from cea.utilities import epwreader
 
 def run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, scalerX,
-                    scalerT, multiprocessing, config, nn_delay, climatic_variables, region, year,use_daysim_radiation):
+                    scalerT, multiprocessing, config, nn_delay, climatic_variables, year,use_daysim_radiation):
     '''
     this function enables a pipeline of tasks by calling a random sampler and a neural network trainer
     :param locator: points to the variables
@@ -43,7 +43,7 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
     '''
     #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
     sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path,
-                  multiprocessing, config, nn_delay, climatic_variables, region, year, use_daysim_radiation)
+                  multiprocessing, config, nn_delay, climatic_variables, year, use_daysim_radiation)
     #   reads the n random files from the previous step and creat the input and targets for the neural net
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     #   train the neural net
@@ -54,7 +54,7 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
         np.random.seed(i)
         #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
         sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path,
-                      multiprocessing, config, nn_delay, climatic_variables, region, year, use_daysim_radiation)
+                      multiprocessing, config, nn_delay, climatic_variables, year, use_daysim_radiation)
         #   reads the n random files from the previous step and creat the input and targets for the neural net
         urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
         #   reads the saved model and the normalizer
@@ -70,18 +70,17 @@ def main(config):
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
-    region = config.region
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
     weather_path = config.weather
-    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)
     scalerT = joblib.load(scalerT_file)
     run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, scalerX, scalerT,
                     multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
-                    climatic_variables=config.neural_network.climatic_variables, region = config.region,
+                    climatic_variables=config.neural_network.climatic_variables,
                     year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
 
 

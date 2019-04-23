@@ -6,6 +6,113 @@ to access this data.
 TO DO: run trace for all scripts.
 
 
+thermal-network
+---------------
+.. graphviz::
+
+    digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5.085];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "thermal-network"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Zug.epw"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "supply_systems.xls"
+        "thermal_networks.xls"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/networks/DH";
+        "nodes.shp"
+    }
+    subgraph cluster_2_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="inputs/networks/DH";
+        "edges.shp"
+    }
+    subgraph cluster_3_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/demand";
+        "{BUILDING}.csv"
+    }
+    subgraph cluster_4_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/optimization/network/layout";
+        "Nominal_EdgeMassFlow_at_design_DH__kgpers.csv"
+        "DH__Nodes.csv"
+        "Nominal_NodeMassFlow_at_design_DH__kgpers.csv"
+        "DH__Edges.csv"
+        "DH__EdgeNode.csv"
+        "DH__MassFlow_kgs.csv"
+        "DH__Plant_heat_requirement_kW.csv"
+        "DH__ploss_System_edges_kW.csv"
+        "DH__P_DeltaP_Pa.csv"
+        "DH__P_DeltaP_kW.csv"
+        "DH__qloss_System_kW.csv"
+        "DH__T_Return_K.csv"
+        "DH__T_Supply_K.csv"
+        "DH__Nodes.csv"
+        "DH__ploss_Substations_kW.csv"
+        "Aggregated_Demand_DH__Wh.csv"
+    }
+    "{BUILDING}.csv" -> "thermal-network"[label="(get_demand_results_file)"]
+    "nodes.shp" -> "thermal-network"[label="(get_network_layout_nodes_shapefile)"]
+    "supply_systems.xls" -> "thermal-network"[label="(get_supply_systems)"]
+    "thermal_networks.xls" -> "thermal-network"[label="(get_thermal_networks)"]
+    "Zug.epw" -> "thermal-network"[label="(get_weather)"]
+    "thermal-network" -> "Nominal_EdgeMassFlow_at_design_DH__kgpers.csv"[label="(get_edge_mass_flow_csv_file)"]
+    "thermal-network" -> "edges.shp"[label="(get_network_layout_edges_shapefile)"]
+    "thermal-network" -> "DH__Nodes.csv"[label="(get_network_node_types_csv_file)"]
+    "thermal-network" -> "Nominal_NodeMassFlow_at_design_DH__kgpers.csv"[label="(get_node_mass_flow_csv_file)"]
+    "thermal-network" -> "DH__Edges.csv"[label="(get_optimization_network_edge_list_file)"]
+    "thermal-network" -> "DH__EdgeNode.csv"[label="(get_optimization_network_edge_node_matrix_file)"]
+    "thermal-network" -> "DH__MassFlow_kgs.csv"[label="(get_optimization_network_layout_massflow_file)"]
+    "thermal-network" -> "DH__Plant_heat_requirement_kW.csv"[label="(get_optimization_network_layout_plant_heat_requirement_file)"]
+    "thermal-network" -> "DH__ploss_System_edges_kW.csv"[label="(get_optimization_network_layout_ploss_system_edges_file)"]
+    "thermal-network" -> "DH__P_DeltaP_Pa.csv"[label="(get_optimization_network_layout_pressure_drop_file)"]
+    "thermal-network" -> "DH__P_DeltaP_kW.csv"[label="(get_optimization_network_layout_pressure_drop_kw_file)"]
+    "thermal-network" -> "DH__qloss_System_kW.csv"[label="(get_optimization_network_layout_qloss_system_file)"]
+    "thermal-network" -> "DH__T_Return_K.csv"[label="(get_optimization_network_layout_return_temperature_file)"]
+    "thermal-network" -> "DH__T_Supply_K.csv"[label="(get_optimization_network_layout_supply_temperature_file)"]
+    "thermal-network" -> "DH__Nodes.csv"[label="(get_optimization_network_node_list_file)"]
+    "thermal-network" -> "DH__ploss_Substations_kW.csv"[label="(get_optimization_network_substation_ploss_file)"]
+    "thermal-network" -> "Aggregated_Demand_DH__Wh.csv"[label="(get_thermal_demand_csv_file)"]
+    }
 
 photovoltaic-thermal
 --------------------
@@ -235,6 +342,152 @@ radiation-daysim
     "zone.shp" -> "radiation-daysim"[label="(get_zone_geometry)"]
     "radiation-daysim" -> "{BUILDING}_insolation_Whm2.json"[label="(get_radiation_building)"]
     "radiation-daysim" -> "{BUILDING}_geometry.csv"[label="(get_radiation_metadata)"]
+    }
+
+solar-collector
+---------------
+.. graphviz::
+
+    digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=3.5];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "solar-collector"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Zug.epw"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "supply_systems.xls"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
+    subgraph cluster_3_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/potentials/solar";
+        "{BUILDING}_SC_ET_sensors.csv"
+        "{BUILDING}_SC_ET.csv"
+        "SC_ET_total_buildings.csv"
+        "SC_ET_total.csv"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "{BUILDING}_insolation_Whm2.json"
+        "{BUILDING}_geometry.csv"
+    }
+    "{BUILDING}_insolation_Whm2.json" -> "solar-collector"[label="(get_radiation_building)"]
+    "{BUILDING}_geometry.csv" -> "solar-collector"[label="(get_radiation_metadata)"]
+    "supply_systems.xls" -> "solar-collector"[label="(get_supply_systems)"]
+    "Zug.epw" -> "solar-collector"[label="(get_weather)"]
+    "zone.shp" -> "solar-collector"[label="(get_zone_geometry)"]
+    "solar-collector" -> "{BUILDING}_SC_ET_sensors.csv"[label="(SC_metadata_results)"]
+    "solar-collector" -> "{BUILDING}_SC_ET.csv"[label="(SC_results)"]
+    "solar-collector" -> "SC_ET_total_buildings.csv"[label="(SC_total_buildings)"]
+    "solar-collector" -> "SC_ET_total.csv"[label="(SC_totals)"]
+    }
+
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=3.5];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "solar-collector"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Zug.epw"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "supply_systems.xls"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
+    subgraph cluster_3_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/potentials/solar";
+        "{BUILDING}_SC_FP_sensors.csv"
+        "{BUILDING}_SC_FP.csv"
+        "SC_FP_total_buildings.csv"
+        "SC_FP_total.csv"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "{BUILDING}_insolation_Whm2.json"
+        "{BUILDING}_geometry.csv"
+    }
+    "{BUILDING}_insolation_Whm2.json" -> "solar-collector"[label="(get_radiation_building)"]
+    "{BUILDING}_geometry.csv" -> "solar-collector"[label="(get_radiation_metadata)"]
+    "supply_systems.xls" -> "solar-collector"[label="(get_supply_systems)"]
+    "Zug.epw" -> "solar-collector"[label="(get_weather)"]
+    "zone.shp" -> "solar-collector"[label="(get_zone_geometry)"]
+    "solar-collector" -> "{BUILDING}_SC_FP_sensors.csv"[label="(SC_metadata_results)"]
+    "solar-collector" -> "{BUILDING}_SC_FP.csv"[label="(SC_results)"]
+    "solar-collector" -> "SC_FP_total_buildings.csv"[label="(SC_total_buildings)"]
+    "solar-collector" -> "SC_FP_total.csv"[label="(SC_totals)"]
     }
 
 operation-costs
@@ -560,79 +813,4 @@ data-helper
     "data-helper" -> "internal_loads.dbf"[label="(get_building_internal)"]
     "data-helper" -> "restrictions.dbf"[label="(get_building_restrictions)"]
     "data-helper" -> "supply_systems.dbf"[label="(get_building_supply)"]
-    }
-
-solar-collector
----------------
-.. graphviz::
-
-    digraph trace_inputlocator {
-    rankdir="LR";
-    graph [overlap=false, fontname=arial];
-    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=3.503];
-    edge [fontname=arial, fontsize = 15]
-    newrank=true
-    subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
-    }
-    "solar-collector"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="cea/databases/weather";
-        "Zug.epw"
-    }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="databases/CH/systems";
-        "supply_systems.xls"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="inputs/building-geometry";
-        "zone.shp"
-    }
-    subgraph cluster_3_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="outputs/data/potentials/solar";
-        "{BUILDING}_SC_FP_sensors.csv"
-        "{BUILDING}_SC_FP.csv"
-        "SC_FP_total_buildings.csv"
-        "SC_FP_total.csv"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="outputs/data/solar-radiation";
-        "{BUILDING}_insolation_Whm2.json"
-        "{BUILDING}_geometry.csv"
-    }
-    "{BUILDING}_insolation_Whm2.json" -> "solar-collector"[label="(get_radiation_building)"]
-    "{BUILDING}_geometry.csv" -> "solar-collector"[label="(get_radiation_metadata)"]
-    "supply_systems.xls" -> "solar-collector"[label="(get_supply_systems)"]
-    "Zug.epw" -> "solar-collector"[label="(get_weather)"]
-    "zone.shp" -> "solar-collector"[label="(get_zone_geometry)"]
-    "solar-collector" -> "{BUILDING}_SC_FP_sensors.csv"[label="(SC_metadata_results)"]
-    "solar-collector" -> "{BUILDING}_SC_FP.csv"[label="(SC_results)"]
-    "solar-collector" -> "SC_FP_total_buildings.csv"[label="(SC_total_buildings)"]
-    "solar-collector" -> "SC_FP_total.csv"[label="(SC_totals)"]
     }

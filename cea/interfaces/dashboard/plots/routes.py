@@ -35,7 +35,8 @@ def route_dashboard(dashboard_index):
     In case of an out-of-bounds error, show the 0-th dashboard (that is guaranteed to exist)
     """
     cea_config = current_app.cea_config
-    dashboards = cea.plots.read_dashboards(cea_config)
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
     return render_template('dashboard.html', dashboard_index=dashboard_index, dashboard=dashboard, categories=categories)
 
@@ -46,13 +47,14 @@ def route_new_dashboard():
     Append a dashboard to the list of dashboards and open it for editing.
     """
     cea_config = current_app.cea_config
-    dashboard_index = cea.plots.new_dashboard(cea_config)
+    plot_cache = current_app.plot_cache
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache)
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
 @blueprint.route('/dashboard/rename/<int:dashboard_index>', methods=['POST'])
 def route_rename_dashboard(dashboard_index):
-    dashboards = cea.plots.read_dashboards(current_app.cea_config)
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     dashboard.name = request.form.get('new-name', dashboard.name)
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
@@ -61,7 +63,7 @@ def route_rename_dashboard(dashboard_index):
 
 @blueprint.route('/dashboard/add-plot/<int:dashboard_index>', methods=['POST'])
 def route_add_plot_to_dashboard(dashboard_index):
-    dashboards = cea.plots.read_dashboards(current_app.cea_config)
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     category = request.form.get('category', next(iter(categories)))
     plot_id = request.form.get('plot-id', next(iter(categories[category]['plots']))['id'])
@@ -73,7 +75,7 @@ def route_add_plot_to_dashboard(dashboard_index):
 @blueprint.route('/dashboard/remove-plot/<int:dashboard_index>/<int:plot_index>')
 def route_remove_plot_from_dashboard(dashboard_index, plot_index):
     """Remove a plot from a dashboard by index."""
-    dashboards = cea.plots.read_dashboards(current_app.cea_config)
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     dashboard.remove_plot(plot_index)
     if len(dashboard.plots) == 0:
@@ -86,7 +88,7 @@ def route_remove_plot_from_dashboard(dashboard_index, plot_index):
 def route_move_plot_up(dashboard_index, plot_index):
     """Move a plot up in the dashboard"""
     if plot_index > 0:
-        dashboards = cea.plots.read_dashboards(current_app.cea_config)
+        dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
         dashboard = dashboards[dashboard_index]
         if plot_index < len(dashboard.plots):
             swap(dashboard.plots, plot_index - 1, plot_index)
@@ -102,7 +104,7 @@ def swap(lst, i, j):
 def route_move_plot_down(dashboard_index, plot_index):
     """Move a plot down in the dashboard"""
     if plot_index >= 0:
-        dashboards = cea.plots.read_dashboards(current_app.cea_config)
+        dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
         dashboard = dashboards[dashboard_index]
         if plot_index < (len(dashboard.plots) - 1):
             swap(dashboard.plots, plot_index, plot_index + 1)
@@ -112,7 +114,7 @@ def route_move_plot_down(dashboard_index, plot_index):
 
 @blueprint.route('/dashboard/plot-parameters/<int:dashboard_index>/<int:plot_index>', methods=['GET'])
 def route_get_plot_parameters(dashboard_index, plot_index):
-    dashboards = cea.plots.read_dashboards(current_app.cea_config)
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]
     parameters = []
@@ -126,12 +128,13 @@ def route_get_plot_parameters(dashboard_index, plot_index):
 
 @blueprint.route('/dashboard/plot-parameters/<int:dashboard_index>/<int:plot_index>', methods=['POST'])
 def route_post_plot_parameters(dashboard_index, plot_index):
-    dashboards = cea.plots.read_dashboards(current_app.cea_config)
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]
-    parameters = []
+    print('route_post_plot_parameters: expected_parameters: {}'.format(plot.expected_parameters.items()))
     for pname, fqname in plot.expected_parameters.items():
         parameter = current_app.cea_config.get_parameter(fqname)
+        print('route_post_plot_parameters: fqname={fqname}, pname={pname}'.format(fqname=fqname, pname=pname))
         if isinstance(parameter, MultiChoiceParameter):
             plot.parameters[pname] = parameter.decode(','.join(request.form.getlist(pname)))
         else:
@@ -169,7 +172,7 @@ def route_div(dashboard_index, plot_index):
 def load_plot(dashboard_index, plot_index):
     """Load a plot from the dashboard_yml"""
     cea_config = current_app.cea_config
-    dashboards = cea.plots.read_dashboards(cea_config)
+    dashboards = cea.plots.read_dashboards(cea_config, current_app.plot_cache)
     dashboard_index = dashboards[dashboard_index]
     plot = dashboard_index.plots[plot_index]
     return plot

@@ -209,18 +209,14 @@ def snappy_endings(lines, max_distance, crs):
 def split_line_by_nearest_points(gdf_line, gdf_points, tolerance, crs):
     """
     Split the union of lines with the union of points resulting
-    Parameters
-    ----------
-    gdf_line : geoDataFrame
-        geodataframe with multiple rows of connecting line segments
-    gdf_points : geoDataFrame
-        geodataframe with multiple rows of single points
 
-    Returns
-    -------
-    gdf_segments : geoDataFrame
-        geodataframe of segments
-        https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
+    :param GeoDataFrame gdf_line:  GeoDataFrame with multiple rows of connecting line segments
+    :param GeoDataFrame gdf_points: geodataframe with multiple rows of single points
+
+    :returns: ``gdf_segments`` (GeoDataFrame of segments)
+    :rtype: GeoDataFrame
+
+    https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
     """
 
     # union all geometries

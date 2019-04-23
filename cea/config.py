@@ -647,8 +647,15 @@ class ScenarioNameParameter(ChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list of scenarios in the project
-        return [folder for folder in os.listdir(self.config.project)
-                if os.path.isdir(os.path.join(self.config.project, folder))]
+        def is_valid_scenario(folder_name):
+            fodler_path = os.path.join(self.config.project, folder_name)
+            return all([
+                os.path.isdir(fodler_path),  # a scenario must be a valid path
+                not folder_name.startswith('.'), # a scenario can't start with a . like `.config`
+                ])
+
+        return [folder_name for folder_name in os.listdir(self.config.project)
+                if is_valid_scenario(folder_name)]
 
 
 class ScenarioParameter(Parameter):
@@ -688,6 +695,26 @@ class MultiChoiceParameter(ChoiceParameter):
                 raise cea.ConfigError(
                     'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
         return choices
+
+
+class SingleBuildingParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'SingleBuildingParameter'
+
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        return locator.get_zone_building_names()
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
 
 
 class BuildingsParameter(MultiChoiceParameter):
@@ -752,7 +779,6 @@ def main():
     config.apply_command_line_args(args, ['test'])
     print(config.test.reference_cases)
     print(config.scenario_plots.scenarios)
-    print(config.get('general:region'))
     print(config.get('plots:buildings'))
     print(config.get_parameter('general:scenario-name')._choices)
 

@@ -23,6 +23,7 @@ import cea.inputlocator
 import cea.globalvar
 import cea.config
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,7 +47,7 @@ def ss_measurment_loader(locator):
     path_to_measuements=os.path.join(path_to_measuements_pre, "building-metering\yearly")
     building_names_with_measurement=find_buildings_with_measurements(path_to_measuements,suffix=".csv")
     total_building_measured=len(building_names_with_measurement)
-    all_measurements_matrix=np.empty([8760,total_building_measured])
+    all_measurements_matrix=np.empty([HOURS_IN_YEAR,total_building_measured])
     counter=0
     for i in (building_names_with_measurement):
         file_path_measures = os.path.join(path_to_measuements, i + "." + "csv")
@@ -110,10 +111,9 @@ def main(config):
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
-    region = config.region
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     ss_calibrator(number_samples_scaler=config.neural_network.number_samples_scaler,
                   locator=cea.inputlocator.InputLocator(scenario=config.scenario),

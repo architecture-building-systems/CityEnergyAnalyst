@@ -1,10 +1,9 @@
 from __future__ import division
-
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
 from cea.plots.variable_naming import NAMING, COLOR, LOGO
-
+from cea.constants import HOURS_IN_YEAR
 import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
@@ -19,8 +18,8 @@ __status__ = "Production"
 class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Load Duration Curve"
 
-    def __init__(self, project, parameters):
-        super(LoadDurationCurvePlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(LoadDurationCurvePlot, self).__init__(project, parameters, cache)
         self.data = self.hourly_loads
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",
@@ -30,7 +29,7 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         graph = []
-        duration = range(8760)
+        duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
         for field in self.analysis_fields:
             name = NAMING[field]
@@ -69,7 +68,7 @@ def calc_table(analysis_fields, data_frame):
     load_utilization = []
     load_names = []
     # data = ''
-    duration = range(8760)
+    duration = range(HOURS_IN_YEAR)
     x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
     for field in analysis_fields:
         data_frame_new = data_frame.sort_values(by=field, ascending=False)
@@ -85,7 +84,7 @@ def calc_table(analysis_fields, data_frame):
 def calc_graph(analysis_fields, data_frame):
 
     graph = []
-    duration = range(8760)
+    duration = range(HOURS_IN_YEAR)
     x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
     for field in analysis_fields:
         name = NAMING[field]
@@ -102,7 +101,7 @@ def evaluate_utilization(x,y):
     if 0 in dataframe_util['y'].values:
         index_occurrence = dataframe_util['y'].idxmin(axis=0, skipna=True)
         utilization_perc = round(dataframe_util.loc[index_occurrence,'x'],1)
-        utilization_days = int(utilization_perc*8760/(24*100))
+        utilization_days = int(utilization_perc*HOURS_IN_YEAR/(24*100))
         return str(utilization_perc) + '% or ' + str(utilization_days) + ' days a year'
     else:
         return 'all year'

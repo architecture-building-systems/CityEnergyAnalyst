@@ -7,6 +7,7 @@ from cea.utilities import dbf
 import cea.inputlocator
 import cea.config
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -21,7 +22,7 @@ __status__ = "Production"
 def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, config):
 
     # now the dates in which the building demand is calculated is stored in 'date'
-    date = pd.date_range(initial_date, periods=8760, freq='H')
+    date = pd.date_range(initial_date, periods=HOURS_IN_YEAR, freq='H')
     time = date.strftime("%Y%m%d%H%M%S")
 
     # this loop checks if all the buildings are selected and gets the building names from Total demand.csv file

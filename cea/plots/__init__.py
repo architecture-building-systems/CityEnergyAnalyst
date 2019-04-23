@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def read_dashboards(config):
+def read_dashboards(config, cache):
     """
     Return a list of dashboard configurations for a given project. The dashboard is loaded from the
     dashboard.yml file located in the project_path (parent folder of the scenario). If no such file is
@@ -38,13 +38,13 @@ def read_dashboards(config):
     """
     try:
         with open(dashboard_yml_path(config), 'r') as f:
-            dashboards = [Dashboard(config, dashboard_dict) for dashboard_dict in yaml.load(f)]
+            dashboards = [Dashboard(config, dashboard_dict, cache) for dashboard_dict in yaml.load(f)]
             if not dashboards:
-                dashboards = [default_dashboard(config)]
+                dashboards = [default_dashboard(config, cache)]
             return dashboards
     except (IOError, TypeError):
         # problems reading the dashboard_yml file - instead, create a default set of dashboards.
-        dashboards = [default_dashboard(config)]
+        dashboards = [default_dashboard(config, cache)]
         write_dashboards(config, dashboards)
         return dashboards
 
@@ -61,45 +61,47 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config):
+def default_dashboard(config, cache):
     """Return a default Dashboard"""
     return Dashboard(config, {'name': 'Default Dashboard',
                               'plots': [{'plot': 'energy-balance',
                                          'category': 'demand',
-                                         'parameters': {'buildings': [],
-                                                        'scenario-name': config.scenario_name}}]})
+                                         'parameters': {'building': 'XYZ',
+                                                        'scenario-name': config.scenario_name}}]}, cache)
 
 
-def new_dashboard(config):
+def new_dashboard(config, cache):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
-    dashboards = read_dashboards(config)
-    dashboards.append(default_dashboard(config))
+    dashboards = read_dashboards(config, cache)
+    dashboards.append(default_dashboard(config, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
 
 def delete_dashboard(config, dashboard_index):
     """Remove the dashboard with that index from the dashboard configuration file"""
-    dashboards = read_dashboards(config)
+    import cea.plots.cache
+    dashboards = read_dashboards(config, cea.plots.cache.NullPlotCache())
     dashboards.pop(dashboard_index)
     write_dashboards(config, dashboards)
 
 
 class Dashboard(object):
     """Implements a dashboard - an editable collection of configured plots."""
-    def __init__(self, config, dashboard_dict):
+    def __init__(self, config, dashboard_dict, cache):
         self.config = config
         self.name = dashboard_dict['name']
-        self.plots = [load_plot(config.project, plot_dict) for plot_dict in dashboard_dict['plots']]
+        self.cache = cache
+        self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
         plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
         parameters = plot_class.get_default_parameters(self.config)
-        plot = plot_class(self.config.project, parameters)
+        plot = plot_class(self.config.project, parameters, self.cache)
         self.plots.append(plot)
 
     def remove_plot(self, plot_index):
@@ -114,14 +116,14 @@ class Dashboard(object):
                            'parameters': p.parameters} for p in self.plots]}
 
 
-def load_plot(project, plot_definition):
+def load_plot(project, plot_definition, cache):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
     print('load_plot', project, plot_definition)
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
     parameters = plot_definition['parameters']
-    return plot_class(project, parameters)
+    return plot_class(project, parameters, cache)
 
 
 def main(config):
