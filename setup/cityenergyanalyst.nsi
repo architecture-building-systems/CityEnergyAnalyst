@@ -88,6 +88,9 @@ Section "Base Installation" Base_Installation_Section
     CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
         "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
+    CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
+        "$WINDIR\notepad.exe" 1 SW_SHOWNORMAL "" "Open CEA Configuration file"
+
 
     ;Download the CityEnergyAnalyst conda environment
     DetailPrint "Downloading ${CEA_ENV_FILENAME}"
@@ -122,6 +125,9 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
         "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
+        "$WINDIR\notepad.exe" 1 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 SectionEnd
 
