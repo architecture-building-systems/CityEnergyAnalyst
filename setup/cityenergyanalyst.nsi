@@ -79,6 +79,16 @@ Section "Base Installation" Base_Installation_Section
     FileClose $0
 
 
+    # create a shortcut in the $INSTDIR for launching the CEA console
+    CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
+        "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL \
+        CONTROL|SHIFT|F10 "Launch the CEA Console"
+
+    # create a shortcut in the $INSTDIR for launching the CEA dashboard
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
+        "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+
+
     ;Download the CityEnergyAnalyst conda environment
     DetailPrint "Downloading ${CEA_ENV_FILENAME}"
     inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
@@ -91,11 +101,11 @@ Section "Base Installation" Base_Installation_Section
 
     # unzip python environment to ${INSTDIR}\Dependencies
     DetailPrint "Extracting ${CEA_ENV_FILENAME}"
-    Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
+    # Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
     Delete ${CEA_ENV_FILENAME}
 
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
+    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
+    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
 
 
     ;Create uninstaller
@@ -105,6 +115,11 @@ SectionEnd
 
 Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
+    # create shortcuts in the start menu for launching the CEA console
+    CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
+    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
+                   "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+
 SectionEnd
 
 Section "Developer version" Clone_Repository_Section
@@ -112,7 +127,7 @@ Section "Developer version" Clone_Repository_Section
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
+    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
