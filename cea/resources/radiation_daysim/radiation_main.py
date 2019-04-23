@@ -180,6 +180,7 @@ def main(config):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
     settings = config.radiation_daysim
+    print('\n Running radiation with weather file %s' % config.weather)
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
