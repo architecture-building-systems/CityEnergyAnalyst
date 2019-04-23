@@ -118,7 +118,10 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
-                   "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+        "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
+        "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
 SectionEnd
 
