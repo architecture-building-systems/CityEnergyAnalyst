@@ -116,6 +116,9 @@ Section "Base Installation" Base_Installation_Section
     # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
     # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
 
+    # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    WriteINIStr "$PROFILE\cea.config" radiation-daysim daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
