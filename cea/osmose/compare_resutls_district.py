@@ -67,7 +67,8 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     x_ticks = range(len(techs))
     # set colors
     #COLOR_TABLE = {'OAU': '#14453D', 'RAU': '#4D9169', 'SCU': '#BACCCC'}  # # OLIVE, GRASS, GREY
-    COLOR_TABLE = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'} # Grey scale
+    #COLOR_TABLE = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'} # Grey scale
+    COLOR_TABLE = {'OAU': '#080808', 'RAU': '#707070', 'SCU': '#C8C8C8'}  # Gray scale
     i = 0
     KEY_TABLE = {'qc_sys_oau': 'OAU', 'qc_sys_scu': 'SCU', 'qc_sys_lcu': 'RAU'}
     for key in qc_all_tech_per_building_dict.keys():
@@ -85,12 +86,14 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
         x_tick_shown.append(label_dict[tech])
     ax.set_xticklabels(x_tick_shown)
     #ax.set_xticklabels(np.append(([0]), label_dict[techs.values]), fontsize=18)
-    ax.xaxis.label.set_size(18)
-    ax.yaxis.label.set_size(18)
-    ax.legend(loc='lower right')
+    ax.xaxis.label.set_size(16)
+    ax.yaxis.label.set_size(16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
+    ax.legend(loc='lower right', fontsize=16)
     case_name = case.split('_')[4]
     title = CASE_TABLE[case_name] + ' ' + building
-    ax.set_title(title, fontsize=18)
+    ax.set_title(title, fontsize=16)
 
     # plt.show()
     # plot layout
@@ -246,6 +249,6 @@ if __name__ == '__main__':
     for case in cases:
         print case
         # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
+        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
         time_steps = 168
         main(path_result_folder, case, time_steps)
