@@ -140,7 +140,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
-Section "Developer version" Clone_Repository_Section
+Section /o "Developer version" Clone_Repository_Section
 
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
