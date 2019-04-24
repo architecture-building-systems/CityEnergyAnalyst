@@ -141,7 +141,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
 
 
     # calculate sensors
-    print "calculating and sending sensor points"
+    print("Calculating and sending sensor points")
     sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
     sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
@@ -149,25 +149,31 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))
 
     num_sensors = sum(sensors_number_zone)
-    print "Daysim simulation starts for building(s)", names_zone
-    print "and the next number of total sensors", num_sensors
+    print("Starting Daysim simulation starts for buildings {buildings}".format(buildings=names_zone))
+    print("Total number of sensors:  {num_sensors}".format(num_sensors=num_sensors))
     if num_sensors > 50000:
         raise ValueError('You are sending more than 50000 sensors at the same time, this '
                          'will eventually crash a daysim instance. To solve it, please reconfigure the radiation tool. '
                          'Just reduce the number of buildings per chunk and try again')
 
     # add_elevation_weather_file(weather_path)
+    print('Executing epw2wea')
     rad.execute_epw2wea(weather_path, ground_reflectance = settings.albedo)
+    print('Executing radfiles2daysim')
     rad.execute_radfiles2daysim()
+    print('Writing radiance parameters')
     rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
                                   settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
                                   settings.rad_ds, settings.rad_dr, settings.rad_dp)
-
+    print('Executing gen_dc')
     rad.execute_gen_dc("w/m2")
+    print('Executing ds_illum')
     rad.execute_ds_illum()
+    print('Evaluating illumination per sensor')
     solar_res = rad.eval_ill_per_sensor()
 
     #erase daysim folder to avoid conflicts after every iteration
+    print('Removing results folder')
     shutil.rmtree(daysim_dir)
 
     # check inconsistencies and replace by max value of weather file
@@ -177,7 +183,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     for i, value in enumerate(solar_res):
         solar_res[i] =  [0 if x > max_global else x for x in value]
 
-    print "Writing results to disk"
+    print("Writing results to disk")
     index = 0
     for building_name, sensors_number_building, sensor_code_building in zip(names_zone, sensors_number_zone, sensors_code_zone):
         selection_of_results = solar_res[index:index+sensors_number_building]

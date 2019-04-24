@@ -16,7 +16,7 @@ from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
 import cea.technologies.substation as substation
-
+from cea.constants import HOURS_IN_YEAR
 
 
 def disconnected_buildings_heating_main(locator, building_names, config, prices, lca):
@@ -94,8 +94,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         TsupDH = loads["T_supply_DH_result_K"].values
         mdot = loads["mdot_DH_result_kgpers"].values
 
-        for hour in range(8760):
-
+        for hour in range(HOURS_IN_YEAR):
             if Tret[hour] == 0:
                 Tret[hour] = TsupDH[hour]
 

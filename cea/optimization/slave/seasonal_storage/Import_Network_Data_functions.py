@@ -8,6 +8,8 @@ Import Network Data:
 """
 import pandas as pd
 import numpy as np
+from cea.constants import HOURS_IN_YEAR
+
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna", "Thuy-an Ngugen", "Jimeno A. Fonseca"]
@@ -30,28 +32,28 @@ def import_solar_data(fName):
     """
 
     if fName == "PV_total.csv":
-        solar_data = pd.read_csv(fName, nrows=8760)
+        solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
         PV_import_kWh = np.array(solar_data['E_PV_gen_kWh'])
         PV_kWh = PV_import_kWh
-        PVT_kWh = np.zeros(8760)
-        Solar_Area_m2 = np.zeros(8760)
-        Solar_E_aux_kWh = np.zeros(8760)
-        Solar_Q_th_kWh = np.zeros(8760)
-        Solar_Tscs_th = np.zeros(8760)
-        Solar_Tscr_th_K = np.zeros(8760)
-        Solar_mcp_kWperC = np.zeros(8760)
+        PVT_kWh = np.zeros(HOURS_IN_YEAR)
+        Solar_Area_m2 = np.zeros(HOURS_IN_YEAR)
+        Solar_E_aux_kWh = np.zeros(HOURS_IN_YEAR)
+        Solar_Q_th_kWh = np.zeros(HOURS_IN_YEAR)
+        Solar_Tscs_th = np.zeros(HOURS_IN_YEAR)
+        Solar_Tscr_th_K = np.zeros(HOURS_IN_YEAR)
+        Solar_mcp_kWperC = np.zeros(HOURS_IN_YEAR)
         #print "PV"
     
     elif fName == "PVT_total.csv":
-        solar_data = pd.read_csv(fName, nrows=8760)
-        PV_kWh = np.zeros(8760)
+        solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
+        PV_kWh = np.zeros(HOURS_IN_YEAR)
         PV_PVT_import_kWh = np.array(solar_data['E_PVT_gen_kWh'])
         PVT_kWh = PV_PVT_import_kWh
         Solar_Area_Array = np.array(solar_data['Area_PVT_m2'])
         Solar_Area_m2 = Solar_Area_Array[0]
         Solar_E_aux_kWh = np.array(solar_data['Eaux_PVT_kWh'])
         Solar_Q_th_kWh = np.array(solar_data['Q_PVT_gen_kWh']) + 0.0
-        Solar_Tscs_th = np.zeros(8760)
+        Solar_Tscs_th = np.zeros(HOURS_IN_YEAR)
         Solar_Tscr_th_K = np.array(solar_data['T_PVT_re_C']) + 273.0
         Solar_mcp_kWperC = np.array(solar_data['mcp_PVT_kWperC'])
         #print "PVT 35"
@@ -59,7 +61,7 @@ def import_solar_data(fName):
         # Replace by 0 if negative values
         Tscs = np.array( pd.read_csv( fName, usecols=["T_PVT_sup_C"], nrows=1 ) ) [0][0]
         
-        for i in range(8760):
+        for i in range(HOURS_IN_YEAR):
             if Solar_Q_th_kWh[i] < 0:
                 Solar_Q_th_kWh[i] = 0
                 Solar_E_aux_kWh[i] = 0
@@ -67,22 +69,22 @@ def import_solar_data(fName):
                 Solar_mcp_kWperC[i] = 0
     
     else:
-        solar_data = pd.read_csv(fName, nrows=8760)
+        solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
         Solar_Area_Array = np.array(solar_data['Area_SC_m2'])
         Solar_Area_m2 = Solar_Area_Array[0]
         Solar_E_aux_kWh = np.array(solar_data['Eaux_SC_kWh'])
         Solar_Q_th_kWh = np.array(solar_data['Q_SC_gen_kWh']) + 0.0
         Solar_Tscr_th_K = np.array(solar_data['T_SC_re_C']) + 273.0
-        Solar_Tscs_th = np.zeros(8760)
+        Solar_Tscs_th = np.zeros(HOURS_IN_YEAR)
 
         Solar_mcp_kWperC = np.array(solar_data['mcp_SC_kWperC'])
-        PV_kWh = np.zeros(8760)
-        PVT_kWh = np.zeros(8760)
+        PV_kWh = np.zeros(HOURS_IN_YEAR)
+        PVT_kWh = np.zeros(HOURS_IN_YEAR)
 
         # Replace by 0 if negative values
         Tscs = np.array( pd.read_csv( fName, usecols=["T_SC_sup_C"], nrows=1 ) ) [0][0]
         
-        for i in range(8760):
+        for i in range(HOURS_IN_YEAR):
             if Solar_Q_th_kWh[i] < 0:
                 Solar_Q_th_kWh[i] = 0
                 Solar_E_aux_kWh[i] = 0
