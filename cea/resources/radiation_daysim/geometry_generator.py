@@ -373,6 +373,11 @@ def raster2tin(input_terrain_raster):
     raster_dataset = gdal.Open(input_terrain_raster)
     band = raster_dataset.GetRasterBand(1)
     a = band.ReadAsArray(0, 0, raster_dataset.RasterXSize, raster_dataset.RasterYSize)
+
+    # if the raster file is below sea level, the entire case study is lifted to the lowest point is at altitude 0
+    if (a * (a > -1e3)).min() < 0:
+        a -= (a * (a > -1e3)).min()
+
     (y_index, x_index) = np.nonzero(a >= 0)
     (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster_dataset.GetGeoTransform()
     x_coords = x_index * x_size + upper_left_x + (x_size / 2)  # add half the cell size
