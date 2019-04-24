@@ -4,10 +4,6 @@ How to do analyses with CEA?
 ============================
 
 In this tutorial we will be running all scripts of CEA with the exemplary case study included along the installation.
-The workflow we will be pursuing is described next:
-
-Step 1. Define Target values
-----------------------------
 
 We encourage you to think about urban energy systems analysis as a series of processes required to assess the combination
 of urban and energy systems design that best fit local social, economic and environmental targets. For this, it is
@@ -24,187 +20,228 @@ You are encouraged to define from local standards the value of those KPIs
 #. Primary energy demand: Non-renewable primary energy intensity [MJ oil-eq/m2.yr].
 
 
-Step 2. Set up a new project and baseline scenario
---------------------------------------------------
+Step 1. Set-up your case study
+------------------------------
 
-The second step consists on setting up a new project or case study. Every case study has a baseline scenario. This baseline
-scenario describes the current condition of the neighborhood or district you want to analyze and improve.
+The first step consists on setting-up a case study with CEA. This includes creating a new project and a baseline scenario of your area of analysis.
 
-CEA holds a particular folder structure in order to allow calls between scripts and tools.
-In order to use a new case study and a baseline scenario of your own just follow the guide :doc:`new-project-guide`.
+Follow the next steps:
 
-For this tutorial we will be using the case study and baseline scenario delivered with CEA.
-To get the example case study ready we will do the following steps:
+#. Prepare a shape-file of your zone of analysis OR download one from our `examples <https://github.com/architecture-building-systems/CityEnergyAnalyst/tree/master/cea/examples>`__.
+#. Open CEA from your Desktop.
+#. Go to tools / create new project.
+#. Indicate where your zone of analysis is.
+#. Indicate folder where to save the new project
+#. Run the tool.
 
-#. Open Pycharm and the project CityEnergyAnalyst (located where you installed CEA).
-#. From the project tab on the left copy and unzip the example case study to C:/. The file with the case study
-   is stored in CityEnergyAnalyst>cea>examples>reference-case-open.zip
+.. note:: The shapefile of your zone of analysis must comply with the structure mentioned
+          in the `Input databases of CEA <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit#slide=id.g1d85a4d9be_0_0>`__.
 
-Step 3. Analyze the Energy demand
-----------------------------------
+
+Step 2. Edit the occupancy and age of buildings
+-----------------------------------------------
+
+Attributes regarding occupancy and age of buildings is a minimum requirement for CEA to gather databases about buildings, technology and economy.
+
+Follow the next steps:
+
+#. Go to the folder where you have saved YourProject
+#. Open CEA from your Desktop.
+#. Go to inputs/Occupancy and edit it accordingly to your case study and Save the changes.
+#. Go to inputs/Occupancy and edit it accordingly to your case study and Save the changes.
+
+The occupancy and Age files are located in YourProject/YourScenario/inputs/building/properties/ in case you would like to edit these files with a .dBf. reader
+
+.. note:: It is important to maintain the column names of these two files for CEA to work.
+          in case you need to check, here is this tutorial `Input databases of CEA <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit#slide=id.g1d85a4d9be_0_0>`__.
+
+
+Step 3. Gather databases
+------------------------
+
+Urban energy systems simulation requires a great deal of data. Use the next tools to gather this data automatically.
+
+Follow the next steps:
+
+With the CEA dashboard:
+
+#. Open CEA from your Desktop.
+#. Go to tools/Data Management/Data Helper tool and run this tool. `Check this blog for some help on this <https://cityenergyanalyst.com/blog/2019/4/5/speedinguppart1>`__.
+#. Go to tools/Data Management/District Helper tool and run this tool. `Check this blog for some help on this <https://cityenergyanalyst.com/blog/2019/4/5/speedinguppart2>`__.
+#. Go to tools/Data Management/Terrain Helper tool and run this tool. `Check this blog for some help on this <https://cityenergyanalyst.com/blog/2019/4/5/speedinguppart2>`__.
+#. Go to tools/Data Management/Streets Helper tool and run this tool. `Check this blog for some help on this <https://cityenergyanalyst.com/blog/2019/4/5/speedinguppart3>`__.
+
+Alternatively with Pycharm:
+
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tools General, Data Helper, District Helper, Terrain Helper and Streets Helper
+#. Go to CityEnergyAnalyst/cea/datamanagement/data_helper.py and run.
+#. Go to CityEnergyAnalyst/cea/datamanagement/district_geometry_helper.py and run.
+#. Go to CityEnergyAnalyst/cea/datamanagement/terrain_helper.py and run.
+#. Go to CityEnergyAnalyst/cea/datamanagement/streets_helper.py and run.
+
+
+Step 4. Solar radiation calculation
+------------------------------------
+
+Once your scenario and databases are ready, we calculate the solar radiation of the baseline scenario. For this we will run the next tools:
+
+With the CEA dashboard:
+
+#. Open CEA from your Desktop.
+#. Go to tools/Resources/Solar Radiation and run this tool.
+#. Visualize results in the dashboard.
+
+Alternatively with Pycharm:
+
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tools solar-radiation
+#. Go to CityEnergyAnalyst/cea/resources/radiation_daysim/radiation_main.py  and run.
+
+Raw output files will be are stored in YourProject/YourScenario/outputs/data/solar-radiation
+
+Step 5. Energy demand calculation
+------------------------------------
 
 Once your scenario is ready, we calculate the energy demand of the baseline scenario. For this we will run the next tools:
 
-in Pycharm:
+With the CEA dashboard:
 
-#. Solar radiation: run this tool located in CityEnergyAnalyst > cea > resources > radiation_daysim > radiation_main.py
-#. Demand: run this tool located in CityEnergyAnalyst> cea > demand > demand_main.py
+#. Open CEA from your Desktop.
+#. Go to tools/Demand/Demand and run this tool.
+#. Visualize results in the dashboard.
 
-in ArcGIS:
+Alternatively with Pycharm:
 
-#. Solar radiation: run this tool located in CityEnergyAnalyst > Energy Potentials > Solar radiation
-#. Demand: run this tool located in CityEnergyAnalyst > Demand Forecasting > Demand
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tool demand
+#. Go to CityEnergyAnalyst/cea/demand/demand_main.py and run.
+
+Raw output files will be are stored in YourProject/YourScenario/outputs/data/demand
 
 
-A helpful tool is the data-helper found in CityEnergyAnalyst>cea>datamanagement>data_helper.py. The data helper
-ensures that all necessary input databases exists and assumes default values from databases for missing values.
+Step 6. Renewable energy potential calculation
+-----------------------------------------------
 
-raw output files will be are stored in YourProject > YourScenario > outputs > data > demand
-
-Step 4. Analyze the Energy Potentials
----------------------------------------
-
-After calculating the solar radiation in building surfaces and energy demand, we will calculate the energy potentials of this scenario.
+After calculating the solar radiation in building surfaces and the energy demand of buildings, we will calculate the energy potentials of this scenario.
 For this we will run the next tools:
 
-In PyCharm:
+With the CEA dashboard:
 
-#. Solar collector: run this tool located in CityEnergyAnalyst > cea > technologies>solar>solar_collector.py
+#. Open CEA from your Desktop.
+#. Go to tools/Energy Potentials/Solar collectors and run this tool.
    Run this tool once with type-scpanel = FP, and once with type-scpanel = ET.
    This will account for flat plate (FP) and evacuated tube (ET) technologies.
-#. Photovoltaic: run this tool located in CityEnergyAnalyst > cea > technologies > solar > photovoltaic.py
-#. Photovoltaic thermal: run this tool located in CityEnergyAnalyst > cea > technologies > solar > photovoltaic_thermal.py
-#. Sewage: run this tool located in CityEnergyAnalyst > cea > resources > sewage_heat_exchanger.py
-#. Lake Potential: run this tool located in CityEnergyAnalyst > cea > resources > lake_potential.py
+#. Go to tools/Energy Potentials/Photovoltaic panels and run this tool.
+#. Go to tools/Energy Potentials/Photovoltaic-thermal Panel and run this tool.
+#. Go to tools/Energy Potentials/Sewage potential.
+#. Go to tools/Energy Potentials/Lake potential.
+#. Visualize results in the dashboard.
 
-In ArcGIS:
+Alternatively with Pycharm:
 
-#. Solar collector: run this tool located in CityEnergyAnalyst > Energy Potentials > Solar collectors
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tool solar
+#. Go to CityEnergyAnalyst/cea/technologies>solar>solar_collector.py and run.
    Run this tool once with type-scpanel = FP, and once with type-scpanel = ET.
    This will account for flat plate (FP) and evacuated tube (ET) technologies.
-#. Photovoltaic: run this tool located in CityEnergyAnalyst > Energy Potentials > Photovoltaic panels
-#. Photovoltaic thermal: run this tool located in CityEnergyAnalyst > Energy Potentials > Photovoltaic-thermal Panel
-#. Sewage: run this tool located in CityEnergyAnalyst > Energy Potentials > Sewage potential
-#. Lake Potential: run this tool located in CityEnergyAnalyst > Energy Potentials > Lake potential
+#. Go to CityEnergyAnalyst/cea/technologies/solar/photovoltaic.py
+#. Go to CityEnergyAnalyst/cea/technologies/solar/photovoltaic_thermal.py
+#. Go to CityEnergyAnalyst/cea/resources/sewage_heat_exchanger.py
+#. Go to CityEnergyAnalyst/cea/resources/lake_potential.py
 
-raw output files will be are stored in YourProject > YourScenario > outputs > data > energy potentials
+Raw output files will be are stored in YourProject/YourScenario/outputs/data/energy potentials
 
-Step 5. Life Cycle Analysis
-----------------------------
+
+Step 7. Thermal networks analysis
+--------------------------------------------------
+
+Either in parallel or after step 6, we can use the tools of CEA to determine close-to optimal thermal networks connecting 2 or more buildings.
+For this we will run the next tools:
+
+With the CEA dashboard:
+
+#. Open CEA from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tool network-layout and thermal-network
+#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/network_layout/main.py
+#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/thermal_network.py
+#. Go to CityEnergyAnalyst/Thermal Networks/Network Layout and run this tool.
+#. Go to CityEnergyAnalyst/Thermal Networks/Thermo-Hydraulic network and run this tool.
+#. Visualize results in the dashboard.
+
+Alternatively with Pycharm:
+
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tool network-layout and thermal-network
+#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/network_layout/main.py
+#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/thermal_network.py
+
+Raw output files will be are stored in YourProject/YourScenario/inputs/networks/energy potentials
+
+
+Step 8. Life Cycle Analysis (Operation costs and LCA emissions)
+---------------------------------------------------------------
 
 After calculating the energy demand of the baseline scenario and energy potentials of the site, we proceed to a life cycle
 analysis of emissions, primary energy and associated costs of the buildings on site.
 
 For this we will run the next tools:
 
-In PyCharm:
+With the CEA dashboard:
 
-#. Emissions and Primary Energy: run this tool located in CityEnergyAnalyst > cea > analysis > lca > main.py
-#. Associated costs due to building operation: run this tool located in CityEnergyAnalyst > cea > costs > operation_costs.py
+#. Open CEA from your Desktop.
+#. Go to tools/Life cycle analysis > District emissions and run this tool.
+#. Go to tools/Cost analysis > Building operation costs and run this tool.
+#. Visualize results in the dashboard.
 
-In ArcGIS:
+Alternatively with Pycharm:
 
-#. Emissions and Primary Energy: run this tool located in CityEnergyAnalyst > Life cycle analysis > District emissions
-#. Associated costs due to building operation: run this tool located in CityEnergyAnalyst > Cost analysis > Building operation costs
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters
+#. Go to CityEnergyAnalyst/cea/analysis/lca/main.py
+#. Go to CityEnergyAnalyst/cea/costs/operation_costs.py
 
-After the tools have finished running, we will visualize the results by either checking the raw output files or launching :doc:`dashboard`.
-raw output files will be stored in YourProject > YourScenario > outputs > data > lca
+Raw output files will be stored in YourProject > YourScenario > outputs > data > lca
 
-Step 6. Visualize data
-----------------------------
-
-Now it is time we visualize the raw output files with CEA.
-
-For this we will run the next tool:
-
-In PyCharm:
-
-#. Plots basic: run this tool located in CityEnergyAnalyst > cea > plots > plots_main.py
-
-In ArcGIS:
-
-#. Plots basic: run this tool located in CityEnergyAnalyst > Visualization > Plots basic
-
-Output files will be stored in YourProject > YourScenario > outputs > plots
-
-Step 7. Create a new scenario
+Step 8. Create a new scenario
 -----------------------------
 
-After running steps 1 to 6, we have enough information to analyze what might be good opportunities or strategies
+After running steps 1 to 7, we have enough information to analyze what might be good opportunities or strategies
 to improve the baseline scenario. Follow the next steps:
 
 #. Copy and paste the baseline scenario and give it a new name. e.g., strategy-1
 #. For the new scenario Strategy-1 proceed to edit the input databases of CEA according to the strategy you would like to pursue.
    The steps to edit your input databases are described in the tutorial `How to edit the input databases of CEA? <https://docs.google.com/presentation/d/16LXsu0vbllRL-in_taABuiThJ2uMP9Q05m3ORdaQrvU/edit?usp=sharing>`__.
-#. Repeat steps 1 to 5 for this scenario.
+#. Repeat steps 1 to 7 for this scenario.
 
-Step 8. Compare scenarios
+Step 9. Compare scenarios
 ----------------------------
 
-Once you have one or more scenarios, we will proceed to compare them one to one with a series of plots.
+Once you have one or more scenarios, you can compare scenarios with the plots included in the CEA dashboard
 
-We will run:
+Step 10. Optimization and multi-criteria analysis
+--------------------------------------------------
 
-In PyCharm:
+Right after Step 6, CEA offers tools to optimize the energy system of an urban scenario.
 
-#. Comparisons: run this tool located in CityEnergyAnalyst > cea > plots > comparisons > main.py
+For this we will run the next tools:
 
-In Arcgis:
+With the CEA dashboard:
 
-#. Comparisons: run this tool located in CityEnergyAnalyst > Visualization > Plots Comparison
-
-After the tools have finished running, the plots will be stored in YourProject > YourScenario > outputs > plots
-
-Step 9. Analyze the thermal networks
--------------------------------------
-After calculating the energy demand of the baseline scenario, it is possible to get a first assessment on how would
-a thermal network perform in this district. We first build a thermal network (District cooling or heating) that connects
-all the buildings in the district, and then simulate the thermal and hydraulic losses. This results are input to the
-Optimization in the next step.
-
-In Pycharm:
-
-#. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies > thermal_network > network_layout > main.py
-#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network.py
-
-In Arcgis:
-
-#. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst > Thermal Networks > Network Layout
-#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > Thermal Networks > Thermo-Hydraulic network
-
-
-
-Step 10. Optimization
----------------------
-
-After Step 3 or Step 5, and followed by Step 9, CEA offers tools to optimize the energy system of a standing scenario.
-
-This idea will be pursued in the next tools:
-
-In Pycharm:
-
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > decentralized_building_main.py
-#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
-#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
-
-In Arcgis:
-
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > Optimization > Decentralized Supply System
+#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > Optimization > Decentralized supply System
 #. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > Optimization > Central supply system
 #. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > Analysis > multicriteria analysis
 
-The output data will be stored in YourProject > YourScenario > outputs > data > optimization
+Alternatively with Pycharm:
 
-After the tools have finished running, go back to step 8. to compare scenarios.
+#. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies > thermal_network > network_layout > main.py
+#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network.py
+#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > disconnected_building_main.py
+#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
+#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
 
-In order to better understand the results of the optimization routine. You can visualize the results with the next tools:
 
-In Pycharm:
+Raw data will be stored in YourProject/YourScenario/outputs/data/optimization
 
-#. optimization results overview: run this tool located in CityEnergyAnalyst > cea > plots > optimization > main.py
-#. optimization results detailed:run this tool located in CityEnergyAnalyst > cea > plots > supply_system > main.py
+After the tools have finished running, go back to step 9. to compare scenarios.
 
-In Arcgis:
-
-#. optimization results overview: run this tool located in CityEnergyAnalyst > Visualization > Plots optimization overview
-#. optimization results detailed: run this tool located in CityEnergyAnalyst > Visualization > Plots optimization detailed
