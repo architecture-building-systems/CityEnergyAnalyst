@@ -4,6 +4,10 @@
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+# icon stuff
+!define MUI_ICON "cea-icon.ico"
+
+
 # download CEA conda env from here (FIXME: update to a more sane download URL)
 # !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
 # !define CEA_ENV_FILENAME "cea.7z"
@@ -64,6 +68,8 @@ Section "Base Installation" Base_Installation_Section
     SectionIn RO  # this section is required
     SetOutPath "$INSTDIR"
 
+    File "cea-icon.ico"
+
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
     SetOutPath "$INSTDIR\Dependencies\cmder"
@@ -81,15 +87,15 @@ Section "Base Installation" Base_Installation_Section
 
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
-        "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL \
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
     CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
-        "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$WINDIR\notepad.exe" 1 SW_SHOWNORMAL "" "Open CEA Configuration file"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 
     ;Download the CityEnergyAnalyst conda environment
@@ -121,13 +127,13 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
-        "$INSTDIR\Dependencies\cmder\cmder.exe" 1 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
-        "$INSTDIR\Dependencies\Python\Scripts\cea.exe" 1 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$WINDIR\notepad.exe" 1 SW_SHOWNORMAL "" "Open CEA Configuration file"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 SectionEnd
 
