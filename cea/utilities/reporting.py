@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from plotly.offline import plot
 import plotly.graph_objs as go
+from cea.constants import HOURS_IN_YEAR
 
 
 
@@ -82,7 +83,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_COOLING_LOADS:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='lines+markers')
+            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -92,7 +93,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_MOISTURE:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='lines+markers')
+            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -102,7 +103,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_VENTILATION_FLOWS:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='lines+markers')
+            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -115,7 +116,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         keys.extend(TSD_KEYS_COOLING_SUPPLY_FLOWS)
         for key in keys:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='lines+markers')
+            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)

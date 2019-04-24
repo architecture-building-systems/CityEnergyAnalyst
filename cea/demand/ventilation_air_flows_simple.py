@@ -5,6 +5,7 @@ from __future__ import division
 import numpy as np
 from cea.demand import control_ventilation_systems, constants, control_heating_cooling_systems
 from cea.utilities import physics
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -37,7 +38,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
     :param tsd: Timestep data
     :type tsd: Dict[str, numpy.ndarray]
-    :param t: time step [0..8760]
+    :param t: time step [0..HOURS_IN_YEAR]
     :type t: int
     :return: updates tsd
     """
@@ -91,7 +92,7 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
     :param tsd: Timestep data
     :type tsd: Dict[str, numpy.ndarray]
-    :param t: time step [0..8760]
+    :param t: time step [0..HOURS_IN_YEAR]
     :type t: int
     :return: updates tsd
     """
@@ -166,7 +167,7 @@ def calc_theta_ve_mech(bpr, tsd, t):
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
     :param tsd: Timestep data
     :type tsd: Dict[str, numpy.ndarray]
-    :param t: time step [0..8760]
+    :param t: time step [0..HOURS_IN_YEAR]
     :type t: int
     :return: updates tsd
     """
@@ -216,7 +217,7 @@ def calc_m_ve_required(bpr, tsd):
         m_ve_required_min = constants.MIN_VENTILATION_RATE * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
         # we want this not to affect the air flows during the heating season
         m_ve_required = []
-        for t in range(0,8760):
+        for t in range(0, HOURS_IN_YEAR):
             if 0.0 < m_ve_required_people[t] < m_ve_required_min[t] and \
                 control_heating_cooling_systems.is_cooling_season(t, bpr):
                 m_ve_required.append(m_ve_required_min[t])

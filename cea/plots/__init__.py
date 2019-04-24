@@ -66,7 +66,7 @@ def default_dashboard(config, cache):
     return Dashboard(config, {'name': 'Default Dashboard',
                               'plots': [{'plot': 'energy-balance',
                                          'category': 'demand',
-                                         'parameters': {'buildings': [],
+                                         'parameters': {'building': 'XYZ',
                                                         'scenario-name': config.scenario_name}}]}, cache)
 
 

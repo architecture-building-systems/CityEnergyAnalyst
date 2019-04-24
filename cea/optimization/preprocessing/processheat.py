@@ -10,6 +10,7 @@ from __future__ import division
 import pandas as pd
 from cea.technologies import boiler
 from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN
+from cea.constants import HOURS_IN_YEAR
 
 
 def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
@@ -41,7 +42,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
             Qnom = 0
             Qannual = 0
             # Operation costs / CO2 / Prim
-            for i in range(8760):
+            for i in range(HOURS_IN_YEAR):
                 Qgas = Qhpro_sys[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from cea.optimization.constants import *
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -144,7 +145,7 @@ class LcaCalculations(object):
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                             'costs_kWh'] / 1000
-            self.ELEC_PRICE = np.ones(8760) * average_electricity_price # in USD_2015 per W
+            self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price # in USD_2015 per W
 
         self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
             'PEN']  # MJ_oil / MJ_final
@@ -153,7 +154,7 @@ class LcaCalculations(object):
 
         average_green_electricity_cost = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'costs_kWh']  # MJ_oil / MJ_final
-        self.ELEC_PRICE_GREEN = np.ones(8760) * average_green_electricity_cost
+        self.ELEC_PRICE_GREEN = np.ones(HOURS_IN_YEAR) * average_green_electricity_cost
         self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'PEN']  # MJ_oil / MJ_final
         self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
