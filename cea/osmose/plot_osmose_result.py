@@ -280,6 +280,9 @@ def main(building, TECHS, building_result_path):
             ## plot exergy loads
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
 
+            ## output chilled water temperatures
+            hourly_T_chw = analyse_chilled_water_temperature(results)
+
         else:
             print 'Cannot find ', osmose_result_file
 
@@ -359,6 +362,24 @@ def analysis_chilled_water_usage(results, tech):
         chiller_occurance[str(chiller_number)] += 1
     T_chillers_df = pd.DataFrame(T_chillers, index=[tech])
     return T_chillers_df
+
+
+def analyse_chilled_water_temperature(results):
+    hourly_chiller_usage = results.filter(like='el_oau_chi').fillna(0)
+    T_low_C = 8.1
+    T_high_C = 14.1
+    T_interval = 0.65  # 0.5
+    T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
+    hourly_chilled_water_temperature = []
+    for i in range(results.shape[0]):
+        chiller_timestep = hourly_chiller_usage.loc[i + 1]
+        if chiller_timestep[chiller_timestep > 0].values.size > 0:
+            chiller_used = str(chiller_timestep[chiller_timestep > 0].index).split('chi')[1].split('_')[0]
+            chiller_number = int(chiller_used) - 1
+            hourly_chilled_water_temperature.append(T_OAU_offcoil[chiller_number])
+        else:
+            hourly_chilled_water_temperature.append(np.nan)
+    return hourly_chilled_water_temperature
 
 
 def set_up_hu_store_df(results):
@@ -485,11 +506,9 @@ def aggregate_el_by_units(tech, electricity_df, results, building, building_resu
         el_per_unit_df['el_oau'] = electricity_df['el_aux_oau'] + electricity_df['el_chi_oau'] + \
                                    results['el_ct'] * (q_ct_oau / q_ct_total).fillna(0)
     el_per_unit_df['el_total'] = results['SU_elec']
-    el_per_unit_df = el_per_unit_df*1000/Af_m2
+    el_per_unit_df = el_per_unit_df * 1000 / Af_m2
     el_per_unit_df.to_csv(path_to_elec_unit_csv(building, building_result_path, tech))
     return np.nan
-
-
 
 
 # def set_up_electricity_per_area_df(tech, results, building):
@@ -550,6 +569,8 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # get T,w
     output_df['T_SA'] = operation_df['T_SA']
     output_df['w_SA'] = operation_df['w_SA']
+    # get T_chw
+    output_df['T_chw'] = analyse_chilled_water_temperature(results)
 
     ## add total row in the bottom
     total_df = pd.DataFrame(output_df.sum()).T
@@ -1175,6 +1196,7 @@ def path_to_elec_csv(building, building_result_path, tech):
     path_to_file = os.path.join(building_result_path, '%s_%s_el.csv' % (building, tech))
     return path_to_file
 
+
 def path_to_elec_unit_csv(building, building_result_path, tech):
     path_to_file = os.path.join(building_result_path, '%s_%s_el_kWh_m2.csv' % (building, tech))
     return path_to_file
@@ -1201,15 +1223,15 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    buildings = ["B006","B007","B008","B009","B010"]
-    #buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-    tech = ["HCS_3for2"]
-    #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
-    #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_HOT"]
-    # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
-    #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
+    buildings = ["B005"]
+    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    # tech = ["HCS_3for2"]
+    tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
+    cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    #cases = ["WTP_CBD_m_WP1_RET"]
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
+    # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
+    # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
