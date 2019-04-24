@@ -110,11 +110,11 @@ Section "Base Installation" Base_Installation_Section
 
     # unzip python environment to ${INSTDIR}\Dependencies
     DetailPrint "Extracting ${CEA_ENV_FILENAME}"
-    # Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
+    Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
     Delete ${CEA_ENV_FILENAME}
 
-    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
-    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install cityenergyanalyst'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -U --no-cache cityenergyanalyst'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
@@ -145,7 +145,7 @@ Section /o "Developer version" Clone_Repository_Section
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    # nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
