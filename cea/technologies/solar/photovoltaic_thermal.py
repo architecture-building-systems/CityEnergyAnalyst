@@ -17,13 +17,15 @@ from itertools import izip, repeat
 import multiprocessing
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
-    calc_absorbed_radiation_PV, calc_cell_temperature)
+                                                 calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
-    vectorize_calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network)
+                                                    vectorize_calc_Eaux_SC, calc_optimal_mass_flow,
+                                                    calc_optimal_mass_flow_2, calc_qloss_network)
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,6 +35,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 def calc_PVT_wrapper(args):
     """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
@@ -118,13 +121,16 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
              'PVT_walls_north_Tout_C': 0.0,
              'PVT_walls_south_E_kWh': 0.0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0.0,
              'PVT_walls_south_Tout_C': 0.0,
-             'PVT_walls_east_E_kWh': 0.0, 'PVT_walls_east_m2': 0.0, 'PVT_walls_east_Q_kWh': 0.0, 'PVT_walls_east_Tout_C': 0.0,
-             'PVT_walls_west_E_kWh': 0.0, 'PVT_walls_west_m2': 0.0, 'PVT_walls_west_Q_kWh': 0.0, 'PVT_walls_west_Tout_C': 0.0,
-             'PVT_roofs_top_E_kWh': 0.0, 'PVT_roofs_top_m2': 0.0, 'PVT_roofs_top_Q_kWh': 0.0, 'PVT_roofs_top_Tout_C': 0.0,
+             'PVT_walls_east_E_kWh': 0.0, 'PVT_walls_east_m2': 0.0, 'PVT_walls_east_Q_kWh': 0.0,
+             'PVT_walls_east_Tout_C': 0.0,
+             'PVT_walls_west_E_kWh': 0.0, 'PVT_walls_west_m2': 0.0, 'PVT_walls_west_Q_kWh': 0.0,
+             'PVT_walls_west_Tout_C': 0.0,
+             'PVT_roofs_top_E_kWh': 0.0, 'PVT_roofs_top_m2': 0.0, 'PVT_roofs_top_Q_kWh': 0.0,
+             'PVT_roofs_top_Tout_C': 0.0,
              'Q_PVT_gen_kWh': 0.0, 'T_PVT_sup_C': 0.0, 'T_PVT_re_C': 0.0,
              'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
              'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'Area_PVT_m2': 0.0,
-             'radiation_kWh': 0.0}, index=range(8760))
+             'radiation_kWh': 0.0}, index=range(HOURS_IN_YEAR))
         Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -184,7 +190,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
 
     list_results_from_PVT = list(range(number_groups))
 
-    potential = pd.DataFrame(index=[range(8760)])
+    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PVT_' + panel_orientation + '_Q_kWh'] = 0.0
@@ -263,7 +269,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
     potential['mcp_PVT_kWperC'] = sum(total_mcp_kWperC)
     potential['Eaux_PVT_kWh'] = sum(total_aux_el_kWh)
     potential['Q_PVT_l_kWh'] = sum(total_qloss_kWh)
-    potential['T_PVT_sup_C'] = np.zeros(8760) + T_in_C
+    potential['T_PVT_sup_C'] = np.zeros(HOURS_IN_YEAR) + T_in_C
     T_out_C = (potential['Q_PVT_gen_kWh'] / potential['mcp_PVT_kWperC']) + T_in_C
     potential['T_PVT_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
@@ -289,12 +295,14 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
 
     return pipe_equivalent_lengths_mperm2
 
+
 def get_t_in_pvt(config):
     if config.solar.t_in_pvt is not None:
         Tin_C = config.solar.T_in_PVT
     else:
         Tin_C = constants.T_IN_PVT
     return Tin_C
+
 
 def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
                     tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, module_area_per_group_m2):
@@ -349,24 +357,31 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
-    specific_flows_kgpers = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area_m2 / 3600,
-                             (np.zeros(8760) + mB_max_r) * aperture_area_m2 / 3600,
-                             (np.zeros(8760) + mB_min_r) * aperture_area_m2 / 3600, np.zeros(8760),
-                             np.zeros(8760)]  # in kg/s
-    specific_pressure_losses_Pa = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area_m2,
-                                   (np.zeros(8760) + dP3) * aperture_area_m2,
-                                   (np.zeros(8760) + dP4) * aperture_area_m2, np.zeros(8760), np.zeros(8760)]  # in Pa
+    specific_flows_kgpers = [np.zeros(HOURS_IN_YEAR), (np.zeros(HOURS_IN_YEAR) + mB0_r) * aperture_area_m2 / 3600,
+                             (np.zeros(HOURS_IN_YEAR) + mB_max_r) * aperture_area_m2 / 3600,
+                             (np.zeros(HOURS_IN_YEAR) + mB_min_r) * aperture_area_m2 / 3600, np.zeros(HOURS_IN_YEAR),
+                             np.zeros(HOURS_IN_YEAR)]  # in kg/s
+    specific_pressure_losses_Pa = [np.zeros(HOURS_IN_YEAR), (np.zeros(HOURS_IN_YEAR) + dP2) * aperture_area_m2,
+                                   (np.zeros(HOURS_IN_YEAR) + dP3) * aperture_area_m2,
+                                   (np.zeros(HOURS_IN_YEAR) + dP4) * aperture_area_m2, np.zeros(HOURS_IN_YEAR),
+                                   np.zeros(HOURS_IN_YEAR)]  # in Pa
 
     # generate empty lists to store results
-    temperature_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_in = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_out_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_losses_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
-                                np.zeros(8760)]
-    temperature_mean = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    mcp_kWperK = np.zeros(8760)
-    T_module_C = np.zeros(8760)
+    temperature_out = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                       np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    temperature_in = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                      np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    supply_out_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                     np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    supply_losses_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                        np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    auxiliary_electricity_kW = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                                np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                                np.zeros(HOURS_IN_YEAR)]
+    temperature_mean = [np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR),
+                        np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR), np.zeros(HOURS_IN_YEAR)]
+    mcp_kWperK = np.zeros(HOURS_IN_YEAR)
+    T_module_C = np.zeros(HOURS_IN_YEAR)
 
     # calculate absorbed radiation
     tilt_rad = radians(tilt_angle_deg)
@@ -390,12 +405,11 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for time in range(8760):
-            #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
+        for time in range(HOURS_IN_YEAR):
+            # c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
             c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time)
-            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
-
-
+            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], time,
+                                         Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
 
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb_C = Tamb_vector_C[time]
@@ -411,8 +425,8 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes
             Tout_Seg_C = do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg,
-                                                     Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C,
-                                                     c1_pvt, c2, delts, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
+                                                      Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C,
+                                                      c1_pvt, c2, delts, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
 
             # resulting energy output
             q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C) / 1000  # [kW]
@@ -509,7 +523,7 @@ def calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time):
 def turn_off_the_water_circuit_if_total_energy_supply_is_zero(T_module_C, Tcell_PV_C, auxiliary_electricity_kW,
                                                               mcp_kWperK, supply_out_total_kW, temperature_in,
                                                               temperature_out):
-    for x in range(8760):
+    for x in range(HOURS_IN_YEAR):
         # turn off the water circuit if total energy supply is zero
         if supply_out_total_kW[x] <= 0:
             supply_out_total_kW[x] = 0
@@ -538,8 +552,8 @@ def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, M
         if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
             Tout_Seg_C = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg + 273.15)) / Aseg_m2 - (
                     C_eff_Jperm2K * (Tin_Seg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
-                         (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                                Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
+                          (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
+                                 Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
             Tout_Seg_C = Tout_Seg_C - 273.15  # in [C]
             TflB[Iseg] = (Tin_Seg + Tout_Seg_C) / 2
         else:  # heat losses based on each segment's inlet and outlet temperatures.
@@ -589,7 +603,8 @@ def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tf
 
 
 @jit(nopython=True)
-def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, time, Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2):
+def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, time, Cp_fluid_JperkgK, C_eff_Jperm2K,
+                    aperture_area_m2):
     Mfl_kgpers = specific_flows_kgpers[time]
     if time < TIME0 + DELT / 2:
         for Iseg in range(101, 501):  # 400 points with the data
@@ -652,7 +667,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running photovoltaic-thermal with scenario = %s' % config.scenario)
-    print('Running photovoltaic-thermal with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
+    print(
+        'Running photovoltaic-thermal with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic-thermal with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic-thermal with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic-thermal with solar-window-solstice = %s' % config.solar.solar_window_solstice)
@@ -677,22 +693,22 @@ def main(config):
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
         pool.map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                       repeat(config, building_count),
-                                       repeat(latitude, building_count),
-                                       repeat(longitude, building_count),
-                                       repeat(weather_data, building_count),
-                                       repeat(date_local, building_count),
-                                       list_buildings_names))
+                                        repeat(config, building_count),
+                                        repeat(latitude, building_count),
+                                        repeat(longitude, building_count),
+                                        repeat(weather_data, building_count),
+                                        repeat(date_local, building_count),
+                                        list_buildings_names))
         # locator, config, latitude, longitude, weather_data, date_local, building_name
     else:
         print("Using single process")
         map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                  repeat(config, building_count),
-                                  repeat(latitude, building_count),
-                                  repeat(longitude, building_count),
-                                  repeat(weather_data, building_count),
-                                  repeat(date_local, building_count),
-                                  list_buildings_names))
+                                   repeat(config, building_count),
+                                   repeat(latitude, building_count),
+                                   repeat(longitude, building_count),
+                                   repeat(weather_data, building_count),
+                                   repeat(date_local, building_count),
+                                   list_buildings_names))
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
@@ -717,7 +733,8 @@ def main(config):
     # save hourly results
     aggregated_hourly_results_df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     aggregated_hourly_results_df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
-    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
+    aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
+        aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
     aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
     # save annual results

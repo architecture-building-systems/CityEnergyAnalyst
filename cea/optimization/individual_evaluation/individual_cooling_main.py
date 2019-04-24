@@ -28,6 +28,7 @@ from cea.optimization.constants import  SIZING_MARGIN, PUMP_ETA, DELTA_U, \
 import cea.technologies.pumps as pumps
 from math import log, ceil
 from cea.optimization.lca_calculations import LcaCalculations
+from cea.constants import HOURS_IN_YEAR
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -104,12 +105,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     arrayData = np.array(df)
 
     # total cooling requirements based on the Heat Recovery Flag
-    Q_cooling_req_W = np.zeros(8760)
+    Q_cooling_req_W = np.zeros(HOURS_IN_YEAR)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
-        for hour in range(8760):  # summing cooling loads of space cooling, refrigeration and data center
+        for hour in range(HOURS_IN_YEAR):  # summing cooling loads of space cooling, refrigeration and data center
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][1]
     else:
-        for hour in range(8760):  # only including cooling loads of space cooling and refrigeration
+        for hour in range(HOURS_IN_YEAR):  # only including cooling loads of space cooling and refrigeration
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
@@ -220,37 +221,37 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     nBuild = int(np.shape(arrayData)[0])
     nHour = int(np.shape(DCN_operation_parameters)[0])
 
-    calfactor_buildings = np.zeros(8760)
+    calfactor_buildings = np.zeros(HOURS_IN_YEAR)
     TotalCool = 0
-    Qc_from_Lake_W = np.zeros(8760)
-    Qc_from_VCC_W = np.zeros(8760)
-    Qc_from_ACH_W = np.zeros(8760)
-    Qc_from_storage_tank_W = np.zeros(8760)
-    Qc_from_VCC_backup_W = np.zeros(8760)
+    Qc_from_Lake_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_VCC_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_ACH_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_storage_tank_W = np.zeros(HOURS_IN_YEAR)
+    Qc_from_VCC_backup_W = np.zeros(HOURS_IN_YEAR)
 
-    Qc_req_from_CT_W = np.zeros(8760)
-    Qh_req_from_CCGT_W = np.zeros(8760)
-    Qh_from_CCGT_W = np.zeros(8760)
-    E_gen_CCGT_W = np.zeros(8760)
+    Qc_req_from_CT_W = np.zeros(HOURS_IN_YEAR)
+    Qh_req_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
+    Qh_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
+    E_gen_CCGT_W = np.zeros(HOURS_IN_YEAR)
 
-    opex_var_Lake = np.zeros(8760)
-    opex_var_VCC = np.zeros(8760)
-    opex_var_ACH = np.zeros(8760)
-    opex_var_VCC_backup = np.zeros(8760)
-    opex_var_CCGT = np.zeros(8760)
-    opex_var_CT = np.zeros(8760)
-    co2_Lake = np.zeros(8760)
-    co2_VCC = np.zeros(8760)
-    co2_ACH = np.zeros(8760)
-    co2_VCC_backup = np.zeros(8760)
-    co2_CCGT = np.zeros(8760)
-    co2_CT = np.zeros(8760)
-    prim_energy_Lake = np.zeros(8760)
-    prim_energy_VCC = np.zeros(8760)
-    prim_energy_ACH = np.zeros(8760)
-    prim_energy_VCC_backup = np.zeros(8760)
-    prim_energy_CCGT = np.zeros(8760)
-    prim_energy_CT = np.zeros(8760)
+    opex_var_Lake = np.zeros(HOURS_IN_YEAR)
+    opex_var_VCC = np.zeros(HOURS_IN_YEAR)
+    opex_var_ACH = np.zeros(HOURS_IN_YEAR)
+    opex_var_VCC_backup = np.zeros(HOURS_IN_YEAR)
+    opex_var_CCGT = np.zeros(HOURS_IN_YEAR)
+    opex_var_CT = np.zeros(HOURS_IN_YEAR)
+    co2_Lake = np.zeros(HOURS_IN_YEAR)
+    co2_VCC = np.zeros(HOURS_IN_YEAR)
+    co2_ACH = np.zeros(HOURS_IN_YEAR)
+    co2_VCC_backup = np.zeros(HOURS_IN_YEAR)
+    co2_CCGT = np.zeros(HOURS_IN_YEAR)
+    co2_CT = np.zeros(HOURS_IN_YEAR)
+    prim_energy_Lake = np.zeros(HOURS_IN_YEAR)
+    prim_energy_VCC = np.zeros(HOURS_IN_YEAR)
+    prim_energy_ACH = np.zeros(HOURS_IN_YEAR)
+    prim_energy_VCC_backup = np.zeros(HOURS_IN_YEAR)
+    prim_energy_CCGT = np.zeros(HOURS_IN_YEAR)
+    prim_energy_CT = np.zeros(HOURS_IN_YEAR)
     calfactor_total = 0
 
     # the simulation is for the month of May. This needs to be multiplied to represent the entire year

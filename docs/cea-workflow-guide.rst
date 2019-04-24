@@ -155,26 +155,41 @@ In Arcgis:
 
 After the tools have finished running, the plots will be stored in YourProject > YourScenario > outputs > plots
 
-Step 9. Optimization
----------------------
-
-Right after Step 3 or Step 5, CEA offers tools to optimize the energy system of a standing scenario.
-
-This idea will be pursued in the next tools:
+Step 9. Analyze the thermal networks
+-------------------------------------
+After calculating the energy demand of the baseline scenario, it is possible to get a first assessment on how would
+a thermal network perform in this district. We first build a thermal network (District cooling or heating) that connects
+all the buildings in the district, and then simulate the thermal and hydraulic losses. This results are input to the
+Optimization in the next step.
 
 In Pycharm:
 
 #. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies > thermal_network > network_layout > main.py
 #. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network.py
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > disconnected_building_main.py
-#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
-#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
 
 In Arcgis:
 
 #. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst > Thermal Networks > Network Layout
 #. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > Thermal Networks > Thermo-Hydraulic network
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > Optimization > Decentralized supply System
+
+
+
+Step 10. Optimization
+---------------------
+
+After Step 3 or Step 5, and followed by Step 9, CEA offers tools to optimize the energy system of a standing scenario.
+
+This idea will be pursued in the next tools:
+
+In Pycharm:
+
+#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > decentralized_building_main.py
+#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
+#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
+
+In Arcgis:
+
+#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > Optimization > Decentralized Supply System
 #. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > Optimization > Central supply system
 #. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > Analysis > multicriteria analysis
 
