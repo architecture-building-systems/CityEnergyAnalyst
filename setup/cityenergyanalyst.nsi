@@ -35,7 +35,7 @@ OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 ;--------------------------------
 ;Folder selection page
 
-InstallDir "$LOCALAPPDATA\CityEnergyAnalyst"
+InstallDir "$DOCUMENTS\CityEnergyAnalyst"
 
 ;Request application privileges for Windows Vista
 RequestExecutionLevel user
