@@ -55,7 +55,7 @@ def plot_T_w_scatter(ax, compare_df):
             label = CONFIG_TABLE[tech]
             color = color_codes[tech]
             ax.scatter(w_SA, T_SA, s=70, c=color, label=label)
-    ax.legend(loc="lower left",ncol=3,bbox_to_anchor=(-0.05,0.6),fontsize='small',columnspacing=0.05)
+    ax.legend(loc="lower left",ncol=3,bbox_to_anchor=(-0.05,0.7),fontsize='small',columnspacing=0.05)
     ax.set(xlabel='Humidity Ratio [g/kg air]', ylabel='Temperature [C]', ylim=(14, 20))
     ax.set_title('OAU Supply Air Conditions ')
     # plt.show()
@@ -138,27 +138,28 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     # format the plt
     plt.figure()
     case_name = case.split('_')[4]
-    plt.title(CASE_TABLE[case_name] + ' ' + building, fontsize=18)
+    plt.title(CASE_TABLE[case_name] + ' ' + building, fontsize=16)
     # plt.xlabel('x')
-    plt.ylabel('Chilled water temperature [C]', fontsize=18)
-    plt.xticks(x_values, x_labels_shown, fontsize=18)
-    plt.yticks(y_values, y_labels, fontsize=18)
+
+    plt.xticks(x_values, x_labels_shown, fontsize=16)
+    plt.yticks(y_values, y_labels, fontsize=16)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.5, max(y_values) + 0.5])
     plt.scatter(x, y_float, s=area, c='#454545') # navy: #14453
-    # plt.show()
+    plt.ylabel('Chilled water temperature [C]', fontsize=16)
+    #plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path))
     return np.nan
 
 
 def plot_el_compare(building, building_result_path, compare_df):
-    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(9.5, 4.5))
+    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(9.5, 5))
 
     # ax1.set_visible(False)
     ax1 = plot_T_w_scatter(ax1, compare_df)
 
     # ax2
-    config = 'Config|1'
+    config = 'Config|1 \n Cooling Coils'
     tech = 'HCS_coil'
     if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
         el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
@@ -167,15 +168,15 @@ def plot_el_compare(building, building_result_path, compare_df):
         ax2.set(ylabel='Electricity Use [Wh/m2]')
         ax2.yaxis.label.set_size(10)
     # ax3
-    config = 'Config|2'
+    config = 'Config|2 \n Direct Evaporative Cooling'
     tech = 'HCS_ER0'
     if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
         el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
         el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
         ax3 = plot_electricity_usages_units(ax3, el_per_unit_df, config)
-        ax3.legend(loc=(0.2,-0.35), ncol=3, fontsize='small', columnspacing=0.1)
+        #ax3.legend(loc=(0.2,-0.35), ncol=3, fontsize='small', columnspacing=0.1)
     # ax4
-    config = 'Config|3'
+    config = 'Config|3 \n Desiccant Wheels'
     tech = 'HCS_3for2'
     if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
         el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
@@ -186,7 +187,7 @@ def plot_el_compare(building, building_result_path, compare_df):
         ax4.set(xlabel='Time [hr]')
         ax4.xaxis.label.set_size(10)
     # ax5
-    config = 'Config|4'
+    config = 'Config|4 \n Liquid Desiccant'
     tech = 'HCS_LD'
     if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
         el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
@@ -194,9 +195,9 @@ def plot_el_compare(building, building_result_path, compare_df):
         ax5 = plot_electricity_usages_units(ax5, el_per_unit_df, config)
         ax5.set(xlabel='Time [hr]')
         ax5.xaxis.label.set_size(10)
-        ax5.legend(loc="upper",ncol=3,fontsize='small',columnspacing=0.05)
+        ax5.legend(loc="upper center",ncol=3,fontsize='small',columnspacing=0.15)
     # ax6
-    config = 'Config|5'
+    config = 'Config|5 \n Indirect Evaporative Cooling'
     tech = 'HCS_IEHX'
     if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
         el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
@@ -221,17 +222,18 @@ def plot_electricity_usages_units(ax, el_per_unit_df, config):
     bar_width = 0.5
     opacity = 1
     #color_table = {'OAU': '#14453D', 'LCU': '#4D9169', 'SCU': '#BACCCC'}
-    color_table = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'}
+    #color_table = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'}
+    color_table = {'OAU': '#080808', 'RAU': '#707070', 'SCU': '#C8C8C8'}  # Gray scale
     # initialize the vertical-offset for the stacked bar chart
     y_offset = np.zeros(el_per_unit_df.shape[0])
     # plot bars
-    unit_table = {'OAU': 'el_oau', 'LCU': 'el_lcu', 'SCU': 'el_scu'}
+    unit_table = {'OAU': 'el_oau', 'RAU': 'el_lcu', 'SCU': 'el_scu'}
     for unit in unit_table.keys():
         column = unit_table[unit]
         ax.bar(x_ticks, el_per_unit_df[column], bar_width, bottom=y_offset, alpha=opacity, color=color_table[unit],
                label=unit)
         y_offset = y_offset + el_per_unit_df[column]
-    ax.set(xlim=(1,24),ylim=(0, 35))
+    ax.set(xlim=(1,24),ylim=(0, 25))
     ax.set_xticks(range(1,25,4))
     # ax.legend(loc='upper left')
     ax.set_title(config)
@@ -302,12 +304,12 @@ def path_to_save_chw_scatter(building, building_result_path):
 
 
 if __name__ == '__main__':
-    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    #buildings = ["B003"]
+    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    buildings = ["B005"]
     timestep = "168"
-    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    #cases = ['WTP_CBD_m_WP1_RET']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0421'
+    #cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_workstation'
     # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
