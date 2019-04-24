@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -71,12 +72,12 @@ def calc_Qref(locator, bpr, tsd):
             tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
                                                                 (tsd['Tcre_sys_re'] + 273), t_source)
             # final to district is zero
-            tsd['DC_cre'] = np.zeros(8760)
+            tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
     elif energy_source == "DC":
         tsd['DC_cre'] = tsd['Qcre_sys']
-        tsd['E_cre'] = np.zeros(8760)
+        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
     else:
-        tsd['E_cre'] = np.zeros(8760)
+        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     return tsd
 

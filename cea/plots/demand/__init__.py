@@ -141,6 +141,18 @@ class DemandPlotBase(cea.plots.PlotBase):
         return self.locator.get_timeseries_plots_file(fname, self.category_path)
 
 
+class DemandSingleBuildingPlotBase(DemandPlotBase):
+    """A base class for demand plots that only work on a single building"""
+    expected_parameters = {
+        'building': 'plots:building',
+        'scenario-name': 'general:scenario-name',
+    }
+
+    def __init__(self, project, parameters, cache):
+        parameters['buildings'] = [parameters['building']]
+        super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
+
+
 if __name__ == '__main__':
     # run all the plots in this category
     config = cea.config.Configuration()

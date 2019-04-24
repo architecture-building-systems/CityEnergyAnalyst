@@ -60,9 +60,9 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
             , x=0.8, y=1.1,
             xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
-    range = calc_range(data_frame_MWh, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
-                       sc_et_analysis_fields)
-
+    range = calc_range(data_frame_MWh, pv_E_analysis_fields_used, pvt_analysis_fields, sc_fp_Q_analysis_fields_used,
+                       sc_et_Q_analysis_fields_used)
+    
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1], range=range),
                        yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=range),

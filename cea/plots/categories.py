@@ -36,6 +36,8 @@ def list_categories():
             continue
         try:
             yield PlotCategory(module)
+        except GeneratorExit:
+            return
         except:
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
