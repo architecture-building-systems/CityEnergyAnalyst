@@ -12,6 +12,7 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.constants import WH_TO_J
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -34,13 +35,13 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
 
 
     # step 1: Get demand of all the district (tota
-    E_appliances_total_W = np.zeros(8760)
-    E_data_center_total_W = np.zeros(8760)
-    E_industrial_processes_total_W = np.zeros(8760)
-    E_auxiliary_units_total_W = np.zeros(8760)
-    E_hotwater_total_W = np.zeros(8760)
-    E_space_heating_total_W = np.zeros(8760)
-    E_space_cooling_total_W = np.zeros(8760)
+    E_appliances_total_W = np.zeros(HOURS_IN_YEAR)
+    E_data_center_total_W = np.zeros(HOURS_IN_YEAR)
+    E_industrial_processes_total_W = np.zeros(HOURS_IN_YEAR)
+    E_auxiliary_units_total_W = np.zeros(HOURS_IN_YEAR)
+    E_hotwater_total_W = np.zeros(HOURS_IN_YEAR)
+    E_space_heating_total_W = np.zeros(HOURS_IN_YEAR)
+    E_space_cooling_total_W = np.zeros(HOURS_IN_YEAR)
 
     for name in building_names: # adding the electricity demand of
         building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
@@ -111,15 +112,15 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         E_from_PVT_W = E_PVT_gen_W
 
 
-        E_CHP_directload_W = np.zeros(8760)
-        E_CHP_grid_W = np.zeros(8760)
-        E_PV_directload_W = np.zeros(8760)
-        E_PV_grid_W = np.zeros(8760)
-        E_PVT_directload_W = np.zeros(8760)
-        E_PVT_grid_W = np.zeros(8760)
-        E_GRID_directload_W = np.zeros(8760)
+        E_CHP_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_CHP_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:
@@ -258,17 +259,17 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         E_from_CHP_W = np.array(data_heating['E_CHP_gen_W'])
         E_from_Furnace_W = np.array(data_heating['E_Furnace_gen_W'])
 
-        E_CHP_directload_W = np.zeros(8760)
-        E_CHP_grid_W = np.zeros(8760)
-        E_PV_directload_W = np.zeros(8760)
-        E_PV_grid_W = np.zeros(8760)
-        E_PVT_directload_W = np.zeros(8760)
-        E_PVT_grid_W = np.zeros(8760)
-        E_Furnace_directload_W = np.zeros(8760)
-        E_Furnace_grid_W = np.zeros(8760)
-        E_GRID_directload_W = np.zeros(8760)
+        E_CHP_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_CHP_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:
@@ -407,14 +408,14 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         E_from_PV_W = E_PV_gen_W
         E_from_PVT_W = E_PVT_gen_W
 
-        E_PV_directload_W = np.zeros(8760)
-        E_PV_grid_W = np.zeros(8760)
-        E_PVT_directload_W = np.zeros(8760)
-        E_PVT_grid_W = np.zeros(8760)
+        E_PV_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_grid_W = np.zeros(HOURS_IN_YEAR)
 
-        E_GRID_directload_W = np.zeros(8760)
+        E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:
@@ -488,14 +489,14 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         E_from_PV_W = E_PV_gen_W
         E_from_PVT_W = E_PVT_gen_W
 
-        E_PV_directload_W = np.zeros(8760)
-        E_PV_grid_W = np.zeros(8760)
-        E_PVT_directload_W = np.zeros(8760)
-        E_PVT_grid_W = np.zeros(8760)
+        E_PV_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PV_grid_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_directload_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_grid_W = np.zeros(HOURS_IN_YEAR)
 
-        E_GRID_directload_W = np.zeros(8760)
+        E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
-        for hour in range(8760):
+        for hour in range(HOURS_IN_YEAR):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:

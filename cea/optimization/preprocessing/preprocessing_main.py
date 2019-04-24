@@ -17,6 +17,7 @@ from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
+from cea.constants import HOURS_IN_YEAR
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -110,15 +111,15 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
 class SolarFeatures(object):
     def __init__(self, locator, building_names, config):
-        E_PV_gen_kWh = np.zeros(8760)
-        E_PVT_gen_kWh = np.zeros(8760)
-        Q_PVT_gen_kWh = np.zeros(8760)
-        Q_SC_FP_gen_kWh = np.zeros(8760)
-        Q_SC_ET_gen_kWh = np.zeros(8760)
-        A_PV_m2 = np.zeros(8760)
-        A_PVT_m2 = np.zeros(8760)
-        A_SC_FP_m2 = np.zeros(8760)
-        A_SC_ET_m2 = np.zeros(8760)
+        E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
+        E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+        Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+        Q_SC_FP_gen_kWh = np.zeros(HOURS_IN_YEAR)
+        Q_SC_ET_gen_kWh = np.zeros(HOURS_IN_YEAR)
+        A_PV_m2 = np.zeros(HOURS_IN_YEAR)
+        A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
+        A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
+        A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
         if config.district_heating_network:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))

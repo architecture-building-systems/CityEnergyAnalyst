@@ -14,9 +14,10 @@ from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
-from cea.globalvar import GlobalVariables
+from cea.utilities import epwreader
 import cea.config
 from cea.demand.building_properties import BuildingProperties
+from cea.constants import HOURS_IN_YEAR
 
 REFERENCE_TIME = 3456
 
@@ -38,7 +39,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
 
-        architecture_DB = pd.read_excel(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
+        architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
@@ -57,19 +58,19 @@ class TestScheduleCreation(unittest.TestCase):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
         stochastic_occupancy = config.demand.use_stochastic_occupancy
-        gv = GlobalVariables()
-        gv.config = config
 
+        # get year from weather file
+        weather_data = epwreader.epw_reader(config.weather)[['year']]
+        year = weather_data['year'][0]
+        date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-        date = pd.date_range(gv.date_start, periods=8760, freq='H')
-
-        building_properties = BuildingProperties(locator, False, 'CH', False)
+        building_properties = BuildingProperties(locator, False, False)
         bpr = building_properties['B01']
         list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
 
         # calculate schedules
-        archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
+        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
         calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                               stochastic_occupancy)
 
@@ -93,14 +94,14 @@ def get_test_config_path():
 def calculate_test_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
-    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE', index_col=0).T['density'].values[:1][0])
-    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM', index_col=0).T['density'].values[:1][0])
+    office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE', index_col=0).T['density'].values[:1][0])
+    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'GYM', index_col=0).T['density'].values[:1][0])
     calculated_results = calculate_average_multiuse(
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS')).set_index('Name')
+        properties_DB=pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')).set_index('Name')
     return calculated_results
 
 
@@ -116,17 +117,18 @@ def create_test_data():
     test_config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    gv = GlobalVariables()
-    gv.config = config
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
-    building_properties = BuildingProperties(locator, False, 'CH', False)
+    building_properties = BuildingProperties(locator, False, False)
     bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-    gv = GlobalVariables()
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    # get year from weather file
+    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy
     calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,

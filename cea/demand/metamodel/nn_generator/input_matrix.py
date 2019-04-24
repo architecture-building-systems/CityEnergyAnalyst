@@ -18,6 +18,7 @@ from cea.demand import control_heating_cooling_systems
 from cea.utilities import epwreader
 from cea.demand.sensible_loads import calc_I_sol
 import numpy as np
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca","Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
+                                   year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
                                    building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
@@ -43,7 +44,7 @@ def input_prepare_multi_processing(building_name, locator, target_parameters, nn
     #   collect targets from the target reader function
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, region, year,
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, year,
                                                      use_daysim_radiation,use_stochastic_occupancy,weather_array,
                                                       weather_data,building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
@@ -124,7 +125,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, climatic_variables, region, year,
+def get_cea_inputs(locator, building_name, climatic_variables, year,
                    use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
                    building_properties, schedules_dict, date):
     '''
@@ -137,7 +138,7 @@ def get_cea_inputs(locator, building_name, climatic_variables, region, year,
     #   collecting all input features concerning climatic characteristics
     # weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
-    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
+    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator, year,use_daysim_radiation)
     #   calling the intended building
     building = building_properties[building_name]
     #   collecting all input features concerning geometry characteristics
@@ -188,25 +189,25 @@ def get_array_geometry_variables(building):
     '''
     this function collects building geometry characteristics
     :param building: the intended building dataset
-    :return: array of geometry features * 8760 (array_geom)
+    :return: array of geometry features * HOURS_IN_YEAR (array_geom)
     '''
     #   net air-conditioned floor area
-    array_Af = np.empty(8760)
+    array_Af = np.empty(HOURS_IN_YEAR)
     array_Af.fill(building.rc_model['Af'])
     #   above ground wall area
-    array_OPwall = np.empty(8760)
+    array_OPwall = np.empty(HOURS_IN_YEAR)
     array_OPwall.fill(building.rc_model['Aop_sup'])
     #   basement wall area
-    array_OPwallB = np.empty(8760)
+    array_OPwallB = np.empty(HOURS_IN_YEAR)
     array_OPwallB.fill(building.rc_model['Aop_bel'])
     #   window area
-    array_GLwin = np.empty(8760)
+    array_GLwin = np.empty(HOURS_IN_YEAR)
     array_GLwin.fill(building.rc_model['Aw'])
     #   roof/floor area
-    array_OProof = np.empty(8760)
+    array_OProof = np.empty(HOURS_IN_YEAR)
     array_OProof.fill(building.rc_model['footprint'])
     #   surface to volume ratio
-    array_sv = np.empty(8760)
+    array_sv = np.empty(HOURS_IN_YEAR)
     array_sv.fill(building.rc_model['surface_volume'])
     #   concatenate geometry arrays
     array_geom = np.column_stack((array_Af, array_OPwall, array_OPwallB, array_GLwin, array_OProof, array_sv))
@@ -220,44 +221,44 @@ def get_array_architecture_variables(building, building_name, locator):
     :param building: the intended building dataset
     :param building_name: the intended building name from the list of buildings
     :param locator: points to the variables
-    :return: array of architectural features * 8760(array_arch)
+    :return: array of architectural features * HOURS_IN_YEAR(array_arch)
     '''
     #   pointing to the building dataframe
     data_architecture = dbf_to_dataframe(locator.get_building_architecture())
     data_architecture.set_index('Name', inplace=True)
     #   Window to wall ratio (as an average of all walls)
-    array_wwr = np.empty(8760)
+    array_wwr = np.empty(HOURS_IN_YEAR)
     average_wwr = np.mean([data_architecture.ix[building_name, 'wwr_south'],
                            data_architecture.ix[building_name, 'wwr_north'],
                            data_architecture.ix[building_name, 'wwr_west'],
                            data_architecture.ix[building_name, 'wwr_east']])
     array_wwr.fill(average_wwr)
     #   thermal mass
-    array_cm = np.empty(8760)
+    array_cm = np.empty(HOURS_IN_YEAR)
     array_cm.fill(building.architecture.Cm_Af)
     #   air leakage (infiltration)
-    array_n50 = np.empty(8760)
+    array_n50 = np.empty(HOURS_IN_YEAR)
     array_n50.fill(building.architecture.n50)
     #   roof properties
-    array_Uroof = np.empty(8760)
+    array_Uroof = np.empty(HOURS_IN_YEAR)
     array_Uroof.fill(building.architecture.U_roof)
-    array_aroof = np.empty(8760)
+    array_aroof = np.empty(HOURS_IN_YEAR)
     array_aroof.fill(building.architecture.a_roof)
     #   walls properties
-    array_Uwall = np.empty(8760)
+    array_Uwall = np.empty(HOURS_IN_YEAR)
     array_Uwall.fill(building.architecture.U_wall)
-    array_awall = np.empty(8760)
+    array_awall = np.empty(HOURS_IN_YEAR)
     array_awall.fill(building.architecture.a_wall)
     #   basement properties
-    array_Ubase = np.empty(8760)
+    array_Ubase = np.empty(HOURS_IN_YEAR)
     array_Ubase.fill(building.architecture.U_base)
     #   glazing properties
-    array_Uwin = np.empty(8760)
+    array_Uwin = np.empty(HOURS_IN_YEAR)
     array_Uwin.fill(building.architecture.U_win)
-    array_Gwin = np.empty(8760)
+    array_Gwin = np.empty(HOURS_IN_YEAR)
     array_Gwin.fill(building.architecture.G_win)
     #   shading properties
-    array_rfsh = np.empty(8760)
+    array_rfsh = np.empty(HOURS_IN_YEAR)
     array_rfsh.fill(building.architecture.rf_sh)
     #   concatenate architectural arrays
     array_arch = np.column_stack(
@@ -287,7 +288,7 @@ def get_array_comfort_variables(building, date, schedules_dict, weather_data,use
     array_Thset = tsd['ta_hs_set']
     array_Tcset = tsd['ta_cs_set']
     #   create a single vector of setpoint temperatures
-    array_cmfrt = np.empty((1, 8760))
+    array_cmfrt = np.empty((1, HOURS_IN_YEAR))
     seasonhours = [3216, 6192]
     array_cmfrt[0, :] = array_Thset
     array_cmfrt[0, seasonhours[0] + 1:seasonhours[1]] = array_Tcset[seasonhours[0] + 1:seasonhours[1]]
@@ -296,10 +297,10 @@ def get_array_comfort_variables(building, date, schedules_dict, weather_data,use
     array_HVAC_status=np.where(array_cmfrt > 99, 0,
              (np.where(array_cmfrt < -99, 0, 1)))
     #   an array of HVAC availability during winter
-    array_HVAC_heating = np.empty((1, 8760))
+    array_HVAC_heating = np.empty((1, HOURS_IN_YEAR))
     array_HVAC_heating[0,:] = np.where(array_Thset < -99, 0,1)
     #   an array of HVAC availability during summer
-    array_HVAC_cooling = np.empty((1, 8760))
+    array_HVAC_cooling = np.empty((1, HOURS_IN_YEAR))
     array_HVAC_cooling[0,:] = np.where(array_Tcset > 99, 0, 1)
     #   concatenate comfort arrays
     array_cmfrts=np.concatenate((array_cmfrt,array_HVAC_status),axis=0)
@@ -325,7 +326,7 @@ def get_array_internal_loads_variables(schedules, tsd, building):
     #   latent gains
     array_latent_gain = tsd['w_int']
     #   solar gains
-    for t in range(8760):
+    for t in range(HOURS_IN_YEAR):
         tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] =calc_I_sol(t, building, tsd)
     array_solar_gain=tsd['I_sol_and_I_rad']
     #   ventilation loss
@@ -342,29 +343,29 @@ def get_array_HVAC_variables(building):
     '''
     this array collects properties of HVAC system
     :param building: the intended building dataset
-    :return: array of HVAC characteristics * 8760(array_hvac)
+    :return: array of HVAC characteristics * HOURS_IN_YEAR(array_hvac)
     '''
     #   heating system
-    array_dThs_C = np.empty(8760)
+    array_dThs_C = np.empty(HOURS_IN_YEAR)
     array_dThs_C.fill(building.hvac['dThs_C'])
     #   cooling system
-    array_dTcs_C = np.empty(8760)
+    array_dTcs_C = np.empty(HOURS_IN_YEAR)
     array_dTcs_C.fill(building.hvac['dTcs_C'])
     #   ventilation (5 properties , converts true/false to Boolean)
-    array_economizer = np.empty(8760)
+    array_economizer = np.empty(HOURS_IN_YEAR)
     array_economizer.fill(int((building.hvac['ECONOMIZER'])=='True'))
-    array_win_vent = np.empty(8760)
+    array_win_vent = np.empty(HOURS_IN_YEAR)
     array_win_vent.fill(int((building.hvac['WIN_VENT'])=='True'))
-    array_mech_vent = np.empty(8760)
+    array_mech_vent = np.empty(HOURS_IN_YEAR)
     array_mech_vent.fill(int((building.hvac['MECH_VENT'])=='True'))
-    array_heat_rec = np.empty(8760)
+    array_heat_rec = np.empty(HOURS_IN_YEAR)
     array_heat_rec.fill(int((building.hvac['HEAT_REC'])=='True'))
-    array_night_flsh = np.empty(8760)
+    array_night_flsh = np.empty(HOURS_IN_YEAR)
     array_night_flsh.fill(int((building.hvac['NIGHT_FLSH'])=='True'))
     #   controller
-    array_ctrl_Qhs = np.empty(8760)
+    array_ctrl_Qhs = np.empty(HOURS_IN_YEAR)
     array_ctrl_Qhs.fill(1 * (building.hvac['dT_Qhs']))
-    array_ctrl_Qcs = np.empty(8760)
+    array_ctrl_Qcs = np.empty(HOURS_IN_YEAR)
     array_ctrl_Qcs.fill(1 * (building.hvac['dT_Qcs']))
     #   concatenate HVAC system arrays
     array_hvac = np.column_stack((array_dThs_C, array_dTcs_C, array_economizer, array_win_vent, array_mech_vent,
@@ -378,8 +379,8 @@ def main(config):
     building_name = 'B001'
     settings = config.demand
     get_cea_inputs(locator=locator, building_name=building_name, climatic_variables=config.neural_network.climatic_variables,
-                   region = config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
-                    use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
+                   year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
+                   use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -9,10 +9,26 @@ cea.plots.optimization package
 Submodules
 ----------
 
+cea.plots.optimization.centralized\_costs\_per\_generation\_unit module
+-----------------------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.centralized_costs_per_generation_unit
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.optimization.cost\_analysis module
 --------------------------------------------
 
 .. automodule:: cea.plots.optimization.cost_analysis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.cost\_analysis\_centralized\_system module
+-----------------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.cost_analysis_centralized_system
     :members:
     :undoc-members:
     :show-inheritance:

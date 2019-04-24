@@ -20,15 +20,17 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
     name = "Cost analysis of centralized system"
 
-    def __init__(self, project, parameters):
-        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters)
+    def __init__(self, project, parameters, cache):
+        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Capex_Centralized_USD",
                                 "Capex_Decentralized_USD",
                                 "Opex_Centralized_USD",
                                 "Opex_Decentralized_USD"]
-        self.data = self.preprocessing_final_generation_data_cost_centralized()
         self.layout = go.Layout(title=self.title, barmode='relative',
                                 yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
+        self.input_files = [self.locator.get_total_demand(),
+                            self.locator.get_preprocessing_costs(),
+                            self.locator.get_optimization_checkpoint(self.generation)]
 
     @property
     def title(self):
@@ -42,12 +44,13 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
             self.category_name)
 
     def calc_graph(self):
+        data = self.preprocessing_final_generation_data_cost_centralized()
         graph = []
         for field in self.analysis_fields:
-            y = self.data[field].values
+            y = data[field].values
             flag_for_unused_technologies = all(v == 0 for v in y)
             if not flag_for_unused_technologies:
-                trace = go.Bar(x=self.data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
                 graph.append(trace)
 
         return graph

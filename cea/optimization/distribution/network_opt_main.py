@@ -4,6 +4,7 @@ Network optimization
 from __future__ import division
 import pandas as pd
 import numpy as np
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -24,8 +25,8 @@ class network_opt_main(object):
     def __init__(self, config, locator):
         self.pipesCosts_DHN_USD = 0     # USD-2015
         self.pipesCosts_DCN_USD = 0     # USD-2015
-        self.DeltaP_DHN = np.zeros(8760)         # Pa
-        self.DeltaP_DCN = np.zeros(8760)        # Pa
+        self.DeltaP_DHN = np.zeros(HOURS_IN_YEAR)         # Pa
+        self.DeltaP_DCN = np.zeros(HOURS_IN_YEAR)        # Pa
         self.thermallosses_DHN = 0
         self.thermallosses_DCN = 0
 
@@ -37,10 +38,10 @@ class network_opt_main(object):
         for network_name in network_names:
             pressure_drop_Pa = pd.read_csv(locator.get_optimization_network_layout_pressure_drop_file(config.thermal_network.network_type, network_name))
             if config.thermal_network.network_type == 'DH':
-                for i in range(8760):
+                for i in range(HOURS_IN_YEAR):
                     self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
             if config.thermal_network.network_type == 'DC':
-                for i in range(8760):
+                for i in range(HOURS_IN_YEAR):
                     self.DeltaP_DCN[i] = self.DeltaP_DCN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
 
         for network_name in network_names:
@@ -60,7 +61,7 @@ class network_opt_main(object):
             pipe_length = edges_file['pipe length'].values
 
             for i in range(len(internal_diameter)):
-                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]
