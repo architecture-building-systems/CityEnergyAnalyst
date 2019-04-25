@@ -163,8 +163,6 @@ With the CEA dashboard:
 
 #. Open CEA from your Desktop.
 #. Go to the cea.config file stored in %userprofile% and edit the parameters for the tool network-layout and thermal-network
-#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/network_layout/main.py
-#. Go to CityEnergyAnalyst/cea/technologies/thermal_network/thermal_network.py
 #. Go to CityEnergyAnalyst/Thermal Networks/Network Layout and run this tool.
 #. Go to CityEnergyAnalyst/Thermal Networks/Thermo-Hydraulic network and run this tool.
 #. Visualize results in the dashboard.
@@ -190,18 +188,18 @@ For this we will run the next tools:
 With the CEA dashboard:
 
 #. Open CEA from your Desktop.
-#. Go to tools/Life cycle analysis > District emissions and run this tool.
-#. Go to tools/Cost analysis > Building operation costs and run this tool.
+#. Go to tools/Life cycle analysis/District emissions and run this tool.
+#. Go to tools/Cost analysis/Building operation costs and run this tool.
 #. Visualize results in the dashboard.
 
 Alternatively with Pycharm:
 
 #. Open PyCharm from your Desktop.
-#. Go to the cea.config file stored in %userprofile% and edit the parameters
-#. Go to CityEnergyAnalyst/cea/analysis/lca/main.py
-#. Go to CityEnergyAnalyst/cea/costs/operation_costs.py
+#. Go to the cea.config file stored in %userprofile% and edit the parameters of life-cycle tools
+#. Go to CityEnergyAnalyst/cea/analysis/lca/main.py and run this tool.
+#. Go to CityEnergyAnalyst/cea/costs/operation_costs.py and run this tool.
 
-Raw output files will be stored in YourProject > YourScenario > outputs > data > lca
+Raw output files will be stored in YourProject/YourScenario/outputs/data/lca
 
 Step 8. Create a new scenario
 -----------------------------
@@ -228,18 +226,18 @@ For this we will run the next tools:
 
 With the CEA dashboard:
 
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > Optimization > Decentralized supply System
-#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > Optimization > Central supply system
-#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > Analysis > multicriteria analysis
+#. Open CEA from your Desktop.
+#. Go to CityEnergyAnalyst/Optimization/Decentralized supply System and run this tool.
+#. Go to CityEnergyAnalyst/Optimization/Central supply system and run this tool.
+#. Go to  CityEnergyAnalyst/Analysis/multicriteria analysis and run this tool.
 
 Alternatively with Pycharm:
 
-#. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies > thermal_network > network_layout > main.py
-#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst > cea > technologies>thermal_network > thermal_network.py
-#. Optimization of Individual Building Energy systems: run this tool located in CityEnergyAnalyst > cea > optimization > preprocessing > disconnected_building_main.py
-#. Optimization of District Energy system: run this tool located in CityEnergyAnalyst > cea > optimization > optimization_main.py
-#. Multi-criteria analysis: run this tool located in CityEnergyAnalyst > cea > analysis > multicriteria > main.py
-
+#. Open PyCharm from your Desktop.
+#. Go to the cea.config file stored in %userprofile% and edit the parameters related to optimization and multicriteria
+#. Go to CityEnergyAnalyst/cea/optimization/preprocessing/disconnected_building_main.py and run it.
+#. Go to CityEnergyAnalyst/cea/optimization/optimization_main.py and run it.
+#. Go to CityEnergyAnalyst/cea/analysis/multicriteria/main.py and run it.
 
 Raw data will be stored in YourProject/YourScenario/outputs/data/optimization
 
