@@ -1,0 +1,19 @@
+{% extends "base_site.html" %}
+
+{% block title %} Welcome {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="center" id="center-">
+        <div class="left" id="recent-projects">
+
+        </div>
+        <div id="project-list">
+            <a
+        </div>
+    </div>
+{% endblock content %}
