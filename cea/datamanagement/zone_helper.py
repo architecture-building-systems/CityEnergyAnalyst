@@ -31,26 +31,20 @@ def poly_to_zone(locator, config):
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
     # local variables:
-    poly = Gdf.from_file("C:\Stash\polygon\polygon_selection.shp")
+    poly = locator.get_site_polygon()
     buildings_height = config.zone_helper.height_ag
     buildings_floors = config.zone_helper.floors_ag
     shapefile_out_path = locator.get_zone_geometry()
-    #
-    # test = Gdf.from_file("C:\Stash\polygon\polygon_selection.shp")
-    #
-    # print(test.geometry[0])
 
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
-    poly = poly.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-
 
     # get footprints of all the district
     poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
 
     # clean attributes of height, name and number of floors
-    result = clean_attributes(poly, buildings_height, buildings_floors)
+    result = clean_attributes(poly, buildings_height, buildings_floors, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save to shapefile

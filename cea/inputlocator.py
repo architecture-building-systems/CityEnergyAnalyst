@@ -605,6 +605,12 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
+    def get_site_polygon(self):
+        """scenario/inputs/building-geometry/site.shp"""
+        shapefile_path = os.path.join(self.get_building_geometry_folder(), 'site.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
     def get_district_geometry(self):
         """scenario/inputs/building-geometry/district.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
