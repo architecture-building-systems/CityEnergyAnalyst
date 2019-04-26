@@ -10,6 +10,7 @@ from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPE
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,13 +34,13 @@ def calc_lake_potential(locator, config):
     Save the results to `SWP.csv`
     """
 
-    lake_potential = np.zeros(8760)
-    hour = range(8760)
+    lake_potential = np.zeros(HOURS_IN_YEAR)
+    hour = range(HOURS_IN_YEAR)
 
     if config.lake.available:
         lake_size = config.lake.size
-        lake_size_per_hour = float(lake_size) / 8760
-        for i in range(8760):
+        lake_size_per_hour = float(lake_size) / HOURS_IN_YEAR
+        for i in range(HOURS_IN_YEAR):
             lake_potential[i] = lake_size_per_hour
 
 

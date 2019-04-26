@@ -9,6 +9,7 @@ from cea.utilities import physics
 from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.hotwater_loads import calc_water_temperature
 import pandas as pd
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -60,7 +61,7 @@ def calc_Eal_Epro(tsd, bpr, schedules):
         # tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
         tsd['Epro'] = schedules['Epro'] # in kWh
     else:
-        tsd['Epro'] = np.zeros(8760)
+        tsd['Epro'] = np.zeros(HOURS_IN_YEAR)
 
     tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
 
@@ -88,19 +89,19 @@ def calc_Ef(bpr, tsd):
 
     if scale_technology == "BUILDING":
         if energy_source == "SOLAR":
-            tsd['GRID'] = np.zeros(8760)
+            tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
             tsd['PV'] = total_el_demand
         else:
             raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
     elif scale_technology == "CITY":
         if energy_source == "GRID":
             tsd['GRID'] = total_el_demand
-            tsd['PV'] = np.zeros(8760)
+            tsd['PV'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
     elif scale_technology == "NONE":
-        tsd['GRID'] = np.zeros(8760)
-        tsd['PV'] = np.zeros(8760)
+        tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
+        tsd['PV'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
 
@@ -125,7 +126,7 @@ def calc_Eaux_fw(tsd, bpr, schedules):
     if nf_ag > 5:  # up to 5th floor no pumping needs
         tsd['Eaux_fw'] = calc_Eauxf_fw(tsd['vfw_m3perh'], nf_ag)
     else:
-        tsd['Eaux_fw'] = np.zeros(8760)
+        tsd['Eaux_fw'] = np.zeros(HOURS_IN_YEAR)
 
     return tsd
 
@@ -222,7 +223,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
         Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_shu, Qhs_sys_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu)
         tsd['Eaux_hs'] = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
     else:
-        tsd['Eaux_hs'] = np.zeros(8760)
+        tsd['Eaux_hs'] = np.zeros(HOURS_IN_YEAR)
 
     if control_heating_cooling_systems.has_cooling_system(bpr):
 
@@ -232,7 +233,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
         Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_scu, Qcs_sys_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu)
         tsd['Eaux_cs'] = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
     else:
-        tsd['Eaux_cs'] = np.zeros(8760)
+        tsd['Eaux_cs'] = np.zeros(HOURS_IN_YEAR)
 
     return tsd
 
@@ -356,7 +357,7 @@ def calc_Eauxf_fw(freshw, nf):
     """
     # TODO: documentation
 
-    Eaux_fw = np.zeros(8760)
+    Eaux_fw = np.zeros(HOURS_IN_YEAR)
     # for domestic freshwater
     # the power of the pump in Watts assuming the best performance of the pump of 0.6 and an accumulation tank
     for day in range(1, 366):
