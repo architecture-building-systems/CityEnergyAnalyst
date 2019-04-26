@@ -3,6 +3,8 @@ from flask import Flask
 import cea.config
 import cea.plots
 import cea.plots.cache
+import webbrowser
+import threading
 
 import os
 
@@ -99,7 +101,8 @@ def main(config):
     app.workers = {}  # script-name -> (Process, Connection)
 
     # FIXME: this needs to be replaced with a better solution
-    app.run(host='localhost', port=5050, threaded=False)
+    threading.Timer(0.5, lambda: webbrowser.open('http://localhost:5050')).start()
+    app.run(host='localhost', port=5050, threaded=False, debug=config.debug)
 
 
 if __name__ == '__main__':
