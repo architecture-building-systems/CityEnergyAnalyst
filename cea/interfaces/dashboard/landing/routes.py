@@ -14,6 +14,12 @@ def index():
     return render_template('landing.html')
 
 
+@blueprint.route('/create_project/')
+def route_project_creator():
+
+    return render_template('project_creator.html')
+
+
 @blueprint.route('/landing/create/<name>', methods=['POST'])
 def route_create_project(name):
 
