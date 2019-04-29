@@ -471,6 +471,8 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     # x=1
     gdf_segments.to_file(path_potential_network, driver='ESRI Shapefile')
 
+    return crs
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario

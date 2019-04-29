@@ -163,11 +163,11 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     else:
         shapefile["description"] = [np.nan]*no_buildings
 
-    shapefile["type"] = shapefile['building']
+    shapefile["category"] = shapefile['building']
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "type", "geometry"]]
+        ["Name", "height_ag", "floors_ag", "description", "category", "geometry"]]
 
     return result
 
