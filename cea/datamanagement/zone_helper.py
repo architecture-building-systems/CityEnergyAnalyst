@@ -31,7 +31,7 @@ def poly_to_zone(locator, config):
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
     # local variables:
-    poly = locator.get_site_polygon()
+    poly = Gdf.from_file(locator.get_site_polygon())
     buildings_height = config.zone_helper.height_ag
     buildings_floors = config.zone_helper.floors_ag
     shapefile_out_path = locator.get_zone_geometry()
