@@ -20,7 +20,7 @@ from cea.demand import constants
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno Fonseca", "Raymond Mok"]
+__credits__ = ["Jimeno Fonseca", "Reynold Mok"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
