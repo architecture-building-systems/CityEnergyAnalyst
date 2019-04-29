@@ -18,9 +18,9 @@ import cea.config
 import cea.inputlocator
 from cea.demand import constants
 
-__author__ = "Daren Thomas"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__author__ = "Jimeno Fonseca"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno Fonseca", "Raymond Mok"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -76,11 +76,11 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     else:
         shapefile["description"] = [np.nan]*no_buildings
 
-    shapefile["type"] = shapefile['building']
+    shapefile["category"] = shapefile['building']
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "type", "geometry"]]
+        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry"]]
 
     return result
 

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 from shapely.geometry import LineString
 
 import cea.config
@@ -26,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
+def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location, create_plant, allow_looped_networks, optimization_flag,
                                plant_building_names, disconnected_building_names):
@@ -50,6 +51,7 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     # get nodes
     iterator_nodes = nodes_graph.nodes(data=False)
     terminal_nodes = [(round(node[0], tolerance), round(node[1], tolerance)) for node in iterator_nodes]
+
     if len(disconnected_building_names) > 0:
         # identify coordinates of disconnected buildings and remove form terminal nodes list
         all_buiding_nodes_df = gdf.from_file(building_nodes_shp)
@@ -119,6 +121,8 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     nx.write_shp(mst_non_directed, output_network_folder)
 
     # get coordinate system and reproject to UTM
+    mst_edges.crs = crs_projected
+    new_mst_nodes.crs = crs_projected
     mst_edges.to_file(output_edges, driver='ESRI Shapefile')
     new_mst_nodes.to_file(output_nodes, driver='ESRI Shapefile')
 
