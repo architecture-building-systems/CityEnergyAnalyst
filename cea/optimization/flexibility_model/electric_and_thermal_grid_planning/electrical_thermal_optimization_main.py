@@ -35,8 +35,8 @@ creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
 # the optimization will start from the same set of individuals if random_seed is specified
-random.seed(config.optimization.random_seed)
-np.random.seed(config.optimization.random_seed)
+random.seed(config.electrical_thermal_optimization.random_seed)
+np.random.seed(config.electrical_thermal_optimization.random_seed)
 
 
 def objective_function(individual, individual_number, locator, config, building_names, generation):
