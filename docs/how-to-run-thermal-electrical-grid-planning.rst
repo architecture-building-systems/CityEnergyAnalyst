@@ -11,7 +11,7 @@ to the thermal network, the loads on electricity grid is decreased.
 Assumptions
 -----------
 #. For buildings connected to the thermal networks, the electricity loads include: lighting, appliance, and hot water.
-#. For buildings disconnected to the thermal networks, the electricity loads include: **cooling**, lighting, appliance, and hot water.
+#. For buildings disconnected from the thermal networks, the electricity loads include: **cooling**, lighting, appliance, and hot water.
 
 
 Prerequisites
