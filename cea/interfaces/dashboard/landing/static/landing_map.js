@@ -3,25 +3,55 @@
 //        {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
 //}).addTo(mymap);
 
-var mymap;
+var map;
+var latlngs = [];
+var polygon = L.polygon(latlngs, {color: 'red'});
+
+const lassoResult = document.querySelector("#lassoResult");
+
+map = L.map('mapid').setView([1.289440, 103.849983], 12);
+
+	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+            {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
+
+	map.on('click', onMapClick);
 
 $(document).ready(function() {
-	mymap = L.map('mapid').setView([51.505, -0.09], 13);
-
-	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-		maxZoom: 18,
-		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-		id: 'mapbox.streets'
-	}).addTo(mymap);
-
-	mymap.on('click', onMapClick);
 });
 
 function onMapClick(e) {
-    L.popup()
-        .setLatLng(e.latlng)
-        .setContent("You clicked the map at " + e.latlng.toString())
-        .openOn(mymap);
+    latlngs.push(e.latlng)
+	// L.polyline(latlngs, {color: 'red'}).addTo(map);
+	map.removeLayer(polygon)
+	polygon = L.polygon(latlngs, {color: 'red'})
+	polygon.addTo(map);
+    console.log(latlngs)
+	if (typeof latlngs !== 'undefined') {
+  		lassoResult.innerHTML = latlngs.toString();
+	}
+}
+
+function removePoly() {
+	latlngs = [];
+	map.removeLayer(polygon)
+}
+
+function createPoly() {
+	// TODO: Check if polygon is empty
+	var json = polygon.toGeoJSON();
+	L.extend(json.properties, polygon.properties);
+
+	$.ajax({
+		type: 'POST',
+		contentType: 'application/json',
+		data: JSON.stringify(json),
+		dataType: 'json',
+		url: 'http://localhost:5050/landing/create_poly',
+		success: function (e) {
+			console.log(e);
+		},
+		error: function(error) {
+			console.log(error);
+		}
+	});
 }
