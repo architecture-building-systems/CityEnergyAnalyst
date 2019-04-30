@@ -188,7 +188,7 @@ dependencies:
     - plotly==2.5.0
     - prometheus-client==0.5.0
     - prompt-toolkit==1.0.15
-    - py4design==0.25
+    - py4design==0.27
     - pycollada==0.6
     - pygments==2.3.1
     - pymf==0.1.9
