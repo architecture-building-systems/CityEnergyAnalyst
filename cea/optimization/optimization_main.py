@@ -136,7 +136,7 @@ def check_input_files(config, locator):
             "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
     if not os.path.exists(locator.get_lake_potential()):
         raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
-    if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
+    if not os.path.exists(locator.get_thermal_network_edge_list_file(config.thermal_network.network_type, '')):
         raise ValueError(
             "Missing thermal network simulation results. Consider running thermal network simulation script first.")
 
