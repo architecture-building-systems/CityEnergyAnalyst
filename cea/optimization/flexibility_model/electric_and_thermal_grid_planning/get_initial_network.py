@@ -15,18 +15,16 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def connect_building_to_grid(config, locator):
-    # import/ export paths
-    input_substations_shp = locator.get_electric_substation_output_location()
-    input_streets_shp = locator.get_street_network()
+def connect_building_to_grid(building_points, input_streets_shp):
 
     # Import data
-    building_points = gdf.from_file(input_substations_shp)
     lines = gdf.from_file(input_streets_shp)
 
     # Create DF for points on line
-    points_on_line = building_points.copy()
-    points_on_line.drop(['floors_bg', 'height_bg', 'floors_ag', 'height_ag', ], axis=1, inplace=True)
+    points_on_line = building_points[["Name","geometry"]].copy()
+    lines = lines[["geometry"]].copy()
+    lines["FID"] = range(lines.shape[0])
+
     # points_on_line['Node Type'] = None
 
     for idx, point in points_on_line.iterrows():
@@ -61,7 +59,6 @@ def connect_building_to_grid(config, locator):
                     index_points_on_line = points_on_line.shape[0]  # current number of rows in points_on_line
                     points_on_line.loc[index_points_on_line, 'geometry'] = line_intersections[index].centroid
                     points_on_line.loc[index_points_on_line, 'Building'] = None
-
     # Name Points
     for idx, point in points_on_line.iterrows():
         points_on_line.loc[idx, 'Name'] = 'Node' + str(idx)
@@ -76,7 +73,7 @@ def connect_building_to_grid(config, locator):
         line_point_intersections = points_on_line.intersection(line_buffered.geometry)
         filtered_points = line_point_intersections[line_point_intersections.is_empty == False]
 
-        start_point = Point(line.values[1].xy[0][0], line.values[1].xy[1][0])
+        start_point = Point(line.values[0].xy[0][0], line.values[0].xy[1][0])
 
         distance = filtered_points.distance(start_point)
         filtered_points = gdf(data=filtered_points)
@@ -90,7 +87,7 @@ def connect_building_to_grid(config, locator):
             newline = LineString([start, end])
             tranches_list.append(newline)
 
-    tranches = gdf(data=tranches_list)
+    tranches = gdf(data=tranches_list, crs=points_on_line.crs)
     tranches.columns = ['geometry']
     tranches['Name'] = None
     tranches['Startnode'] = None

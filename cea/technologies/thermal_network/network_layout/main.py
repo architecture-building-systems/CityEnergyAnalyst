@@ -1,10 +1,11 @@
+import os
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-import cea.config
-import os
+from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -16,7 +17,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, plant_building_names, input_path_name, output_name_network="", optimization_flag=False):
+def network_layout(config, locator, plant_building_names, input_path_name, output_name_network="",
+                   optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
     type_mat_default = config.network_layout.type_mat
@@ -25,42 +27,39 @@ def network_layout(config, locator, plant_building_names, input_path_name, outpu
     create_plant = config.network_layout.create_plant
     connected_buildings = config.network_layout.buildings
     disconnected_building_names = config.thermal_network.disconnected_buildings
-    path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
+    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     total_demand_location = locator.get_total_demand()
 
-    if input_path_name=='streets': #point to default location of streets file
+    if input_path_name == 'streets':  # point to default location of streets file
         path_streets_shp = locator.get_street_network()  # shapefile with the stations
         input_buildings_shp = locator.get_zone_geometry()
         output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    elif input_path_name =='electrical_grid':
+        # Calculate points where the substations will be located
+        calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
+    elif input_path_name == 'electrical_grid':
         path_streets_shp = locator.get_electric_network_output_location(input_path_name)
-        input_buildings_shp = locator.get_zone_geometry()
         output_substations_shp = locator.get_electric_substation_output_location()
 
-    # Calculate points where the substations will be located
-    calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
-
     # Calculate potential network
-    calc_connectivity_network(path_streets_shp, output_substations_shp,
-                              path_potential_network)
+    calc_connectivity_network(path_streets_shp, output_substations_shp, path_potential_network)
 
     # calc minimum spanning tree and save results to disk
     output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
-    # calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
-    #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
 
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location, create_plant, config.network_layout.allow_looped_networks,
                                optimization_flag, plant_building_names, disconnected_building_names)
 
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, connected_building_names, input_path_name='streets')
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

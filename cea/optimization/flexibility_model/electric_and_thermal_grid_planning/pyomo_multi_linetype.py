@@ -41,10 +41,14 @@ def initial_network(config, locator):
     :rtype: dictionary
     """
 
+    # localfiles
     input_buildings_shp = locator.get_electric_substation_input_location()
     output_substations_shp = locator.get_electric_substation_output_location()
-    calc_substation_location(input_buildings_shp, output_substations_shp, [])
-    points_on_line, tranches = gia.connect_building_to_grid(config, locator)
+    input_streets_shp = locator.get_street_network()
+
+    # calcualte and save file with location
+    building_points, _ = calc_substation_location(input_buildings_shp, output_substations_shp, [])
+    points_on_line, tranches = gia.connect_building_to_grid(building_points, input_streets_shp)
     points_on_line_processed = gia.process_network(points_on_line, config, locator)
     dict_length, dict_path = gia.create_length_dict(points_on_line_processed, tranches)
 
@@ -385,6 +389,10 @@ def main(dict_connected, config, locator):
 
     # Street network and Buildings
     points_on_line, tranches, dict_length, dict_path = initial_network(config, locator)
+
+    #for visualizing only
+    # points_on_line.to_file(locator.get_network_layout_nodes_shapefile("EL", ""))
+    # tranches.to_file(locator.get_network_layout_edges_shapefile("EL", ""))
 
     # Line Parameters
     df_line_parameter = pd.read_excel(locator.get_electrical_networks(), "CABLING CATALOG")
