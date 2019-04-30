@@ -7,7 +7,7 @@ import pandas as pd
 from pyomo.environ import *
 
 import get_initial_network as gia
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
+from cea.technologies.network_layout.substations_location import calc_substation_location
 from concept_parameters import *
 
 # ============================

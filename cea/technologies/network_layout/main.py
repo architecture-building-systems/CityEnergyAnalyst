@@ -3,9 +3,9 @@ import os
 import cea.config
 import cea.globalvar
 import cea.inputlocator
-from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
-from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+from cea.technologies.network_layout.substations_location import calc_substation_location
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

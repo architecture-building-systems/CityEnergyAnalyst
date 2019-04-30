@@ -8,7 +8,7 @@ import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network as thermal_network
-from cea.technologies.thermal_network.network_layout.main import network_layout as network_layout
+from cea.technologies.network_layout.main import network_layout
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
