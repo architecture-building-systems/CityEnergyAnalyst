@@ -351,7 +351,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
             archetype_schedule = archetype_schedules[num][0]
             for occupant in range(occupants_in_current_use):
-                mu = MU_V[int(len(MU_V) * random.random())]
+                # mu = np.random.random() / 2 # MU_V[int(len(MU_V) * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(archetype_schedule)
                 current_stochastic_schedule += occupant_pattern
                 schedules['people'] += occupant_pattern
@@ -418,7 +418,7 @@ def calc_individual_occupant_schedule(archetype_schedule):
     :rtype pattern: list[int]
     """
 
-    mu = MU_V[int(len(MU_V) * random.random())]
+    mu = np.random.random() / 2 # MU_V[int(len(MU_V) * random.random())]
 
     # assign initial state: assume equal to the archetypal occupancy schedule at t = 0
     # state = archetype_schedule[0]
