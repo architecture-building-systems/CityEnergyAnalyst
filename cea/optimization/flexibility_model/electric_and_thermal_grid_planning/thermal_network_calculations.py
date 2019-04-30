@@ -39,13 +39,13 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     process_results.electrical_network_layout_to_shapefile(m, electrical_grid_file_name, thermal_network_file_name,
                                                            config, locator, dict_connected)
 
-    process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
-
     #override flags of thermal_network main
     network_type = config.electrical_thermal_optimization.network_type
     if network_type != 'DC':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
     config.thermal_network.network_type = network_type
+    #get thermal network layout and include electrical network properties
+    process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
     thermal_network.main(config)
 
     gv = cea.globalvar.GlobalVariables()
