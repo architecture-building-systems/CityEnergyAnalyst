@@ -568,7 +568,7 @@ def main(config):
     network_info.number_of_buildings_in_district = total_demand.Name.count()
 
     # write disconnected_buildings_index into network_info
-    disconnected_buildings_list = config.thermal_network.disconnected_buildings
+    disconnected_buildings_list = config.network_layout.disconnected_buildings
     disconnected_buildings_index = []
     for building in disconnected_buildings_list:
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))

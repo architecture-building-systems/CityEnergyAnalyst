@@ -297,7 +297,7 @@ def objective_function(network_info):
 
     if len(disconnected_building_names) >= len(network_info.building_names) - 1:  # all buildings disconnected
         print 'All buildings disconnected'
-        network_info.config.thermal_network.disconnected_buildings = []
+        network_info.config.network_layout.disconnected_buildings = []
         # we need to create a network and run the thermal network matrix to maintain the workflow.
         # But no buildings are connected so this will make problems.
         # So we fake that buildings are connected but no loads are supplied to make 0 costs
@@ -312,7 +312,7 @@ def objective_function(network_info):
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         thermal_network.main(network_info.config)
         # set all buildings to disconnected
-        network_info.config.thermal_network.disconnected_buildings = network_info.building_names
+        network_info.config.network_layout.disconnected_buildings = network_info.building_names
         # set all indexes as disconnected
         network_info.disconnected_buildings_index = [i for i in range(len(network_info.building_names))]
         # revert cooling and heating systems to original
@@ -321,7 +321,7 @@ def objective_function(network_info):
     else:
         print 'We have at least one connected building.'
         # save which buildings are disconnected
-        network_info.config.thermal_network.disconnected_buildings = disconnected_building_names
+        network_info.config.network_layout.disconnected_buildings = disconnected_building_names
         # create the network specified by the individual
         network_layout(network_info.config, network_info.locator, plant_building_names, optimization_flag=True)
         # run the thermal_network simulation with the generated network
@@ -570,7 +570,7 @@ def generateInitialPopulation(network_info):
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
             new_plants = np.zeros(network_info.number_of_buildings_in_district)
             # read in the list of disconnected buildings from config file, if any are given
-            for building in network_info.config.thermal_network.disconnected_buildings:
+            for building in network_info.config.network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
                     if str(building) == str(building_name):
                         new_plants[index] = 2.0
