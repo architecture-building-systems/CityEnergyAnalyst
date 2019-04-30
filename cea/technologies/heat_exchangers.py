@@ -88,7 +88,7 @@ def calc_Cinv_HEX_hisaka(network_info):
 
     ## list node id of all substations
     # read in nodes list
-    all_nodes = pd.read_csv(network_info.locator.get_optimization_network_node_list_file(network_info.network_type,
+    all_nodes = pd.read_csv(network_info.locator.get_thermal_network_node_types_csv_file(network_info.network_type,
                                                                                          network_info.network_name))
     Capex_a = 0
     Opex_a_fixed = 0
