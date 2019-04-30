@@ -120,7 +120,7 @@ def calc_Ctot_cooling_plants(network_info):
 
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
-        network_info.locator.get_optimization_network_layout_plant_heat_requirement_file(
+        network_info.locator.get_thermal_network_layout_plant_heat_requirement_file(
             network_info.network_type, network_info.config.thermal_network_optimization.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)
@@ -534,8 +534,8 @@ def calc_network_size(network_info):
     :return:
     """
     network_info = pd.read_csv(
-        network_info.locator.get_optimization_network_edge_list_file(network_info.network_type,
-                                                                     network_info.network_name))
+        network_info.locator.get_thermal_network_edge_list_file(network_info.network_type,
+                                                                network_info.network_name))
     length_m = network_info['pipe length'].sum()
     average_diameter_m = network_info['D_int_m'].mean()
     return float(length_m), float(average_diameter_m)

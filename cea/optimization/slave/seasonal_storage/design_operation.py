@@ -49,7 +49,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
 
     # Import Network Data
-    Network_Data = pd.read_csv(locator.get_optimization_network_data_folder(CSV_NAME))
+    Network_Data = pd.read_csv(locator.get_thermal_network_data_folder(CSV_NAME))
 
     # recover Network  Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values

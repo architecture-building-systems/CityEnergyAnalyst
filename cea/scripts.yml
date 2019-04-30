@@ -42,6 +42,13 @@ Data Management:
   module: cea.datamanagement.district_geometry_helper
   parameters: ['general:scenario', district-helper]
 
+- name: zone-helper
+  label: Zone helper
+  description: Query zone geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.zone_helper
+  parameters: ['general:scenario', zone-helper]
+
 - name: streets-helper
   label: Streets helper
   description: Query streets geometry from Open Street Maps

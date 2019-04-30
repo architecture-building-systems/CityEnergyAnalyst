@@ -1,0 +1,29 @@
+{% extends "base_site.html" %}
+
+{% block title %} Welcome {% endblock title %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('landing_blueprint.static', filename='landing.css') }}">
+{% endblock stylesheets %}
+
+{% block body_class %}{% endblock body_class %}
+{% block body %}
+    <div class="landing-box">
+        <div class="landing">
+            <div class="logo">
+                {% block logo %} <img src="/static/images/cea-logo.png"> {% endblock %}
+                <h1>City Energy Analyst</h1>
+            </div>
+
+            <div>
+                <i class="fas fa-plus"></i>
+                <a href="{{ url_for('landing_blueprint.route_project_creator') }}">Create new project</a>
+                <br>
+                <i class="fas fa-folder-open"></i>
+                <a href="{{ url_for('plots_blueprint.index') }}">Open project</a>
+            </div>
+        </div>
+    </div>
+{% endblock body %}
