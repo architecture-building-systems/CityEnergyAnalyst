@@ -1,48 +1,30 @@
-from __future__ import division
-
-import os
 import random
+import time
 
-import geopandas
 import networkx as nx
 import pandas as pd
-import shapely
+from geopandas import GeoDataFrame as gdf
+from shapely.geometry import LineString, Point
 
-from cea.technologies.network_layout.substations_location import \
-    calc_substation_location as substation_location
-
-__author__ = "Sebastian Troitzsch"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sebastian Troitzsch", "Sreepathi Bhargava Krishna", "Jimeno A. Fonseca"]
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna", "Thanh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
-def calc_substation_location(locator):
-    # pint to function of cea doing this.
-    input_buildings_shp = locator.get_zone_geometry()
-    output_substations_shp = locator.get_network_layout_nodes_shapefile("EL", "")
-
-    points, poly = substation_location(input_buildings_shp, output_substations_shp, connected_buildings=[])
-
-    return (points, poly)
-
-
-def connect_building_to_grid(locator):
-    # Import/ export paths
-    input_substations_shp = locator.get_network_layout_nodes_shapefile("EL", "")
-    input_streets_shp = locator.get_street_network()
+def connect_building_to_grid(building_points, input_streets_shp):
 
     # Import data
-    building_points = geopandas.GeoDataFrame.from_file(input_substations_shp)
-    lines = geopandas.GeoDataFrame.from_file(input_streets_shp)
+    lines = gdf.from_file(input_streets_shp)
 
     # Create DF for points on line
-    points_on_line = building_points.copy()
-    points_on_line.drop(['floors_bg', 'height_bg', 'floors_ag', 'height_ag', ], axis=1, inplace=True)
+    points_on_line = building_points[["Name","geometry"]].copy()
+    lines = lines[["geometry"]].copy()
+    lines["FID"] = range(lines.shape[0])
+
     # points_on_line['Node Type'] = None
 
     for idx, point in points_on_line.iterrows():
@@ -77,7 +59,6 @@ def connect_building_to_grid(locator):
                     index_points_on_line = points_on_line.shape[0]  # current number of rows in points_on_line
                     points_on_line.loc[index_points_on_line, 'geometry'] = line_intersections[index].centroid
                     points_on_line.loc[index_points_on_line, 'Building'] = None
-
     # Name Points
     for idx, point in points_on_line.iterrows():
         points_on_line.loc[idx, 'Name'] = 'Node' + str(idx)
@@ -92,10 +73,10 @@ def connect_building_to_grid(locator):
         line_point_intersections = points_on_line.intersection(line_buffered.geometry)
         filtered_points = line_point_intersections[line_point_intersections.is_empty == False]
 
-        start_point = shapely.geometry.Point(line.values[1].xy[0][0], line.values[1].xy[1][0])
+        start_point = Point(line.values[0].xy[0][0], line.values[0].xy[1][0])
 
         distance = filtered_points.distance(start_point)
-        filtered_points = geopandas.GeoDataFrame(data=filtered_points)
+        filtered_points = gdf(data=filtered_points)
         filtered_points['distance'] = distance
         filtered_points.sort_values(by='distance', inplace=True)
 
@@ -103,10 +84,10 @@ def connect_building_to_grid(locator):
         for idx1 in range(0, len(filtered_points) - 1):
             start = filtered_points.iloc[idx1][0]
             end = filtered_points.iloc[idx1 + 1][0]
-            newline = shapely.geometry.LineString([start, end])
+            newline = LineString([start, end])
             tranches_list.append(newline)
 
-    tranches = geopandas.GeoDataFrame(data=tranches_list)
+    tranches = gdf(data=tranches_list, crs=points_on_line.crs)
     tranches.columns = ['geometry']
     tranches['Name'] = None
     tranches['Startnode'] = None
@@ -116,8 +97,11 @@ def connect_building_to_grid(locator):
     tranches['Length'] = 0
 
     for idx, tranch in tranches.iterrows():
+        # print (idx)
+        # print (tranch)
         tranches.loc[idx, 'Name'] = 'tranch' + str(idx)
         tranches.loc[idx, 'Length'] = tranch.values[0].length
+        # print (tranch.values[0].boundary)
 
         startnode = tranch.values[0].boundary[0]
         endnode = tranch.values[0].boundary[1]
@@ -139,15 +123,10 @@ def connect_building_to_grid(locator):
     # building_nodes = building_nodes.to_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     # streets = streets.to_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
-    return (
-        points_on_line,
-        tranches
-    )
+    return points_on_line, tranches
 
 
-def process_network(locator,
-        points_on_line,
-):
+def process_network(points_on_line, config, locator):
     building_path = locator.get_total_demand()
     building_prop = pd.read_csv(building_path)
     # building_prop = building_prop[['Name', 'GRID0_kW']]
@@ -168,18 +147,6 @@ def process_network(locator,
                 points_on_line.loc[idx, 'Type'] = 'CONSUMER'
 
     return points_on_line
-
-
-def get_hourly_power_demand_per_building(locator, points_on_line):
-    hourly_power_demand_per_building = {}
-
-    for idx_node, node in points_on_line.iterrows():
-        if node['Building'] != None:
-            building_name = node['Building']
-            hourly_power_demand_per_building[building_name] = pd.read_csv(locator.get_demand_results_file(building_name)
-            )
-
-    return hourly_power_demand_per_building
 
 
 def create_length_dict(points_on_line, tranches):
@@ -221,7 +188,59 @@ def create_length_dict(points_on_line, tranches):
                                                                             source=idx_node1,
                                                                             target=idx_node2,
                                                                             weight='weight')
-    return (
-        dict_length,
-        dict_path
-    )
+    return dict_length, dict_path
+
+
+def create_length_complete_dict(points_on_line, tranches):
+    G_complete = nx.Graph()
+
+    for idx, node in points_on_line.iterrows():
+        node_type = node['Type']
+        G_complete.add_node(idx, type=node_type)
+
+    for idx, tranch in tranches.iterrows():
+        start_node_index = tranch['Startnode'][4::]
+        end_node_index = tranch['Endnode'][4::]
+        tranch_length = tranch['Length']
+        G_complete.add_edge(int(start_node_index), int(end_node_index),
+                            weight=tranch_length,
+                            gene=idx,
+                            startnode=start_node_index,
+                            endnode=end_node_index)
+
+    # idx_nodes_sub = points_on_line[points_on_line['Type'] == 'PLANT'].index
+    # idx_nodes_consum = points_on_line[points_on_line['Type'] == 'CONSUMER'].index
+    idx_nodes = points_on_line.index
+
+    dict_length = {}
+    dict_path = {}
+    for idx_node1 in idx_nodes:
+        dict_length[idx_node1] = {}
+        dict_path[idx_node1] = {}
+        for idx_node2 in idx_nodes:
+            if idx_node1 == idx_node2:
+                dict_length[idx_node1][idx_node2] = 0.0
+            else:
+                nx.shortest_path(G_complete, 0, 1)
+                dict_path[idx_node1][idx_node2] = nx.shortest_path(G_complete,
+                                                                   source=idx_node1,
+                                                                   target=idx_node2,
+                                                                   weight='weight')
+                dict_length[idx_node1][idx_node2] = nx.shortest_path_length(G_complete,
+                                                                            source=idx_node1,
+                                                                            target=idx_node2,
+                                                                            weight='weight')
+    return dict_length, dict_path
+
+
+def main():
+    points_on_line, tranches = connect_building_to_grid()
+    points_on_line_processed = process_network(points_on_line)
+    dict_length, dict_path = create_length_dict(points_on_line_processed, tranches)
+
+
+if __name__ == '__main__':
+    t0 = time.clock()
+    main()
+    print 'network_optimization_main() succeeded'
+    print('total time: ', time.clock() - t0)

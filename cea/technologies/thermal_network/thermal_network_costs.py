@@ -37,7 +37,7 @@ class Thermal_Network(object):
         self.locator = locator
         self.config = config
         self.network_type = network_type
-        self.network_name = config.thermal_network_optimization.network_name
+        self.network_name = config.thermal_network_optimization.network_names
         # initialize optimization storage variables and dictionaries
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
@@ -103,7 +103,8 @@ def calc_Ctot_network_pump(network_info):
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
-    Capex_a, Opex_a_fixed, _ = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+
+    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var
@@ -120,7 +121,7 @@ def calc_Ctot_cooling_plants(network_info):
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
         network_info.locator.get_optimization_network_layout_plant_heat_requirement_file(
-            network_info.network_type, network_info.config.thermal_network_optimization.network_name))
+            network_info.network_type, network_info.config.thermal_network_optimization.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)
 
@@ -189,6 +190,7 @@ def calc_Ctot_cooling_plants(network_info):
                         plant_heat_original_kWh[column_name][t]) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
 
             # calculate equipment cost of chiller and cooling tower
+
             Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                       network_info.config, 'CH1')
             Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
@@ -468,22 +470,23 @@ def calc_Ctot_cs_district(network_info):
     Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_cs_disconnected_buildings(
         network_info)
     # calculate costs of HEX at connected buildings
+
     Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(network_info)
     # calculate electricity consumption
     el_price_per_Wh = network_info.prices.ELEC_PRICE
     el_MWh = (Opex_var_pump + Opex_var_plant) / el_price_per_Wh / 1e6
 
     # store results
-    Capex_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
+    Capex_a_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
                   Capex_a_chiller + Capex_a_CT + Capex_a_hex
     Opex_total = Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Opex_tot_dis_loads + \
                  Opex_tot_dis_buildings + Opex_fixed_plant + Opex_fixed_hex
     Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                   Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Ctot_dis_loads + Ctot_dis_buildings + \
                   Opex_fixed_plant + Opex_fixed_hex
-    cost_storage_df.ix['total'][0] = Capex_total + Opex_total
+    cost_storage_df.ix['total'][0] = Capex_a_total + Opex_total
     cost_storage_df.ix['opex'][0] = Opex_total
-    cost_storage_df.ix['capex'][0] = Capex_total
+    cost_storage_df.ix['capex'][0] = Capex_a_total
     cost_storage_df.ix['capex_network'][0] = Capex_a_netw
     cost_storage_df.ix['capex_pump'][0] = Capex_a_pump
     cost_storage_df.ix['capex_hex'][0] = Capex_a_hex
@@ -498,7 +501,7 @@ def calc_Ctot_cs_district(network_info):
     cost_storage_df.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
     cost_storage_df.ix['el_network_MWh'][0] = el_MWh
 
-    return Capex_total, Opex_total, Costs_total, cost_storage_df
+    return Capex_a_total, Opex_total, Costs_total, cost_storage_df
 
 
 def find_cooling_systems_string(disconnected_systems):
@@ -521,6 +524,7 @@ def find_cooling_systems_string(disconnected_systems):
         print disconnected_systems
         print len(disconnected_systems)
     return system_string
+
 
 
 def calc_network_size(network_info):
@@ -549,6 +553,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     network_info = Thermal_Network(locator, config, network_type, gv)
+
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
@@ -563,7 +568,7 @@ def main(config):
     network_info.number_of_buildings_in_district = total_demand.Name.count()
 
     # write disconnected_buildings_index into network_info
-    disconnected_buildings_list = config.thermal_network.disconnected_buildings
+    disconnected_buildings_list = config.network_layout.disconnected_buildings
     disconnected_buildings_index = []
     for building in disconnected_buildings_list:
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))
@@ -617,4 +622,4 @@ def main(config):
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main(cea.config.Configuration(), 0)

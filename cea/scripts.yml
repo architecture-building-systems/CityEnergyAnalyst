@@ -212,7 +212,7 @@ Thermal networks:
   label: Network layout
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.network_layout.main
+  module: cea.technologies.network_layout.main
   parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
 
 - name: thermal-network

@@ -38,7 +38,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
     """
     if Q_design_W > 0:
-        HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="HEX")
+        HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
         HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -69,7 +69,6 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
     return Capex_a_HEX_USD, Opex_fixed_HEX_USD, Capex_HEX_USD
 
-
 def calc_Cinv_HEX_hisaka(network_info):
     """
     Calculates costs of all substation heat exchangers in a network.
@@ -77,7 +76,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     """
     ## read in cost values from database
     HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(),
-                               sheetname='HEX', index_col=0)
+                               sheet_name='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
     c = HEX_prices['c']['District substation heat exchanger']
@@ -93,6 +92,7 @@ def calc_Cinv_HEX_hisaka(network_info):
                                                                                          network_info.network_name))
     Capex_a = 0
     Opex_a_fixed = 0
+
     substation_node_id_list = []
     # add buildings to node id list
     for building in network_info.building_names:
@@ -129,6 +129,7 @@ def calc_Cinv_HEX_hisaka(network_info):
                 nodeflow_nom = node_flow / number_of_HEXs
                 mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
                 for i in range(number_of_HEXs):
+
                     Capex_substation_hex = Capex_substation_hex + (a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub))
 
             Capex_a_substation_hex = Capex_substation_hex * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
