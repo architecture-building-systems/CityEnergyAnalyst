@@ -377,8 +377,6 @@ def create_terminals(buiding_centroids, crs, street_network):
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
 
-
-
     lines_to_buildings = lines_to_buildings.append(street_network).reset_index(drop=True)
     lines_to_buildings.crs = crs
     return lines_to_buildings
@@ -472,7 +470,6 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     gdf_segments.to_file(path_potential_network, driver='ESRI Shapefile')
 
     return crs
-
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario

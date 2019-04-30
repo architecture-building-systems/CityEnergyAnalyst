@@ -5,13 +5,9 @@ it is estimated as the centroid of buildings.
 
 from __future__ import division
 
-import os
-
 from geopandas import GeoDataFrame as gdf
+import pandas as pd
 
-import cea.config
-import cea.globalvar
-import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 import pandas as pd
 
@@ -49,8 +45,6 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
             raise Exception("We could not find two or more buildings with thermal energy deamand for cooling or heating,"
                       " the network layout will not work unless the buildings_with_demand parameter is set to False")
 
-
-
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
@@ -66,15 +60,3 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
     points.to_file(output_substations_shp, driver='ESRI Shapefile')
 
     return points, poly
-
-
-def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    input_buildings_shp = locator.get_zone_geometry()
-    output_substations_shp = locator.get_connection_point()
-    calc_substation_location(input_buildings_shp, output_substations_shp)
-
-
-if __name__ == '__main__':
-    main(cea.config.Configuration())
