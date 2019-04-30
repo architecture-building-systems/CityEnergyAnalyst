@@ -44,6 +44,7 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     if network_type != 'DC':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
     config.thermal_network.network_type = network_type
+    config.network_layout.network_type = network_type
     #get thermal network layout and include electrical network properties
     process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
     thermal_network.main(config)
