@@ -184,7 +184,7 @@ dependencies:
     - prometheus-client==0.6.0
     - prompt-toolkit==1.0.15
     - ptyprocess==0.6.0
-    - py4design==0.26
+    - py4design==0.27
     - pycollada==0.6
     - pygments==2.3.1
     - pyinotify==0.9.6
