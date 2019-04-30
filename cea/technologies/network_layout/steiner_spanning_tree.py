@@ -79,6 +79,8 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     building_nodes_df = gdf.from_file(building_nodes_shp)
     building_nodes_df.loc[:, 'coordinates'] = building_nodes_df['geometry'].apply(
         lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
+
+    # if there are disconnected buildings
     if len(disconnected_building_names) > 0:
         for disconnected_building in disconnected_building_coordinates:
             building_id = int(np.where(building_nodes_df['coordinates'] == disconnected_building)[0])

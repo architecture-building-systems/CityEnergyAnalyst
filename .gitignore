@@ -101,3 +101,15 @@ cea/demand/metamodel/nn_generator/
 # Excel Backup File
 *.xlk
 cea/technologies/thermal_network/thermal_network_matrix.pstat
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.cpg
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.dbf
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.prj
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.shp
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.shx
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/nodes_buildings.dbf
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.cpg
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.dbf
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.prj
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shp
+cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shx
+cea/concept_project/data/reference-case-WTP/MIX_high_density/inputs/networks/nodes_buildings.dbf

@@ -442,7 +442,7 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="CCGT")
+    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -479,7 +479,7 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
-    FC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="FC")
+    FC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="FC")
     technology_code = list(set(FC_cost_data['code']))
     FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
