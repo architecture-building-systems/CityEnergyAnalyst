@@ -51,6 +51,7 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     # get nodes
     iterator_nodes = nodes_graph.nodes(data=False)
     terminal_nodes = [(round(node[0], tolerance), round(node[1], tolerance)) for node in iterator_nodes]
+
     if len(disconnected_building_names) > 0:
         # identify coordinates of disconnected buildings and remove form terminal nodes list
         all_buiding_nodes_df = gdf.from_file(building_nodes_shp)

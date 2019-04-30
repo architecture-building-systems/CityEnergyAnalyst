@@ -9,6 +9,7 @@ from geopandas import GeoDataFrame as gdf
 import pandas as pd
 
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

@@ -118,7 +118,7 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     return area, geometry_merged_final
 
 
-def clean_attributes(shapefile, buildings_height, buildings_floors):
+def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     # local variables
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
@@ -163,11 +163,11 @@ def clean_attributes(shapefile, buildings_height, buildings_floors):
     else:
         shapefile["description"] = [np.nan]*no_buildings
 
-    shapefile["type"] = shapefile['building']
-    shapefile["Name"] = ["CEA" + str(x + 1000) for x in
+    shapefile["category"] = shapefile['building']
+    shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "type", "geometry"]]
+        ["Name", "height_ag", "floors_ag", "description", "category", "geometry"]]
 
     return result
 
@@ -210,7 +210,7 @@ def geometry_extractor_osm(locator, config):
     district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
 
     # clean attributes of height, name and number of floors
-    result = clean_attributes(district, buildings_height, buildings_floors)
+    result = clean_attributes(district, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save to shapefile
