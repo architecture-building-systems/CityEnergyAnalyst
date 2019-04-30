@@ -162,7 +162,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
             Pump_Array_W[pump_i] = Pump_min_kW * 1000
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
-        pump_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Pump")
+        pump_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Pump")
         pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
