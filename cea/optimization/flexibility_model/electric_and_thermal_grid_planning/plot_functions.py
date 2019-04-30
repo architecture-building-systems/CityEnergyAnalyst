@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import get_initial_network as gia
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.pyomo_multi_linetype import initial_network
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
+from cea.technologies.network_layout.substations_location import calc_substation_location
 import re
 
 __author__ =  "Thanh"

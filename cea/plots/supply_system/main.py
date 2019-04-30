@@ -414,7 +414,7 @@ class Plots(object):
         return data_processed
 
     def preprocessing_create_thermal_network_layout(self, config, locator, output_name_network, output_type_network, buildings_data):
-        from cea.technologies.thermal_network.network_layout.main import network_layout
+        from cea.technologies.network_layout.main import network_layout
         buildings_data = buildings_data.loc[buildings_data["Type"]=="CENTRALIZED"]
         buildings_connected = buildings_data.Name.values
 

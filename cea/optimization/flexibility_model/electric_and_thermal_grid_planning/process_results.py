@@ -8,8 +8,8 @@ from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefil
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system
 import get_initial_network as gia
 
-from cea.technologies.thermal_network.network_layout.main import network_layout
-from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
+from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.substations_location import calc_substation_location
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

@@ -40,7 +40,7 @@ class EnergySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
     def _create_thermal_network_layout(self, buildings_data):
         """Run the network layout script to generate the shapefiles for this plot"""
-        from cea.technologies.thermal_network.network_layout.main import network_layout
+        from cea.technologies.network_layout.main import network_layout
         buildings_data = buildings_data.loc[buildings_data["Type"] == "CENTRALIZED"]
         buildings_connected = buildings_data.Name.values
 
