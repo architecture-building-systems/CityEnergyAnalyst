@@ -146,6 +146,8 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
         T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
         output_hcs_dict = {}
         output_hcs_copy = output_hcs.copy()
+        T_iehx = 16
+        dT_iehx = 0.15
         for i in range(T_OAU_offcoil.size):
             # output hcs
             output_hcs['T_OAU_offcoil' + str(i + 1)] = T_OAU_offcoil[i]
@@ -158,6 +160,10 @@ def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_build
             input_T_df = pd.DataFrame()
             input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
             input_T_df['T_ext_C'] = reduced_tsd_df['T_ext']
+            input_T_df['T_dew_coil'] = 18 # 8 + 10
+            input_T_df['T_dew_iehx'] = T_iehx #
+            T_iehx = T_iehx + dT_iehx
+            input_T_df['T_dew_er0'] = 16
             input_T_df.T.to_csv(path_to_osmose_project_inputT(str(i + 1)), header=False)
         # output input_T0
         input_T0_df = pd.DataFrame()
