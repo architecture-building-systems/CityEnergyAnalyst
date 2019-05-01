@@ -394,7 +394,7 @@ def set_up_hu_store_df(results):
     # calculate actual balance
     w_gain_kgpers = (results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1)).values
     w_lcu_out = results['w_lcu'].values
-    m_air_out = results['m_oau_out'].values
+    m_air_out = results.filter(like='m_oau_out').sum(axis=1).values
     M_room_kg = results['M_dryair'].values
     T_RA_C = results['T_RA'].values
     timesteps = results.shape[0]
@@ -427,7 +427,7 @@ def set_up_co2_store_df(results):
 
     ## calculate actual co2 concentration
     # get numbers
-    m_air_out = results['m_oau_out'].values
+    m_air_out = results.filter(like='m_oau_out').sum(axis=1).values
     rho_air = results['rho_air'].values
     V_room_m3 = results['Vf_m3'].values
     co2_occupants_m3 = results['co2_bui_inf_occ'].values
@@ -695,7 +695,7 @@ def set_up_humidity_df(tech, results):
     humidity_df['m_w_lcu_removed'] = results['w_lcu']
     if tech == 'HCS_LD':
         total_oau_in = results.filter(like='w_oau_in').sum(axis=1)
-        total_oau_out = results['w_oau_out']
+        total_oau_out = results.filter(like='w_oau_out').sum(axis=1)
     else:
         total_oau_in = results.filter(like='w_oau_in').sum(axis=1)
         total_oau_out = results.filter(like='w_oau_out').sum(axis=1)
@@ -1225,9 +1225,9 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    buildings = ["B002"]
+    buildings = ["B006"]
     #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_IEHX"]
+    tech = ["HCS_coil","HCS_IEHX"]
     #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
     cases = ["WTP_CBD_m_WP1_RET"]
