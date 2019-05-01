@@ -861,7 +861,7 @@ def read_schedules(use, x):
 
 
 # read schedules and archetypal values from excel file
-def schedule_maker(region, dates, locator, list_uses):
+def schedule_maker(region, locator, list_uses):
     """
     Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
     demands.
@@ -881,9 +881,9 @@ def schedule_maker(region, dates, locator, list_uses):
     """
 
     # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index(
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index(
         'Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index(
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index(
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
