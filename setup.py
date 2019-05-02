@@ -26,7 +26,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'mock',
                     'numba',
                     'plotly',
-                    'py4design',
+                    'py4design==0.27',
                     'pymc3',
                     'pysal',
                     'pyyaml',
