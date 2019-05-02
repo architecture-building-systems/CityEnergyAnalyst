@@ -16,6 +16,7 @@ __status__ = "Production"
 def print_res(m):
     # Print objective function values
     obj_val = 0.0
+    print 'The objective function includes: '
     for cost_type in [m.var_costs.values()][0]:
         obj_val += cost_type.value
         print cost_type, cost_type.value

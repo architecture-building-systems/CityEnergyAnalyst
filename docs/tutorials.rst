@@ -31,6 +31,9 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__
 #. :doc:`how-to-prepare-inputs-for-network-simulation`
 #. :doc:`how-to-run-thermal-network-optimization`
+#. :doc:`how-to-run-thermal-electrical-grid-planning`
+#. :doc:`how-to-run-MPC-building`
+#. :doc:`how-to-run-MPC-district`
 #. :doc:`how-to-run-CEA-optimization`
 
 
