@@ -65,7 +65,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, config):
     if config.district_heating_network:
 
 
-        df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
+        df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
         mdotA_kgpers = np.array(df)
         mdotnMax_kgpers = np.amax(mdotA_kgpers)
 
@@ -82,10 +82,10 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, config):
     if config.district_cooling_network:
 
         if dicoSupply.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
+            df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating),
                              usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         else:
-            df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
+            df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating),
                              usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
 
         mdotA_kgpers = np.array(df)
@@ -162,7 +162,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology
             Pump_Array_W[pump_i] = Pump_min_kW * 1000
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
-        pump_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Pump")
+        pump_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Pump")
         pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
