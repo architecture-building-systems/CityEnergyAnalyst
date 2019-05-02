@@ -326,15 +326,19 @@ def main(locator, weather_path,
     for idx_line in dict_line_tech_params:
         dict_line_tech_params[idx_line]['annuity_factor'] = annuity_factor(40, interest_rate)
 
-    # Cost types
+
+    # NOTE: the names should not be changed!
     cost_types = [
-        'investment_line',  # investment costs lines
-        'investment_sub',  # investment costs substaton
-        'investment_build',  # investment costs building transformer
-        'om',  # operation and maintenance cost
-        'losses',  # cost for power losses in lines
-        'electricity_price',  # Objective function part related to the price-based flexibility
-        'set_temperature',  # related to the set outputs
+        ## Select cost types that you wish to include in the objective function
+        'investment_line',  # annual investment costs of electric lines
+        'investment_sub',  # annual investment costs of substations
+        'investment_build',  # annual investment costs of building transformers
+        'om',  # operation and maintenance cost of electric lines, substations and transformers
+        'losses',  # cost for power losses in lines #FIXME: confirm with Sebestian
+        'electricity_price',  # electricity costs from building operation with MPC flexibility
+
+        ## Tag to save set-point temperature outputs
+        'set_temperature',  # hourly set-point temperatures over the specified time-steps.
         ]
 
     # Index data

@@ -151,12 +151,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
         UA_HEX_tank_charge_WperK = 0
         V_tank_m3 = 0
 
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Chiller")
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
-
     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(),
-                                                 sheetname="Absorption_chiller",
+                                                 sheet_name="Absorption_chiller",
                                                  usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e',
                                                           'IR_%',
                                                           'LT_yr', 'O&M_%'])
