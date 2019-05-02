@@ -117,9 +117,9 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                         first += number_of_people
                 else:
                     number_of_people = np.int(bpr.rc_model['NFA_m2'] * bpr.occupancy['HOSPITAL'] *
-                                              archetype_values.loc['HOSPITAL', 'people'] - hospital_employees)
+                                              archetype_values.loc['HOSPITAL', 'people']) - hospital_employees
                     for i in range(number_of_people):
-                        yearly_schedule = get_yearly_occupancy(dates, occupant_schedule,
+                        yearly_schedule = get_yearly_occupancy(dates, all_schedules['HOSPITAL']['people'],
                                                                all_schedules['HOSPITAL']['monthly'])
                         building_schedules = add_occupant_schedules(building_schedules, yearly_schedule,
                                                                     archetype_values.loc['HOSPITAL'])
