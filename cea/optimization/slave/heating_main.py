@@ -75,7 +75,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
     Q_missing_copy_W = Q_missing_W.copy()
 
     # Import Temperatures from Network Summary:
-    network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_heating))
+    network_data = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
     tdhret_K = network_data['T_DHNf_re_K']
 
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
