@@ -169,7 +169,7 @@ class Plots(object):
         return pd.DataFrame(ambient_temp)
 
     def preprocessing_pipe_length(self):
-        df = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type, self.network_name))[
+        df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))[
             ['Name', 'pipe length']]
         total_pipe_length = df['pipe length'].sum()
         return total_pipe_length
@@ -242,11 +242,11 @@ class Plots(object):
         Identify node coordinates.
         '''
         # read in edge node matrix
-        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(self.network_type,
-                                                                                     self.network_name),
+        df = pd.read_csv(self.locator.get_thermal_network_edge_node_matrix_file(self.network_type,
+                                                                                self.network_name),
                          index_col=0)
         # read in node data
-        node_data = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type,
+        node_data = pd.read_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type,
                                                                                      self.network_name),
                                 index_col=0)
         # identify number of plants and nodes
@@ -295,26 +295,26 @@ class Plots(object):
         edge heat and pressure losses
         '''
         # read in edge diameters
-        edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type,
-                                                                                     self.network_name),
+        edge_data = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type,
+                                                                                self.network_name),
                                 index_col=0)
         edge_diam = edge_data['D_int_m']  # diameters of each edge
         DN = edge_data['Pipe_DN_y']
         d1 = pd.read_csv(
             self.locator.get_Tnode_s(self.network_name, self.network_type)) - 273.15  # node supply temperature
-        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_system_file(self.network_type,
-                                                                                        self.network_name))  # edge loss
-        d3 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_system_edges_file(self.network_type,
-                                                                                              self.network_name))
-        d4 = pd.read_csv(self.locator.get_optimization_network_substation_ploss_file(self.network_type,
-                                                                                     self.network_name))
+        d2 = pd.read_csv(self.locator.get_thermal_network_layout_qloss_system_file(self.network_type,
+                                                                                   self.network_name))  # edge loss
+        d3 = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
+                                                                                         self.network_name))
+        d4 = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
+                                                                                self.network_name))
         diam = pd.DataFrame(edge_diam)
         return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3,
                 'P_loss_substation_kWh': d4}
 
     def preprocessing_network_pumping(self):
         df_pumping_kW = pd.read_csv(
-            self.locator.get_optimization_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
         df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
         df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
         df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
@@ -404,7 +404,7 @@ class Plots(object):
                                                            category)
         analysis_fields = ['Tnode_hourly_C', 'Q_loss_kWh']  # data to plot
         all_nodes = pd.read_csv(
-            self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
+            self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
                 'edge_node': self.network_processed['edge_node'],  # read edge node matrix of node connections
@@ -421,7 +421,7 @@ class Plots(object):
         analysis_fields = ['P_loss_substation_kWh', 'P_loss_kWh']
 
         all_nodes = pd.read_csv(
-            self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
+            self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
                 'edge_node': self.network_processed['edge_node'],  # read edge node matrix of node connections
@@ -435,7 +435,7 @@ class Plots(object):
         title = " Network Layout" + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout', category)
         all_nodes = pd.read_csv(
-            self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
+            self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
         data = {'DN': self.network_data_processed['DN'],
                 'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
