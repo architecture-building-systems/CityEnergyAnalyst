@@ -220,7 +220,7 @@ Thermal networks:
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.network_layout.main
-  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
+  parameters: ['general:scenario', network-layout]
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
