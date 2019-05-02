@@ -1,0 +1,49 @@
+{% extends "base_site.html" %}
+
+{% block title %} Project Overview {% endblock title %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('landing_blueprint.static', filename='landing.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="row">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title" align="center">
+                            <h1>{{ project_name }}</h1>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            {% for scenario in scenarios %}
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title pull-left">
+                                            {{ scenario }}
+                                        </h3>
+
+                                        <button class="btn btn-default pull-right">Open</button>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="image-placeholder">
+                                            <h4>Image of Scenario</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            <button class="btn btn-default btn-block" onclick="">
+                                <i class="fa fa-plus"></i> Create new Scenario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
