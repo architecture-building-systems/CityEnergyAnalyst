@@ -169,17 +169,17 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                 #                                                archetype_values.loc[use],
                 #                                                bpr.rc_model['Aef'] * bpr.occupancy[use])
 
-    for schedule in PERSON_SCHEDULES:
-        normalizing_value = np.sum(
-            archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)).multiply(
-                archetype_values['people'])) / np.sum(pd.Series(bpr.occupancy).multiply(archetype_values['people']))
-        if not np.isclose(normalizing_value, 0.0):
-            building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
-
-    for schedule in ELECTRICAL_SCHEDULES:
-        normalizing_value = np.sum(archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)))
-        if not np.isclose(normalizing_value, 0.0):
-            building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
+    # for schedule in PERSON_SCHEDULES:
+    #     normalizing_value = np.sum(
+    #         archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)).multiply(
+    #             archetype_values['people'])) / np.sum(pd.Series(bpr.occupancy).multiply(archetype_values['people']))
+    #     if not np.isclose(normalizing_value, 0.0):
+    #         building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
+    #
+    # for schedule in ELECTRICAL_SCHEDULES:
+    #     normalizing_value = np.sum(archetype_values[schedule.split('_')[0]].multiply(pd.Series(bpr.occupancy)))
+    #     if not np.isclose(normalizing_value, 0.0):
+    #         building_schedules[schedule.split('_')[0]] *= comfort_and_loads[schedule] / normalizing_value
 
     for schedule in OTHER_SCHEDULES:
         building_schedules[schedule.split('_')[0]] = calc_process_schedules(building_schedules, all_schedules, bpr,
