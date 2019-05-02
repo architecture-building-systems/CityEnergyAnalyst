@@ -46,12 +46,12 @@ def main(_):
 
 
 def copy_config(scripts_folder):
-    """Copy the cea/config.py, cea/default.config and an empty __init__.py file to the toolbox_folder"""
+    """Copy the cea/concept_parameters.py, cea/default.config and an empty __init__.py file to the toolbox_folder"""
     import cea.config
 
     cea_dst_folder = get_cea_dst_folder(scripts_folder)
     cea_src_folder = os.path.dirname(cea.config.__file__)
-    shutil.copy(os.path.join(cea_src_folder, 'config.py'), cea_dst_folder)
+    shutil.copy(os.path.join(cea_src_folder, 'concept_parameters.py'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
 
