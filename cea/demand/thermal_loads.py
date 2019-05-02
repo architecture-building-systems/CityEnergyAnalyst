@@ -74,7 +74,24 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
+    actual_weather_data = weather_data.copy(deep=True)
+
+    # check if microclimate data is available
+    if os.path.isfile(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')):
+        print 'microclimate data found, replacing standard weather values'
+        drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
+        if building_name in drybulb_C.columns.values:
+            # import other microclimate data
+            relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'rh_ext.csv')).set_index('hoy')
+            windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'u_wind.csv')).set_index('hoy')
+            # replace available microclimate data in building's weather data
+            actual_weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
+            actual_weather_data.loc[drybulb_C.index.values, 'wetbulb_C'] = calc_wet_bulb_temperature(
+                drybulb_C[building_name],relhum_percent[building_name])
+            actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
+            actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
+
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, actual_weather_data, use_stochastic_occupancy)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
