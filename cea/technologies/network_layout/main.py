@@ -28,7 +28,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     pipe_diameter_default = config.network_layout.pipe_diameter
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
-    connected_buildings = config.plant_building_names.buildings
+    connected_buildings = config.network_layout.buildings
     consider_only_buildings_with_demand = config.network_layout.buildings_with_demand
     disconnected_building_names = config.network_layout.disconnected_buildings
 
@@ -42,28 +42,30 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     elif input_path_name == 'electrical_grid':  # point to location of electrical grid
         path_streets_shp = locator.get_electric_network_output_location(input_path_name)
         output_substations_shp = locator.get_electric_substation_output_location()
+    else:
+        raise Exception("the value of the varaible input_path_name is not valid")
 
-        # Calculate potential network
-        crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
-                                                  path_potential_network)
+    # Calculate potential network
+    crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
+                                              path_potential_network)
 
-        # calc minimum spanning tree and save results to disk
-        output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
-        output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
-        output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
+    # calc minimum spanning tree and save results to disk
+    output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
+    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
+    output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
 
-        calc_steiner_spanning_tree(crs_projected, path_potential_network, output_network_folder, output_substations_shp,
-                                   output_edges,
-                                   output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                                   total_demand_location, create_plant, config.network_layout.allow_looped_networks,
-                                   optimization_flag, plant_building_names, disconnected_building_names)
+    calc_steiner_spanning_tree(crs_projected, path_potential_network, output_network_folder, output_substations_shp,
+                               output_edges,
+                               output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
+                               total_demand_location, create_plant, config.network_layout.allow_looped_networks,
+                               optimization_flag, plant_building_names, disconnected_building_names)
 
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names)
+    plant_building_names = []  # Placeholder, this is only used in Network optimization
+    network_layout(config, locator, plant_building_names)
 
 
 if __name__ == '__main__':
