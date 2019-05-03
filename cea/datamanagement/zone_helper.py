@@ -86,15 +86,16 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
     shapefile["category"] = shapefile['building']
     shapefile["Name"] = [key + str(x + 1000) for x in
-                         range(no_buildings)]  # start in a big number to avoid potential confusion\
+                         range(no_buildings)]  # start in a big number to avoid potential confusion
+
     result = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
          "data_source"]]
 
     result.reset_index(inplace=True, drop=True)
+    shapefile.reset_index(inplace=True, drop=True)
 
-    return result
-
+    return result, shapefile
 
 def zone_helper(locator, config):
     """
@@ -115,7 +116,7 @@ def zone_helper(locator, config):
     occupancy_output_path = locator.get_building_occupancy()
     age_output_path = locator.get_building_age()
 
-    # get zone.shp file
+    # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
                               poly, zone_output_path)
@@ -166,13 +167,35 @@ def calculate_age_file(zone_df, year_construction, age_output_path):
     :param age_output_path:
     :return:
     """
-    age_df = zone_df[["Name"]].copy()
+    #create dataframe to fill in the data
     for column in COLUMNS_ZONE_AGE:
         if column == 'built':
-            age_df.loc[:, column] = year_construction
+            zone_df.loc[:, column] = year_construction
         else:
-            age_df.loc[:, column] = 0
-    dataframe_to_dbf(age_df, age_output_path)
+            zone_df.loc[:, column] = 0
+
+    if year_construction is None:
+        print('Warning! you have not indicated a year of construction for the buildings, '
+              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
+              'if we do not get any data we assume all buildings being constructed in the year 2000')
+        list_of_columns = zone_df.columns
+        if "start_date" not in list_of_columns:  # this field describes the construction year of buildings
+            zone_df["start_date"] = 2000
+            zone_df['data_source'] = "CEA - assumption"
+        else:
+            zone_df['data_source'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
+
+        data_floors_sum_with_nan = [np.nan if x is np.nan else int(x) for x in zone_df['start_date']]
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        zone_df["built"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
+    else:
+        zone_df['data_source'] = "CEA - assumption"
+
+    fields = ["Name"] + COLUMNS_ZONE_AGE + ['data_source']
+    age_dbf = zone_df[fields]
+
+    dataframe_to_dbf(age_dbf, age_output_path)
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
@@ -183,13 +206,13 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     # get footprints of all the district
     poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
     # clean attributes of height, name and number of floors
-    result = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
+    result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
                               buildings_floors_below_ground, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     # save to shapefile
     result.to_file(shapefile_out_path)
 
-    return result
+    return result_allfields
 
 
 def main(config):
