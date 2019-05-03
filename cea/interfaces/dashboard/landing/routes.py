@@ -6,6 +6,7 @@ from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 import cea.inputlocator
 
+
 blueprint = Blueprint(
     'landing_blueprint',
     __name__,
@@ -28,17 +29,20 @@ def route_new_project():
     return render_template('new_project.html', project=project)
 
 
-@blueprint.route('/project_overview/')
+@blueprint.route('/create_scenario')
+def route_new_scenario():
+    # TODO: Could add some preprocessing steps
+    return render_template('new_scenario.html')
+
+
+@blueprint.route('/project_overview')
 def route_project_overview():
     cea_config = current_app.cea_config
     project_path = cea_config.project
     project_name = os.path.basename(project_path)
 
     # Get the list of scenarios
-    scenarios = []
-    for directory in os.listdir(project_path):
-        if os.path.isdir(os.path.join(project_path, directory)):
-            scenarios.append(directory)
+    scenarios = get_scenarios(project_path)
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
 
 
@@ -55,29 +59,63 @@ def route_poly_creator():
     poly = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[poly])
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     poly.to_file(locator.get_site_polygon())
-    print('site.shp file created at %s'%locator.get_site_polygon())
-    return jsonify(dict(redirect=url_for('plots_blueprint.index')))
+    print('site.shp file created at %s' % locator.get_site_polygon())
+
+    return jsonify(dict(redirect='/tools/zone-helper'))
 
 
 @blueprint.route('/create_project/save', methods=['POST'])
-def route_save():
-    # FIXME: Cannot create new project if current project does not exist
+def route_save_project():
+    # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
+    # FIXME: A scenario will created based on the current scenario of the config
     cea_config.scenario_name = 'baseline'
-    cea_config.project = os.path.join(request.form['projectPath'], request.form['projectName'])
+    cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
 
     # Make sure that the project folder exists
     try:
         os.makedirs(cea_config.project)
     except OSError as e:
         print(e.message)
-
+    cea_config.save()
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
-@blueprint.route('/open_project', methods=['POST'])
-def route_open():
-    return None
+@blueprint.route('/create_scenario/save', methods=['POST'])
+def route_save_scenario():
+    cea_config = current_app.cea_config
+    scenario = request.form.get('scenarioName')
+
+    try:
+        os.makedirs(os.path.join(cea_config.project, scenario))
+    except OSError as e:
+        print(e.message)
+
+    # FIXME: Currently config switches to new scenario to create files in the right directory
+    # Might not be desirable
+    cea_config.scenario_name = scenario
+
+    if request.form.get('create-zone') == 'on':
+        return redirect(url_for('landing_blueprint.route_zone_creator'))
+    else:
+        return redirect(url_for('landing_blueprint.route_project_overview'))
+
+
+@blueprint.route('/open_project')
+def route_open_project():
+
+    return url_for('project_blueprint.route_show')
+
+
+@blueprint.route('/open_project/<scenario>')
+def route_open_scenario(scenario):
+    """Open project based on the scenario"""
+    cea_config = current_app.cea_config
+    # Make sure the scenario exists
+    assert scenario in get_scenarios(cea_config.project)
+    cea_config.scenario_name = scenario
+    cea_config.save()
+    return redirect(url_for('plots_blueprint.index'))
 
 
 # FIXME: this should be refactored, as it is originally from tools/routes.py
@@ -104,7 +142,6 @@ def route_open_folder_dialog(fqname):
     if not os.path.exists(current_folder):
         # use home directory if it doesn't exist
         current_folder = os.path.expanduser('~')
-
 
     folders = []
     for entry in os.listdir(current_folder):
@@ -162,3 +199,12 @@ def route_open_file_dialog(fqname):
     return render_template('file_listing.html', current_folder=current_folder,
                            folders=folders, files=files, title=parameter.help, fqname=fqname,
                            parameter_name=parameter.name, breadcrumbs=breadcrumbs)
+
+
+def get_scenarios(path):
+    """Return list of scenarios based on folder structure"""
+    scenarios = []
+    for directory in os.listdir(path):
+        if os.path.isdir(os.path.join(path, directory)):
+            scenarios.append(directory)
+    return scenarios

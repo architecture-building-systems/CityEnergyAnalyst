@@ -13,7 +13,7 @@ blueprint = Blueprint(
 
 @blueprint.route('/')
 def route_default():
-    return redirect(url_for('plots_blueprint.index'))
+    return redirect(url_for('landing_blueprint.index'))
 
 
 @blueprint.route('/fixed_<template>')
