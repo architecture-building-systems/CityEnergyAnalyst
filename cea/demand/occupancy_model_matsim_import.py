@@ -908,7 +908,7 @@ def schedule_maker(region, locator, list_uses):
 
     for use in updated_list_uses:
         # read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use).T
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
 
         # read lists of every daily profile
         occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
