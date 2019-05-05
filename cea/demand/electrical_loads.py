@@ -10,6 +10,7 @@ from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.hotwater_loads import calc_water_temperature
 import pandas as pd
 from cea.constants import HOURS_IN_YEAR
+from cea.demand.refrigeration_loads import calc_Qcpro_sys
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -63,7 +64,8 @@ def calc_Eal_Epro(tsd, bpr, schedules):
     else:
         tsd['Epro'] = np.zeros(HOURS_IN_YEAR)
 
-    tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
+    # tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
+    tsd = calc_Qcpro_sys(tsd)
 
     return tsd
 

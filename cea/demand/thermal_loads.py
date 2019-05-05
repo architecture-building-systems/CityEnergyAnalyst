@@ -464,7 +464,7 @@ TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
 TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcs_sys_ahu', 'mcpcs_sys_aru', 'mcpcs_sys_scu', 'mcpcs_sys']
 TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcs_sys_re_ahu', 'Tcs_sys_re_aru', 'Tcs_sys_re_scu', 'Tcs_sys_sup_ahu', 'Tcs_sys_sup_aru',
                                 'Tcs_sys_sup_scu', 'Tcs_sys_sup', 'Tcs_sys_re',
-                                'Tcdata_sys_re', 'Tcdata_sys_sup',
+                                'Tcdata_sys_re', 'Tcdata_sys_sup', 'Tcpro_sys_re', 'Tcpro_sys_sup',
                                 'Tcre_sys_re', 'Tcre_sys_sup']
 TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphs_sys_ahu', 'mcphs_sys_aru', 'mcphs_sys_shu', 'mcphs_sys']
 TSD_KEYS_HEATING_SUPPLY_TEMP = ['Ths_sys_re_ahu', 'Ths_sys_re_aru', 'Ths_sys_re_shu', 'Ths_sys_sup_ahu', 'Ths_sys_sup_aru',
@@ -587,7 +587,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Epro', 'Edata', 'Ea', 'El', 'Eal',
                    'mcphs_sys', 'mcpcs_sys', 'mcptw'
                    'mcpww_sys','mcpcdata_sys','mcpcre_sys',
-                   'Tcdata_sys_re', 'Tcdata_sys_sup',
+                   'Tcdata_sys_re', 'Tcdata_sys_sup', 'Tcpro_sys_re', 'Tcpro_sys_sup',
                    'Tcre_sys_re', 'Tcre_sys_sup',
                    'Tww_sys_sup', 'Tww_sys_re',
                    'Ths_sys_sup', 'Ths_sys_re',

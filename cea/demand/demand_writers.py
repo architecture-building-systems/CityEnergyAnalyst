@@ -72,7 +72,8 @@ class DemandWriter(object):
                                    'mcphs_sys_aru',
                                    'mcphs_sys_shu',
                                    'mcpcre_sys',
-                                   'mcpcdata_sys']
+                                   'mcpcdata_sys',
+                                   'mcpcpro_sys']
         else:
             self.mass_flow_vars = massflows
 
@@ -80,7 +81,7 @@ class DemandWriter(object):
             self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
                                      'Tww_sys_sup', 'Tww_sys_re',
                                      'Tcre_sys_re', 'Tcre_sys_sup',
-                                     'Tcdata_sys_re', 'Tcdata_sys_sup',
+                                     'Tcdata_sys_re', 'Tcdata_sys_sup', 'Tcpro_sys_re', 'Tcpro_sys_sup',
                                      'Ths_sys_sup_aru', 'Ths_sys_sup_ahu', 'Ths_sys_sup_shu',
                                      'Ths_sys_re_aru', 'Ths_sys_re_ahu', 'Ths_sys_re_shu',
                                      'Tcs_sys_sup_aru', 'Tcs_sys_sup_ahu', 'Tcs_sys_sup_scu',

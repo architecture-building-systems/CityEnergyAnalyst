@@ -81,3 +81,22 @@ def calc_Qref(locator, bpr, tsd):
 
     return tsd
 
+def calc_Qcpro_sys(tsd):
+    tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
+    # tsd['Qcre_sys'] = schedules['Qcre'] # in kWh
+
+    def function(Qcre_sys):
+        if Qcre_sys > 0:
+            # return and supply temperatures from Emanuel Riegelbauer's thesis
+            Tcref_re_0 = 12
+            Tcref_sup_0 = 6
+            mcpref = Qcre_sys/(Tcref_re_0-Tcref_sup_0)
+        else:
+            mcpref = 0.0
+            Tcref_re_0 = 0.0
+            Tcref_sup_0 = 0.0
+        return mcpref, Tcref_re_0, Tcref_sup_0
+
+    tsd['mcpcpro_sys'], tsd['Tcpro_sys_re'], tsd['Tcpro_sys_sup'] = np.vectorize(function)(tsd['Qcpro_sys'])
+
+    return tsd
