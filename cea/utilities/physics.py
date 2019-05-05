@@ -2,6 +2,7 @@
 """
 Physical functions
 """
+import numpy as np
 from __future__ import division
 
 __author__ = "Jimeno A. Fonseca"
@@ -38,3 +39,12 @@ def calc_rho_air(temp_air):
 
     return rho_air
 
+def calc_wet_bulb_temperature(dry_bulb_temperature, relative_humidity):
+    '''
+    calc wet bulb temperature from empirical formula in R. Stull, "Wet-Bulb Temperature from Relative Humidity and Air
+    Temperature" (2011)
+    '''
+
+    return dry_bulb_temperature * np.arctan(0.151977 * (relative_humidity + 8.313659) ** 0.5) + \
+           np.arctan(dry_bulb_temperature + relative_humidity) - np.arctan(relative_humidity - 1.676331) + \
+           0.00391838 * (relative_humidity) ** 1.5 * np.arctan(0.23101 * relative_humidity) - 4.686035
