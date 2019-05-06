@@ -17,22 +17,22 @@
     <br>
     <form id="map-location" class="form-horizontal form-label-left" action="javascript:;" onsubmit="goToLocation()">
         <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="coordinates">Coordinates of site</label>
             <div class="col-md-6 col-sm-6 col-xs-12">
+            <label class="control-label" for="latitude">Latitude</label>
+                 <input type="text" class="form-control" placeholder="Latitude"
+                        id="latitude" name="latitude" value="1.3521">
+            </div>
 
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Latitude, Longitude"
-                           id="coordinates" name="coordinates" value="1.3521, 103.8198">
-                    <div class="input-group-btn">
-                        <button class="btn btn-file-parameter" type="button" onclick="goToLocation()">Go</button>
-                    </div>
-                </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+            <label class="control-label" for="longitude">Longitude</label>
+            <input type="text" class="form-control" placeholder="Longitude"
+                       id="longitude" name="longitude" value="103.8198">
             </div>
         </div>
     </form>
 
     <div style="text-align: center">
-        <div id="mapid" style="width: 600px; height: 400px;"></div>
+        <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
 {#        <div id="lassoResult"></div>#}
         <button onclick="removePoly()">Clear</button>
         <button onclick="createPoly('{{ scenario }}')">Done</button>
