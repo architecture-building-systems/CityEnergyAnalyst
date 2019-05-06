@@ -70,8 +70,7 @@
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
                         <button type="submit" class="btn btn-success">Save</button>
-                        {# FIXME: Previous page might not be overiew #}
-                        <button type="button" class="btn btn-default" onclick="window.location.href='{{ url_for('landing_blueprint.route_project_overview') }}'">Back</button>
+                        <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
                     </div>
                 </div>
             </form>
@@ -82,5 +81,10 @@
   {{ super()}}
     <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
 {% endblock javascripts %}
 {% endblock body %}
