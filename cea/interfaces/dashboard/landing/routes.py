@@ -103,8 +103,21 @@ def route_save_scenario():
 
 @blueprint.route('/open_project')
 def route_open_project():
+    cea_config = current_app.cea_config
+    project = cea_config.project
+    return render_template('open_project.html', project=project)
 
-    return url_for('project_blueprint.route_show')
+
+@blueprint.route('/open_project/save', methods=['POST'])
+def route_save_open_project():
+    cea_config = current_app.cea_config
+    project_path = request.form.get('projectPath')
+    scenarios = get_scenarios(project_path)
+
+    cea_config.scenario_name = scenarios[0]
+    cea_config.project = project_path
+    cea_config.save()
+    return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
 @blueprint.route('/open_project/<scenario>')
