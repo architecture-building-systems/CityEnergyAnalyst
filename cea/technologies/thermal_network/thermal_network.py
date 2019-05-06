@@ -413,6 +413,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
        Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
 
+    start_time = time.time()
+    output_times = {'start_time': start_time}
+
     # # prepare data for calculation
     print('Initialize network')
     # initiate class, and get edge-node matrix from defined network
@@ -446,6 +449,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         start_t = config.thermal_network.start_t
         stop_t = config.thermal_network.stop_t
 
+    substation_time = time.time()
+    output_times['substation_time'] = substation_time
+
     print('Calculating edge mass flows')
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
@@ -473,6 +479,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
             thermal_network.edge_mass_flow_df.to_csv(
                 thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                     thermal_network.network_name))
+    edge_mass_flow_time = time.time()
+    output_times['edge_mass_flow_time'] = edge_mass_flow_time
 
     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, set_diameter)
@@ -482,6 +490,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                             right_index=True)
     thermal_network.edge_df.to_csv(
         thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
+
+    pipe_assign_time = time.time()
+    output_times['pipe_assign_time'] = pipe_assign_time
 
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(),
@@ -508,8 +519,10 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         pool.join()
     else:
         hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                     repeat(thermal_network, times=(stop_t - start_t))
+                                     repeat(thermal_network, times=(stop_t - start_t)),
                                      )
+    thermal_hydraulic_time = time.time()
+    output_times['thermal_hydraulic_time'] = thermal_hydraulic_time
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -540,6 +553,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                         thermal_network.network_name))
 
     print("Completed thermal-hydraulic calculation.\n")
+    print(output_times)
 
     if thermal_network.no_convergence_flag == True:  # no convergence of network diameters
         print('Results are to be treated with caution since network diameters did not converge. \n')
