@@ -52,7 +52,7 @@ function removePoly() {
 	// map.removeLayer(temppoly);
 }
 
-function createPoly() {
+function createPoly(scenario) {
 	var r = confirm("Are you sure you want to create the zone file?");
 
 	if (r === true) {
@@ -65,7 +65,7 @@ function createPoly() {
 			contentType: 'application/json',
 			data: JSON.stringify(json),
 			dataType: 'json',
-			url: 'http://localhost:5050/landing/create_poly',
+			url: `http://localhost:5050/landing/create_poly?scenario=${scenario}`,
 			success: function(response) {
   				if (response.redirect) {
     				window.location.href = response.redirect;
