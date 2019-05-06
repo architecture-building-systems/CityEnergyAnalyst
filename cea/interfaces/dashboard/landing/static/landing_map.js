@@ -3,12 +3,12 @@ var latlngs = [];
 var temp = [];
 var polygon = L.polygon(latlngs, {color: 'red'});
 // var temppoly = L.polygon(temp, {color: 'red'});
-var latlon = $("#coordinates").val().split(/[,\s]/);
-console.log(latlon)
+var lat = $("#latitude").val();
+var lon = $("#longitude").val();
 
 // const lassoResult = document.querySelector("#lassoResult");
 
-map = L.map('mapid').setView([latlon[0], latlon[latlon.length-1]], 11);
+map = L.map('mapid').setView([lat, lon], 11);
 
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
     {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
@@ -19,8 +19,9 @@ map.on('click', onMapClick);
 	// map.on('mousemove', onMapHover);
 
 function goToLocation() {
-	var latlon = $("#coordinates").val().split(/[,\s]/);
-	map.setView([latlon[0], latlon[latlon.length-1]], 11);
+	var lat = $("#latitude").val();
+	var lon = $("#longitude").val();
+	map.setView([lat, lon], 11);
 }
 
 function onMapClick(e) {
