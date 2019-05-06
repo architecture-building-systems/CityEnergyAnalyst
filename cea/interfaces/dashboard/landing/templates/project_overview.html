@@ -18,7 +18,7 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            <button class="btn btn-success btn-block" onclick="window.location.href='{{ url_for('landing_blueprint.route_new_scenario') }}'">
+                            <button class="btn btn-success btn-block" onclick="window.location.href='{{ url_for('landing_blueprint.route_create_scenario') }}'">
                                 <i class="fa fa-plus"></i> Create new Scenario
                             </button>
                             {% for scenario in scenarios %}
@@ -28,7 +28,7 @@
                                             {{ scenario }}
                                         </h3>
                                         {# TODO: Maybe change onclick to Javascript implementation #}
-                                        <button class="btn btn-default pull-right" onclick="window.location.href='{{ url_for('landing_blueprint.route_open_scenario', scenario=scenario) }}'">Open</button>
+                                        <button class="btn btn-default pull-right" onclick="window.location.href='{{ url_for('landing_blueprint.route_open_project_scenario', scenario=scenario) }}'">Open</button>
                                         <div class="clearfix"></div>
                                     </div>
                                     <div class="panel-body">

@@ -35,7 +35,7 @@
             <h2>New Scenario<br/><small>Current Project: {{ project_name }}</small></h2>
             <br>
             <form id="new-project" data-parsley-validate class="form-horizontal form-label-left" method="post"
-                  action="{{ url_for('landing_blueprint.route_save_scenario') }}">
+                  action="{{ url_for('landing_blueprint.route_create_scenario_save') }}">
                 {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
                 {# TODO: Maybe check for space in name or if it already exists #}
                 <div class="form-group">
