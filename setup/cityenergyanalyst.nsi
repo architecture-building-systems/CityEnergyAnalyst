@@ -82,6 +82,8 @@ Section "Base Installation" Base_Installation_Section
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
     FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileClose $0
 
 
