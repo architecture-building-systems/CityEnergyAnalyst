@@ -23,21 +23,21 @@ def index():
     return render_template('landing.html')
 
 
-@blueprint.route('/create_project')
-def route_new_project():
+@blueprint.route('/create-project')
+def route_create_project():
     cea_config = current_app.cea_config
     project = os.path.dirname(cea_config.project)
     # TODO: Check if directory already exists
     return render_template('new_project.html', project=project)
 
 
-@blueprint.route('/create_scenario')
-def route_new_scenario():
+@blueprint.route('/create-scenario')
+def route_create_scenario():
     # TODO: Could add some preprocessing steps
     return render_template('new_scenario.html')
 
 
-@blueprint.route('/project_overview')
+@blueprint.route('/project-overview')
 def route_project_overview():
     cea_config = current_app.cea_config
     project_path = cea_config.project
@@ -48,13 +48,13 @@ def route_project_overview():
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
 
 
-@blueprint.route('/create_project/map')
-def route_zone_creator():
+@blueprint.route('/create-zone')
+def route_create_zone():
     scenario = request.args['scenario']
     return render_template('project_map.html', scenario=scenario)
 
 
-@blueprint.route('/create_poly', methods=['POST'])
+@blueprint.route('/create-poly', methods=['POST'])
 def route_poly_creator():
     # Get polygon points and create .shp file
     data = request.get_json()
@@ -98,8 +98,8 @@ def route_poly_creator():
     return jsonify(dict(redirect='/landing/project_overview'))
 
 
-@blueprint.route('/create_project/save', methods=['POST'])
-def route_save_project():
+@blueprint.route('/create-project/save', methods=['POST'])
+def route_create_project_save():
     # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
     # FIXME: A scenario will created based on the current scenario of the config
@@ -115,8 +115,8 @@ def route_save_project():
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
-@blueprint.route('/create_scenario/save', methods=['POST'])
-def route_save_scenario():
+@blueprint.route('/create-scenario/save', methods=['POST'])
+def route_create_scenario_save():
     cea_config = current_app.cea_config
     scenario = request.form.get('scenarioName')
 
@@ -126,20 +126,20 @@ def route_save_scenario():
         print(e.message)
 
     if request.form.get('create-zone') == 'on':
-        return redirect(url_for('landing_blueprint.route_zone_creator', scenario=scenario))
+        return redirect(url_for('landing_blueprint.route_create_zone', scenario=scenario))
     else:
         return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
-@blueprint.route('/open_project')
+@blueprint.route('/open-project')
 def route_open_project():
     cea_config = current_app.cea_config
     project = cea_config.project
     return render_template('open_project.html', project=project)
 
 
-@blueprint.route('/open_project/save', methods=['POST'])
-def route_save_open_project():
+@blueprint.route('/open-project/save', methods=['POST'])
+def route_open_project_save():
     cea_config = current_app.cea_config
     project_path = request.form.get('projectPath')
     scenarios = get_scenarios(project_path)
@@ -150,8 +150,8 @@ def route_save_open_project():
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
-@blueprint.route('/open_project/<scenario>')
-def route_open_scenario(scenario):
+@blueprint.route('/open-project/<scenario>')
+def route_open_project_scenario(scenario):
     """Open project based on the scenario"""
     cea_config = current_app.cea_config
     # Make sure the scenario exists
