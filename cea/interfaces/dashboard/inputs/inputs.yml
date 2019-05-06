@@ -21,12 +21,8 @@ district:
   fields:
   - name: Name
     type: str
-  - name: floors_bg
-    type: int
   - name: floors_ag
     type: int
-  - name: height_bg
-    type: float
   - name: height_ag
     type: float
 age:
