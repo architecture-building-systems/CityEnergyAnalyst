@@ -48,7 +48,8 @@ def route_project_overview():
 
 @blueprint.route('/create_project/map')
 def route_zone_creator():
-    return render_template('project_map.html')
+    scenario = request.args['scenario']
+    return render_template('project_map.html', scenario=scenario)
 
 
 @blueprint.route('/create_poly', methods=['POST'])
@@ -57,11 +58,18 @@ def route_poly_creator():
     data = request.get_json()
     poly = shape(data['geometry'])
     poly = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[poly])
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    poly.to_file(locator.get_site_polygon())
-    print('site.shp file created at %s' % locator.get_site_polygon())
 
     return jsonify(dict(redirect='/tools/zone-helper'))
+    cea_config = current_app.cea_config
+    # Save current scenario name
+    temp = cea_config.scenario_name
+    cea_config.scenario_name = request.args['scenario']
+    scenario_path = cea_config.scenario
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    poly_path = locator.get_site_polygon()
+
+    poly.to_file(poly_path)
+    print('site.shp file created at %s' % poly_path)
 
 
 @blueprint.route('/create_project/save', methods=['POST'])
@@ -91,12 +99,8 @@ def route_save_scenario():
     except OSError as e:
         print(e.message)
 
-    # FIXME: Currently config switches to new scenario to create files in the right directory
-    # Might not be desirable
-    cea_config.scenario_name = scenario
-
     if request.form.get('create-zone') == 'on':
-        return redirect(url_for('landing_blueprint.route_zone_creator'))
+        return redirect(url_for('landing_blueprint.route_zone_creator', scenario=scenario))
     else:
         return redirect(url_for('landing_blueprint.route_project_overview'))
 
