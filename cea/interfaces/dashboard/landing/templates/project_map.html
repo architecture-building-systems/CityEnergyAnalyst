@@ -18,17 +18,24 @@
     <form id="map-location" class="form-horizontal form-label-left" action="javascript:;" onsubmit="goToLocation()">
         <div class="form-group">
             <div class="col-md-6 col-sm-6 col-xs-12">
-            <label class="control-label" for="latitude">Latitude</label>
-                 <input type="text" class="form-control" placeholder="Latitude"
-                        id="latitude" name="latitude" value="1.3521">
+                <label class="control-label" for="latitude">Latitude</label>
+                <input type="text" class="form-control" placeholder="Latitude"
+                       id="latitude" name="latitude" value="1.3521" required>
             </div>
 
             <div class="col-md-6 col-sm-6 col-xs-12">
-            <label class="control-label" for="longitude">Longitude</label>
-            <input type="text" class="form-control" placeholder="Longitude"
-                       id="longitude" name="longitude" value="103.8198">
+                <label class="control-label" for="longitude">Longitude</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Longitude"
+                           id="longitude" name="longitude" value="103.8198" required>
+                    <div class="input-group-btn">
+                        <button class="btn" type="button" onclick="goToLocation()">Go</button>
+                    </div>
+                </div>
+
             </div>
         </div>
+
     </form>
 
     <div style="text-align: center">
