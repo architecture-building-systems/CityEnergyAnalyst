@@ -199,15 +199,27 @@ def calc_mainuse(uses_df, uses):
         if databaseclean[i][array_max[i]] != 1:
             databaseclean[i][array_max[i]] = 0
     array_second = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
-    mainuse = np.array(map(calc_comparison, array_second, array_max))
+    for i in range(len(array_second)):
+        if databaseclean[i][array_second[i]] != 1:
+            databaseclean[i][array_second[i]] = 0
+    array_third = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
+
+    mainuse = np.array(map(calc_comparison, array_second, array_third, array_max))
 
     return mainuse
 
 
-def calc_comparison(array_second, array_max):
-    if array_max == 'PARKING':
-        if array_second != 'PARKING':
+def calc_comparison(array_second, array_third, array_max):
+    if array_max in {'PARKING','COOLROOM'}:
+        if array_second not in {'PARKING','COOLROOM'}:
             array_max = array_second
+        elif array_second in {'PARKING','COOLROOM'}:
+            # check if building has a third use besides parking and coolroom
+            # otherwise fall back to original main use
+            if array_third != np.nan:
+                array_max = array_third
+            elif array_third == np.nan:
+                pass  # main use is parking or coolroom
     return array_max
 
 

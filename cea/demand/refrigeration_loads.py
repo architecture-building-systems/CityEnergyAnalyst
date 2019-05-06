@@ -28,7 +28,7 @@ def has_refrigeration_load(bpr):
     :rtype: bool
         """
 
-    if bpr.internal_loads['Qcre_Wm2'] > 0:
+    if bpr.internal_loads['Qcre_Wm2'] > 0.0:
         return True
     else:
         return False
