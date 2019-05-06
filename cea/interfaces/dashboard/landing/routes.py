@@ -95,7 +95,7 @@ def route_poly_creator():
     ##########################################
     cea_config.scenario_name = temp
 
-    return jsonify(dict(redirect='/landing/project_overview'))
+    return jsonify(dict(redirect='/landing/project-overview'))
 
 
 @blueprint.route('/create-project/save', methods=['POST'])
