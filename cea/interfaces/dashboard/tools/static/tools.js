@@ -190,7 +190,8 @@ function folder_dialog_navigate_to(parameter_fqname, current_folder, folder) {
  */
 function save_folder_name(target_id, folder_path) {
     // figure out folder path
-    $('#' + target_id).val(folder_path);
+    $('#' + target_id).val(folder_path).trigger("input").trigger("change");
+    console.log(target_id)
 }
 
 /**

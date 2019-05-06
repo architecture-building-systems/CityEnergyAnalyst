@@ -1,27 +1,81 @@
-//var mymap = L.map('mapid').setView([51.505, -0.09], 13);
-//L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-//        {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
-//}).addTo(mymap);
+var map;
+var latlngs = [];
+var temp = [];
+var polygon = L.polygon(latlngs, {color: 'red'});
+// var temppoly = L.polygon(temp, {color: 'red'});
+var latlon = $("#coordinates").val().split(/[,\s]/);
+console.log(latlon)
 
-var mymap;
+// const lassoResult = document.querySelector("#lassoResult");
 
-$(document).ready(function() {
-	mymap = L.map('mapid').setView([51.505, -0.09], 13);
+map = L.map('mapid').setView([latlon[0], latlon[latlon.length-1]], 11);
 
-	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-		maxZoom: 18,
-		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-		id: 'mapbox.streets'
-	}).addTo(mymap);
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+    {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
 
-	mymap.on('click', onMapClick);
-});
+map.on('click', onMapClick);
+
+	// Not sure whether to add hover functionality
+	// map.on('mousemove', onMapHover);
+
+function goToLocation() {
+	var latlon = $("#coordinates").val().split(/[,\s]/);
+	map.setView([latlon[0], latlon[latlon.length-1]], 11);
+}
 
 function onMapClick(e) {
-    L.popup()
-        .setLatLng(e.latlng)
-        .setContent("You clicked the map at " + e.latlng.toString())
-        .openOn(mymap);
+    latlngs.push(e.latlng)
+	map.removeLayer(polygon)
+	polygon = L.polygon(latlngs, {color: 'red'})
+	polygon.addTo(map);
+
+	// if (typeof latlngs !== 'undefined') {
+  	// 	lassoResult.innerHTML = latlngs.toString();
+	// }
 }
+
+function onMapHover(e) {
+	if (latlngs.length !== 0) {
+		map.removeLayer(temppoly)
+		temp = [...latlngs]
+		temp.push(e.latlng)
+		temppoly = L.polygon(temp, {color: 'red'})
+		temppoly.addTo(map);
+	}
+}
+
+function removePoly() {
+	// lassoResult.innerHTML = "";
+	latlngs = [];
+	map.removeLayer(polygon);
+	// temp = [];
+	// map.removeLayer(temppoly);
+}
+
+function createPoly(scenario) {
+	var r = confirm("Are you sure you want to create the zone file?");
+
+	if (r === true) {
+		// TODO: Check if polygon is empty
+		var json = polygon.toGeoJSON();
+		L.extend(json.properties, polygon.properties);
+
+		$.ajax({
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(json),
+			dataType: 'json',
+			url: `http://localhost:5050/landing/create-poly?scenario=${scenario}`,
+			success: function(response) {
+  				if (response.redirect) {
+    				window.location.href = response.redirect;
+  				}
+			},
+			error: function(error) {
+				console.log(error);
+			}
+		});
+	}
+}
+
+$(document)
