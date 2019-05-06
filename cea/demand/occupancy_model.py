@@ -672,7 +672,6 @@ def main(config):
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
-    date = pd.date_range(gv.date_start, periods=HOURS_IN_YEAR, freq='H')
     building_properties = BuildingProperties(locator, True, False)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
