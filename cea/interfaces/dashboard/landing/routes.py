@@ -6,8 +6,7 @@ from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 import cea.inputlocator
-import cea.scripts
-from . import worker
+import cea.api
 
 blueprint = Blueprint(
     'landing_blueprint',
@@ -72,27 +71,7 @@ def route_poly_creator():
     poly.to_file(poly_path)
     print('site.shp file created at %s' % poly_path)
 
-    # FIXME: THIS IS A HACK, refactor this! This emulates tool/start/script to run zone_helper.py
-    ###########################################
-    form = {
-        'scenario': scenario_path,
-        'height-ag': '',
-        'floors-ag': '',
-        'year-construction': 2000,
-        'height-bg': 3,
-        'floors-bg': 1,
-        'occupancy - type': 'MULTI_RES'
-    }
-
-    kwargs = {}
-    script = 'zone-helper'
-    print('/start/%s' % script)
-    parameters = [p for _, p in cea_config.matching_parameters(cea.scripts.by_name(script).parameters)]
-    for parameter in parameters:
-        print('%s: %s' % (parameter.name, form.get(parameter.name)))
-        kwargs[parameter.name] = parameter.decode(form.get(parameter.name))
-    current_app.workers[script] = worker.main(script, **kwargs)
-    ##########################################
+    cea.api.zone_helper(scenario=scenario_path)
     cea_config.scenario_name = temp
 
     return jsonify(dict(redirect='/landing/project-overview'))
