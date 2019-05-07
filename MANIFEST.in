@@ -9,5 +9,6 @@ include cea/tests/test_schedules.config
 include cea/tests/radiation_data/*.csv
 include cea/examples/*.zip
 
+include cea/interfaces/dashboard/inputs/inputs.yml
+
 include cea/plots/naming.csv
-include cea/plots/plots.yml
