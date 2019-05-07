@@ -10,5 +10,6 @@ include cea/tests/radiation_data/*.csv
 include cea/examples/*.zip
 
 include cea/interfaces/dashboard/inputs/inputs.yml
+include cea/interfaces/dashboard *.html *.js *.css
 
 include cea/plots/naming.csv
