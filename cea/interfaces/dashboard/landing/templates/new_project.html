@@ -63,6 +63,61 @@
                     </div>
                 </div>
 
+              <h2>Scenario</h2>
+              <br>
+
+              <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="scenarioName">Scenario Name</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+
+                        <input id="scenarioName" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                               name="scenarioName" type="text" value="baseline" placeholder="Name of the scenario" required/>
+                    </div>
+                </div>
+
+              <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="description">Description</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        {# FIXME: Change placeholder when config allows tracking of description #}
+                        <textarea id="description" style="max-width: 100%;min-width: 100%" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                                  name="description" type="text" placeholder="Enter a description for this scenario Does not work yet"></textarea>
+                    </div>
+                </div>
+
+              <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="helper-tools">Helper Tools</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12" id="helper-tools">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                          <label class="form-check-label" for="defaultCheck1">
+                            Zone
+                          </label>
+                          <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                        </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
+                        <label class="form-check-label" for="defaultCheck2">
+                          District
+                        </label>
+                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
+                        <label class="form-check-label" for="defaultCheck2">
+                          Streets
+                        </label>
+                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
+                        <label class="form-check-label" for="defaultCheck2">
+                          Terrain
+                        </label>
+                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                      </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
                         <button type="submit" class="btn btn-success">Save</button>
