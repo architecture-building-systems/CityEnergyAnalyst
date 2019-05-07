@@ -79,17 +79,20 @@ def route_poly_creator():
 
 @blueprint.route('/create-project/save', methods=['POST'])
 def route_create_project_save():
+    # Make sure that the project folder exists
+    try:
+        os.makedirs(os.path.join(request.form.get('projectPath'), request.form.get('projectName'),
+                                 request.form.get('scenarioName')))
+    except OSError as e:
+        print(e.message)
     # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
     # FIXME: A scenario will created based on the current scenario of the config
-    cea_config.scenario_name = 'baseline'
+    cea_config.scenario_name = request.form.get('scenarioName')
     cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
+    print(cea_config.scenario_name)
 
-    # Make sure that the project folder exists
-    try:
-        os.makedirs(cea_config.project)
-    except OSError as e:
-        print(e.message)
+
     cea_config.save()
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
