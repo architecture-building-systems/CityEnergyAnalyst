@@ -48,6 +48,12 @@ def route_get_json(db):
     else:
         assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
         table_df = cea.utilities.dbf.dbf_to_dataframe(location)
+
+    # Check for any missing columns from input and set it to null
+    for column in db_info['fieldnames']:
+        if column not in table_df.columns:
+            table_df[column] = 'null'
+
     result = [{column: db_info['fieldtypes'][column](getattr(row, column))
                for column in db_info['fieldnames']} for row in table_df.itertuples()]
     return jsonify(result)
