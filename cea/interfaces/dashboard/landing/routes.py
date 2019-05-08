@@ -53,12 +53,11 @@ def route_create_zone():
     return render_template('project_map.html', scenario=scenario)
 
 
-@blueprint.route('/create-poly', methods=['POST'])
-def route_poly_creator():
+@blueprint.route('/create-site', methods=['POST'])
+def route_create_site():
     # Get polygon points and create .shp file
     data = request.get_json()
-    poly = shape(data['geometry'])
-    poly = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[poly])
+    site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[shape(data['geometry'])])
 
     cea_config = current_app.cea_config
     # Save current scenario name
@@ -66,10 +65,10 @@ def route_poly_creator():
     cea_config.scenario_name = request.args['scenario']
     scenario_path = cea_config.scenario
     locator = cea.inputlocator.InputLocator(scenario_path)
-    poly_path = locator.get_site_polygon()
+    site_path = locator.get_site_polygon()
 
-    poly.to_file(poly_path)
-    print('site.shp file created at %s' % poly_path)
+    site.to_file(site_path)
+    print('site.shp file created at %s' % site_path)
 
     cea.api.zone_helper(scenario=scenario_path)
     cea_config.scenario_name = temp
