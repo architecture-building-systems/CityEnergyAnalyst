@@ -2051,6 +2051,8 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                     cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcdata_sys_kWh)
                 elif system == 're':
                     cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcre_sys_kWh)
+                elif system == 'pro':
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcpro_sys_kWh)
                 else:
                     cooling_sum = cooling_sum + abs(
                         thermal_network.buildings_demands[building]['Qcs_sys_' + system + '_kWh'])
@@ -3042,9 +3044,12 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
         elif np.isclose(z_note[node, e], -1):
             # calculate outlet temperature if flow goes from node to out_node through edge
-            t_e_out[out_node_index, e] = (t_e_in[node, e] * (
-                    k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
-                                                 -m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 - k / 2)  # [K]
+            try:
+                t_e_out[out_node_index, e] = (t_e_in[node, e] * (
+                        k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
+                                                     -m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 - k / 2)  # [K]
+            except RuntimeWarning:
+                print('invalid value encountered')
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))

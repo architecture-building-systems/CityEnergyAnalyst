@@ -16,6 +16,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', '
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
                              'Qcdata_sys_kWh', 'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'mcpcdata_sys_kWperC',
                              'Qcre_sys_kWh', 'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'mcpcre_sys_kWperC',
+                             'Qcpro_sys_kWh', 'Tcpro_sys_sup_C', 'Tcpro_sys_re_C', 'mcpcpro_sys_kWperC',
                              'Ths_sys_re_aru_C', 'Ths_sys_re_ahu_C', 'Ths_sys_re_shu_C',
                              'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C',
                              'Tcs_sys_sup_scu_C', 'Tcs_sys_re_ahu_C', 'Tcs_sys_re_aru_C', 'Tcs_sys_re_scu_C',
@@ -121,6 +122,13 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
                                                                       abs(buildings_demands[name].Qcre_sys_kWh) > 0,
                                                                       buildings_demands[name].Tcre_sys_sup_C,
                                                                       np.nan))
+            elif system == 'pro':
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcpro_sys_kWh)
+                T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
+                                                                  np.where(
+                                                                      abs(buildings_demands[name].Qcpro_sys_kWh) > 0,
+                                                                      buildings_demands[name].Tcpro_sys_sup_C,
+                                                                      np.nan))
             else:
                 Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
@@ -193,6 +201,11 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
             # calculate HEX area and UA for cre
             hex_areas.A_hex_cs_re, UA_data.UA_cooling_cs_re, Q_nom_data.Q_hex_c_re = calc_hex_area_from_demand(
                 building_demand, 'cre_sys', '',
+                T_DC_supply_C, thermal_network)
+        elif system == 'pro':
+            # calculate HEX area and UA for cpro
+            hex_areas.A_hex_cs_pro, UA_data.UA_cooling_cs_pro, Q_nom_data.Q_hex_c_pro = calc_hex_area_from_demand(
+                building_demand, 'cpro_sys', '',
                 T_DC_supply_C, thermal_network)
         else:
             # calculate HEX area and UA for the aru of cooling costumers
@@ -485,6 +498,18 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         heat.append(Qcre_sys[0])
         thermal_network.cc_old['cs_re'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_re'][t][name] = float(cc_value)
+
+    if 'UA_cooling_cs_pro' in substation_HEX_specs.HEX_UA.columns:
+        Qcpro_sys, t_DC_return_pro, mcp_DC_pro, cc_value = calc_HEX_cooling(building, 'cpro_sys', '', T_DC_supply_K,
+                                                                             substation_HEX_specs.HEX_UA.UA_cooling_cs_pro[
+                                                                                 '0'],
+                                                                             thermal_network.cc_old['cs_pro'][t][name],
+                                                                             thermal_network.delta_cap_mass_flow[t])
+        temperatures.append(t_DC_return_pro)
+        mass_flows.append(mcp_DC_pro)
+        heat.append(Qcpro_sys[0])
+        thermal_network.cc_old['cs_pro'][t][name] = float(cc_value)
+        thermal_network.cc_value['cs_pro'][t][name] = float(cc_value)
 
     # calculate mix temperature of return DH
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
