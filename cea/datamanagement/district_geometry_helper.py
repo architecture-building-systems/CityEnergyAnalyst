@@ -14,6 +14,7 @@ from geopandas import GeoDataFrame as Gdf
 from geopandas import overlay
 from scipy.spatial import Delaunay
 from shapely.ops import cascaded_union, polygonize
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -131,6 +132,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
+        elif pd.isnull(shapefile['building:levels']).all():
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
         else:
             shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
@@ -142,8 +146,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         data_floors_sum = [x + y for x, y in
                            zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x <= 1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(
-            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
