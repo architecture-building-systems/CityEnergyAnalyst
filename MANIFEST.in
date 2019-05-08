@@ -10,6 +10,6 @@ include cea/tests/radiation_data/*.csv
 include cea/examples/*.zip
 
 include cea/interfaces/dashboard/inputs/inputs.yml
-recursive-include cea/interfaces/dashboard *.html *.js *.css
+recursive-include cea/interfaces/dashboard *.html *.js *.css *.otf *.eot *.svg *.ttf *.woff *.woff2 *.png *.jpg *.gif *.ico
 
 include cea/plots/naming.csv
