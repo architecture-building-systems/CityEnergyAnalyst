@@ -11,6 +11,7 @@ import os
 import numpy as np
 import osmnx as ox
 from geopandas import GeoDataFrame as Gdf
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -42,6 +43,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
         # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
         if 'building:levels' not in list_of_columns:
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
+        elif pd.isnull(shapefile['building:levels']).all():
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
         else:
