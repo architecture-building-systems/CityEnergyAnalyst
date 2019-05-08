@@ -3,6 +3,19 @@
 Installation guide for Windows
 ==============================
 
+The easiest way to install the CityEnergyAnalyst (CEA) is to use the installer provided in the latest release. Look
+for a file named "Setup_CityEnergyAnalyst_VERSION.exe" on the `releases page`_ on GitHub.
+
+The default options will install the CEA into the "Documents" folder in your user profile in a subdirectory called
+"CityEnergyAnalyst". Start menu shortcuts are provided to launch the CEA Dashboard interface and the CEA Console (for
+running the console version of the CEA).
+
+.. _`releases page`: https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/
+
+
+Manual installation of the CEA
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows system (tested with Windows 10).
 
 .. attention:: We advise to follow the above guide precisely:
