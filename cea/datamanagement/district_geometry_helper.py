@@ -131,12 +131,12 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
-            shapefile['data_source'] = "CEA - assumption"
+            shapefile['REFERENCE'] = "CEA - assumption"
         elif pd.isnull(shapefile['building:levels']).all():
             shapefile['building:levels'] = [3] * no_buildings
-            shapefile['data_source'] = "CEA - assumption"
+            shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['data_source'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
+            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
 
@@ -174,7 +174,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry",  "data_source"]]
+        ["Name", "height_ag", "floors_ag", "description", "category", "geometry",  "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 
