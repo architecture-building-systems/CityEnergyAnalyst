@@ -92,7 +92,7 @@ Section "Base Installation" Base_Installation_Section
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
     DetailPrint "Setting up CEA Dashboard"
-    FileOpen $0 "$INSTDIR\dashboard" w
+    FileOpen $0 "$INSTDIR\dashboard.bat" w
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
