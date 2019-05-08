@@ -14,7 +14,7 @@ zone:
     type: float
   - name: height_ag
     type: float
-  - name: data_source
+  - name: REFERENCE
     type: str
 district:
   pk: Name
@@ -27,7 +27,7 @@ district:
     type: int
   - name: height_ag
     type: float
-  - name: data_source
+  - name: REFERENCE
     type: str
 age:
   pk: Name
@@ -50,7 +50,7 @@ age:
     type: year
   - name: windows
     type: year
-  - name: data_source
+  - name: REFERENCE
     type: str
 occupancy:
   pk: Name
@@ -91,7 +91,7 @@ occupancy:
     type: float
   - name: PARKING
     type: float
-  - name: data_source
+  - name: REFERENCE
     type: str
 internal-loads:
   pk: Name

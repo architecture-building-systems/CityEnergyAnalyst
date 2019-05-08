@@ -45,9 +45,6 @@ def route_get_json(db):
     location = getattr(locator, db_info['location'])()
     if db_info['type'] == 'shp':
         table_df = geopandas.GeoDataFrame.from_file(location)
-        # Fix truncated column due to shp file specification
-        if 'data_sourc' in table_df.columns:
-            table_df = table_df.rename(columns={"data_sourc": "data_source"})
     else:
         assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
         table_df = cea.utilities.dbf.dbf_to_dataframe(location)
