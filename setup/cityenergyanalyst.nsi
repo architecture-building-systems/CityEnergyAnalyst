@@ -109,7 +109,7 @@ Section "Base Installation" Base_Installation_Section
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard.bat" "" \
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat"  \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -149,7 +149,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\dashboard.bat" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
