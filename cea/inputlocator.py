@@ -548,7 +548,7 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'inputs', 'building-geometry')
 
     def get_building_properties_folder(self):
-        """scenario/inputs/building-geometry/"""
+        """scenario/inputs/building-properties/"""
         return self._ensure_folder(self.scenario, 'inputs', 'building-properties')
 
     def get_terrain_folder(self):
