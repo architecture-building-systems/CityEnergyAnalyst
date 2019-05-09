@@ -157,6 +157,20 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
+Section /o "Create Desktop menu shortcuts" Create_Start_Menu_Shortcuts_Section
+
+    # create shortcuts in the start menu for launching the CEA console
+    CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+
+    CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
+
+SectionEnd
+
 Section /o "Developer version" Clone_Repository_Section
 
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
