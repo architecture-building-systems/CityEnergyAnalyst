@@ -8,6 +8,15 @@
 {% endblock stylesheets %}
 
 {% block content %}
+    <!-- show the open prompt dialog -->
+    <div class="modal fade" id="cea-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+            </div>
+        </div>
+    </div>
+
     <div class="right_col" role="main">
         <div class="">
             <div class="row">
@@ -37,7 +46,7 @@
                                             <li><a href="#">Rename</a></li>
                                             <li><a href="#">Duplicate</a></li>
                                             <li role="separator" class="divider"></li>
-                                            <li><a href="#" style="color: red">Delete</a></li>
+                                            <li><a href="#" style="color: red" onclick="openSettings({{ scenario }}, 'delete')">Delete</a></li>
                                           </ul>
                                         </div>
                                         <div class="clearfix"></div>
@@ -69,3 +78,14 @@
     </div>
 
 {% endblock content %}
+{% block javascripts %}
+  {{ super()}}
+  <script>
+    function openSettings(scenario, func) {
+        $.get('project-overview/' + scenario + '/' + func, {}, function(html) {
+            $('#cea-prompt .modal-content').html(html);
+            $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+        });
+    }
+  </script>
+{% endblock javascripts %}

@@ -56,16 +56,39 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="create-zone" class="control-label col-md-3 col-sm-3 col-xs-12">Create Zone file?</label>
-                    <div class="col-md-9 col-sm-9 col-xs-12">
-                            <label>
-                                <input type="checkbox" name="create-zone" id="create-zone" class="js-switch cea-parameter"
-                                data-cea-parameter-typename="BooleanParameter"/>
-                            </label>
-                        <small id="create-zone-help" class="form-text text-muted">Create zone based on map </small>
-                    </div>
+{#                <div class="form-group">#}
+{#                    <label for="create-zone" class="control-label col-md-3 col-sm-3 col-xs-12">Create Zone file?</label>#}
+{#                    <div class="col-md-9 col-sm-9 col-xs-12">#}
+{#                            <label>#}
+{#                                <input type="checkbox" name="create-zone" id="create-zone" class="js-switch cea-parameter"#}
+{#                                data-cea-parameter-typename="BooleanParameter"/>#}
+{#                            </label>#}
+{#                        <small id="create-zone-help" class="form-text text-muted">Create zone based on map </small>#}
+{#                    </div>#}
+{#                </div>#}
+
+              <h2>Input data</h2>
+              <br/>
+
+              <div class="form-group">
+                <div class="col-md-9 col-sm-9 col-xs-12">
+                  <label>
+                    <input type="radio" name="input-files" value="copy" checked>Copy from other scenarios in the project.<br>
+                    <input type="radio" name="input-files" value="generate">Generate new input files<br>
+                  </label>
                 </div>
+              </div>
+
+              <div class="form-group" id="select-scenario">
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="other-scenario">Scenarios in project</label>
+                <div class="col-md-6 col-sm-6 col-xs-12">
+                  <select id="scenario" name="scenario" class="form-control">
+                    {% for scenario in scenarios %}
+                      <option>{{ scenario }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
 
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
@@ -85,6 +108,18 @@
         function goBack() {
             window.history.back();
         }
+
+        $('input[type=radio][name=input-files]').change(function() {
+            if (this.value == 'copy') {
+                $('#select-scenario').show();
+            }
+            else {
+                $('#select-scenario').hide();
+            }
+        });
+
+        $(document).ready(function () {
+        });
     </script>
 {% endblock javascripts %}
 {% endblock body %}

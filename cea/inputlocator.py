@@ -557,7 +557,8 @@ class InputLocator(object):
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'zone.shp')
-        self.check_cpg(shapefile_path)
+        if os.path.isfile(shapefile_path):
+            self.check_cpg(shapefile_path)
         return shapefile_path
 
     def get_site_polygon(self):

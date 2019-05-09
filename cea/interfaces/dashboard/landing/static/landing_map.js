@@ -70,7 +70,7 @@ function createPoly(scenario) {
 			contentType: 'application/json',
 			data: JSON.stringify(json),
 			dataType: 'json',
-			url: `http://localhost:5050/landing/create-poly?scenario=${scenario}`,
+			url: `http://localhost:5050/landing/create-site?scenario=${scenario}`,
 			success: function(response) {
   				if (response.redirect) {
     				window.location.href = response.redirect;

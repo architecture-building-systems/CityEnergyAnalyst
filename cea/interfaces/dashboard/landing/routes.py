@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify
 
-import os
+import os, shutil
 import json
 import geopandas
 from shapely.geometry import shape
@@ -34,8 +34,8 @@ def route_create_project():
 
 @blueprint.route('/create-scenario')
 def route_create_scenario():
-    # TODO: Could add some preprocessing steps
-    return render_template('new_scenario.html')
+    scenarios = get_scenarios(current_app.cea_config.project)
+    return render_template('new_scenario.html', scenarios=scenarios)
 
 
 @blueprint.route('/project-overview')
@@ -47,6 +47,12 @@ def route_project_overview():
     # Get the list of scenarios
     scenarios = get_scenarios(project_path)
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
+
+
+@blueprint.route('/project-overview/<scenario>/<function>')
+def route_project_overview_function(scenario, function):
+    if function == 'delete':
+        return render_template('modal/delete.html', scenario=scenario)
 
 
 @blueprint.route('/create-zone')
@@ -90,8 +96,8 @@ def route_create_project_save():
 
     # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
-    cea_config.scenario_name = request.form.get('scenarioName')
     cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
+    cea_config.scenario_name = request.form.get('scenarioName')
     cea_config.save()
     print(request.form.get('scenarioName'), cea_config.scenario_name)
     tools = request.form.getlist('tools')
@@ -108,15 +114,13 @@ def route_create_project_save():
                 site_path = locator.get_site_polygon()
                 site.to_file(site_path)
                 print('site.shp file created at %s' % site_path)
-                cea.api.zone_helper(scenario=scenario_path)
+                cea.api.zone_helper(cea_config)
             elif tool == 'district-helper':
-                cea.api.district_helper(scenario=scenario_path)
+                cea.api.district_helper(cea_config)
             elif tool == 'streets-helper':
-                cea.api.streets_helper(scenario=scenario_path)
+                cea.api.streets_helper(cea_config)
             elif tool == 'terrain-helper':
-                cea.api.terrain_helper(scenario=scenario_path)
-
-
+                cea.api.terrain_helper(cea_config)
 
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
@@ -126,15 +130,19 @@ def route_create_scenario_save():
     cea_config = current_app.cea_config
     scenario = request.form.get('scenarioName')
 
-    try:
-        os.makedirs(os.path.join(cea_config.project, scenario))
-    except OSError as e:
-        print(e.message)
+    # try:
+    #     os.makedirs(os.path.join(cea_config.project, scenario))
+    # except OSError as e:
+    #     print(e.message)
 
-    if request.form.get('create-zone') == 'on':
-        return redirect(url_for('landing_blueprint.route_create_zone', scenario=scenario))
-    else:
+    if request.form.get('input-files') == 'copy':
+        shutil.copytree(os.path.join(cea_config.project, request.form.get('scenario')),
+                        os.path.join(cea_config.project, scenario))
+
         return redirect(url_for('landing_blueprint.route_project_overview'))
+
+    elif request.form.get('input-files') == 'generate':
+        return redirect(url_for('landing_blueprint.route_create_zone', scenario=scenario))
 
 
 @blueprint.route('/open-project')
@@ -150,8 +158,9 @@ def route_open_project_save():
     project_path = request.form.get('projectPath')
     scenarios = get_scenarios(project_path)
 
-    cea_config.scenario_name = scenarios[0]
     cea_config.project = project_path
+    cea_config.scenario_name = scenarios[0]
+    print(scenarios, cea_config.scenario_name)
     cea_config.save()
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
