@@ -36,6 +36,8 @@
         </div>
     </div>
 
+
+
     <!-- show the open tool settings dialog -->
     <div class="modal fade" id="cea-script-settings" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -54,12 +56,23 @@
         </div>
     </div>
 
+    <!-- show the open loading dialog -->
+    <div class="modal fade" id="cea-loading" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-body">
+                <h2>Running Data management tools...</h2>
+              </div>
+            </div>
+        </div>
+    </div>
+
     <div class="landing-box">
         <div class="landing">
             <h2>New Project</h2>
             <br>
             <form id="new-project" data-parsley-validate class="form-horizontal form-label-left" method="post"
-                  action="{{ url_for('landing_blueprint.route_create_project_save') }}">
+                  action="{{ url_for('landing_blueprint.route_create_project_save') }}" onsubmit="polyToString()">
                 {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
                 {# TODO: Maybe check for space in project name #}
                 <div class="form-group">
@@ -177,7 +190,7 @@
                 <br/>
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-                        <button type="submit" class="btn btn-success" onclick="polyToString()">Create</button>
+                        <button type="submit" class="btn btn-success">Create</button>
                         <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
                     </div>
                 </div>
@@ -245,6 +258,15 @@
                 $('#poly-string').prop('required', 'false')
                     .val('');
             }
+            $('#new-project').on("submit", function(){
+                if($('#zone').prop('checked') || $('#district').prop('checked')
+                    || $('#streets').prop('checked') || $('#terrain').prop('checked')) {
+                    $('#cea-loading').modal({'show': true, 'backdrop': 'static'});
+                }
+            });
+            $(window).unload(function(){
+                $('#cea-loading').modal('hide');
+            });
         });
     </script>
 {% endblock javascripts %}
