@@ -1,12 +1,14 @@
 from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify
 
 import os
+import json
 import geopandas
 from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 import cea.inputlocator
 import cea.api
+import cea.scripts
 
 blueprint = Blueprint(
     'landing_blueprint',
@@ -79,20 +81,43 @@ def route_create_site():
 @blueprint.route('/create-project/save', methods=['POST'])
 def route_create_project_save():
     # Make sure that the project folder exists
+    scenario_path = os.path.join(request.form.get('projectPath'), request.form.get('projectName'),
+                                 request.form.get('scenarioName'))
     try:
-        os.makedirs(os.path.join(request.form.get('projectPath'), request.form.get('projectName'),
-                                 request.form.get('scenarioName')))
+        os.makedirs(scenario_path)
     except OSError as e:
         print(e.message)
+
     # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
-    # FIXME: A scenario will created based on the current scenario of the config
     cea_config.scenario_name = request.form.get('scenarioName')
     cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
-    print(cea_config.scenario_name)
-
-
     cea_config.save()
+    print(request.form.get('scenarioName'), cea_config.scenario_name)
+    tools = request.form.getlist('tools')
+    print(tools)
+    if tools is not None:
+        for tool in tools:
+            print(tool)
+            if tool == 'zone-helper':
+                # FIXME: Setup a proper endpoint for site creation
+                data = json.loads(request.form.get('poly-string'))
+                site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
+                                              geometry=[shape(data['geometry'])])
+                locator = cea.inputlocator.InputLocator(scenario_path)
+                site_path = locator.get_site_polygon()
+                site.to_file(site_path)
+                print('site.shp file created at %s' % site_path)
+                cea.api.zone_helper(scenario=scenario_path)
+            elif tool == 'district-helper':
+                cea.api.district_helper(scenario=scenario_path)
+            elif tool == 'streets-helper':
+                cea.api.streets_helper(scenario=scenario_path)
+            elif tool == 'terrain-helper':
+                cea.api.terrain_helper(scenario=scenario_path)
+
+
+
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
@@ -140,6 +165,42 @@ def route_open_project_scenario(scenario):
     cea_config.scenario_name = scenario
     cea_config.save()
     return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+
+
+@blueprint.route('/create-project/<script_name>/settings')
+def route_script_settings(script_name):
+    config = current_app.cea_config
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    script = cea.scripts.by_name(script_name)
+    return render_template('script_settings.html', script=script, parameters=parameters_for_script(script_name, config))
+
+
+def parameters_for_script(script_name, config):
+    """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
+    parameters = [p for _, p in config.matching_parameters(cea.scripts.by_name(script_name).parameters)]
+    return parameters
+
+
+@blueprint.route('/save-config/<script>', methods=['POST'])
+def route_save_config(script):
+    """Save the configuration for this tool to the configuration file"""
+    for parameter in parameters_for_script(script, current_app.cea_config):
+        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
+        parameter.set(parameter.decode(request.form.get(parameter.name)))
+    current_app.cea_config.save()
+    return jsonify(True)
+
+
+@blueprint.route('/restore-defaults/<script_name>', methods=['POST'])
+def route_restore_defaults(script_name):
+    """Restore the default configuration values for the CEA"""
+    config = current_app.cea_config
+    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+
+    for parameter in parameters_for_script(script_name, config):
+        parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+    config.save()
+    return jsonify(True)
 
 
 # FIXME: this should be refactored, as it is originally from tools/routes.py

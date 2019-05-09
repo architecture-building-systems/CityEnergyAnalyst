@@ -49,12 +49,16 @@ function removePoly() {
 	// lassoResult.innerHTML = "";
 	latlngs = [];
 	map.removeLayer(polygon);
+	$("#polyString").val("");
 	// temp = [];
 	// map.removeLayer(temppoly);
 }
 
 function createPoly(scenario) {
-	var r = confirm("Are you sure you want to create the zone file?");
+	if (latlngs.length < 3) {
+		alert("Please select a site with a polygon")
+	} else {
+		var r = confirm("Are you sure you want to create the zone file?");
 
 	if (r === true) {
 		// TODO: Check if polygon is empty
@@ -76,6 +80,18 @@ function createPoly(scenario) {
 				console.log(error);
 			}
 		});
+	}
+	}
+}
+
+function polyToString() {
+	if ($('#zone').prop('checked') && latlngs.length < 3) {
+		alert("Please select a site with a polygon")
+	} else {
+		// TODO: Check if polygon is empty
+		var json = polygon.toGeoJSON();
+		L.extend(json.properties, polygon.properties);
+		$("#poly-string").val(JSON.stringify(json));
 	}
 }
 
