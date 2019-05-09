@@ -14,6 +14,8 @@ zone:
     type: float
   - name: height_ag
     type: float
+  - name: REFERENCE
+    type: str
 district:
   pk: Name
   type: shp  # shp or dbf
@@ -21,14 +23,12 @@ district:
   fields:
   - name: Name
     type: str
-  - name: floors_bg
-    type: int
   - name: floors_ag
     type: int
-  - name: height_bg
-    type: float
   - name: height_ag
     type: float
+  - name: REFERENCE
+    type: str
 age:
   pk: Name
   type: dbf
@@ -50,6 +50,8 @@ age:
     type: year
   - name: windows
     type: year
+  - name: REFERENCE
+    type: str
 occupancy:
   pk: Name
   type: dbf
@@ -89,6 +91,8 @@ occupancy:
     type: float
   - name: PARKING
     type: float
+  - name: REFERENCE
+    type: str
 internal-loads:
   pk: Name
   type: dbf

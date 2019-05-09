@@ -1,0 +1,51 @@
+{% extends "landing.html" %}
+
+{% block title %} Create Zone {% endblock title %}
+
+{% block stylesheets %}
+    {{ super() }}
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+  integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+  crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+      integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+      crossorigin=""></script>
+{% endblock stylesheets %}
+
+{% block content %}
+    <h2>Select the zone for the project</h2>
+    <br>
+    <form id="map-location" class="form-horizontal form-label-left" action="javascript:;" onsubmit="goToLocation()">
+        <div class="form-group">
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <label class="control-label" for="latitude">Latitude</label>
+                <input type="text" class="form-control" placeholder="Latitude"
+                       id="latitude" name="latitude" value="1.3521" required>
+            </div>
+
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <label class="control-label" for="longitude">Longitude</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Longitude"
+                           id="longitude" name="longitude" value="103.8198" required>
+                    <div class="input-group-btn">
+                        <button class="btn" type="button" onclick="goToLocation()">Go</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </form>
+
+    <div style="text-align: center">
+        <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
+{#        <div id="lassoResult"></div>#}
+        <button onclick="removePoly()">Clear</button>
+        <button onclick="createPoly('{{ scenario }}')">Done</button>
+    </div>
+{% endblock content %}
+{% block javascripts %}
+    {{ super() }}
+    <script src="{{ url_for('.static', filename='landing_map.js') }}"></script>
+{% endblock javascripts %}

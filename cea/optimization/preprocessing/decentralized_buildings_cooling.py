@@ -235,11 +235,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_K = np.zeros(HOURS_IN_YEAR)
         T_re_boiler_ET_to_single_ACH_to_AHU_K = np.zeros(HOURS_IN_YEAR)
 
-        VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Chiller")
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
         max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(),
                                                      sheet_name="Absorption_chiller")
 
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[

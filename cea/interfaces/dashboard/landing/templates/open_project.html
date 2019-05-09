@@ -1,0 +1,77 @@
+{% extends "landing.html" %}
+
+{% block title %} Open Project {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+{% endblock stylesheets %}
+
+{% block body %}
+    <!-- show the open file dialog -->
+    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template file_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- show the open folder dialog -->
+    <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template folder_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+    <div class="landing-box">
+        <div class="landing">
+            <h2>Open Project</h2>
+            <br>
+            <form id="new-project" data-parsley-validate class="form-horizontal form-label-left" method="post"
+                  action="{{ url_for('landing_blueprint.route_open_project_save') }}">
+                {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
+
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="project">Path of Project</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        {# FIXME: Pattern validation for directory only works for windows systems #}
+                        <div class="input-group">
+                            <input type="text" class="form-control cea-parameter" placeholder="Select where the project is"
+                                   id="project" name="projectPath" data-cea-parameter-typename="PathParameter" value="{{ project }}"
+                                   data-parsley-pattern="^[a-zA-Z]:\\[\\\S|*\S]?.*$" required>
+                            <span class="input-group-btn">
+                                <button class="btn btn-file-parameter" type="button"
+                                        onclick="show_open_folder_dialog('general:project')">...</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                        <button type="submit" class="btn btn-success">Open</button>
+                        <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% block javascripts %}
+  {{ super()}}
+    <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+    <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+{% endblock javascripts %}
+{% endblock body %}
