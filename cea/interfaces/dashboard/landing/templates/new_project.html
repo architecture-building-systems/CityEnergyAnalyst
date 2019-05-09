@@ -5,6 +5,12 @@
 {% block stylesheets %}
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+        integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+        crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+          integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+          crossorigin=""></script>
 {% endblock stylesheets %}
 
 {% block body %}
@@ -26,6 +32,24 @@
 
                 <!-- see template folder_listing.html for contents -->
 
+            </div>
+        </div>
+    </div>
+
+    <!-- show the open tool settings dialog -->
+    <div class="modal fade" id="cea-script-settings" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+                </button>
+                <h2 class="modal-title" id="script-title"></h2>
+              </div>
+              <div class="modal-body">
+
+                  <!--  -->
+
+              </div>
             </div>
         </div>
     </div>
@@ -83,44 +107,77 @@
                                   name="description" type="text" placeholder="Enter a description for this scenario Does not work yet"></textarea>
                     </div>
                 </div>
-
+              <br/>
               <div class="form-group">
-                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="helper-tools">Helper Tools</label>
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="helper-tools">Data Management Tools</label>
                     <div class="col-md-6 col-sm-6 col-xs-12" id="helper-tools">
+                      {# TODO: Could recreate this portion using loop #}
+                      {# TODO: Get helper file descriptions from scripts.yml #}
                         <div class="form-check">
-                          <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
-                          <label class="form-check-label" for="defaultCheck1">
+                          <input class="form-check-input" type="checkbox" name="tools" value="zone-helper" id="zone" onclick="toggleTools()">
+                          <label class="form-check-label" for="zone">
                             Zone
                           </label>
-                          <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                          <i class="fa fa-info-circle" data-toggle="tooltip" title="Query zone geometry from Open Street Maps"></i>
+                          <i class="fa fa-cogs" onclick="openSettings('zone-helper')" style="cursor: pointer;"></i>
                         </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
-                        <label class="form-check-label" for="defaultCheck2">
+                        <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district" disabled onclick="toggleTools()">
+                        <label class="form-check-label" for="district">
                           District
                         </label>
-                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query district geometry from Open Street Maps. Requires zone file."></i>
+                        <i class="fa fa-cogs" onclick="openSettings('district-helper')" style="cursor: pointer;"></i>
                       </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
-                        <label class="form-check-label" for="defaultCheck2">
+                        <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets" disabled>
+                        <label class="form-check-label" for="streets">
                           Streets
                         </label>
-                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query streets geometry from Open Street Maps. Requires zone and district file."></i>
+                        <i class="fa fa-cogs" onclick="openSettings('streets-helper')" style="cursor: pointer;"></i>
                       </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
-                        <label class="form-check-label" for="defaultCheck2">
+                        <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain" disabled>
+                        <label class="form-check-label" for="terrain">
                           Terrain
                         </label>
-                        <a href="{{ url_for('landing_blueprint.route_project_overview') }}"><i class="fa fa-wrench"></i></a>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Creates a fixed elevation terrain file. Requires zone and district file."></i>
+                        <i class="fa fa-cogs" onclick="openSettings('terrain-helper')" style="cursor: pointer;"></i>
                       </div>
                     </div>
                 </div>
 
+              <div id="site-selector" class="well">
+                <h3>Create zone file from map</h3>
+                <div class="form-group" id="site-selector-group">
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+                    <label class="control-label" for="latitude">Latitude</label>
+                    <input type="text" class="form-control" placeholder="Latitude"
+                           id="latitude" name="latitude" value="1.3521" required>
+                  </div>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+                    <label class="control-label" for="longitude">Longitude</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" placeholder="Longitude"
+                             id="longitude" name="longitude" value="103.8198" required>
+                      <div class="input-group-btn">
+                        <button class="btn" type="button" onclick="goToLocation()">Go</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <input type="text" name="poly-string" id="poly-string" hidden>
+                <div style="text-align: center">
+                  <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
+                  <button type="button" onclick="removePoly()">Clear</button>
+                </div>
+              </div>
+
+                <br/>
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="submit" class="btn btn-success" onclick="polyToString()">Create</button>
                         <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
                     </div>
                 </div>
@@ -132,10 +189,63 @@
   {{ super()}}
     <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script src="{{ url_for('.static', filename='landing_map.js') }}"></script>
     <script>
         function goBack() {
             window.history.back();
         }
+
+        function openSettings(script) {
+            $.get('create-project/' + script + '/settings', {}, function(html) {
+                $('#cea-script-settings .modal-body').html(html);
+                $('#cea-script-settings').modal({'show': true, 'backdrop': 'static'});
+                $('#cea-script-settings #script-title').text(script);
+            });
+        }
+
+        function closeSettings() {
+            $('#cea-script-settings').modal('hide');
+        }
+
+        function toggleTools() {
+            if ($('#zone').prop('checked')) {
+                $('#district').prop('disabled', false);
+                $('#site-selector').css("display", "block");
+                $('#poly-string').prop('required', 'true');
+            } else {
+                $('#district').prop('disabled', true)
+                    .prop('checked', false);
+                $('#site-selector').css("display", "none");
+                $('#poly-string').prop('required', 'false')
+                    .val('');
+                disableStreetTerrain();
+            }
+
+            if ($('#district').prop('checked')) {
+                $('#streets').prop('disabled', false);
+                $('#terrain').prop('disabled', false);
+            } else {
+                disableStreetTerrain();
+            }
+        }
+
+        function disableStreetTerrain() {
+            $('#streets').prop('disabled', true)
+                .prop('checked', false);
+            $('#terrain').prop('disabled', true)
+                .prop('checked', false);
+        }
+
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+            if ($('#zone').prop('checked')) {
+                $('#site-selector').css("display", "block");
+            } else {
+                $('#site-selector').css("display", "none");
+                $('#poly-string').prop('required', 'false')
+                    .val('');
+            }
+        });
     </script>
 {% endblock javascripts %}
 {% endblock body %}
