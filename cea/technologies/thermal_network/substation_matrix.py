@@ -11,6 +11,7 @@ from math import ceil
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
+from cea.optimization.constants import HP_COP_MAX, HP_COP_MIN, HP_ETA_EX_COOL
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -24,6 +25,9 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', '
                              'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh', 'Qcs_sys_scu_kWh', 'mcphs_sys_aru_kWperC',
                              'mcphs_sys_ahu_kWperC', 'mcphs_sys_shu_kWperC', 'mcpcs_sys_ahu_kWperC',
                              'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
+
+DC_NETWORK_SETPOINT = 12.0
+DT_HEX = 4.0
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -106,44 +110,93 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
                                                                            np.nan))
 
         Q_substation_cooling = 0
+        E_substation_cooling = 0
         T_supply_cooling_C = np.nan
         for system in substation_systems['cooling']:
             if system == 'data':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdata_sys_kWh)
-                T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(
-                                                                      abs(buildings_demands[name].Qcdata_sys_kWh) > 0,
-                                                                      buildings_demands[name].Tcdata_sys_sup_C,
-                                                                      np.nan))
+                T_system = np.nanmax(buildings_demands[name].Tcdata_sys_sup_C)
+                if T_system < DC_NETWORK_SETPOINT:
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcdata_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
+                    COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
+                                          HP_COP_MAX]), HP_COP_MIN])
+                    Q_substation_cooling += abs(buildings_demands[name].Qcdata_sys_kWh) * (1 - 1 / COP)
+                    E_substation_cooling += abs(buildings_demands[name].Qcdata_sys_kWh) / COP
+                else:
+                    Q_substation_cooling += abs(buildings_demands[name].Qcdata_sys_kWh)
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcdata_sys_kWh) > 0, T_system, np.nan))
+                # Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdata_sys_kWh)
+                # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
+                #                                                   np.where(
+                #                                                       abs(buildings_demands[name].Qcdata_sys_kWh) > 0,
+                #                                                       buildings_demands[name].Tcdata_sys_sup_C,
+                #                                                       np.nan))
             elif system == 're':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcre_sys_kWh)
-                T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(
-                                                                      abs(buildings_demands[name].Qcre_sys_kWh) > 0,
-                                                                      buildings_demands[name].Tcre_sys_sup_C,
-                                                                      np.nan))
+                T_system = np.nanmax(buildings_demands[name].Tcre_sys_sup_C)
+                if T_system < DC_NETWORK_SETPOINT:
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcre_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
+                    COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
+                                          HP_COP_MAX]), HP_COP_MIN])
+                    Q_substation_cooling += abs(buildings_demands[name].Qcre_sys_kWh) * (1 - 1 / COP)
+                    E_substation_cooling += abs(buildings_demands[name].Qcre_sys_kWh) / COP
+                else:
+                    Q_substation_cooling += abs(buildings_demands[name].Qcre_sys_kWh)
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcre_sys_kWh) > 0, T_system, np.nan))
+                # Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcre_sys_kWh)
+                # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
+                #                                                   np.where(
+                #                                                       abs(buildings_demands[name].Qcre_sys_kWh) > 0,
+                #                                                       buildings_demands[name].Tcre_sys_sup_C,
+                #                                                       np.nan))
             elif system == 'pro':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcpro_sys_kWh)
-                T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(
-                                                                      abs(buildings_demands[name].Qcpro_sys_kWh) > 0,
-                                                                      buildings_demands[name].Tcpro_sys_sup_C,
-                                                                      np.nan))
+                T_system = np.nanmax(buildings_demands[name].Tcpro_sys_sup_C)
+                if T_system < DC_NETWORK_SETPOINT:
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcpro_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
+                    COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system), HP_COP_MAX]), HP_COP_MIN])
+                    Q_substation_cooling += abs(buildings_demands[name].Qcpro_sys_kWh) * (1 - 1 / COP)
+                    E_substation_cooling += abs(buildings_demands[name].Qcpro_sys_kWh) / COP
+                else:
+                    Q_substation_cooling += abs(buildings_demands[name].Qcpro_sys_kWh)
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name].Qcpro_sys_kWh) > 0, T_system, np.nan))
+                # Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcpro_sys_kWh)
+                # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
+                #                                                   np.where(
+                #                                                       abs(buildings_demands[name].Qcpro_sys_kWh) > 0,
+                #                                                       buildings_demands[name].Tcpro_sys_sup_C,
+                #                                                       np.nan))
             else:
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
-                T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(abs(buildings_demands[name][
-                                                                                   'Qcs_sys_' + system + '_kWh']) > 0,
-                                                                           buildings_demands[name][
-                                                                               'Tcs_sys_sup_' + system + '_C'],
-                                                                           np.nan))
+                T_system = np.nanmax(buildings_demands[name]['Tcs_sys_sup_' + system + '_C'])
+                if T_system < DC_NETWORK_SETPOINT:
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0, DC_NETWORK_SETPOINT, np.nan))
+                    COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
+                                          HP_COP_MAX]), HP_COP_MIN])
+                    Q_substation_cooling += abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) * (1 - 1 / COP)
+                    E_substation_cooling += abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) / COP
+                else:
+                    Q_substation_cooling += abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
+                    T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                        abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0, T_system, np.nan))
 
+                # Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
+                # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
+                #                                                   np.where(abs(buildings_demands[name][
+                #                                                                    'Qcs_sys_' + system + '_kWh']) > 0,
+                #                                                            buildings_demands[name][
+                #                                                                'Tcs_sys_sup_' + system + '_C'],
+                #                                                            np.nan))
         # find the target substation supply temperature
         T_supply_DH_C = np.where(Q_substation_heating > 0, T_supply_heating_C + DT_HEAT, np.nan)
         T_supply_DC_C = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling_C - DT_COOL, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = abs(Q_substation_cooling)
+        buildings_demands[name]['E_substation_cooling'] = E_substation_cooling
         buildings_demands[name]['T_sup_target_DH'] = T_supply_DH_C
         buildings_demands[name]['T_sup_target_DC'] = T_supply_DC_C
 
@@ -237,9 +290,17 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     Qnom = max(Qf)  # in W
     if Qnom > 0:
         tpi = T_supply_C + 273  # in K
-        tso = building_demand[T_sup].values + 273  # in K
-        tsi = building_demand[T_ret].values + 273  # in K
-        cs = (abs(building_demand[m].values)) * 1000  # in W/K
+        # add heat pump if network temperature is not enough
+        if np.nanmax(building_demand[T_sup].values) < np.nanmin(T_supply_C):
+            tso = tpi + DT_COOL
+            tsi = tso + DT_HEX
+            COP = np.max([np.min([HP_ETA_EX_COOL * (np.nanmax(building_demand[T_sup].values) + 273) / (
+                        DC_NETWORK_SETPOINT - np.nanmax(building_demand[T_sup].values)), HP_COP_MAX]), HP_COP_MIN])
+            cs = (abs(building_demand[Q]) * (1 - 1 / COP) * 1000) / DT_HEX
+        else:
+            tso = building_demand[T_sup].values + 273  # in K
+            tsi = building_demand[T_ret].values + 273  # in K
+            cs = (abs(building_demand[m].values)) * 1000  # in W/K
         index = np.where(Qf == Qnom)[0][0]
         tpi_0 = tpi[index]  # primary side inlet in K
         tsi_0 = tsi[index]  # secondary side inlet in K
