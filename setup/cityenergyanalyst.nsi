@@ -11,7 +11,7 @@
 # download CEA conda env from here (FIXME: update to a more sane download URL)
 # !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
 # !define CEA_ENV_FILENAME "cea.7z"
-!define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/USmeJGf3PnjksFc/download"
+!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.13/Dependencies.7z"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
@@ -82,6 +82,8 @@ Section "Base Installation" Base_Installation_Section
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
     FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileClose $0
 
 
@@ -91,7 +93,7 @@ Section "Base Installation" Base_Installation_Section
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\python.exe" "-m cea.interfaces.cli.cli dashboard" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -132,7 +134,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\Scripts\cea.exe" "dashboard" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\Dependencies\Python\python.exe" "-m cea.interfaces.cli.cli dashboard" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
