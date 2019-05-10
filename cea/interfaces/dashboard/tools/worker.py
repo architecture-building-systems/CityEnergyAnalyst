@@ -14,6 +14,9 @@ class WorkerStream(object):
         self.name = name  # 'stdout' or 'stderr'
         self.connection = connection
 
+    def __repr__(self):
+        return "WorkerStream({name})".format(name=self.name)
+
     def close(self):
         self.connection.close()
 
