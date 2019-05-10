@@ -299,6 +299,6 @@ def get_scenarios(path):
     """Return list of scenarios based on folder structure"""
     scenarios = []
     for directory in os.listdir(path):
-        if os.path.isdir(os.path.join(path, directory)):
+        if os.path.isdir(os.path.join(path, directory)) and not directory.startswith('.'):
             scenarios.append(directory)
     return scenarios
