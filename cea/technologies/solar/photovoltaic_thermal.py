@@ -675,9 +675,9 @@ def main(config):
     print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
 
-    list_buildings_names = config.solar.buildings
-    if not list_buildings_names:
-        list_buildings_names = locator.get_zone_building_names()
+    building_names = config.solar.buildings
+    if not building_names:
+        building_names = locator.get_zone_building_names()
 
     hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
@@ -687,32 +687,33 @@ def main(config):
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather hourly_results_per_building done.')
 
-    building_count = len(list_buildings_names)
+    num_buildings = len(building_names)
     number_of_processes = config.get_number_of_processes()
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
-        pool.map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                        repeat(config, building_count),
-                                        repeat(latitude, building_count),
-                                        repeat(longitude, building_count),
-                                        repeat(weather_data, building_count),
-                                        repeat(date_local, building_count),
-                                        list_buildings_names))
-        # locator, config, latitude, longitude, weather_data, date_local, building_name
+        joblist = []
+        for building_name in building_names:
+            job = pool.apply_async(calc_PVT,
+                                   [locator, config, latitude, longitude, weather_data, date_local, building_name])
+            joblist.append(job)
+        for i, job in enumerate(joblist):
+            job.get(240)
+            print('Building No. %i completed out of %i' % (i + 1, num_buildings))
+        pool.close()
     else:
         print("Using single process")
-        map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                   repeat(config, building_count),
-                                   repeat(latitude, building_count),
-                                   repeat(longitude, building_count),
-                                   repeat(weather_data, building_count),
-                                   repeat(date_local, building_count),
-                                   list_buildings_names))
+        map(calc_PVT_wrapper, izip(repeat(locator, num_buildings),
+                                   repeat(config, num_buildings),
+                                   repeat(latitude, num_buildings),
+                                   repeat(longitude, num_buildings),
+                                   repeat(weather_data, num_buildings),
+                                   repeat(date_local, num_buildings),
+                                   building_names))
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
-    for i, building in enumerate(list_buildings_names):
+    for i, building in enumerate(building_names):
         hourly_results_per_building = pd.read_csv(locator.PVT_results(building))
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
