@@ -104,7 +104,7 @@ def read(script):
             if not len(concatenated_message):
                 # never got any data
                 return jsonify(None)
-    except EOFError:
+    except (EOFError, IOError):
         return jsonify(None)
     return jsonify(dict(stream=stream, message=concatenated_message))
 
