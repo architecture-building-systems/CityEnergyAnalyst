@@ -8,18 +8,18 @@
   <p>Enter the name of the scenario you are deleting.</p>
   <input id="delete-input" type="text" placeholder="{{ scenario }}">
   <script>
-      $("delete-input").on("input", function(e){
+      $("#delete-input").on("input", function() {
           console.log($(this).val());
-          if ($(this).val() === {{ scenario }}) {
-              $('#delete-btn').prop('disabled', 'false');
+          if ($(this).val() === '{{ scenario }}') {
+              $('#delete-btn').prop('disabled', false);
           } else {
-              $('#delete-btn').prop('disabled', 'true');
+              $('#delete-btn').prop('disabled', true);
           }
       });
   </script>
 </div>
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" id="delete-btn" disabled>Delete</button>
+  <button type="button" class="btn btn-danger" id="delete-btn" disabled="true">Delete</button>
   <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 </div>
