@@ -68,6 +68,10 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
              with sensor data of each PVT panel.
     """
 
+    # FIXME: remove once tested
+    import sys
+    print(sys.stdout)
+
     t0 = time.clock()
 
     radiation_json_path = locator.get_radiation_building(building_name)
@@ -691,9 +695,12 @@ def main(config):
     number_of_processes = config.get_number_of_processes()
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
+        import sys
+        print("stdout: {}".format(type(sys.stdout)))
         pool = multiprocessing.Pool(number_of_processes)
         joblist = []
         for building_name in building_names:
+            print('pool.apply_async for building {building_name}'.format(building_name=building_name))
             job = pool.apply_async(calc_PVT,
                                    [locator, config, latitude, longitude, weather_data, date_local, building_name])
             joblist.append(job)

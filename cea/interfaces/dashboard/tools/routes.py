@@ -95,11 +95,18 @@ def read(script):
     if not script in current_app.workers:
         return jsonify(None)
     worker, connection = current_app.workers[script]
+    concatenated_message = ''
     try:
-        stream, message = connection.recv()
+        while connection.poll(0):
+            stream, message = connection.recv()
+            concatenated_message += message
+        else:
+            if not len(concatenated_message):
+                # never got any data
+                return jsonify(None)
     except EOFError:
         return jsonify(None)
-    return jsonify(dict(stream=stream, message=message))
+    return jsonify(dict(stream=stream, message=concatenated_message))
 
 
 @blueprint.route('/open-folder-dialog/<fqname>')
