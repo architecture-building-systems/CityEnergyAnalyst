@@ -157,7 +157,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
-Section /o "Create Desktop menu shortcuts" Create_Start_Menu_Shortcuts_Section
+Section /o "Create Desktop menu shortcuts" Create_Desktop_Menu_Shortcuts_Section
 
     # create shortcuts in the start menu for launching the CEA console
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
