@@ -40,8 +40,8 @@ Pair_Pa = 101325
 Ra_JperkgK = 286.9
 Rw_JperkgK = 461.5
 
-RH_max = 80  # %
-RH_min = 40  # %
+# RH_max = 80  # %
+# RH_min = 40  # %
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
@@ -58,7 +58,8 @@ N_m_ve_max = 3
 
 def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
 
-    start_t = get_start_t(case)
+    start_t = get_start_t(case, timesteps)
+    RH_max, RH_min = get_rh(case)
 
     # read total demand
     total_demand_df = pd.read_csv(path_to_total_demand(case)).set_index('Name')
@@ -306,20 +307,36 @@ def path_to_osmose_project_inputT(number):
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
-def get_start_t(case):
+def get_start_t(case, timesteps):
     """
     WTP: 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
     ABU: 7/6 - 7/12: 4464
-    HKG: 7/15 - 7/21: 4680
+    HKG: 7/15 - 7/21: 4680, Friday - Thursday
     :param case:
     :return:
     """
-    START_T_dict = {'WTP': 5040, 'ABU': 4392, 'HKG': 4680}
-    for key in START_T_dict.keys():
-        if key in case:
-            start_t = START_T_dict[key]
+    START_t_168_dict = {'WTP': 5040, 'ABU': 4392, 'HKG': 4680}
+    START_t_24_dict = {'WTP': 5040, 'ABU': 4416, 'HKG': 4680}
+    if timesteps == 168:
+        for key in START_t_168_dict.keys():
+            if key in case:
+                start_t = START_t_168_dict[key]
+    else:
+        for key in START_t_24_dict.keys():
+            if key in case:
+                start_t = START_t_24_dict[key]
 
     return start_t
+
+def get_rh(case):
+    RH_max_dict = {'WTP': 80, 'ABU': 80, 'HKG': 80}
+    RH_min_dict = {'WTP': 40, 'ABU': 20, 'HKG': 40}
+    for key in RH_max_dict.keys():
+        if key in case:
+            RH_max = RH_max_dict[key]
+            RH_min = RH_min_dict[key]
+
+    return RH_max, RH_min
 
 if __name__ == '__main__':
     case = 'WTP_CBD_m_WP1_HOT'
