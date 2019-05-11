@@ -56,7 +56,10 @@ N_m_ve_max = 3
 # SS553_lps_m2 = 0.6
 
 
-def extract_cea_outputs_to_osmose_main(case, start_t, timesteps, specified_buildings):
+def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
+
+    start_t = get_start_t(case)
+
     # read total demand
     total_demand_df = pd.read_csv(path_to_total_demand(case)).set_index('Name')
     if specified_buildings != []:
@@ -303,9 +306,23 @@ def path_to_osmose_project_inputT(number):
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
+def get_start_t(case):
+    """
+    WTP: 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
+    ABU: 7/6 - 7/12: 4464
+    HKG: 7/15 - 7/21: 4680
+    :param case:
+    :return:
+    """
+    START_T_dict = {'WTP': 5040, 'ABU': 4392, 'HKG': 4680}
+    for key in START_T_dict.keys():
+        if key in case:
+            start_t = START_T_dict[key]
+
+    return start_t
 
 if __name__ == '__main__':
     case = 'WTP_CBD_m_WP1_HOT'
-    start_t = 5040  # 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
     timesteps = 168  # 168 (week)
-    extract_cea_outputs_to_osmose_main(case, start_t, timesteps)
+    specified_buildings = ["B001"]
+    extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
