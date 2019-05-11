@@ -469,7 +469,7 @@ def set_up_electricity_df(tech, results):
     electricity_df['el_aux_lcu'] = results['el_lcu_fan']
     # oau
     if tech == 'HCS_LD':
-        electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan']
+        electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan'] + results['el_oau_out_by_fan']
         electricity_df['el_hp_oau'] = results['el_LDHP']
     else:
         electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results.filter(like='el_oau_out').sum(axis=1)
@@ -662,7 +662,7 @@ def set_up_heat_df(tech, results):
     heat_df['q_scu_sen'] = results['q_scu_sen']
     if tech == 'HCS_LD':
         total_oau_in = results.filter(like='q_oau_sen_in').sum(axis=1)
-        total_oau_out = results['q_oau_sen_out']
+        total_oau_out = results['q_oau_sen_out'] + results['q_oau_sen_out_by']
     else:
         total_oau_in = results.filter(like='q_oau_sen_in').sum(axis=1)
         total_oau_out = results.filter(like='q_oau_sen_out').sum(axis=1)
@@ -733,8 +733,8 @@ def set_up_air_flow_df(results):
         balance = air_flow_df['OAU_in'] + air_flow_df['infiltration'] - oau_out
 
     # testing for balance
-    if abs(air_flow_df['OAU_in'].sum()) > 0 and abs(balance.sum()) >= 10:
-        raise (ValueError, 'wrong air balance')
+    # if abs(air_flow_df['OAU_in'].sum()) > 0 and abs(balance.sum()) >= 10:
+    #     raise (ValueError, 'wrong air balance')
     return air_flow_df
 
 
@@ -1225,19 +1225,19 @@ def p_ws_from_t(t_celsius):
 
 
 if __name__ == '__main__':
-    buildings = ["B006"]
+    buildings = ["B001"]
     #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_coil","HCS_IEHX"]
+    tech = ["HCS_LD"]
     #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     #cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_RET"]
+    cases = ["ABU_CBD_m_WP1_OFF"]
     result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_combo"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_24"
+            building_time = building + "_168"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
