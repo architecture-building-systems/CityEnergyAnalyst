@@ -319,8 +319,8 @@ def get_start_t(case, timesteps):
     :param case:
     :return:
     """
-    START_t_168_dict = {'WTP': 5040, 'ABU': 4464, 'HKG': 4680}
-    START_t_24_dict = {'WTP': 5040, 'ABU': 4512, 'HKG': 4680}
+    START_t_168_dict = {'WTP': 5040, 'ABU': 4464, 'HKG': 4680, 'MDL': 5016}
+    START_t_24_dict = {'WTP': 5040, 'ABU': 4512, 'HKG': 4680, 'MDL': 5016}
     if timesteps == 168:
         for key in START_t_168_dict.keys():
             if key in case:
@@ -333,8 +333,8 @@ def get_start_t(case, timesteps):
     return start_t
 
 def get_rh(case):
-    RH_max_dict = {'WTP': 80, 'ABU': 70, 'HKG': 80}
-    RH_min_dict = {'WTP': 40, 'ABU': 30, 'HKG': 40}
+    RH_max_dict = {'WTP': 80, 'ABU': 70, 'HKG': 80, 'MDL':80}
+    RH_min_dict = {'WTP': 40, 'ABU': 30, 'HKG': 40, 'MDL':40}
     for key in RH_max_dict.keys():
         if key in case:
             RH_max = RH_max_dict[key]
