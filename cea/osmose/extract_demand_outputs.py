@@ -101,6 +101,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         # change units
         output_hcs['T_ext'] = reduced_tsd_df['T_ext']
         output_hcs['T_ext_wb'] = reduced_tsd_df['T_ext_wetbulb']
+        output_hcs['COND_TIN'] = reduced_tsd_df['T_ext_wetbulb'] + 3 + 273.15
+        output_hcs['COND_TOUT'] = reduced_tsd_df['T_ext_wetbulb'] + 2.5 + 273.15
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
         if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
             output_hcs['w_RA'] = 10.29  # 24C with 55% RH
@@ -171,6 +173,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
             T_iehx = T_iehx + dT_iehx
             input_T_df['T_dew_er0'] = T_ER0
             T_ER0 = T_ER0 + dT_ER0
+            input_T_df['COND_TIN'] = output_hcs['COND_TIN']
+            input_T_df['COND_TOUT'] = output_hcs['COND_TOUT']
             input_T_df.T.to_csv(path_to_osmose_project_inputT(str(i + 1)), header=False)
         # output input_T0
         input_T0_df = pd.DataFrame()
@@ -315,8 +319,8 @@ def get_start_t(case, timesteps):
     :param case:
     :return:
     """
-    START_t_168_dict = {'WTP': 5040, 'ABU': 4392, 'HKG': 4680}
-    START_t_24_dict = {'WTP': 5040, 'ABU': 4416, 'HKG': 4680}
+    START_t_168_dict = {'WTP': 5040, 'ABU': 4464, 'HKG': 4680}
+    START_t_24_dict = {'WTP': 5040, 'ABU': 4512, 'HKG': 4680}
     if timesteps == 168:
         for key in START_t_168_dict.keys():
             if key in case:
@@ -329,8 +333,8 @@ def get_start_t(case, timesteps):
     return start_t
 
 def get_rh(case):
-    RH_max_dict = {'WTP': 80, 'ABU': 80, 'HKG': 80}
-    RH_min_dict = {'WTP': 40, 'ABU': 20, 'HKG': 40}
+    RH_max_dict = {'WTP': 80, 'ABU': 70, 'HKG': 80}
+    RH_min_dict = {'WTP': 40, 'ABU': 30, 'HKG': 40}
     for key in RH_max_dict.keys():
         if key in case:
             RH_max = RH_max_dict[key]
