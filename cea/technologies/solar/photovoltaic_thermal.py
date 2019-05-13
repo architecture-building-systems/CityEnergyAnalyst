@@ -5,6 +5,7 @@ Photovoltaic thermal panels
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import os
 import time
 from math import *
@@ -80,11 +81,6 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
              with sensor data of each PVT panel.
     """
-
-    # FIXME: remove once tested
-    import sys
-    print(sys.stdout)
-
     t0 = time.clock()
 
     radiation_json_path = locator.get_radiation_building(building_name)
@@ -708,10 +704,8 @@ def main(config):
     number_of_processes = config.get_number_of_processes()
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
-        import sys
-        print("stdout: {}".format(type(sys.stdout)))
         pool = multiprocessing.Pool(number_of_processes)
-        queue = multiprocessing.Queue()
+        queue = multiprocessing.Manager().Queue()
         map_result = pool.map_async(calc_PVT_mp_wrapper, izip(repeat(queue, num_buildings),
                                                               repeat(locator, num_buildings),
                                                               repeat(config, num_buildings),
@@ -722,11 +716,13 @@ def main(config):
                                                               building_names))
         while not map_result.ready():
             stream_from_queue(queue)
+
+        pool.close()
+        pool.join()
+
         # process the rest of the Queue
         while not queue.empty():
             stream_from_queue(queue)
-        queue.close()
-        pool.close()
     else:
         print("Using single process")
         map(calc_PVT_wrapper, izip(repeat(locator, num_buildings),

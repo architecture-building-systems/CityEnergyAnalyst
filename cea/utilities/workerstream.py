@@ -29,7 +29,7 @@ class WorkerStream(object):
 
 
 class QueueWorkerStream(object):
-    """File-like object for wrapping the output of the scripts with queues"""
+    """File-like object for wrapping the output of the scripts with queues - to be created in child process"""
 
     def __init__(self, name, queue):
         self.name = name  # 'stdout' or 'stderr'
@@ -52,6 +52,7 @@ class QueueWorkerStream(object):
 
 
 def stream_from_queue(queue):
+    """Stream the contents from the queue to STDOUT / STDERR - to be called from parent process"""
     try:
         stream, msg = queue.get(block=True, timeout=0.1)
         if stream == 'stdout':
