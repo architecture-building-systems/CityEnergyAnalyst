@@ -548,7 +548,7 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'inputs', 'building-geometry')
 
     def get_building_properties_folder(self):
-        """scenario/inputs/building-geometry/"""
+        """scenario/inputs/building-properties/"""
         return self._ensure_folder(self.scenario, 'inputs', 'building-properties')
 
     def get_terrain_folder(self):
@@ -557,7 +557,8 @@ class InputLocator(object):
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'zone.shp')
-        self.check_cpg(shapefile_path)
+        if os.path.isfile(shapefile_path):
+            self.check_cpg(shapefile_path)
         return shapefile_path
 
     def get_site_polygon(self):
