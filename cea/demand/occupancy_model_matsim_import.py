@@ -108,7 +108,8 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                                                                          np.min(all_schedules[facility]['electricity']))
                         building_schedules = add_lighting_schedules(building_schedules, dates, all_schedules[facility],
                                                                    archetype_values.loc[facility],
-                                                                   bpr.rc_model['Aef'] * bpr.occupancy[facility])
+                                                                   bpr.rc_model['NFA_m2'] * bpr.occupancy[facility])
+                                                                   # bpr.rc_model['Aef'] * bpr.occupancy[facility])
                         # building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[facility],
                         #                                                archetype_values.loc[facility],
                         #                                                bpr.rc_model['Aef'] * bpr.occupancy[facility])
@@ -137,7 +138,8 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
                                                      all_schedules[use]['processes'], all_schedules[use]['monthly'])
                 building_schedules = add_single_schedules(building_schedules, yearly_schedule, archetype_values.loc[use],
                                                           bpr.rc_model['NFA_m2'] * bpr.occupancy[use],
-                                                          bpr.rc_model['Aef'] * bpr.occupancy[use])
+                                                          bpr.rc_model['NFA_m2'] * bpr.occupancy[use])
+                                                          # bpr.rc_model['Aef'] * bpr.occupancy[use])
 
     else:
         # use stochastic occupancy schedule generator
@@ -164,7 +166,8 @@ def calc_schedules(list_uses, all_schedules, bpr, archetype_values, dates, use_s
 
                 building_schedules = add_lighting_schedules(building_schedules, dates, all_schedules[use],
                                                             archetype_values.loc[use],
-                                                            bpr.rc_model['Aef'] * bpr.occupancy[use])
+                                                            bpr.rc_model['NFA_m2'] * bpr.occupancy[use])
+                                                            # bpr.rc_model['Aef'] * bpr.occupancy[use])
                 # building_schedules = add_electricity_schedules(building_schedules, dates, all_schedules[use],
                 #                                                archetype_values.loc[use],
                 #                                                bpr.rc_model['Aef'] * bpr.occupancy[use])
@@ -253,7 +256,8 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
                                                                      list_uses, bpr.occupancy,
                                                                      schedule_codes['electricity'],
-                                                                     archetype_values['people']) * bpr.rc_model['Aef']
+                                                                     archetype_values['people']) * bpr.rc_model['NFA_m2']
+                                                                     # archetype_values['people']) * bpr.rc_model['Aef']
     for schedule in water_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
                                                                      list_uses, bpr.occupancy, schedule_codes['water'],
@@ -276,21 +280,24 @@ def calc_process_schedules(schedules, archetype_schedules, bpr, dates):
                                                           np.array(archetype_schedules[process_type]['water']),
                                                           np.array(archetype_schedules[process_type]['processes']),
                                                           np.array(archetype_schedules[process_type]['monthly']))[1]) * \
-                              bpr.internal_loads[schedule + '_Wm2'] * bpr.rc_model['Aef']
+                              bpr.internal_loads[schedule + '_Wm2'] * bpr.rc_model['NFA_m2']
+                              # bpr.internal_loads[schedule + '_Wm2'] * bpr.rc_model['Aef']
     # refrigeration schedule is only defined for cool room archetype
     schedules['Qcre'] = np.array(get_yearly_vectors(dates, np.array(archetype_schedules['COOLROOM']['people']),
                                                     np.array(archetype_schedules['COOLROOM']['electricity']),
                                                     np.array(archetype_schedules['COOLROOM']['water']),
                                                     np.array(archetype_schedules['COOLROOM']['processes']),
                                                     np.array(archetype_schedules['COOLROOM']['monthly']))[1]) * \
-                        bpr.internal_loads['Qcre_Wm2'] * bpr.rc_model['Aef']
+                        bpr.internal_loads['Qcre_Wm2'] * bpr.rc_model['NFA_m2']
+                        # bpr.internal_loads['Qcre_Wm2'] * bpr.rc_model['Aef']
     # data center schedule is only defined for server room archetype
     schedules['Ed'] = np.array(get_yearly_vectors(dates, np.array(archetype_schedules['SERVERROOM']['people']),
                                                   np.array(archetype_schedules['SERVERROOM']['electricity']),
                                                   np.array(archetype_schedules['SERVERROOM']['water']),
                                                   np.array(archetype_schedules['SERVERROOM']['processes']),
                                                   np.array(archetype_schedules['SERVERROOM']['monthly']))[1]) * \
-                      bpr.internal_loads['Ed_Wm2'] * bpr.rc_model['Aef']
+                      bpr.internal_loads['Ed_Wm2'] * bpr.rc_model['NFA_m2']
+                      # bpr.internal_loads['Ed_Wm2'] * bpr.rc_model['Aef']
 
     return schedules
 
@@ -344,7 +351,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
             archetype_schedule = archetype_schedules[num][0]
             for occupant in range(occupants_in_current_use):
-                mu = MU_V[int(len(MU_V) * random.random())]
+                # mu = np.random.random() / 2 # MU_V[int(len(MU_V) * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(archetype_schedule)
                 current_stochastic_schedule += occupant_pattern
                 schedules['people'] += occupant_pattern
@@ -376,7 +383,8 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 if archetype_values[label][num] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values[label][num], current_share_of_use,
-                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[use][schedule_codes['electricity']],
+                        bpr.rc_model['NFA_m2'], schedules[label], archetype_schedules[use][schedule_codes['electricity']],
+                        # bpr.rc_model['Aef'], schedules[label], archetype_schedules[use][schedule_codes['electricity']],
                         share_time_occupancy_density)
             for label in water_schedules:
                 if archetype_values[label][num] != 0:
@@ -410,7 +418,7 @@ def calc_individual_occupant_schedule(archetype_schedule):
     :rtype pattern: list[int]
     """
 
-    mu = MU_V[int(len(MU_V) * random.random())]
+    mu = np.random.random() / 2 # MU_V[int(len(MU_V) * random.random())]
 
     # assign initial state: assume equal to the archetypal occupancy schedule at t = 0
     # state = archetype_schedule[0]
