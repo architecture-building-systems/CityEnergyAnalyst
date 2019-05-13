@@ -67,20 +67,25 @@ For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updat
 worked on that release.
 
 
-Creating the installer for the planner's edition
-------------------------------------------------
+Creating the installer
+----------------------
 
-- first, make sure you have the Nullsoft Scriptable Installation System (NSIS) version 3.01 installed. You can get it
-  from here: http://nsis.sourceforge.net/Download (choose the version 3.01, this was the newest version at the time
-  of writing htis document)
+- first, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
+- if the dependencies changed, you need to re-create the ``Dependencies.7z`` file and store it as a binary on the
+  release.
+  - Be sure to update the URL to ``Dependencies.7z`` in the file ``setup/cityenergyanalyst.nsi`` to the new release
+  - To create the ``Dependencies.7z`` file, follow these steps:
+    - create an empty folder called ``Dependencies``
+    - locate the conda environment for the CEA (as created with ``environment.yml`` and copy it to the ``Dependencies``
+      folder.
+    - rename the environment folder to ``Python``
+    - use the 7z_ program to compress the ``Dependencies`` folder to ``Dependencies.7z``
+- create the installer by right-clicking ``setup/cityenergyanalyst.nsi`` in Windows Explorer and choosing the "Compile
+  NSIS Script" option.
+- upload the installer to the Release page.
+- update the document :doc:`installation-on-windows` to refer to the newest installer.
 
-- update the `*.pyd` files by running `cea/utilities/compile_pyd_files.py`
-
-  - this requires `numba.pycc` to be installed, which can be obtained by doing `conda install numba`
-  - this also requires a C compiler installed
-
-
-**TODO**: figure out in a VM exactly how to set this up... (this could be a separate document)
+.. _7z: https://www.7-zip.org/7z.html
 
 Testing in a virtual machine
 ----------------------------
