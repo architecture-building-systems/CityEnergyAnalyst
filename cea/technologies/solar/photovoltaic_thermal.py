@@ -15,6 +15,7 @@ import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from itertools import izip, repeat
 import multiprocessing
+import cea.utilities.workerstream
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
@@ -26,6 +27,7 @@ from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from cea.constants import HOURS_IN_YEAR
+from cea.utilities.workerstream import stream_from_queue
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -40,6 +42,17 @@ __status__ = "Production"
 def calc_PVT_wrapper(args):
     """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
     function"""
+    return calc_PVT(*args)
+
+def calc_PVT_mp_wrapper(args):
+    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
+    function - expects the first argument to be a multiprocessing.Queue() which is used to write stdout and stderr to"""
+    queue, args = args[0], args[1:]
+
+    # set up printing to stderr and stdout to go through the queue
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
+
     return calc_PVT(*args)
 
 
@@ -698,15 +711,21 @@ def main(config):
         import sys
         print("stdout: {}".format(type(sys.stdout)))
         pool = multiprocessing.Pool(number_of_processes)
-        joblist = []
-        for building_name in building_names:
-            print('pool.apply_async for building {building_name}'.format(building_name=building_name))
-            job = pool.apply_async(calc_PVT,
-                                   [locator, config, latitude, longitude, weather_data, date_local, building_name])
-            joblist.append(job)
-        for i, job in enumerate(joblist):
-            job.get(240)
-            print('Building No. %i completed out of %i' % (i + 1, num_buildings))
+        queue = multiprocessing.Queue()
+        map_result = pool.map_async(calc_PVT_mp_wrapper, izip(repeat(queue, num_buildings),
+                                                              repeat(locator, num_buildings),
+                                                              repeat(config, num_buildings),
+                                                              repeat(latitude, num_buildings),
+                                                              repeat(longitude, num_buildings),
+                                                              repeat(weather_data, num_buildings),
+                                                              repeat(date_local, num_buildings),
+                                                              building_names))
+        while not map_result.ready():
+            stream_from_queue(queue)
+        # process the rest of the Queue
+        while not queue.empty():
+            stream_from_queue(queue)
+        queue.close()
         pool.close()
     else:
         print("Using single process")
