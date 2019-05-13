@@ -176,7 +176,7 @@ Section /o "Developer version" Clone_Repository_Section
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\pip.exe" install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
