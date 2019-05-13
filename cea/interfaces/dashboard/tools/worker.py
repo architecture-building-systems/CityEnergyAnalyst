@@ -39,6 +39,7 @@ def run_script(script_name, connection, kwargs):
     script = getattr(cea.api, script_name.replace('-', '_'))
     script(**kwargs)
 
+
 def main(script_name, **kwargs):
     """This is the main interface to start a worker process.
     The returned ``multiprocessing.Process`` object has allready been ``start()``ed. The ``Connection``
@@ -51,8 +52,7 @@ def main(script_name, **kwargs):
     worker = multiprocessing.Process(target=run_script, args=(script_name, child, kwargs))
     worker.start()
     child.close()
-    return (worker, parent)
-
+    return worker, parent
 
 
 def test_worker():
