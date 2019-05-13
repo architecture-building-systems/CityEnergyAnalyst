@@ -131,7 +131,10 @@ Section "Base Installation" Base_Installation_Section
     Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
     Delete ${CEA_ENV_FILENAME}
 
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-cache cityenergyanalyst==${VER}'
+    DetailPrint "Updating Pip"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U pip'
+    DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
