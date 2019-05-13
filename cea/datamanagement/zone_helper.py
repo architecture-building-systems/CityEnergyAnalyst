@@ -149,17 +149,36 @@ def calculate_occupancy_file(zone_df, occupancy_type, occupancy_output_path):
     if occupancy_type == "Get it from open street maps":
         no_buildings = occupancy_df.shape[0]
         for index in range(no_buildings):
-            if zone_df.loc[index, "category"] == "yes" or zone_df.loc[index, "category"] == "residential" or \
-                    zone_df.loc[index, "category"] == "apartments":
+            if zone_df.loc[index, "category"] == "yes":
                 occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
+            elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
+                occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
                 occupancy_df.loc[index, "OFFICE"] = 1.0
-            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages":
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "school":
+                occupancy_df.loc[index, "SCHOOL"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or zone_df.loc[index, "category"] == "warehouse":
                 occupancy_df.loc[index, "PARKING"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or zone_df.loc[index, "category"] == "detached":
                 occupancy_df.loc[index, "SINGLE_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
                 occupancy_df.loc[index, "RETAIL"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "industrial":
+                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "warehouse":
+                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            else:
+                occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
     dataframe_to_dbf(occupancy_df, occupancy_output_path)
 
 
