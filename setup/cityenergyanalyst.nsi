@@ -132,7 +132,7 @@ Section "Base Installation" Base_Installation_Section
     Delete ${CEA_ENV_FILENAME}
 
     DetailPrint "Updating Pip"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U pip'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
 
