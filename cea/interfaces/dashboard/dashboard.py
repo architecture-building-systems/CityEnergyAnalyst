@@ -39,6 +39,14 @@ def main(config):
         dashboards = cea.plots.read_dashboards(config, plot_cache)
         return dict(dashboards=dashboards)
 
+    @app.context_processor
+    def project_processor():
+        return dict(project_name=os.path.basename(config.project))
+
+    @app.context_processor
+    def scenario_processor():
+        return dict(scenario_name=os.path.basename(config.scenario_name))
+
     @app.template_filter('escapejs')
     def escapejs(text):
         """Escape text for a javascript string (without surrounding quotes)"""
@@ -84,11 +92,13 @@ def main(config):
     import plots.routes
     import inputs.routes
     import project.routes
+    import landing.routes
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(project.routes.blueprint)
+    app.register_blueprint(landing.routes.blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config

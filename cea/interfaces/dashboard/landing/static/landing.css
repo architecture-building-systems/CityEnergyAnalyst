@@ -1,0 +1,48 @@
+.landing-box {
+  width: 100%;
+  padding: 8% 0 0;
+  margin: auto;
+}
+
+.landing {
+  position: relative;
+  z-index: 1;
+  background: #FFFFFF;
+  max-width: 720px;
+  margin: 0 auto 100px;
+  padding: 45px;
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+}
+
+.landing .logo img {
+  width: 120px;
+}
+
+.logo h1 {
+  font-size: 25px;
+}
+
+.panel-heading h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: normal;
+  width: 75%;
+  margin-top: 10px;
+}
+
+/*TO BE REMOVED*/
+.image-placeholder {
+    background-color: #eee;
+    display: flex;
+    height: 180px;
+    margin: 5px;
+    width: 260px;
+}
+
+.image-placeholder > h4 {
+    align-self: center;
+    text-align: center;
+    width: 100%;
+}
+/*TO BE REMOVED*/

@@ -100,7 +100,8 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
             rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd)
 
-        elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
+        elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr) or \
+                control_heating_cooling_systems.has_floor_cooling_system(bpr):
 
             rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd)
 

@@ -1,0 +1,90 @@
+{% extends "landing.html" %}
+
+{% block title %} New Scenario {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+{% endblock stylesheets %}
+
+{% block body %}
+    <!-- show the open file dialog -->
+    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template file_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- show the open folder dialog -->
+    <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template folder_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+    <div class="landing-box">
+        <div class="landing">
+            <h2>New Scenario<br/><small>Current Project: {{ project_name }}</small></h2>
+            <br>
+            <form id="new-project" data-parsley-validate class="form-horizontal form-label-left" method="post"
+                  action="{{ url_for('landing_blueprint.route_create_scenario_save') }}">
+                {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
+                {# TODO: Maybe check for space in name or if it already exists #}
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="scenarioName">Scenario Name</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+
+                        <input id="scenarioName" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                               name="scenarioName" type="text" value="baseline" placeholder="Name of the scenario" required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="description">Description</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        {# FIXME: Change placeholder when config allows tracking of description #}
+                        <textarea id="description" style="max-width: 100%;min-width: 100%" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                                  name="description" type="text" placeholder="Enter a description for this scenario Does not work yet"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="create-zone" class="control-label col-md-3 col-sm-3 col-xs-12">Create Zone file?</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                            <label>
+                                <input type="checkbox" name="create-zone" id="create-zone" class="js-switch cea-parameter"
+                                data-cea-parameter-typename="BooleanParameter"/>
+                            </label>
+                        <small id="create-zone-help" class="form-text text-muted">Create zone based on map </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% block javascripts %}
+  {{ super()}}
+    <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+    <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+{% endblock javascripts %}
+{% endblock body %}

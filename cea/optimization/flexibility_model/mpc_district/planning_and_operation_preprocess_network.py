@@ -8,7 +8,7 @@ import networkx as nx
 import pandas as pd
 import shapely
 
-from cea.technologies.thermal_network.network_layout.substations_location import \
+from cea.technologies.network_layout.substations_location import \
     calc_substation_location as substation_location
 
 __author__ = "Sebastian Troitzsch"

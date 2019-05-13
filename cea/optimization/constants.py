@@ -168,7 +168,7 @@ ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
 N_COOL = 4  # number of cooling technologies
-N_HEAT = 6  # number of heating
+N_HEAT = 6  # number of heating technologies
 N_HR = 2  # number of heat recovery options
 N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
 

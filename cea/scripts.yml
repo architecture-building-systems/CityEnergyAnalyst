@@ -5,8 +5,7 @@ Analysis:
   description: Multicriteria analysis
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.multicriteria.main
-  parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria,
-               'thermal-network:network-names', 'thermal-network:network-type']
+  parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria]
 
 
 Cost analysis:
@@ -41,6 +40,13 @@ Data Management:
   interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.district_geometry_helper
   parameters: ['general:scenario', district-helper]
+
+- name: zone-helper
+  label: Zone helper
+  description: Query zone geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.zone_helper
+  parameters: ['general:scenario', zone-helper]
 
 - name: streets-helper
   label: Streets helper
@@ -212,8 +218,8 @@ Thermal networks:
   label: Network layout
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
+  module: cea.technologies.network_layout.main
+  parameters: ['general:scenario', network-layout]
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
