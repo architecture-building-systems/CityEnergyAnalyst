@@ -160,7 +160,7 @@ def route_open_project_scenario(scenario):
     return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
 
 
-@blueprint.route('/create-project/<script_name>/settings')
+@blueprint.route('/create-scenario/<script_name>/settings')
 def route_script_settings(script_name):
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
