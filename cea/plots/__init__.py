@@ -61,19 +61,20 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache):
+def default_dashboard(config, cache, name='Default Dashboard', description=''):
     """Return a default Dashboard"""
-    return Dashboard(config, {'name': 'Default Dashboard',
+    return Dashboard(config, {'name': name,
+                              'description': description,
                               'plots': []}, cache)
 
 
-def new_dashboard(config, cache):
+def new_dashboard(config, cache, name, description):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
     dashboards = read_dashboards(config, cache)
-    dashboards.append(default_dashboard(config, cache))
+    dashboards.append(default_dashboard(config, cache, name, description))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
@@ -93,6 +94,7 @@ class Dashboard(object):
         self.name = dashboard_dict['name']
         self.cache = cache
         self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
+        self.description = dashboard_dict['description']
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
@@ -102,7 +104,6 @@ class Dashboard(object):
         plot = plot_class(self.config.project, parameters, self.cache)
         self.plots.append(plot)
 
-
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
         self.plots.pop(plot_index)
@@ -110,6 +111,7 @@ class Dashboard(object):
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
         return {'name': self.name,
+                'description': self.description,
                 'plots': [{'plot': p.id(),
                            'category': p.category_name,
                            'parameters': p.parameters} for p in self.plots]}
