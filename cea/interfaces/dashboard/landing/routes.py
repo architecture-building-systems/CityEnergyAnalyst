@@ -49,10 +49,18 @@ def route_project_overview():
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
 
 
-@blueprint.route('/project-overview/<scenario>/<function>')
-def route_project_overview_function(scenario, function):
-    if function == 'delete':
-        return render_template('modal/delete.html', scenario=scenario)
+@blueprint.route('/project-overview/<scenario>/<func>')
+def route_project_overview_function(scenario, func):
+    if func == 'delete':
+        return render_template('modal/delete_scenario.html', scenario=scenario)
+
+
+@blueprint.route('/project-overview/delete/<scenario>', methods=['POST'])
+def route_delete_scenario(scenario):
+    cea_config = current_app.cea_config
+    scenario_path = os.path.join(cea_config.project, scenario)
+    shutil.rmtree(scenario_path)
+    return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
 @blueprint.route('/create-zone')
@@ -80,7 +88,7 @@ def route_create_site():
 
     cea.api.zone_helper(scenario=scenario_path)
     cea_config.scenario_name = temp
-
+    # FIXME: Change to form post
     return jsonify(dict(redirect='/landing/project-overview'))
 
 
