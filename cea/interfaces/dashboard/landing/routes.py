@@ -60,6 +60,7 @@ def route_delete_scenario(scenario):
     cea_config = current_app.cea_config
     scenario_path = os.path.join(cea_config.project, scenario)
     shutil.rmtree(scenario_path)
+    cea_config.scenario_name = ''
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
@@ -141,11 +142,9 @@ def route_open_project():
 def route_open_project_save():
     cea_config = current_app.cea_config
     project_path = request.form.get('projectPath')
-    scenarios = get_scenarios(project_path)
 
     cea_config.project = project_path
-    cea_config.scenario_name = scenarios[0]
-    print(scenarios, cea_config.scenario_name)
+    cea_config.scenario_name = ''
     cea_config.save()
     return redirect(url_for('landing_blueprint.route_project_overview'))
 

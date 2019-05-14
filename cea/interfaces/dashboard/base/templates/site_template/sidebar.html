@@ -21,6 +21,7 @@
             <li><a href="{{ url_for('landing_blueprint.route_create_scenario') }}">New Scenario</a></li>
           </ul>
         </li>
+      {% if scenario_name != '' %}
         <li><a><i class="fa fa-building-o"></i> Inputs <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="/inputs/table/zone">Zone</a></li>
@@ -48,6 +49,7 @@
         </li>
         <li><a href="{{ url_for('plots_blueprint.index') }}"><i class="fa fa-bar-chart"></i> Dashboard </a>
         </li>
+      {% endif %}
       </ul>
     </div>
 
