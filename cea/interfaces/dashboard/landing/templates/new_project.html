@@ -5,26 +5,9 @@
 {% block stylesheets %}
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
-        integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
-        crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
-          integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
-          crossorigin=""></script>
 {% endblock stylesheets %}
 
 {% block body %}
-    <!-- show the open file dialog -->
-    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-
-                <!-- see template file_listing.html for contents -->
-
-            </div>
-        </div>
-    </div>
-
     <!-- show the open folder dialog -->
     <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -36,69 +19,20 @@
         </div>
     </div>
 
-
-
-    <!-- show the open tool settings dialog -->
-    <div class="modal fade" id="cea-script-settings" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
-                </button>
-                <h2 class="modal-title" id="script-title"></h2>
-              </div>
-              <div class="modal-body">
-
-                  <!--  -->
-
-              </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- show the open loading dialog -->
-    <div class="modal fade" id="cea-loading" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-body">
-                <h2>Running Data management tools...</h2>
-              </div>
-            </div>
-        </div>
-    </div>
-
     <div class="landing-box">
         <div class="landing">
             <h2>Create new Project</h2>
             <br>
             <form id="new-project" data-parsley-validate class="form-horizontal form-label-left" method="post"
-                  action="{{ url_for('landing_blueprint.route_create_project_save') }}" onsubmit="polyToString()">
+                  action="{{ url_for('landing_blueprint.route_create_project_save') }}">
                 {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
                 {# TODO: Maybe check for space in project name #}
                 <div class="form-group">
-                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="projectName">Project Name</label>
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="project-name">Project Name</label>
                     <div class="col-md-6 col-sm-6 col-xs-12">
 
-                        <input id="projectName" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
-                               name="projectName" type="text" value="cea-new-project" placeholder="Name of your project" required/>
-                    </div>
-                </div>
-
-              <div class="form-group">
-                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="scenarioName">Scenario Name</label>
-                    <div class="col-md-6 col-sm-6 col-xs-12">
-
-                        <input id="scenarioName" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
-                               name="scenarioName" type="text" value="baseline" placeholder="Name of the scenario" required/>
-                    </div>
-                </div>
-
-              <div class="form-group">
-                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="description">Description</label>
-                    <div class="col-md-6 col-sm-6 col-xs-12">
-                        {# FIXME: Change placeholder when config allows tracking of description #}
-                        <textarea id="description" style="max-width: 100%;min-width: 100%" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
-                                  name="description" type="text" placeholder="Enter a description for this scenario Does not work yet"></textarea>
+                        <input id="project-name" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                               name="project-name" type="text" value="cea-new-project" placeholder="Name of your project" required/>
                     </div>
                 </div>
 
@@ -108,7 +42,7 @@
                         {# FIXME: Pattern validation for directory only works for windows systems #}
                         <div class="input-group">
                             <input type="text" class="form-control cea-parameter" value="{{ project }}" placeholder="Select where to save your project"
-                                   id="project" name="projectPath" data-cea-parameter-typename="PathParameter"
+                                   id="project" name="project-path" data-cea-parameter-typename="PathParameter"
                                    data-parsley-pattern="^[a-zA-Z]:\\[\\\S|*\S]?.*$" required>
                             <span class="input-group-btn">
                                 <button class="btn btn-file-parameter" type="button"
@@ -117,73 +51,6 @@
                         </div>
                     </div>
                 </div>
-              <br/>
-              <div class="form-group">
-                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="helper-tools">Data Management Tools</label>
-                    <div class="col-md-6 col-sm-6 col-xs-12" id="helper-tools">
-                      {# TODO: Could recreate this portion using loop #}
-                      {# TODO: Get helper file descriptions from scripts.yml #}
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" name="tools" value="zone-helper" id="zone" onclick="toggleTools()">
-                          <label class="form-check-label" for="zone">
-                            Zone
-                          </label>
-                          <i class="fa fa-info-circle" data-toggle="tooltip" title="Query zone geometry from Open Street Maps"></i>
-                          <a href="#"><i class="fa fa-cog" onclick="openSettings('zone-helper')"></i></a>
-                        </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district" disabled onclick="toggleTools()">
-                        <label class="form-check-label" for="district">
-                          District
-                        </label>
-                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query district geometry from Open Street Maps. Requires zone file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('district-helper')"></i></a>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets" disabled>
-                        <label class="form-check-label" for="streets">
-                          Streets
-                        </label>
-                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query streets geometry from Open Street Maps. Requires zone and district file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('streets-helper')"></i></a>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain" disabled>
-                        <label class="form-check-label" for="terrain">
-                          Terrain
-                        </label>
-                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Creates a fixed elevation terrain file. Requires zone and district file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('terrain-helper')"></i></a>
-                      </div>
-                    </div>
-                </div>
-
-              <div id="site-selector" class="well">
-                <h3>Create zone file from map</h3>
-                <div class="form-group" id="site-selector-group">
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <label class="control-label" for="latitude">Latitude</label>
-                    <input type="text" class="form-control" placeholder="Latitude"
-                           id="latitude" name="latitude" value="1.3521" required>
-                  </div>
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <label class="control-label" for="longitude">Longitude</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control" placeholder="Longitude"
-                             id="longitude" name="longitude" value="103.8198" required>
-                      <div class="input-group-btn">
-                        <button class="btn" type="button" onclick="goToLocation()">Go</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <input type="text" name="poly-string" id="poly-string" hidden>
-                <div style="text-align: center">
-                  <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
-                  <button type="button" onclick="removePoly()">Clear</button>
-                </div>
-              </div>
-
                 <br/>
                 <div class="form-group">
                     <div style="text-align: center;">
@@ -199,72 +66,10 @@
   {{ super()}}
     <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
-    <script src="{{ url_for('.static', filename='landing_map.js') }}"></script>
     <script>
         function goBack() {
             window.history.back();
         }
-
-        function openSettings(script) {
-            $.get('create-project/' + script + '/settings', {}, function(html) {
-                $('#cea-script-settings .modal-body').html(html);
-                $('#cea-script-settings').modal({'show': true, 'backdrop': 'static'});
-                $('#cea-script-settings #script-title').text(script);
-            });
-        }
-
-        function closeSettings() {
-            $('#cea-script-settings').modal('hide');
-        }
-
-        function toggleTools() {
-            if ($('#zone').prop('checked')) {
-                $('#district').prop('disabled', false);
-                $('#site-selector').css("display", "block");
-                $('#poly-string').prop('required', true);
-            } else {
-                $('#district').prop('disabled', true)
-                    .prop('checked', false);
-                $('#site-selector').css("display", "none");
-                $('#poly-string').prop('required', false)
-                    .val('');
-                disableStreetTerrain();
-            }
-
-            if ($('#district').prop('checked')) {
-                $('#streets').prop('disabled', false);
-                $('#terrain').prop('disabled', false);
-            } else {
-                disableStreetTerrain();
-            }
-        }
-
-        function disableStreetTerrain() {
-            $('#streets').prop('disabled', true)
-                .prop('checked', false);
-            $('#terrain').prop('disabled', true)
-                .prop('checked', false);
-        }
-
-        $(document).ready(function(){
-            $('[data-toggle="tooltip"]').tooltip();
-            if ($('#zone').prop('checked')) {
-                $('#site-selector').css("display", "block");
-            } else {
-                $('#site-selector').css("display", "none");
-                $('#poly-string').prop('required', false)
-                    .val('');
-            }
-            $('#new-project').on("submit", function(){
-                if($('#zone').prop('checked') || $('#district').prop('checked')
-                    || $('#streets').prop('checked') || $('#terrain').prop('checked')) {
-                    $('#cea-loading').modal({'show': true, 'backdrop': 'static'});
-                }
-            });
-            $(window).unload(function(){
-                $('#cea-loading').modal('hide');
-            });
-        });
     </script>
 {% endblock javascripts %}
 {% endblock body %}

@@ -95,40 +95,16 @@ def route_create_site():
 @blueprint.route('/create-project/save', methods=['POST'])
 def route_create_project_save():
     # Make sure that the project folder exists
-    scenario_path = os.path.join(request.form.get('projectPath'), request.form.get('projectName'),
-                                 request.form.get('scenarioName'))
+    project_path = os.path.join(request.form.get('project-path'), request.form.get('project-name'))
     try:
-        os.makedirs(scenario_path)
+        os.makedirs(project_path)
     except OSError as e:
         print(e.message)
 
-    # FIXME: Cannot create new project if current project in config does not exist
     cea_config = current_app.cea_config
-    cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
-    cea_config.scenario_name = request.form.get('scenarioName')
+    cea_config.project = project_path
+    cea_config.scenario_name = ''
     cea_config.save()
-    print(request.form.get('scenarioName'), cea_config.scenario_name)
-    tools = request.form.getlist('tools')
-    print(tools)
-    if tools is not None:
-        for tool in tools:
-            print(tool)
-            if tool == 'zone-helper':
-                # FIXME: Setup a proper endpoint for site creation
-                data = json.loads(request.form.get('poly-string'))
-                site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
-                                              geometry=[shape(data['geometry'])])
-                locator = cea.inputlocator.InputLocator(scenario_path)
-                site_path = locator.get_site_polygon()
-                site.to_file(site_path)
-                print('site.shp file created at %s' % site_path)
-                cea.api.zone_helper(cea_config)
-            elif tool == 'district-helper':
-                cea.api.district_helper(cea_config)
-            elif tool == 'streets-helper':
-                cea.api.streets_helper(cea_config)
-            elif tool == 'terrain-helper':
-                cea.api.terrain_helper(cea_config)
 
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
