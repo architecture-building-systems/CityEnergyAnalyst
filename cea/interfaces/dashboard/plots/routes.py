@@ -52,12 +52,12 @@ def route_manage_dashboards():
     return render_template('manage.html', dashboards=dashboards)
 
 
-@blueprint.route('/dashboard/new', methods=['GET'])
+@blueprint.route('/dashboard/new')
 def route_new_dashboard_view():
     return render_template('modal/new_dashboard.html')
 
 
-@blueprint.route('/dashboard/new', methods=['POST'])
+@blueprint.route('/dashboard/new/save', methods=['POST'])
 def route_new_dashboard():
     """
     Append a dashboard to the list of dashboards and open it for editing.
