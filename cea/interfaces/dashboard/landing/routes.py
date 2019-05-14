@@ -63,35 +63,6 @@ def route_delete_scenario(scenario):
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
-@blueprint.route('/create-zone')
-def route_create_zone():
-    scenario = request.args['scenario']
-    return render_template('project_map.html', scenario=scenario)
-
-
-@blueprint.route('/create-site', methods=['POST'])
-def route_create_site():
-    # Get polygon points and create .shp file
-    data = request.get_json()
-    site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[shape(data['geometry'])])
-
-    cea_config = current_app.cea_config
-    # Save current scenario name
-    temp = cea_config.scenario_name
-    cea_config.scenario_name = request.args['scenario']
-    scenario_path = cea_config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path)
-    site_path = locator.get_site_polygon()
-
-    site.to_file(site_path)
-    print('site.shp file created at %s' % site_path)
-
-    cea.api.zone_helper(scenario=scenario_path)
-    cea_config.scenario_name = temp
-    # FIXME: Change to form post
-    return jsonify(dict(redirect='/landing/project-overview'))
-
-
 @blueprint.route('/create-project/save', methods=['POST'])
 def route_create_project_save():
     # Make sure that the project folder exists

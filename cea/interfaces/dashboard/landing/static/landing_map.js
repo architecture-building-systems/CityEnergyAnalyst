@@ -54,36 +54,6 @@ function removePoly() {
 	// map.removeLayer(temppoly);
 }
 
-function createPoly(scenario) {
-	if (latlngs.length < 3) {
-		alert("Please select a site with a polygon")
-	} else {
-		var r = confirm("Are you sure you want to create the zone file?");
-
-	if (r === true) {
-		// TODO: Check if polygon is empty
-		var json = polygon.toGeoJSON();
-		L.extend(json.properties, polygon.properties);
-
-		$.ajax({
-			type: 'POST',
-			contentType: 'application/json',
-			data: JSON.stringify(json),
-			dataType: 'json',
-			url: `http://localhost:5050/landing/create-site?scenario=${scenario}`,
-			success: function(response) {
-  				if (response.redirect) {
-    				window.location.href = response.redirect;
-  				}
-			},
-			error: function(error) {
-				console.log(error);
-			}
-		});
-	}
-	}
-}
-
 function polyToString() {
 	if ($('#zone').prop('checked') && latlngs.length < 3) {
 		alert("Please select a site with a polygon")
