@@ -64,7 +64,7 @@ def route_new_dashboard():
     """
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
-    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache)
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'))
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
