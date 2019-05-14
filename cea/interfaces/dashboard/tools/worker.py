@@ -6,25 +6,7 @@ import sys
 import cea.api
 import multiprocessing
 
-
-class WorkerStream(object):
-    """File-like object for wrapping the output of the scripts into connection messages"""
-
-    def __init__(self, name, connection):
-        self.name = name  # 'stdout' or 'stderr'
-        self.connection = connection
-
-    def close(self):
-        self.connection.close()
-
-    def write(self, str):
-        self.connection.send((self.name, str))
-
-    def isatty(self):
-        return False
-
-    def flush(self):
-        pass
+from cea.utilities.workerstream import WorkerStream
 
 
 def run_script(script_name, connection, kwargs):
@@ -35,6 +17,7 @@ def run_script(script_name, connection, kwargs):
 
     script = getattr(cea.api, script_name.replace('-', '_'))
     script(**kwargs)
+
 
 def main(script_name, **kwargs):
     """This is the main interface to start a worker process.
@@ -48,14 +31,12 @@ def main(script_name, **kwargs):
     worker = multiprocessing.Process(target=run_script, args=(script_name, child, kwargs))
     worker.start()
     child.close()
-    return (worker, parent)
-
+    return worker, parent
 
 
 def test_worker():
     """Run a simple test with ``cea test`` to see if the worker works"""
     worker, connection = main('demand')
-    import multiprocessing
     while worker.is_alive():
         try:
             print(connection.recv())
