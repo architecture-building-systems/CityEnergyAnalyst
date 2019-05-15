@@ -94,7 +94,10 @@ class Dashboard(object):
         self.name = dashboard_dict['name']
         self.cache = cache
         self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
-        self.description = dashboard_dict['description']
+        try:
+            self.description = dashboard_dict['description']
+        except KeyError:
+            self.description = None
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
