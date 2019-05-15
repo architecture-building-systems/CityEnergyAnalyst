@@ -32,6 +32,19 @@ $(document).ready(function() {
             console.log(data);
         });
     });
+
+    $('#dashboard-selector').change(function () {
+        if($(this).val() === 'manage') {
+            window.location.href = './'+ 'manage';
+        } else if($(this).val() === 'new') {
+            $.get('new', function (html) {
+                $('#cea-prompt .modal-content').html(html);
+                $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+            });
+        } else {
+            window.location.href = './'+ $(this).val();
+        }
+    });
 });
 
 
