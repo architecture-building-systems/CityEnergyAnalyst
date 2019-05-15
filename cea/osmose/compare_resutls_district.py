@@ -6,7 +6,7 @@ import operator
 import matplotlib.pyplot as plt
 
 CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
-
+COLOR_CODES = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3', 'status': '#707070'}
 
 def main(path_result_folder, case, time_steps):
     path_district_result_folder = os.path.join(path_result_folder, case)
@@ -122,8 +122,7 @@ def plot_scatter_COP(all_cop_dict, path_district_result_folder):
     anno = second_level_key
     area = tuple(map(lambda x: 100, anno))
     # marker colors
-    color_codes = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3'}
-    anno_colors = tuple(map(lambda i: color_codes[i], anno))
+    anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
 
     # format the plt
     plt.figure()
@@ -165,8 +164,7 @@ def plot_scatter_EX(all_exergy_eff_dict, path_district_result_folder):
     anno = second_level_key
     area = tuple(map(lambda x: 100, anno))
     # marker colors
-    color_codes = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3'}
-    anno_colors = tuple(map(lambda i: color_codes[i], anno))
+    anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
 
     # format the plt
     plt.figure()
@@ -248,7 +246,7 @@ if __name__ == '__main__':
     #cases = ['WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+        #path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
         path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
         time_steps = 168
         main(path_result_folder, case, time_steps)
