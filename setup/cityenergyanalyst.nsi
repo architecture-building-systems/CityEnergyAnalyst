@@ -160,9 +160,18 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
-Section /o "Create Desktop menu shortcuts" Create_Desktop_Menu_Shortcuts_Section
+Section /o "Developer version" Clone_Repository_Section
 
-    # create shortcuts in the start menu for launching the CEA console
+    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
+    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
+    DetailPrint "Binding CEA to repository"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
+
+SectionEnd
+
+Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
+
+    # create shortcuts on the Desktop for launching the CEA console
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
@@ -171,15 +180,6 @@ Section /o "Create Desktop menu shortcuts" Create_Desktop_Menu_Shortcuts_Section
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
-SectionEnd
-
-Section /o "Developer version" Clone_Repository_Section
-
-    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
-    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
-    DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
