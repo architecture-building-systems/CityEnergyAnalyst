@@ -59,10 +59,10 @@ def main(config):
     def tools_processor():
         return dict(tools=list_tools(), drives=get_drives())
 
-    @app.context_processor
-    def dashboards_processor():
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-        return dict(dashboards=dashboards)
+    # @app.context_processor
+    # def dashboards_processor():
+    #     dashboards = cea.plots.read_dashboards(config, plot_cache)
+    #     return dict(dashboards=dashboards)
 
     @app.context_processor
     def project_processor():
