@@ -303,7 +303,7 @@
         }
 
         function openSettings(script) {
-            $.get('create-project/' + script + '/settings', {}, function(html) {
+            $.get('create-scenario/' + script + '/settings', {}, function(html) {
                 $('#cea-script-settings .modal-body').html(html);
                 $('#cea-script-settings').modal({'show': true, 'backdrop': 'static'});
                 $('#cea-script-settings #script-title').text(script);
