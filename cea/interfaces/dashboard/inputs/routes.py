@@ -131,10 +131,14 @@ def route_table_post(db):
 
     # copy data from form POST data
     new_data = json.loads(request.form.get('cea-table-data'))
+    column_types = table_df.dtypes
     for row in new_data:
         for column in row.keys():
             table_df.loc[table_df[pk] == row[pk], column] = row[column]
     print table_df
+    # allow columns to maintain their original type
+    for (types, column) in zip(column_types, table_df):
+        table_df[column] = table_df[column].astype(types)
 
     # safe dataframe back to disk
     if db_info['type'] == 'shp':
