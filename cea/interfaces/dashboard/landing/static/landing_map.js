@@ -24,6 +24,33 @@ function goToLocation() {
 	map.setView([lat, lon], 11);
 }
 
+function getLocation() {
+    $.getJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${$("#latitude").val()}&lon=${$("#longitude").val()}`,
+        function(json) {
+            console.log(json)
+			var city = json.address.city;
+            console.log(city)
+            if (city !== undefined) {
+            	$("#location").val(city);
+			} else {
+            	$("#location").val(json.address.country);
+
+			}
+        }
+    );
+}
+
+function getLatLon() {
+	var location = $("#location").val();
+	console.log(location)
+    $.getJSON(`https://nominatim.openstreetmap.org/?format=json&q=${location}&limit=1`, function(json) {
+    	console.log(json)
+    	$("#latitude").val(json[0].lat);
+		$("#longitude").val(json[0].lon);
+		goToLocation()
+    });
+}
+
 function onMapClick(e) {
     latlngs.push(e.latlng)
 	map.removeLayer(polygon)
