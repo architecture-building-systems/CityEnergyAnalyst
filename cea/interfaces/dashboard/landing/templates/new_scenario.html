@@ -146,26 +146,40 @@
                     </div>
                 </div>
 
+
               <div id="site-selector" class="well">
+                <input type="text" name="poly-string" id="poly-string" hidden>
                 <h3>Create zone file from map</h3>
-                <div class="form-group" id="site-selector-group">
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <label class="control-label" for="latitude">Latitude</label>
-                    <input type="text" class="form-control" placeholder="Latitude"
-                           id="latitude" name="latitude" value="1.3521" required>
-                  </div>
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <label class="control-label" for="longitude">Longitude</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control" placeholder="Longitude"
-                             id="longitude" name="longitude" value="103.8198" required>
-                      <div class="input-group-btn">
-                        <button class="btn" type="button" onclick="goToLocation()">Go</button>
+                  <div class="form-group" id="location-form">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                      <label class="control-label" for="longitude">Location</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" placeholder=""
+                               id="location">
+                        <div class="input-group-btn">
+                          <button class="btn" type="button" onclick="getLatLon()">Go</button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <input type="text" name="poly-string" id="poly-string" hidden>
+
+                  <div class="form-group" id="lat-long">
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                      <label class="control-label" for="latitude">Latitude</label>
+                      <input type="text" class="form-control" placeholder="Latitude"
+                             id="latitude" name="latitude" value="1.3521">
+                    </div>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                      <label class="control-label" for="longitude">Longitude</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Longitude"
+                               id="longitude" name="longitude" value="103.8198">
+                        <div class="input-group-btn">
+                          <button class="btn" type="button" onclick="goToLocation();getLocation()">Go</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 <div style="text-align: center">
                   <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
                   <button type="button" onclick="removePoly()">Clear</button>
@@ -284,7 +298,7 @@
 
                 <div class="form-group">
                     <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-success" onclick="$('#new-scenario').submit()">Create</button>
                         <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
                     </div>
                 </div>
