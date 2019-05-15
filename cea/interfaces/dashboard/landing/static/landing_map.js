@@ -24,6 +24,33 @@ function goToLocation() {
 	map.setView([lat, lon], 11);
 }
 
+function getLocation() {
+    $.getJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${$("#latitude").val()}&lon=${$("#longitude").val()}`,
+        function(json) {
+            console.log(json)
+			var city = json.address.city;
+            console.log(city)
+            if (city !== undefined) {
+            	$("#location").val(city);
+			} else {
+            	$("#location").val(json.address.country);
+
+			}
+        }
+    );
+}
+
+function getLatLon() {
+	var location = $("#location").val();
+	console.log(location)
+    $.getJSON(`https://nominatim.openstreetmap.org/?format=json&q=${location}&limit=1`, function(json) {
+    	console.log(json)
+    	$("#latitude").val(json[0].lat);
+		$("#longitude").val(json[0].lon);
+		goToLocation()
+    });
+}
+
 function onMapClick(e) {
     latlngs.push(e.latlng)
 	map.removeLayer(polygon)
@@ -52,36 +79,6 @@ function removePoly() {
 	$("#polyString").val("");
 	// temp = [];
 	// map.removeLayer(temppoly);
-}
-
-function createPoly(scenario) {
-	if (latlngs.length < 3) {
-		alert("Please select a site with a polygon")
-	} else {
-		var r = confirm("Are you sure you want to create the zone file?");
-
-	if (r === true) {
-		// TODO: Check if polygon is empty
-		var json = polygon.toGeoJSON();
-		L.extend(json.properties, polygon.properties);
-
-		$.ajax({
-			type: 'POST',
-			contentType: 'application/json',
-			data: JSON.stringify(json),
-			dataType: 'json',
-			url: `http://localhost:5050/landing/create-site?scenario=${scenario}`,
-			success: function(response) {
-  				if (response.redirect) {
-    				window.location.href = response.redirect;
-  				}
-			},
-			error: function(error) {
-				console.log(error);
-			}
-		});
-	}
-	}
 }
 
 function polyToString() {

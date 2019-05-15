@@ -34,8 +34,7 @@ import matplotlib.cm as cm
 import pandas as pd
 import numpy as np
 import vtk
-
-import cea.globalvar
+import cea.config
 import cea.inputlocator
 
 __author__ = "Paul Neitzel"
@@ -314,8 +313,8 @@ if __name__ == '__main__':
     txt_color = (0.4, 0.4, 0.4)
 
     # file paths
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    config = cea.config.Configuration()
+    scenario_path = config.scenario
     locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     in_path = locator.get_3D_geometry_folder()
     out_path = locator.get_solar_radiation_folder()

@@ -5,8 +5,15 @@
 </div>
 
 <div class="modal-body">
-  <p>Enter the name of the scenario you are deleting.</p>
-  <input id="delete-input" type="text" placeholder="{{ scenario }}">
+  <form id="cea-delete-scenario" class="form-horizontal" method="post"
+        action="project-overview/delete/{{ scenario }}">
+    <p>Enter the name of the scenario you are deleting.</p>
+    <input id="delete-input" type="text" placeholder="{{ scenario }}" required>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      <button type="submit" class="btn btn-danger" id="delete-btn" disabled>Delete</button>
+    </div>
+  </form>
   <script>
       $("#delete-input").on("input", function() {
           console.log($(this).val());
@@ -17,9 +24,4 @@
           }
       });
   </script>
-</div>
-
-<div class="modal-footer">
-  <button type="button" class="btn btn-danger" id="delete-btn" disabled="true">Delete</button>
-  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 </div>
