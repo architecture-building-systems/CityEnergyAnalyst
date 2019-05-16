@@ -49,7 +49,7 @@
                     </td>
                     <td>
                       <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=index) }}">Open</a>
-                      <a>Edit</a>
+                      <a href="#" onclick="openSettings({{ index }}, 'rename')">Rename</a>
                       <a href="#" onclick="openSettings({{ index }}, 'delete')">Delete</a>
                     </td>
                   </tr>
