@@ -29,12 +29,14 @@ function getLocation() {
         function(json) {
             console.log(json)
 			var city = json.address.city;
-            console.log(city)
+            var country = json.address.country;
+            console.log(city, country)
             if (city !== undefined) {
-            	$("#location").val(city);
+            	$("#location").val(`${city}, ${country}`);
+			} else if (country !== undefined){
+            	$("#location").val(country);
 			} else {
-            	$("#location").val(json.address.country);
-
+            	$("#location").val('');
 			}
         }
     );

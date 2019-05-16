@@ -70,7 +70,7 @@
             <h2>New Scenario<br/><small>Current Project: {{ project_name }}</small></h2>
             <br>
             <form id="new-scenario" data-parsley-validate class="form-horizontal form-label-left" method="post"
-                  action="{{ url_for('landing_blueprint.route_create_scenario_save') }}"  onsubmit="polyToString()">
+                  action="{{ url_for('landing_blueprint.route_create_scenario_save') }}" onsubmit="polyToString()">
                 {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
                 {# TODO: Maybe check for space in name or if it already exists #}
                 <div class="form-group">
@@ -112,7 +112,7 @@
                       {# TODO: Could recreate this portion using loop #}
                       {# TODO: Get helper file descriptions from scripts.yml #}
                         <div class="form-check">
-                          <input class="form-check-input" type="checkbox" name="tools" value="zone-helper" id="zone">
+                          <input class="form-check-input" type="checkbox" name="tools" value="zone-helper" id="zone" checked>
                           <label class="form-check-label" for="zone">
                             Zone
                           </label>
@@ -149,12 +149,13 @@
 
               <div id="site-selector" class="well">
                 <input type="text" name="poly-string" id="poly-string" hidden>
-                <h3>Create zone file from map</h3>
+                <h3>Select an area in the map for the zone file</h3>
+                <small>Navigate to an area using a location or coordinates.</small>
                   <div class="form-group" id="location-form">
                     <div class="col-md-12 col-sm-12 col-xs-12">
                       <label class="control-label" for="longitude">Location</label>
                       <div class="input-group">
-                        <input type="text" class="form-control" placeholder=""
+                        <input type="text" class="form-control" placeholder="Enter a location"
                                id="location">
                         <div class="input-group-btn">
                           <button class="btn" type="button" onclick="getLatLon()">Go</button>
@@ -167,19 +168,20 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                       <label class="control-label" for="latitude">Latitude</label>
                       <input type="text" class="form-control" placeholder="Latitude"
-                             id="latitude" name="latitude" value="1.3521">
+                             id="latitude" name="latitude" value="">
                     </div>
                     <div class="col-md-6 col-sm-6 col-xs-12">
                       <label class="control-label" for="longitude">Longitude</label>
                       <div class="input-group">
                         <input type="text" class="form-control" placeholder="Longitude"
-                               id="longitude" name="longitude" value="103.8198">
+                               id="longitude" name="longitude" value="">
                         <div class="input-group-btn">
                           <button class="btn" type="button" onclick="goToLocation();getLocation()">Go</button>
                         </div>
                       </div>
                     </div>
                   </div>
+                <small>Click on the map to create points around the area to form a polygon.</small>
                 <div style="text-align: center">
                   <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
                   <button type="button" onclick="removePoly()">Clear</button>
@@ -297,8 +299,8 @@
 
 
                 <div class="form-group">
-                    <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-                        <button type="button" class="btn btn-success" onclick="$('#new-scenario').submit()">Create</button>
+                    <div style="text-align: center;">
+                        <button type="submit" class="btn btn-success">Create</button>
                         <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
                     </div>
                 </div>
@@ -344,7 +346,9 @@
             $('[data-toggle="tooltip"]').tooltip();
 
             if ($('#zone').prop('checked')) {
+                $('#district').prop('disabled', false);
                 $('#site-selector').css("display", "block");
+                $('#poly-string').prop('required', true);
             } else {
                 $('#site-selector').css("display", "none");
                 $('#poly-string').prop('required', false)
@@ -388,6 +392,8 @@
                 }
                 if (this.value === 'generate') {
                     $('#data-tools').show();
+                    $('#zone').prop('checked', true)
+                        .trigger('change');
                 }
                 else {
                     $('#data-tools').hide();
@@ -399,14 +405,20 @@
                 }
                 else {
                     $('#import-files').hide();
-                    $('#zone').prop('checked', false)
-                        .trigger('change');
+
                 }
             });
 
             $(window).unload(function(){
                 $('#cea-loading').modal('hide');
             });
+
+            $('#new-scenario').keypress(function (e) {
+                return e.which !== 13;
+            });
+            $('#location').keypress(function (e) {
+                if (e.which === 13 ) getLatLon();
+            })
         });
     </script>
 {% endblock javascripts %}
