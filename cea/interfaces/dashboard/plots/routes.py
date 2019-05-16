@@ -76,6 +76,10 @@ def route_manage_dashboards_function(dashboard_index, func):
     dashboard_name = dashboards[dashboard_index].name
     if func == 'delete':
         return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name)
+    if func == 'rename':
+        dashboard_description = dashboards[dashboard_index].description
+        return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name,
+                               dashboard_description=dashboard_description)
 
 
 @blueprint.route('/dashboard/delete/<int:dashboard_index>', methods=['POST'])
@@ -90,8 +94,9 @@ def route_rename_dashboard(dashboard_index):
     dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     dashboard.name = request.form.get('new-name', dashboard.name)
+    dashboard.description = request.form.get('new-description', dashboard.description)
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+    return redirect(url_for('plots_blueprint.route_manage_dashboards'))
 
 
 @blueprint.route('/dashboard/add-plot/<int:dashboard_index>', methods=['POST'])

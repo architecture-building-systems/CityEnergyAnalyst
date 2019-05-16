@@ -17,9 +17,9 @@
                 <option value="{{ index }}">{{ dashboards[index].name }}</option>
               {% endfor %}
               <option data-divider="true"></option>
-              <option value="new">Add new dashboard...</option>
               <option value="manage">Manage Dashboards</option>
             </select>
+            <a href="#" onclick="add_new_dashboard()"><i class="fa fa-plus-circle"></i> New Dashboard</a>
           </div>
 
           <!--

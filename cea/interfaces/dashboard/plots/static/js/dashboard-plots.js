@@ -36,12 +36,7 @@ $(document).ready(function() {
     $('#dashboard-selector').change(function () {
         if($(this).val() === 'manage') {
             window.location.href = './'+ 'manage';
-        } else if($(this).val() === 'new') {
-            $.get('new', function (html) {
-                $('#cea-prompt .modal-content').html(html);
-                $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
-            });
-        } else {
+        } else if($(this).val() !== 'new') {
             window.location.href = './'+ $(this).val();
         }
     });
@@ -66,5 +61,12 @@ function load_all_plots() {
             console.log('error creating plot:');
             console.log(data);
         });
+    });
+}
+
+function add_new_dashboard() {
+    $.get('new', function (html) {
+        $('#cea-prompt .modal-content').html(html);
+        $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
     });
 }
