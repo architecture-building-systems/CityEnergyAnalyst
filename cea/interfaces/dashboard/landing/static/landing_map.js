@@ -8,7 +8,7 @@ var lon = $("#longitude").val();
 
 // const lassoResult = document.querySelector("#lassoResult");
 
-map = L.map('mapid').setView([lat, lon], 11);
+map = L.map('mapid').setView([lat, lon], 10);
 
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
     {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
@@ -21,7 +21,7 @@ map.on('click', onMapClick);
 function goToLocation() {
 	var lat = $("#latitude").val();
 	var lon = $("#longitude").val();
-	map.setView([lat, lon], 11);
+	map.setView([lat, lon], 16);
 }
 
 function getLocation() {
