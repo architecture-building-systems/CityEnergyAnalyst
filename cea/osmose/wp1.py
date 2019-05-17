@@ -28,8 +28,7 @@ def main(case):
     make_directory(path_to_case_folder, new_calculation)
 
     # extract demand outputs
-    building_names = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, start_t, timesteps,
-                                                                               specified_buildings)
+    building_names = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
@@ -111,7 +110,7 @@ def exec_osmose(tech, osmose_project_path):
     if err.decode('utf-8') is not '':
         # print(err.decode('utf-8'))
         if err.decode('utf-8').startswith('WARNING:'):
-            print 'warning' #, err.decode('utf-8')
+             print 'warning' #, err.decode('utf-8')
         elif err.decode('utf-8').startswith('pandoc: Could not find image'):
             print 'warning' #, err.decode('utf-8')
         else:
@@ -130,8 +129,12 @@ def exec_osmose(tech, osmose_project_path):
 
 
 if __name__ == '__main__':
-    #cases = ['WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
+    #cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
+    #cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
+    #cases = ['ABU_CBD_m_WP1_OFF']
+    #cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
+    #cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
     for case in cases:
         main(case)
     # stop ampl license
