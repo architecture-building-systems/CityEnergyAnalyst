@@ -6,24 +6,34 @@ import operator
 import matplotlib.pyplot as plt
 
 CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
-COLOR_CODES = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3', 'status': '#707070'}
+COLOR_CODES = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3',
+               'status': '#707070'}
+
 
 def main(path_result_folder, case, time_steps):
     path_district_result_folder = os.path.join(path_result_folder, case)
     el_compare_paths = path_to_el_compare_files(path_district_result_folder, time_steps)
     # iterate through files and combine results
     all_results_dict = {}
+    all_el_total_dict = {}
     all_cop_dict = {}
     all_exergy_eff_dict = {}
     for path in el_compare_paths:
         building = path.split('\\')[6].split('_')[0]
         el_compare_df = pd.read_csv(path, index_col=0)
+        #
+        Af_m2 = el_compare_df.loc['el_Wh_total_per_Af'] / (el_compare_df.loc['el_total'] / 1000)
+        el_compare_df.loc['qc_load_Wh_per_Af'] = el_compare_df.loc['qc_load_total'] / Af_m2
         list_of_labels = []
-        for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean', 'eff_exergy', 'Qh', 'cop_Qh']:
+        for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean',
+                      'eff_exergy', 'Qh', 'cop_Qh', 'el_Wh_total_per_Af', 'qc_load_Wh_per_Af',
+                      'qc_Wh_sys_per_Af']:
             list_of_labels.append(el_compare_df.loc[label])
         building_result_df = pd.concat(list_of_labels, axis=1)
         building_result_df = building_result_df.sort_values(by=['el_total']).T
         all_results_dict[building] = building_result_df
+
+        all_el_total_dict[building] = el_compare_df.loc['el_Wh_total_per_Af'].to_dict()
         all_cop_dict[building] = el_compare_df.loc['cop_system_mean'].to_dict()  # FIXME
         all_exergy_eff_dict[building] = (el_compare_df.loc['eff_exergy'] * 100).to_dict()
 
@@ -31,7 +41,7 @@ def main(path_result_folder, case, time_steps):
         qc_all_tech_per_building_dict = {}
         # change order of columns
         new_column_list = []
-        for tech in ['coil','ER0','3for2','LD','IEHX']:
+        for tech in ['coil', 'ER0', '3for2', 'LD', 'IEHX']:
             if tech in el_compare_df.columns:
                 new_column_list.append(tech)
         ordered_el_compare_df = el_compare_df[new_column_list]
@@ -47,7 +57,7 @@ def main(path_result_folder, case, time_steps):
     all_results_df.to_csv(path_to_save_all_dirstrict_df(case, path_district_result_folder))
 
     # scatter plot of COP
-    plot_scatter_COP(all_cop_dict, path_district_result_folder)
+    plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folder)
 
     # scatter plot of exergy eff
     plot_scatter_EX(all_exergy_eff_dict, path_district_result_folder)
@@ -66,8 +76,8 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     # plot bars
     x_ticks = range(len(techs))
     # set colors
-    #COLOR_TABLE = {'OAU': '#14453D', 'RAU': '#4D9169', 'SCU': '#BACCCC'}  # # OLIVE, GRASS, GREY
-    #COLOR_TABLE = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'} # Grey scale
+    # COLOR_TABLE = {'OAU': '#14453D', 'RAU': '#4D9169', 'SCU': '#BACCCC'}  # # OLIVE, GRASS, GREY
+    # COLOR_TABLE = {'OAU': '#171717', 'RAU': '#454545', 'SCU': '#737373'} # Grey scale
     COLOR_TABLE = {'OAU': '#080808', 'RAU': '#707070', 'SCU': '#C8C8C8'}  # Gray scale
     i = 0
     KEY_TABLE = {'qc_sys_oau': 'OAU', 'qc_sys_scu': 'SCU', 'qc_sys_lcu': 'RAU'}
@@ -85,7 +95,7 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     for tech in techs:
         x_tick_shown.append(label_dict[tech])
     ax.set_xticklabels(x_tick_shown)
-    #ax.set_xticklabels(np.append(([0]), label_dict[techs.values]), fontsize=18)
+    # ax.set_xticklabels(np.append(([0]), label_dict[techs.values]), fontsize=18)
     ax.xaxis.label.set_size(16)
     ax.yaxis.label.set_size(16)
     ax.xaxis.set_tick_params(labelsize=14)
@@ -103,12 +113,12 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     return np.nan
 
 
-def plot_scatter_COP(all_cop_dict, path_district_result_folder):
+def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folder):
     # get all the points
-    look_up_first_level_key, second_level_key, value = get_all_points_from_dict(all_cop_dict)
+    building_lookup_key, tech_key, value = get_all_points_from_dict(all_cop_dict)
 
     # x axis
-    x = look_up_first_level_key
+    x = building_lookup_key
     x_labels = list(all_cop_dict.keys())
     x_labels.sort()
     x_values = list(range(len(x_labels)))
@@ -119,8 +129,18 @@ def plot_scatter_COP(all_cop_dict, path_district_result_folder):
     y_minor_values = y_values + 0.5
     y_labels = [str(v) for v in y_values]
     # marker size
-    anno = second_level_key
-    area = tuple(map(lambda x: 100, anno))
+    anno = tech_key
+    el_tot_list = []
+    for i in range(len(anno)):
+        building = x_labels[building_lookup_key[i]]
+        tech = anno[i]
+        #area = (all_el_total_dict[building][tech]/500)**2 # qc_load_Wh_per_Af
+        area = (all_el_total_dict[building][tech] / 110) ** 2  # el_Wh_total_per_Af
+        #area = (all_el_total_dict[building][tech] / 600) ** 2  # qc_Wh_sys_per_Af
+        el_tot_list.append(area)  # Wh/m2
+    el_tot = tuple(el_tot_list)
+    area = el_tot
+    # area = tuple(map(lambda x:100, anno))
     # marker colors
     anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
 
@@ -188,16 +208,16 @@ def plot_scatter_EX(all_exergy_eff_dict, path_district_result_folder):
 
 
 def get_all_points_from_dict(two_level_dict):
-    first_level_key = list(two_level_dict.keys())
-    first_level_key.sort()
+    building_name_key = list(two_level_dict.keys())
+    building_name_key.sort()  # so the results display by this order
     # lookup table mapping category
-    lookup_table = dict((v, k) for k, v in enumerate(first_level_key))
+    building_lookup_table = dict((v, k) for k, v in enumerate(building_name_key))
     # build a list of points (x,y,annotation)
-    points = [(lookup_table[action], key, anno)
-              for action, values in two_level_dict.items()
-              for key, anno in (values if values else {}).items()]
-    look_up_first_level_key, second_level_key, value = zip(*points)
-    return look_up_first_level_key, second_level_key, value
+    points = [(building_lookup_table[v], tech, cop)
+              for v, values in two_level_dict.items()
+              for tech, cop in (values if values else {}).items()]
+    building_lookup_key, tech_key, value = zip(*points)
+    return building_lookup_key, tech_key, value
 
 
 def path_to_el_compare_files(path_district_result_folder, time_steps):
@@ -242,11 +262,19 @@ def path_to_save_total_heat_supplied_fig(building, time_steps, path_district_res
 
 
 if __name__ == '__main__':
-    cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    #cases = ['WTP_CBD_m_WP1_RET']
+    cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
+             "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
+             "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
+             "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    # cases = ['WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    #cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
+    # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
+    # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
+    # cases = ['WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        #path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_workstation"
+        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_0515"
         time_steps = 168
         main(path_result_folder, case, time_steps)
