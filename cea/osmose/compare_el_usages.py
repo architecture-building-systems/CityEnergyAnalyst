@@ -21,14 +21,22 @@ def main(building, building_result_path, case):
 
     el_dfs = {}
     cop_mean = {}
+    hourly_cop_shr_dict = {}
     compare_df = pd.DataFrame()
     for path in paths:
+        # get file
         file_name = path.split('\\')
         tech = [x for x in file_name if 'HCS' in x][0].split('_')[2]
         el_dfs[tech] = pd.read_csv(path)
         index = el_dfs[tech].shape[0] - 1
+        # write compare_DF
         cop_mean[tech] = el_dfs[tech]['cop_system'].replace(0, np.nan).mean()
         compare_df[tech] = el_dfs[tech].ix[index][1:]
+        #
+        cop_shr_df = pd.DataFrame()
+        cop_shr_df['COP'] = el_dfs[tech]['cop_system']
+        cop_shr_df['SHR'] = el_dfs[tech]['sys_SHR']
+        hourly_cop_shr_dict[tech] = cop_shr_df
     compare_df.to_csv(path_to_save_compare_df(building, building_result_path))
 
     # get chiller_T_tech_df df from all tech
@@ -36,8 +44,11 @@ def main(building, building_result_path, case):
     plot_chiller_temperatures_bar(chiller_T_all_tech_df, building, building_result_path)
     plot_chiller_temperatures_scatter(chiller_T_all_tech_df, building, building_result_path, case)
 
+
     # # plot T_SA, w_SA
     plot_el_compare(building, building_result_path, compare_df)
+    ## plot hourly COP vs SHR
+    plot_COP_SHR_scatter(hourly_cop_shr_dict, building, case, building_result_path)
 
     return
 
@@ -61,6 +72,21 @@ def plot_T_w_scatter(ax, compare_df):
     # plt.show()
     return np.nan
 
+def plot_COP_SHR_scatter(hourly_cop_shr_dict, building, case, building_result_path):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    color_codes = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3'}
+    for tech in hourly_cop_shr_dict.keys():
+        if 'status' not in tech:
+            COP = hourly_cop_shr_dict[tech]['COP']
+            SHR = hourly_cop_shr_dict[tech]['SHR']
+            color = color_codes[tech]
+            ax.scatter(SHR,COP,c=color)
+    ax.set(xlabel='SHR', ylabel='COP',ylim=(3,9),xlim=(0,1))
+    ax.set_title(building + '_' + case.split('_')[4] + '_' + case.split('_')[0], fontsize=16)
+    fig.savefig(path_to_save_cop_shr_scatter(building, building_result_path))
+    #plt.show()
+    return
 
 def get_chiller_T_from_all_techs(chiller_paths):
     i = 0
@@ -138,7 +164,7 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
     # format the plt
     plt.figure()
     case_name = case.split('_')[4]
-    plt.title(CASE_TABLE[case_name] + ' ' + building, fontsize=16)
+    plt.title(case.split('_')[0] + ' ' + CASE_TABLE[case_name] + ' ' + building, fontsize=16)
     # plt.xlabel('x')
 
     plt.xticks(x_values, x_labels_shown, fontsize=16)
@@ -302,15 +328,27 @@ def path_to_save_chw_scatter(building, building_result_path):
     path_to_file = os.path.join(building_result_path, filename)
     return path_to_file
 
+def path_to_save_cop_shr_scatter(building, building_result_path):
+    filename = building + '_shr_cop_scatter.png'
+    path_to_file = os.path.join(building_result_path, filename)
+    return path_to_file
+
 
 if __name__ == '__main__':
-    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    buildings = ["B005"]
+    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    #buildings = ["B003"]
     timestep = "168"
-    #cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_workstation'
-    # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    # cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
+    cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
+             "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
+             "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
+             "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    #cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
+    #cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
+    #cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
+    #cases = ['WTP_CBD_m_WP1_RET']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0515'
+    #result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
         case_folder = os.path.join(result_folder, case)
