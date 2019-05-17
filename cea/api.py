@@ -15,7 +15,7 @@ def register_scripts():
     def script_wrapper(cea_script):
         module_path = cea_script.module
         script_module = importlib.import_module(module_path)
-        
+
         def script_runner(config=config, **kwargs):
             option_list = cea_script.parameters
             config.restrict_to(option_list)
