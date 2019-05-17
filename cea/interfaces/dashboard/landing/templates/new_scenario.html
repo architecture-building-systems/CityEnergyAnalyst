@@ -120,7 +120,7 @@
                           <a href="#"><i class="fa fa-cog" onclick="openSettings('zone-helper')"></i></a>
                         </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district" disabled>
+                        <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district">
                         <label class="form-check-label" for="district">
                           District
                         </label>
@@ -128,7 +128,7 @@
                         <a href="#"><i class="fa fa-cog" onclick="openSettings('district-helper')"></i></a>
                       </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets" disabled>
+                        <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets">
                         <label class="form-check-label" for="streets">
                           Streets
                         </label>
@@ -136,7 +136,7 @@
                         <a href="#"><i class="fa fa-cog" onclick="openSettings('streets-helper')"></i></a>
                       </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain" disabled>
+                        <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain">
                         <label class="form-check-label" for="terrain">
                           Terrain
                         </label>
@@ -345,16 +345,6 @@
         $(document).ready(function(){
             $('[data-toggle="tooltip"]').tooltip();
 
-            if ($('#zone').prop('checked')) {
-                $('#district').prop('disabled', false);
-                $('#site-selector').css("display", "block");
-                $('#poly-string').prop('required', true);
-            } else {
-                $('#site-selector').css("display", "none");
-                $('#poly-string').prop('required', false)
-                    .val('');
-            }
-
             $('#new-scenario').on("submit", function(){
                 if($('#zone').prop('checked') || $('#district').prop('checked')
                     || $('#streets').prop('checked') || $('#terrain').prop('checked')) {
@@ -373,7 +363,6 @@
                     $('#site-selector').css("display", "none");
                     $('#poly-string').prop('required', false)
                         .val('');
-                    disableStreetTerrain();
                 }
 
                 if ($('#district').prop('checked')) {
@@ -419,6 +408,8 @@
             $('#location').keypress(function (e) {
                 if (e.which === 13 ) getLatLon();
             })
+
+             $('#data-tools').trigger('change');
         });
     </script>
 {% endblock javascripts %}
