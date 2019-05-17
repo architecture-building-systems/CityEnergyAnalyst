@@ -44,7 +44,7 @@ be achieved by:
     version_number = cea.__version__
 
 
-The NSIS installer (see section `Creating the installer for the planner's edition`_) uses the helper tool
+The NSIS installer (see section `Creating the installer`_) uses the helper tool
 ``setup/get_version.exe`` to extract the version and write it to the file ``setup/cea_version.txt`` - if importing
 :py:mod:`cea` is not an option, you could explore this avenue too...
 
@@ -73,13 +73,16 @@ Creating the installer
 - first, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
 - if the dependencies changed, you need to re-create the ``Dependencies.7z`` file and store it as a binary on the
   release.
+
   - Be sure to update the URL to ``Dependencies.7z`` in the file ``setup/cityenergyanalyst.nsi`` to the new release
   - To create the ``Dependencies.7z`` file, follow these steps:
+
     - create an empty folder called ``Dependencies``
     - locate the conda environment for the CEA (as created with ``environment.yml`` and copy it to the ``Dependencies``
       folder.
     - rename the environment folder to ``Python``
     - use the 7z_ program to compress the ``Dependencies`` folder to ``Dependencies.7z``
+
 - create the installer by right-clicking ``setup/cityenergyanalyst.nsi`` in Windows Explorer and choosing the "Compile
   NSIS Script" option.
 - upload the installer to the Release page.
