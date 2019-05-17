@@ -42,7 +42,7 @@ $(document).ready(function() {
         zoneLayer = new deck.GeoJsonLayer({
             id: 'zone',
             data: zoneJson,
-            opacity: 0.2,
+            opacity: 0.5,
             stroked: false,
             filled: true,
             extruded: true,
@@ -61,7 +61,7 @@ $(document).ready(function() {
         districtLayer = new deck.GeoJsonLayer({
             id: 'district',
             data: districtJson,
-            opacity: 0.2,
+            opacity: 0.5,
             stroked: false,
             filled: true,
             extruded: true,
