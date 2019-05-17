@@ -1,5 +1,8 @@
 var map;
-var geojson;
+var zoneJson;
+var districtJson;
+var zoneLayer;
+var districtLayer;
 /**
  * Zoom in on the map for the input...
  */
@@ -25,21 +28,47 @@ $(document).ready(function() {
     //             });
     //         }
     //     }).addTo(map)
-    $.getJSON('http://localhost:5050/inputs/geojson/zone', function(json) {
+    var getZone = $.getJSON('http://localhost:5050/inputs/geojson/zone', function(json) {
         console.log(json);
-        geojson = json;
-        const geojsonLayer = new deck.GeoJsonLayer({
-            data: geojson,
+        zoneJson = json;
+    });
+
+    var getDistrict = $.getJSON('http://localhost:5050/inputs/geojson/district', function(json) {
+        console.log(json);
+        districtJson = json;
+    });
+
+    $.when(getZone, getDistrict).done(function () {
+        zoneLayer = new deck.GeoJsonLayer({
+            id: 'zone',
+            data: zoneJson,
             opacity: 0.2,
             stroked: false,
             filled: true,
             extruded: true,
             wireframe: true,
-            fp64: true,
 
             getElevation: f => f.properties['height_ag'],
             getFillColor: f => [0, 0, 255],
-            getLineColor: f => [255, 255, 255],
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: updateTooltip,
+            onClick: editProperties
+        });
+
+        districtLayer = new deck.GeoJsonLayer({
+            id: 'district',
+            data: districtJson,
+            opacity: 0.2,
+            stroked: false,
+            filled: true,
+            extruded: true,
+            wireframe: true,
+
+            getElevation: f => f.properties['height_ag'],
+            getFillColor: f => [255, 0, 0],
 
             pickable: true,
             autoHighlight: true,
@@ -52,11 +81,11 @@ $(document).ready(function() {
             container: 'mapid',
             mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
             mapStyle: 'mapbox://styles/mapbox/streets-v11',
-            latitude: (geojson.bbox[1] + geojson.bbox[3]) / 2,
-            longitude: (geojson.bbox[0] + geojson.bbox[2]) / 2,
+            latitude: (zoneJson.bbox[1] + zoneJson.bbox[3]) / 2,
+            longitude: (zoneJson.bbox[0] + zoneJson.bbox[2]) / 2,
             zoom: 16,
             pitch: 45,
-            layers: [geojsonLayer]
+            layers: [zoneLayer, districtLayer]
         });
     });
 
@@ -69,6 +98,7 @@ $(document).ready(function() {
         $('#cea-table-data').val(JSON.stringify($('#cea-table').bootstrapTable('getData', false)));
         return true;
     });
+
 });
 
 
