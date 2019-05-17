@@ -346,12 +346,12 @@ default:
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
 
-- name: scenario-plots
-  label: scenario-plots
-  description: scenario-plots
-  interfaces: [cli]
-  module: cea.plots.scenario_plots
-  parameters: [scenario-plots]
+#- name: scenario-plots
+#  label: scenario-plots
+#  description: scenario-plots
+#  interfaces: [cli]
+#  module: cea.plots.scenario_plots
+#  parameters: [scenario-plots]
 
 - name: shapefile-to-excel
   label: shapefile-to-excel
