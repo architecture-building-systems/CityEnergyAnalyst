@@ -1,29 +1,63 @@
 var map;
-
+var geojson;
 /**
  * Zoom in on the map for the input...
  */
+
 $(document).ready(function() {
-    $.getJSON('http://localhost:5050/inputs/geojson/zone', function(geojson){
-        console.log(geojson.bbox);
-        bbox = L.latLng([
-            (geojson.bbox[1] + geojson.bbox[3]) / 2,
-            (geojson.bbox[0] + geojson.bbox[2]) / 2]);
-        map = L.map('mapid').setView(bbox, 16);
-        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-            {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
-        L.geoJSON(geojson, {
-            onEachFeature: function onEachFeature(feature, layer) {
-                layer.on('click', function (e) {
-                    console.log(e);
-                    console.log(e.target.feature.properties.Name);
-                    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
-                    var pk = e.target.feature.properties[pk_field];
-                    var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
-                    edit_row(row);
-                });
-            }
-        }).addTo(map)
+    // $.getJSON('http://localhost:5050/inputs/geojson/zone', function(geojson){
+    //     console.log(geojson.bbox);
+    //     bbox = L.latLng([
+    //         (geojson.bbox[1] + geojson.bbox[3]) / 2,
+    //         (geojson.bbox[0] + geojson.bbox[2]) / 2]);
+    //     map = L.map('mapid').setView(bbox, 16);
+    //     L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+    //         {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
+    //     L.geoJSON(geojson, {
+    //         onEachFeature: function onEachFeature(feature, layer) {
+    //             layer.on('click', function (e) {
+    //                 console.log(e);
+    //                 console.log(e.target.feature.properties.Name);
+    //                 var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
+    //                 var pk = e.target.feature.properties[pk_field];
+    //                 var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
+    //                 edit_row(row);
+    //             });
+    //         }
+    //     }).addTo(map)
+    $.getJSON('http://localhost:5050/inputs/geojson/zone', function(json) {
+        console.log(json);
+        geojson = json;
+        const geojsonLayer = new deck.GeoJsonLayer({
+            data: geojson,
+            opacity: 0.2,
+            stroked: false,
+            filled: true,
+            extruded: true,
+            wireframe: true,
+            fp64: true,
+
+            getElevation: f => f.properties['height_ag'],
+            getFillColor: f => [0, 0, 255],
+            getLineColor: f => [255, 255, 255],
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: updateTooltip,
+            onClick: editProperties
+        });
+
+        new deck.DeckGL({
+            container: 'mapid',
+            mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
+            mapStyle: 'mapbox://styles/mapbox/streets-v11',
+            latitude: (geojson.bbox[1] + geojson.bbox[3]) / 2,
+            longitude: (geojson.bbox[0] + geojson.bbox[2]) / 2,
+            zoom: 16,
+            pitch: 45,
+            layers: [geojsonLayer]
+        });
     });
 
     $('#cea-table').on('click-row.bs.table', function(e, row, $element, field) {
@@ -66,4 +100,27 @@ function cea_save_row_to_table() {
     }
     let pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
     $('#cea-table').bootstrapTable('updateByUniqueId', {uniqueId: row_being_edited[pk_field], row: row_being_edited});
+}
+
+function updateTooltip({x, y, object}) {
+    const tooltip = document.getElementById('tooltip');
+
+    if (object) {
+        tooltip.style.top = `${y}px`;
+        tooltip.style.left = `${x}px`;
+        tooltip.innerHTML = `
+        <div><b>Name</b></div>
+        <div><div>${object.properties.Name}</div></div>
+        `;
+    } else {
+        tooltip.innerHTML = '';
+    }
+}
+
+function editProperties({object}) {
+    console.log(object.properties.Name);
+    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
+    var pk = object.properties[pk_field];
+    var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
+    edit_row(row);
 }
