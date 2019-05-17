@@ -57,7 +57,6 @@ N_m_ve_max = 3
 
 
 def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
-
     start_t = get_start_t(case, timesteps)
     RH_max, RH_min = get_rh(case)
 
@@ -82,6 +81,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         output_df1 = pd.DataFrame()
         output_hcs = pd.DataFrame()
 
+
         ## output to building.lua
         # de-activate inf when no occupant
         # reduced_tsd_df.ix[output_df.people == 0, 'm_ve_inf'] = 0
@@ -96,6 +96,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['x_ve_inf']
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
+
+
 
         ## output to hcs_out
         # change units
@@ -168,8 +170,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
             input_T_df = pd.DataFrame()
             input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
             input_T_df['T_ext_C'] = reduced_tsd_df['T_ext']
-            input_T_df['T_dew_coil'] = 18 # 8 + 10
-            input_T_df['T_dew_iehx'] = T_iehx #
+            input_T_df['T_dew_coil'] = 18  # 8 + 10
+            input_T_df['T_dew_iehx'] = T_iehx  #
             T_iehx = T_iehx + dT_iehx
             input_T_df['T_dew_er0'] = T_ER0
             T_ER0 = T_ER0 + dT_ER0
@@ -276,6 +278,8 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
 ##  Paths (TODO: connected with cea.config and inputLocator)
 
 
+
+
 def path_to_demand_output(building_name, case):
     path_to_file = {}
     path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
@@ -311,6 +315,7 @@ def path_to_osmose_project_inputT(number):
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
+
 def get_start_t(case, timesteps):
     """
     WTP: 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
@@ -332,15 +337,17 @@ def get_start_t(case, timesteps):
 
     return start_t
 
+
 def get_rh(case):
-    RH_max_dict = {'WTP': 80, 'ABU': 70, 'HKG': 80, 'MDL':80}
-    RH_min_dict = {'WTP': 40, 'ABU': 30, 'HKG': 40, 'MDL':40}
+    RH_max_dict = {'WTP': 80, 'ABU': 70, 'HKG': 80, 'MDL': 80}
+    RH_min_dict = {'WTP': 40, 'ABU': 30, 'HKG': 40, 'MDL': 40}
     for key in RH_max_dict.keys():
         if key in case:
             RH_max = RH_max_dict[key]
             RH_min = RH_min_dict[key]
 
     return RH_max, RH_min
+
 
 if __name__ == '__main__':
     case = 'WTP_CBD_m_WP1_HOT'
