@@ -31,14 +31,21 @@ $(document).ready(function() {
     var getZone = $.getJSON('http://localhost:5050/inputs/geojson/zone', function(json) {
         console.log(json);
         zoneJson = json;
+    }).fail(function() {
+        console.log("Get zone failed.")
     });
 
     var getDistrict = $.getJSON('http://localhost:5050/inputs/geojson/district', function(json) {
         console.log(json);
         districtJson = json;
-    });
+    }).fail(function() {
+        console.log("Get district failed.")
+    }).done();
 
-    $.when(getZone, getDistrict).done(function () {
+    $.when(getZone, getDistrict).always(function () {
+        var layers = [];
+
+        if(zoneJson !== null) {
         zoneLayer = new deck.GeoJsonLayer({
             id: 'zone',
             data: zoneJson,
@@ -58,6 +65,10 @@ $(document).ready(function() {
             onClick: editProperties
         });
 
+        layers.push(zoneLayer)
+        };
+
+        if(districtJson !== null) {
         districtLayer = new deck.GeoJsonLayer({
             id: 'district',
             data: districtJson,
@@ -77,6 +88,9 @@ $(document).ready(function() {
             onClick: editProperties
         });
 
+        layers.push(districtLayer)
+        };
+
         new deck.DeckGL({
             container: 'mapid',
             mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
@@ -85,7 +99,7 @@ $(document).ready(function() {
             longitude: (zoneJson.bbox[0] + zoneJson.bbox[2]) / 2,
             zoom: 16,
             pitch: 45,
-            layers: [zoneLayer, districtLayer]
+            layers: layers
         });
     });
 
