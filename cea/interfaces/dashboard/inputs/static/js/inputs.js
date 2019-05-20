@@ -152,10 +152,11 @@ function updateTooltip({x, y, object}) {
     if (object) {
         tooltip.style.top = `${y}px`;
         tooltip.style.left = `${x}px`;
-        tooltip.innerHTML = `
-        <div><b>Name</b></div>
-        <div><div>${object.properties.Name}</div></div>
-        `;
+        var innerHTML = '';
+        for (prop in object.properties) {
+            innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`
+        }
+        tooltip.innerHTML = innerHTML
     } else {
         tooltip.innerHTML = '';
     }
