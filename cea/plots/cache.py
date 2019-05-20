@@ -15,13 +15,13 @@ import cPickle
 
 class NullPlotCache(object):
     """A dummy cache that doesn't cache anything - for comparing performance of PlotCache"""
-    def lookup(self, _, __, producer):
+    def lookup(self, data_path, plot, producer):
         return producer()
 
-    def lookup_plot_div(self, _, producer):
+    def lookup_plot_div(self, plot, producer):
         return producer()
 
-    def lookup_table_div(self, _, producer):
+    def lookup_table_div(self, plot, producer):
         return producer()
 
 class PlotCache(object):

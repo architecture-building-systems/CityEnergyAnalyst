@@ -10,6 +10,7 @@ import plotly.graph_objs as go
 from cea.plots.variable_naming import NAMING, COLOR
 from cea.constants import HOURS_IN_YEAR
 
+
 class LoadDurationCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
     """Implement the load-duration-curve-supply plot"""
     name = "Load Duration Curve Supply"
