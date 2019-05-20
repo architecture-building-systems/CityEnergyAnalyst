@@ -5,6 +5,7 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 from __future__ import division
 from __future__ import print_function
 import os
+import jinja2
 import plotly.graph_objs
 import plotly.offline
 import cea.inputlocator
@@ -89,12 +90,21 @@ class PlotBase(object):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
         raise NotImplementedError('Subclass needs to implement calc_graph for plot!')
 
+    def calc_table(self):
+        """Calculates a pandas.Dataframe to display as table."""
+        raise NotImplementedError('This plot has no table')
+
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
-        graph = self.calc_graph()
-        layout = self.layout
-        fig = plotly.graph_objs.Figure(data=graph, layout=layout)
-        plotly.offline.plot(fig, auto_open=auto_open, filename=self.output_path)
+        # PLOT
+        template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
+        template = jinja2.Template(open(template_path, 'r').read())
+        maps_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title,
+                                    header_values=[], cells_values=[])
+        print('Writing output to: %s' % self.output_path)
+        with open(self.output_path, 'w') as f:
+            f.write(maps_html)
+
         print("Plotted %s to %s" % (self.name, self.output_path))
 
     def plot_div(self):
@@ -105,6 +115,17 @@ class PlotBase(object):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
+
+    def table_div(self):
+        """Returns the html div for a table, or an empty string if no table is to be produced"""
+        return self.cache.lookup_table_div(self, self._table_div_producer)
+
+    def _table_div_producer(self):
+        try:
+            table_df = self.calc_table()
+            return table_df.to_html()
+        except NotImplementedError:
+            return ''
 
     @classmethod
     def get_default_parameters(cls, config):
