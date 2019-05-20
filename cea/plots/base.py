@@ -99,11 +99,10 @@ class PlotBase(object):
         # PLOT
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
         template = jinja2.Template(open(template_path, 'r').read())
-        maps_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title,
-                                    header_values=[], cells_values=[])
+        plot_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title)
         print('Writing output to: %s' % self.output_path)
         with open(self.output_path, 'w') as f:
-            f.write(maps_html)
+            f.write(plot_html)
 
         print("Plotted %s to %s" % (self.name, self.output_path))
 
@@ -121,9 +120,13 @@ class PlotBase(object):
         return self.cache.lookup_table_div(self, self._table_div_producer)
 
     def _table_div_producer(self):
+        """Default producer for table divs (override if you need more control)"""
         try:
             table_df = self.calc_table()
-            return table_df.to_html()
+            template_path = os.path.join(os.path.dirname(__file__), 'table.html')
+            template = jinja2.Template(open(template_path, 'r').read())
+            table_html = template.render(table_df=table_df)
+            return table_html
         except NotImplementedError:
             return ''
 
