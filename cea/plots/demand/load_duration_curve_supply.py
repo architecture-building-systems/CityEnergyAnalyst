@@ -4,14 +4,14 @@ Implements the Load Duration Curve Supply plot.
 from __future__ import division
 from __future__ import print_function
 
-import cea.plots.demand
+import cea.plots.demand.load_duration_curve
 import plotly.graph_objs as go
 
 from cea.plots.variable_naming import NAMING, COLOR
 from cea.constants import HOURS_IN_YEAR
 
 
-class LoadDurationCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
+class LoadDurationCurveSupplyPlot(cea.plots.demand.load_duration_curve.LoadDurationCurvePlot):
     """Implement the load-duration-curve-supply plot"""
     name = "Load Duration Curve Supply"
 
@@ -47,7 +47,15 @@ if __name__ == '__main__':
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     buildings = config.plots.buildings
+    cache = cea.plots.cache.PlotCache(config.project)
+    # cache = cea.plots.cache.NullPlotCache()
 
-    LoadDurationCurveSupplyPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    LoadDurationCurveSupplyPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    LoadDurationCurveSupplyPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    LoadDurationCurveSupplyPlot(config.project, {'buildings': None,
+                                                 'scenario-name': config.scenario_name},
+                                cache).plot(auto_open=True)
+    LoadDurationCurveSupplyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                                 'scenario-name': config.scenario_name},
+                                cache).plot(auto_open=True)
+    LoadDurationCurveSupplyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                                 'scenario-name': config.scenario_name},
+                                cache).plot(auto_open=True)
