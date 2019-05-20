@@ -58,7 +58,7 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
         anchors = []
         load_names = []
         for field in self.analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            anchors.append(', '.join(calc_top_three_anchor_loads(data_frame, field)))
             load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
 
         column_names = ['Load Name', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 Consumers']
@@ -132,7 +132,8 @@ if __name__ == '__main__':
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    cache = cea.plots.cache.PlotCache(config.project)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
 
     EnergyDemandDistrictPlot(config.project, {'buildings': None,
                                               'scenario-name': config.scenario_name},
