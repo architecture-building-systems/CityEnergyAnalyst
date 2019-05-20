@@ -39,6 +39,27 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
             graph.append(trace)
         return graph
 
+    def calc_table(self):
+        # calculate variables for the analysis
+        load_peak = self.data[self.analysis_fields].max().round(2).tolist()
+        load_total = (self.data[self.analysis_fields].sum() / 1000).round(2).tolist()
+
+        # calculate graph
+        load_utilization = []
+        load_names = []
+        # data = ''
+        duration = range(HOURS_IN_YEAR)
+        x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+        for field in self.analysis_fields:
+            data_frame_new = self.data.sort_values(by=field, ascending=False)
+            y = data_frame_new[field].values
+            load_utilization.append(evaluate_utilization(x, y))
+            load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
+        column_names = ['Load Name', 'Peak Load [kW]', 'Yearly Demand [MWh]', 'Utilization [-]']
+        column_data = [load_names, load_peak, load_total, load_utilization]
+        table_df = pd.DataFrame({cn: cd for cn, cd in zip(column_names, column_data)}, columns=column_names)
+        return table_df
+
 
 def load_duration_curve(data_frame, analysis_fields, title, output_path):
 
@@ -113,7 +134,15 @@ if __name__ == '__main__':
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    cache = cea.plots.cache.PlotCache(config.project)
+    # cache = cea.plots.cache.NullPlotCache()
 
-    LoadDurationCurvePlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    LoadDurationCurvePlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    LoadDurationCurvePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    LoadDurationCurvePlot(config.project, {'buildings': None,
+                                           'scenario-name': config.scenario_name},
+                          cache).plot(auto_open=True)
+    LoadDurationCurvePlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                           'scenario-name': config.scenario_name},
+                          cache).plot(auto_open=True)
+    LoadDurationCurvePlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                           'scenario-name': config.scenario_name},
+                          cache).plot(auto_open=True)
