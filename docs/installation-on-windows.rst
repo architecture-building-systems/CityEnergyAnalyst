@@ -5,15 +5,16 @@ Installation guide for Windows
 
 Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows system (tested with Windows 10).
 
-1. `Download the latest version of CEA (2.13.5a1) in here`_.
-    Note: For previous releases please check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
-    Note: To install from the source check :doc:`here <installation-on-windows-manual>`
-
-.. _`Download the latest version of CEA (2.13.5a1) in here` : https://cityenergyanalyst.com/tryit
-
+1. `Download the latest version of CEA (2.14) here`_.
 2. Open the installer and follow the instructions
-    Note: For installing the development version of CEA, tick the box "development version" during the installation.
 
+.. _`Download the latest version of CEA (2.14) here`: https://cityenergyanalyst.com/tryit
+
+.. note:: For installing the development version of CEA, tick the box "development version" during the installation.
+
+.. note:: For previous releases please check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
+
+.. note:: To install from the source check :doc:`here <installation-on-windows-manual>`
 
 Interfaces
 ~~~~~~~~~~
