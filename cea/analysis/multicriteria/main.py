@@ -45,12 +45,12 @@ def multi_criteria_main(locator, config):
     generation = config.multi_criteria.generations
     category = "optimization-detailed"
 
+    # TODO: this part is redundant for DH, check if that is true for DC
     # get path to data of the generation specified
     # if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
     #     data_address = locating_individuals_in_generation_script(generation, locator)
     # else:
     #     data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
-
     data_address = create_data_address_file(locator, generation)
 
     # initialize class
@@ -80,14 +80,14 @@ def multi_criteria_main(locator, config):
                 compiled_data_df.loc[i][name] = data_processed[name][0]
         compiled_data_df = compiled_data_df.assign(individual=individual_list)
 
-    ## normalize data
+    # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
-
+    # rank data
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
     compiled_data_df['emissions_rank'] = compiled_data_df['normalized_emissions'].rank(ascending=True)
     compiled_data_df['prim_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)
 
-    # user defined mcda
+    ## user defined mcda
     compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
                                  compiled_data_df['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
                                  compiled_data_df['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
