@@ -100,11 +100,10 @@ class PlotBase(object):
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
         template = jinja2.Template(open(template_path, 'r').read())
         plot_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title)
-        print('Writing output to: %s' % self.output_path)
         with open(self.output_path, 'w') as f:
             f.write(plot_html)
 
-        print("Plotted %s to %s" % (self.name, self.output_path))
+        print("Plotted '%s' to %s" % (self.name, self.output_path))
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
