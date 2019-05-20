@@ -15,7 +15,10 @@ import cPickle
 
 class NullPlotCache(object):
     """A dummy cache that doesn't cache anything - for comparing performance of PlotCache"""
-    def lookup(self, data_path, plot, producer):
+    def lookup(self, _, __, producer):
+        return producer()
+
+    def lookup_plot_div(self, _, producer):
         return producer()
 
 
@@ -35,6 +38,10 @@ class PlotCache(object):
     def _cached_div_file(self, plot):
         data_path = os.path.join(plot.category_name, plot.id())
         return self._cached_data_file(data_path, plot.parameters) + '.div'
+
+    def _cached_table_file(self, plot):
+        data_path = os.path.join(plot.category_name, plot.id())
+        return self._cached_data_file(data_path, plot.parameters) + '.table.div'
 
     def lookup(self, data_path, plot, producer):
         cache_timestamp = self.cache_timestamp(self._cached_data_file(data_path, plot.parameters))
@@ -58,6 +65,23 @@ class PlotCache(object):
             with open(div_file, 'r') as div_fp:
                 plot_div = div_fp.read()
         return plot_div
+
+    def lookup_table_div(self, plot, producer):
+        """Lookup the cache of a table created with plot.table_div()"""
+        div_file = self._cached_table_file(plot)
+        cache_timestamp = self.cache_timestamp(div_file)
+        if cache_timestamp < self.newest_dependency(plot.input_files):
+            table_div = producer()
+            folder = os.path.dirname(div_file)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            with open(div_file, 'w') as div_fp:
+                div_fp.write(table_div)
+        else:
+            print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
+            with open(div_file, 'r') as div_fp:
+                table_div = div_fp.read()
+        return table_div
 
     def cache_timestamp(self, path):
         """Return a timestamp (like ``os.path.getmtime``) to compare to. Returns 0 if there is no data in the cache"""
