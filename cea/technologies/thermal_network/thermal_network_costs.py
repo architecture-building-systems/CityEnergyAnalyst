@@ -94,7 +94,7 @@ def calc_Ctot_network_pump(network_info):
     mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
     # read in total pressure loss in kW
-    deltaP_kW = pd.read_csv(network_info.locator.get_ploss('', network_type))
+    deltaP_kW = pd.read_csv(network_info.locator.get_thermal_network_layout_pressure_drop_kw_file(network_type,''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
     Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
@@ -622,4 +622,4 @@ def main(config):
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration(), 0)
+    main(cea.config.Configuration())
