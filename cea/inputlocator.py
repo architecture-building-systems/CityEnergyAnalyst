@@ -248,8 +248,13 @@ class InputLocator(object):
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_results_folder(),
-                            'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+        if 'Network_summary_result_' in key:
+            path = os.path.join(self.get_optimization_network_results_folder(), key)
+        else:
+            path = os.path.join(self.get_optimization_network_results_folder(),
+                                'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+        return path
+
 
     def get_optimization_network_all_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
