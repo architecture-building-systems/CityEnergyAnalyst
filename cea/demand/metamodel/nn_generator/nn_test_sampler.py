@@ -29,7 +29,7 @@ from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 from geopandas import GeoDataFrame as Gdf
 
 def sampling_single(locator, random_variables, target_parameters, list_building_names, config,
-                    nn_delay, climatic_variables, year, use_daysim_radiation,use_stochastic_occupancy):
+                    nn_delay, climatic_variables, year,use_stochastic_occupancy):
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
 
@@ -72,7 +72,7 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
     #   prepare the inputs for feeding into the neural network
     urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                 nn_delay, climatic_variables, year,
-                                                                use_daysim_radiation,use_stochastic_occupancy)
+                                                                use_stochastic_occupancy)
 
     return urban_input_matrix, urban_taget_matrix
 
@@ -87,7 +87,6 @@ def main(config):
                                                              nn_delay=config.neural_network.nn_delay,
                                                              climatic_variables=config.neural_network.climatic_variables,
                                                              year=config.neural_network.year,
-                                                             use_daysim_radiation=settings.use_daysim_radiation,
                                                              use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
