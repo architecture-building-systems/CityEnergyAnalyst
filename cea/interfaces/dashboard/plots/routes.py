@@ -204,7 +204,11 @@ def route_div(dashboard_index, plot_index):
         plot = load_plot(dashboard_index, plot_index)
     except Exception as ex:
         return abort(500, ex)
-    return make_response(plot.plot_div(), 200)
+    if not plot.missing_input_files():
+        return make_response(plot.plot_div(), 200)
+    else:
+        return render_template('missing_input_files.html',
+                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()])
 
 
 def load_plot(dashboard_index, plot_index):

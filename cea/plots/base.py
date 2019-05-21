@@ -48,9 +48,11 @@ class PlotBase(object):
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
+        result = []
         for locator_method, args in self.input_files:
             if not os.path.exists(locator_method(*args)):
-                yield (locator_method, args)
+                result.append((locator_method, args))
+        return result
 
     @property
     def locator(self):
