@@ -353,8 +353,8 @@ def preprocessing_cost_data_DC(locator, data_raw, individual, generations, data_
         data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
         # Network costs
-        network_features = network_opt.network_opt_main(config, locator)
-        network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(DCN_barcode)
+        network_features = network_opt.network_opt_main(config, locator) # TODO: check if it is using the latest run of result, if yes, it is wrong
+        network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(DCN_barcode)  # FIXME: what does this mean?
         data_costs['Network_costs_USD'] = network_costs_a_USD
         Inv_IR = 0.05
         Inv_LT = 20
