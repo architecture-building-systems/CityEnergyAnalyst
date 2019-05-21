@@ -1,0 +1,29 @@
+<div class="modal-header">
+  <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+  </button>
+  <h3 class="modal-title">Rename Dashboard</h3>
+</div>
+
+<div class="modal-body">
+  <form id="cea-rename-dashboard" class="form-horizontal" method="post" action="rename/{{ dashboard_index }}">
+    <div class="form-group">
+      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-dashboard-name">New Name</label>
+      <div class="col-md-6 col-sm-6 col-xs-12">
+        <input type="text" id="dashboard-name" name="new-name" required
+               class="form-control col-md-7 col-xs-12" value="{{ dashboard_name }}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-dashboard-name">New Description</label>
+      <div class="col-md-6 col-sm-6 col-xs-12">
+        <input type="text" id="dashboard-description" name="new-description"
+               class="form-control col-md-7 col-xs-12" value="{{ dashboard_description }}">
+      </div>
+    </div>
+    <br>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      <button type="submit" class="btn btn-default">Rename</button>
+    </div>
+  </form>
+</div>

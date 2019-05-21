@@ -1,0 +1,91 @@
+{% extends "base_site.html" %}
+
+{% block title %} Project Overview {% endblock title %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('landing_blueprint.static', filename='landing.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+    <!-- show the open prompt dialog -->
+    <div class="modal fade" id="cea-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="row">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title" align="center">
+                            <h1>{{ project_name }}</h1>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <button class="btn btn-success btn-block" onclick="window.location.href='{{ url_for('landing_blueprint.route_create_scenario') }}'">
+                                <i class="fa fa-plus"></i> Create new Scenario
+                            </button>
+                            {% for scenario in scenarios %}
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title pull-left">
+                                            {{ scenario }}
+                                        </h3>
+                                        {# TODO: Maybe change onclick to Javascript implementation #}
+                                        <button class="btn btn-primary pull-right" onclick="window.location.href='{{ url_for('landing_blueprint.route_open_project_scenario', scenario=scenario) }}'">Open</button>
+                                        <div class="btn-group pull-right">
+                                          <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Edit <span class="caret"></span>
+                                          </button>
+                                          <ul class="dropdown-menu">
+                                            <li><a href="#">Rename</a></li>
+                                            <li><a href="#">Duplicate</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#" style="color: red" onclick="openSettings('{{ scenario }}', 'delete')">Delete</a></li>
+                                          </ul>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                      </div>
+                                    <div class="panel-body">
+                                        <div class="col-lg-2" style="min-width: 300px;">
+                                            <div class="image-placeholder">
+                                                <h4>Image of Scenario</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-8">
+                                            <h3>Description</h3>
+                                            <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                                                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                                                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+                                                reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                                                pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
+                                                qui officia deserunt mollit anim id est laborum.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+{% block javascripts %}
+  {{ super()}}
+  <script>
+    function openSettings(scenario, func) {
+        $.get('project-overview/' + scenario + '/' + func, {}, function(html) {
+            $('#cea-prompt .modal-content').html(html);
+            $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+        });
+    }
+  </script>
+{% endblock javascripts %}

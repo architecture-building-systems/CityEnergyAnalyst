@@ -1,0 +1,416 @@
+{% extends "landing.html" %}
+
+{% block title %} New Scenario {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('tools_blueprint.static', filename='tools.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+        integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+        crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+          integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+          crossorigin=""></script>
+{% endblock stylesheets %}
+
+{% block body %}
+    <!-- show the open file dialog -->
+    <div class="modal fade" id="cea-file-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template file_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- show the open folder dialog -->
+    <div class="modal fade" id="cea-folder-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- see template folder_listing.html for contents -->
+
+            </div>
+        </div>
+    </div>
+
+      <!-- show the open tool settings dialog -->
+    <div class="modal fade" id="cea-script-settings" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+                </button>
+                <h2 class="modal-title" id="script-title"></h2>
+              </div>
+              <div class="modal-body">
+
+                  <!--  -->
+
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- show the open loading dialog -->
+    <div class="modal fade" id="cea-loading" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-body">
+                <h2>Running Data management tools...</h2>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="landing-box">
+        <div class="landing">
+            <h2>New Scenario<br/><small>Current Project: {{ project_name }}</small></h2>
+            <br>
+            <form id="new-scenario" data-parsley-validate class="form-horizontal form-label-left" method="post"
+                  action="{{ url_for('landing_blueprint.route_create_scenario_save') }}" onsubmit="polyToString()">
+                {# FIXME: Check for unneeded props and attr, this is from project/project.html #}
+                {# TODO: Maybe check for space in name or if it already exists #}
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="scenario-name">Scenario Name</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+
+                        <input id="scenario-name" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                               name="scenario-name" type="text" value="baseline" placeholder="Name of the scenario" required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="description">Description</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        {# FIXME: Change placeholder when config allows tracking of description #}
+                        <textarea id="description" style="max-width: 100%;min-width: 100%" class="form-control cea-parameter" data-cea-parameter-typename="StringParameter"
+                                  name="description" type="text" placeholder="Enter a description for this scenario Does not work yet"></textarea>
+                    </div>
+                </div>
+
+              <h2>Input data</h2>
+              <br/>
+
+              <div class="form-group">
+                <div class="col-md-9 col-sm-9 col-xs-12">
+                  <label>
+                    <input type="radio" name="input-files" value="generate" checked>Generate new input files<br>
+                    {% if scenarios|length > 0 %}
+                      <input type="radio" name="input-files" value="copy">Copy from other scenarios in the project.<br>
+                    {% endif %}
+                    <input type="radio" name="input-files" value="import">Import input files<br>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group" id="data-tools">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="helper-tools">Data Management Tools</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12" id="helper-tools">
+                      {# TODO: Could recreate this portion using loop #}
+                      {# TODO: Get helper file descriptions from scripts.yml #}
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="tools" value="zone-helper" id="zone" checked>
+                          <label class="form-check-label" for="zone">
+                            Zone
+                          </label>
+                          <i class="fa fa-info-circle" data-toggle="tooltip" title="Query zone geometry from Open Street Maps"></i>
+                          <a href="#"><i class="fa fa-cog" onclick="openSettings('zone-helper')"></i></a>
+                        </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district">
+                        <label class="form-check-label" for="district">
+                          District
+                        </label>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query district geometry from Open Street Maps. Requires zone file."></i>
+                        <a href="#"><i class="fa fa-cog" onclick="openSettings('district-helper')"></i></a>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets">
+                        <label class="form-check-label" for="streets">
+                          Streets
+                        </label>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Query streets geometry from Open Street Maps. Requires zone and district file."></i>
+                        <a href="#"><i class="fa fa-cog" onclick="openSettings('streets-helper')"></i></a>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain">
+                        <label class="form-check-label" for="terrain">
+                          Terrain
+                        </label>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Creates a fixed elevation terrain file. Requires zone and district file."></i>
+                        <a href="#"><i class="fa fa-cog" onclick="openSettings('terrain-helper')"></i></a>
+                      </div>
+                    </div>
+                </div>
+
+
+              <div id="site-selector" class="well">
+                <input type="text" name="poly-string" id="poly-string" hidden>
+                <h3>Select an area in the map for the zone file</h3>
+                <small>Navigate to an area using a location or coordinates.</small>
+                  <div class="form-group" id="location-form">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                      <label class="control-label" for="longitude">Location</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Enter a location"
+                               id="location">
+                        <div class="input-group-btn">
+                          <button class="btn" type="button" onclick="getLatLon()">Go</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group" id="lat-long">
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                      <label class="control-label" for="latitude">Latitude</label>
+                      <input type="text" class="form-control" placeholder="Latitude"
+                             id="latitude" name="latitude" value="">
+                    </div>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                      <label class="control-label" for="longitude">Longitude</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Longitude"
+                               id="longitude" name="longitude" value="">
+                        <div class="input-group-btn">
+                          <button class="btn" type="button" onclick="goToLocation();getLocation()">Go</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <small>Click on the map to create points around the area to form a polygon.</small>
+                <div style="text-align: center">
+                  <div id="mapid" style="width: 600px; height: 400px; display: inline-block;"></div>
+                  <button type="button" onclick="removePoly()">Clear</button>
+                </div>
+              </div>
+
+              <div id="import-files" hidden>
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="zone">zone</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to geometry of the zone"
+                             id="zone" name="zone" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:zone')">...</button>
+                      </div>
+                    </div>
+                    <small id="zone-help" class="form-text text-muted">Path to geometry of the zone</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="terrain">terrain</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to the digital elevation model"
+                             id="terrain" name="terrain" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:terrain')">...</button>
+                      </div>
+                    </div>
+                    <small id="terrain-help" class="form-text text-muted">Path to the digital elevation model</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="streets">streets</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to street geometry."
+                             id="streets" name="streets" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:streets')">...</button>
+                      </div>
+                    </div>
+                    <small id="streets-help" class="form-text text-muted">Path to street geometry.</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="district">district</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to geometry of zone and surroundings. Leave empty if you do not want to consider shading effects."
+                             id="district" name="district" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:district')">...</button>
+                      </div>
+                    </div>
+                    <small id="district-help" class="form-text text-muted">Path to geometry of zone and surroundings. Leave empty if you do not want to consider shading effects.</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="occupancy">occupancy</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to occupancy database. Leave empty for CEA to create one for you."
+                             id="occupancy" name="occupancy" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:occupancy')">...</button>
+                      </div>
+                    </div>
+                    <small id="occupancy-help" class="form-text text-muted">Path to occupancy database. Leave empty for CEA to create one for you.</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="age">age</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+
+                    <div class="input-group">
+                      <input type="text" class="form-control cea-parameter" value="" placeholder="Path to age database. Leave empty for CEA to create one for you."
+                             id="age" name="age" data-cea-parameter-typename="FileParameter">
+                      <div class="input-group-btn">
+                        <button class="btn btn-file-parameter" type="button"
+                                onclick="show_open_file_dialog('create-new-project:age')">...</button>
+                      </div>
+                    </div>
+                    <small id="age-help" class="form-text text-muted">Path to age database. Leave empty for CEA to create one for you.</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" id="select-scenario" hidden>
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="other-scenario">Scenarios in project</label>
+                <div class="col-md-6 col-sm-6 col-xs-12">
+                  <select id="scenario" name="scenario" class="form-control">
+                    {% for scenario in scenarios %}
+                      <option>{{ scenario }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+
+                <div class="form-group">
+                    <div style="text-align: center;">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-default" onclick="goBack()">Back</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% block javascripts %}
+  {{ super()}}
+    <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+    <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script src="{{ url_for('.static', filename='landing_map.js') }}"></script>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        function openSettings(script) {
+            $.get('create-scenario/' + script + '/settings', {}, function(html) {
+                $('#cea-script-settings .modal-body').html(html);
+                $('#cea-script-settings').modal({'show': true, 'backdrop': 'static'});
+                $('#cea-script-settings #script-title').text(script);
+            });
+        }
+
+        function closeSettings() {
+            $('#cea-script-settings').modal('hide');
+        }
+
+        function enableStreetTerrain() {
+            $('#streets').prop('disabled', false);
+            $('#terrain').prop('disabled', false);
+        }
+
+        function disableStreetTerrain() {
+            $('#streets').prop('disabled', true)
+                .prop('checked', false);
+            $('#terrain').prop('disabled', true)
+                .prop('checked', false);
+        }
+
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('#new-scenario').on("submit", function(){
+                if($('#zone').prop('checked') || $('#district').prop('checked')
+                    || $('#streets').prop('checked') || $('#terrain').prop('checked')) {
+                    $('#cea-loading').modal({'show': true, 'backdrop': 'static'});
+                }
+            });
+
+            $('#data-tools').change(function () {
+                if ($('#zone').prop('checked')) {
+                    $('#district').prop('disabled', false);
+                    $('#site-selector').css("display", "block");
+                    $('#poly-string').prop('required', true);
+                } else {
+                    $('#district').prop('disabled', true)
+                        .prop('checked', false);
+                    $('#site-selector').css("display", "none");
+                    $('#poly-string').prop('required', false)
+                        .val('');
+                }
+
+                if ($('#district').prop('checked')) {
+                    enableStreetTerrain();
+                } else {
+                    disableStreetTerrain();
+                }
+            });
+
+            $('input[type=radio][name=input-files]').change(function() {
+                if (this.value === 'copy') {
+                    $('#select-scenario').show();
+                }
+                else {
+                    $('#select-scenario').hide();
+                }
+                if (this.value === 'generate') {
+                    $('#data-tools').show();
+                    $('#zone').prop('checked', true)
+                        .trigger('change');
+                }
+                else {
+                    $('#data-tools').hide();
+                    $('#zone').prop('checked', false)
+                        .trigger('change');
+                }
+                if (this.value === 'import') {
+                    $('#import-files').show();
+                }
+                else {
+                    $('#import-files').hide();
+
+                }
+            });
+
+            $(window).unload(function(){
+                $('#cea-loading').modal('hide');
+            });
+
+            $('#new-scenario').keypress(function (e) {
+                return e.which !== 13;
+            });
+            $('#location').keypress(function (e) {
+                if (e.which === 13 ) getLatLon();
+            })
+
+             $('#data-tools').trigger('change');
+        });
+    </script>
+{% endblock javascripts %}
+{% endblock body %}
