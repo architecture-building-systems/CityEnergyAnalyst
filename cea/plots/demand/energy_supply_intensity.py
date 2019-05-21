@@ -50,13 +50,15 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
             return traces
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-
     EnergySupplyIntensityPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
     EnergySupplyIntensityPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
     EnergySupplyIntensityPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()

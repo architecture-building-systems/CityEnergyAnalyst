@@ -6,6 +6,15 @@ from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 import cea.plots.demand
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "2.8"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Peak Load"
@@ -34,17 +43,6 @@ class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
             trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
         return traces
-
-
-
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
-__license__ = "MIT"
-__version__ = "2.8"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
 
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):
@@ -103,13 +101,24 @@ def diversity_factor(data_frame_timeseries, data_frame_totals, analysis_fields, 
     plot(fig, auto_open=False, filename=output_path)
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
 
-    PeakLoadCurvePlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    PeakLoadCurvePlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    PeakLoadCurvePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    PeakLoadCurvePlot(config.project, {'buildings': None,
+                                       'scenario-name': config.scenario_name},
+                      cache).plot(auto_open=True)
+    PeakLoadCurvePlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                       'scenario-name': config.scenario_name},
+                      cache).plot(auto_open=True)
+    PeakLoadCurvePlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                       'scenario-name': config.scenario_name},
+                      cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()

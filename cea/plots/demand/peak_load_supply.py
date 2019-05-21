@@ -95,13 +95,24 @@ def diversity_factor(data_frame_timeseries, data_frame_totals, analysis_fields, 
     plot(fig, auto_open=False, filename=output_path)
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
 
-    PeakLoadSupplyPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    PeakLoadSupplyPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    PeakLoadSupplyPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    PeakLoadSupplyPlot(config.project, {'buildings': None,
+                                        'scenario-name': config.scenario_name},
+                       cache).plot(auto_open=True)
+    PeakLoadSupplyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                        'scenario-name': config.scenario_name},
+                       cache).plot(auto_open=True)
+    PeakLoadSupplyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                        'scenario-name': config.scenario_name},
+                       cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()
