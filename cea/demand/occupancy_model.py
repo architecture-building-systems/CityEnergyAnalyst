@@ -670,7 +670,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
 
-    building_properties = BuildingProperties(locator, True, False)
+    building_properties = BuildingProperties(locator, True)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
