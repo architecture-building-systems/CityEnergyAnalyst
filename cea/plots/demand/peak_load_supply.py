@@ -40,8 +40,6 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
         return traces
 
 
-
-
 def peak_load_building(data_frame, analysis_fields, title, output_path):
     # CREATE FIRST PAGE WITH TIMESERIES
     traces = []
