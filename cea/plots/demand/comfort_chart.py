@@ -533,17 +533,19 @@ def calc_constant_rh_curve(t_array, rh, p):
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
 
+def main():
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
+
+    ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
+                                      'scenario-name': config.scenario_name},
+                     cache).plot(auto_open=True)
+
+
 if __name__ == '__main__':
-    def main():
-        import cea.config
-        import cea.inputlocator
-
-        config = cea.config.Configuration()
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        # cache = cea.plots.cache.PlotCache(config.project)
-        cache = cea.plots.cache.NullPlotCache()
-
-        ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
-                                          'scenario-name': config.scenario_name},
-                         cache).plot(auto_open=True)
     main()
