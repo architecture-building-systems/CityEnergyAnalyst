@@ -117,7 +117,9 @@ class DemandPlotBase(cea.plots.PlotBase):
 
     @property
     def data(self):
-        return self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+        if not hasattr(self, '_data'):
+            self._data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+        return self._data
 
     @property
     def title(self):
