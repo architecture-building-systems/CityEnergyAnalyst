@@ -4,6 +4,7 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 import os
 import cea
 
+
 class CeaScript(object):
     def __init__(self, script_dict, category):
         self.name = script_dict['name']

@@ -1,13 +1,14 @@
 from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify
 
-import os
+import os, shutil
+import json
 import geopandas
 from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 import cea.inputlocator
+import cea.api
 import cea.scripts
-from . import worker
 
 blueprint = Blueprint(
     'landing_blueprint',
@@ -33,8 +34,8 @@ def route_create_project():
 
 @blueprint.route('/create-scenario')
 def route_create_scenario():
-    # TODO: Could add some preprocessing steps
-    return render_template('new_scenario.html')
+    scenarios = get_scenarios(current_app.cea_config.project)
+    return render_template('new_scenario.html', scenarios=scenarios)
 
 
 @blueprint.route('/project-overview')
@@ -48,87 +49,86 @@ def route_project_overview():
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
 
 
-@blueprint.route('/create-zone')
-def route_create_zone():
-    scenario = request.args['scenario']
-    return render_template('project_map.html', scenario=scenario)
+@blueprint.route('/project-overview/<scenario>/<func>')
+def route_project_overview_function(scenario, func):
+    if func == 'delete':
+        return render_template('modal/delete_scenario.html', scenario=scenario)
 
 
-@blueprint.route('/create-poly', methods=['POST'])
-def route_poly_creator():
-    # Get polygon points and create .shp file
-    data = request.get_json()
-    poly = shape(data['geometry'])
-    poly = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(), geometry=[poly])
-
+@blueprint.route('/project-overview/delete/<scenario>', methods=['POST'])
+def route_delete_scenario(scenario):
     cea_config = current_app.cea_config
-    # Save current scenario name
-    temp = cea_config.scenario_name
-    cea_config.scenario_name = request.args['scenario']
-    scenario_path = cea_config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path)
-    poly_path = locator.get_site_polygon()
-
-    poly.to_file(poly_path)
-    print('site.shp file created at %s' % poly_path)
-
-    # FIXME: THIS IS A HACK, refactor this! This emulates tool/start/script to run zone_helper.py
-    ###########################################
-    form = {
-        'scenario': scenario_path,
-        'height-ag': '',
-        'floors-ag': '',
-        'year-construction': 2000,
-        'height-bg': 3,
-        'floors-bg': 1,
-        'occupancy - type': 'MULTI_RES'
-    }
-
-    kwargs = {}
-    script = 'zone-helper'
-    print('/start/%s' % script)
-    parameters = [p for _, p in cea_config.matching_parameters(cea.scripts.by_name(script).parameters)]
-    for parameter in parameters:
-        print('%s: %s' % (parameter.name, form.get(parameter.name)))
-        kwargs[parameter.name] = parameter.decode(form.get(parameter.name))
-    current_app.workers[script] = worker.main(script, **kwargs)
-    ##########################################
-    cea_config.scenario_name = temp
-
-    return jsonify(dict(redirect='/landing/project-overview'))
+    scenario_path = os.path.join(cea_config.project, scenario)
+    shutil.rmtree(scenario_path)
+    cea_config.scenario_name = ''
+    return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
 @blueprint.route('/create-project/save', methods=['POST'])
 def route_create_project_save():
-    # FIXME: Cannot create new project if current project in config does not exist
-    cea_config = current_app.cea_config
-    # FIXME: A scenario will created based on the current scenario of the config
-    cea_config.scenario_name = 'baseline'
-    cea_config.project = os.path.join(request.form.get('projectPath'), request.form.get('projectName'))
-
     # Make sure that the project folder exists
+    project_path = os.path.join(request.form.get('project-path'), request.form.get('project-name'))
     try:
-        os.makedirs(cea_config.project)
+        os.makedirs(project_path)
     except OSError as e:
         print(e.message)
+
+    cea_config = current_app.cea_config
+    cea_config.project = project_path
+    cea_config.scenario_name = ''
     cea_config.save()
+
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
 
 @blueprint.route('/create-scenario/save', methods=['POST'])
 def route_create_scenario_save():
-    cea_config = current_app.cea_config
-    scenario = request.form.get('scenarioName')
 
+    cea_config = current_app.cea_config
+
+    # Make sure that the scenario folder exists
     try:
-        os.makedirs(os.path.join(cea_config.project, scenario))
+        os.makedirs(os.path.join(cea_config.project, request.form.get('scenario-name')))
     except OSError as e:
         print(e.message)
 
-    if request.form.get('create-zone') == 'on':
-        return redirect(url_for('landing_blueprint.route_create_zone', scenario=scenario))
-    else:
-        return redirect(url_for('landing_blueprint.route_project_overview'))
+    cea_config.scenario_name = request.form.get('scenario-name')
+    cea_config.save()
+
+    scenario_path = cea_config.scenario
+
+    if request.form.get('input-files') == 'import':
+        # TODO
+        pass
+
+    elif request.form.get('input-files') == 'copy':
+        shutil.copytree(os.path.join(cea_config.project, request.form.get('scenario'), 'inputs'),
+                        os.path.join(scenario_path, 'inputs'))
+
+    elif request.form.get('input-files') == 'generate':
+        tools = request.form.getlist('tools')
+        print(tools)
+        if tools is not None:
+            for tool in tools:
+                print(tool)
+                if tool == 'zone-helper':
+                    # FIXME: Setup a proper endpoint for site creation
+                    data = json.loads(request.form.get('poly-string'))
+                    site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
+                                                  geometry=[shape(data['geometry'])])
+                    locator = cea.inputlocator.InputLocator(scenario_path)
+                    site_path = locator.get_site_polygon()
+                    site.to_file(site_path)
+                    print('site.shp file created at %s' % site_path)
+                    cea.api.zone_helper(cea_config)
+                elif tool == 'district-helper':
+                    cea.api.district_helper(cea_config)
+                elif tool == 'streets-helper':
+                    cea.api.streets_helper(cea_config)
+                elif tool == 'terrain-helper':
+                    cea.api.terrain_helper(cea_config)
+
+    return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
 
 
 @blueprint.route('/open-project')
@@ -142,10 +142,9 @@ def route_open_project():
 def route_open_project_save():
     cea_config = current_app.cea_config
     project_path = request.form.get('projectPath')
-    scenarios = get_scenarios(project_path)
 
-    cea_config.scenario_name = scenarios[0]
     cea_config.project = project_path
+    cea_config.scenario_name = ''
     cea_config.save()
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
@@ -159,6 +158,42 @@ def route_open_project_scenario(scenario):
     cea_config.scenario_name = scenario
     cea_config.save()
     return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+
+
+@blueprint.route('/create-scenario/<script_name>/settings')
+def route_script_settings(script_name):
+    config = current_app.cea_config
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    script = cea.scripts.by_name(script_name)
+    return render_template('script_settings.html', script=script, parameters=parameters_for_script(script_name, config))
+
+
+def parameters_for_script(script_name, config):
+    """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
+    parameters = [p for _, p in config.matching_parameters(cea.scripts.by_name(script_name).parameters)]
+    return parameters
+
+
+@blueprint.route('/save-config/<script>', methods=['POST'])
+def route_save_config(script):
+    """Save the configuration for this tool to the configuration file"""
+    for parameter in parameters_for_script(script, current_app.cea_config):
+        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
+        parameter.set(parameter.decode(request.form.get(parameter.name)))
+    current_app.cea_config.save()
+    return jsonify(True)
+
+
+@blueprint.route('/restore-defaults/<script_name>', methods=['POST'])
+def route_restore_defaults(script_name):
+    """Restore the default configuration values for the CEA"""
+    config = current_app.cea_config
+    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+
+    for parameter in parameters_for_script(script_name, config):
+        parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+    config.save()
+    return jsonify(True)
 
 
 # FIXME: this should be refactored, as it is originally from tools/routes.py
@@ -248,6 +283,6 @@ def get_scenarios(path):
     """Return list of scenarios based on folder structure"""
     scenarios = []
     for directory in os.listdir(path):
-        if os.path.isdir(os.path.join(path, directory)):
+        if os.path.isdir(os.path.join(path, directory)) and not directory.startswith('.'):
             scenarios.append(directory)
     return scenarios

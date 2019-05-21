@@ -8,6 +8,15 @@
 {% endblock stylesheets %}
 
 {% block content %}
+    <!-- show the open prompt dialog -->
+    <div class="modal fade" id="cea-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+            </div>
+        </div>
+    </div>
+
     <div class="right_col" role="main">
         <div class="">
             <div class="row">
@@ -28,9 +37,20 @@
                                             {{ scenario }}
                                         </h3>
                                         {# TODO: Maybe change onclick to Javascript implementation #}
-                                        <button class="btn btn-default pull-right" onclick="window.location.href='{{ url_for('landing_blueprint.route_open_project_scenario', scenario=scenario) }}'">Open</button>
+                                        <button class="btn btn-primary pull-right" onclick="window.location.href='{{ url_for('landing_blueprint.route_open_project_scenario', scenario=scenario) }}'">Open</button>
+                                        <div class="btn-group pull-right">
+                                          <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Edit <span class="caret"></span>
+                                          </button>
+                                          <ul class="dropdown-menu">
+                                            <li><a href="#">Rename</a></li>
+                                            <li><a href="#">Duplicate</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#" style="color: red" onclick="openSettings('{{ scenario }}', 'delete')">Delete</a></li>
+                                          </ul>
+                                        </div>
                                         <div class="clearfix"></div>
-                                    </div>
+                                      </div>
                                     <div class="panel-body">
                                         <div class="col-lg-2" style="min-width: 300px;">
                                             <div class="image-placeholder">
@@ -58,3 +78,14 @@
     </div>
 
 {% endblock content %}
+{% block javascripts %}
+  {{ super()}}
+  <script>
+    function openSettings(scenario, func) {
+        $.get('project-overview/' + scenario + '/' + func, {}, function(html) {
+            $('#cea-prompt .modal-content').html(html);
+            $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+        });
+    }
+  </script>
+{% endblock javascripts %}
