@@ -25,6 +25,8 @@ categories = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name
 
 @blueprint.route('/index')
 def index():
+    # TODO: Make this the entry point for showing dashboard
+
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
 
 
@@ -38,18 +40,53 @@ def route_dashboard(dashboard_index):
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
-    return render_template('dashboard.html', dashboard_index=dashboard_index, dashboard=dashboard, categories=categories)
+    return render_template('dashboard.html', dashboard_index=dashboard_index, dashboards=dashboards,
+                           dashboard=dashboard, categories=categories)
+
+
+@blueprint.route('/dashboard/manage')
+def route_manage_dashboards():
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
+    return render_template('manage.html', dashboards=dashboards)
 
 
 @blueprint.route('/dashboard/new')
+def route_new_dashboard_view():
+    return render_template('modal/new_dashboard.html')
+
+
+@blueprint.route('/dashboard/new/save', methods=['POST'])
 def route_new_dashboard():
     """
     Append a dashboard to the list of dashboards and open it for editing.
     """
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
-    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache)
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'))
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+
+
+@blueprint.route('/dashboard/<int:dashboard_index>/<func>')
+def route_manage_dashboards_function(dashboard_index, func):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
+    dashboard_name = dashboards[dashboard_index].name
+    if func == 'delete':
+        return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name)
+    if func == 'rename':
+        dashboard_description = dashboards[dashboard_index].description
+        return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name,
+                               dashboard_description=dashboard_description)
+
+
+@blueprint.route('/dashboard/delete/<int:dashboard_index>', methods=['POST'])
+def route_delete_dashboard(dashboard_index):
+    cea_config = current_app.cea_config
+    cea.plots.delete_dashboard(cea_config, dashboard_index)
+    return redirect(url_for('plots_blueprint.route_manage_dashboards'))
 
 
 @blueprint.route('/dashboard/rename/<int:dashboard_index>', methods=['POST'])
@@ -57,8 +94,9 @@ def route_rename_dashboard(dashboard_index):
     dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     dashboard.name = request.form.get('new-name', dashboard.name)
+    dashboard.description = request.form.get('new-description', dashboard.description)
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+    return redirect(url_for('plots_blueprint.route_manage_dashboards'))
 
 
 @blueprint.route('/dashboard/add-plot/<int:dashboard_index>', methods=['POST'])

@@ -16,6 +16,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +65,14 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     # get occupancy and age files
     region_database = config.data_helper.region
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    list_uses = list(building_occupancy_df.drop(['Name'], axis=1).columns)  # parking excluded in U-Values
+    columns = building_occupancy_df.columns
+
+    #validate list of uses
+    list_uses = []
+    for name in columns:
+        if name in COLUMNS_ZONE_OCCUPANCY:
+            list_uses.append(name)
+
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
     #get technology database

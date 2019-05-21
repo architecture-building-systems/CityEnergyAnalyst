@@ -12,7 +12,7 @@ Install the `NSIS7z plugin`_ by copying the contents to the NSIS installation lo
 it was ``C:\Program Files (x86)\NSIS`` on my machine.
 
 Do the same for the `Inetc plugin`_. Now you should be able to compile the installer
-with NSIS. The easiest way to do that is probably to right-click on the file
+with NSIS. The easiest way to do that is to right-click on the file
 ``CityEnergyAnalyst\setup\cityenergyanalyst.nsi`` in Windows Explorer and choose
 "Compile NSIS Script".
 

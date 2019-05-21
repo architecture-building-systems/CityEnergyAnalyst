@@ -669,7 +669,7 @@ def main(config):
 
     weather_data = epwreader.epw_reader(config.weather)[['year']]
     year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+    dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     config.demand.buildings = locator.get_zone_building_names()[0]
     building_properties = BuildingProperties(locator, True, False)
@@ -679,7 +679,7 @@ def main(config):
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
 
     # calculate schedules
-    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+    archetype_schedules, archetype_values = schedule_maker(dates, locator, list_uses)
     return calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, use_stochastic_occupancy)
 
 
