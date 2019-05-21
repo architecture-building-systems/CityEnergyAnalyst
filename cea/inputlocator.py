@@ -690,7 +690,7 @@ class InputLocator(object):
         else:
             file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
 
-        return os.path.join(self.get_optimization_network_layout_folder(), file_name)
+        return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
