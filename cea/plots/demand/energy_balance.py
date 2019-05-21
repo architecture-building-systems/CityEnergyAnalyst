@@ -51,9 +51,12 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
                                 'Q_loss_sen_wind_kWh',
                                 'Q_loss_sen_vent_kWh',
                                 'Q_loss_sen_ref_kWh']
-        self.layout = go.Layout(barmode='relative',
-                                yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
         self.__data_frame_month = None
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='relative',
+                                yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
 
     @property
     def data_frame_month(self):

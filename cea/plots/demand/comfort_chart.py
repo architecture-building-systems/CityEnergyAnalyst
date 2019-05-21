@@ -42,9 +42,15 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         super(ComfortChartPlot, self).__init__(project, parameters, cache)
         if len(self.buildings) > 1:
             self.buildings = [self.buildings[0]]
-        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = None
-        self.layout = create_layout(self.title)
+
+    @property
+    def layout(self):
+        return create_layout(self.title)
+
+    @property
+    def data(self):
+        return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
 
     def calc_graph(self):
         # calculate points of comfort in different conditions

@@ -25,17 +25,19 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(EnergyDemandDistrictPlot, self).__init__(project, parameters, cache)
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                 "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        self.layout = go.Layout(barmode='stack',
-                                yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
-                                xaxis=dict(title='Building Name'), showlegend=True)
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                         xaxis=dict(title='Building Name'), showlegend=True)
 
     def calc_graph(self):
         graph = []
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
         data = self.data.sort_values(by='total', ascending=False)
         for field in self.analysis_fields:

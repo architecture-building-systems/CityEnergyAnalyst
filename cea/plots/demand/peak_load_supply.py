@@ -11,25 +11,28 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(PeakLoadSupplyPlot, self).__init__(project, parameters, cache)
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
-        self.analysis_fields = self.remove_unused_fields(self.data,
-                                                         ["DH_hs0_kW", "DH_ww0_kW", 'SOLAR_ww0_kW', 'SOLAR_hs0_kW',
-                                                          "DC_cs0_kW", 'DC_cdata0_kW', 'DC_cre0_kW', 'GRID0_kW',
-                                                          'PV0_kW', 'NG_hs0_kW', 'COAL_hs0_kW', 'OIL_hs0_kW',
-                                                          'WOOD_hs0_kW', 'NG_ww0_kW', 'COAL_ww0_kW', 'OIL_ww0_kW',
-                                                          'WOOD_ww0_kW'])
-        self.layout = go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
+        self.analysis_fields = ["DH_hs0_kW", "DH_ww0_kW", 'SOLAR_ww0_kW', 'SOLAR_hs0_kW', "DC_cs0_kW", 'DC_cdata0_kW',
+                                'DC_cre0_kW',
+                                'GRID0_kW', 'PV0_kW', 'NG_hs0_kW', 'COAL_hs0_kW', 'OIL_hs0_kW', 'WOOD_hs0_kW',
+                                'NG_ww0_kW', 'COAL_ww0_kW',
+                                'OIL_ww0_kW', 'WOOD_ww0_kW']
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         if len(self.buildings) > 1:
             return self.totals_bar_plot()
         assert len(self.data) == 1, 'Expected DataFrame with only one row'
+
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         building_data = self.data.iloc[0]
         traces = []
         area = building_data["GFA_m2"]
-        building_data = building_data[self.analysis_fields]
+        building_data = building_data[analysis_fields]
         x = ["Absolute [kW]", "Relative [W/m2]"]
-        for field in self.analysis_fields:
+        for field in analysis_fields:
             y = [building_data[field], building_data[field] / area * 1000]
             name = NAMING[field]
             trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))

@@ -12,7 +12,7 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 class EnergySupplyPlot(cea.plots.demand.energy_demand.EnergyDemandDistrictPlot):
-    """Implement the energy-supply plot"""
+    """Implement the energy-supply plot, inherits most of it's functionality from EnergyDemandDistrictPlot"""
     name = "Energy Supply"
 
     def __init__(self, project, parameters, cache):
@@ -21,24 +21,22 @@ class EnergySupplyPlot(cea.plots.demand.energy_demand.EnergyDemandDistrictPlot):
                                 'DC_cdata_MWhyr', 'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr',
                                 'COAL_hs_MWhyr', 'OIL_hs_MWhyr', 'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr']
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        self.layout = go.Layout(barmode='stack',
-                                yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
-                                xaxis=dict(title='Building Name'), showlegend=True)
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                         xaxis=dict(title='Building Name'), showlegend=True)
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     buildings = config.plots.buildings
-
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
-
     EnergySupplyPlot(config.project, {'buildings': None,
                                       'scenario-name': config.scenario_name},
                      cache).plot(auto_open=True)
@@ -48,3 +46,7 @@ if __name__ == '__main__':
     EnergySupplyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                       'scenario-name': config.scenario_name},
                      cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()
