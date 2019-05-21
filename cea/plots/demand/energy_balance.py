@@ -114,6 +114,29 @@ def energy_balance(data_frame, analysis_fields, normalize_value, title, output_p
     return {'data': traces_graph, 'layout': layout}
 
 
+def calc_table(data_frame_month):
+    """
+    draws table of monthly energy balance
+
+    :param data_frame_month: data frame of monthly building energy balance
+    :return:
+    """
+
+    # create table arrays
+    name_month = np.append(data_frame_month.index, ['YEAR'])
+    total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
+    total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
+    balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
+
+    # draw table
+    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
+                     header=dict(values=['Month', 'Total heat [kWh/m2_GFA]', 'Total cool [kWh/m2_GFA]',
+                                         'Delta [kWh/m2_GFA]']),
+                     cells=dict(values=[name_month, total_heat, total_cool, balance]))
+
+    return table
+
+
 def calc_graph(analysis_fields, data_frame):
     """
     draws building heat balance graph
