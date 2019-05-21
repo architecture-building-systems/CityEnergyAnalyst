@@ -208,7 +208,18 @@ def route_div(dashboard_index, plot_index):
         return make_response(plot.plot_div(), 200)
     else:
         return render_template('missing_input_files.html',
-                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()])
+                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
+                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
+
+
+def script_suggestions(locator_names):
+    """Return a list of CeaScript objects that produce the output for each locator name"""
+    import cea.scripts
+    schemas = cea.scripts.schemas()
+    script_names = []
+    for name in locator_names:
+        script_names.extend(schemas[name]['created_by'])
+    return [cea.scripts.by_name(n) for n in sorted(set(script_names))]
 
 
 def load_plot(dashboard_index, plot_index):
