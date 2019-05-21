@@ -224,33 +224,30 @@ class Plots(object):
             columns_of_saved_files.append(str(i) + ' DCN')
 
         ind_name_list = individual_barcodes['individual_barcode'].index.values
+        # build empty data_processed
         if config.plots_optimization.network_type == 'DH':
-            data_activation_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed(1, 1))
-            df_heating_costs = pd.read_csv(data_activation_path)
+            df_heating_costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(1, 1))
             column_names = df_heating_costs.columns.values
             column_names = np.append(column_names, ['Opex_HP_Sewage', 'Opex_HP_Lake', 'Opex_GHP', 'Opex_CHP_BG',
                                                     'Opex_CHP_NG', 'Opex_Furnace_wet', 'Opex_Furnace_dry',
                                                     'Opex_BaseBoiler_BG', 'Opex_BaseBoiler_NG', 'Opex_PeakBoiler_BG',
                                                     'Opex_PeakBoiler_NG', 'Opex_BackupBoiler_BG',
                                                     'Opex_BackupBoiler_NG',
-                                                    'Capex_SC', 'Capex_PVT', 'Capex_Boiler_backup', 'Capex_storage_HEX',
-                                                    'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake',
-                                                    'Capex_CHP',
-                                                    'Capex_Sewage', 'Capex_pump', 'Opex_Total', 'Capex_Total',
+                                                    'Capex_SC',
+                                                    'Capex_Boiler', 'Opex_Total', 'Capex_Total',
                                                     'Capex_Boiler_Total',
                                                     'Opex_Boiler_Total', 'Opex_CHP_Total', 'Opex_Furnace_Total',
                                                     'Disconnected_costs',
                                                     'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
-                                                    'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
+                                                    'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs']) # FIXME: not sure which file should be added to column_names
 
             data_processed = pd.DataFrame(np.zeros([len(individual_barcodes['individual_barcode']), len(column_names)]),
                                           columns=column_names)
 
         elif config.plots_optimization.network_type == 'DC':
-            data_activation_path = os.path.join(
+            data_cost_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
-            df_cooling_costs = pd.read_csv(data_activation_path)
+            df_cooling_costs = pd.read_csv(data_cost_path)
             column_names = df_cooling_costs.columns.values
             column_names = np.append(column_names,
                                      ['Opex_var_ACH_USD', 'Opex_var_CCGT_USD', 'Opex_var_CT_USD', 'Opex_var_Lake_USD', 'Opex_var_VCC_USD',
@@ -266,33 +263,31 @@ class Plots(object):
 
             data_processed = pd.DataFrame(np.zeros([len(individual_barcodes['individual_barcode']), len(column_names)]),
                                           columns=column_names)
+        # get mcda
         try:
             data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
         except IOError:
             raise IOError("Please run the multi-criteria analysis tool first for the generation you would like to visualize")
 
+        # write individual costs into data_processed
         for index in range(len(ind_name_list)):
-
+            # build empty df_current_individual
             individual_barcode = individual_barcodes['individual_barcode'].loc[ind_name_list[index]].values[0]
             df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
                                                  columns=columns_of_saved_files)
+            # write costs into df_current_individual
             for i, column in enumerate(columns_of_saved_files):
                 df_current_individual[column] = individual_barcode[i]
-            data_address_individual = data_address[data_address['individual_list'] == ind_name_list[index]]
 
-            generation_pointer = data_address_individual['generation_number_address'].values[
-                0]  # points to the correct file to be referenced from optimization folders
+            # points to the correct file to be referenced from optimization folders
+            data_address_individual = data_address[data_address['individual_list'] == ind_name_list[index]]
+            generation_pointer = data_address_individual['generation_number_address'].values[0]
             individual_pointer = data_address_individual['individual_number_address'].values[0]
 
             if config.plots_optimization.network_type == 'DH':
-                data_costs = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed(individual_pointer, generation_pointer))
-                df_heating_costs = pd.read_csv(data_costs)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_heating_activation_pattern(individual_pointer, generation_pointer))
-                df_heating = pd.read_csv(data_activation_path).set_index("DATE")
-
+                df_heating_costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual_pointer, generation_pointer))
+                df_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(individual_pointer, generation_pointer)).set_index("DATE")
+                # write individual costs into data_processed
                 for column_name in df_heating_costs.columns.values:
                     data_processed.loc[index][column_name] = df_heating_costs[column_name].values
 
@@ -312,8 +307,8 @@ class Plots(object):
                 data_processed.loc[index]['Opex_BackupBoiler_NG'] = np.sum(
                     df_heating['Opex_var_BackupBoiler_NG'])
 
-                data_processed.loc[index]['Capex_SC'] = data_processed.loc[index]['Capex_a_SC'] + \
-                                                                  data_processed.loc[index]['Opex_fixed_SC']
+                data_processed.loc[index]['Capex_SC'] = data_processed.loc[index]['Capex_a_SC_FP_USD'] + \
+                                                                  data_processed.loc[index]['Opex_fixed_SC'] # TODO: find out how this is saved in optimization outputs. how to know if is FP or ET in use?
                 data_processed.loc[index]['Capex_PVT'] = data_processed.loc[index]['Capex_a_PVT'] + \
                                                                    data_processed.loc[index]['Opex_fixed_PVT']
                 data_processed.loc[index]['Capex_Boiler_backup'] = data_processed.loc[index][
