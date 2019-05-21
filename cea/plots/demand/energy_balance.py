@@ -53,18 +53,45 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
                                 'Q_loss_sen_ref_kWh']
         self.layout = go.Layout(barmode='relative',
                                 yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
+        self.__data_frame_month = None
+
+    @property
+    def data_frame_month(self):
+        if self.__data_frame_month is None:
+            gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
+            hourly_loads_for_buildings = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+            self.__data_frame_month = calc_monthly_energy_balance(hourly_loads_for_buildings, gfa_m2)
+        return self.__data_frame_month
 
     def calc_graph(self):
-        gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
-        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
-        self.data = calc_monthly_energy_balance(self.data, gfa_m2)
+        data_frame_month = self.data_frame_month
         traces = []
         for field in self.analysis_fields:
-            y = self.data[field]
-            trace = go.Bar(x=self.data.index, y=y, name=field.split('_kWh', 1)[0],
+            y = data_frame_month[field]
+            trace = go.Bar(x=data_frame_month.index, y=y, name=field.split('_kWh', 1)[0],
                            marker=dict(color=COLOR[field]))  # , text = total_perc_txt)
             traces.append(trace)
         return traces
+
+    def calc_table(self):
+        """
+        draws table of monthly energy balance
+
+        :param data_frame_month: data frame of monthly building energy balance
+        :return:
+        """
+        data_frame_month = self.data_frame_month
+        # create table arrays
+        name_month = np.append(data_frame_month.index, ['YEAR'])
+        total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
+        total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
+        balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
+
+        # draw table
+        column_names = ['Month', 'Total heat [kWh/m2_GFA]', 'Total cool [kWh/m2_GFA]', 'Delta [kWh/m2_GFA]']
+        column_data = [name_month, total_heat, total_cool, balance]
+        table_df = pd.DataFrame({cn: cd for cn, cd in zip(column_names, column_data)}, columns=column_names)
+        return table_df
 
 
 def energy_balance(data_frame, analysis_fields, normalize_value, title, output_path):
@@ -106,27 +133,7 @@ def calc_graph(analysis_fields, data_frame):
     return graph
 
 
-def calc_table(data_frame_month):
-    """
-    draws table of monthly energy balance
 
-    :param data_frame_month: data frame of monthly building energy balance
-    :return:
-    """
-
-    # create table arrays
-    name_month = np.append(data_frame_month.index, ['YEAR'])
-    total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
-    total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
-    balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
-
-    # draw table
-    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
-                     header=dict(values=['Month', 'Total heat [kWh/m2_GFA]', 'Total cool [kWh/m2_GFA]',
-                                         'Delta [kWh/m2_GFA]']),
-                     cells=dict(values=[name_month, total_heat, total_cool, balance]))
-
-    return table
 
 
 def calc_monthly_energy_balance(data_frame, normalize_value):
@@ -220,13 +227,18 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     return data_frame_month
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
+    import cea.plots.cache
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
+    EnergyBalancePlot(config.project, {'building': locator.get_zone_building_names()[0],
+                                       'scenario-name': config.scenario_name},
+                      cache).plot(auto_open=True)
 
-    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
-    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
-    EnergyBalancePlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)
+
+if __name__ == '__main__':
+    main()
