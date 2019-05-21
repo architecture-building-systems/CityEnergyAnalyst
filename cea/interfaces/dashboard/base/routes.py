@@ -1,4 +1,8 @@
-from flask import Blueprint, render_template, redirect, request, url_for
+from flask import Blueprint, render_template, redirect, request, url_for, jsonify
+
+import cea.plots
+import os
+import csv
 
 # start the login system
 
@@ -14,6 +18,15 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def route_default():
     return redirect(url_for('landing_blueprint.index'))
+
+
+@blueprint.route('/glossary_search')
+def route_glossary_search():
+    query = request.args.get('query')
+    with open(os.path.join(os.path.dirname(cea.plots.__file__), 'naming.csv')) as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    return jsonify(filter(lambda row: query.lower() in row['VARIABLE'].lower(), rows))
 
 
 @blueprint.route('/fixed_<template>')
