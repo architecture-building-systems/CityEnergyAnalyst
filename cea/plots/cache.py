@@ -94,11 +94,13 @@ class PlotCache(object):
 
     def newest_dependency(self, input_files):
         """Returns the newest timestamp (``os.path.getmtime`` and ``time.time()``) of the input_files - the idea being,
-        that if the cache is newer than this, then the cache is valid."""
+        that if the cache is newer than this, then the cache is valid.
+
+        :param input_files: A list of tuples (locator method, args) that, when applied, produce a path"""
         try:
-            return max(os.path.getmtime(f) for f in input_files)
+            return max(os.path.getmtime(locator_method(*args)) for locator_method, args in input_files)
         except:
-            print('Could not read input_files for cache!')
+            print('Could not read input files for cache!')
             return time.time()
 
     def store_cached_value(self, data_path, parameters, producer):

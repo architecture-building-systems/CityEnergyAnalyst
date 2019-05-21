@@ -11,24 +11,27 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(EnergySupplyIntensityPlot, self).__init__(project, parameters, cache)
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
-        self.analysis_fields = self.remove_unused_fields(self.data, ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr',
-                                                                     'SOLAR_hs_MWhyr', "DC_cs_MWhyr", 'DC_cdata_MWhyr',
-                                                                     'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr',
-                                                                     'NG_hs_MWhyr', 'COAL_hs_MWhyr', 'OIL_hs_MWhyr',
-                                                                     'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
-                                                                     'OIL_ww_MWhyr', 'WOOD_ww_MWhyr', ])
-        self.layout = go.Layout(barmode='stack',
-                                yaxis=dict(title='Energy Supply Intensity [kWh/m2.yr]'), showlegend=True)
+        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr', "DC_cs_MWhyr", 'DC_cdata_MWhyr',
+                   'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr', 'COAL_hs_MWhyr', 'OIL_hs_MWhyr',
+                   'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr', 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr', ]
+        self.analysis_fields = analysis_fields
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Energy Supply Intensity [kWh/m2.yr]'), showlegend=True)
+
 
     def calc_graph(self):
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
+
         if len(self.buildings) == 1:
             assert len(self.data) == 1, 'Expected DataFrame with only one row'
             building_data = self.data.iloc[0]
             traces = []
             area = building_data["GFA_m2"]
             x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
-            for field in self.analysis_fields:
+            for field in analysis_fields:
                 name = NAMING[field]
                 y = [building_data[field], building_data[field] / area * 1000]
                 trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
@@ -37,13 +40,13 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
         else:
             # district version of this plot
             traces = []
-            self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-            for field in self.analysis_fields:
+            self.data['total'] = self.data[analysis_fields].sum(axis=1)
+            for field in analysis_fields:
                 self.data[field] = self.data[field] * 1000 / self.data["GFA_m2"]  # in kWh/m2y
-                self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
-            x = self.data["Name"].tolist()
-            for field in self.analysis_fields:
-                y = self.data[field]
+                data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+            x = data["Name"].tolist()
+            for field in analysis_fields:
+                y = data[field]
                 name = NAMING[field]
                 trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
@@ -55,9 +58,18 @@ def main():
     import cea.inputlocator
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    EnergySupplyIntensityPlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    EnergySupplyIntensityPlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    EnergySupplyIntensityPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
+
+    EnergySupplyIntensityPlot(config.project, {'buildings': None,
+                                               'scenario-name': config.scenario_name},
+                              cache).plot(auto_open=True)
+    EnergySupplyIntensityPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                               'scenario-name': config.scenario_name},
+                              cache).plot(auto_open=True)
+    EnergySupplyIntensityPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                               'scenario-name': config.scenario_name},
+                              cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
