@@ -211,6 +211,16 @@ def route_div(dashboard_index, plot_index):
                                missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
                                script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
 
+@blueprint.route('/table/<int:dashboard_index>/<int:plot_index>')
+def route_table(dashboard_index, plot_index):
+    """Return the table for the plot as a div to be used in an AJAX call"""
+    try:
+        plot = load_plot(dashboard_index, plot_index)
+    except Exception as ex:
+        return abort(500, ex)
+    if not plot.missing_input_files():
+        return make_response(plot.table_div(), 200)
+
 
 def script_suggestions(locator_names):
     """Return a list of CeaScript objects that produce the output for each locator name"""
