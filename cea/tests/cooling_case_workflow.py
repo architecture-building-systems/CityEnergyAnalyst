@@ -24,7 +24,7 @@ __status__ = "Production"
 def main(config):
     if not config.cooling_case_workflow.scenario:
         working_dir = os.path.join(tempfile.gettempdir(),
-                               datetime.datetime.now().strftime('%Y-%d-%m-%H-%M-%S-cooling-case-workflow'))
+                               datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-cooling-case-workflow'))
         os.mkdir(working_dir)
         cea.api.extract_reference_case(destination=working_dir, case='cooling')
         print('-' * 80)
