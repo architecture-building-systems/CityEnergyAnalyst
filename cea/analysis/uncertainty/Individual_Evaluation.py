@@ -72,7 +72,7 @@ def individual_evaluation(generation, level, size, variable_groups):
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand,
                                                                                      building_names,
                                                                                      weather_file, gv)
-    network_features = network_opt.network_opt_main()
+    network_features = network_opt.NetworkOptimizationFeatures()
     def objective_function(ind, ind_num):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, solarFeat, network_features, gv,
                                                         config, prices, lca,

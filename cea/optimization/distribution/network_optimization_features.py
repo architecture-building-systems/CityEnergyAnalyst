@@ -15,7 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-class network_opt_main(object):
+class NetworkOptimizationFeatures(object):
     """
     This class just sets-ip constants of the linear model of the distribution.
     These results are extracted form the work of Florian at the chair.
