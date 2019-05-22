@@ -4,6 +4,10 @@
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+; include some string functions
+!include "StrFunc.nsh"
+${StrRep}
+
 # icon stuff
 !define MUI_ICON "cea-icon.ico"
 
@@ -133,10 +137,11 @@ Section "Base Installation" Base_Installation_Section
 
     # make sure qt.conf has the correct paths
     DetailPrint "Updating qt.conf..."
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$INSTDIR/Dependencies/Python/Library"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$INSTDIR/Dependencies/Python/Library/bin"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$INSTDIR/Dependencies/Python/Library/lib"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$INSTDIR/Dependencies/Python/Library/include/qt"
+    ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now constains the $INSTDIR with forward slashes instead of backward slashes
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
