@@ -68,9 +68,9 @@
                 <h2>{{ table_name }}</h2>
                 <div class="clearfix"></div>
               </div>
-              <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;">
-                <div id="tooltip"></div>
-              </div>
+              <nav id="menu"><a href="#" onclick="toggle3D()">Toggle 3D</a></nav>
+              <div id="tooltip"></div>
+              <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
               <div class="x_content">
                 <table id="cea-table"
                        data-toggle="table"
@@ -105,6 +105,7 @@
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/map.js') }}"></script>
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <!-- optional if mapbox base map is needed -->
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
