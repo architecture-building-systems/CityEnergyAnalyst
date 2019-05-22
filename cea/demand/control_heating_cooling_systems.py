@@ -44,7 +44,7 @@ def has_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3', 'T4'}:
+    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3', 'T4', 'T5'}:
         return True
     elif bpr.hvac['type_cs'] in {'T0'}:
         return False
@@ -121,7 +121,7 @@ def has_local_ac_cooling_system(bpr):
 
     if bpr.hvac['type_cs'] in {'T2'}:  # mini-split ac
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T3', 'T4'}:
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T3', 'T4', 'T5'}:
         return False
     else:
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
@@ -139,7 +139,7 @@ def has_central_ac_cooling_system(bpr):
 
     if bpr.hvac['type_cs'] in {'T3'}:  # central ac
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T4'}:
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T4', 'T5'}:
         return False
     else:
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
@@ -157,7 +157,7 @@ def has_3for2_cooling_system(bpr):
 
     if bpr.hvac['type_cs'] in {'T4'}:  # 3for2
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3'}:
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3', 'T5'}:
         return False
     else:
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
@@ -175,11 +175,27 @@ def has_ceiling_cooling_system(bpr):
 
     if bpr.hvac['type_cs'] in {'T1'}:  # ceiling cooling
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T2', 'T3', 'T4'}:
+    elif bpr.hvac['type_cs'] in {'T0', 'T2', 'T3', 'T4', 'T5'}:
         return False
     else:
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
 
+def has_floor_cooling_system(bpr):
+    """
+    Checks if building has ceiling cooling system
+
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
+    :rtype: bool
+    """
+
+    if bpr.hvac['type_cs'] in {'T5'}:  # floor cooling
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3', 'T4'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
 
 def cooling_system_is_active(bpr, tsd, t):
     """
