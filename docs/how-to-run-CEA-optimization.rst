@@ -53,7 +53,7 @@ Steps to Run The Tool
 #. Run optimization_main.py or the equivalent toolbox
 #. Run multicriteria > main.py or the equivalent toolbox
 #. Check results from optimization in ``...outputs/data/optimization/network/all_individuals.csv`` or using the
- plotting tools for optimization (Step 10 in :doc:`cea-workflow-guide`)
+   plotting tools for optimization (Step 10 in :doc:`cea-workflow-guide`)
 
 
 Optimization Parameters
@@ -84,7 +84,8 @@ More on what's behind the scene
 -------------------------------
 
 Want to know how to understand the result files?
-""""""""""""""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 There are tremendous amount of information that is generated through the optimization process.
 Your go-to file to start with is `case study\optimization\slave\All_individuals.csv`. This files includes objectives
 and variables of all individuals evaluated by the optimization.
@@ -92,9 +93,12 @@ To navigate through the rest of the files in the `case study\optimization` folde
 
 
 Want to know more about the master and slave structure?
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 This optimization follows a bi-level structure. In the master level, the configurations are determined, and the
 slave level, the hourly operation is determined. To dig more into the structure of this optimization, please refer to
-these `workflow diagrams<https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/docs/optimization_workflow/CEA-optimization-workflow.pdf>`_ .
+these `workflow diagrams`_.
+
+.. _workflow diagrams: ./optimization_workflow/CEA-optimization-workflow.pdf
 
 
