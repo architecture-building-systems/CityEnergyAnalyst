@@ -66,7 +66,7 @@ function load_all_plots() {
         $.get("../table/" + dashboard_index + "/" + plot_index, function(data){
                 $(x_table_id).children().replaceWith(data);
         }).fail(function(data) {
-            $(x_table_id).children().replaceWith("ERROR: " + $(data.responseText).filter("p").text());
+            $(x_table_id).children().replaceWith("");
             console.log("error creating plot:");
             console.log(data);
         });
