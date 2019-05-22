@@ -470,7 +470,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Tcs_sys_re_scu'] = Tcs_re  # in C
         tsd['mcpcs_sys_scu'] = mcpcs
 
-    elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
+    elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr) or \
+            control_heating_cooling_systems.has_floor_cooling_system(bpr):
 
         # SCU
         # consider losses according to loads of systems

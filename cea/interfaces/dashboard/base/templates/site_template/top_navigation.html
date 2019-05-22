@@ -3,9 +3,14 @@
     <div class="nav toggle">
       <a id="menu_toggle"><i class="fa fa-bars"></i></a>
     </div>
-
+      <ul class="nav navbar-nav navbar-left">
+        <li class="">
+            <h5>Current Project: {{ project_name }}</h5>
+            <h5>Scenario: {{ scenario_name }}</h5>
+        </li>
+      </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li class="">
+        <li class="">
         <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
           <img src="/static/images/img.jpg" alt="">daren
           <span class=" fa fa-angle-down"></span>
