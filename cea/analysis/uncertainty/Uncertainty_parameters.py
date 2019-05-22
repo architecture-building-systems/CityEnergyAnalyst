@@ -69,8 +69,7 @@ def run_as_script(scenario_path, number_of_uncertain_scenarios):
     print 'Uncertain Parameters have been generated for the given economic scenarios'
 
 if __name__ == '__main__':
-    import cea.globalvar
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    import cea.config
+    config = cea.config.Configuration()
     number_of_uncertain_scenarios = 1000  # The total number of scenarios to be generated
-    run_as_script(scenario_path, number_of_uncertain_scenarios)
+    run_as_script(config.scenario, number_of_uncertain_scenarios)

@@ -1,0 +1,78 @@
+{% extends "base_site.html" %}
+
+{% block title %}Manage Dashboards{% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+  <!-- show the open prompt dialog -->
+  <div class="modal fade" id="cea-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+      </div>
+    </div>
+  </div>
+
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2 class="pull-left">Manage Dashboards</h2>
+              <a class="pull-right" href="{{ url_for('plots_blueprint.index') }}"><i class="fa fa-arrow-left"></i> Back</a>
+              <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+              <table class="table">
+                <thead>
+                <tr>
+                  <th>Dashboard</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for index in range(0, dashboards|length) %}
+                  <tr>
+                    <td>{{ dashboards[index].name }}</td>
+                    <td>
+                      {% if dashboards[index].description=='' %}
+                        -
+                      {% else %}
+                        {{ dashboards[index].description }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=index) }}">Open</a>
+                      <a href="#" onclick="openSettings({{ index }}, 'rename')">Rename</a>
+                      <a href="#" onclick="openSettings({{ index }}, 'delete')">Delete</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super() }}
+  <script>
+    function openSettings(dashboard_index, func) {
+        $.get('./' + dashboard_index + '/' + func, {}, function(html) {
+            $('#cea-prompt .modal-content').html(html);
+            $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+        });
+    }
+  </script>
+{% endblock javascripts %}

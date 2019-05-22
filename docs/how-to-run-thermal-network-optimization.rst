@@ -73,10 +73,16 @@ The default layout is branch when ``optimize-loop-branch = False``.
 
 Network Load
 ^^^^^^^^^^^^
-**WARNING: This functionality is not available yet, see github issue `#1757 <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1757>`_. **
+
+.. warning::
+
+    This functionality is not available yet, see GitHub issue #1757_.
+
+.. _#1757: https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/1757
 
 The optimization can evaluate which loads from the space heating/cooling systems to supply by the network.
-The space heating/cooling loads are divided into the loads from three units: Air Handling Units (AHU), Recirculated Air Units (RAU), and Sensible Cooling/Heating Units (SCU/SHU).
+The space heating/cooling loads are divided into the loads from three units: Air Handling Units (AHU), Recirculated
+Air Units (RAU), and Sensible Cooling/Heating Units (SCU/SHU).
 Since all three units require different supply temperatures, therefore, it will affect thermal network performance.
 To enable this variable, set ``optimize-network-loads = True``
 

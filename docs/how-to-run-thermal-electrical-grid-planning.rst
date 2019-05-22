@@ -16,16 +16,17 @@ Assumptions
 
 Prerequisites
 -------------
+
 1. Install the license of Gurobi on your computer. you can obtain one in `gurobi.com
 <http://www.gurobi.com/registration/download-reg>`_ for free for academic purposes.
 
-2. Add Gurobi package to the cea environment::
+2. Add Gurobi package to the cea environment:
    
-   *open anaconda
-   *do ``conda env update``
-   *do ``activate cea``
-   *do ``grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`` 
-   (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
+  * open anaconda
+  * do ``conda env update``
+  * do ``activate cea``
+  * do ``grbgetkey xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx``
+    (where xxxxxxxxxxxxxxxxxxxxxxxxxx is the key of your license.)
    
 3. If you are having problems running from pycharm. get today's version 06.03.2019 or later one. This includes a fix to paths in conda.
 
@@ -70,7 +71,7 @@ Thermal Network Design
 * Annualized Capital costs (CAPEX) and Operation costs (OPEX)
 
 Electricity Grid Design
-""""""""""""""""""""""
+"""""""""""""""""""""""
 * Size of lines
 * Size of transformers
 * Size of substations

@@ -41,6 +41,10 @@ def main(config):
         config = cea.config.Configuration(os.path.join(workflow_scenario, 'cea.config'))
         config.scenario = workflow_scenario
 
+    # BUGFIX: the user config file contains the proper daysim bin folder for the os / setup
+    user_config = cea.config.Configuration()
+    config.radiation_daysim.daysim_bin_directory = user_config.radiation_daysim.daysim_bin_directory
+
     config_file = os.path.join(config.scenario, 'cea.config')
     config.save(config_file)
     print('Configuration file saved to {config_file}'.format(config_file=config_file))

@@ -34,10 +34,18 @@ def main(config):
     def tools_processor():
         return dict(tools=list_tools())
 
+    # @app.context_processor
+    # def dashboards_processor():
+    #     dashboards = cea.plots.read_dashboards(config, plot_cache)
+    #     return dict(dashboards=dashboards)
+
     @app.context_processor
-    def dashboards_processor():
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-        return dict(dashboards=dashboards)
+    def project_processor():
+        return dict(project_name=os.path.basename(config.project))
+
+    @app.context_processor
+    def scenario_processor():
+        return dict(scenario_name=os.path.basename(config.scenario_name))
 
     @app.template_filter('escapejs')
     def escapejs(text):

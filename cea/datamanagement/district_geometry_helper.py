@@ -14,6 +14,7 @@ from geopandas import GeoDataFrame as Gdf
 from geopandas import overlay
 from scipy.spatial import Delaunay
 from shapely.ops import cascaded_union, polygonize
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -34,8 +35,8 @@ def alpha_shape(points, alpha):
     """
     Compute the alpha shape (concave hull) of a set of points.
 
-    @param points: Iterable container of points.
-    @param alpha: alpha value to influence the gooeyness of the border. Smaller
+    :param points: Iterable container of points.
+    :param alpha: alpha value to influence the gooeyness of the border. Smaller
                   numbers don't fall inward as much as larger numbers. Too large,
                   and you lose everything!
     """
@@ -130,9 +131,12 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
-            shapefile['data_source'] = "CEA - assumption"
+            shapefile['REFERENCE'] = "CEA - assumption"
+        elif pd.isnull(shapefile['building:levels']).all():
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['data_source'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
+            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
 
@@ -142,8 +146,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         data_floors_sum = [x + y for x, y in
                            zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x <= 1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(
-            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
@@ -171,7 +174,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry",  "data_source"]]
+        ["Name", "height_ag", "floors_ag", "description", "category", "geometry",  "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 

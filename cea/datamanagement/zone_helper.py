@@ -11,6 +11,7 @@ import os
 import numpy as np
 import osmnx as ox
 from geopandas import GeoDataFrame as Gdf
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -43,9 +44,12 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
-            shapefile['data_source'] = "CEA - assumption"
+            shapefile['REFERENCE'] = "CEA - assumption"
+        elif pd.isnull(shapefile['building:levels']).all():
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['data_source'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
+            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
                                         shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
@@ -90,7 +94,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
     result = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "data_source"]]
+         "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
     shapefile.reset_index(inplace=True, drop=True)
@@ -145,17 +149,36 @@ def calculate_occupancy_file(zone_df, occupancy_type, occupancy_output_path):
     if occupancy_type == "Get it from open street maps":
         no_buildings = occupancy_df.shape[0]
         for index in range(no_buildings):
-            if zone_df.loc[index, "category"] == "yes" or zone_df.loc[index, "category"] == "residential" or \
-                    zone_df.loc[index, "category"] == "apartments":
+            if zone_df.loc[index, "category"] == "yes":
                 occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
+            elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
+                occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
                 occupancy_df.loc[index, "OFFICE"] = 1.0
-            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages":
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "school":
+                occupancy_df.loc[index, "SCHOOL"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or zone_df.loc[index, "category"] == "warehouse":
                 occupancy_df.loc[index, "PARKING"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or zone_df.loc[index, "category"] == "detached":
                 occupancy_df.loc[index, "SINGLE_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
                 occupancy_df.loc[index, "RETAIL"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "industrial":
+                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            elif zone_df.loc[index, "category"] == "warehouse":
+                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+            else:
+                occupancy_df.loc[index, "MULTI_RES"] = 1.0
+                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
     dataframe_to_dbf(occupancy_df, occupancy_output_path)
 
 
@@ -182,17 +205,17 @@ def calculate_age_file(zone_df, year_construction, age_output_path):
         list_of_columns = zone_df.columns
         if "start_date" not in list_of_columns:  # this field describes the construction year of buildings
             zone_df["start_date"] = 2000
-            zone_df['data_source'] = "CEA - assumption"
+            zone_df['REFERENCE'] = "CEA - assumption"
         else:
-            zone_df['data_source'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
+            zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
         data_floors_sum_with_nan = [np.nan if x is np.nan else int(x) for x in zone_df['start_date']]
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         zone_df["built"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
-        zone_df['data_source'] = "CEA - assumption"
+        zone_df['REFERENCE'] = "CEA - assumption"
 
-    fields = ["Name"] + COLUMNS_ZONE_AGE + ['data_source']
+    fields = ["Name"] + COLUMNS_ZONE_AGE + ['REFERENCE']
     age_dbf = zone_df[fields]
 
     dataframe_to_dbf(age_dbf, age_output_path)
