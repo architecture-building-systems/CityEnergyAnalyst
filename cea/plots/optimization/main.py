@@ -165,9 +165,14 @@ class Plots(object):
 
     def preprocessing_capacities_data(self, locator, data_generation, generation, network_type, config, data_address):
 
-        column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
-                        'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
-                        'Storage_thermal_kW', 'CT_kW', 'Buildings Connected Share']
+        if network_type == 'DC':
+            column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                            'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
+                            'Storage_thermal_kW', 'CT_kW', 'Buildings Connected Share']
+        elif network_type == 'DH':
+            column_names = ['Boiler_kW', 'CHP_thermal_kW', 'Furnace_kW', 'GHP_kW', 'HPLake_kW', 'HPSewage_kW',
+                            'Storage_thermal_kW', 'Buildings Connected Share']
+
         individual_index = data_generation['individual_barcode'].index.values
         capacities_of_generation = pd.DataFrame(np.zeros([len(individual_index), len(column_names)]),
                                                 columns=column_names)
@@ -191,6 +196,8 @@ class Plots(object):
                     capacities_of_generation.iloc[i][name] = np.float(connected_buildings * 100 / total_buildings)
                 else:
                     capacities_of_generation.iloc[i][name] = district_supply_sys[name].sum()
+
+            print ('retrieved technology capacity data of: ', ind)
 
         capacities_of_generation['indiv'] = individual_index
         capacities_of_generation.set_index('indiv', inplace=True)
