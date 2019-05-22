@@ -309,7 +309,7 @@ default:
   description: dashboard
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
-  parameters: []
+  parameters: ['general:debug']
 
 - name: install-arcgis
   label: install-arcgis

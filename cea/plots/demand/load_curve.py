@@ -16,17 +16,21 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Load Curve"
 
     def __init__(self, project, parameters, cache):
         super(LoadCurvePlot, self).__init__(project, parameters, cache)
-        self.data = self.hourly_loads
         self.analysis_fields = ["E_sys_kWh",
                                 "Qhs_sys_kWh", "Qww_sys_kWh",
                                 "Qcs_sys_kWh", 'Qcdata_sys_kWh', 'Qcre_sys_kWh']
-        self.layout = dict(yaxis=dict(title='Load [kW]'),
-                           yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
+
+    @property
+    def layout(self):
+        # computing this instead of initializing, because it's dependent on self.data...
+        return dict(yaxis=dict(title='Load [kW]'),
+                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
                 rangeselector=dict(buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
                                                  dict(count=1, label='1w', step='week', stepmode='backward'),
                                                  dict(count=1, label='1m', step='month', stepmode='backward'),
@@ -34,6 +38,10 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
                                                  dict(count=1, label='1y', step='year', stepmode='backward'),
                                                  dict(step='all')])), rangeslider=dict(), type='date',
                 range=[self.data.index[0], self.data.index[168]], fixedrange=False))
+
+    @property
+    def data(self):
+        return self.hourly_loads
 
     def calc_graph(self):
         traces = []

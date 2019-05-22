@@ -33,7 +33,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                 'Capex_total_Mio',
                                 'Opex_total_Mio']
         self.objectives = ['TAC_Mio', 'total_emissions_kiloton', 'total_prim_energy_TJ']
-        self.input_files = [self.locator.get_multi_criteria_analysis(self.generation)]
+        self.input_files = [(self.locator.get_multi_criteria_analysis, [self.generation])]
         # NOTE: self.layout is set during the call to calc_graph
 
     @property
