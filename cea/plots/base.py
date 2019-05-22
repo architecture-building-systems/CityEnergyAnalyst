@@ -5,9 +5,11 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 from __future__ import division
 from __future__ import print_function
 import os
+import jinja2
 import plotly.graph_objs
 import plotly.offline
 import cea.inputlocator
+from cea import MissingInputDataException
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Daren Thomas"
@@ -37,14 +39,20 @@ class PlotBase(object):
         self.cache = cache  # a PlotCache implementation for reading cached data
         self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
-        self.data = None  # override this in the plot subclasses! set it to the pandas DataFrame to use as data
-        self.layout = None  # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
-
+        self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
 
         for parameter_name in self.expected_parameters:
             assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+
+    def missing_input_files(self):
+        """Return the list of missing input files for this plot"""
+        result = []
+        for locator_method, args in self.input_files:
+            if not os.path.exists(locator_method(*args)):
+                result.append((locator_method, args))
+        return result
 
     @property
     def locator(self):
@@ -52,6 +60,11 @@ class PlotBase(object):
         :return: cea.inputlocator.InputLocator
         """
         return cea.inputlocator.InputLocator(os.path.join(self.project, self.parameters['scenario-name']))
+
+    @property
+    def layout(self):
+        # override this in the plot subclasses! set it to a plotly.graph_objs.Layout object
+        return None
 
     @property
     def title(self):
@@ -89,22 +102,50 @@ class PlotBase(object):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
         raise NotImplementedError('Subclass needs to implement calc_graph for plot!')
 
+    def calc_table(self):
+        """Calculates a pandas.Dataframe to display as table."""
+        raise NotImplementedError('This plot has no table')
+
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
-        graph = self.calc_graph()
-        layout = self.layout
-        fig = plotly.graph_objs.Figure(data=graph, layout=layout)
-        plotly.offline.plot(fig, auto_open=auto_open, filename=self.output_path)
-        print("Plotted %s to %s" % (self.name, self.output_path))
+        if self.missing_input_files():
+            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+        # PLOT
+        template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
+        template = jinja2.Template(open(template_path, 'r').read())
+        plot_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title)
+        with open(self.output_path, 'w') as f:
+            f.write(plot_html)
+
+        print("Plotted '%s' to %s" % (self.name, self.output_path))
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
+        if self.missing_input_files():
+            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
+
+    def table_div(self):
+        """Returns the html div for a table, or an empty string if no table is to be produced"""
+        if self.missing_input_files():
+            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+        return self.cache.lookup_table_div(self, self._table_div_producer)
+
+    def _table_div_producer(self):
+        """Default producer for table divs (override if you need more control)"""
+        try:
+            table_df = self.calc_table()
+            template_path = os.path.join(os.path.dirname(__file__), 'table.html')
+            template = jinja2.Template(open(template_path, 'r').read())
+            table_html = template.render(table_df=table_df)
+            return table_html
+        except NotImplementedError:
+            return ''
 
     @classmethod
     def get_default_parameters(cls, config):

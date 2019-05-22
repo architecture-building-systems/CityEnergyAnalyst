@@ -18,6 +18,11 @@ class NullPlotCache(object):
     def lookup(self, data_path, plot, producer):
         return producer()
 
+    def lookup_plot_div(self, plot, producer):
+        return producer()
+
+    def lookup_table_div(self, plot, producer):
+        return producer()
 
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
@@ -35,6 +40,10 @@ class PlotCache(object):
     def _cached_div_file(self, plot):
         data_path = os.path.join(plot.category_name, plot.id())
         return self._cached_data_file(data_path, plot.parameters) + '.div'
+
+    def _cached_table_file(self, plot):
+        data_path = os.path.join(plot.category_name, plot.id())
+        return self._cached_data_file(data_path, plot.parameters) + '.table.div'
 
     def lookup(self, data_path, plot, producer):
         cache_timestamp = self.cache_timestamp(self._cached_data_file(data_path, plot.parameters))
@@ -59,6 +68,23 @@ class PlotCache(object):
                 plot_div = div_fp.read()
         return plot_div
 
+    def lookup_table_div(self, plot, producer):
+        """Lookup the cache of a table created with plot.table_div()"""
+        div_file = self._cached_table_file(plot)
+        cache_timestamp = self.cache_timestamp(div_file)
+        if cache_timestamp < self.newest_dependency(plot.input_files):
+            table_div = producer()
+            folder = os.path.dirname(div_file)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            with open(div_file, 'w') as div_fp:
+                div_fp.write(table_div)
+        else:
+            print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
+            with open(div_file, 'r') as div_fp:
+                table_div = div_fp.read()
+        return table_div
+
     def cache_timestamp(self, path):
         """Return a timestamp (like ``os.path.getmtime``) to compare to. Returns 0 if there is no data in the cache"""
         if not os.path.exists(path):
@@ -68,11 +94,13 @@ class PlotCache(object):
 
     def newest_dependency(self, input_files):
         """Returns the newest timestamp (``os.path.getmtime`` and ``time.time()``) of the input_files - the idea being,
-        that if the cache is newer than this, then the cache is valid."""
+        that if the cache is newer than this, then the cache is valid.
+
+        :param input_files: A list of tuples (locator method, args) that, when applied, produce a path"""
         try:
-            return max(os.path.getmtime(f) for f in input_files)
+            return max(os.path.getmtime(locator_method(*args)) for locator_method, args in input_files)
         except:
-            print('Could not read input_files for cache!')
+            print('Could not read input files for cache!')
             return time.time()
 
     def store_cached_value(self, data_path, parameters, producer):

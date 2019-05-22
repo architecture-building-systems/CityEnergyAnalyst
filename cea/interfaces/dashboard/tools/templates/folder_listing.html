@@ -16,6 +16,15 @@
     </ol>
   </nav>
 
+  {% if drives %}
+  <select class="form-control cea-drive-select" id="cea-drive-select"
+          onchange="folder_dialog_navigate_to('{{fqname}}', $(this).val(), '.')">
+    {% for drive in drives %}
+    <option value="{{ drive }}\" {% if breadcrumbs[0][:2].lower() == drive.lower() %} selected {% endif %}>{{ drive }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+
   <ul class="cea-folder-listing">
     <li><a href="#" onclick="folder_dialog_navigate_to('{{fqname}}', '{{current_folder|escapejs}}', '..')">
       <i class="fa fa-level-up">&nbsp;</i>..</a>
