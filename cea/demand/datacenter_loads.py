@@ -39,22 +39,30 @@ def calc_Edata(bpr, tsd, schedules):
 
     return tsd
 
-def calc_Qcdata_sys(tsd):
+def calc_Qcdata_sys(bpr, tsd):
+    # calculate cooling loads for data center
+    tsd['Qcdata'] = 0.9 * tsd['Edata']
 
-    def function(Edataf):
-        if Edataf > 0:
+    # calculate distribution losses for data center cooling analogously to space cooling distribution losses
+    Y = bpr.building_systems['Y'][0]
+    Lv = bpr.building_systems['Lv']
+    Qcdata_d_ls = ((tsd['Tcdata_sys_sup'] + tsd['Tcdata_sys_re']) / 2 - tsd['T_ext']) * (
+            tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (Lv * Y)
+    # calculate system loads for data center
+    tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
+
+    def function(Qcdata_sys):
+        if Qcdata_sys > 0:
             Tcdataf_re_0 = 15
             Tcdataf_sup_0 = 7
-            DC_cdata = Edataf * 0.9
-            mcpref = DC_cdata / (Tcdataf_re_0 - Tcdataf_sup_0)
+            mcpref = Qcdata_sys / (Tcdataf_re_0 - Tcdataf_sup_0)
         else:
-            DC_cdata = 0
             Tcdataf_re_0 = 0
             Tcdataf_sup_0 = 0
             mcpref = 0
-        return DC_cdata, mcpref, Tcdataf_re_0, Tcdataf_sup_0
+        return mcpref, Tcdataf_re_0, Tcdataf_sup_0
 
-    tsd['Qcdata_sys'], tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Edata'])
+    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Qcdata_sys'])
 
     return tsd
 

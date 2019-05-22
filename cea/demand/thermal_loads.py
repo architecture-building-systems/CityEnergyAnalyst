@@ -101,7 +101,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
-            tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
+            tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
             tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
             tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)

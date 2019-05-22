@@ -34,8 +34,15 @@ def has_refrigeration_load(bpr):
         return False
 
 def calc_Qcre_sys(bpr, tsd, schedules):
-
-    tsd['Qcre_sys'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+    # calculate refrigeration loads
+    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+    # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
+    Y = bpr.building_systems['Y'][0]
+    Lv = bpr.building_systems['Lv']
+    Qcre_d_ls = ((tsd['Tcdata_sys_sup'] + tsd['Tcdata_sys_re']) / 2 - tsd['T_ext']) * (
+                tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
+    # calculate system loads for data center
+    tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
     def function(Qcre_sys):
         if Qcre_sys > 0:
