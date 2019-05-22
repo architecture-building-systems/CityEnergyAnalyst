@@ -1,0 +1,83 @@
+{% import 'input_macros.html' as input_macros %}
+
+{% block content %}
+  <div class="right_col" role="main">
+
+    <div class="modal fade" id="config-modal-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-body" id="modal-prompt">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="">
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+
+
+                <!-- show the parameters for running -->
+                <div id="div-parameters-{{ script.name }}" class="d-block">
+                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left">
+                    {% for parameter in parameters %}
+                    {{ input_macros.input(parameter, weather_dict) }}
+                    {% endfor %}
+                  </form>
+                </div>
+
+
+                <!-- show buttons -->
+                <div class="form-group">
+                  <div class="ln_solid"></div>
+                  <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+
+                    <button id='save-config' type="button" value="Save" class="btn btn-success"
+                            onclick="save_config('{{ script.name}}')">Save configuration
+                    </button>
+
+                    <button id='restore-defaults' type="button" value="Restore Defaults" class="btn btn-default"
+                            onclick="restore_defaults('{{ script.name}}')">Restore Defaults
+                    </button>
+                  </div>
+                </div>
+          </div>
+        </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
+    <script>
+        function save_config(script) {
+            $('#modal-prompt').text('Saving Configuration.')
+            $('#config-modal-prompt').modal({'show': true, 'backdrop': 'static'});
+            $.post('save-config/' + script, get_parameter_values(), null, 'json')
+                .done(function () {
+                    $('#modal-prompt').text('Configuration Saved!')
+                    setTimeout(function(){
+                        $('#config-modal-prompt').modal('hide');
+                        closeSettings();
+                    }, 1000);
+                });
+
+        }
+        function restore_defaults(script) {
+            $('#modal-prompt').text('Restoring Defaults.')
+            $('#config-modal-prompt').modal({'show': true, 'backdrop': 'static'});
+            $.post('restore-defaults/' + script, get_parameter_values(), null, 'json')
+                .done(function () {
+                    $('#config-modal-prompt').modal('hide');
+                    openSettings(script);
+                    setTimeout(function(){
+                        $('#modal-prompt').text('Defaults Restored!');
+                        $('#config-modal-prompt').modal({'show': true, 'backdrop': 'static'});
+                    }, 1000);
+                    setTimeout(function(){
+                        $('#config-modal-prompt').modal('hide');
+                    }, 2000);
+                });
+        }
+    </script>
+{% endblock javascripts %}
