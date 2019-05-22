@@ -52,11 +52,16 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     def data(self):
         return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
 
+    @property
+    def dict_graph(self):
+        if not hasattr(self, '_dict_graph'):
+            self._dict_graph = calc_data(self.data, self.locator)
+        return self._dict_graph
+
     def calc_graph(self):
         # calculate points of comfort in different conditions
 
         # create scatter of comfort
-        self.dict_graph = calc_data(self.data, self.locator)
         traces_graph = calc_graph(self.dict_graph)
 
         # create lines of constant relative humidity
@@ -159,7 +164,7 @@ def create_layout(title):
 
     layout = {
         'xaxis': {
-            'title': 'Operative Temperature [Â°C]',
+            'title': 'Operative Temperature [°C]',
             'range': [5, 35],
             'domain': XAXIS_DOMAIN_GRAPH
         },
