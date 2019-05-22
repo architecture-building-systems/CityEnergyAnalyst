@@ -1,0 +1,18 @@
+<div class="x_content">
+  <table class="table table-bordered">
+    <thead>
+    {% for column in table_df.columns %}
+    <th>{{ column }}</th>
+    {% endfor %}
+    </thead>
+    <tbody>
+    {% for row in table_df.itertuples() %}
+      <tr>
+        {% for column in range(table_df.columns|length) %}
+        <td>{{ row[column+1] }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
