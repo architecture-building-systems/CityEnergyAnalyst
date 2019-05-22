@@ -442,7 +442,7 @@ if __name__ == "__main__":
     nBuildings = len(building_names)
 
 
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = network_opt_main.NetworkOptimizationFeatures(config, locator)
 
 
     non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,

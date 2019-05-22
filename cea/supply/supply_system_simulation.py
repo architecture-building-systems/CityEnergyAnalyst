@@ -503,7 +503,7 @@ def main(config):
                                                                              weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = network_opt_main.NetworkOptimizationFeatures(config, locator)
 
     ## generate individual from config
     # heating technologies at the centralized plant

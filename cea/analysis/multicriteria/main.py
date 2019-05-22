@@ -320,7 +320,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
         # Network costs
-        network_features = network_opt.network_opt_main(config, locator)
+        network_features = network_opt.NetworkOptimizationFeatures(config, locator)
         network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(DCN_barcode)
         data_costs['Network_costs_USD'] = network_costs_a_USD
         Inv_IR = 0.05

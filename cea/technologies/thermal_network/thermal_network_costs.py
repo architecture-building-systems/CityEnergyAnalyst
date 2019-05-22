@@ -450,8 +450,8 @@ def calc_Ctot_cs_district(network_info):
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
-    network_info.network_features = network_opt.network_opt_main(network_info.config,
-                                                                 network_info.locator)
+    network_info.network_features = network_opt.NetworkOptimizationFeatures(network_info.config,
+                                                                            network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
     ## calculate network costs

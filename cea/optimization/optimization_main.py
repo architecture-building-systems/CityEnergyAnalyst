@@ -73,7 +73,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print("NETWORK OPTIMIZATION")
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = network_opt_main.NetworkOptimizationFeatures(config, locator)
 
     # optimize conversion systems
     print("CONVERSION AND STORAGE OPTIMIZATION")
