@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import math
 import pyromat as pm
+import cea.osmose.auxiliary_functions as aux
 
 # REF: D.Peng et al., 2017
 Ra = 0.287  # kJ / kgK, ideal air constant for air
@@ -109,15 +110,7 @@ def water_exergy_pyromat(T_water_C, T_ref_C):
     return ex_water
 
 
-def calc_w_sat(T):
-    # Antoine Equation
-    A = 8.07131
-    B = 1730.63
-    C = 233.426
-    P_sat = (10 ** (A - B / (C + T))) * 0.1333224
-    P_atm = 101.325  # kPa
-    w_sat_kgperkg = 0.622 * P_sat / (P_atm - P_sat)
-    return w_sat_kgperkg
+
 
 
 def calc_Ex_Qc(Qc, T_RA_C, T_ref_C):
@@ -130,7 +123,7 @@ def calc_Ex_Qc(Qc, T_RA_C, T_ref_C):
 def calc_ex_latent(T_ref_C, w_ref_gperkg):
     T_ref_K = T_ref_C + 273.15
     w_ref_kgperkg = w_ref_gperkg / 1000
-    w_sat_kgperkg = calc_w_sat(T_ref_C)
+    w_sat_kgperkg = aux.calc_w_ss_from_T(T_ref_C)
     a1 = (1 + 1.608 * w_ref_kgperkg) / (1 + 1.608 * w_sat_kgperkg)
     a2 = w_ref_kgperkg / w_sat_kgperkg
     ex_latent_kJperkg = 1.608 * Ra * T_ref_K * math.log(a1 * a2)
