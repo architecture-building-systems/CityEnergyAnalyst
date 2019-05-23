@@ -106,6 +106,14 @@ def route_geojson(db):
     return jsonify(json.loads(table_df.to_json(show_bbox=True)))
 
 
+@blueprint.route('/geojson/others/streets')
+def route_geojson_streets():
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    location = locator.get_street_network()
+    table_df = geopandas.GeoDataFrame.from_file(location)
+    table_df = table_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
+    return jsonify(json.loads(table_df.to_json(show_bbox=True)))
+
 @blueprint.route('/table/<db>', methods=['GET'])
 def route_table_get(db):
     if not db in INPUTS:

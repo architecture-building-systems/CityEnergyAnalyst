@@ -1,43 +1,49 @@
-var map;
-var zoneJson;
-var districtJson;
-var zoneLayer;
-var districtLayer;
-
 var deckgl;
+var jsonStore = {};
 var layers = [];
-var extruded = false;
+var extruded = true;
 var currentViewState;
 
 $(document).ready(function() {
 
     var getZone = $.getJSON('http://localhost:5050/inputs/geojson/zone', function (json) {
         console.log(json);
-        zoneJson = json;
+        jsonStore['zone'] = json;
     }).fail(function () {
         console.log("Get zone failed.")
     });
 
     var getDistrict = $.getJSON('http://localhost:5050/inputs/geojson/district', function (json) {
         console.log(json);
-        districtJson = json;
+        jsonStore['district'] = json;
     }).fail(function () {
         console.log("Get district failed.")
-    }).done();
+    });
 
-    $.when(getZone, getDistrict).always(function () {
+    var getStreets = $.getJSON('http://localhost:5050/inputs/geojson/others/streets', function (json) {
+        console.log(json);
+        jsonStore['streets'] = json;
+    }).fail(function () {
+        console.log("Get streets failed.")
+    });
 
-        if (zoneJson !== null) {
+    $.when(getZone, getDistrict, getStreets).always(function () {
+        currentViewState = {latitude: 0, longitude: 0, zoom: 0};
+        if (jsonStore['zone'] !== undefined) {
             createZoneLayer();
+            currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
+            longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
+            zoom: 16};
         }
 
-        if (districtJson !== null) {
+        if (jsonStore['district'] !== undefined) {
             createDistrictLayer();
         }
 
-        currentViewState = {latitude: (zoneJson.bbox[1] + zoneJson.bbox[3]) / 2,
-            longitude: (zoneJson.bbox[0] + zoneJson.bbox[2]) / 2,
-            zoom: 16};
+        if (jsonStore['streets'] !== undefined) {
+            createStreetsLayer();
+        }
+
         deckgl = new deck.DeckGL({
             container: 'mapid',
             mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
@@ -50,7 +56,7 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
-
+        toggle3D();
     });
 });
 
@@ -64,7 +70,7 @@ function toggle3D() {
         pitch = 0;
         bearing = 0;
     }
-    layers = [];
+
     createDistrictLayer();
     createZoneLayer();
     deckgl.setProps({ layers: [...layers], controller: {dragRotate: extruded},
@@ -72,9 +78,9 @@ function toggle3D() {
 }
 
 function createDistrictLayer() {
-    districtLayer = new deck.GeoJsonLayer({
+    var districtLayer = new deck.GeoJsonLayer({
         id: 'district',
-        data: districtJson,
+        data: jsonStore['district'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
@@ -88,13 +94,15 @@ function createDistrictLayer() {
         onHover: updateTooltip,
         onClick: editProperties
     });
+
+    layers = layers.filter(layer => layer.id!=='district');
     layers.push(districtLayer);
 }
 
 function createZoneLayer() {
-    zoneLayer = new deck.GeoJsonLayer({
+    var zoneLayer = new deck.GeoJsonLayer({
         id: 'zone',
-        data: zoneJson,
+        data: jsonStore['zone'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
@@ -108,5 +116,25 @@ function createZoneLayer() {
         onHover: updateTooltip,
         onClick: editProperties
     });
+    layers = layers.filter(layer => layer.id!=='zone');
     layers.push(zoneLayer);
+}
+
+function createStreetsLayer() {
+    var streetsLayer = new deck.GeoJsonLayer({
+        id: 'streets',
+        data: jsonStore['streets'],
+
+        getLineColor: [255, 0, 0],
+        getLineWidth: 3,
+
+        pickable: true,
+        autoHighlight: true,
+
+        onHover: updateTooltip,
+        onClick: editProperties
+    });
+    layers = layers.filter(layer => layer.id!=='streets');
+    layers.push(streetsLayer);
+}
 }
