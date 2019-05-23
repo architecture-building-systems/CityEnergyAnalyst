@@ -1,0 +1,14 @@
+<p>This plot can't be displayed because some input files are missing:</p>
+<ul>
+  {% for input_file in missing_input_files %}
+  <li>{{input_file}}</li>
+  {% endfor %}
+</ul>
+{% if script_suggestions %}
+<p>Try running these scripts first:</p>
+<ul>
+  {% for script in script_suggestions %}
+  <li><a href="/tools/{{script.name}}">{{script.label}}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
