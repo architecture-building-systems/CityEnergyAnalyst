@@ -25,20 +25,26 @@ Prerequisites
   - ``sudo apt-get install git``
 
 #. Download and install `Daysim <https://daysim.ning.com/page/download>`__.
+
   - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``
   - ``mkdir build``
   - ``cd build``
   - if you don't have cmake installed, you can use ``sudo apt-get install cmake`` to install it.
+
     - Other packages that are missing in minimal setup of Ubuntu and need to be installedwith apt-get are:
+
       - ``sudo apt-get install build-essential`` (for error "No CMAKE_CXX_Compiler could be found.")
       - ``sudo apt-get install libgl1-mesa-dev`` (for error "Could NOT find OpenGL")
       - ``sudo apt-get install freeglut3-dev`` (for error "GL/glu.h: No such file or directory" while running ``make`` below)
+
   - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim``
   - ``make``
   - ``make install``
   - open the file ``~/tmp/Daysim/CMakeLists.txt`` in your favorite text editor (the one that comes with Ubuntu is fine)
+
     - add a line just below the line "project (daysim VERSION 5.2.0)": ``add_definitions(-DDAYSIM)``
     - save and return to terminal
+
   - ``cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim``
   - ``make``
   - ``mv ./bin/rtrace ./bin/rtrace_dc``
