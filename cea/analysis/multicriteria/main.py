@@ -225,14 +225,27 @@ def preprocessing_cost_data_DC(locator, data_raw, individual, generations, data_
     building_names = total_demand.Name.values
     individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
 
+    # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
+    # correspondingly these columns_of_saved_files needs to be changed
+    columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
+                              'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+                              'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
+                              'GHP Share',
+                              'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
+                              'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature',
+                              'DHN unit configuration',
+                              'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
+                              'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
+                              'DCN Temperature', 'DCN unit configuration']
+
     for i in building_names:  # DHN
-        COLUMNS_OF_SAVED_FILES.append(str(i) + ' DHN')
+        columns_of_saved_files.append(str(i) + ' DHN')
 
     for i in building_names:  # DCN
-        COLUMNS_OF_SAVED_FILES.append(str(i) + ' DCN')
+        columns_of_saved_files.append(str(i) + ' DCN')
 
-    df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(COLUMNS_OF_SAVED_FILES))), columns=COLUMNS_OF_SAVED_FILES)
-    for i, ind in enumerate((COLUMNS_OF_SAVED_FILES)):
+    df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
+    for i, ind in enumerate((columns_of_saved_files)):
         df_current_individual[ind] = individual_barcode_list[i]
 
     data_address = data_address[data_address['individual_list'] == individual]
@@ -261,7 +274,7 @@ def preprocessing_cost_data_DC(locator, data_raw, individual, generations, data_
         data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
     elif config.multi_criteria.network_type == 'DC':
-
+        config.thermal_network.network_type = 'DC' # todo: temporal fix
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
         data_electricity = pd.read_csv(os.path.join(locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
