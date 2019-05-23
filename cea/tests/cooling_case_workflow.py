@@ -50,32 +50,34 @@ def main(config):
     print('Configuration file saved to {config_file}'.format(config_file=config_file))
 
     def run(script, **kwargs):
+        print('Running {script} with args {args}'.format(script=script, args=kwargs))
         f = getattr(cea.api, script.replace('-', '_'))
         f(config=config, **kwargs)
         print('-' * 80)
 
     scripts_to_run = [
-        ('data-helper', {}),
-        ('radiation-daysim', {}),
-        ('demand', {}),
-        ('emissions', {}),
-        ('operation-costs', {}),
-        ('network-layout', {'network_type': 'DC'}),
-        ('lake-potential', {}),
-        ('sewage-potential', {}),
-        ('photovoltaic', {}),
-        ('solar-collector', {'type_scpanel': 'FP'}),
-        ('solar-collector', {'type_scpanel': 'ET'}),
-        ('photovoltaic-thermal', {'type_scpanel': 'FP'}),
-        ('photovoltaic-thermal', {'type_scpanel': 'ET'}),
-        ('thermal-network', {'network_type': 'DC', 'use_representative_week_per_month': True}),
-        ('thermal-network-optimization', {'network_type': 'DC','use_representative_week_per_month': True, 'yearly_cost_calculations': True}),
-        ('decentralized', {}),
-        ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),
-        ('multi-criteria-analysis', {'generations': 2}),
-        ('plots', {'network_type': 'DC', 'generations':2}),
+        ('data-helper', {}),  # last=0
+        ('radiation-daysim', {}),  # last=1
+        ('demand', {}),  # last=2
+        ('emissions', {}),  # last=3
+        ('operation-costs', {}),  # last=4
+        ('network-layout', {'network_type': 'DC'}),  # last=5
+        ('lake-potential', {}),  # last=6
+        ('sewage-potential', {}),  # last=7
+        ('photovoltaic', {}),  # last=8
+        ('solar-collector', {'type_scpanel': 'FP'}),  # last=9
+        ('solar-collector', {'type_scpanel': 'ET'}),  # last=10
+        ('photovoltaic-thermal', {'type_scpanel': 'FP'}),  # last=11
+        ('photovoltaic-thermal', {'type_scpanel': 'ET'}),  # last=12
+        ('thermal-network', {'network_type': 'DC', 'use_representative_week_per_month': True}),  # last=13
+        ('thermal-network-optimization', {'network_type': 'DC', 'use_representative_week_per_month': True,
+                                          'yearly_cost_calculations': True}),  # last=14
+        ('decentralized', {}),   # last=15
+        ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),   # last=16
+        ('multi-criteria-analysis', {'generations': 2}),   # last=17
+        ('plots', {'network_type': 'DC', 'generations':2}),   # last=18
         #('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
-        ('plots-optimization', {'network_type': 'DC','generation':2}),
+        ('plots-optimization', {'network_type': 'DC','generation':2}),  # last=19
         ]
 
     # skip steps already performed
