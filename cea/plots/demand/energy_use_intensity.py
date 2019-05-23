@@ -21,12 +21,15 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(EnergyUseIntensityPlot, self).__init__(project, parameters, cache)
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = ["E_sys_MWhyr",
                                 "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                 "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
-        self.layout = go.Layout(barmode='stack',
-                                yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'), showlegend=True)
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'), showlegend=True)
+
 
     def calc_graph(self):
         if len(self.buildings) == 1:
