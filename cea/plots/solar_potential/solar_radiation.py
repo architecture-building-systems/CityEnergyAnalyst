@@ -53,7 +53,7 @@ class SolarRadiationPlot(cea.plots.solar_potential.SolarPotentialPlotBase):
         # calculate graph
         anchors = []
         for field in analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            anchors.append(', '.join(calc_top_three_anchor_loads(data_frame, field)))
         column_names = ['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']
         column_values = [analysis_fields, total_perc, median, anchors]
         table_df = pd.DataFrame({cn: cv for cn, cv in zip(column_names, column_values)}, columns=column_names)
