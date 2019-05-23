@@ -24,7 +24,7 @@ __status__ = "Production"
 def main(config):
     if not config.cooling_case_workflow.scenario:
         working_dir = os.path.join(tempfile.gettempdir(),
-                               datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-cooling-case-workflow'))
+                                   datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-cooling-case-workflow'))
         os.mkdir(working_dir)
         cea.api.extract_reference_case(destination=working_dir, case='cooling')
         print('-' * 80)
@@ -72,13 +72,13 @@ def main(config):
         ('thermal-network', {'network_type': 'DC', 'use_representative_week_per_month': True}),  # last=13
         ('thermal-network-optimization', {'network_type': 'DC', 'use_representative_week_per_month': True,
                                           'yearly_cost_calculations': True}),  # last=14
-        ('decentralized', {}),   # last=15
-        ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),   # last=16
-        ('multi-criteria-analysis', {'generations': 2}),   # last=17
-        ('plots', {'network_type': 'DC', 'generations':2}),   # last=18
-        #('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
-        ('plots-optimization', {'network_type': 'DC','generation':2}),  # last=19
-        ]
+        ('decentralized', {}),  # last=15
+        ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),  # last=16
+        ('multi-criteria-analysis', {'generations': 2}),  # last=17
+        ('plots', {'network_type': 'DC', 'generations': 2}),  # last=18
+        # ('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
+        ('plots-optimization', {'network_type': 'DC', 'generation': 2}),  # last=19
+    ]
 
     # skip steps already performed
     scripts_to_run = scripts_to_run[config.cooling_case_workflow.last:]

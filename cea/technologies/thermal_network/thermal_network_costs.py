@@ -120,7 +120,7 @@ def calc_Ctot_cooling_plants(network_info):
 
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
-        network_info.locator.get_thermal_network_layout_plant_heat_requirement_file(
+        network_info.locator.get_thermal_network_plant_heat_requirement_file(
             network_info.network_type, network_info.config.thermal_network_optimization.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)

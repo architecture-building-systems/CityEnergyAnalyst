@@ -51,7 +51,7 @@ def calc_Closs_pressure(locator, network_name, network_type):
     :return total_cost:
     """
     #read in electric requirement of pump per timestep
-    pressure_loss_kw = pd.read_csv(locator.get_ploss(network_name, network_type))
+    pressure_loss_kw = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_kw_file(network_type, network_name))
     # read in electricity price
     electricity_price = 1 # todo: find timeseries of data and read in
     #multiply with electricity cost
@@ -75,7 +75,7 @@ def calc_Closs_heat(locator, network_name, network_type):
     :return total_cost:
     """
     # read in electric requirement of pump per timestep
-    heat_loss_kw = pd.read_csv(locator.get_qloss(network_name, network_type))
+    heat_loss_kw = pd.read_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name))
     # read in electricity price
     heat_price = 1  # todo: find timeseries of data of cost of producing 1 kWh at plant in that timestep and read in
     # multiply with electricity cost
