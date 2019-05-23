@@ -12,8 +12,6 @@ $(document).ready(function() {
     });
 });
 
-
-
 var row_being_edited = null;
 
 /**
@@ -41,28 +39,4 @@ function cea_save_row_to_table() {
     }
     let pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
     $('#cea-table').bootstrapTable('updateByUniqueId', {uniqueId: row_being_edited[pk_field], row: row_being_edited});
-}
-
-function updateTooltip({x, y, object}) {
-    const tooltip = document.getElementById('tooltip');
-
-    if (object) {
-        tooltip.style.top = `${y}px`;
-        tooltip.style.left = `${x}px`;
-        var innerHTML = '';
-        for (prop in object.properties) {
-            innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`
-        }
-        tooltip.innerHTML = innerHTML
-    } else {
-        tooltip.innerHTML = '';
-    }
-}
-
-function editProperties({object}) {
-    console.log(object.properties.Name);
-    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
-    var pk = object.properties[pk_field];
-    var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
-    edit_row(row);
 }
