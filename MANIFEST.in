@@ -1,4 +1,5 @@
 include cea/scripts.yml
+include cea/schemas.yml
 include cea/databases/weather/*.epw
 
 recursive-include cea/databases *.xlsx *.xls

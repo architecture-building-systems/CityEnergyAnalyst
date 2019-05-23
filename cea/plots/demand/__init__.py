@@ -91,7 +91,7 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cs_kWh',
                                        'E_cdata_kWh',
                                        'E_cre_kWh']
-        self.input_files = [self.locator.get_total_demand()]  # all these scripts depend on demand
+        self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
 
     @property
     def hourly_loads(self):
@@ -114,6 +114,12 @@ class DemandPlotBase(cea.plots.PlotBase):
     @property
     def yearly_loads(self):
         return pd.read_csv(self.locator.get_total_demand())
+
+    @property
+    def data(self):
+        if not hasattr(self, '_data'):
+            self._data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+        return self._data
 
     @property
     def title(self):
@@ -153,16 +159,21 @@ class DemandSingleBuildingPlotBase(DemandPlotBase):
         super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
 
 
-if __name__ == '__main__':
+def main():
+    """
+    Run all the plots in this category and time the caches.
+    :return:
+    """
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
     from cea.plots.cache import NullPlotCache, PlotCache, MemoryPlotCache
     import time
 
-    def plot_category(cache):
+    def plot_the_whole_category(cache):
         for category in list_categories():
             if category.label != label:
+                # skip other categories
                 continue
             print('category:', category.name, ':', category.label)
             for plot_class in category.plots:
@@ -175,32 +186,36 @@ if __name__ == '__main__':
                 assert plot.category_name == category.name
                 print('plot:', plot.name, '/', plot.id(), '/', plot.title)
 
-                # plot the plot!
-                plot.plot()
-
+                missing_input_files = plot.missing_input_files()
+                if missing_input_files:
+                    for locator_method, args in missing_input_files:
+                        print('Input file not found: {}'.format(locator_method(*args)))
+                else:
+                    # plot the plot!
+                    plot.plot()
 
     null_plot_cache = NullPlotCache()
     plot_cache = PlotCache(config.project)
     memory_plot_cache = MemoryPlotCache(config.project)
-
     # test plots with cache
     t0 = time.time()
     for i in range(3):
-        plot_category(plot_cache)
+        plot_the_whole_category(plot_cache)
     time_with_cache = (time.time() - t0) / 3
-
     # test plots with memory cache
     t0 = time.time()
     for i in range(3):
-        plot_category(memory_plot_cache)
+        plot_the_whole_category(memory_plot_cache)
     time_with_memory_cache = (time.time() - t0) / 3
-
     # test plots without cache
     # t0 = time.time()
     # for i in range(3):
-    #     plot_category(null_plot_cache)
+    #     plot_the_whole_category(null_plot_cache)
     # time_without_cache = (time.time() - t0) / 3
-
     # print('Average without cache: %.2f seconds' % time_without_cache)
     print('Average with cache: %.2f seconds' % time_with_cache)
     print('Average with memory cache: %.2f seconds' % time_with_memory_cache)
+
+
+if __name__ == '__main__':
+    main()
