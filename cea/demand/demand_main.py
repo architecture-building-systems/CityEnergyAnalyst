@@ -74,7 +74,6 @@ def demand_calculation(locator, config):
     multiprocessing = config.multiprocessing
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
-    use_daysim_radiation = config.demand.use_daysim_radiation
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
@@ -89,7 +88,7 @@ def demand_calculation(locator, config):
     year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation,
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year,
                                                                         override_variables)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
@@ -126,13 +125,13 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def properties_and_schedule(locator, year, use_daysim_radiation, override_variables=False):
+def properties_and_schedule(locator, year, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     # building properties model
 
-    building_properties = BuildingProperties(locator, use_daysim_radiation, override_variables)
+    building_properties = BuildingProperties(locator, override_variables)
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.columns)
@@ -188,7 +187,6 @@ def main(config):
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
-    print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
     print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
     if config.demand.write_detailed_output:
         print('Running demand calculation with write detailed output=%s' % config.demand.write_detailed_output)
@@ -208,10 +206,7 @@ def radiation_files_exist(config, locator):
         return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
             locator.get_radiation_building(building_name))
 
-    if config.demand.use_daysim_radiation:
-        return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
-    else:
-        return os.path.exists(locator.get_radiation()) and os.path.exists(locator.get_surface_properties())
+    return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
 
 
 if __name__ == '__main__':
