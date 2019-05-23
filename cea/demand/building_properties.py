@@ -41,7 +41,7 @@ class BuildingProperties(object):
         :type locator: cea.inputlocator.InputLocator
 
         :param override_variables: override_variables from config
-        :type override_variables: str
+        :type override_variables: bool
 
         :returns: BuildingProperties
         :rtype: BuildingProperties
