@@ -46,7 +46,7 @@ class NetworkOptimizationFeatures(object):
 
         for network_name in network_names:
             thermal_loss_sum = 0
-            thermal_losses_kW = pd.read_csv(locator.get_thermal_network_layout_qloss_system_file(config.thermal_network.network_type, network_name))
+            thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file(config.thermal_network.network_type, network_name))
             for column_name in thermal_losses_kW.columns:
                 thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum())*1000
             if config.thermal_network.network_type == 'DH':
