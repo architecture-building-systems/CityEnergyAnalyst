@@ -112,8 +112,7 @@ def main(config):
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     settings = config.demand
-    use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
     list_building_names = building_properties.list_building_names()
     ss_calibrator(number_samples_scaler=config.neural_network.number_samples_scaler,
                   locator=cea.inputlocator.InputLocator(scenario=config.scenario),

@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, locator, target_parameters, nn_delay, climatic_variables,
-                                   year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
+                                   year, use_stochastic_occupancy, weather_array, weather_data,
                                    building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
@@ -45,7 +45,7 @@ def input_prepare_multi_processing(building_name, locator, target_parameters, nn
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
     raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, year,
-                                                     use_daysim_radiation,use_stochastic_occupancy,weather_array,
+                                                     use_stochastic_occupancy,weather_array,
                                                       weather_data,building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
@@ -126,7 +126,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     return raw_nn_targets
 
 def get_cea_inputs(locator, building_name, climatic_variables, year,
-                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                    use_stochastic_occupancy, weather_array, weather_data,
                    building_properties, schedules_dict, date):
     '''
     this function reads the CEA inputs before executing the demand calculations
@@ -379,7 +379,7 @@ def main(config):
     building_name = 'B001'
     settings = config.demand
     get_cea_inputs(locator=locator, building_name=building_name, climatic_variables=config.neural_network.climatic_variables,
-                   year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
+                   year=config.neural_network.year,
                    use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
