@@ -5,13 +5,14 @@ from __future__ import division
 from __future__ import print_function
 
 import cea.plots.demand
+import cea.plots.demand.energy_demand
 import plotly.graph_objs as go
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-class EnergySupplyPlot(cea.plots.demand.DemandPlotBase):
-    """Implement the energy-supply plot"""
+class EnergySupplyPlot(cea.plots.demand.energy_demand.EnergyDemandDistrictPlot):
+    """Implement the energy-supply plot, inherits most of it's functionality from EnergyDemandDistrictPlot"""
     name = "Energy Supply"
 
     def __init__(self, project, parameters, cache):
@@ -20,35 +21,32 @@ class EnergySupplyPlot(cea.plots.demand.DemandPlotBase):
                                 'DC_cdata_MWhyr', 'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr',
                                 'COAL_hs_MWhyr', 'OIL_hs_MWhyr', 'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr']
-        self.data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        self.layout = go.Layout(barmode='stack',
-                                yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
-                                xaxis=dict(title='Building Name'), showlegend=True)
 
-    def calc_graph(self):
-        graph = []
-        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-        data = self.data.sort_values(by='total', ascending=False)
-        for field in self.analysis_fields:
-            y = data[field]
-            name = NAMING[field]
-            total_percent = (y / data['total'] * 100).round(2).values
-            total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
-            trace = go.Bar(x=data["Name"], y=y, name=name, text=total_percent_txt, orientation='v',
-                           marker=dict(color=COLOR[field]))
-            graph.append(trace)
-
-        return graph
+    @property
+    def layout(self):
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                         xaxis=dict(title='Building Name'), showlegend=True)
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     buildings = config.plots.buildings
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
+    EnergySupplyPlot(config.project, {'buildings': None,
+                                      'scenario-name': config.scenario_name},
+                     cache).plot(auto_open=True)
+    EnergySupplyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                                      'scenario-name': config.scenario_name},
+                     cache).plot(auto_open=True)
+    EnergySupplyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                                      'scenario-name': config.scenario_name},
+                     cache).plot(auto_open=True)
 
-    EnergySupplyPlot(config, locator, buildings).plot(auto_open=True)
-    EnergySupplyPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+
+if __name__ == '__main__':
+    main()
