@@ -373,3 +373,12 @@ default:
   interfaces: [cli]
   module: cea.tests.cooling_case_workflow
   parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
+
+
+Documentation:
+- name: doc
+  label:
+  description:
+  interfaces: [cli]
+  module: cea.doc
+  parameters: ['general:scenario',doc]
