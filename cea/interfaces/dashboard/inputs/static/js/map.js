@@ -1,7 +1,8 @@
+const {DeckGL, GeoJsonLayer} = deck;
 var deckgl;
 var jsonStore = {};
 var layers = [];
-var extruded = true;
+var extruded = false;
 var currentViewState;
 
 $(document).ready(function() {
@@ -11,6 +12,7 @@ $(document).ready(function() {
         jsonStore['zone'] = json;
     }).fail(function () {
         console.log("Get zone failed.")
+        $('#zone-toggle').prop('disabled', true)
     });
 
     var getDistrict = $.getJSON('http://localhost:5050/inputs/geojson/district', function (json) {
@@ -18,6 +20,7 @@ $(document).ready(function() {
         jsonStore['district'] = json;
     }).fail(function () {
         console.log("Get district failed.")
+        $('#district-toggle').prop('disabled', true)
     });
 
     var getStreets = $.getJSON('http://localhost:5050/inputs/geojson/others/streets', function (json) {
@@ -25,26 +28,39 @@ $(document).ready(function() {
         jsonStore['streets'] = json;
     }).fail(function () {
         console.log("Get streets failed.")
+        $('#streets-toggle').prop('disabled', true)
     });
 
-    $.when(getZone, getDistrict, getStreets).always(function () {
-        currentViewState = {latitude: 0, longitude: 0, zoom: 0};
+    var getDHnetwork = $.getJSON('http://localhost:5050/inputs/geojson/networks/DC', function (json) {
+        console.log(json);
+        jsonStore['networks'] = json;
+    }).fail(function () {
+        console.log("Get network failed.")
+        $('#networks-toggle').prop('disabled', true)
+    });
+
+    $.when(getZone, getDistrict, getStreets, getDHnetwork).always(function () {
+        currentViewState = {latitude: 0, longitude: 0, zoom: 0, bearing: 0, pitch: 0};
         if (jsonStore['zone'] !== undefined) {
-            createZoneLayer();
+            createLayer('zone');
             currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
             longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
-            zoom: 16};
+            zoom: 16, bearing: 0, pitch: 0};
         }
 
         if (jsonStore['district'] !== undefined) {
-            createDistrictLayer();
+            createLayer('district');
         }
 
         if (jsonStore['streets'] !== undefined) {
-            createStreetsLayer();
+            createLayer('streets');
         }
 
-        deckgl = new deck.DeckGL({
+        if (jsonStore['networks'] !== undefined) {
+            createLayer('networks');
+        }
+
+        deckgl = new DeckGL({
             container: 'mapid',
             mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
             mapStyle: 'mapbox://styles/mapbox/streets-v11',
@@ -56,7 +72,6 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
-        toggle3D();
     });
 });
 
@@ -71,19 +86,48 @@ function toggle3D() {
         bearing = 0;
     }
 
-    createDistrictLayer();
-    createZoneLayer();
+    createLayer('zone', { visible: $('#zone-toggle').prop('checked') });
+    createLayer('district', { visible: $('#district-toggle').prop('checked') });
     deckgl.setProps({ layers: [...layers], controller: {dragRotate: extruded},
         viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
 }
 
-function createDistrictLayer() {
-    var districtLayer = new deck.GeoJsonLayer({
+function toggleLayer(obj) {
+    if (obj.checked) {
+        createLayer(obj.value, { visible: true });
+    } else {
+        createLayer(obj.value, { visible: false });
+    }
+    deckgl.setProps({ layers: [...layers] });
+}
+
+function createLayer(name, options={}) {
+    switch(name) {
+        case 'zone':
+            createZoneLayer(options);
+            break;
+        case 'district':
+            createDistrictLayer(options);
+            break;
+        case 'streets':
+            createStreetsLayer(options);
+            break;
+        case 'networks':
+            createNetworksLayer(options);
+            break;
+    }
+}
+
+function createDistrictLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='district');
+
+    layers.splice(3, 0, new GeoJsonLayer({
         id: 'district',
         data: jsonStore['district'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
+        filled: true,
 
         getElevation: f => f.properties['height_ag'],
         getFillColor: [255, 0, 0],
@@ -92,20 +136,22 @@ function createDistrictLayer() {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties
-    });
+        onClick: editProperties,
 
-    layers = layers.filter(layer => layer.id!=='district');
-    layers.push(districtLayer);
+        ...options
+    }));
 }
 
-function createZoneLayer() {
-    var zoneLayer = new deck.GeoJsonLayer({
+function createZoneLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='zone');
+
+    layers.splice(2, 0, new GeoJsonLayer({
         id: 'zone',
         data: jsonStore['zone'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
+        filled: true,
 
         getElevation: f => f.properties['height_ag'],
         getFillColor: [0, 0, 255],
@@ -114,14 +160,15 @@ function createZoneLayer() {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties
-    });
-    layers = layers.filter(layer => layer.id!=='zone');
-    layers.push(zoneLayer);
+        onClick: editProperties,
+
+        ...options
+    }));
 }
 
-function createStreetsLayer() {
-    var streetsLayer = new deck.GeoJsonLayer({
+function createStreetsLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='streets');
+    layers.splice(0, 0, new GeoJsonLayer({
         id: 'streets',
         data: jsonStore['streets'],
 
@@ -132,11 +179,35 @@ function createStreetsLayer() {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties
-    });
-    layers = layers.filter(layer => layer.id!=='streets');
-    layers.push(streetsLayer);
+        onClick: editProperties,
+
+        ...options
+    }));
 }
+
+function createNetworksLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='networks');
+    layers.splice(1, 0, new GeoJsonLayer({
+        id: 'networks',
+        data: jsonStore['networks'],
+        stroked: false,
+        filled: true,
+
+        getLineColor: [0, 255, 0],
+        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getLineWidth: 3,
+        getRadius: 3,
+
+        pickable: true,
+        autoHighlight: true,
+
+        onHover: updateTooltip,
+        onClick: editProperties,
+
+        ...options
+    }));
+}
+
 
 function updateTooltip({x, y, object}) {
     const tooltip = document.getElementById('tooltip');
@@ -145,7 +216,7 @@ function updateTooltip({x, y, object}) {
         tooltip.style.top = `${y}px`;
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
-        for (prop in object.properties) {
+        for (let prop in object.properties) {
             innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`
         }
         tooltip.innerHTML = innerHTML
@@ -160,4 +231,14 @@ function editProperties({object}) {
     var pk = object.properties[pk_field];
     var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
     edit_row(row);
+}
+
+function nodeFillColor(type) {
+    if (type === 'NONE') {
+        return [100, 100, 100]
+    } else if (type === 'CONSUMER') {
+        return [255, 255, 255]
+    } else if (type === 'PLANT') {
+        return [0, 0, 0]
+    }
 }
