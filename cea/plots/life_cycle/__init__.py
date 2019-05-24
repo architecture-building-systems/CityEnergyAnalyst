@@ -65,3 +65,16 @@ class LifeCycleAnalysisPlotBase(cea.plots.PlotBase):
         data_processed = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(
             data_raw_mobility_emissions, lsuffix='y2')
         return data_processed.ix[self.buildings]
+
+    @property
+    def data_processed_costs(self):
+        """Returns the preprocessed operation costs data used for the life-cycle-analysis plots. Uses the PlotCache to
+        speed up ``self._calculate_data_processed_costs()``"""
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'data_processed_costs'),
+                                 plot=self, producer=self._calculate_data_processed_costs)
+
+    def _calculate_data_processed_costs(self):
+        data_raw = pd.read_csv(self.locator.get_costs_operation_file()).set_index('Name')
+        self.analysis_fields_costs = self.remove_unused_fields(data_raw, self.analysis_fields_costs)
+        data_processed = data_raw[self.analysis_fields_costs]
+        return data_processed.ix[self.buildings]
