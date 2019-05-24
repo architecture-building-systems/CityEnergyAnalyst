@@ -5,6 +5,7 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 from __future__ import division
 from __future__ import print_function
 import os
+import re
 import jinja2
 import plotly.graph_objs
 import plotly.offline
@@ -103,8 +104,12 @@ class PlotBase(object):
             prefix = 'Selected_Buildings'
         else:
             prefix = 'District'
-        file_name = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
+        file_name = "%s_%s" % (prefix, self.sanitize_name(self.name))
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
+
+    def sanitize_name(self, name):
+        name = re.sub('\s+\(.*\)', '', name)
+        return name.lower().replace(' ', '_')
 
     def remove_unused_fields(self, data, fields):
         """
