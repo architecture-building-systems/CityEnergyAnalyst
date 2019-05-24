@@ -34,7 +34,7 @@ from cea.utilities import epwreader
 
 def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
                     number_samples_scaler,nn_delay,  gv, config,climatic_variables,year,
-                    use_daysim_radiation,use_stochastic_occupancy):
+                    use_stochastic_occupancy):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -75,7 +75,7 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
         demand_main.demand_calculation(locator, config)
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
                                                                     nn_delay, climatic_variables,
-                                                                    year, use_daysim_radiation, use_stochastic_occupancy)
+                                                                    year, use_stochastic_occupancy)
 
         scaler_inout_path = locator.get_minmaxscaler_folder()
         file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
@@ -92,12 +92,11 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
 def run_as_script(config):
     gv = cea.globalvar.GlobalVariables()
     settings = config.demand
-    use_daysim_radiation = settings.use_daysim_radiation
     weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
     list_building_names = building_properties.list_building_names()
     sampling_scaler(locator=locator, random_variables=config.neural_network.random_variables,
                     target_parameters=config.neural_network.target_parameters,
@@ -105,7 +104,7 @@ def run_as_script(config):
                     number_samples_scaler=config.neural_network.number_samples_scaler,nn_delay=config.neural_network.nn_delay,
                      gv=gv, config = config,
                     climatic_variables=config.neural_network.climatic_variables,year=config.neural_network.year,
-                    use_daysim_radiation=settings.use_daysim_radiation,use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
+                    use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
     run_as_script(cea.config.Configuration())

@@ -38,7 +38,6 @@ def main(output_file):
     cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True, True)
 
     year = weather_data['year'][0]
-    use_daysim_radiation = config.demand.use_daysim_radiation
     resolution_outputs = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
@@ -48,7 +47,7 @@ def main(output_file):
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
 
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
