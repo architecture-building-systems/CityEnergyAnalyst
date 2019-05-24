@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import print_function
 
-import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.life_cycle
