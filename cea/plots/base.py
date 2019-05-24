@@ -42,6 +42,7 @@ class PlotBase(object):
         self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
         self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
+        self.buildings = self.process_buildings_parameter()
 
         for parameter_name in self.expected_parameters:
             assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
@@ -68,7 +69,13 @@ class PlotBase(object):
 
     @property
     def title(self):
-        raise NotImplementedError('Subclasses need to implement self.title')
+        """Override the version in PlotBase"""
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
+            if len(self.buildings) == 1:
+                return "%s for Building %s" % (self.name, self.buildings[0])
+            else:
+                return "%s for Selected Buildings" % self.name
+        return "%s for District" % self.name
 
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
@@ -86,8 +93,18 @@ class PlotBase(object):
 
     @property
     def output_path(self):
-        """The output path to use for the plot"""
-        raise NotImplementedError('Subclasses need to implement self.output_path')
+        """The output path to use for the solar-potential plots"""
+        assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
+        assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
+
+        if len(self.buildings) == 1:
+            prefix = 'Building_%s' % self.buildings[0]
+        elif len(self.buildings) < len(self.locator.get_zone_building_names()):
+            prefix = 'Selected_Buildings'
+        else:
+            prefix = 'District'
+        file_name = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
+        return self.locator.get_timeseries_plots_file(file_name, self.category_path)
 
     def remove_unused_fields(self, data, fields):
         """
