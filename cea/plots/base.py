@@ -154,3 +154,18 @@ class PlotBase(object):
             k: config.get(v)
             for k, v in cls.expected_parameters.items()
         }
+
+    def process_buildings_parameter(self):
+        """
+        Make sure the buildings parameter contains only buildings in the zone. Returns (and updates) the parameter.
+        """
+        # all plots in this category use the buildings parameter. make it easier to access
+        # handle special case of buildings... (only allow buildings for the scenario in question)
+        zone_building_names = self.locator.get_zone_building_names()
+
+        if not self.parameters['buildings']:
+            self.parameters['buildings'] = zone_building_names
+        self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
+                                         b in zone_building_names]
+                                        or zone_building_names)
+        return self.parameters['buildings']
