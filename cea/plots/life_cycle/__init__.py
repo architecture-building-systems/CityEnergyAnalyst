@@ -27,7 +27,7 @@ label = 'Life Cycle Analysis'
 
 class LifeCycleAnalysisPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "life-cycle-analysis"
+    category_name = "life-cycle"
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
