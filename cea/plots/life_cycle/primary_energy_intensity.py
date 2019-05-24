@@ -8,7 +8,7 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "2.8"
 __maintainer__ = "Daren Thomas"
