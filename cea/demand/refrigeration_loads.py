@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
+from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -33,31 +34,27 @@ def has_refrigeration_load(bpr):
     else:
         return False
 
+
 def calc_Qcre_sys(bpr, tsd, schedules):
     # calculate refrigeration loads
-    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2'] * -1.0  # cooling loads are negative
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcre_d_ls = ((tsd['Tcdata_sys_sup'] + tsd['Tcdata_sys_re']) / 2 - tsd['T_ext']) * (
+    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2 - tsd['T_ext']) * (
                 tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
     # calculate system loads for data center
     tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
-    def function(Qcre_sys):
-        if Qcre_sys > 0:
-            Tcref_re_0 = 5
-            Tcref_sup_0 = 1
-            mcpref = Qcre_sys/(Tcref_re_0-Tcref_sup_0)
-        else:
-            mcpref = 0.0
-            Tcref_re_0 = 0.0
-            Tcref_sup_0 = 0.0
-        return mcpref, Tcref_re_0, Tcref_sup_0
-
-    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] = np.vectorize(function)(tsd['Qcre_sys'])
+    # writing values to tsd, replacing function and np.vectorize call with simple for loop
+    for h in range(HOURS_IN_YEAR):
+        if tsd['Qcre_sys'][h] > 0:
+            tsd['mcpcre_sys'][h] = tsd['Qcre_sys'][h] / (T_C_REF_RE_0 - T_C_REF_SUP_0)
+            tsd['Tcre_sys_re'][h] = T_C_REF_RE_0
+            tsd['Tcre_sys_sup'][h] = T_C_REF_SUP_0
 
     return tsd
+
 
 def calc_Qref(locator, bpr, tsd):
     """
