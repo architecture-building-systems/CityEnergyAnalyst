@@ -122,6 +122,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
+        tsd['Qcre_sys'] = abs(tsd['Qcre_sys'])  # inverting sign of cooling loads for reporting and graphs
 
         tsd = calc_Qcs_sys(bpr, tsd) # final : including fuels and renewables
         tsd = calc_Qhs_sys(bpr, tsd) # final : including fuels and renewables
