@@ -58,3 +58,7 @@ LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the
 # RC-MODEL TEMPERATURE BOUNDS
 T_WARNING_LOW = -30.0
 T_WARNING_HIGH = 50.0
+
+# SUPPLY AND RETURN TEMPERATURES OF REFRIGERATION SYSTEM
+T_C_REF_SUP_0 = 1  # (°C) refactored from refrigeration loads, without original source
+T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original source
