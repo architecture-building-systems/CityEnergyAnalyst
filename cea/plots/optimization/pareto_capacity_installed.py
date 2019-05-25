@@ -41,8 +41,7 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlo
         self.layout = go.Layout(title=self.title, barmode='stack',
                                 yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
                                 xaxis=dict(title='Point in the Pareto Curve'))
-        self.input_files = [self.locator.get_optimization_all_individuals(),
-                            ]
+        self.input_files = [(self.locator.get_optimization_all_individuals, [])]
 
     @property
     def title(self):
