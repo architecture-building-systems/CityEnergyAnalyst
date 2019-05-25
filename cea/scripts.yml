@@ -377,8 +377,8 @@ default:
 
 Documentation:
 - name: doc
-  label:
-  description:
+  label: documentation-tool
+  description: Run all documentation methods via the command line
   interfaces: [cli]
   module: cea.doc
-  parameters: ['general:scenario',doc]
+  parameters: ['general:scenario', doc]
