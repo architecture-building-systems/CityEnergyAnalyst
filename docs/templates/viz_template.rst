@@ -5,7 +5,7 @@ to access this data.
 
 TO DO: run trace for all scripts.
 
-{% for script, underline, digraph in dependencies%}
+{% for script, underline, digraph in vizfiles%}
 {{script}}
 {{underline}}
 .. graphviz::

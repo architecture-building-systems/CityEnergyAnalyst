@@ -1,52 +1,31 @@
+"""This is a really rough attempt at integrating all the documentation processes in one script"""
+
 import os
 import cea.config
 import cea.scripts
+import cea.inputlocator as locator
 from subprocess import check_output
 
 all_scripts = cea.scripts.list_scripts()
 
-def get_script_dependencies(viz_path):
-    dependencies = []
-    for script in sorted(all_scripts):
-        viz_file = os.path.join(os.path.curdir, (script.name + '.gv'))
-        if os.path.isfile(viz_file):
-            with open(viz_file) as viz:
-                digraph = viz.read()
-                underline = '-' * len(script.name)
-            contents = [[script.name, underline, digraph]]
-            dependencies.extend(contents)
-    return dependencies
-
-def meta_naming_merge(meta_location, output):
-    import pandas
+def get_meta():
+    # TODO incorporate into inputlocator method
     import yaml
+    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'tests/trace_inputlocator.output.new.yml')
+    with open(metapath, 'r') as db:
+        metadata = yaml.load(db)
+    return metadata
 
-    # create dataframe from variables_gloss.csv without duplicates
-    gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
-    gloss = pandas.read_csv(gloss_path, delimiter=';')
-    gloss = gloss.set_index(gloss['VARIABLE'])
-    gloss = gloss[~gloss.index.duplicated(keep='first')]
 
-    # create dataframe from naming.csv
-    NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming.csv')
-    naming = pandas.read_csv(NAMING_FILE_PATH)
-    naming = naming.set_index(naming['VARIABLE'])
-
-    # create dataframe from trace_inputlocator.output.yml
-    TRACE_PATH = os.path.join(os.path.dirname(meta_location), 'baseline\\outputs\\trace_inputlocator.output.yml')
-    with open(TRACE_PATH, 'r') as db:
-        TRACE = yaml.load(db)
-
-    # set of unique variables in trace_inputlocator.output.yml
-    TRACE_DATA = set()
-    # dict containing variables mapped to scripts which wrote them
-    SCRIPT = {}
-    for index in TRACE:
-        if not TRACE[index]['created_by']:
-            scr = 'primary_input'
-        else:
-            scr = TRACE[index]['created_by'][0]
-        for VAR in TRACE[index]['schema']:
+def get_meta_variables():
+    # TODO incorporate into inputlocator method
+    import yaml
+    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'tests/trace_inputlocator.output.new.yml')
+    with open(metapath, 'r') as db:
+        metadata = yaml.load(db)
+    meta_variables = set()
+    for locator_method in metadata:
+        for VAR in metadata[locator_method]['schema']:
             if VAR.find('srf') != -1:
                 VAR = VAR.replace(VAR, 'srf0')
             if VAR.find('PIPE') != -1:
@@ -55,30 +34,84 @@ def meta_naming_merge(meta_location, output):
                 VAR = VAR.replace(VAR, 'NODE0')
             if VAR.find('B0') != -1:
                 VAR = VAR.replace(VAR, 'B01')
-            if TRACE[index]['file_type'] == 'epw':
+            if metadata[locator_method]['file_type'] == 'epw':
                 VAR = None
-            if TRACE[index]['file_type'] == 'xlsx':
-                for var in TRACE[index]['schema'][VAR]:
-                    TRACE_DATA.add(var)
-                    SCRIPT[var] = scr
+            if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
+                for var in metadata[locator_method]['schema'][VAR]:
+                    meta_variables.add(var)
             else:
-                TRACE_DATA.add(VAR)
-                SCRIPT[VAR] = scr
+                meta_variables.add(VAR)
+    return meta_variables
+
+
+def get_naming():
+    # TODO incorporate into inputlocator method
+    import pandas
+    NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming.csv')
+    naming = pandas.read_csv(NAMING_FILE_PATH)
+    naming = naming.set_index(naming['VARIABLE'])
+    return naming
+
+
+def meta_naming_merge(output):
+    import pandas
+    # create dataframe from variables_gloss.csv without duplicates TODO delete the glossary reference after first run
+    gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
+    gloss = pandas.read_csv(gloss_path, delimiter=';')
+    gloss = gloss.set_index(gloss['VARIABLE'])
+    gloss = gloss[~gloss.index.duplicated(keep='first')]
+
+    naming = get_naming()
+    metadata = get_meta()
+    META_VARIABLES = get_meta_variables()
+    # dict containing variables mapped to scripts which wrote them
+    SCRIPT = {}
+    for locator_method in metadata:
+        if not metadata[locator_method]['created_by']:
+            scr = 'input: ' + str(metadata[locator_method]['file_path'].split('\\')[-1])
+        else:
+            scr = metadata[locator_method]['created_by'][0]
+        for VAR in metadata[locator_method]['schema']:
+            if VAR.find('srf') != -1:
+                VAR = VAR.replace(VAR, 'srf0')
+            if VAR.find('PIPE') != -1:
+                VAR = VAR.replace(VAR, 'PIPE0')
+            if VAR.find('NODE') != -1:
+                VAR = VAR.replace(VAR, 'NODE0')
+            if VAR.find('B0') != -1:
+                VAR = VAR.replace(VAR, 'B01')
+            if metadata[locator_method]['file_type'] == 'epw':
+                VAR = None
+            if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
+                for var in metadata[locator_method]['schema'][VAR]:
+                    SCRIPT[var] = [scr, locator_method]
+            else:
+                SCRIPT[VAR] = [scr, locator_method]
 
     # cross reference all variables(in order of priority) with naming.csv, variables_gloss.csv for descriptions
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
     # if variable not found in either - TO DO labels
-    csv = pandas.DataFrame(columns=['VARIABLE', 'SCRIPT', 'DESCRIPTION', 'TYPE', 'VALUES'])
+    #TODO this could probably be done more easily
+    csv = pandas.DataFrame(columns=['VARIABLE', 'SCRIPT', 'DESCRIPTION', 'UNIT', 'TYPE', 'VALUES', 'COLOR'])
     vars = []
     desc = []
     dtype = []
     values = []
     script = []
-    for var in TRACE_DATA:
-        script.append(SCRIPT[var])
+    color = []
+    unit = []
+    locator_method = []
+    oldvar = []
+    newvar = []
+
+    for var in META_VARIABLES:
+        script.append(SCRIPT[var][0])
+        locator_method.append(SCRIPT[var][1])
         if var in list(naming['VARIABLE']):
             vars.append(var)
             desc.append(naming.loc[var]['SHORT_DESCRIPTION'])
+            color.append(naming.loc[var]['COLOR'])
+            unit.append(naming.loc[var]['UNIT'])
             if var in list(gloss['VARIABLE']):
                 dtype.append(gloss.loc[var]['DTYPE'])
                 values.append(gloss.loc[var]['VALUES'])
@@ -86,16 +119,27 @@ def meta_naming_merge(meta_location, output):
                 dtype.append('TODO')
                 values.append('TODO')
 
+
         elif var in list(gloss['VARIABLE']):
             vars.append(var)
             desc.append(gloss.loc[var]['SHORT_DESCRIPTION'])
             dtype.append(gloss.loc[var]['DTYPE'])
             values.append(gloss.loc[var]['VALUES'])
+            unit.append(gloss.loc[var]['UNIT'])
+            color.append('black')
+
         else:
             vars.append(var)
             desc.append('TODO')
             dtype.append('TODO')
             values.append('TODO')
+            color.append('black')
+            unit.append('TODO')
+            newvar.append(var)
+
+    for var in list(naming['VARIABLE']):
+        if var not in META_VARIABLES:
+            oldvar.append(var)
 
     # assign to dataframe and write
     csv['VARIABLE'] = vars
@@ -103,13 +147,83 @@ def meta_naming_merge(meta_location, output):
     csv['TYPE'] = dtype
     csv['VALUES'] = values
     csv['SCRIPT'] = script
-    csv = csv.sort_values(by=['SCRIPT', 'VARIABLE', 'VALUES'])
-    csv.to_csv(output, columns=['SCRIPT', 'VARIABLE', 'DESCRIPTION', 'VALUES', 'TYPE'], index=False)
+    csv['UNIT'] = unit
+    csv['COLOR'] = color
+    csv['LOCATOR_METHOD'] = locator_method
+    csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'VARIABLE', 'VALUES'])
+    csv.to_csv(output, columns=['SCRIPT','LOCATOR_METHOD', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False)
+
+    exceptions = {
+        'new_variables': newvar,
+        'old_variables': oldvar
+    }
+    return exceptions
+
+
+def docs_template_gen(documentation_dir, function):
+    from jinja2 import Template
+    if function == 'viz':
+        print 'sorry, viz method is not working ... yet'
+        # template_path = os.path.join(documentation_dir, '\\templates\\viz_template.rst')
+        # template = Template(open(template_path, 'r').read())
+        # vizfiles = []
+        # for script in sorted(all_scripts):
+        #     viz_file = os.path.join(metafile, (script.name + '.gv'))
+        #     if os.path.isfile(viz_file):
+        #         with open(viz_file) as viz:
+        #             digraph = viz.read()
+        #             underline = '-' * len(script.name)
+        #         contents = [[script.name, underline, digraph]]
+        #         vizfiles.extend(contents)
+        # output = template.render(vizfiles=vizfiles)
+        # with open('script-input-outputs.rst', 'w') as vizzz:
+        #     vizzz.write(output)
+
+    if function == 'gloss':
+        import pandas
+        # TODO replace once naming merge has been completed
+        NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
+        naming = pandas.read_csv(NAMING_FILE_PATH)
+        naming = naming.set_index(naming['VARIABLE'])
+
+        metadata = get_meta()
+        META_VARIABLES = get_meta_variables()
+
+        input_locator_methods = set()
+        output_locator_methods = set()
+        glossdata = set()
+
+        for locator_method in metadata:
+            if metadata[locator_method]['used_by'] == []:
+                input_locator_methods.add((locator_method, '-' * len(locator_method)))
+            else:
+                output_locator_methods.add((locator_method, '-' * len(locator_method)))
+
+        for var in META_VARIABLES:
+            if var in list(naming.index):
+                glossdata.add(tuple(naming.loc[var]))
+
+
+        template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
+        template = Template(open(template_path, 'r').read())
+        output = template.render(headers=input_locator_methods, tuples=metadata)
+        with open('input_files.rst', 'w') as gloss:
+            gloss.write(output)
+
+        template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
+        template = Template(open(template_path, 'r').read())
+        output = template.render(headers=output_locator_methods, tuples=metadata)
+        with open('output_files.rst', 'w') as gloss:
+            gloss.write(output)
+
+    else:
+        raise ('The mode you have selected is not valid, please select either <viz> or <gloss>')
+
 
 def main(config):
     docmode = config.doc.mode
 
-    # easy access to paths
+    # easy access to paths, can be incorporated into inputlocator methods later
     originalpath = os.path.curdir
     docspath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..\\docs'))
     ceapath = os.path.join(docspath, '..\\')
@@ -127,39 +241,25 @@ def main(config):
     # change dir to cea/docs
     os.chdir(docspath)
 
-
     if docmode not in config.doc.choices:
         print '%s is not a recognised documentation mode' %docmode
 
+    elif docmode == 'merge':
+        output = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
+        exceptions = meta_naming_merge(output)
+
     elif docmode == 'gloss':
-        import cea.inputlocator
-
-        locator = cea.inputlocator.InputLocator(config.Configuration().scenario).scenario
-        print locator
-        output = os.path.join(os.path.dirname(cea.config.__file__), 'tests/variable_declaration.csv')
-
-        undeclared_vars = meta_naming_merge(locator, output)
-
+        docs_template_gen(docspath, 'gloss')
 
     elif docmode == 'viz':
-        from jinja2 import Template
-
-        template_path = os.path.join(docspath, '\\templates\\script_dependencies_template.rst')
-        template = Template(open(template_path, 'r').read())
-        dependencies = get_script_dependencies()
-        output = template.render(dependencies=dependencies)
-        os.chdir(os.path.join('..copy output from command line python\\', os.curdir))
-        with open('script-input-outputs.rst', 'w') as cea:
-            cea.write(output)
+        ## reconstruct trace_data through the metadata and employ viz in one method
+        docs_template_gen(docspath, 'viz')
+        print 'viz method is not working ... yet'
 
     elif docmode == 'api':
         os.system('make-api-doc')
 
     elif docmode == 'clean':
-        os.chdir('modules')
-        print 'Removing existing module api builds'
-        os.system('del cea*.rst')
-        os.chdir(docspath)
         os.system('make clean')
 
     elif docmode == 'html':
