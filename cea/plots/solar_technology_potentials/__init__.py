@@ -62,7 +62,21 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         # get extra data of weather and date
         weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
 
-        PV_hourly_aggregated_kW = sum(pd.read_csv(self.locator.PV_results(building), usecols=self.pv_analysis_fields)
+        pv_hourly_aggregated_kW = sum(pd.read_csv(self.locator.PV_results(building), usecols=self.pv_analysis_fields)
                                       for building in self.buildings)
-        PV_hourly_aggregated_kW['DATE'] = weather_data["date"]
-        return PV_hourly_aggregated_kW
+        pv_hourly_aggregated_kW['DATE'] = weather_data["date"]
+        return pv_hourly_aggregated_kW
+
+    @property
+    def PVT_hourly_aggregated_kW(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'PVT_hourly_aggregated_kW'),
+                                 plot=self, producer=self._calculate_PVT_hourly_aggregated_kW)
+
+    def _calculate_PVT_hourly_aggregated_kW(self):
+        # get extra data of weather and date
+        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
+
+        pvt_hourly_aggregated_kW = sum(pd.read_csv(self.locator.PVT_results(building), usecols=self.pvt_analysis_fields)
+                                      for building in self.buildings)
+        pvt_hourly_aggregated_kW['DATE'] = weather_data["date"]
+        return pvt_hourly_aggregated_kW
