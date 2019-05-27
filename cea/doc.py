@@ -6,30 +6,17 @@ import cea.scripts
 import cea.inputlocator as locator
 from subprocess import check_output
 
-all_scripts = cea.scripts.list_scripts()
-
-def get_meta():
-    # TODO incorporate into inputlocator method
-    import yaml
-    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'schemas.yml')
-    with open(metapath, 'r') as db:
-        metadata = yaml.load(db)
-    return metadata
-
 
 def get_meta_variables():
-    # TODO incorporate into inputlocator method
-    import yaml
-    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'schemas.yml')
-    with open(metapath, 'r') as db:
-        metadata = yaml.load(db)
+    metadata = cea.scripts.schemas()
     meta_variables = set()
     for locator_method in metadata:
         if not metadata[locator_method]['created_by']:
-            script = metadata[locator_method]['file_path'].split('\\')[-1]
+            script = metadata[locator_method]['file_path'].split('\\')[-1].split('.')[0]
         else:
             script = metadata[locator_method]['created_by'][0]
         for VAR in metadata[locator_method]['schema']:
+
             if VAR.find('srf') != -1:
                 VAR = VAR.replace(VAR, 'srf0')
             if VAR.find('PIPE') != -1:
@@ -37,14 +24,18 @@ def get_meta_variables():
             if VAR.find('NODE') != -1:
                 VAR = VAR.replace(VAR, 'NODE0')
             if VAR.find('B0') != -1:
-                VAR = VAR.replace(VAR, 'B01')
+                VAR = VAR.replace(VAR, 'B001')
             if metadata[locator_method]['file_type'] == 'epw':
-                VAR = None
+                VAR = 'EPW file variables'
             if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
                 for var in metadata[locator_method]['schema'][VAR]:
-                    meta_variables.add((var, locator_method, 'input:'+script+':'+str(VAR)))
+
+                    file_name = metadata[locator_method]['file_path'].split('\\')[-1] + ':' + VAR
+                    meta_variables.add((var, locator_method, script, file_name))
             else:
-                meta_variables.add((VAR, locator_method, script))
+
+                file_name = metadata[locator_method]['file_path'].split('\\')[-1]
+                meta_variables.add((VAR, locator_method, script, file_name))
     return meta_variables
 
 
@@ -62,42 +53,19 @@ def meta_naming_merge(output):
     # create dataframe from variables_gloss.csv without duplicates TODO delete the glossary reference after first run
     gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
     gloss = pandas.read_csv(gloss_path, delimiter=';')
-    gloss = gloss.set_index(gloss['VARIABLE'])
-    gloss = gloss[~gloss.index.duplicated(keep='first')]
+    gloss['key'] = gloss['FILE'] + '!!!' + gloss['VARIABLE']
+    gloss_vars = gloss.set_index(['VARIABLE'])
+    gloss_vars = gloss_vars.loc[~gloss_vars.index.duplicated(keep='first')]
+    gloss = gloss.set_index(['key'])
 
     naming = get_naming()
-    metadata = get_meta()
     META_VARIABLES = get_meta_variables()
-    # dict containing variables mapped to scripts which wrote them
-    # SCRIPT = {}
-    #
-    # for locator_method in metadata:
-    #     if not metadata[locator_method]['created_by']:
-    #         scr = metadata[locator_method]['file_path'].split('\\')[-1]
-    #     else:
-    #         scr = metadata[locator_method]['created_by'][0]
-    #     for VAR in metadata[locator_method]['schema']:
-    #         if VAR.find('srf') != -1:
-    #             VAR = VAR.replace(VAR, 'srf0')
-    #         if VAR.find('PIPE') != -1:
-    #             VAR = VAR.replace(VAR, 'PIPE0')
-    #         if VAR.find('NODE') != -1:
-    #             VAR = VAR.replace(VAR, 'NODE0')
-    #         if VAR.find('B0') != -1:
-    #             VAR = VAR.replace(VAR, 'B01')
-    #         if metadata[locator_method]['file_type'] == 'epw':
-    #             VAR = None
-    #         if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
-    #             for var in metadata[locator_method]['schema'][VAR]:
-    #                 SCRIPT[locator_method] = [scr+':'+VAR, var]
-    #         else:
-    #             SCRIPT[locator_method] = [scr, VAR]
 
     # cross reference all variables(in order of priority) with naming.csv, variables_gloss.csv for descriptions
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
     # if variable not found in either - TO DO labels
     #TODO this could probably be done more easily
-    csv = pandas.DataFrame(columns=['VARIABLE', 'SCRIPT', 'DESCRIPTION', 'UNIT', 'TYPE', 'VALUES', 'COLOR'])
+    csv = pandas.DataFrame()
     vars = []
     desc = []
     dtype = []
@@ -106,31 +74,50 @@ def meta_naming_merge(output):
     color = []
     unit = []
     locator_method = []
+    files = []
     oldvar = []
     newvar = []
 
-    for var, method, script in META_VARIABLES:
+
+
+    for var, method, script, file_name in META_VARIABLES:
+        key = file_name + '!!!' + var
         scripts.append(script)
         locator_method.append(method)
+        files.append(file_name)
 
         if var in list(naming['VARIABLE']):
             vars.append(var)
             desc.append(naming.loc[var]['SHORT_DESCRIPTION'])
             color.append(naming.loc[var]['COLOR'])
             unit.append(naming.loc[var]['UNIT'])
-            if var in list(gloss['VARIABLE']):
-                dtype.append(gloss.loc[var]['DTYPE'])
-                values.append(gloss.loc[var]['VALUES'])
-            if var not in list(gloss['VARIABLE']):
+
+            if key in list(gloss.index.values):
+                dtype.append(gloss.loc[key]['DTYPE'])
+                values.append(gloss.loc[key]['VALUES'])
+
+            elif var in list(gloss_vars.index.values):
+                dtype.append(gloss_vars.loc[var]['DTYPE'])
+                values.append(gloss_vars.loc[var]['VALUES'])
+
+            else:
                 dtype.append('TODO')
                 values.append('TODO')
 
-        elif var in list(gloss['VARIABLE']):
+        elif key in list(gloss.index.values):
             vars.append(var)
-            desc.append(gloss.loc[var]['SHORT_DESCRIPTION'])
-            dtype.append(gloss.loc[var]['DTYPE'])
-            values.append(gloss.loc[var]['VALUES'])
-            unit.append(gloss.loc[var]['UNIT'])
+            desc.append(gloss.loc[key]['SHORT_DESCRIPTION'])
+            dtype.append(gloss.loc[key]['DTYPE'])
+            values.append(gloss.loc[key]['VALUES'])
+            unit.append(gloss.loc[key]['UNIT'])
+            color.append('black')
+
+        elif var in list(gloss_vars.index.values):
+            vars.append(var)
+            desc.append(gloss_vars.loc[var]['SHORT_DESCRIPTION'])
+            dtype.append(gloss_vars.loc[var]['DTYPE'])
+            values.append(gloss_vars.loc[var]['VALUES'])
+            unit.append(gloss_vars.loc[var]['UNIT'])
             color.append('black')
 
         else:
@@ -143,7 +130,7 @@ def meta_naming_merge(output):
             newvar.append(var)
 
     for var in list(naming['VARIABLE']):
-        for VAR, method, script in META_VARIABLES:
+        for VAR, method, script, file_name in META_VARIABLES:
             if var == VAR:
                 oldvar.append(var)
 
@@ -156,8 +143,9 @@ def meta_naming_merge(output):
     csv['UNIT'] = unit
     csv['COLOR'] = color
     csv['LOCATOR_METHOD'] = locator_method
-    csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'VARIABLE', 'VALUES'])
-    csv.to_csv(output, columns=['SCRIPT', 'LOCATOR_METHOD', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False)
+    csv['FILE_NAME'] = files
+    csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'VALUES'])
+    csv.to_csv(output, columns=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME','VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False, sep=';')
 
     exceptions = {
         'new_variables': newvar,
@@ -189,16 +177,17 @@ def docs_template_gen(documentation_dir, function):
         import pandas
         # TODO replace once naming merge has been completed
         NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
-        naming = pandas.read_csv(NAMING_FILE_PATH)
-        naming = naming.set_index(naming['VARIABLE'])
-        naming = naming.sort_values(by=['LOCATOR_METHOD','VARIABLE'])
+        naming = pandas.read_csv(NAMING_FILE_PATH, sep=';')
+        naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
+        naming = naming.set_index(['key'])
+        naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
 
-        metadata = get_meta()
+        metadata = cea.scripts.schemas()
         META_VARIABLES = get_meta_variables()
 
         input_locator_methods = set()
         output_locator_methods = set()
-        glossdata = set()
+        glossary_data = set()
 
         for locator_method in metadata:
             if metadata[locator_method]['created_by'] == []:
@@ -206,22 +195,22 @@ def docs_template_gen(documentation_dir, function):
             else:
                 output_locator_methods.add((locator_method, '-' * len(locator_method)))
 
-        for var in META_VARIABLES:
-            if var in list(naming.index):
-                glossdata.add(tuple(naming.loc[var]))
+        for var, locator_method, script, file_name in META_VARIABLES:
+            key = file_name + '!!!' + var
+            if key in list(naming.index):
+                glossary_data.add(tuple(naming.loc[key]))
 
-
-
+        # glossary_data = sorted(glossary_data)
 
         template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
         template = Template(open(template_path, 'r').read())
-        output = template.render(headers=input_locator_methods, tuples=glossdata)
+        output = template.render(headers=input_locator_methods, tuples=glossary_data)
         with open('input_files.rst', 'w') as gloss:
             gloss.write(output)
 
         template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
         template = Template(open(template_path, 'r').read())
-        output = template.render(headers=output_locator_methods, tuples=glossdata)
+        output = template.render(headers=output_locator_methods, tuples=glossary_data)
         with open('output_files.rst', 'w') as gloss:
             gloss.write(output)
 
