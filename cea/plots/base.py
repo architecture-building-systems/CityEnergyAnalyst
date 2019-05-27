@@ -109,7 +109,7 @@ class PlotBase(object):
 
     def sanitize_name(self, name):
         name = re.sub('\s+\(.*\)', '', name)
-        return name.lower().replace(' ', '_')
+        return name.lower().replace(' ', '_').replace('/', '_')
 
     def remove_unused_fields(self, data, fields):
         """
