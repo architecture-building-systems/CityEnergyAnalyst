@@ -11,7 +11,7 @@ all_scripts = cea.scripts.list_scripts()
 def get_meta():
     # TODO incorporate into inputlocator method
     import yaml
-    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'tests/trace_inputlocator.output.new.yml')
+    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'schemas.yml')
     with open(metapath, 'r') as db:
         metadata = yaml.load(db)
     return metadata
@@ -20,11 +20,15 @@ def get_meta():
 def get_meta_variables():
     # TODO incorporate into inputlocator method
     import yaml
-    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'tests/trace_inputlocator.output.new.yml')
+    metapath = os.path.join(os.path.dirname(cea.config.__file__), 'schemas.yml')
     with open(metapath, 'r') as db:
         metadata = yaml.load(db)
     meta_variables = set()
     for locator_method in metadata:
+        if not metadata[locator_method]['created_by']:
+            script = metadata[locator_method]['file_path'].split('\\')[-1]
+        else:
+            script = metadata[locator_method]['created_by'][0]
         for VAR in metadata[locator_method]['schema']:
             if VAR.find('srf') != -1:
                 VAR = VAR.replace(VAR, 'srf0')
@@ -38,9 +42,9 @@ def get_meta_variables():
                 VAR = None
             if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
                 for var in metadata[locator_method]['schema'][VAR]:
-                    meta_variables.add(var)
+                    meta_variables.add((var, locator_method, 'input:'+script+':'+str(VAR)))
             else:
-                meta_variables.add(VAR)
+                meta_variables.add((VAR, locator_method, script))
     return meta_variables
 
 
@@ -65,28 +69,29 @@ def meta_naming_merge(output):
     metadata = get_meta()
     META_VARIABLES = get_meta_variables()
     # dict containing variables mapped to scripts which wrote them
-    SCRIPT = {}
-    for locator_method in metadata:
-        if not metadata[locator_method]['created_by']:
-            scr = 'input: ' + str(metadata[locator_method]['file_path'].split('\\')[-1])
-        else:
-            scr = metadata[locator_method]['created_by'][0]
-        for VAR in metadata[locator_method]['schema']:
-            if VAR.find('srf') != -1:
-                VAR = VAR.replace(VAR, 'srf0')
-            if VAR.find('PIPE') != -1:
-                VAR = VAR.replace(VAR, 'PIPE0')
-            if VAR.find('NODE') != -1:
-                VAR = VAR.replace(VAR, 'NODE0')
-            if VAR.find('B0') != -1:
-                VAR = VAR.replace(VAR, 'B01')
-            if metadata[locator_method]['file_type'] == 'epw':
-                VAR = None
-            if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
-                for var in metadata[locator_method]['schema'][VAR]:
-                    SCRIPT[var] = [scr, locator_method]
-            else:
-                SCRIPT[VAR] = [scr, locator_method]
+    # SCRIPT = {}
+    #
+    # for locator_method in metadata:
+    #     if not metadata[locator_method]['created_by']:
+    #         scr = metadata[locator_method]['file_path'].split('\\')[-1]
+    #     else:
+    #         scr = metadata[locator_method]['created_by'][0]
+    #     for VAR in metadata[locator_method]['schema']:
+    #         if VAR.find('srf') != -1:
+    #             VAR = VAR.replace(VAR, 'srf0')
+    #         if VAR.find('PIPE') != -1:
+    #             VAR = VAR.replace(VAR, 'PIPE0')
+    #         if VAR.find('NODE') != -1:
+    #             VAR = VAR.replace(VAR, 'NODE0')
+    #         if VAR.find('B0') != -1:
+    #             VAR = VAR.replace(VAR, 'B01')
+    #         if metadata[locator_method]['file_type'] == 'epw':
+    #             VAR = None
+    #         if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
+    #             for var in metadata[locator_method]['schema'][VAR]:
+    #                 SCRIPT[locator_method] = [scr+':'+VAR, var]
+    #         else:
+    #             SCRIPT[locator_method] = [scr, VAR]
 
     # cross reference all variables(in order of priority) with naming.csv, variables_gloss.csv for descriptions
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
@@ -97,16 +102,17 @@ def meta_naming_merge(output):
     desc = []
     dtype = []
     values = []
-    script = []
+    scripts = []
     color = []
     unit = []
     locator_method = []
     oldvar = []
     newvar = []
 
-    for var in META_VARIABLES:
-        script.append(SCRIPT[var][0])
-        locator_method.append(SCRIPT[var][1])
+    for var, method, script in META_VARIABLES:
+        scripts.append(script)
+        locator_method.append(method)
+
         if var in list(naming['VARIABLE']):
             vars.append(var)
             desc.append(naming.loc[var]['SHORT_DESCRIPTION'])
@@ -118,7 +124,6 @@ def meta_naming_merge(output):
             if var not in list(gloss['VARIABLE']):
                 dtype.append('TODO')
                 values.append('TODO')
-
 
         elif var in list(gloss['VARIABLE']):
             vars.append(var)
@@ -138,20 +143,21 @@ def meta_naming_merge(output):
             newvar.append(var)
 
     for var in list(naming['VARIABLE']):
-        if var not in META_VARIABLES:
-            oldvar.append(var)
+        for VAR, method, script in META_VARIABLES:
+            if var == VAR:
+                oldvar.append(var)
 
     # assign to dataframe and write
     csv['VARIABLE'] = vars
     csv['DESCRIPTION'] = desc
     csv['TYPE'] = dtype
     csv['VALUES'] = values
-    csv['SCRIPT'] = script
+    csv['SCRIPT'] = scripts
     csv['UNIT'] = unit
     csv['COLOR'] = color
     csv['LOCATOR_METHOD'] = locator_method
     csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'VARIABLE', 'VALUES'])
-    csv.to_csv(output, columns=['SCRIPT','LOCATOR_METHOD', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False)
+    csv.to_csv(output, columns=['SCRIPT', 'LOCATOR_METHOD', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False)
 
     exceptions = {
         'new_variables': newvar,
@@ -185,6 +191,7 @@ def docs_template_gen(documentation_dir, function):
         NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
         naming = pandas.read_csv(NAMING_FILE_PATH)
         naming = naming.set_index(naming['VARIABLE'])
+        naming = naming.sort_values(by=['LOCATOR_METHOD','VARIABLE'])
 
         metadata = get_meta()
         META_VARIABLES = get_meta_variables()
@@ -194,7 +201,7 @@ def docs_template_gen(documentation_dir, function):
         glossdata = set()
 
         for locator_method in metadata:
-            if metadata[locator_method]['used_by'] == []:
+            if metadata[locator_method]['created_by'] == []:
                 input_locator_methods.add((locator_method, '-' * len(locator_method)))
             else:
                 output_locator_methods.add((locator_method, '-' * len(locator_method)))
@@ -204,20 +211,22 @@ def docs_template_gen(documentation_dir, function):
                 glossdata.add(tuple(naming.loc[var]))
 
 
+
+
         template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
         template = Template(open(template_path, 'r').read())
-        output = template.render(headers=input_locator_methods, tuples=metadata)
+        output = template.render(headers=input_locator_methods, tuples=glossdata)
         with open('input_files.rst', 'w') as gloss:
             gloss.write(output)
 
         template_path = os.path.join(documentation_dir, 'templates\\gloss_template.rst')
         template = Template(open(template_path, 'r').read())
-        output = template.render(headers=output_locator_methods, tuples=metadata)
+        output = template.render(headers=output_locator_methods, tuples=glossdata)
         with open('output_files.rst', 'w') as gloss:
             gloss.write(output)
 
     else:
-        raise ('The mode you have selected is not valid, please select either <viz> or <gloss>')
+        print ('The mode you have selected is not valid, please select either <viz> or <gloss>')
 
 
 def main(config):
@@ -229,7 +238,7 @@ def main(config):
     ceapath = os.path.join(docspath, '..\\')
     sphinxbuild = os.path.join(docspath, '_build\\html\\index.html')
 
-    # record the change files in git diff
+    # record docs relevant files from git diff
     os.chdir(ceapath)
     gitdiff = check_output('git diff --name-only', shell=True).split('\n')
     preview_docs = set()
