@@ -39,7 +39,6 @@ class SolarPotentialPlotBase(cea.plots.PlotBase):
     def __init__(self, project, parameters, cache):
         super(SolarPotentialPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', 'solar-potential')
-        self.buildings = self.process_buildings_parameter()
         self.weather = self.parameters['weather']
         self.analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                                 'walls_east', 'walls_west', 'walls_south', 'walls_north', 'roofs_top']
@@ -48,31 +47,6 @@ class SolarPotentialPlotBase(cea.plots.PlotBase):
         self.input_files = [(self.locator.get_radiation_metadata, [building_name]) for building_name in
                             self.buildings] + [(self.locator.get_radiation_building, [building_name]) for building_name
                                                in self.buildings]
-
-    @property
-    def output_path(self):
-        """The output path to use for the solar-potential plots"""
-        assert self.name, "Attribute 'name' not defined for this plot (%s)" % self.__class__
-        assert self.category_path, "Attribute 'category_path' not defined for this plot(%s)" % self.__class__
-
-        if len(self.buildings) == 1:
-            prefix = 'Building_%s' % self.buildings[0]
-        elif len(self.buildings) < len(self.locator.get_zone_building_names()):
-            prefix = 'Selected_Buildings'
-        else:
-            prefix = 'District'
-        file_name = "%s_%s" % (prefix, self.name.lower().replace(' ', '_'))
-        return self.locator.get_timeseries_plots_file(file_name, self.category_path)
-
-    @property
-    def title(self):
-        """Override the version in PlotBase"""
-        if set(self.buildings) != set(self.locator.get_zone_building_names()):
-            if len(self.buildings) == 1:
-                return "%s for Building %s" % (self.name, self.buildings[0])
-            else:
-                return "%s for Selected Buildings" % self.name
-        return "%s for District" % self.name
 
     @property
     def input_data_aggregated_kW(self):

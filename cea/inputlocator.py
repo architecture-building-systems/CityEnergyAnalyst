@@ -248,8 +248,13 @@ class InputLocator(object):
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_results_folder(),
-                            'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+        if 'Network_summary_result_' in key:
+            path = os.path.join(self.get_optimization_network_results_folder(), key)
+        else:
+            path = os.path.join(self.get_optimization_network_results_folder(),
+                                'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+        return path
+
 
     def get_optimization_network_all_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -690,7 +695,7 @@ class InputLocator(object):
         else:
             file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
 
-        return os.path.join(self.get_optimization_network_layout_folder(), file_name)
+        return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
@@ -798,7 +803,7 @@ class InputLocator(object):
         return os.path.join(folder, file_name)
 
 
-    def get_thermal_network_layout_qloss_system_file(self, network_type, network_name, representative_week=False):
+    def get_thermal_network_qloss_system_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
         if representative_week == True:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -856,8 +861,8 @@ class InputLocator(object):
         return os.path.join(folder, file_name)
 
 
-    def get_thermal_network_layout_plant_heat_requirement_file(self, network_type, network_name,
-                                                               representative_week=False):
+    def get_thermal_network_plant_heat_requirement_file(self, network_type, network_name,
+                                                        representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
         Heat requirement at from the plants in a district heating or cooling network
         """
@@ -1022,47 +1027,47 @@ class InputLocator(object):
 
     # THERMAL NETWORK
 
-    def get_qloss(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_qloss_System_kW.%(format)s' % locals())
+    # def get_qloss(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_qloss_System_kW.%(format)s' % locals())
 
-    def get_substation_HEX_cost(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__substaion_HEX_cost.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(
-                                network_name) + '_substaion_HEX_cost_USD.%(format)s' % locals())
+    # def get_substation_HEX_cost(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__substaion_HEX_cost.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(
+    #                             network_name) + '_substaion_HEX_cost_USD.%(format)s' % locals())
 
-    def get_ploss(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_P_DeltaP_kW.%(format)s' % locals())
+    # def get_ploss(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_P_DeltaP_kW.%(format)s' % locals())
 
-    def get_qplant(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__Plant_heat_requirement_kW.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(
-                                network_name) + '_Plant_heat_requirement_kW.%(format)s' % locals())
+    # def get_qplant(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__Plant_heat_requirement_kW.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(
+    #                             network_name) + '_Plant_heat_requirement_kW.%(format)s' % locals())
 
-    def get_pnode_s(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__P_Supply_Pa.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_P_Supply_Pa.%(format)s' % locals())
+    # def get_pnode_s(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__P_Supply_Pa.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_P_Supply_Pa.%(format)s' % locals())
 
-    def get_pnode_r(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DC__P_Return_Pa.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_P_Return_Pa.%(format)s' % locals())
+    # def get_pnode_r(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DC__P_Return_Pa.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_P_Return_Pa.%(format)s' % locals())
 
-    def get_Tnode_s(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DH__T_Supply_K.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_T_Supply_K.%(format)s' % locals())
+    # def get_Tnode_s(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DH__T_Supply_K.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_T_Supply_K.%(format)s' % locals())
 
-    def get_Tnode_r(self, network_name, network_type, format='csv'):
-        """scenario/outputs/data/optimization/network/layout/DC__T_Return_K.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(),
-                            str(network_type) + '_' + str(network_name) + '_T_Return_K.%(format)s' % locals())
+    # def get_Tnode_r(self, network_name, network_type, format='csv'):
+    #     """scenario/outputs/data/optimization/network/layout/DC__T_Return_K.csv"""
+    #     return os.path.join(self.get_optimization_network_layout_folder(),
+    #                         str(network_type) + '_' + str(network_name) + '_T_Return_K.%(format)s' % locals())
 
     # CALIBRATION
     def get_calibration_folder(self):
