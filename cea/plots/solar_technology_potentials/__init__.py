@@ -80,3 +80,42 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                                       for building in self.buildings)
         pvt_hourly_aggregated_kW['DATE'] = weather_data["date"]
         return pvt_hourly_aggregated_kW
+
+    @property
+    def SC_FP_hourly_aggregated_kW(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'SC_FP_hourly_aggregated_kW'),
+                                 plot=self, producer=self._calculate_SC_FP_hourly_aggregated_kW)
+
+    def _calculate_SC_FP_hourly_aggregated_kW(self):
+        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
+        sc_fp_hourly_aggregated_kW = sum(
+            pd.read_csv(self.locator.SC_results(building, panel_type='FP'), usecols=self.sc_analysis_fields) for
+            building in self.buildings)
+        sc_fp_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
+                                                   'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
+                                                   'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
+                                                   'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
+                                                   'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
+                                          inplace=True)
+        sc_fp_hourly_aggregated_kW['DATE'] = weather_data["date"]
+        return sc_fp_hourly_aggregated_kW
+
+    @property
+    def SC_ET_hourly_aggregated_kW(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, 'SC_ET_hourly_aggregated_kW'),
+                                 plot=self, producer=self._calculate_SC_ET_hourly_aggregated_kW)
+
+    def _calculate_SC_ET_hourly_aggregated_kW(self):
+        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
+        sc_et_hourly_aggregated_kW = sum(
+            pd.read_csv(self.locator.SC_results(building, panel_type='FP'), usecols=self.sc_analysis_fields) for
+            building in self.buildings)
+        sc_et_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
+                                                   'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
+                                                   'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
+                                                   'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
+                                                   'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
+                                          inplace=True)
+        sc_et_hourly_aggregated_kW['DATE'] = weather_data["date"]
+        return sc_et_hourly_aggregated_kW
+
