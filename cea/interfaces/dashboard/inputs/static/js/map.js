@@ -11,7 +11,7 @@ $(document).ready(function() {
         console.log(json);
         jsonStore['zone'] = json;
     }).fail(function () {
-        console.log("Get zone failed.")
+        console.log("Get zone failed.");
         $('#zone-toggle').prop('disabled', true)
     });
 
@@ -19,7 +19,7 @@ $(document).ready(function() {
         console.log(json);
         jsonStore['district'] = json;
     }).fail(function () {
-        console.log("Get district failed.")
+        console.log("Get district failed.");
         $('#district-toggle').prop('disabled', true)
     });
 
@@ -27,19 +27,27 @@ $(document).ready(function() {
         console.log(json);
         jsonStore['streets'] = json;
     }).fail(function () {
-        console.log("Get streets failed.")
+        console.log("Get streets failed.");
         $('#streets-toggle').prop('disabled', true)
     });
 
-    var getDHnetwork = $.getJSON('http://localhost:5050/inputs/geojson/networks/DC', function (json) {
+    var getDHNetworks = $.getJSON('http://localhost:5050/inputs/geojson/networks/DH', function (json) {
         console.log(json);
-        jsonStore['networks'] = json;
+        jsonStore['dh-networks'] = json;
     }).fail(function () {
-        console.log("Get network failed.")
-        $('#networks-toggle').prop('disabled', true)
+        console.log("Get DH networks failed.");
+        $('#dh-networks-toggle').prop('disabled', true)
     });
 
-    $.when(getZone, getDistrict, getStreets, getDHnetwork).always(function () {
+    var getDCNetworks = $.getJSON('http://localhost:5050/inputs/geojson/networks/DC', function (json) {
+        console.log(json);
+        jsonStore['dc-networks'] = json;
+    }).fail(function () {
+        console.log("Get DC networks failed.");
+        $('#dc-networks-toggle').prop('disabled', true)
+    });
+
+    $.when(getZone, getDistrict, getStreets, getDHNetworks, getDCNetworks).always(function () {
         currentViewState = {latitude: 0, longitude: 0, zoom: 0, bearing: 0, pitch: 0};
         if (jsonStore['zone'] !== undefined) {
             createLayer('zone');
@@ -56,8 +64,12 @@ $(document).ready(function() {
             createLayer('streets');
         }
 
-        if (jsonStore['networks'] !== undefined) {
-            createLayer('networks');
+        if (jsonStore['dc-networks'] !== undefined) {
+            createLayer('dc-networks');
+        }
+
+        if (jsonStore['dh-networks'] !== undefined) {
+            createLayer('dh-networks');
         }
 
         deckgl = new DeckGL({
@@ -112,8 +124,11 @@ function createLayer(name, options={}) {
         case 'streets':
             createStreetsLayer(options);
             break;
-        case 'networks':
-            createNetworksLayer(options);
+        case 'dh-networks':
+            createDHNetworksLayer(options);
+            break;
+        case 'dc-networks':
+            createDCNetworksLayer(options);
             break;
     }
 }
@@ -121,7 +136,7 @@ function createLayer(name, options={}) {
 function createDistrictLayer(options={}) {
     layers = layers.filter(layer => layer.id!=='district');
 
-    layers.splice(3, 0, new GeoJsonLayer({
+    layers.splice(4, 0, new GeoJsonLayer({
         id: 'district',
         data: jsonStore['district'],
         opacity: 0.5,
@@ -145,7 +160,7 @@ function createDistrictLayer(options={}) {
 function createZoneLayer(options={}) {
     layers = layers.filter(layer => layer.id!=='zone');
 
-    layers.splice(2, 0, new GeoJsonLayer({
+    layers.splice(3, 0, new GeoJsonLayer({
         id: 'zone',
         data: jsonStore['zone'],
         opacity: 0.5,
@@ -185,11 +200,11 @@ function createStreetsLayer(options={}) {
     }));
 }
 
-function createNetworksLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='networks');
+function createDHNetworksLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='dh-networks');
     layers.splice(1, 0, new GeoJsonLayer({
-        id: 'networks',
-        data: jsonStore['networks'],
+        id: 'dh-networks',
+        data: jsonStore['dh-networks'],
         stroked: false,
         filled: true,
 
@@ -208,6 +223,28 @@ function createNetworksLayer(options={}) {
     }));
 }
 
+function createDCNetworksLayer(options={}) {
+    layers = layers.filter(layer => layer.id!=='dc-networks');
+    layers.splice(2, 0, new GeoJsonLayer({
+        id: 'dc-networks',
+        data: jsonStore['dc-networks'],
+        stroked: false,
+        filled: true,
+
+        getLineColor: [0, 255, 0],
+        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getLineWidth: 3,
+        getRadius: 3,
+
+        pickable: true,
+        autoHighlight: true,
+
+        onHover: updateTooltip,
+        onClick: editProperties,
+
+        ...options
+    }));
+}
 
 function updateTooltip({x, y, object}) {
     const tooltip = document.getElementById('tooltip');
