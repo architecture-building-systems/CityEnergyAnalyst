@@ -55,24 +55,27 @@ def calc_exergy_moist_air_2(T_air_C, w_air_gperkg, T_ref_C, w_ref_gperkg):
     ..[Ren,C. et al.2002] Discussion Regarding the Principles of Exergy Analysis Applied to HVAC Systems. Journal of
     Asian Architecture and Building Engineering, 137-141.
     """
-    T_ref_K = T_ref_C + 273.15
-    T_air_K = T_air_C + 273.15
-    w_air_kgperkg = w_air_gperkg / 1000
-    w_ref_kgperkg = w_ref_gperkg / 1000
+    if T_air_C > 0:
+        T_ref_K = T_ref_C + 273.15
+        T_air_K = T_air_C + 273.15
+        w_air_kgperkg = w_air_gperkg / 1000
+        w_ref_kgperkg = w_ref_gperkg / 1000
 
-    # physical exergy
-    ph_1 = c_air_kJperkgK + w_air_kgperkg * c_vapor_kJperkgK
-    ph_2 = T_air_K - T_ref_K - T_ref_K * math.log(T_air_K / T_ref_K)
-    ex_ph = ph_1 * ph_2  # eq.(2') first part
-    # print('thermal exergy: ',ex_ph)
+        # physical exergy
+        ph_1 = c_air_kJperkgK + w_air_kgperkg * c_vapor_kJperkgK
+        ph_2 = T_air_K - T_ref_K - T_ref_K * math.log(T_air_K / T_ref_K)
+        ex_ph = ph_1 * ph_2  # eq.(2') first part
+        # print('thermal exergy: ',ex_ph)
 
-    # chemical exergy
-    ch_1 = (1 + 1.608 * w_air_kgperkg)
-    ch_2 = (1 + 1.608 * w_ref_kgperkg)
-    ex_ch = Ra * T_ref_K * (ch_1 * math.log(ch_2 / ch_1)
-                            + 1.608 * w_air_kgperkg * math.log(w_air_kgperkg / w_ref_kgperkg))  # eq.(2') third part
-    # print('chemical exergy: ', ex_ch)
-    ex_air_kJperkg = ex_ph + ex_ch
+        # chemical exergy
+        ch_1 = (1 + 1.608 * w_air_kgperkg)
+        ch_2 = (1 + 1.608 * w_ref_kgperkg)
+        ex_ch = Ra * T_ref_K * (ch_1 * math.log(ch_2 / ch_1)
+                                + 1.608 * w_air_kgperkg * math.log(w_air_kgperkg / w_ref_kgperkg))  # eq.(2') third part
+        # print('chemical exergy: ', ex_ch)
+        ex_air_kJperkg = ex_ph + ex_ch
+    else:
+        ex_air_kJperkg = np.nan
     return ex_air_kJperkg
 
 
@@ -221,7 +224,7 @@ if __name__ == '__main__':
     w_air_gperkg = 9.5
     T_0_C = 32
     w_0_gperkg = 21.4
-    w_0s_gperkg = calc_w_sat(T_0_C) * 1000
+    w_0s_gperkg = aux.calc_w_ss_from_T(T_0_C) * 1000
     ex_moist_air_A = calc_exergy_moist_air_2(T_air_C, w_air_gperkg, T_0_C, w_0_gperkg)
     print 'ex A (Marletta,2010): ', ex_moist_air_A, ' [kJ/kg]'  #
     ####################################################################
