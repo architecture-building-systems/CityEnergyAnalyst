@@ -22,7 +22,7 @@ class SolarRadiationCurvePlot(cea.plots.solar_potential.SolarPotentialPlotBase):
     @property
     def layout(self):
         date = self.input_data_aggregated_kW.DATE
-        return dict(images=LOGO, title=self.title,
+        return dict(title=self.title,
                     yaxis=dict(domain=dict(x=[0, 1], y=[0.0, 0.7]), title='Solar Radiation [kW]'),
                     yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(rangeselector=dict(
                 buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
