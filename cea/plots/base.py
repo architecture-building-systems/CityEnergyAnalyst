@@ -34,7 +34,8 @@ class PlotBase(object):
 
     @classmethod
     def id(cls):
-        return cls.name.lower().replace(' ', '-')  # use for js/html etc.
+        name = re.sub('\s+\(.*\)', '', cls.name)  # remove parenthesis
+        return name.lower().replace(' ', '_').replace('/', '_')  # use for js/html etc.
 
     def __init__(self, project, parameters, cache):
         self.cache = cache  # a PlotCache implementation for reading cached data
@@ -104,12 +105,8 @@ class PlotBase(object):
             prefix = 'Selected_Buildings'
         else:
             prefix = 'District'
-        file_name = "%s_%s" % (prefix, self.sanitize_name(self.name))
+        file_name = "%s_%s" % (prefix, self.id())
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
-
-    def sanitize_name(self, name):
-        name = re.sub('\s+\(.*\)', '', name)
-        return name.lower().replace(' ', '_').replace('/', '_')
 
     def remove_unused_fields(self, data, fields):
         """
