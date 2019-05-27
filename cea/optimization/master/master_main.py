@@ -8,7 +8,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization.distribution import network_opt_main
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
 import json
@@ -442,7 +442,7 @@ if __name__ == "__main__":
     nBuildings = len(building_names)
 
 
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = NetworkOptimizationFeatures(config, locator)
 
 
     non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
