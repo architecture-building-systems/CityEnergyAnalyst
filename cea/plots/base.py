@@ -41,8 +41,8 @@ class PlotBase(object):
         self.cache = cache  # a PlotCache implementation for reading cached data
         self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
-        self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
-        self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
+        # self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
+        # self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
         self.buildings = self.process_buildings_parameter()
 
