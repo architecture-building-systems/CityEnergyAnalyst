@@ -1,4 +1,4 @@
-__version__ = "2.13.5a1"
+__version__ = "2.14"
 
 
 class ConfigError(Exception):
@@ -14,3 +14,8 @@ class CustomDatabaseNotFound(Exception):
 class ScriptNotFoundException(Exception):
     """Raised when an invalid script name is used."""
     rc = 102  # sys.exit(rc)
+
+
+class MissingInputDataException(Exception):
+    """Raised when a script can't run because some information is missing"""
+    rc = 103

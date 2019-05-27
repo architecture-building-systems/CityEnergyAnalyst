@@ -21,6 +21,8 @@ Constraints
 """""""""""
   * Capacity limits corresponding to electric grids, line types.
   * Range of the building temperature according to thermal comfort standard.
+
+
 Variables
 """""""""
   * Which buildings are connected to the micro-grid.
@@ -70,6 +72,7 @@ Steps
 #. Run `cea\optimization\flexibility_model\mpc_district\planning_and_operation_optimization.py`
 #. Check results from optimization in ``...scenario\outputs\mpc-district``
 
+
 Outputs
 -------
 The results from the optimization are saved for each building. In ``Bxxx_outputs.csv`` you will find:
@@ -79,7 +82,6 @@ The results from the optimization are saved for each building. In ``Bxxx_outputs
 * Hourly electricity consumption for cooling
 
 The results of the electricity grid costs and sizes is saved in ``output_folder.csv``
-
 
 
 Calculation flowchart
