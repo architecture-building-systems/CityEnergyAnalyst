@@ -33,18 +33,15 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, use_daysim_radiation, override_variables=False):
+    def __init__(self, locator, override_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
 
-        :param use_daysim_radiation: from config
-        :type use_daysim_radiation: bool
-
         :param override_variables: override_variables from config
-        :type override_variables: str
+        :type override_variables: bool
 
         :returns: BuildingProperties
         :rtype: BuildingProperties
@@ -86,10 +83,10 @@ class BuildingProperties(object):
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(locator, prop_occupancy, prop_envelope,
-                                                prop_geometry, prop_HVAC_result, use_daysim_radiation)
+                                                prop_geometry, prop_HVAC_result)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -192,7 +189,7 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
 
-    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures, use_daysim_radiation):
+    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures):
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
@@ -258,13 +255,8 @@ class BuildingProperties(object):
         FIXME: rename Awall_all to something more sane...
         """
 
-        # calculate building geometry in case of arcgis radiation
-        if use_daysim_radiation:
-            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, H_F)
-
-        elif not use_daysim_radiation:
-            df = self.geometry_reader_radiation_arcgis(locator, envelope, geometry, H_F, occupancy)
-
+        # calculate building geometry
+        df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, H_F)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
         for building in df.index.values:
@@ -387,71 +379,6 @@ class BuildingProperties(object):
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['surface_volume'] = (df['Awin'] + df['Awall'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
-
-        return df
-
-    def geometry_reader_radiation_arcgis(self, locator, envelope, geometry, floor_height, occupancy):
-        """
-        Reader which returns the surface properties from Arcgis. Adjusts the imported data such that it is
-        consistent with other imported geometry parameters.
-
-        :param locator: an InputLocator for locating the input files
-
-        :param envelope: The contents of the `architecture.shp` file, indexed by building name.
-
-        :param occupancy: The contents of the `occupancy.shp` file, indexed by building name.
-
-        :param geometry: The contents of the `zone.shp` file indexed by building name.
-
-        :param floor_height: Height of the floor in [m].
-
-        :return: Adjusted Arcgis geometry data containing the following:
-
-            - Name: Name of building.
-            - Awall: Wall areas (length x height) multiplied by the FactorShade [m2]
-            - Awall_all: Sum of wall areas for each building (including windows and voids) [m2]
-            - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
-            - Aop_sup: Opaque wall areas above ground (excluding voids and windows) [m2]
-            - Aop_bel: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
-            - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
-            - GFA_m2: Gross floor area [m2]
-            - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
-            - surface_volume: Surface to volume ratio [m^-1]
-
-        :rtype: DataFrame
-
-        Data is read from
-        ``cea.inputlocator.InputLocator.get_surface_properties``
-        (e.g.
-        ``reference-case/baseline/outputs/data/solar-radiation/properties_surfaces.csv``)
-
-        """
-
-        # Areas above ground
-        # get the area of each wall in the buildings
-        surface_properties = pd.read_csv(locator.get_surface_properties())
-        surface_properties['Awall'] = (surface_properties['Shape_Leng'] * surface_properties['Freeheight'] *
-                                       surface_properties['FactorShade'])
-        df = pd.DataFrame({'Name': surface_properties['Name'],
-                           'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
-        df = df.merge(envelope, left_index=True, right_index=True).merge(occupancy, left_index=True,
-                                                                         right_index=True)
-        # area of windows
-        # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
-        # calculate average wwr
-        wwr_mean = 0.25 * (df['wwr_south'] + df['wwr_east'] + df['wwr_north'] + df['wwr_west'])
-        df['Aw'] = df['Awall_all'] * wwr_mean * (1 - df['void_deck'])
-        # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall_all'] * (1 - df['void_deck']) - df['Aw']
-        # Areas below ground
-        df = df.merge(geometry, left_index=True, right_index=True)
-        df['floors'] = df['floors_bg'] + df['floors_ag']
-        # opague areas in [m2] below ground including floor
-        df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
-        # total area of the building envelope in [m2], the roof is considered to be flat
-        df['Aroof'] = df['footprint']
-        df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
 
@@ -874,7 +801,7 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
+def get_prop_solar(locator, prop_rc_model, prop_envelope):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -882,7 +809,6 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     :param locator: an InputLocator for locating the input files
     :param prop_rc_model: RC model properties of a building by name.
     :param prop_envelope: dataframe containing the building envelope properties.
-    :param bool use_daysim_radiation: use the DaySim radiation data as opposed to the ArcGIS version.
     :return: dataframe containing the sensible solar gains for each building by name called result.
     :rtype: Dataframe
     """
@@ -890,35 +816,15 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     # load gv
     thermal_resistance_surface = RSE
 
-    if use_daysim_radiation:
+    # create result data frame
+    list_Isol = []
 
-        # create result data frame
-        list_Isol = []
+    # for every building
+    for building_name in locator.get_zone_building_names():
+        I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
+        list_Isol.append(I_sol)
 
-        # for every building
-        for building_name in locator.get_zone_building_names():
-            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
-            list_Isol.append(I_sol)
-
-        result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
-
-    elif not use_daysim_radiation:
-
-        solar = pd.read_csv(locator.get_radiation()).set_index('Name')
-        solar_list = solar.values.tolist()
-        surface_properties = pd.read_csv(locator.get_surface_properties())
-        surface_properties['Awall'] = (
-                surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
-        sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
-
-        I_sol_average_Wperm2 = [a / b for a, b in zip(solar_list, sum_surface)]
-        I_sol_average_Wperm2_dict = dict(zip(solar.index, I_sol_average_Wperm2))
-
-        array_Isol_all_buildings_W = [
-            calc_Isol_arcgis(I_sol_average_Wperm2_dict[name], prop_rc_model.ix[name], prop_envelope.ix[name],
-                              thermal_resistance_surface) for name in solar.index]
-
-        result = pd.DataFrame({'Name': solar.index, 'I_sol': array_Isol_all_buildings_W})
+    result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
 
     return result
 

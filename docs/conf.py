@@ -27,12 +27,18 @@ sys.path.insert(0, os.path.abspath('../cea'))
 
 # mock out some imports so we don't have conflicts on the readthedocs server...
 class Mock(MagicMock):
+    __all__ = []
     @classmethod
     def __getattr__(cls, name):
             return MagicMock()
 
 
 MOCK_MODULES = ['COLOR',
+                'concept',
+                'concept.algorithm_planning_and_operation',
+                'concept.algorithm_planning_and_operation.planning_and_operation_main',
+                'CoolProp',
+                'CoolProp.HumidAirProp',
                 'SALib',
                 'SALib.analyze',
                 'SALib.analyze',
@@ -83,9 +89,11 @@ MOCK_MODULES = ['COLOR',
                 'OCC.gp',
                 'OCC.TopoDS',
                 'OCC.IntCurvesFace',
+                'osmnx',
                 'plotly',
                 'plotly.graph_objs',
                 'plotly.offline',
+                'pvlib',
                 'pyDOE',
                 'pycollada',
                 'py4design',
@@ -99,6 +107,8 @@ MOCK_MODULES = ['COLOR',
                 'py4design.pycitygml',
                 'py4design.shp2citygml',
                 'py4design.py3dmodel.utility',
+                'pyomo',
+                'pyomo.environ',
                 'pyproj',
                 'pysal',
                 'pyshp',

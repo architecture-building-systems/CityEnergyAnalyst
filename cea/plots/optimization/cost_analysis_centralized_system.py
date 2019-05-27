@@ -28,9 +28,9 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
                                 "Opex_Decentralized_USD"]
         self.layout = go.Layout(title=self.title, barmode='relative',
                                 yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
-        self.input_files = [self.locator.get_total_demand(),
-                            self.locator.get_preprocessing_costs(),
-                            self.locator.get_optimization_checkpoint(self.generation)]
+        self.input_files = [(self.locator.get_total_demand, []),
+                            (self.locator.get_preprocessing_costs, []),
+                            (self.locator.get_optimization_checkpoint, [self.generation])]
 
     @property
     def title(self):

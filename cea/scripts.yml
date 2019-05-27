@@ -5,7 +5,8 @@ Analysis:
   description: Multicriteria analysis
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.multicriteria.main
-  parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria]
+  parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria,
+               'thermal-network:network-names', 'thermal-network:network-type']
 
 
 Cost analysis:
@@ -309,7 +310,7 @@ default:
   description: dashboard
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
-  parameters: []
+  parameters: ['general:debug']
 
 - name: install-arcgis
   label: install-arcgis
@@ -346,12 +347,12 @@ default:
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
 
-- name: scenario-plots
-  label: scenario-plots
-  description: scenario-plots
-  interfaces: [cli]
-  module: cea.plots.scenario_plots
-  parameters: [scenario-plots]
+#- name: scenario-plots
+#  label: scenario-plots
+#  description: scenario-plots
+#  interfaces: [cli]
+#  module: cea.plots.scenario_plots
+#  parameters: [scenario-plots]
 
 - name: shapefile-to-excel
   label: shapefile-to-excel

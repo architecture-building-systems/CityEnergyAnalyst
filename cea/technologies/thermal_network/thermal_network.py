@@ -690,8 +690,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # heat losses over entire network
         q_loss_system_for_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(q_loss_system_for_csv).to_csv(
-            thermal_network.locator.get_thermal_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                 thermal_network.network_name),
+            thermal_network.locator.get_thermal_network_qloss_system_file(thermal_network.network_type,
+                                                                          thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -708,7 +708,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         plant_heat_requirement_for_csv.columns = filter(None, thermal_network.all_nodes_df[
             thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
         plant_heat_requirement_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_plant_heat_requirement_file(
+            thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
                 thermal_network.network_name), index=False,
             float_format='%.3f')
@@ -770,9 +770,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # heat losses over entire network
         pd.DataFrame(csv_outputs['q_loss_system'], columns=thermal_network.edge_node_df.columns).to_csv(
-            thermal_network.locator.get_thermal_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                 thermal_network.network_name,
-                                                                                 representative_week),
+            thermal_network.locator.get_thermal_network_qloss_system_file(thermal_network.network_type,
+                                                                          thermal_network.network_name,
+                                                                          representative_week),
             index=False,
             float_format='%.3f')
 
@@ -788,7 +788,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pd.DataFrame(csv_outputs['plant_heat_requirement'],
                      columns=filter(None, thermal_network.all_nodes_df[
                          thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
-            thermal_network.locator.get_thermal_network_layout_plant_heat_requirement_file(
+            thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
                 thermal_network.network_name, representative_week), index=False,
             float_format='%.3f')
