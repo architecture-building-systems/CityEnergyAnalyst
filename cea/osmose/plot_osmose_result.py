@@ -70,7 +70,7 @@ def main(building, TECHS, building_result_path):
             plot_electricity_usage(building, building_result_path, results, tech)
             electricity_df = set_up_electricity_df(tech, results)
             output_el_usage_by_units(tech, electricity_df, results, building, building_result_path)
-            ex_df = calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech)
+            # output_df
             plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
             if results.shape[0] > 24:
                 result_WED = results.iloc[72:96]
@@ -80,10 +80,14 @@ def main(building, TECHS, building_result_path):
                 result_SAT = results.iloc[144:168]
                 plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
             ## plot exergy loads
+            ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
 
             ## output chilled water temperatures
             hourly_T_chw = analyse_chilled_water_temperature(results)
+
+            ## write output_df
+            calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech)
 
         else:
             print 'Cannot find ', osmose_result_file
@@ -492,7 +496,7 @@ def output_el_usage_by_units(tech, electricity_df, results, building, building_r
 #     return electricity_df
 
 
-def calc_el_stats(building, building_result_path, electricity_df, operation_df, results, tech):
+def calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech):
     output_df = electricity_df.copy()
     # calculate electricity used in each technology
     output_df['el_total'] = output_df.sum(axis=1)
@@ -512,9 +516,8 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['qc_sys_sen_total'] = cooling_df.filter(like='qc_sys_sen').sum(axis=1)
     output_df['qc_sys_lat_total'] = cooling_df.filter(like='qc_sys_lat').sum(axis=1)
     # calculate minimum exergy required
-    ex_df = set_up_ex_df(results)
-    output_df['Ex_min'] = ex_df.sum(axis=1).values
-    ex_df['eff_exergy'] = (output_df['Ex_min'] / output_df['el_total']).values
+    output_df['Ex_min'] = ex_df['Ex_min_total']
+    output_df['Ex_process'] = ex_df['Ex_process_total']
     # get Qh
     output_df['Qh'] = results['SU_Qh']
     output_df['el_tot_with_Qh'] = output_df['Qh'] + output_df['el_total']
@@ -566,6 +569,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
 
     # calculate exergy efficiency
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
+    output_df['eff_process_exergy'] = output_df['Ex_process'] / output_df['el_total']
 
     # calculate the percentage used by each component
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
@@ -1038,8 +1042,8 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
 
 def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     Af_m2 = results['Af_m2'].mean()
-    eff_exergy = exergy_df['eff_exergy'].values
-    del exergy_df['eff_exergy']
+    eff_exergy = exergy_df['eff_process_exergy'].values
+    # del exergy_df['eff_exergy']
     exergy_per_area_df = exergy_df * 1000 / Af_m2
     # extract parameters
     time_steps = results.shape[0] - 1
@@ -1056,8 +1060,10 @@ def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     # initialize the vertical-offset for the stacked bar chart
     y_offset = np.zeros(exergy_per_area_df.shape[0])
     # plot bars
-    for c in range(len(exergy_per_area_df.columns)):
-        column = exergy_per_area_df.columns[c]
+    # columns = ['Ex_min_Qc','Ex_min_air','Ex_min_water']
+    columns = ['Ex_process_OAU', 'Ex_process_RAU', 'Ex_process_SCU']
+    for c in range(len(columns)):
+        column = columns[c]
         ax.bar(x_ticks, exergy_per_area_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
         y_offset = y_offset + exergy_per_area_df[column]
