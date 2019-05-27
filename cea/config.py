@@ -419,7 +419,8 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file.')
+            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
+                weather_path=value))
             weather_path = self.locator.get_weather('Zug')
         return weather_path
 

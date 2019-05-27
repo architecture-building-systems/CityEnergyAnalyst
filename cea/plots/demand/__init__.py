@@ -40,16 +40,7 @@ class DemandPlotBase(cea.plots.PlotBase):
         super(DemandPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('new_basic', 'demand')
-
-        # all plots in this category use the buildings parameter. make it easier to access
-        # handle special case of buildings... (only allow buildings for the scenario in question)
-        zone_building_names = self.locator.get_zone_building_names()
-        if not self.parameters['buildings']:
-            self.parameters['buildings'] = zone_building_names
-        self.parameters['buildings'] = ([b for b in self.parameters['buildings'] if
-                                         b in zone_building_names]
-                                        or zone_building_names)
-        self.buildings = self.parameters['buildings']
+        self.buildings = self.process_buildings_parameter()
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',

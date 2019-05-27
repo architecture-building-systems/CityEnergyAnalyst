@@ -43,6 +43,8 @@ def read_dashboards(config, cache):
                 dashboards = [default_dashboard(config, cache)]
             return dashboards
     except (IOError, TypeError):
+        import traceback
+        traceback.print_exc()
         # problems reading the dashboard_yml file - instead, create a default set of dashboards.
         dashboards = [default_dashboard(config, cache)]
         write_dashboards(config, dashboards)
