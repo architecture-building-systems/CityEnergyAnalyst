@@ -1,4 +1,3 @@
-:orphan:
 Glossary
 ========
 This glossary contains all the written input and output variables used by CEA. These variables are stored in
@@ -9,11 +8,13 @@ the information within each file.
 Input
 -----
 Inputlocator methods:
+
 .. toctree::
     input_files
 
 Output
 ------
 Inputlocator methods:
+
 .. toctree::
     output_files
