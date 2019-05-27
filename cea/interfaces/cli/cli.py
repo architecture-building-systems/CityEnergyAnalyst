@@ -93,11 +93,15 @@ def print_help(config, remaining_args):
 
 
 def print_valid_script_names():
+    """Print out the list of scripts by category."""
     import textwrap
+    import itertools
     print("")
-    print(textwrap.fill("SCRIPT can be one of: %s" % ', '.join(s.name for s in sorted(cea.scripts.for_interface('cli'))),
-                        subsequent_indent='    ', break_on_hyphens=False))
-
+    print("SCRIPT can be one of:")
+    scripts = sorted(cea.scripts.for_interface('cli'), key=lambda s: s.category)
+    for category, group in itertools.groupby(scripts, lambda s: s.category):
+        print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
+                            subsequent_indent='    ', break_on_hyphens=False))
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

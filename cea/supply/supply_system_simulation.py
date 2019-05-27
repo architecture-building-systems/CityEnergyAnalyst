@@ -15,7 +15,7 @@ import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices
 from cea.optimization.slave import heating_main
-from cea.optimization.distribution import network_opt_main
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.optimization.master import evaluation
@@ -503,7 +503,7 @@ def main(config):
                                                                              weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = NetworkOptimizationFeatures(config, locator)
 
     ## generate individual from config
     # heating technologies at the centralized plant
