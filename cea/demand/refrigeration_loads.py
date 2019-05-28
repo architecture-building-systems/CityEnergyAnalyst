@@ -41,8 +41,7 @@ def calc_Qcre_sys(bpr, tsd, schedules):
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2 - tsd['T_ext']) * (
-                tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
+    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
     # calculate system loads for data center
     tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
