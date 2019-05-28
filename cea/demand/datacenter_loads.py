@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -51,18 +51,18 @@ def calc_Qcdata_sys(bpr, tsd):
     # calculate system loads for data center
     tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
 
-    def function(Qcdata_sys):
+    def calc_mcpcdata(Qcdata_sys):
         if Qcdata_sys > 0:
-            Tcdataf_re_0 = 15
-            Tcdataf_sup_0 = 7
-            mcpref = Qcdata_sys / (Tcdataf_re_0 - Tcdataf_sup_0)
+            Tcdata_sys_re = T_C_DATA_RE_0
+            Tcdata_sys_sup = T_C_DATA_SUP_0
+            mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
         else:
-            Tcdataf_re_0 = 0
-            Tcdataf_sup_0 = 0
-            mcpref = 0
-        return mcpref, Tcdataf_re_0, Tcdataf_sup_0
+            Tcdata_sys_re = 0
+            Tcdata_sys_sup = 0
+            mcpcdata_sys = 0
+        return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
-    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Qcdata_sys'])
+    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(tsd['Qcdata_sys'])
 
     return tsd
 

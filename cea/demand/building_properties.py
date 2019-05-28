@@ -17,7 +17,6 @@ from cea.utilities.dbf import dbf_to_dataframe
 
 # import constants
 H_F = constants.H_F
-E_S = constants.E_S
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
