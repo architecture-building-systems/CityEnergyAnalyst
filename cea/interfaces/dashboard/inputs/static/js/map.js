@@ -21,6 +21,7 @@ $(document).ready(function() {
         console.log(json);
         jsonStore['zone'] = json;
         createLayer('zone');
+        $('#zone-toggle').prop('disabled', false);
         currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
             longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
             zoom: 16, bearing: 0, pitch: 0};
@@ -45,6 +46,7 @@ $(document).ready(function() {
                 jsonStore[key] = json;
                 createLayer(key);
                 deckgl.setProps({ layers: [...layers] });
+                $(`#${key}-toggle`).prop('disabled', false);
             }).fail(function () {
                 console.log(`Get ${key} failed.`);
             });
@@ -56,11 +58,6 @@ $(document).ready(function() {
 
     }).fail(function () {
         console.log("Get zone failed.");
-        $('#zone-toggle').prop('disabled', true);
-        $('#district-toggle').prop('disabled', true);
-        $('#streets-toggle').prop('disabled', true);
-        $('#dh_networks-toggle').prop('disabled', true);
-        $('#dc_networks-toggle').prop('disabled', true);
     });
 });
 
