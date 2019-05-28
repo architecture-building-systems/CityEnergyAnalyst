@@ -245,7 +245,6 @@ class Plots(object):
 
         hourly_results_aggregated_kW = reduce(join_dfs, dfs)
         hourly_results_aggregated_kW['DATE'] = weather_data["date"]
-
         return {"data_hourly": hourly_results_aggregated_kW, "data_yearly": annual_results_all_buildings_kW}
 
     def pv_district_monthly(self, category):

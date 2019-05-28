@@ -54,7 +54,6 @@ class AllTechHourlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPot
             return []
         return result
 
-
     @property
     def data_frame(self):
         """Combine all the (available) hourly tech data_frames by inner join"""
