@@ -17,11 +17,27 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class SolarCollectorMonthlyPlotBase(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
-    """Common functionality for ET / FP plots"""
+class SolarCollectorEvacuatedTubeMonthlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
+    """Monthly plots for evacuated tubes (flat plates work exactly the same but on different data,
+    see :py:class:`SolarCollectorFlatPlateMonthlyPlot`)"""
+
+    name = "Evacuated Tube SC Thermal Potential"
 
     def __init__(self, project, parameters, cache):
-        super(SolarCollectorMonthlyPlotBase, self).__init__(project, parameters, cache)
+        super(SolarCollectorEvacuatedTubeMonthlyPlot, self).__init__(project, parameters, cache)
+
+    @property
+    def data_frame(self):
+        return self.SC_ET_hourly_aggregated_kW
+
+    @property
+    def analysis_fields(self):
+        return [f.replace('SC_', 'SC_ET_') for f in self.sc_analysis_fields]
+
+    @property
+    def input_files(self):
+        return [(self.locator.SC_totals, ['ET'])] + [(self.locator.SC_results, [building, 'ET'])
+                                                     for building in self.buildings]
 
     @property
     def layout(self):
@@ -74,24 +90,7 @@ class SolarCollectorMonthlyPlotBase(cea.plots.solar_technology_potentials.SolarT
         return table_df
 
 
-class SolarCollectorEvacuatedTubeMonthlyPlot(SolarCollectorMonthlyPlotBase):
-    name = "Evacuated Tube SC Thermal Potential"
-
-    @property
-    def data_frame(self):
-        return self.SC_ET_hourly_aggregated_kW
-
-    @property
-    def analysis_fields(self):
-        return [f.replace('SC_', 'SC_ET_') for f in self.sc_analysis_fields]
-
-    @property
-    def input_files(self):
-        return [(self.locator.SC_totals, ['ET'])] + [(self.locator.SC_results, [building, 'ET'])
-                                                     for building in self.buildings]
-
-
-class SolarCollectorFlatPlateMonthlyPlot(SolarCollectorMonthlyPlotBase):
+class SolarCollectorFlatPlateMonthlyPlot(SolarCollectorEvacuatedTubeMonthlyPlot):
     name = "Flat Plate SC Thermal Potential"
 
     @property
