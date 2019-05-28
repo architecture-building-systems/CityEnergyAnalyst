@@ -32,8 +32,10 @@ def main(building, TECHS, building_result_path):
             if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
                 chiller_count = 1  # do nothing
             elif tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
-                chiller_count = analysis_chilled_water_usage(results, tech)
-                chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech))
+                chiller_count = analyse_chilled_water_usage(results, tech)
+                chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller'))
+                chiller_Qc = analyse_Qc_from_chilled_water(results, tech)
+                chiller_Qc.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller_Qc'))
 
             ## plot air flows
             air_flow_df = set_up_air_flow_df(results)
@@ -301,10 +303,7 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, bu
     return np.nan
 
 
-
-
-
-def analysis_chilled_water_usage(results, tech):
+def analyse_chilled_water_usage(results, tech):
     chiller_usage = results.filter(like='el_oau_chi').fillna(0).astype(bool).sum()
     T_low_C = 8.1
     T_high_C = 14.1
@@ -325,6 +324,18 @@ def analysis_chilled_water_usage(results, tech):
         chiller_occurance[str(chiller_number)] += 1
     T_chillers_df = pd.DataFrame(T_chillers, index=[tech])
     return T_chillers_df
+
+
+def analyse_Qc_from_chilled_water(results, tech):
+    Qc_from_chilled_water_df = results.filter(like='q_oau_in_').sum(axis=0).reset_index()
+    T_low_C, T_high_C = 8.1, 14.1
+    T_interval = 0.65  # 0.5
+    T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval).round(2)
+    Qc_from_chilled_water_df = Qc_from_chilled_water_df.set_index([T_OAU_offcoil])
+    del Qc_from_chilled_water_df['index']
+    Qc_from_chilled_water_df.columns = [tech]
+    Qc_from_chilled_water_df = Qc_from_chilled_water_df.T
+    return Qc_from_chilled_water_df
 
 
 def analyse_chilled_water_temperature(results):
@@ -1175,16 +1186,16 @@ def path_to_elec_unit_csv(building, building_result_path, tech):
     return path_to_file
 
 
-def path_to_chiller_csv(building, building_result_path, tech):
-    path_to_file = os.path.join(building_result_path, '%s_%s_chiller.csv' % (building, tech))
+def path_to_chiller_csv(building, building_result_path, tech, name):
+    path_to_file = os.path.join(building_result_path, '%s_%s_%s.csv' % (building, tech, name))
     return path_to_file
 
 
 if __name__ == '__main__':
     buildings = ["B003"]
     #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_coil"]
-    #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
+    #tech = ["HCS_coil"]
+    tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
