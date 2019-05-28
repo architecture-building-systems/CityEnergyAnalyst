@@ -6,7 +6,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
-from cea.constants import HOURS_IN_YEAR, T_C_DATA_SUP_0, T_C_DATA_RE_0
+from cea.constants import HOURS_IN_YEAR
+from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
