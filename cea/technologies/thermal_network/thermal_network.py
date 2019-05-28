@@ -304,7 +304,7 @@ class ThermalNetwork(object):
 
         # The direction of flow is then corrected
         # keep track if there was a change for the iterative process
-        pd.options.mode.chained_assignment = None #avoid warnings of copies
+        pd.options.mode.chained_assignment = None  # avoid warnings of copies
         changed = [True] * node_mass_flows_df.shape[1]
         while any(changed):
             for i in range(node_mass_flows_df.shape[1]):
@@ -452,7 +452,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
-        # FIXME: this is where you will change the start_t/stop_t for the period you will use for sizing
+        # TODO[SH]: this is where you will change the start_t/stop_t for the period you will use for sizing
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
                                                                    start_t, stop_t, substation_systems, config,
                                                                    use_multiprocessing=config.multiprocessing)
@@ -572,7 +572,7 @@ def output_hex_specs_at_nodes(substation_HEX_Q, thermal_network):
 
 def prepare_inputs_of_representative_weeks(thermal_network):
     hours_list = range(0, 168) + range(744, 912) + range(1416, 1584) + range(2160, 2328) + range(2880, 3048) + \
-                 range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832,6000) + range(6522, 6690) + \
+                 range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832, 6000) + range(6522, 6690) + \
                  range(7296, 7464) + range(8016, 8184)
     # cut out relevant parts of all dataframes
     thermal_network.T_ground_K = [value for index, value in enumerate(thermal_network.T_ground_K) if
@@ -646,7 +646,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             p_loss_system_edges_to_csv = p_loss_system_edges_to_csv.append(p_loss_system_edges_to_csv.mean(),
                                                                            ignore_index=True)
 
-        #Output values
+        # Output values
         # Edge Mass Flows
         edge_mass_flows_for_csv.columns = thermal_network.edge_node_df.columns
         edge_mass_flows_for_csv.to_csv(
@@ -1253,10 +1253,12 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     # ToDo: does not apply for looped networks
     edge_node_transpose = np.transpose(edge_node_df.values)
     pressure_nodes_supply__pa = np.round(
-        np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1),rcond=-1)[0]),
+        np.transpose(
+            np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1), rcond=-1)[0]),
         decimals=5)
     pressure_nodes_return__pa = np.round(
-        np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1),rcond=-1)[0]),
+        np.transpose(
+            np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1), rcond=-1)[0]),
         decimals=5)
     return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
            pressure_loss_total_kw, pressure_loss_pipes_kW[0], pressure_loss_substations_kW
@@ -1312,7 +1314,8 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
                             building_node = thermal_network.all_nodes_df.index[building_index]
                             building_edge = thermal_network.edge_node_df.columns[
                                 np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
-                            building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+                            building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][
+                                0]
                             # calculate equivalent length for valve
                             valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
                             aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
@@ -1914,8 +1917,9 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_count
                 thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit / 5):  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
-                pd.read_csv(thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
-                                                                                            thermal_network.network_name))[
+                pd.read_csv(
+                    thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
+                                                                                    thermal_network.network_name))[
                     'Building']
             # identify which edges
             edges = np.where((test_edge_flow - pipe_min_mass_flow < -pipe_min_mass_flow / 2).values)[1]
@@ -2278,14 +2282,14 @@ def solve_network_temperatures(thermal_network, t):
                                                         thermal_network.network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
-        control = 'VT_VF'
+        control = 'CT_VF' # TODO[SH]: This is where to switch the control strategy, 'VT_VF' is the original one
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw, switch_control = calc_supply_temperatures(t, edge_node_df.copy(),
                                                                                edge_mass_flow_df, k, thermal_network,
                                                                                control)
         if switch_control == True:
             control = 'CT_VF'
-            raise ValueError('temperature not reached, control strategy is switched to: ', control)
+            # raise ValueError('temperature not reached, control strategy is switched to: ', control) FIXME: remove
 
         # write supply temperatures to substation nodes
         t_substation_supply__k = write_nodes_values_to_substations(t_supply_nodes__k, thermal_network.all_nodes_df)
@@ -2344,7 +2348,48 @@ def solve_network_temperatures(thermal_network, t):
                 t_supply_nodes_2__k, plant_node, \
                 q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
                                                                        k, thermal_network, control)
+            elif control == 'CT_VF':
+                VF_flag = True
+                VF_iter = 0
+                while VF_flag == True:
+                    # iterate mass flow to meet substation requirement
+                    t_supply_nodes_2__k, plant_node, \
+                    q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
+                                                                           k, thermal_network, control)
+                    # check if all substation temperatures are satisfied
+                    dt_nodes = t_supply_nodes_2__k - 273.15 - thermal_network.t_target_supply_df.loc[t]
+                    dt_nodes_max = dt_nodes.max().copy()
+                    dt_tolerance = 0.00001 # TODO[SH]: defined by users
+                    # identify the nodes
+                    nodes_insufficient = dt_nodes[dt_nodes > dt_tolerance].index
+                    if dt_nodes_max >= dt_tolerance and VF_iter < 10:
+                        print(dt_nodes_max) # FIXME: to be removed (check if it's reducing)
+                        # increase node flows
+                        substations_nodes_df_old = mass_flow_substations_nodes_df.copy()
+                        for node in nodes_insufficient:
+                            mass_flow_substations_nodes_df[node] = substations_nodes_df_old[node] * 1.1 # increase flow by 10%
+                        # solve for the required mass flow rate on each edge/pipe
+                        edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
+                                                                       mass_flow_substations_nodes_df,
+                                                                       thermal_network.all_nodes_df,
+                                                                       thermal_network.pipe_properties[:][
+                                                                       'D_int_m':'D_int_m'].values[0],
+                                                                       thermal_network.edge_df['pipe length'], t_edge__k)
+                        VF_iter = VF_iter + 1
+                    elif dt_nodes_max >= dt_tolerance and VF_iter >= 10:
+                        for node in nodes_insufficient:
+                            index_insufficient = np.argwhere(edge_node_df.index == node)[0][0]
+                            t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
+                            t_supply_nodes_2__k[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                            # force setting node temperature to target to avoid substation HEX calculation error.
+                            # However, it might potentially cause error at mass flow iteration.
+                            print('force node: ', node, 'with dt=', dt_nodes[node], ' at time: ', t)
+                        VF_flag = False
+                    else:
+                        VF_flag = False
 
+            else:
+                raise ('control strategy not specified: ', control)
             # calculate edge temperature for heat transfer coefficient within iteration
             t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
 
@@ -2524,7 +2569,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
 
     """
     ## unpack variables
-    t_ground__k = thermal_network.T_ground_K[t] # vector with ground temperatures in K
+    t_ground__k = thermal_network.T_ground_K[t]  # vector with ground temperatures in K
     t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
     network_type = thermal_network.network_type
     all_nodes_df = thermal_network.all_nodes_df
@@ -2546,7 +2591,11 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
     # start node temperature calculation
     flag = 0
     # set initial supply temperature guess to the target substation supply temperature
-    t_plant_sup_0 = 273.15 + t_target_supply__c.max() if network_type == 'DH' else 273.15 + t_target_supply__c.min()
+    if control == 'VT_VF':
+        t_plant_sup_0 = 273.15 + t_target_supply__c.max() if network_type == 'DH' else 273.15 + t_target_supply__c.min()
+    elif control == 'CT_VF':
+        # TODO[SH]: This is where to specify the fixed T_plant
+        t_plant_sup_0 = 273.15 + t_target_supply__c.max() + 5 if network_type == 'DH' else 273.15 + t_target_supply__c.min() - 2 # FIXME: get T
     t_plant_sup = t_plant_sup_0
     iteration = 0
     while flag == 0:
@@ -2580,11 +2629,10 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
                     calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground__k, z_note, thermal_network)
             plant_node = t_node.nonzero()[0]  # the node indices of the plant nodes in the edge-node index
 
-
             # Identify all nodes with no in or outflows and delete those values from the z matrixes
             # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
             for i in range(z_note.shape[0]):
-                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])),0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])),0):
+                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])), 0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])), 0):
                     t_node[i] = np.nan
                     # no in our outflows, clear in and outflows at this node
                     # and clear node incoming flows from the corresponding edges
@@ -2627,7 +2675,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
                         k, thermal_network)
                 else:  # stuck! this can happen with loops
                     for i in range(np.shape(t_e_out)[1]):
-                        #check if we have a mass flow on this edge
+                        # check if we have a mass flow on this edge
                         if np.any(t_e_out[:, i] == 1):
                             z_note[np.where(t_e_out[:, i] == 1), i] = 0  # remove inflow value from z_note
                             if temp_iter < 1:  # do this in first iteration only, since there is no previous value
@@ -2638,11 +2686,11 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
                             break
                     not_stuck = np.array([True] * z.shape[0])
 
-            delta_temp_0 = np.max(abs(t_e_out_old - t_e_out)) # exit condition
+            delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))  # exit condition
             temp_iter = temp_iter + 1
             # if delta_temp_0 < temp_tolerance: print ('number of temp_iter: ', temp_iter) #todo: remove
 
-        t_plant_sup_max = 98 + 273.15 # todo: move to config
+        t_plant_sup_max = 98 + 273.15  # todo: move to config
         t_plant_sup_min = 2 + 273.15
 
         if control == 'VT_VF' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max:
@@ -2719,7 +2767,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
                 switch_control = False
             else:
                 switch_control = True
-                print ('switched control: ',control, ' temperature:', t_plant_sup)
+                print('switched control: ', control, ' temperature:', t_plant_sup)
 
     # calculate pipe heat losses
     q_loss_edges_kw = np.zeros(z_note.shape[1])
@@ -2903,7 +2951,8 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         # calculate the return pipe node temperature of substations locating at the end of the branch
         for i in range(z.shape[0]):
             # choose the consumer nodes locating at the end of the branches
-            if np.count_nonzero(np.isclose(z_note[i], 1)) == 0 and np.count_nonzero(np.isclose(z_note[i], 0)) != z.shape[1]:
+            if np.count_nonzero(np.isclose(z_note[i], 1)) == 0 and np.count_nonzero(np.isclose(z_note[i], 0)) != \
+                    z.shape[1]:
                 t_node[i] = t_return.values[0, i]
                 # t_node[i] = map(list, t_return.values)[0][i]
                 if not np.isnan(t_node[i]):
@@ -3055,13 +3104,13 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
-                #Store value
+                # Store value
                 if not str(
                         e) in thermal_network.problematic_edges.keys():  # add problematic edge and corresponding mass flow to the dictionary
                     thermal_network.problematic_edges[str(e)] = m
                 elif thermal_network.problematic_edges[str(
-                            e)] > m:  # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value
-                        thermal_network.problematic_edges[str(e)] = m
+                        e)] > m:  # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value
+                    thermal_network.problematic_edges[str(e)] = m
 
                 if (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) > 0:
                     print(
@@ -3144,8 +3193,9 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
                 'D_ins_m', pipe]  # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
             D_ins = pipe_properties_df.loc['D_ins_m', pipe]
-        R_insulation = np.log((D_ins+pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
-                2 * math.pi * conductivity_insulation)  # [m*K/W]
+        R_insulation = np.log(
+            (D_ins + pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
+                               2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
