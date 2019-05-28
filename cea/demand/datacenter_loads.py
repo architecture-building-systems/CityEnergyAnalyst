@@ -47,8 +47,8 @@ def calc_Qcdata_sys(bpr, tsd):
     # calculate distribution losses for data center cooling analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcdata_d_ls = ((tsd['Tcdata_sys_sup'] + tsd['Tcdata_sys_re']) / 2 - tsd['T_ext']) * (
-            tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (Lv * Y)
+    Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
+                Lv * Y)
     # calculate system loads for data center
     tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
 
