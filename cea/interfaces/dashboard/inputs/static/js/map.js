@@ -1,76 +1,29 @@
 const {DeckGL, GeoJsonLayer} = deck;
 var deckgl;
 var jsonStore = {};
-var layers = [];
+// Make sure the layers maintain their order
+var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_networks'}),
+    new GeoJsonLayer({id:'dc_networks'}), new GeoJsonLayer({id:'zone'}), new GeoJsonLayer({id:'district'})];
 var extruded = false;
 var currentViewState;
 
-$(document).ready(function() {
+const jsonUrls = {
+    'zone': 'http://localhost:5050/inputs/geojson/zone',
+    'district': 'http://localhost:5050/inputs/geojson/district',
+    'streets': 'http://localhost:5050/inputs/geojson/others/streets',
+    'dh_networks': 'http://localhost:5050/inputs/geojson/networks/DH',
+    'dc_networks': 'http://localhost:5050/inputs/geojson/networks/DC'
+};
 
-    var getZone = $.getJSON('http://localhost:5050/inputs/geojson/zone', function (json) {
+$(document).ready(function() {
+    // Get zone file first. Will not create map if zone file does not exist
+    $.getJSON(jsonUrls['zone'], function (json) {
         console.log(json);
         jsonStore['zone'] = json;
-    }).fail(function () {
-        console.log("Get zone failed.");
-        $('#zone-toggle').prop('disabled', true)
-    });
-
-    var getDistrict = $.getJSON('http://localhost:5050/inputs/geojson/district', function (json) {
-        console.log(json);
-        jsonStore['district'] = json;
-    }).fail(function () {
-        console.log("Get district failed.");
-        $('#district-toggle').prop('disabled', true)
-    });
-
-    var getStreets = $.getJSON('http://localhost:5050/inputs/geojson/others/streets', function (json) {
-        console.log(json);
-        jsonStore['streets'] = json;
-    }).fail(function () {
-        console.log("Get streets failed.");
-        $('#streets-toggle').prop('disabled', true)
-    });
-
-    var getDHNetworks = $.getJSON('http://localhost:5050/inputs/geojson/networks/DH', function (json) {
-        console.log(json);
-        jsonStore['dh-networks'] = json;
-    }).fail(function () {
-        console.log("Get DH networks failed.");
-        $('#dh-networks-toggle').prop('disabled', true)
-    });
-
-    var getDCNetworks = $.getJSON('http://localhost:5050/inputs/geojson/networks/DC', function (json) {
-        console.log(json);
-        jsonStore['dc-networks'] = json;
-    }).fail(function () {
-        console.log("Get DC networks failed.");
-        $('#dc-networks-toggle').prop('disabled', true)
-    });
-
-    $.when(getZone, getDistrict, getStreets, getDHNetworks, getDCNetworks).always(function () {
-        currentViewState = {latitude: 0, longitude: 0, zoom: 0, bearing: 0, pitch: 0};
-        if (jsonStore['zone'] !== undefined) {
-            createLayer('zone');
-            currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
+        createLayer('zone');
+        currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
             longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
             zoom: 16, bearing: 0, pitch: 0};
-        }
-
-        if (jsonStore['district'] !== undefined) {
-            createLayer('district');
-        }
-
-        if (jsonStore['streets'] !== undefined) {
-            createLayer('streets');
-        }
-
-        if (jsonStore['dc-networks'] !== undefined) {
-            createLayer('dc-networks');
-        }
-
-        if (jsonStore['dh-networks'] !== undefined) {
-            createLayer('dh-networks');
-        }
 
         deckgl = new DeckGL({
             container: 'mapid',
@@ -84,6 +37,30 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
+
+        // Try to get every other input
+        $.each(jsonUrls, function (key, value) {
+            $.getJSON(value, function (json) {
+                console.log(json);
+                jsonStore[key] = json;
+                createLayer(key);
+                deckgl.setProps({ layers: [...layers] });
+            }).fail(function () {
+                console.log(`Get ${key} failed.`);
+            });
+        });
+
+        setTimeout(function() {
+            console.log(layers)
+        }, 5000);
+
+    }).fail(function () {
+        console.log("Get zone failed.");
+        $('#zone-toggle').prop('disabled', true);
+        $('#district-toggle').prop('disabled', true);
+        $('#streets-toggle').prop('disabled', true);
+        $('#dh_networks-toggle').prop('disabled', true);
+        $('#dc_networks-toggle').prop('disabled', true);
     });
 });
 
@@ -124,10 +101,10 @@ function createLayer(name, options={}) {
         case 'streets':
             createStreetsLayer(options);
             break;
-        case 'dh-networks':
+        case 'dh_networks':
             createDHNetworksLayer(options);
             break;
-        case 'dc-networks':
+        case 'dc_networks':
             createDCNetworksLayer(options);
             break;
     }
@@ -201,10 +178,10 @@ function createStreetsLayer(options={}) {
 }
 
 function createDHNetworksLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='dh-networks');
+    layers = layers.filter(layer => layer.id!=='dh_networks');
     layers.splice(1, 0, new GeoJsonLayer({
-        id: 'dh-networks',
-        data: jsonStore['dh-networks'],
+        id: 'dh_networks',
+        data: jsonStore['dh_networks'],
         stroked: false,
         filled: true,
 
@@ -224,14 +201,14 @@ function createDHNetworksLayer(options={}) {
 }
 
 function createDCNetworksLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='dc-networks');
+    layers = layers.filter(layer => layer.id!=='dc_networks');
     layers.splice(2, 0, new GeoJsonLayer({
-        id: 'dc-networks',
-        data: jsonStore['dc-networks'],
+        id: 'dc_networks',
+        data: jsonStore['dc_networks'],
         stroked: false,
         filled: true,
 
-        getLineColor: [0, 255, 0],
+        getLineColor: [0, 255, 244],
         getFillColor: f => nodeFillColor(f.properties['Type']),
         getLineWidth: 3,
         getRadius: 3,
