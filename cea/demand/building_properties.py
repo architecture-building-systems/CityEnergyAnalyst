@@ -54,11 +54,17 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_hvac())
-        prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name').drop('REFERENCE', 1)
+        prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
+        # Drop 'REFERENCE' column if it exists
+        if 'REFERENCE' in prop_occupancy_df:
+            prop_occupancy_df.drop('REFERENCE', 1, inplace=True)
         prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
         prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
-        prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name').drop('REFERENCE', 1)
+        prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
+        # Drop 'REFERENCE' column if it exists
+        if 'REFERENCE' in prop_age:
+            prop_age.drop('REFERENCE', 1, inplace=True)
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
         prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
