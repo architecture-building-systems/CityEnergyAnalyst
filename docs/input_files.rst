@@ -1,1640 +1,871 @@
 
+get_archetypes_properties
+-------------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    construction_properties.xlsx:ARCHITECTURE,Es,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:ARCHITECTURE,Hs,Fraction of heated space in building archetype,[-],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,Ns,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    construction_properties.xlsx:ARCHITECTURE,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+    construction_properties.xlsx:ARCHITECTURE,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,type_roof,Roof construction. It relates to the contents of the default database of Envelope Properties: roof,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,type_shade,Shading system type. It relates to the contents of the default database of Envelope Properties: shade,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,type_wall,Wall construction. It relates to the contents of the default database of Envelope Properties: walll,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,type_win,Window type. It relates to the contents of the default database of Envelope Properties: windows,[code],string,{T1...Tn}
+    construction_properties.xlsx:ARCHITECTURE,void_deck,Share of floors with an open envelope (default = 0),[floor/floor],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,wwr_east,Window to wall ratio in building archetype,[-],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,wwr_north,Window to wall ratio in building archetype,[-],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,wwr_south,Window to wall ratio in building archetype,[-],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,wwr_west,Window to wall ratio in building archetype,[-],float,{0.0...1}
+    construction_properties.xlsx:ARCHITECTURE,year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
+    construction_properties.xlsx:ARCHITECTURE,year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
+    construction_properties.xlsx:HVAC,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,[-]
+    construction_properties.xlsx:HVAC,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+    construction_properties.xlsx:HVAC,type_cs,Type of cooling supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:HVAC,type_ctrl,Type of control system,[code],string,{T0...Tn}
+    construction_properties.xlsx:HVAC,type_dhw,Type of hot water supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:HVAC,type_hs,Type of heating supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:HVAC,type_vent,Type of ventilation system,[code],string,{T0...Tn}
+    construction_properties.xlsx:HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
+    construction_properties.xlsx:HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],string,[-]
+    construction_properties.xlsx:INDOOR_COMFORT,Tcs_set_C,Setpoint temperature for cooling system,[C],float,{0.0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,Tcs_setb_C,Setback point of temperature for cooling system,[C],float,{0.0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],float,{0.0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],float,{0.0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],float,{0.0...n}
+    construction_properties.xlsx:INDOOR_COMFORT,rhum_max_pc,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:INDOOR_COMFORT,rhum_min_pc,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],string,[-]
+    construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],string,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific due to process heat,[W/m2],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,Qs_Wp,TODO,TODO,TODO,TODO
+    construction_properties.xlsx:INTERNAL_LOADS,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,Vww_lpd,Peak specific daily hot water consumption,[lpd],float,{0.0...n}
+    construction_properties.xlsx:INTERNAL_LOADS,X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],float,{0.0...n}
+    construction_properties.xlsx:SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    construction_properties.xlsx:SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+    construction_properties.xlsx:SUPPLY,type_cs,Type of cooling supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:SUPPLY,type_dhw,Type of hot water supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:SUPPLY,type_el,Type of electrical supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:SUPPLY,type_hs,Type of heating supply system,[code],string,{T0...Tn}
+    construction_properties.xlsx:SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
+    construction_properties.xlsx:SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
+
+get_archetypes_schedules
+------------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    occupancy_schedules.xlsx:COOLROOM,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:COOLROOM,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:COOLROOM,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:FOODSTORE,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:FOODSTORE,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:GYM,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:GYM,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Saturday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:HOSPITAL,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Sunday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:HOSPITAL,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOSPITAL,Weekday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:HOSPITAL,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:HOSPITAL,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:HOTEL,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:HOTEL,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Saturday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:INDUSTRIAL,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Sunday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:INDUSTRIAL,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:INDUSTRIAL,Weekday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:INDUSTRIAL,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:INDUSTRIAL,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Saturday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:LAB,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Sunday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:LAB,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LAB,Weekday_4,TODO,TODO,TODO,TODO
+    occupancy_schedules.xlsx:LAB,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:LAB,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:LIBRARY,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:LIBRARY,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MULTI_RES,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:MULTI_RES,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:MUSEUM,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:MUSEUM,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:OFFICE,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:OFFICE,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:PARKING,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:PARKING,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RESTAURANT,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:RESTAURANT,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:RETAIL,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:RETAIL,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SCHOOL,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:SCHOOL,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SERVERROOM,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:SERVERROOM,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SINGLE_RES,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:SINGLE_RES,month,Probability of use for the month,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+    occupancy_schedules.xlsx:SWIMMING,density,m2 per person,[m2/p],float,{0.0...n}
+    occupancy_schedules.xlsx:SWIMMING,month,Probability of use for the month,[p/p],float,{0.0...1}
+
+get_archetypes_system_controls
+------------------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    system_controls.xlsx:heating_cooling,cooling-season-end,Last day of the cooling season,[-],date,mm-dd
+    system_controls.xlsx:heating_cooling,cooling-season-start,Day on which the cooling season starts,[-],date,mm-dd
+    system_controls.xlsx:heating_cooling,has-cooling-season,Defines whether the scenario has a cooling season.,[-],Boolean,{TRUE/FALSE}
+    system_controls.xlsx:heating_cooling,has-heating-season,Defines whether the scenario has a heating season.,[-],Boolean,{TRUE/FALSE}
+    system_controls.xlsx:heating_cooling,heating-season-end,Last day of the heating season,[-],date,mm-dd
+    system_controls.xlsx:heating_cooling,heating-season-start,Day on which the heating season starts,[-],date,mm-dd
+
+get_building_age
+----------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    age.dbf,HVAC,Year of last retrofit of HVAC systems (0 if none),[-],int,{0...n}
+    age.dbf,Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
+    age.dbf,basement,Year of last retrofit of basement (0 if none),[-],int,{0...n}
+    age.dbf,built,Construction year,[-],int,{0...n}
+    age.dbf,envelope,Year of last retrofit of building facades (0 if none),[-],int,{0...n}
+    age.dbf,partitions,Year of last retrofit of internal wall partitions(0 if none),[-],int,{0...n}
+    age.dbf,roof,Year of last retrofit of roof (0 if none),[-],int,{0...n}
+    age.dbf,windows,Year of last retrofit of windows (0 if none),[-],int,{0...n}
+
 get_building_occupancy
 ----------------------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    SINGLE_RES,Residential (single dwellings),m2,{0.0...1},float
+    occupancy.dbf,COOLROOM,Refrigeration rooms,m2,float,{0.0...1}
+    occupancy.dbf,FOODSTORE,Food stores,m2,float,{0.0...1}
+    occupancy.dbf,GYM,Gymnasiums,m2,float,{0.0...1}
+    occupancy.dbf,HOSPITAL,Hospitals,m2,float,{0.0...1}
+    occupancy.dbf,HOTEL,Hotels,m2,float,{0.0...1}
+    occupancy.dbf,INDUSTRIAL,Light industry,m2,float,{0.0...1}
+    occupancy.dbf,LIBRARY,Libraries,m2,float,{0.0...1}
+    occupancy.dbf,MULTI_RES,Residential (multiple dwellings),m2,TODO,TODO
+    occupancy.dbf,Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
+    occupancy.dbf,OFFICE,Offices,m2,float,{0.0...1}
+    occupancy.dbf,PARKING,Parking,m2,float,{0.0...1}
+    occupancy.dbf,RESTAURANT,Restaurants,m2,float,{0.0...1}
+    occupancy.dbf,RETAIL,Retail,m2,float,{0.0...1}
+    occupancy.dbf,SCHOOL,Schools,m2,float,{0.0...1}
+    occupancy.dbf,SERVERROOM,Data center,m2,float,{0.0...1}
+    occupancy.dbf,SINGLE_RES,Residential (single dwellings),m2,float,{0.0...1}
+    occupancy.dbf,SWIMMING,Swimming halls,m2,float,{0.0...1}
 
-    HOSPITAL,Hospitals,m2,{0.0...1},float
+get_data_benchmark
+------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    GYM,Gymnasiums,m2,{0.0...1},float
+    benchmark_2000W.xls:EMBODIED,CO2_target_new,Target CO2 production for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,CO2_today,Present CO2 production,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    benchmark_2000W.xls:EMBODIED,NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,NRE_today,Present non-renewable energy consumption,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,PEN_target_new,Target primary energy demand for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,PEN_today,Present primary energy demand,[-],float,{0.0...n}
+    benchmark_2000W.xls:EMBODIED,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    benchmark_2000W.xls:MOBILITY,CO2_target_new,Target CO2 production for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,CO2_today,Present CO2 production,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    benchmark_2000W.xls:MOBILITY,NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,NRE_today,Present non-renewable energy consumption,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,PEN_target_new,Target primary energy demand for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,PEN_today,Present primary energy demand,[-],float,{0.0...n}
+    benchmark_2000W.xls:MOBILITY,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    benchmark_2000W.xls:OPERATION,CO2_target_new,Target CO2 production for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,CO2_today,Present CO2 production,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    benchmark_2000W.xls:OPERATION,NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,NRE_today,Present non-renewable energy consumption,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,PEN_target_new,Target primary energy demand for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,PEN_today,Present primary energy demand,[-],float,{0.0...n}
+    benchmark_2000W.xls:OPERATION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    benchmark_2000W.xls:TOTAL,CO2_target_new,Target CO2 production for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,CO2_today,Present CO2 production,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    benchmark_2000W.xls:TOTAL,NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,NRE_today,Present non-renewable energy consumption,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,PEN_target_new,Target primary energy demand for newly constructed buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,PEN_today,Present primary energy demand,[-],float,{0.0...n}
+    benchmark_2000W.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-    SERVERROOM,Data center,m2,{0.0...1},float
+get_district_geometry
+---------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    SWIMMING,Swimming halls,m2,{0.0...1},float
+    district.shp,Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
+    district.shp,floors_ag,TODO,TODO,TODO,TODO
+    district.shp,floors_bg,TODO,TODO,TODO,TODO
+    district.shp,geometry,TODO,TODO,TODO,TODO
+    district.shp,height_ag,Aggregated height of the walls.,[m],float,{0.0...n}
+    district.shp,height_bg,TODO,TODO,TODO,TODO
 
-    LIBRARY,Libraries,m2,{0.0...1},float
+get_envelope_systems
+--------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    RESTAURANT,Restaurants,m2,{0.0...1},float
+    envelope_systems.xls:CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],float,{0.0...1}
+    envelope_systems.xls:CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:CONSTRUCTION,code,Unique ID of component in the construction category,[-],string,{T1..Tn}
+    envelope_systems.xls:LEAKAGE,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:LEAKAGE,code,Unique ID of component in the leakage category,[-],string,{T1..Tn}
+    envelope_systems.xls:LEAKAGE,n50,Air exchanges due to leakage at a pressure of 50 Pa.,[1/h],float,{0.0...n}
+    envelope_systems.xls:ROOF,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:ROOF,U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
+    envelope_systems.xls:ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:ROOF,code,Unique ID of component in the window category,[-],string,{T1..Tn}
+    envelope_systems.xls:ROOF,e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:ROOF,r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],float,{0.0...1}
+    envelope_systems.xls:SHADING,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:SHADING,code,Unique ID of component in the window category,[-],string,{T1...Tn}
+    envelope_systems.xls:SHADING,rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:WALL,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:WALL,U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:WALL,U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
+    envelope_systems.xls:WALL,a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:WALL,code,Unique ID of component in the window category,[-],string,{T1..Tn}
+    envelope_systems.xls:WALL,e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],float,{0.0...1}
+    envelope_systems.xls:WINDOW,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    envelope_systems.xls:WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
+    envelope_systems.xls:WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
+    envelope_systems.xls:WINDOW,code,Unique ID of component in the window category,[-],string,{T1..Tn}
+    envelope_systems.xls:WINDOW,e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
 
-    COOLROOM,Refrigeration rooms,m2,{0.0...1},float
+get_life_cycle_inventory_building_systems
+-----------------------------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    SCHOOL,Schools,m2,{0.0...1},float
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Excavation,Typical embodied CO2 equivalent emissions for site excavation.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Floor_g,Typical embodied CO2 equivalent emissions of the ground floor.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Floor_int,Typical embodied CO2 equivalent emissions of the interior floor.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Roof,Typical embodied CO2 equivalent emissions of the roof.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Services,Typical embodied CO2 equivalent emissions of the building services.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_ag,Typical embodied CO2 equivalent emissions of the exterior above ground walls.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_bg,Typical embodied CO2 equivalent emissions of the exterior below ground walls.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_nosup,nan,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_sup,nan,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,Win_ext,Typical embodied CO2 equivalent emissions of the external glazing.,[kgCO2],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,year_end,Upper limit of year interval where the building properties apply,[-],int,{0...n}
+    LCA_buildings.xlsx:EMBODIED_EMISSIONS,year_start,Lower limit of year interval where the building properties apply,[-],int,{0...n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Excavation,Typical embodied energy for site excavation.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Floor_g,Typical embodied energy of the ground floor.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Floor_int,Typical embodied energy of the interior floor.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Roof,Typical embodied energy of the roof.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Services,Typical embodied energy of the building services.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Wall_int_nosup,nan,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Wall_int_sup,nan,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,Win_ext,Typical embodied energy of the external glazing.,[GJ],float,{0.0....n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_buildings.xlsx:EMBODIED_ENERGY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,year_end,Upper limit of year interval where the building properties apply,[-],int,{0...n}
+    LCA_buildings.xlsx:EMBODIED_ENERGY,year_start,Lower limit of year interval where the building properties apply,[-],int,{0...n}
 
-    RETAIL,Retail,m2,{0.0...1},float
+get_life_cycle_inventory_supply_systems
+---------------------------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    HOTEL,Hotels,m2,{0.0...1},float
+    LCA_infrastructure.xlsx:COOLING,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    LCA_infrastructure.xlsx:COOLING,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_infrastructure.xlsx:COOLING,eff_cs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:COOLING,reference,nan,[-],string,[-]
+    LCA_infrastructure.xlsx:COOLING,scale_cs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:COOLING,source_cs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:DHW,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    LCA_infrastructure.xlsx:DHW,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_infrastructure.xlsx:DHW,eff_dhw,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:DHW,reference,nan,[-],string,[-]
+    LCA_infrastructure.xlsx:DHW,scale_dhw,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:DHW,source_dhw,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:ELECTRICITY,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    LCA_infrastructure.xlsx:ELECTRICITY,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_infrastructure.xlsx:ELECTRICITY,eff_el,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:ELECTRICITY,reference,nan,[-],string,[-]
+    LCA_infrastructure.xlsx:ELECTRICITY,scale_el,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:ELECTRICITY,source_el,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:HEATING,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    LCA_infrastructure.xlsx:HEATING,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    LCA_infrastructure.xlsx:HEATING,eff_hs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:HEATING,reference,nan,[-],string,[-]
+    LCA_infrastructure.xlsx:HEATING,scale_hs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:HEATING,source_hs,TODO,TODO,TODO,TODO
+    LCA_infrastructure.xlsx:RESOURCES,CO2,Refers to the equivalent CO2 required to run the heating or cooling system.,[kg/kWh],float,{0.0....n}
+    LCA_infrastructure.xlsx:RESOURCES,Description,Description of the heating and cooling network (related to the code). E.g. heatpump -soil/water,[-],string,[-]
+    LCA_infrastructure.xlsx:RESOURCES,PEN,Refers to the amount of primary energy needed (PEN) to run the heating or cooling system.,[kWh/kWh],float,{0.0....n}
+    LCA_infrastructure.xlsx:RESOURCES,code,Unique ID of component of the heating and cooling network,[-],string,{T1..Tn}
+    LCA_infrastructure.xlsx:RESOURCES,costs_kWh,Refers to the financial costs required to run the heating or cooling system.,[$/kWh],float,{0.0....n}
+    LCA_infrastructure.xlsx:RESOURCES,reference,nan,[-],string,[-]
 
-    INDUSTRIAL,Light industry,m2,{0.0...1},float
+get_street_network
+------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    PARKING,Parking,m2,{0.0...1},float
+    streets.shp,FID,TODO,TODO,TODO,TODO
+    streets.shp,geometry,TODO,TODO,TODO,TODO
 
-    Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string
+get_supply_systems
+------------------
+.. csv-table::
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    OFFICE,Offices,m2,{0.0...1},float
-
-    FOODSTORE,Food stores,m2,{0.0...1},float
-
-    MULTI_RES,Residential (multiple dwellings),m2,TODO,TODO
-
+    supply_systems.xls:Absorption_chiller,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Absorption_chiller,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,a_e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,a_g,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:Absorption_chiller,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,e_e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,e_g,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,el_W,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,m_cw,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,m_hw,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,r_e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,r_g,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,s_e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,s_g,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,type,TODO,TODO,TODO,TODO
+    supply_systems.xls:Absorption_chiller,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:BH,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:BH,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:BH,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Boiler,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:Boiler,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Boiler,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:CCGT,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:CCGT,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:CCGT,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:CT,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:CT,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:CT,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Chiller,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:Chiller,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Chiller,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC, Assumptions,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:FC,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:FC,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:FC,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Furnace,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:Furnace,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Furnace,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,Currency,Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.,[-],string,[-]
+    supply_systems.xls:HEX,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:HEX,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,a_p,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,b_p,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,c_p,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:HEX,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,d_p,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,e_p,TODO,TODO,TODO,TODO
+    supply_systems.xls:HEX,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:HP,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:HP,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:HP,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:PV,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_Bref,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_a0,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_a1,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_a2,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_a3,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_a4,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_n,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_noct,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,PV_th,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:PV,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,misc_losses,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,module_length_m,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,type,TODO,TODO,TODO,TODO
+    supply_systems.xls:PV,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:PVT,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:PVT,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:PVT,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:Piping,Currency ,TODO,TODO,TODO,TODO
+    supply_systems.xls:Piping,Description,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],string,alphanumeric
+    supply_systems.xls:Piping,Diameter_max,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],float,{0.0....n}
+    supply_systems.xls:Piping,Diameter_min,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],float,{0.0....n}
+    supply_systems.xls:Piping,Investment,Typical cost of investment for a given pipe diameter.,[$/m],float,{0.0....n}
+    supply_systems.xls:Piping,Unit,Defines the unit of measurement for the diameter values.,[mm],string,[-]
+    supply_systems.xls:Piping,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pricing,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Pricing,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pricing,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pricing,value,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:Pump,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:Pump,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:Pump,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,C_eff,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,Cp_fluid,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:SC,IAM_d,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,aperture_area_ratio,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,c1,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,c2,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:SC,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,dP1,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,dP2,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,dP3,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,dP4,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,mB0_r,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,mB_max_r,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,mB_min_r,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,module_area_m2,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,module_length_m,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,n0,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,t_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,type,TODO,TODO,TODO,TODO
+    supply_systems.xls:SC,unit,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    supply_systems.xls:TES,IR_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,LT_yr,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,O&M_%,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,a,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,assumption,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,b,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,c,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,cap_max,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,cap_min,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    supply_systems.xls:TES,currency,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,d,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,e,TODO,TODO,TODO,TODO
+    supply_systems.xls:TES,unit ,TODO,TODO,TODO,TODO
 
 get_technical_emission_systems
 ------------------------------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    Description,Describes the source of the benchmark standards.,[-],[-],string
+    emission_systems.xls:controller,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    emission_systems.xls:controller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    emission_systems.xls:controller,dT_Qcs,TODO,TODO,TODO,TODO
+    emission_systems.xls:controller,dT_Qhs,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    emission_systems.xls:cooling,Qcsmax_Wm2,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Tc_sup_air_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Tc_sup_air_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Tscs0_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Tscs0_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,Tscs0_scu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    emission_systems.xls:cooling,dTcs0_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,dTcs0_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,dTcs0_scu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:cooling,dTcs_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:dhw,Description,Description of the typical supply and return temperatures related to HVAC: hot water and sanitation.,[-],string,[-]
+    emission_systems.xls:dhw,Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).,[W/m2],float,{0.0....n}
+    emission_systems.xls:dhw,Tsww0_C,Typical supply water temperature.,[C],float,{0.0....n}
+    emission_systems.xls:dhw,code,Unique ID of component of the typical supply and return temperature bins.,[-],string,{T1..Tn}
+    emission_systems.xls:heating,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    emission_systems.xls:heating,Qhsmax_Wm2,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,Th_sup_air_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,Th_sup_air_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,Tshs0_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,Tshs0_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,Tshs0_shu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    emission_systems.xls:heating,dThs0_ahu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,dThs0_aru_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,dThs0_shu_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:heating,dThs_C,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,Description,Describes the source of the benchmark standards.,[-],string,[-]
+    emission_systems.xls:ventilation,ECONOMIZER,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,HEAT_REC,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,MECH_VENT,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,NIGHT_FLSH,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,WIN_VENT,TODO,TODO,TODO,TODO
+    emission_systems.xls:ventilation,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    dTcs_C,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    HEAT_REC,TODO,TODO,TODO,TODO
-
-    dThs_C,TODO,TODO,TODO,TODO
-
-    Tc_sup_air_ahu_C,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).,[W/m2],{0.0....n},float
-
-    Tscs0_aru_C,TODO,TODO,TODO,TODO
-
-    Tshs0_ahu_C,TODO,TODO,TODO,TODO
-
-    Description,Description of the typical supply and return temperatures related to HVAC, hot water and sanitation.,[-],[-],string
-
-    Qhsmax_Wm2,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    MECH_VENT,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    code,Unique ID of component of the typical supply and return temperature bins.,[-],{T1..Tn},string
-
-    dTcs0_ahu_C,TODO,TODO,TODO,TODO
-
-    ECONOMIZER,TODO,TODO,TODO,TODO
-
-    dTcs0_scu_C,TODO,TODO,TODO,TODO
-
-    Qcsmax_Wm2,TODO,TODO,TODO,TODO
-
-    Tshs0_aru_C,TODO,TODO,TODO,TODO
-
-    dT_Qhs,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    Tshs0_shu_C,TODO,TODO,TODO,TODO
-
-    dT_Qcs,TODO,TODO,TODO,TODO
-
-    dTcs0_aru_C,TODO,TODO,TODO,TODO
-
-    Tc_sup_air_aru_C,TODO,TODO,TODO,TODO
-
-    Tscs0_scu_C,TODO,TODO,TODO,TODO
-
-    Th_sup_air_ahu_C,TODO,TODO,TODO,TODO
-
-    NIGHT_FLSH,TODO,TODO,TODO,TODO
-
-    Th_sup_air_aru_C,TODO,TODO,TODO,TODO
-
-    dThs0_aru_C,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    Tscs0_ahu_C,TODO,TODO,TODO,TODO
-
-    dThs0_ahu_C,TODO,TODO,TODO,TODO
-
-    Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float
-
-    WIN_VENT,TODO,TODO,TODO,TODO
-
-    dThs0_shu_C,TODO,TODO,TODO,TODO
-
-
-get_zone_geometry
------------------
+get_terrain
+-----------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    height_ag,Aggregated height of the walls.,[m],{0.0...n},float
-
-    height_bg,TODO,TODO,TODO,TODO
-
-    floors_ag,TODO,TODO,TODO,TODO
-
-    geometry,TODO,TODO,TODO,TODO
-
-    Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string
-
-    floors_bg,TODO,TODO,TODO,TODO
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
 
 get_thermal_networks
 --------------------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    Cp_JkgK,Heat capacity of transmission fluid.,[J/kgK],{0.0...n},float
-
-    D_ins_m,Defines the pipe insulation diameter for the nominal diameter (DN) bin.,[m],{0.0...n},float
-
-    D_int_m,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,[m],{0.0...n},float
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    Vdot_min_m3s,Minimum volume flow rate for the nominal diameter (DN) bin.,[m3/s],{0.0...n},float
-
-    material,TODO,TODO,TODO,TODO
-
-    Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string
-
-    lambda_WmK,Thermal conductivity,[W/mK],{0.0...n},float
-
-    D_ext_m,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,[m],{0.0...n},float
-
-    rho_kgm3,Density of transmission fluid.,[kg/m3],{0.0...n},float
-
-    Vdot_max_m3s,Maximum volume flow rate for the nominal diameter (DN) bin.,[m3/s],{0.0...n},float
-
-
-get_archetypes_schedules
-------------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_4,TODO,TODO,TODO,TODO
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_4,TODO,TODO,TODO,TODO
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Sunday_4,TODO,TODO,TODO,TODO
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_4,TODO,TODO,TODO,TODO
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Saturday_4,TODO,TODO,TODO,TODO
-
-    Weekday_4,TODO,TODO,TODO,TODO
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Weekday_4,TODO,TODO,TODO,TODO
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_4,TODO,TODO,TODO,TODO
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_4,TODO,TODO,TODO,TODO
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],{0.0...1},float
-
-    Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    density,m2 per person,[m2/p],{0.0...n},float
-
-    month,Probability of use for the month,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-    Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],{0.0...1},float
-
-
-get_supply_systems
-------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    d,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    c,TODO,TODO,TODO,TODO
-
-    dP2,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    module_area_m2,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    e_p,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    Diameter_max,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],{0.0....n},float
-
-    c,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    mB0_r,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    module_length_m,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    a_e,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    unit,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    c_p,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    misc_losses,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    el_W,TODO,TODO,TODO,TODO
-
-    a_p,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    a,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    IAM_d,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    d,TODO,TODO,TODO,TODO
-
-    type,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    s_e,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    mB_max_r,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    Unit,Defines the unit of measurement for the diameter values.,[mm],[-],string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    assumption,TODO,TODO,TODO,TODO
-
-    Description,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    m_hw,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    assumption,TODO,TODO,TODO,TODO
-
-    Cp_fluid,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    c,TODO,TODO,TODO,TODO
-
-    PV_a2,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    m_cw,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    value,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    assumption,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    c2,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    C_eff,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    b_p,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    c1,TODO,TODO,TODO,TODO
-
-    unit ,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    PV_a3,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    e,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    module_length_m,TODO,TODO,TODO,TODO
-
-    PV_n,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    PV_th,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    n0,TODO,TODO,TODO,TODO
-
-    d_p,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    Currency,Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.,[-],[-],string
-
-    PV_Bref,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    unit,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    PV_noct,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    aperture_area_ratio,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    b,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    Investment,Typical cost of investment for a given pipe diameter.,[$/m],{0.0....n},float
-
-    a,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    dP4,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    Diameter_min,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],{0.0....n},float
-
-    currency,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    a,TODO,TODO,TODO,TODO
-
-    type,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    assumption,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    d,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    dP1,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    type,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    PV_a4,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    b,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    e,TODO,TODO,TODO,TODO
-
-    e_g,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    a_g,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    O&M_%,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    e_e,TODO,TODO,TODO,TODO
-
-    t_max,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    s_g,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    c,TODO,TODO,TODO,TODO
-
-    PV_a0,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    unit,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    Currency ,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    unit,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    PV_a1,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    cap_max,TODO,TODO,TODO,TODO
-
-     Assumptions,TODO,TODO,TODO,TODO
-
-    mB_min_r,TODO,TODO,TODO,TODO
-
-    r_e,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    LT_yr,TODO,TODO,TODO,TODO
-
-    dP3,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    cap_max,TODO,TODO,TODO,TODO
-
-    cap_min,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    c,TODO,TODO,TODO,TODO
-
-    IR_%,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    r_g,TODO,TODO,TODO,TODO
-
-    currency,TODO,TODO,TODO,TODO
-
-    d,TODO,TODO,TODO,TODO
-
-    a,TODO,TODO,TODO,TODO
-
-    b,TODO,TODO,TODO,TODO
-
-    assumption,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    cap_max,TODO,TODO,TODO,TODO
-
-
-get_archetypes_properties
--------------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    void_deck,Share of floors with an open envelope (default = 0),[floor/floor],{0.0...1},float
-
-    Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float
-
-    Qcre_Wm2,TODO,TODO,TODO,TODO
-
-    type_el,Type of electrical supply system,[code],{T0...Tn},string
-
-    X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float
-
-    Qhpro_Wm2,Peak specific due to process heat,[W/m2],{0.0...n},float
-
-    Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float
-
-    Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float
-
-    rhum_min_pc,TODO,TODO,TODO,TODO
-
-    year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int
-
-    building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int
-
-    rhum_max_pc,TODO,TODO,TODO,TODO
-
-    Code,Unique code for the material of the pipe.,[-],[-],string
-
-    El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float
-
-    standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,[-],{C, R},string
-
-    year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int
-
-    Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float
-
-    year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int
-
-    type_cs,Type of cooling supply system,[code],{T0...Tn},string
-
-    type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string
-
-    type_ctrl,Type of control system,[code],{T0...Tn},string
-
-    type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string
-
-    wwr_north,Window to wall ratio in building archetype,[-],{0.0...1},float
-
-    building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],[-],string
-
-    wwr_east,Window to wall ratio in building archetype,[-],{0.0...1},float
-
-    Hs,Fraction of heated space in building archetype,[-],{0.0...1},float
-
-    Qs_Wp,TODO,TODO,TODO,TODO
-
-    Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float
-
-    Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float
-
-    type_dhw,Type of hot water supply system,[code],{T0...Tn},string
-
-    Code,Unique code for the material of the pipe.,[-],[-],string
-
-    type_dhw,Type of hot water supply system,[code],{T0...Tn},string
-
-    Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string
-
-    type_wall,Wall construction. It relates to the contents of the default database of Envelope Properties: walll,[code],{T1...Tn},string
-
-    year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int
-
-    Es,TODO,TODO,TODO,TODO
-
-    type_hs,Type of heating supply system,[code],{T0...Tn},string
-
-    type_cs,Type of cooling supply system,[code],{T0...Tn},string
-
-    building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    type_roof,Roof construction. It relates to the contents of the default database of Envelope Properties: roof,[code],{T1...Tn},string
-
-    type_vent,Type of ventilation system,[code],{T0...Tn},string
-
-    wwr_west,Window to wall ratio in building archetype,[-],{0.0...1},float
-
-    Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float
-
-    year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int
-
-    Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float
-
-    standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,[-],{C, R},string
-
-    Ns,TODO,TODO,TODO,TODO
-
-    standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,[-],{C , R},string
-
-    wwr_south,Window to wall ratio in building archetype,[-],{0.0...1},float
-
-    Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float
-
-    type_win,Window type. It relates to the contents of the default database of Envelope Properties: windows,[code],{T1...Tn},string
-
-    type_hs,Type of heating supply system,[code],{T0...Tn},string
-
-    type_shade,Shading system type. It relates to the contents of the default database of Envelope Properties: shade,[code],{T1...Tn},string
-
-
-get_street_network
-------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    geometry,TODO,TODO,TODO,TODO
-
-    FID,TODO,TODO,TODO,TODO
-
-
-get_district_geometry
----------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    height_ag,Aggregated height of the walls.,[m],{0.0...n},float
-
-    floors_bg,TODO,TODO,TODO,TODO
-
-    Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string
-
-    height_bg,TODO,TODO,TODO,TODO
-
-    floors_ag,TODO,TODO,TODO,TODO
-
-    geometry,TODO,TODO,TODO,TODO
-
-
-get_archetypes_system_controls
-------------------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    has-cooling-season,Defines whether the scenario has a cooling season.,[-],{TRUE, FALSE},Boolean
-
-    heating-season-end,Last day of the heating season,[-],mm-dd,date
-
-    heating-season-start,Day on which the heating season starts,[-],mm-dd,date
-
-    cooling-season-start,Day on which the cooling season starts,[-],mm-dd,date
-
-    cooling-season-end,Last day of the cooling season,[-],mm-dd,date
-
-    has-heating-season,Defines whether the scenario has a heating season.,[-],{TRUE, FALSE},Boolean
-
-
-get_data_benchmark
-------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],{0.0...n},float
-
-    NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],{0.0...n},float
-
-    PEN_today,Present primary energy demand,[-],{0.0...n},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    CO2_today,Present CO2 production,[-],{0.0...n},float
-
-    NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],{0.0...n},float
-
-    PEN_today,Present primary energy demand,[-],{0.0...n},float
-
-    NRE_today,Present non-renewable energy consumption,[-],{0.0...n},float
-
-    CO2_target_new,Target CO2 production for newly constructed buildings,[-],{0.0...n},float
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],{0.0...n},float
-
-    CO2_today,Present CO2 production,[-],{0.0...n},float
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    CO2_today,Present CO2 production,[-],{0.0...n},float
-
-    NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],{0.0...n},float
-
-    NRE_today,Present non-renewable energy consumption,[-],{0.0...n},float
-
-    CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],{0.0...n},float
-
-    PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float
-
-    PEN_target_new,Target primary energy demand for newly constructed buildings,[-],{0.0...n},float
-
-    NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],{0.0...n},float
-
-    NRE_today,Present non-renewable energy consumption,[-],{0.0...n},float
-
-    PEN_target_new,Target primary energy demand for newly constructed buildings,[-],{0.0...n},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],{0.0...n},float
-
-    CO2_target_new,Target CO2 production for newly constructed buildings,[-],{0.0...n},float
-
-    NRE_today,Present non-renewable energy consumption,[-],{0.0...n},float
-
-    PEN_today,Present primary energy demand,[-],{0.0...n},float
-
-    PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float
-
-    CO2_target_new,Target CO2 production for newly constructed buildings,[-],{0.0...n},float
-
-    PEN_today,Present primary energy demand,[-],{0.0...n},float
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],{0.0...n},float
-
-    CO2_today,Present CO2 production,[-],{0.0...n},float
-
-    NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings,[-],{0.0...n},float
-
-    PEN_target_new,Target primary energy demand for newly constructed buildings,[-],{0.0...n},float
-
-    PEN_target_new,Target primary energy demand for newly constructed buildings,[-],{0.0...n},float
-
-    CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],{0.0...n},float
-
-    NRE_target_new,Target non-renewable energy consumption for newly constructed buildings,[-],{0.0...n},float
-
-    CO2_target_new,Target CO2 production for newly constructed buildings,[-],{0.0...n},float
-
-
-get_building_age
-----------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    built,Construction year,[-],{0...n},int
-
-    HVAC,Year of last retrofit of HVAC systems (0 if none),[-],{0...n},int
-
-    windows,Year of last retrofit of windows (0 if none),[-],{0...n},int
-
-    envelope,Year of last retrofit of building facades (0 if none),[-],{0...n},int
-
-    Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string
-
-    roof,Year of last retrofit of roof (0 if none),[-],{0...n},int
-
-    basement,Year of last retrofit of basement (0 if none),[-],{0...n},int
-
-    partitions,Year of last retrofit of internal wall partitions(0 if none),[-],{0...n},int
-
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    thermal_networks.xls:MATERIAL PROPERTIES,Cp_JkgK,Heat capacity of transmission fluid.,[J/kgK],float,{0.0...n}
+    thermal_networks.xls:MATERIAL PROPERTIES,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+    thermal_networks.xls:MATERIAL PROPERTIES,lambda_WmK,Thermal conductivity,[W/mK],float,{0.0...n}
+    thermal_networks.xls:MATERIAL PROPERTIES,material,TODO,TODO,TODO,TODO
+    thermal_networks.xls:MATERIAL PROPERTIES,rho_kgm3,Density of transmission fluid.,[kg/m3],float,{0.0...n}
+    thermal_networks.xls:PIPING CATALOG,D_ext_m,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,[m],float,{0.0...n}
+    thermal_networks.xls:PIPING CATALOG,D_ins_m,Defines the pipe insulation diameter for the nominal diameter (DN) bin.,[m],float,{0.0...n}
+    thermal_networks.xls:PIPING CATALOG,D_int_m,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,[m],float,{0.0...n}
+    thermal_networks.xls:PIPING CATALOG,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],string,alphanumeric
+    thermal_networks.xls:PIPING CATALOG,Vdot_max_m3s,Maximum volume flow rate for the nominal diameter (DN) bin.,[m3/s],float,{0.0...n}
+    thermal_networks.xls:PIPING CATALOG,Vdot_min_m3s,Minimum volume flow rate for the nominal diameter (DN) bin.,[m3/s],float,{0.0...n}
 
 get_weather
 -----------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
 
-    EPW file variables,TODO,TODO,TODO,TODO
+    Singapore.epw,EPW file variables,TODO,TODO,TODO,TODO
 
-
-get_life_cycle_inventory_building_systems
------------------------------------------
+get_zone_geometry
+-----------------
 .. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    Win_ext,Typical embodied CO2 equivalent emissions of the external glazing.,[kgCO2],{0.0....n},float
-
-    Wall_int_nosup,nan,[kgCO2],{0.0....n},float
-
-    year_end,Upper limit of year interval where the building properties apply,[-],{0...n},int
-
-    Wall_ext_bg,Typical embodied CO2 equivalent emissions of the exterior below ground walls.,[kgCO2],{0.0....n},float
-
-    year_end,Upper limit of year interval where the building properties apply,[-],{0...n},int
-
-    year_start,Lower limit of year interval where the building properties apply,[-],{0...n},int
-
-    Floor_g,Typical embodied CO2 equivalent emissions of the ground floor.,[kgCO2],{0.0....n},float
-
-    standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,[-],{C, R},string
-
-    Excavation,Typical embodied CO2 equivalent emissions for site excavation.,[kgCO2],{0.0....n},float
-
-    Wall_ext_ag,Typical embodied CO2 equivalent emissions of the exterior above ground walls.,[kgCO2],{0.0....n},float
-
-    Floor_int,Typical embodied energy of the interior floor.,[GJ],{0.0....n},float
-
-    Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[GJ],{0.0....n},float
-
-    Roof,Typical embodied CO2 equivalent emissions of the roof.,[kgCO2],{0.0....n},float
-
-    standard,Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.,[-],{C, R},string
-
-    building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    Services,Typical embodied CO2 equivalent emissions of the building services.,[kgCO2],{0.0....n},float
-
-    Services,Typical embodied energy of the building services.,[GJ],{0.0....n},float
-
-    Win_ext,Typical embodied energy of the external glazing.,[GJ],{0.0....n},float
-
-    Wall_int_nosup,nan,[GJ],{0.0....n},float
-
-    Wall_int_sup,nan,[GJ],{0.0....n},float
-
-    Floor_int,Typical embodied CO2 equivalent emissions of the interior floor.,[kgCO2],{0.0....n},float
-
-    Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[GJ],{0.0....n},float
-
-    Floor_g,Typical embodied energy of the ground floor.,[GJ],{0.0....n},float
-
-    Roof,Typical embodied energy of the roof.,[GJ],{0.0....n},float
-
-    building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    Wall_int_sup,nan,[kgCO2],{0.0....n},float
-
-    year_start,Lower limit of year interval where the building properties apply,[-],{0...n},int
-
-    Excavation,Typical embodied energy for site excavation.,[GJ],{0.0....n},float
-
-
-get_life_cycle_inventory_supply_systems
----------------------------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    eff_dhw,TODO,TODO,TODO,TODO
-
-    source_el,TODO,TODO,TODO,TODO
-
-    scale_hs,TODO,TODO,TODO,TODO
-
-    reference,nan,[-],[-],string
-
-    eff_el,TODO,TODO,TODO,TODO
-
-    reference,nan,[-],[-],string
-
-    scale_dhw,TODO,TODO,TODO,TODO
-
-    reference,nan,[-],[-],string
-
-    code,Unique ID of component of the heating and cooling network,[-],{T1..Tn},string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    CO2,Refers to the equivalent CO2 required to run the heating or cooling system.,[kg/kWh],{0.0....n},float
-
-    reference,nan,[-],[-],string
-
-    scale_cs,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    eff_cs,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    scale_el,TODO,TODO,TODO,TODO
-
-    source_dhw,TODO,TODO,TODO,TODO
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    source_cs,TODO,TODO,TODO,TODO
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string
-
-    costs_kWh,Refers to the financial costs required to run the heating or cooling system.,[$/kWh],{0.0....n},float
-
-    PEN,Refers to the amount of primary energy needed (PEN) to run the heating or cooling system.,[kWh/kWh],{0.0....n},float
-
-    reference,nan,[-],[-],string
-
-    eff_hs,TODO,TODO,TODO,TODO
-
-    Description,Description of the heating and cooling network (related to the code). E.g. heatpump -soil/water,[-],[-],string
-
-    source_hs,TODO,TODO,TODO,TODO
-
-
-get_envelope_systems
---------------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
-    U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],{0.0...1},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    code,Unique ID of component in the window category,[-],{T1..Tn},string
-
-    U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float
-
-    r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float
-
-    e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    code,Unique ID of component in the window category,[-],{T1..Tn},string
-
-    Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float
-
-    code,Unique ID of component in the construction category,[-],{T1..Tn},string
-
-    e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    code,Unique ID of component in the window category,[-],{T1...Tn},string
-
-    code,Unique ID of component in the leakage category,[-],{T1..Tn},string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    n50,Air exchanges due to leakage at a pressure of 50 Pa.,[1/h],{0.0...n},float
-
-    a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float
-
-    r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float
-
-    code,Unique ID of component in the window category,[-],{T1..Tn},string
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-    U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float
-
-    Description,Describes the source of the benchmark standards.,[-],[-],string
-
-
-get_terrain
------------
-.. csv-table::
-    :header: "Variable", "Description", "Unit", "Values", "Type"
-
+    :header: "File:Sheet","Variable", "Description", "Unit", "Type", "Values"
+
+    zone.shp,Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
+    zone.shp,floors_ag,TODO,TODO,TODO,TODO
+    zone.shp,floors_bg,TODO,TODO,TODO,TODO
+    zone.shp,geometry,TODO,TODO,TODO,TODO
+    zone.shp,height_ag,Aggregated height of the walls.,[m],float,{0.0...n}
+    zone.shp,height_bg,TODO,TODO,TODO,TODO

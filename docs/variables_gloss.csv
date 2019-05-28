@@ -63,9 +63,9 @@ occupancy.dbf;LIBRARY;float;[m2/m2];Share (fraction of gross floor area) of this
 restrictions.dbf;NAME;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 restrictions.dbf;SOLAR;float;[-];Share of solar rooftop area protected;{0.0...1}
 restrictions.dbf;GEOTHERMAL;float;[-];Share of foot-print area protected for geothermal exploration;{0.0...1}
-restrictions.dbf;WATERBODY;int;[-];Use of water bodies is restricted in the area. 0 = no, 1, yes;{0, 1}
-restrictions.dbf;NATURALGAS;int;[-];Natural gas restricted in the area. 0 = no, 1, yes;{0, 1}
-restrictions.dbf;BIOGAS;int;[-];Biogas gas restricted in the area. 0 = no, 1, yes;{0, 1}
+restrictions.dbf;WATERBODY;int;[-];Use of water bodies is restricted in the area.;{0/1}
+restrictions.dbf;NATURALGAS;int;[-];Natural gas restricted in the area.;{0/1}
+restrictions.dbf;BIOGAS;int;[-];Biogas restricted in the area;{0/1}
 supply_systems.dbf;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 supply_systems.dbf;type_cs;string;[code];Type of cooling supply system;{T0...Tn}
 supply_systems.dbf;type_hs;string;[code];Type of heating supply system;{T0...Tn}
@@ -81,7 +81,7 @@ construction_properties.xlsx:ARCHITECTURE;Name;string;[-];Unique building ID. It
 construction_properties.xlsx:ARCHITECTURE;building_use;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;Those stored in Zone_occupancy
 construction_properties.xlsx:ARCHITECTURE;year_start;int;[yr];Lower limit of year interval where the building properties apply;{0...n}
 construction_properties.xlsx:ARCHITECTURE;year_end;int;[yr];Upper limit of year interval where the building properties apply;{0...n}
-construction_properties.xlsx:ARCHITECTURE;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;{C, R}
+construction_properties.xlsx:ARCHITECTURE;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);{C or R}
 construction_properties.xlsx:ARCHITECTURE;Hs;float;[-];Fraction of heated space in building archetype;{0.0...1}
 construction_properties.xlsx:ARCHITECTURE;win_wall;float;[-];Window to wall ratio in building archetype;{0.0...1}
 construction_properties.xlsx:ARCHITECTURE;wwr_north;float;[-];Window to wall ratio in building archetype;{0.0...1}
@@ -98,7 +98,7 @@ construction_properties.xlsx:ARCHITECTURE;void_dek;float;[floor/floor];Share of 
 construction_properties.xlsx:SUPPLY;building_use;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;Those stored in Zone_occupancy
 construction_properties.xlsx:SUPPLY;year_start;int;[yr];Lower limit of year interval where the building properties apply;{0...n}
 construction_properties.xlsx:SUPPLY;year_end;int;[yr];Upper limit of year interval where the building properties apply;{0...n}
-construction_properties.xlsx:SUPPLY;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;{C, R}
+construction_properties.xlsx:SUPPLY;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);{C or R}
 construction_properties.xlsx:SUPPLY;type_hs;string;[code];Type of heating supply system;{T0...Tn}
 construction_properties.xlsx:SUPPLY;type_dhw;string;[code];Type of hot water supply system;{T0...Tn}
 construction_properties.xlsx:SUPPLY;type_cs;string;[code];Type of cooling supply system;{T0...Tn}
@@ -106,7 +106,7 @@ construction_properties.xlsx:SUPPLY;type_el;string;[code];Type of electrical sup
 construction_properties.xlsx:HVAC;building_use;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;[-]
 construction_properties.xlsx:HVAC;year_start;int;[yr];Lower limit of year interval where the building properties apply;{0...n}
 construction_properties.xlsx:HVAC;year_end;int;[yr];Upper limit of year interval where the building properties apply;{0...n}
-construction_properties.xlsx:HVAC;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;{C , R}
+construction_properties.xlsx:HVAC;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);{C or R}
 construction_properties.xlsx:HVAC;type_hs;string;[code];Type of heating supply system;{T0...Tn}
 construction_properties.xlsx:HVAC;type_cs;string;[code];Type of cooling supply system;{T0...Tn}
 construction_properties.xlsx:HVAC;type_dhw;string;[code];Type of hot water supply system;{T0...Tn}
@@ -124,10 +124,10 @@ occupancy_schedules.xlsx:COOLROOM;Saturday_3;float;[p/p];Probability of domestic
 occupancy_schedules.xlsx:COOLROOM;Sunday_3;float;[p/p];Probability of domestic hot water consumption (daily) for each hour;{0.0...1}
 occupancy_schedules.xlsx:COOLROOM;month;float;[p/p];Probability of use for the month;{0.0...1}
 occupancy_schedules.xlsx:COOLROOM;density;float;[m2/p];m2 per person;{0.0...n}
-system_controls.xlsx:heating_cooling;has-heating-season;Boolean;[-];Defines whether the scenario has a heating season.;{TRUE, FALSE}
+system_controls.xlsx:heating_cooling;has-heating-season;Boolean;[-];Defines whether the scenario has a heating season.;{TRUE/FALSE}
 system_controls.xlsx:heating_cooling;heating-season-start;date;[-];Day on which the heating season starts;mm-dd
 system_controls.xlsx:heating_cooling;heating-season-end;date;[-];Last day of the heating season;mm-dd
-system_controls.xlsx:heating_cooling;has-cooling-season;Boolean;[-];Defines whether the scenario has a cooling season.;{TRUE, FALSE}
+system_controls.xlsx:heating_cooling;has-cooling-season;Boolean;[-];Defines whether the scenario has a cooling season.;{TRUE/FALSE}
 system_controls.xlsx:heating_cooling;cooling-season-start;date;[-];Day on which the cooling season starts;mm-dd
 system_controls.xlsx:heating_cooling;cooling-season-end;date;[-];Last day of the cooling season;mm-dd
 benchmark_2000W.xls:EMBODIED;code;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;Those stored in Zone_occupancy
@@ -150,7 +150,7 @@ supply_systems.xls:Piping;Currency;string;[-];Defines the unit of currency used 
 LCA_buildings.xlsx:EMBODIED_ENERGY;building_use;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;Those stored in Zone_occupancy
 LCA_buildings.xlsx:EMBODIED_ENERGY;year_start;int;[-];Lower limit of year interval where the building properties apply;{0...n}
 LCA_buildings.xlsx:EMBODIED_ENERGY;year_end;int;[-];Upper limit of year interval where the building properties apply;{0...n}
-LCA_buildings.xlsx:EMBODIED_ENERGY;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;{C, R}
+LCA_buildings.xlsx:EMBODIED_ENERGY;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);{C or R}
 LCA_buildings.xlsx:EMBODIED_ENERGY;Wall_ext_ag;float;[GJ];Typical embodied energy of the exterior above ground walls.;{0.0....n}
 LCA_buildings.xlsx:EMBODIED_ENERGY;Wall_ext_bg;float;[GJ];Typical embodied energy of the exterior below ground walls.;{0.0....n}
 LCA_buildings.xlsx:EMBODIED_ENERGY;Floor_int;float;[GJ];Typical embodied energy of the interior floor.;{0.0....n}
@@ -164,7 +164,7 @@ LCA_buildings.xlsx:EMBODIED_ENERGY;Excavation;float;[GJ];Typical embodied energy
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;building_use;string;[-];Building use. It relates to the uses stored in the input database of Zone_occupancy;Those stored in Zone_occupancy
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;year_start;int;[-];Lower limit of year interval where the building properties apply;{0...n}
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;year_end;int;[-];Upper limit of year interval where the building properties apply;{0...n}
-LCA_buildings.xlsx:EMBODIED_EMISSIONS;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;{C, R}
+LCA_buildings.xlsx:EMBODIED_EMISSIONS;standard;string;[-];Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);{C or R}
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;Wall_ext_ag;float;[kgCO2];Typical embodied CO2 equivalent emissions of the exterior above ground walls.;{0.0....n}
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;Wall_ext_bg;float;[kgCO2];Typical embodied CO2 equivalent emissions of the exterior below ground walls.;{0.0....n}
 LCA_buildings.xlsx:EMBODIED_EMISSIONS;Floor_int;float;[kgCO2];Typical embodied CO2 equivalent emissions of the interior floor.;{0.0....n}
@@ -180,7 +180,7 @@ LCA_infrastructure.xlsx:RESOURCES;code;string;[-];Unique ID of component of the 
 LCA_infrastructure.xlsx:RESOURCES;PEN;float;[kWh/kWh];Refers to the amount of primary energy needed (PEN) to run the heating or cooling system.;{0.0....n}
 LCA_infrastructure.xlsx:RESOURCES;CO2;float;[kg/kWh];Refers to the equivalent CO2 required to run the heating or cooling system.;{0.0....n}
 LCA_infrastructure.xlsx:RESOURCES;costs_kWh;float;[$/kWh];Refers to the financial costs required to run the heating or cooling system.;{0.0....n}
-emission_systems.xls:dhw;Description;string;[-];Description of the typical supply and return temperatures related to HVAC, hot water and sanitation.;[-]
+emission_systems.xls:dhw;Description;string;[-];Description of the typical supply and return temperatures related to HVAC: hot water and sanitation.;[-]
 emission_systems.xls:dhw;code;string;[-];Unique ID of component of the typical supply and return temperature bins.;{T1..Tn}
 emission_systems.xls:dhw;Tsww0_C;float;[C];Typical supply water temperature.;{0.0....n}
 emission_systems.xls:dhw;Qwwmax_Wm2;float;[W/m2];Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).;{0.0....n}
@@ -268,7 +268,7 @@ B001.csv;NG_hs_kWh;float;[kWh];NG consumption due to space heating;{0.0...n}
 B001.csv;NG_ww_kWh;float;[kWh];NG consumption due to hotwater;{0.0...n}
 B001.csv;OIL_hs_kWh;float;[kWh];OIL consumption due to space heating;{0.0...n}
 B001.csv;OIL_ww_kWh;float;[kWh];OIL consumption due to hotwater;{0.0...n}
-B001.csv;people;int;[people];Predicted occupancy, number of people in building;{0...n}
+B001.csv;people;int;[people];Predicted occupancy: number of people in building;{0...n}
 B001.csv;PV_kWh;float;[kWh];PV electricity consumption;{0.0...n}
 B001.csv;Q_gain_lat_peop_kWh;float;[kWh];Latent heat gain from people;{0.0...n}
 B001.csv;Q_gain_sen_app_kWh;float;[kWh];Sensible heat gain from appliances;{0.0...n}
@@ -335,7 +335,7 @@ B001.csv;Tcs_sys_sup_ahu_C;float;[C];Supply temperature cooling system;{0.0...n}
 B001.csv;Tcs_sys_sup_aru_C;float;[C];Supply temperature cooling system;{0.0...n}
 B001.csv;Tcs_sys_sup_C;float;[C];System cooling supply temperature.;{0.0...n}
 B001.csv;Tcs_sys_sup_scu_C;float;[C];Supply temperature cooling system;{0.0...n}
-B001.csv;theta_o_C;float;[C];Operative temperature in building (RC-model), used for comfort plotting;{0.0...n}
+B001.csv;theta_o_C;float;[C];Operative temperature in building (RC-model) used for comfort plotting;{0.0...n}
 B001.csv;Ths_sys_re_ahu_C;float;[C];Return temperature heating system;{0.0...n}
 B001.csv;Ths_sys_re_aru_C;float;[C];Return temperature heating system;{0.0...n}
 B001.csv;Ths_sys_re_C;float;[C];Heating system return temperature.;{0.0...n}
@@ -485,14 +485,14 @@ Total_demand.csv;WOOD_ww0_kW;float;[kW/year];Nominal WOOD consumption due to hot
 Building_geometry.csv;AREA_m2;float;[m2];Surface area.;{0.0...n}
 Building_geometry.csv;BUILDING;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 Building_geometry.csv;SURFACE;string;[-];Unique surface ID for each building exterior surface.;{srf0...srfn}
-Building_geometry.csv;TYPE;string;[-];Surface typology.;{walls, windows, roofs}
+Building_geometry.csv;TYPE;string;[-];Surface typology.;{walls/windows/roofs}
 Building_geometry.csv;Xcoor;float;[-];Describes the position of the x vector.;{0.0...n}
 Building_geometry.csv;Xdir;float;[-];Directional scalar of the x vector.;{-1...1}
 Building_geometry.csv;Ycoor;float;[-];Describes the position of the y vector.;{0.0...n}
 Building_geometry.csv;Ydir;float;[-];Directional scalar of the y vector.;{-1...1}
 Building_geometry.csv;Zcoor;float;[-];Describes the position of the z vector.;{0.0...n}
 Building_geometry.csv;Zdir;float;[-];Directional scalar of the z vector.;{-1...1}
-Building_geometry.csv;orientation;string;[-];Orientation of the surface (north, east, south, west or top);{north...}
+Building_geometry.csv;orientation;string;[-];Orientation of the surface (north/east/south/west/top);{north...}
 properties_surfaces.csv;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 properties_surfaces.csv;Freeheight;float;[m];Surface height exposed to the sun;{0.0...n}
 properties_surfaces.csv;FactorShade;float;[ratio];Defines whether surface is facing the sun (1) or not (0);{0.0...1}
@@ -670,14 +670,14 @@ B001_PV.csv;E_PV_gen_kWh;float;[kWh];Total electricity generated by the collecto
 B001_PVT_sensors.csv;SURFACE;string;[-];Unique surface ID for each building exterior surface.;{srf0...srfn}
 B001_PVT_sensors.csv;AREA_m2;float;[m2];Area of the unique surface for each building.;{0.0...n}
 B001_PVT_sensors.csv;BUILDING;string;[-];Unique building ID. It must start with a letter.;alphanumeric
-B001_PVT_sensors.csv;TYPE;string;[-];Surface typology.;{walls, windows, roofs}
+B001_PVT_sensors.csv;TYPE;string;[-];Surface typology.;{walls/windows/roofs}
 B001_PVT_sensors.csv;Xcoor;float;[-];Describes the position of the x vector.;{0.0...n}
 B001_PVT_sensors.csv;Xdir;float;[-];Directional scalar of the x vector.;{-1...1}
 B001_PVT_sensors.csv;Ycoor;float;[-];Describes the position of the y vector.;{0.0...n}
 B001_PVT_sensors.csv;Ydir;float;[-];Directional scalar of the y vector.;{-1...1}
 B001_PVT_sensors.csv;Zcoor;float;[-];Describes the position of the z vector.;{0.0...n}
 B001_PVT_sensors.csv;Zdir;float;[-];Directional scalar of the z vector.;{-1...1}
-B001_PVT_sensors.csv;orientation;string;[-];Orientation of the surface (north, east, south, west or top);{north...}
+B001_PVT_sensors.csv;orientation;string;[-];Orientation of the surface (north/east/south/west/top);{north...}
 B001_PVT_sensors.csv;total_rad_Whm2;float;[Wh/m2];Total radiatiative potential of a given surfaces area.;{0.0...n}
 B001_PVT_sensors.csv;tilt_deg;float;[deg];Tilt angle of roof or walls;{0.0...n}
 B001_PVT_sensors.csv;B_deg;float;[deg];Tilt angle of the installed solar panels;{0.0...n}

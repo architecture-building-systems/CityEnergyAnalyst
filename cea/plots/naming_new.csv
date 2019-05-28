@@ -10,7 +10,7 @@ LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBOD
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;Wall_int_sup;;[kgCO2];{0.0....n};float;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;Win_ext;Typical embodied CO2 equivalent emissions of the external glazing.;[kgCO2];{0.0....n};float;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;building_use;Building use. It relates to the uses stored in the input database of Zone_occupancy;[-];Those stored in Zone_occupancy;string;black
-LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;standard;Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;[-];{C, R};string;black
+LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;standard;Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);[-];{C or R};string;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;year_end;Upper limit of year interval where the building properties apply;[-];{0...n};int;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_EMISSIONS;year_start;Lower limit of year interval where the building properties apply;[-];{0...n};int;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;Excavation;Typical embodied energy for site excavation.;[GJ];{0.0....n};float;black
@@ -24,7 +24,7 @@ LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBOD
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;Wall_int_sup;;[GJ];{0.0....n};float;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;Win_ext;Typical embodied energy of the external glazing.;[GJ];{0.0....n};float;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;building_use;Building use. It relates to the uses stored in the input database of Zone_occupancy;[-];Those stored in Zone_occupancy;string;black
-LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;standard;Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;[-];{C, R};string;black
+LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;standard;Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);[-];{C or R};string;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;year_end;Upper limit of year interval where the building properties apply;[-];{0...n};int;black
 LCA_buildings;get_life_cycle_inventory_building_systems;LCA_buildings.xlsx:EMBODIED_ENERGY;year_start;Lower limit of year interval where the building properties apply;[-];{0...n};int;black
 LCA_infrastructure;get_life_cycle_inventory_supply_systems;LCA_infrastructure.xlsx:COOLING;Description;Describes the source of the benchmark standards.;[-];[-];string;black
@@ -114,7 +114,7 @@ construction_properties;get_archetypes_properties;construction_properties.xlsx:A
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;Hs;Fraction of heated space in building archetype;[-];{0.0...1};float;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;Ns;TODO;TODO;TODO;TODO;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;building_use;Building use. It relates to the uses stored in the input database of Zone_occupancy;[-];Those stored in Zone_occupancy;string;black
-construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;standard;Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;[-];{C, R};string;black
+construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;standard;Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);[-];{C or R};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;type_cons;Type of construction. It relates to the contents of the default database of Envelope Properties: construction;[code];{T1...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;type_leak;Leakage level. It relates to the contents of the default database of Envelope Properties: leakage;[code];{T1...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;type_roof;Roof construction. It relates to the contents of the default database of Envelope Properties: roof;[code];{T1...Tn};string;black
@@ -129,7 +129,7 @@ construction_properties;get_archetypes_properties;construction_properties.xlsx:A
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;year_end;Upper limit of year interval where the building properties apply;[yr];{0...n};int;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:ARCHITECTURE;year_start;Lower limit of year interval where the building properties apply;[yr];{0...n};int;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;building_use;Building use. It relates to the uses stored in the input database of Zone_occupancy;[-];[-];string;black
-construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;standard;Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;[-];{C , R};string;black
+construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;standard;Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);[-];{C or R};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;type_cs;Type of cooling supply system;[code];{T0...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;type_ctrl;Type of control system;[code];{T0...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:HVAC;type_dhw;Type of hot water supply system;[code];{T0...Tn};string;black
@@ -157,7 +157,7 @@ construction_properties;get_archetypes_properties;construction_properties.xlsx:I
 construction_properties;get_archetypes_properties;construction_properties.xlsx:INTERNAL_LOADS;Vww_lpd;Peak specific daily hot water consumption;[lpd];{0.0...n};float;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:INTERNAL_LOADS;X_ghp;Moisture released by occupancy at peak conditions;[gh/kg/p];{0.0...n};float;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;building_use;Building use. It relates to the uses stored in the input database of Zone_occupancy;[-];Those stored in Zone_occupancy;string;black
-construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;standard;Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.;[-];{C, R};string;black
+construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;standard;Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R);[-];{C or R};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;type_cs;Type of cooling supply system;[code];{T0...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;type_dhw;Type of hot water supply system;[code];{T0...Tn};string;black
 construction_properties;get_archetypes_properties;construction_properties.xlsx:SUPPLY;type_el;Type of electrical supply system;[code];{T0...Tn};string;black
@@ -204,12 +204,12 @@ data-helper;get_building_internal;internal_loads.dbf;Qs_Wp;TODO;TODO;TODO;TODO;b
 data-helper;get_building_internal;internal_loads.dbf;Vw_lpd;Peak specific fresh water consumption (includes cold and hot water);[lpd];{0.0...n};float;black
 data-helper;get_building_internal;internal_loads.dbf;Vww_lpd;Peak specific daily hot water consumption;[lpd];{0.0...n};float;black
 data-helper;get_building_internal;internal_loads.dbf;X_ghp;Moisture released by occupancy at peak conditions;[gh/kg/p];{0.0...n};float;black
-data-helper;get_building_restrictions;restrictions.dbf;BIOGAS;Biogas gas restricted in the area. 0 = no, 1, yes;[-];{0, 1};int;black
+data-helper;get_building_restrictions;restrictions.dbf;BIOGAS;Biogas restricted in the area;[-];{0/1};int;black
 data-helper;get_building_restrictions;restrictions.dbf;GEOTHERMAL;Share of foot-print area protected for geothermal exploration;[-];{0.0...1};float;black
-data-helper;get_building_restrictions;restrictions.dbf;NATURALGAS;Natural gas restricted in the area. 0 = no, 1, yes;[-];{0, 1};int;black
+data-helper;get_building_restrictions;restrictions.dbf;NATURALGAS;Natural gas restricted in the area.;[-];{0/1};int;black
 data-helper;get_building_restrictions;restrictions.dbf;Name;Unique building ID. It must start with a letter.;[-];alphanumeric;string;black
 data-helper;get_building_restrictions;restrictions.dbf;SOLAR;Share of solar rooftop area protected;[-];{0.0...1};float;black
-data-helper;get_building_restrictions;restrictions.dbf;WATERBODY;Use of water bodies is restricted in the area. 0 = no, 1, yes;[-];{0, 1};int;black
+data-helper;get_building_restrictions;restrictions.dbf;WATERBODY;Use of water bodies is restricted in the area.;[-];{0/1};int;black
 data-helper;get_building_supply;supply_systems.dbf;Name;Unique building ID. It must start with a letter.;[-];alphanumeric;string;black
 data-helper;get_building_supply;supply_systems.dbf;type_cs;Type of cooling supply system;[code];{T0...Tn};string;black
 data-helper;get_building_supply;supply_systems.dbf;type_dhw;Type of hot water supply system;[code];{T0...Tn};string;black
@@ -332,8 +332,8 @@ demand;get_demand_results_file;B001.csv;mcphs_sys_kWperC;Capacity flow rate (mas
 demand;get_demand_results_file;B001.csv;mcphs_sys_shu_kWperC;Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to sensible heating units (space heating).;[kW/Cap];{0.0...n};float;black
 demand;get_demand_results_file;B001.csv;mcptw_kWperC;Capacity flow rate (mass flow* specific heat capaicty) of the fresh water;[kW/Cap];{0.0...n};float;black
 demand;get_demand_results_file;B001.csv;mcpww_sys_kWperC;Capacity flow rate (mass flow* specific heat capaicty) of domestic hot water;[kW/Cap];{0.0...n};float;black
-demand;get_demand_results_file;B001.csv;people;Predicted occupancy, number of people in building;[people];{0...n};int;black
-demand;get_demand_results_file;B001.csv;theta_o_C;Operative temperature in building (RC-model), used for comfort plotting;[C];{0.0...n};float;black
+demand;get_demand_results_file;B001.csv;people;Predicted occupancy: number of people in building;[people];{0...n};int;black
+demand;get_demand_results_file;B001.csv;theta_o_C;Operative temperature in building (RC-model) used for comfort plotting;[C];{0.0...n};float;black
 demand;get_demand_results_file;B001.csv;x_int;Internal mass fraction of humidity (water/dry air);[kg/kg];{0.0...n};float;black
 demand;get_total_demand;Total_demand.csv;Af_m2;Conditioned floor area (heated/cooled);[m2];{0.0...n};float;black
 demand;get_total_demand;Total_demand.csv;Aroof_m2;Roof area;[m2];{0.0...n};float;black
@@ -491,7 +491,7 @@ emission_systems;get_technical_emission_systems;emission_systems.xls:cooling;dTc
 emission_systems;get_technical_emission_systems;emission_systems.xls:cooling;dTcs0_aru_C;TODO;TODO;TODO;TODO;black
 emission_systems;get_technical_emission_systems;emission_systems.xls:cooling;dTcs0_scu_C;TODO;TODO;TODO;TODO;black
 emission_systems;get_technical_emission_systems;emission_systems.xls:cooling;dTcs_C;TODO;TODO;TODO;TODO;black
-emission_systems;get_technical_emission_systems;emission_systems.xls:dhw;Description;Description of the typical supply and return temperatures related to HVAC, hot water and sanitation.;[-];[-];string;black
+emission_systems;get_technical_emission_systems;emission_systems.xls:dhw;Description;Description of the typical supply and return temperatures related to HVAC: hot water and sanitation.;[-];[-];string;black
 emission_systems;get_technical_emission_systems;emission_systems.xls:dhw;Qwwmax_Wm2;Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).;[W/m2];{0.0....n};float;black
 emission_systems;get_technical_emission_systems;emission_systems.xls:dhw;Tsww0_C;Typical supply water temperature.;[C];{0.0....n};float;black
 emission_systems;get_technical_emission_systems;emission_systems.xls:dhw;code;Unique ID of component of the typical supply and return temperature bins.;[-];{T1..Tn};string;black
@@ -906,7 +906,7 @@ photovoltaic;PV_metadata_results;B001_PV_sensors.csv;CATB;Category according to 
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;CATGB;Category according to the annual radiation on the panel surface;[-];{0...n};int;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;CATteta_z;Category according to the surface azimuth of the panel;[-];{0...n};int;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;SURFACE;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
-photovoltaic;PV_metadata_results;B001_PV_sensors.csv;TYPE;Surface typology.;[-];{walls, windows, roofs};string;black
+photovoltaic;PV_metadata_results;B001_PV_sensors.csv;TYPE;Surface typology.;[-];{walls/windows/roofs};string;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;Xcoor;Describes the position of the x vector.;[-];{0.0...n};float;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;Xdir;Directional scalar of the x vector.;[-];{-1...1};float;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;Ycoor;Describes the position of the y vector.;[-];{0.0...n};float;black
@@ -915,7 +915,7 @@ photovoltaic;PV_metadata_results;B001_PV_sensors.csv;Zcoor;Describes the positio
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;Zdir;Directional scalar of the z vector.;[-];{-1...1};float;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;area_installed_module_m2;The area of the building suface covered by one solar panel;[m2];{0.0...n};float;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;array_spacing_m;Spacing between solar arrays.;[m];{0.0...n};float;black
-photovoltaic;PV_metadata_results;B001_PV_sensors.csv;orientation;Orientation of the surface (north, east, south, west or top);[-];{north...};string;black
+photovoltaic;PV_metadata_results;B001_PV_sensors.csv;orientation;Orientation of the surface (north/east/south/west/top);[-];{north...};string;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;surface;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;surface_azimuth_deg;Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E);[deg];{0.0...n};float;black
 photovoltaic;PV_metadata_results;B001_PV_sensors.csv;tilt_deg;Tilt angle of roof or walls;[deg];{0.0...n};float;black
@@ -970,7 +970,7 @@ photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;CATB;Category acc
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;CATGB;Category according to the annual radiation on the panel surface;[-];{0...n};int;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;CATteta_z;Category according to the surface azimuth of the panel;[-];{0...n};int;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;SURFACE;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
-photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;TYPE;Surface typology.;[-];{walls, windows, roofs};string;black
+photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;TYPE;Surface typology.;[-];{walls/windows/roofs};string;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;Xcoor;Describes the position of the x vector.;[-];{0.0...n};float;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;Xdir;Directional scalar of the x vector.;[-];{-1...1};float;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;Ycoor;Describes the position of the y vector.;[-];{0.0...n};float;black
@@ -979,7 +979,7 @@ photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;Zcoor;Describes t
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;Zdir;Directional scalar of the z vector.;[-];{-1...1};float;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;area_installed_module_m2;The area of the building suface covered by one solar panel;[m2];{0.0...n};float;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;array_spacing_m;Spacing between solar arrays.;[m];{0.0...n};float;black
-photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;orientation;Orientation of the surface (north, east, south, west or top);[-];{north...};string;black
+photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;orientation;Orientation of the surface (north/east/south/west/top);[-];{north...};string;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;surface;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;surface_azimuth_deg;Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E);[deg];{0.0...n};float;black
 photovoltaic-thermal;PVT_metadata_results;B001_PVT_sensors.csv;tilt_deg;Tilt angle of roof or walls;[deg];{0.0...n};float;black
@@ -1061,14 +1061,14 @@ radiation-daysim;get_radiation_building;B001_insolation_Whm2.json;srf0;TODO;TODO
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;AREA_m2;Surface area.;[m2];{0.0...n};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;BUILDING;Unique building ID. It must start with a letter.;[-];alphanumeric;string;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;SURFACE;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
-radiation-daysim;get_radiation_metadata;B001_geometry.csv;TYPE;Surface typology.;[-];{walls, windows, roofs};string;black
+radiation-daysim;get_radiation_metadata;B001_geometry.csv;TYPE;Surface typology.;[-];{walls/windows/roofs};string;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Xcoor;Describes the position of the x vector.;[-];{0.0...n};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Xdir;Directional scalar of the x vector.;[-];{-1...1};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Ycoor;Describes the position of the y vector.;[-];{0.0...n};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Ydir;Directional scalar of the y vector.;[-];{-1...1};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Zcoor;Describes the position of the z vector.;[-];{0.0...n};float;black
 radiation-daysim;get_radiation_metadata;B001_geometry.csv;Zdir;Directional scalar of the z vector.;[-];{-1...1};float;black
-radiation-daysim;get_radiation_metadata;B001_geometry.csv;orientation;Orientation of the surface (north, east, south, west or top);[-];{north...};string;black
+radiation-daysim;get_radiation_metadata;B001_geometry.csv;orientation;Orientation of the surface (north/east/south/west/top);[-];{north...};string;black
 sewage-potential;get_sewage_heat_potential;SWP.csv;Qsw_kW;TODO;TODO;TODO;TODO;black
 sewage-potential;get_sewage_heat_potential;SWP.csv;tin_HP_C;TODO;TODO;TODO;TODO;black
 sewage-potential;get_sewage_heat_potential;SWP.csv;tin_sw_C;TODO;TODO;TODO;TODO;black
@@ -1082,7 +1082,7 @@ solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;CATB;Category accordi
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;CATGB;Category according to the annual radiation on the panel surface;[-];{0...n};int;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;CATteta_z;Category according to the surface azimuth of the panel;[-];{0...n};int;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;SURFACE;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
-solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;TYPE;Surface typology.;[-];{walls, windows, roofs};string;black
+solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;TYPE;Surface typology.;[-];{walls/windows/roofs};string;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;Xcoor;Describes the position of the x vector.;[-];{0.0...n};float;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;Xdir;Directional scalar of the x vector.;[-];{-1...1};float;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;Ycoor;Describes the position of the y vector.;[-];{0.0...n};float;black
@@ -1091,7 +1091,7 @@ solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;Zcoor;Describes the p
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;Zdir;Directional scalar of the z vector.;[-];{-1...1};float;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;area_installed_module_m2;The area of the building suface covered by one solar panel;[m2];{0.0...n};float;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;array_spacing_m;Spacing between solar arrays.;[m];{0.0...n};float;black
-solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;orientation;Orientation of the surface (north, east, south, west or top);[-];{north...};string;black
+solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;orientation;Orientation of the surface (north/east/south/west/top);[-];{north...};string;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;surface;Unique surface ID for each building exterior surface.;[-];{srf0...srfn};string;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;surface_azimuth_deg;Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E);[deg];{0.0...n};float;black
 solar-collector;SC_metadata_results;B001_SC_ET_sensors.csv;tilt_deg;Tilt angle of roof or walls;[deg];{0.0...n};float;black
@@ -1438,8 +1438,8 @@ supply_systems;get_supply_systems;supply_systems.xls:TES;e;TODO;TODO;TODO;TODO;b
 supply_systems;get_supply_systems;supply_systems.xls:TES;unit ;TODO;TODO;TODO;TODO;black
 system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;cooling-season-end;Last day of the cooling season;[-];mm-dd;date;black
 system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;cooling-season-start;Day on which the cooling season starts;[-];mm-dd;date;black
-system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;has-cooling-season;Defines whether the scenario has a cooling season.;[-];{TRUE, FALSE};Boolean;black
-system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;has-heating-season;Defines whether the scenario has a heating season.;[-];{TRUE, FALSE};Boolean;black
+system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;has-cooling-season;Defines whether the scenario has a cooling season.;[-];{TRUE/FALSE};Boolean;black
+system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;has-heating-season;Defines whether the scenario has a heating season.;[-];{TRUE/FALSE};Boolean;black
 system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;heating-season-end;Last day of the heating season;[-];mm-dd;date;black
 system_controls;get_archetypes_system_controls;system_controls.xlsx:heating_cooling;heating-season-start;Day on which the heating season starts;[-];mm-dd;date;black
 thermal-network;get_edge_mass_flow_csv_file;Nominal_EdgeMassFlow_at_design_DH__kgpers.csv;PIPE0;TODO;TODO;TODO;TODO;black
