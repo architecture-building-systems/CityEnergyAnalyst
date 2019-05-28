@@ -446,12 +446,13 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         start_t = config.thermal_network.start_t
         stop_t = config.thermal_network.stop_t
 
-    print('Calculating edge mass flows')
+    print('Calculating edge mass flows for pipe sizing')
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
+        # FIXME: this is where you will change the start_t/stop_t for the period you will use for sizing
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
                                                                    start_t, stop_t, substation_systems, config,
                                                                    use_multiprocessing=config.multiprocessing)
@@ -1881,12 +1882,12 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     return mass_flow_edges_for_t, mass_flow_nodes_for_t, thermal_demand_for_t
 
 
-def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, t):
+def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_counter, t):
     """
 
     :param network_type: string with network type, DH or DC
     :param edge_mass_flow_df: edge mass flows                       (1 x e)
-    :param min_iteration: iteration counter
+    :param iteration_counter: iteration counter
     :param cc_value_sh: capacity mass flow for space heating        (1 x e)
     :param ch_value: capacity mass flow for cooling                 (1 x e)
     :param cc_value_dhw: capacity mass flow for warm water          (1 x e)
@@ -1909,7 +1910,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         min_edge_flow_flag = True  # no mass flows
     elif (
             test_edge_flow - pipe_min_mass_flow < -pipe_min_mass_flow / 2).values.any():  # some edges have too low mass flows, 0.01 is tolerance
-        if min_iteration < int(
+        if iteration_counter < int(
                 thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit / 5):  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
@@ -1937,7 +1938,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                             if np.where(thermal_network.edge_node_df.ix[node_name] == -1)[0]:
                                 new_edge = np.where(thermal_network.edge_node_df.ix[node_name] == -1)[0][0]
                             else:  # our node is at a dead end
-                                min_iteration = 5  # exit for loop
+                                iteration_counter = 5  # exit for loop
                                 break
                         pipe_name = str(thermal_network.edge_node_df.columns.values[new_edge])
                         if len(np.where(thermal_network.edge_node_df[pipe_name] == 1)[
@@ -1964,15 +1965,15 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
             for key in thermal_network.config.thermal_network.substation_cooling_systems:
                 key = 'cs_' + key
                 thermal_network.cc_old[key][t] = thermal_network.cc_value[key][t]
-        min_iteration = min_iteration + 1
+        iteration_counter = iteration_counter + 1
     else:  # all edge mass flows ok
         min_edge_flow_flag = True
 
     # exit condition
-    if min_iteration > thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit:
-        print('Stopped minimum edge mass flow iterations at: ', min_iteration)
+    if iteration_counter > thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit:
+        print('Stopped minimum edge mass flow iterations at: ', iteration_counter)
         min_edge_flow_flag = True
-    return min_iteration, min_edge_flow_flag
+    return iteration_counter, min_edge_flow_flag
 
 
 def initial_diameter_guess(thermal_network, set_diameter, substation_systems, config):
@@ -2277,13 +2278,14 @@ def solve_network_temperatures(thermal_network, t):
                                                         thermal_network.network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
+        control = 'VT_VF'
         t_supply_nodes__k, \
-        plant_node, q_loss_edges_kw = calc_supply_temperatures(thermal_network.T_ground_K[t],
-                                                               edge_node_df.copy(),
-                                                               edge_mass_flow_df, k,
-                                                               thermal_network.t_target_supply_df.loc[t],
-                                                               thermal_network.network_type,
-                                                               thermal_network.all_nodes_df, thermal_network)
+        plant_node, q_loss_edges_kw, switch_control = calc_supply_temperatures(t, edge_node_df.copy(),
+                                                                               edge_mass_flow_df, k, thermal_network,
+                                                                               control)
+        if switch_control == True:
+            control = 'CT_VF'
+            raise ValueError('temperature not reached, control strategy is switched to: ', control)
 
         # write supply temperatures to substation nodes
         t_substation_supply__k = write_nodes_values_to_substations(t_supply_nodes__k, thermal_network.all_nodes_df)
@@ -2292,14 +2294,17 @@ def solve_network_temperatures(thermal_network, t):
         flag = 0
         iteration = 0
         min_edge_flow_flag = False
-        min_iteration = 0
+        edge_flow_iteration_counter = 0
         reset_min_mass_flow_variables(thermal_network, t)
+
         while flag == 0:
             # calculate substation return temperatures according to supply temperatures
             while min_edge_flow_flag == False:
                 reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
                 consumer_building_names = thermal_network.all_nodes_df.loc[
                     thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
+
+                # get substation mass flow according to Tsupply at the substations
                 _, mdot_all_kgs, _ = substation_matrix.substation_return_model_main(thermal_network,
                                                                                     t_substation_supply__k, t,
                                                                                     consumer_building_names)
@@ -2307,11 +2312,11 @@ def solve_network_temperatures(thermal_network, t):
                 if mdot_all_kgs.values.max() == np.nan:
                     print('Error in edge mass flow! Check edge_mass_flow_df')
 
-                # write consumer substation return T and required flow rate to nodes
+                # write required flow rate to consumer substation nodes
                 mass_flow_substations_nodes_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df,
                                                                                      mdot_all_kgs)
 
-                # solve for the required mass flow rate on each pipe
+                # solve for the required mass flow rate on each edge/pipe
                 edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
                                                                mass_flow_substations_nodes_df,
                                                                thermal_network.all_nodes_df,
@@ -2323,9 +2328,9 @@ def solve_network_temperatures(thermal_network, t):
                 edge_mass_flow_df_2_kgs, \
                 edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
                                                             edge_node_df.copy())
-                min_iteration, \
+                edge_flow_iteration_counter, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                              edge_mass_flow_df_2_kgs, min_iteration, t)
+                                                              edge_mass_flow_df_2_kgs, edge_flow_iteration_counter, t)
 
                 # calculate updated pipe aggregated heat conduction coefficient with new mass flows
                 k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.locator,
@@ -2334,13 +2339,12 @@ def solve_network_temperatures(thermal_network, t):
                                                                 thermal_network.network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
-            t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
-                thermal_network.T_ground_K[t],
-                edge_node_df.copy(),
-                edge_mass_flow_df_2_kgs, k,
-                thermal_network.t_target_supply_df.loc[t],
-                thermal_network.network_type,
-                thermal_network.all_nodes_df, thermal_network)
+            if control == 'VT_VF':
+                # iterate temperature to meet substation requirement
+                t_supply_nodes_2__k, plant_node, \
+                q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
+                                                                       k, thermal_network, control)
+
             # calculate edge temperature for heat transfer coefficient within iteration
             t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
 
@@ -2367,7 +2371,7 @@ def solve_network_temperatures(thermal_network, t):
                 # print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
             else:
-                min_iteration = 0
+                edge_flow_iteration_counter = 0
                 # do not increase mass flows further, already converged
                 thermal_network.delta_cap_mass_flow[t] = 0
                 # calculate substation return temperatures according to supply temperatures
@@ -2497,8 +2501,7 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
     return t_substation_supply.T
 
 
-def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_target_supply__c, network_type,
-                             all_nodes_df, thermal_network):
+def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, control):
     """
     This function calculate the node temperatures considering heat losses in the supply network.
     Starting from the plant supply node, the function go through the edge-node index to search for the outlet node, and
@@ -2506,27 +2509,27 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
     the node temperature at the corresponding pipe outlet, and the calculation goes on until all the node temperatures
     are solved. At nodes connecting to multiple pipes, the mixing temperature is calculated.
 
-    :param t_ground__k: vector with ground temperatures in K
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
                         value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
                         so only negative values                                          (n x e)
     :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t (1 x e)
     :param k: aggregated heat conduction coefficient for each pipe                                          (1 x e)
-    :param t_target_supply__c: target supply temperature at each substation
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
-                         network
-
     :type edge_node_df: DataFrame
     :type mass_flow_df: DataFrame
-    :type network_type: str
-
     :return t_node.T: list of node temperatures (nx1)
     :return plant_node: the index of the plant node
     :rtype t_node.T: list
     :rtype plant_node: numpy array
 
     """
+    ## unpack variables
+    t_ground__k = thermal_network.T_ground_K[t] # vector with ground temperatures in K
+    t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
+    network_type = thermal_network.network_type
+    all_nodes_df = thermal_network.all_nodes_df
+    ##
+
     z = np.asarray(edge_node_df.copy())  # (nxe) edge-node matrix
     z_pipe_out = z.clip(min=0)  # pipe outlet matrix
     z_pipe_in = z.clip(max=0)  # pipe inlet matrix
@@ -2559,6 +2562,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
         # iterate over temperatures for loop networks
         while delta_temp_0 >= temp_tolerance:
             t_e_out_old = np.array(t_e_out)
+
             # reset_matrixes
             z_note = z.copy()
             t_e_out = z_pipe_out.copy()
@@ -2634,71 +2638,88 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                             break
                     not_stuck = np.array([True] * z.shape[0])
 
-            delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))
+            delta_temp_0 = np.max(abs(t_e_out_old - t_e_out)) # exit condition
             temp_iter = temp_iter + 1
+            # if delta_temp_0 < temp_tolerance: print ('number of temp_iter: ', temp_iter) #todo: remove
 
-        # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
-        if network_type == 'DH':
-            # calculate the difference between node temperature and the target supply temperature at substations
-            # [K] temperature differences b/t node supply and target supply
-            d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
-            # enter iteration if the node supply temperature is lower than the target supply temperature
-            # (0.1 is the tolerance)
-            if all(d_t > -0.1) == False and iteration <= 30:
-                # increase plant supply temperature and re-iterate the node supply temperature calculation
-                # increase by the maximum amount of temperature deficit at nodes
-                t_plant_sup = t_plant_sup + abs(d_t.min())
-                # check if this term is positive, looping causes t_e_out to sink instead of rise.
+        t_plant_sup_max = 98 + 273.15 # todo: move to config
+        t_plant_sup_min = 2 + 273.15
 
-                # reset the matrices for supply network temperature calculation
-                z_note = z.copy()
-                t_e_out = z_pipe_out.copy()
-                t_e_in = z_pipe_in.copy().dot(-1)
-                t_node = np.zeros(z.shape[0])
-                iteration += 1
+        if control == 'VT_VF' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max:
+            # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
+            if network_type == 'DH':
+                # calculate the difference between node temperature and the target supply temperature at substations
+                # [K] temperature differences b/t node supply and target supply
+                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                # enter iteration if the node supply temperature is lower than the target supply temperature
+                # (0.1 is the tolerance)
+                if all(d_t > -0.1) == False and iteration <= 30:
+                    # increase plant supply temperature and re-iterate the node supply temperature calculation
+                    # increase by the maximum amount of temperature deficit at nodes
+                    t_plant_sup = t_plant_sup + abs(d_t.min())
+                    # check if this term is positive, looping causes t_e_out to sink instead of rise.
 
-            elif all(d_t > -0.1) == False and iteration > 30:
-                # end iteration if too many iterations
-                print('cannot fulfill substation supply node temperature requirement after iterations:',
-                      iteration, abs(d_t).min())
-                node_insufficient = d_t[d_t < 0].index.values
-                for node in range(node_insufficient.size):
-                    index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                    t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
-                    # force setting node temperature to target to avoid substation HEX calculation error.
-                    # However, it might potentially cause error at mass flow iteration.
-                flag = 1
-            else:
-                flag = 1
-        else:  # when network type == 'DC'
-            # calculate the difference between node temperature and the target supply temperature at substations
-            # [K] temperature differences b/t node supply and target supply
-            d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                    # reset the matrices for supply network temperature calculation
+                    z_note = z.copy()
+                    t_e_out = z_pipe_out.copy()
+                    t_e_in = z_pipe_in.copy().dot(-1)
+                    t_node = np.zeros(z.shape[0])
+                    iteration += 1
 
-            # enter iteration if the node supply temperature is higher than the target supply temperature
-            # (0.1 is the tolerance)
-            if all(d_t < 0.1) == False and iteration <= 30:
-                # increase plant supply temperature and re-iterate the node supply temperature calculation
-                # increase by the maximum amount of temperature deficit at nodes
-                t_plant_sup = t_plant_sup - abs(d_t.max())
-                z_note = z.copy()
-                t_e_out = z_pipe_out.copy()
-                t_e_in = z_pipe_in.copy().dot(-1)
-                t_node = np.zeros(z.shape[0])
-                iteration += 1
-            elif all(d_t < 0.1) == False and iteration > 30:
-                # end iteration if too many iterations
-                print('cannot fulfill substation supply node temperature requirement after iterations:',
-                      iteration, d_t.min())
-                node_insufficient = d_t[d_t > 0].index.values
-                for node in range(node_insufficient.size):
-                    index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                    t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
-                    # force setting node temperature to target to avoid substation HEX calculation error.
-                    # However, it might potentially cause error at mass flow iteration.
+                elif all(d_t > -0.1) == False and iteration > 30:
+                    # end iteration if too many iterations
+                    print('cannot fulfill substation supply node temperature requirement after iterations:',
+                          iteration, abs(d_t).min())
+                    node_insufficient = d_t[d_t < 0].index.values
+                    for node in range(node_insufficient.size):
+                        index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        # force setting node temperature to target to avoid substation HEX calculation error.
+                        # However, it might potentially cause error at mass flow iteration.
                     flag = 1
+                    switch_control = False
+                else:
+                    flag = 1
+                    switch_control = False
+            else:  # when network type == 'DC'
+                # calculate the difference between node temperature and the target supply temperature at substations
+                # [K] temperature differences b/t node supply and target supply
+                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+
+                # enter iteration if the node supply temperature is higher than the target supply temperature
+                # (0.1 is the tolerance)
+                if all(d_t < 0.1) == False and iteration <= 30:
+                    # increase plant supply temperature and re-iterate the node supply temperature calculation
+                    # increase by the maximum amount of temperature deficit at nodes
+                    t_plant_sup = t_plant_sup - abs(d_t.max())
+                    z_note = z.copy()
+                    t_e_out = z_pipe_out.copy()
+                    t_e_in = z_pipe_in.copy().dot(-1)
+                    t_node = np.zeros(z.shape[0])
+                    iteration += 1
+                elif all(d_t < 0.1) == False and iteration > 30:
+                    # end iteration if too many iterations
+                    print('cannot fulfill substation supply node temperature requirement after iterations:',
+                          iteration, d_t.min())
+                    node_insufficient = d_t[d_t > 0].index.values
+                    for node in range(node_insufficient.size):
+                        index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        # force setting node temperature to target to avoid substation HEX calculation error.
+                        # However, it might potentially cause error at mass flow iteration.
+                        flag = 1
+                        switch_control = False
+                else:
+                    flag = 1
+                    switch_control = False
+        else:
+            flag = 1
+            if control == 'CT_VF':
+                # no need to meet target temperature, no iteration
+                switch_control = False
             else:
-                flag = 1
+                switch_control = True
+                print ('switched control: ',control, ' temperature:', t_plant_sup)
 
     # calculate pipe heat losses
     q_loss_edges_kw = np.zeros(z_note.shape[1])
@@ -2707,7 +2728,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
             dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
             q_loss_edges_kw[edge] = m_d[edge, edge] * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 * dT_edge  # kW
 
-    return t_node.T, plant_node, q_loss_edges_kw
+    return t_node.T, plant_node, q_loss_edges_kw, switch_control
 
 
 def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, t_ground_k, not_stuck, k,
