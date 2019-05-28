@@ -195,10 +195,14 @@ def docs_template_gen(documentation_dir, function):
             else:
                 output_locator_methods.add((locator_method, '-' * len(locator_method)))
 
+        input_locator_methods = sorted(input_locator_methods)
+        output_locator_methods = sorted(output_locator_methods)
+
         for var, locator_method, script, file_name in META_VARIABLES:
             key = file_name + '!!!' + var
             if key in list(naming.index):
                 glossary_data.add(tuple(naming.loc[key]))
+        glossary_data = sorted(glossary_data)
 
         # glossary_data = sorted(glossary_data)
 
@@ -215,7 +219,7 @@ def docs_template_gen(documentation_dir, function):
             gloss.write(output)
 
     else:
-        print ('The mode you have selected is not valid, please select either <viz> or <gloss>')
+        raise ValueError('The mode you have selected is not valid, please select either <viz> or <gloss>')
 
 
 def main(config):
@@ -240,7 +244,7 @@ def main(config):
     os.chdir(docspath)
 
     if docmode not in config.doc.choices:
-        print '%s is not a recognised documentation mode' %docmode
+        raise ValueError('%s is not a recognised documentation mode' %docmode)
 
     elif docmode == 'merge':
         output = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
