@@ -77,7 +77,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
 
     # Space cooling previously aggregated in the substation routine
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        df = pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_and_refrigeration_sup_K", "T_DCNf_space_cooling_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         df = df.fillna(0)
@@ -85,7 +85,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
         T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
         mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
     else:
-        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        df = pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
                               "T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
@@ -97,7 +97,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     DCN_operation_parameters_array = DCN_operation_parameters.values
 
     Qc_DCN_W = np.array(
-        pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                     usecols=["Q_DCNf_space_cooling_and_refrigeration_W",
                              "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)

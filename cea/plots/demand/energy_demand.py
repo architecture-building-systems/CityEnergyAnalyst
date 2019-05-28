@@ -128,15 +128,13 @@ def calc_top_three_anchor_loads(data_frame, field):
     return anchor_list
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
-
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
-
     EnergyDemandDistrictPlot(config.project, {'buildings': None,
                                               'scenario-name': config.scenario_name},
                              cache).plot(auto_open=True)
@@ -146,3 +144,7 @@ if __name__ == '__main__':
     EnergyDemandDistrictPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                               'scenario-name': config.scenario_name},
                              cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()
