@@ -42,7 +42,7 @@ def calc_Edata(bpr, tsd, schedules):
 
 def calc_Qcdata_sys(bpr, tsd):
     # calculate cooling loads for data center
-    tsd['Qcdata'] = 0.9 * tsd['Edata']
+    tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
 
     # calculate distribution losses for data center cooling analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
