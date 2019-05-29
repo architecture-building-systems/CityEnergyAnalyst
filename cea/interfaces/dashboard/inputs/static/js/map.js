@@ -21,7 +21,7 @@ $(document).ready(function() {
         console.log(json);
         jsonStore['zone'] = json;
         createLayer('zone');
-        $('#zone-toggle').prop('disabled', false);
+        $('#zone-cb').prop('hidden', false);
         currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
             longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
             zoom: 16, bearing: 0, pitch: 0};
@@ -42,11 +42,11 @@ $(document).ready(function() {
         // Try to get every other input
         $.each(jsonUrls, function (key, value) {
             $.getJSON(value, function (json) {
+                $(`#${key}-cb`).prop('hidden', false);
                 console.log(json);
                 jsonStore[key] = json;
                 createLayer(key);
                 deckgl.setProps({ layers: [...layers] });
-                $(`#${key}-toggle`).prop('disabled', false);
             }).fail(function () {
                 console.log(`Get ${key} failed.`);
             });
