@@ -91,7 +91,7 @@
                   <label for='dh_networks-toggle'>DH Network</label>
                 </span>
                 <span id="dc_networks-cb" hidden>
-                <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked disabled
+                <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
                        onchange='toggleLayer(this);'>
                   <label for='dc_networks-toggle'>DC Network</label>
                 </span>
@@ -108,7 +108,7 @@
                        data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
                   <thead>
                   {% for column in table_columns %}
-                  <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
+                    <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
                   {% endfor %}
                   </thead>
                 </table>
@@ -137,5 +137,5 @@
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/map.js' version='0.1') }}"></script>
+  <script src="{{ url_for('.static', filename='js/map.js', version='0.1') }}"></script>
 {% endblock javascripts %}
