@@ -133,8 +133,9 @@
   <!-- optional if mapbox base map is needed -->
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/map.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/map.js' version='0.1') }}"></script>
 {% endblock javascripts %}

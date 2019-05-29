@@ -220,7 +220,7 @@ function createDCNetworksLayer(options={}) {
     }));
 }
 
-function updateTooltip({x, y, object}) {
+function updateTooltip({x, y, object, layer}) {
     const tooltip = document.getElementById('tooltip');
 
     if (object) {
@@ -228,9 +228,20 @@ function updateTooltip({x, y, object}) {
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
         for (let prop in object.properties) {
-            innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`
+            innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
         }
-        tooltip.innerHTML = innerHTML
+        if (layer.id == 'zone' || layer.id == 'district') {
+            var area = turf.area(object);
+            innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>
+            <div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+        }
+        if (layer.id == 'dc_networks' || layer.id == 'dh_networks') {
+            if (!object.properties.hasOwnProperty("Building")) {
+                var length = turf.length(object) * 1000;
+                innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+            }
+        }
+        tooltip.innerHTML = innerHTML;
     } else {
         tooltip.innerHTML = '';
     }
