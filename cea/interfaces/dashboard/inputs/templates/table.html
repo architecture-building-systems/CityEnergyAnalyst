@@ -70,21 +70,31 @@
               </div>
               <nav id="menu"><a href="#" onclick="toggle3D()">Toggle 3D</a></nav>
               <div id='layers'>
-                <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked disabled
+                <span id="zone-cb" hidden>
+                <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
                        onchange='toggleLayer(this);'>
-                <label for='zone-toggle'>Zone</label>
-                <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked disabled
+                  <label for='zone-toggle'>Zone</label>
+                </span>
+                <span id="district-cb" hidden>
+                <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
                        onchange='toggleLayer(this);'>
-                <label for='district-toggle'>District</label>
-                <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked disabled
+                  <label for='district-toggle'>District</label>
+                </span>
+                <span id="streets-cb" hidden>
+                <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
                        onchange='toggleLayer(this);'>
-                <label for='streets-toggle'>Streets</label>
-                <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked disabled
+                  <label for='streets-toggle'>Streets</label>
+                </span>
+                <span id="dh_networks-cb" hidden>
+                <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
                        onchange='toggleLayer(this);'>
-                <label for='dh_networks-toggle'>DH Network</label>
+                  <label for='dh_networks-toggle'>DH Network</label>
+                </span>
+                <span id="dc_networks-cb" hidden>
                 <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked disabled
                        onchange='toggleLayer(this);'>
-                <label for='dc_networks-toggle'>DC Network</label>
+                  <label for='dc_networks-toggle'>DC Network</label>
+                </span>
               </div>
               <div id="tooltip"></div>
               <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
@@ -98,7 +108,7 @@
                        data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
                   <thead>
                   {% for column in table_columns %}
-                    <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
+                  <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
                   {% endfor %}
                   </thead>
                 </table>
