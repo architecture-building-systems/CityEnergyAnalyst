@@ -61,8 +61,8 @@ $(document).ready(function() {
     });
 });
 
-function toggle3D() {
-    extruded = !extruded;
+function toggle3D(obj) {
+    extruded = obj.checked;
     var pitch;
     var bearing;
     if (extruded) {
