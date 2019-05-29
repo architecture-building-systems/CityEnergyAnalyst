@@ -171,10 +171,10 @@ def calculate_occupancy_file(zone_df, occupancy_type, occupancy_output_path):
                 occupancy_df.loc[index, "RETAIL"] = 1.0
                 occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "industrial":
-                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "INDUSTRIAL"] = 1.0
                 occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "warehouse":
-                occupancy_df.loc[index, "INDUSTRY"] = 1.0
+                occupancy_df.loc[index, "INDUSTRIAL"] = 1.0
                 occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
             else:
                 occupancy_df.loc[index, "MULTI_RES"] = 1.0
