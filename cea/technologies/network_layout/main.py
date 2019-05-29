@@ -6,6 +6,7 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_substation_location
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +31,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     create_plant = config.network_layout.create_plant
     connected_buildings = config.network_layout.buildings
     consider_only_buildings_with_demand = config.network_layout.buildings_with_demand
-    disconnected_building_names = config.network_layout.disconnected_buildings
+    disconnected_building_names = get_disconnected_building_names(config, locator)
 
     if input_path_name == 'streets':  # point to default location of streets file
         path_streets_shp = locator.get_street_network()  # shapefile with the stations
@@ -43,7 +44,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
         path_streets_shp = locator.get_electric_network_output_location(input_path_name)
         output_substations_shp = locator.get_electric_substation_output_location()
     else:
-        raise Exception("the value of the varaible input_path_name is not valid")
+        raise Exception("the value of the variable input_path_name is not valid")
 
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
@@ -60,6 +61,23 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
                                total_demand_location, create_plant, config.network_layout.allow_looped_networks,
                                optimization_flag, plant_building_names, disconnected_building_names)
 
+def get_disconnected_building_names(config, locator):
+    '''
+    Gets the list of disconnected buildings provided by the user and joins it to the buildings with no thermal systems.
+    '''
+
+    # get buildings that are not connected according to user inputs
+    disconnected_buildings_user = config.network_layout.disconnected_buildings
+    # get buildings that do not have heating or cooling systems
+    supply_systems = dbf_to_dataframe(locator.get_building_supply())
+    if config.network_layout.network_type == 'DH':
+        disconnected_buildings_no_system = list(supply_systems.loc[supply_systems['type_hs'] == 'T0', 'Name'])
+    else:
+        disconnected_buildings_no_system = list(supply_systems.loc[supply_systems['type_cs'] == 'T0', 'Name'])
+    # join the two lists without repeating buildings
+    disconnected_building_names = list(set().union(disconnected_buildings_user, disconnected_buildings_no_system))
+
+    return disconnected_building_names
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
