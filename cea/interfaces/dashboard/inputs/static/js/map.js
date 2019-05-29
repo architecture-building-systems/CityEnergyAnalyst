@@ -78,6 +78,14 @@ function toggle3D(obj) {
         viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
 }
 
+function toggleDark(obj) {
+    if (obj.checked) {
+        deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/dark-v10');
+    } else {
+        deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/streets-v11');
+    }
+}
+
 function toggleLayer(obj) {
     if (obj.checked) {
         createLayer(obj.value, { visible: true });
