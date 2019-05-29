@@ -68,8 +68,8 @@
                 <h2>{{ table_name }}</h2>
                 <div class="clearfix"></div>
               </div>
-              <nav id="menu"><a href="#" onclick="toggle3D()">Toggle 3D</a></nav>
-              <div id='layers'>
+                <input id='3d-toggle' type='checkbox' name='3d-toggle' value='3d' onchange='toggle3D(this);'>
+                <label for='3d-toggle'>3D</label>
                 <span id="zone-cb" hidden>
                 <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
                        onchange='toggleLayer(this);'>
