@@ -11,7 +11,7 @@ from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca",  "Martin Mosteiro"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
