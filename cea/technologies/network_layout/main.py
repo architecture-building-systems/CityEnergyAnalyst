@@ -28,9 +28,9 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     pipe_diameter_default = config.network_layout.pipe_diameter
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
-    connected_buildings = config.network_layout.buildings
-    consider_only_buildings_with_demand = config.network_layout.buildings_with_demand
-    disconnected_building_names = config.network_layout.disconnected_buildings
+    connected_buildings = config.network_layout.connected_buildings
+    consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
+    disconnected_buildings = config.network_layout.disconnected_buildings
 
     if input_path_name == 'streets':  # point to default location of streets file
         path_streets_shp = locator.get_street_network()  # shapefile with the stations
@@ -43,7 +43,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
         path_streets_shp = locator.get_electric_network_output_location(input_path_name)
         output_substations_shp = locator.get_electric_substation_output_location()
     else:
-        raise Exception("the value of the varaible input_path_name is not valid")
+        raise Exception("the value of the variable input_path_name is not valid")
 
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
@@ -55,10 +55,10 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
 
     calc_steiner_spanning_tree(crs_projected, path_potential_network, output_network_folder, output_substations_shp,
-                               output_edges,
-                               output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location, create_plant, config.network_layout.allow_looped_networks,
-                               optimization_flag, plant_building_names, disconnected_building_names)
+                               output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
+                               type_network, total_demand_location, create_plant,
+                               config.network_layout.allow_looped_networks, optimization_flag, plant_building_names,
+                               disconnected_buildings)
 
 
 def main(config):
