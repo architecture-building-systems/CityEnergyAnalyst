@@ -43,7 +43,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
         path_streets_shp = locator.get_electric_network_output_location(input_path_name)
         output_substations_shp = locator.get_electric_substation_output_location()
     else:
-        raise Exception("the value of the varaible input_path_name is not valid")
+        raise Exception("the value of the variable input_path_name is not valid")
 
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
