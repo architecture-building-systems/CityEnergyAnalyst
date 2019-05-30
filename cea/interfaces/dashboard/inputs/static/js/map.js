@@ -8,11 +8,11 @@ var extruded = false;
 var currentViewState;
 
 const jsonUrls = {
-    'zone': 'http://localhost:5050/inputs/geojson/zone',
-    'district': 'http://localhost:5050/inputs/geojson/district',
-    'streets': 'http://localhost:5050/inputs/geojson/others/streets',
-    'dh_networks': 'http://localhost:5050/inputs/geojson/networks/DH',
-    'dc_networks': 'http://localhost:5050/inputs/geojson/networks/DC'
+    'zone': '/inputs/geojson/zone',
+    'district': '/inputs/geojson/district',
+    'streets': '/inputs/geojson/others/streets',
+    'dh_networks': '/inputs/geojson/networks/DH',
+    'dc_networks': '/inputs/geojson/networks/DC'
 };
 
 $(document).ready(function() {
