@@ -54,13 +54,13 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
 
     if len(disconnected_building_names) > 0:
         # identify coordinates of disconnected buildings and remove form terminal nodes list
-        all_buiding_nodes_df = gdf.from_file(building_nodes_shp)
-        all_buiding_nodes_df.loc[:, 'coordinates'] = all_buiding_nodes_df['geometry'].apply(
+        all_building_nodes_df = gdf.from_file(building_nodes_shp)
+        all_building_nodes_df.loc[:, 'coordinates'] = all_building_nodes_df['geometry'].apply(
             lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
         disconnected_building_coordinates = []
         for building in disconnected_building_names:
-            index = np.where(all_buiding_nodes_df['Name'] == building)[0]
-            disconnected_building_coordinates.append(all_buiding_nodes_df['coordinates'].values[index][0])
+            index = np.where(all_building_nodes_df['Name'] == building)[0]
+            disconnected_building_coordinates.append(all_building_nodes_df['coordinates'].values[index][0])
         for disconnected_building in disconnected_building_coordinates:
             terminal_nodes = [i for i in terminal_nodes if i != disconnected_building]
 
