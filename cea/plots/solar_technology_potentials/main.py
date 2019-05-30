@@ -201,16 +201,16 @@ class Plots(object):
                                                                      usecols=all_tech_analysis_fields['PVT'])
                     PVT_hourly_aggregated_kW = PVT_hourly_aggregated_kW + hourly_data_per_building_kW['PVT']
                 if 'SC_FP' in all_tech_analysis_fields:
-                    SC_FP_houlry_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
+                    SC_FP_hourly_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                                usecols=SC_analysis_fields)
-                    SC_FP_houlry_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
+                    SC_FP_hourly_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
                                                                  'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
                                                                  'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
                                                                  'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
                                                                  'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
                                                         inplace=True)
-                    hourly_data_per_building_kW['SC_FP'] = SC_FP_houlry_per_building_kW
-                    SC_FP_hourly_aggregated_kW = SC_FP_hourly_aggregated_kW + SC_FP_houlry_per_building_kW
+                    hourly_data_per_building_kW['SC_FP'] = SC_FP_hourly_per_building_kW
+                    SC_FP_hourly_aggregated_kW = SC_FP_hourly_aggregated_kW + SC_FP_hourly_per_building_kW
                 if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_hourly_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                                usecols=SC_analysis_fields)
@@ -245,7 +245,6 @@ class Plots(object):
 
         hourly_results_aggregated_kW = reduce(join_dfs, dfs)
         hourly_results_aggregated_kW['DATE'] = weather_data["date"]
-
         return {"data_hourly": hourly_results_aggregated_kW, "data_yearly": annual_results_all_buildings_kW}
 
     def pv_district_monthly(self, category):
