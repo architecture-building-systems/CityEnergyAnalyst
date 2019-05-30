@@ -4,7 +4,6 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
-import pandas as pd
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
