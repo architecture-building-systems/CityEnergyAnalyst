@@ -27,10 +27,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
-                               weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location, create_plant, allow_looped_networks, optimization_flag,
-                               plant_building_names, disconnected_building_names):
+def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_folder, building_nodes_shp,
+                               output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
+                               type_network, total_demand_location, create_plant, allow_looped_networks,
+                               optimization_flag, plant_building_names, disconnected_building_names):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -59,8 +59,10 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
             lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
         disconnected_building_coordinates = []
         for building in disconnected_building_names:
-            index = np.where(all_building_nodes_df['Name'] == building)[0]
-            disconnected_building_coordinates.append(all_building_nodes_df['coordinates'].values[index][0])
+            # skip disconnected buildings that were filtered out because they had no demand
+            if building in list(all_building_nodes_df['Name']):
+                index = np.where(all_building_nodes_df['Name'] == building)[0]
+                disconnected_building_coordinates.append(all_building_nodes_df['coordinates'].values[index][0])
         for disconnected_building in disconnected_building_coordinates:
             terminal_nodes = [i for i in terminal_nodes if i != disconnected_building]
 
