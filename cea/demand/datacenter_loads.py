@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
+from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -27,7 +28,7 @@ def has_data_load(bpr):
     :rtype: bool
         """
 
-    if bpr.internal_loads['Ed_Wm2'] > 0:
+    if bpr.internal_loads['Ed_Wm2'] > 0.0:
         return True
     else:
         return False
@@ -39,24 +40,33 @@ def calc_Edata(bpr, tsd, schedules):
 
     return tsd
 
-def calc_Qcdata_sys(tsd):
+def calc_Qcdata_sys(bpr, tsd):
+    # calculate cooling loads for data center
+    tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
 
-    def function(Edataf):
-        if Edataf > 0:
-            Tcdataf_re_0 = 15
-            Tcdataf_sup_0 = 7
-            DC_cdata = Edataf * 0.9
-            mcpref = DC_cdata / (Tcdataf_re_0 - Tcdataf_sup_0)
+    # calculate distribution losses for data center cooling analogously to space cooling distribution losses
+    Y = bpr.building_systems['Y'][0]
+    Lv = bpr.building_systems['Lv']
+    Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
+                Lv * Y)
+    # calculate system loads for data center
+    tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
+
+    def calc_mcpcdata(Qcdata_sys):
+        if Qcdata_sys > 0.0:
+            Tcdata_sys_re = T_C_DATA_RE_0
+            Tcdata_sys_sup = T_C_DATA_SUP_0
+            mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
         else:
-            DC_cdata = 0
-            Tcdataf_re_0 = 0
-            Tcdataf_sup_0 = 0
-            mcpref = 0
-        return DC_cdata, mcpref, Tcdataf_re_0, Tcdataf_sup_0
+            Tcdata_sys_re = np.nan
+            Tcdata_sys_sup = np.nan
+            mcpcdata_sys = 0.0
+        return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
-    tsd['Qcdata_sys'], tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Edata'])
+    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(tsd['Qcdata_sys'])
 
     return tsd
+
 
 def calc_Qcdataf(locator, bpr, tsd):
     """
