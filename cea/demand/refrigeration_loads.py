@@ -65,7 +65,7 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
         Tcre_sys_re = T_C_REF_RE_0
         Tcre_sys_sup = T_C_REF_SUP_0
     else:
-        mcpcre_sys = np.nan
+        mcpcre_sys = 0.0
         Tcre_sys_re = np.nan
         Tcre_sys_sup = np.nan
 

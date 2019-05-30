@@ -11,7 +11,7 @@ from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca",  "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -28,7 +28,7 @@ def has_data_load(bpr):
     :rtype: bool
         """
 
-    if bpr.internal_loads['Ed_Wm2'] > 0:
+    if bpr.internal_loads['Ed_Wm2'] > 0.0:
         return True
     else:
         return False
@@ -47,25 +47,26 @@ def calc_Qcdata_sys(bpr, tsd):
     # calculate distribution losses for data center cooling analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
+    Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
                 Lv * Y)
     # calculate system loads for data center
     tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
 
     def calc_mcpcdata(Qcdata_sys):
-        if Qcdata_sys > 0:
+        if Qcdata_sys > 0.0:
             Tcdata_sys_re = T_C_DATA_RE_0
             Tcdata_sys_sup = T_C_DATA_SUP_0
             mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
         else:
-            Tcdata_sys_re = 0
-            Tcdata_sys_sup = 0
-            mcpcdata_sys = 0
+            Tcdata_sys_re = np.nan
+            Tcdata_sys_sup = np.nan
+            mcpcdata_sys = 0.0
         return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
     tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(tsd['Qcdata_sys'])
 
     return tsd
+
 
 def calc_Qcdataf(locator, bpr, tsd):
     """
