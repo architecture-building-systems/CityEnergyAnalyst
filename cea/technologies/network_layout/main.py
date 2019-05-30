@@ -29,8 +29,8 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
     connected_buildings = config.network_layout.buildings
-    consider_only_buildings_with_demand = config.network_layout.buildings_with_demand
-    disconnected_building_names = config.network_layout.disconnected_buildings
+    consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
+    disconnected_building_names = config.network_layout.disconnected_building_names
 
     if input_path_name == 'streets':  # point to default location of streets file
         path_streets_shp = locator.get_street_network()  # shapefile with the stations
