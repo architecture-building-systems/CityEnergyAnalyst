@@ -5,6 +5,7 @@ Photovoltaic thermal panels
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import os
 import time
 from math import *
@@ -15,6 +16,7 @@ import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from itertools import izip, repeat
 import multiprocessing
+import cea.utilities.workerstream
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
@@ -26,6 +28,7 @@ from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from cea.constants import HOURS_IN_YEAR
+from cea.utilities.workerstream import stream_from_queue
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -40,6 +43,17 @@ __status__ = "Production"
 def calc_PVT_wrapper(args):
     """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
     function"""
+    return calc_PVT(*args)
+
+def calc_PVT_mp_wrapper(args):
+    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
+    function - expects the first argument to be a multiprocessing.Queue() which is used to write stdout and stderr to"""
+    queue, args = args[0], args[1:]
+
+    # set up printing to stderr and stdout to go through the queue
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
+
     return calc_PVT(*args)
 
 
@@ -67,7 +81,6 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
              with sensor data of each PVT panel.
     """
-
     t0 = time.clock()
 
     radiation_json_path = locator.get_radiation_building(building_name)
@@ -635,7 +648,7 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     FIXME: handle multiple technologies when cost calculations are done
     """
     PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
-    PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="PV")
+    PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
     technology_code = list(set(PVT_cost_data['code']))
     PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -675,9 +688,9 @@ def main(config):
     print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
 
-    list_buildings_names = config.solar.buildings
-    if not list_buildings_names:
-        list_buildings_names = locator.get_zone_building_names()
+    building_names = config.solar.buildings
+    if not building_names:
+        building_names = locator.get_zone_building_names()
 
     hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
@@ -687,32 +700,42 @@ def main(config):
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather hourly_results_per_building done.')
 
-    building_count = len(list_buildings_names)
+    num_buildings = len(building_names)
     number_of_processes = config.get_number_of_processes()
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
-        pool.map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                        repeat(config, building_count),
-                                        repeat(latitude, building_count),
-                                        repeat(longitude, building_count),
-                                        repeat(weather_data, building_count),
-                                        repeat(date_local, building_count),
-                                        list_buildings_names))
-        # locator, config, latitude, longitude, weather_data, date_local, building_name
+        queue = multiprocessing.Manager().Queue()
+        map_result = pool.map_async(calc_PVT_mp_wrapper, izip(repeat(queue, num_buildings),
+                                                              repeat(locator, num_buildings),
+                                                              repeat(config, num_buildings),
+                                                              repeat(latitude, num_buildings),
+                                                              repeat(longitude, num_buildings),
+                                                              repeat(weather_data, num_buildings),
+                                                              repeat(date_local, num_buildings),
+                                                              building_names))
+        while not map_result.ready():
+            stream_from_queue(queue)
+
+        pool.close()
+        pool.join()
+
+        # process the rest of the Queue
+        while not queue.empty():
+            stream_from_queue(queue)
     else:
         print("Using single process")
-        map(calc_PVT_wrapper, izip(repeat(locator, building_count),
-                                   repeat(config, building_count),
-                                   repeat(latitude, building_count),
-                                   repeat(longitude, building_count),
-                                   repeat(weather_data, building_count),
-                                   repeat(date_local, building_count),
-                                   list_buildings_names))
+        map(calc_PVT_wrapper, izip(repeat(locator, num_buildings),
+                                   repeat(config, num_buildings),
+                                   repeat(latitude, num_buildings),
+                                   repeat(longitude, num_buildings),
+                                   repeat(weather_data, num_buildings),
+                                   repeat(date_local, num_buildings),
+                                   building_names))
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
-    for i, building in enumerate(list_buildings_names):
+    for i, building in enumerate(building_names):
         hourly_results_per_building = pd.read_csv(locator.PVT_results(building))
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building

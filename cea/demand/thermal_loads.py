@@ -108,7 +108,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
         tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd)
     else:
-        tsd['DC_cre'] = tsd['Qcre_sys'] = np.zeros(HOURS_IN_YEAR) # = tsd['Qcre'] = np.zeros(HOURS_IN_YEAR)
+        tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(HOURS_IN_YEAR)
         tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
@@ -126,10 +126,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
-            tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
+            tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
             tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
-            tsd['DC_cdata'] = tsd['Qcdata_sys'] = np.zeros(HOURS_IN_YEAR) # = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(HOURS_IN_YEAR)
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
 
@@ -147,6 +147,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
+        tsd['Qcre_sys'] = abs(tsd['Qcre_sys'])  # inverting sign of cooling loads for reporting and graphs
+        tsd['Qcdata_sys'] = abs(tsd['Qcdata_sys'])  # inverting sign of cooling loads for reporting and graphs
 
         tsd = calc_Qcs_sys(bpr, tsd) # final : including fuels and renewables
         tsd = calc_Qhs_sys(bpr, tsd) # final : including fuels and renewables
@@ -455,8 +457,8 @@ TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_a
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                           'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs_sys_scu', 'Qcs_sys_ahu', 'Qcs_sys_aru',
                           'DC_cs', 'Qcs', 'Qcs_sys', 'QC_sys',
-                          'DC_cre', 'Qcre_sys', # 'Qcre',
-                          'DC_cdata', 'Qcdata_sys'] # , 'Qcdata']
+                          'DC_cre', 'Qcre_sys', 'Qcre',
+                          'DC_cdata', 'Qcdata_sys', 'Qcdata']
 TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
@@ -580,8 +582,8 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs',
                    'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
                    'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
-                   'DC_cdata', 'Qcdata_sys', # 'Qcdata',
-                   'DC_cre', 'Qcre_sys', # 'Qcre',
+                   'DC_cdata', 'Qcdata_sys', 'Qcdata',
+                   'DC_cre', 'Qcre_sys', 'Qcre',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'PV', 'GRID', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
                    'Epro', 'Edata', 'Ea', 'El', 'Eal',

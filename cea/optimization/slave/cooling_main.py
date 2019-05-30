@@ -70,7 +70,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     # Space cooling previously aggregated in the substation routine
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        df = pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_and_refrigeration_sup_K", "T_DCNf_space_cooling_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         df = df.fillna(0)
@@ -78,7 +78,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
         mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
     else:
-        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        df = pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
                               "T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
@@ -90,7 +90,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     DCN_operation_parameters_array = DCN_operation_parameters.values
 
     Qc_DCN_W = np.array(
-        pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+        pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
                     usecols=["Q_DCNf_space_cooling_and_refrigeration_W",
                              "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
@@ -144,12 +144,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         UA_HEX_tank_charge_WperK = 0
         V_tank_m3 = 0
 
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Chiller")
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(),
-                                                 sheetname="Absorption_chiller")
+                                                 sheet_name="Absorption_chiller")
     Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
     max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
@@ -268,7 +268,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator, hour)
 
-        print (hour)
+        # print (hour)
         # save results for each time-step
         opex_var_Lake_USD[hour] = performance_indicators_output['Opex_var_Lake_USD']
         opex_var_VCC_USD[hour] = performance_indicators_output['Opex_var_VCC_USD']
@@ -427,7 +427,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, locator, lca, config)
     costs_a_USD += Capex_a_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
-    network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
+    network_data = pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling))
 
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,

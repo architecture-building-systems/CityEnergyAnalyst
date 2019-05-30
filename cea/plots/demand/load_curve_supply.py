@@ -16,22 +16,14 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LoadCurveSupplyPlot, self).__init__(project, parameters, cache)
-        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
-        self.analysis_fields = self.remove_unused_fields(self.data,
-                                                         ["DH_hs_kWh", "DH_ww_kWh",
-                                                          'SOLAR_ww_kWh', 'SOLAR_hs_kWh',
-                                                          "DC_cs_kWh", 'DC_cdata_kWh', 'DC_cre_kWh',
-                                                          'GRID_kWh', 'PV_kWh',
-                                                          'NG_hs_kWh',
-                                                          'COAL_hs_kWh',
-                                                          'OIL_hs_kWh',
-                                                          'WOOD_hs_kWh',
-                                                          'NG_ww_kWh',
-                                                          'COAL_ww_kWh',
-                                                          'OIL_ww_kWh',
-                                                          'WOOD_ww_kWh'])
-        self.layout = dict(yaxis=dict(title='Load [kW]'),
-                           yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
+        self.analysis_fields = ["DH_hs_kWh", "DH_ww_kWh", 'SOLAR_ww_kWh', 'SOLAR_hs_kWh', "DC_cs_kWh", 'DC_cdata_kWh',
+                                'DC_cre_kWh', 'GRID_kWh', 'PV_kWh', 'NG_hs_kWh', 'COAL_hs_kWh', 'OIL_hs_kWh',
+                                'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh']
+
+    @property
+    def layout(self):
+        return dict(yaxis=dict(title='Load [kW]'),
+                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
                 rangeselector=dict(buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
                                                  dict(count=1, label='1w', step='week', stepmode='backward'),
                                                  dict(count=1, label='1m', step='month', stepmode='backward'),
@@ -40,9 +32,15 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
                                                  dict(step='all')])), rangeslider=dict(), type='date',
                 range=[self.data.index[0], self.data.index[168]], fixedrange=False))
 
+
+    @property
+    def data(self):
+        return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+
     def calc_graph(self):
         traces = []
-        for field in self.analysis_fields:
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
+        for field in analysis_fields:
             y = self.data[field].values
             name = NAMING[field]
             if field in ["T_int_C", "T_ext_C"]:

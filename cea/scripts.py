@@ -4,6 +4,7 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 import os
 import cea
 
+
 class CeaScript(object):
     def __init__(self, script_dict, category):
         self.name = script_dict['name']
@@ -66,3 +67,10 @@ def by_name(script_name):
 def for_interface(interface='cli'):
     """Return the list of CeaScript instances that are listed for the interface"""
     return [script for script in list_scripts() if interface in script.interfaces]
+
+
+def schemas():
+    """Return the contents of the schemas.yml file"""
+    import yaml
+    schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
+    return yaml.load(open(schemas_yml))

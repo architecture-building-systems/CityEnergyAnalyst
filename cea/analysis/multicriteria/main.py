@@ -21,7 +21,7 @@ from cea.analysis.multicriteria.optimization_post_processing.individual_configur
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv_ACH
 from cea.technologies.cooling_tower import calc_Cinv_CT
-import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
 from math import ceil, log
 
@@ -320,7 +320,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
         # Network costs
-        network_features = network_opt.network_opt_main(config, locator)
+        network_features = NetworkOptimizationFeatures(config, locator)
         network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(DCN_barcode)
         data_costs['Network_costs_USD'] = network_costs_a_USD
         Inv_IR = 0.05

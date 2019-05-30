@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
+from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro", "Gabriel Happle"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -33,24 +34,43 @@ def has_refrigeration_load(bpr):
     else:
         return False
 
+
 def calc_Qcre_sys(bpr, tsd, schedules):
-    tsd['Qcre_sys'] = schedules['Qcre'] # in kWh
-    # tsd['Qcre_sys'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+    # calculate refrigeration loads
+    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2'] * -1.0  # cooling loads are negative
+    # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
+    Y = bpr.building_systems['Y'][0]
+    Lv = bpr.building_systems['Lv']
+    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
+    # calculate system loads for data center
+    tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
-    def function(Qcre_sys):
-        if Qcre_sys > 0:
-            Tcref_re_0 = 5
-            Tcref_sup_0 = 1
-            mcpref = Qcre_sys/(Tcref_re_0-Tcref_sup_0)
-        else:
-            mcpref = 0.0
-            Tcref_re_0 = 0.0
-            Tcref_sup_0 = 0.0
-        return mcpref, Tcref_re_0, Tcref_sup_0
-
-    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] = np.vectorize(function)(tsd['Qcre_sys'])
+    # writing values to tsd, replacing function and np.vectorize call with simple for loop
+    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] =\
+        np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd['Qcre_sys'])
 
     return tsd
+
+
+def calc_refrigeration_temperature_and_massflow(Qcre_sys):
+    """
+    Calculate refrigeration supply and return temperatures and massflows based on the refrigeration load
+    This function is intended to be used in np.vectorize form
+    :param Qcre_sys: refrigeration load including losses
+    :return: refrigeration massflow, refrigeration supply temperature, refrigeration return temperature
+    """
+
+    if Qcre_sys > 0.0:
+        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
+        Tcre_sys_re = T_C_REF_RE_0
+        Tcre_sys_sup = T_C_REF_SUP_0
+    else:
+        mcpcre_sys = 0.0
+        Tcre_sys_re = np.nan
+        Tcre_sys_sup = np.nan
+
+    return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
+
 
 def calc_Qref(locator, bpr, tsd):
     """
@@ -81,22 +101,3 @@ def calc_Qref(locator, bpr, tsd):
 
     return tsd
 
-def calc_Qcpro_sys(tsd):
-    tsd['Qcpro_sys'] = 0.9 * tsd['Epro']
-    # tsd['Qcre_sys'] = schedules['Qcre'] # in kWh
-
-    def function(Qcre_sys):
-        if Qcre_sys > 0:
-            # return and supply temperatures from Emanuel Riegelbauer's thesis
-            Tcref_re_0 = 12
-            Tcref_sup_0 = 6
-            mcpref = Qcre_sys/(Tcref_re_0-Tcref_sup_0)
-        else:
-            mcpref = 0.0
-            Tcref_re_0 = 0.0
-            Tcref_sup_0 = 0.0
-        return mcpref, Tcref_re_0, Tcref_sup_0
-
-    tsd['mcpcpro_sys'], tsd['Tcpro_sys_re'], tsd['Tcpro_sys_sup'] = np.vectorize(function)(tsd['Qcpro_sys'])
-
-    return tsd

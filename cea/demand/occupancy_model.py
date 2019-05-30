@@ -138,6 +138,9 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
                 current_schedule = np.rint(np.array(archetype_schedules[use][0]) * archetype_values['people'][num] *
                                            current_share_of_use * bpr.rc_model['NFA_m2'])
+                # make sure there is at least one occupant per occupancy type in the building
+                if np.max(current_schedule) < 1.0:
+                    current_schedule = np.round(np.array(archetype_schedules[num][0]))
                 schedules['people'] += current_schedule
                 for label in occupant_schedules:
                     current_archetype_values = archetype_values[label]

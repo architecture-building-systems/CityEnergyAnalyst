@@ -42,6 +42,13 @@ Data Management:
   module: cea.datamanagement.district_geometry_helper
   parameters: ['general:scenario', district-helper]
 
+- name: zone-helper
+  label: Zone helper
+  description: Query zone geometry from Open Street Maps
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.zone_helper
+  parameters: ['general:scenario', zone-helper]
+
 - name: streets-helper
   label: Streets helper
   description: Query streets geometry from Open Street Maps
@@ -212,8 +219,8 @@ Thermal networks:
   label: Network layout
   description: Create a potential layout of the network with the minimum spanning tree
   interfaces: [cli, arcgis, dashboard]
-  module: cea.technologies.thermal_network.network_layout.main
-  parameters: ['general:scenario', network-layout, 'thermal-network:disconnected-buildings']
+  module: cea.technologies.network_layout.main
+  parameters: ['general:scenario', network-layout]
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
@@ -303,7 +310,7 @@ default:
   description: dashboard
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
-  parameters: []
+  parameters: ['general:debug']
 
 - name: install-arcgis
   label: install-arcgis
@@ -340,12 +347,12 @@ default:
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters: ['general:scenario']
 
-- name: scenario-plots
-  label: scenario-plots
-  description: scenario-plots
-  interfaces: [cli]
-  module: cea.plots.scenario_plots
-  parameters: [scenario-plots]
+#- name: scenario-plots
+#  label: scenario-plots
+#  description: scenario-plots
+#  interfaces: [cli]
+#  module: cea.plots.scenario_plots
+#  parameters: [scenario-plots]
 
 - name: shapefile-to-excel
   label: shapefile-to-excel

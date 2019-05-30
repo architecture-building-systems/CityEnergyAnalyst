@@ -1,0 +1,36 @@
+{% extends "base_site.html" %}
+
+{% block title %} Welcome {% endblock title %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('landing_blueprint.static', filename='landing.css') }}">
+{% endblock stylesheets %}
+
+{% block body_class %}{% endblock body_class %}
+{% block body %}
+    <div class="landing-box">
+        <div class="landing">
+            {% block content %}
+                <div style="text-align: center">
+                    <div class="logo">
+                        {% block logo %} <img src="/static/images/cea-logo.png"> {% endblock %}
+                        <h1>City Energy Analyst</h1>
+                    </div>
+
+                    <div>
+                        <i class="fa fa-folder-open"></i>
+                        <a href="{{ url_for('landing_blueprint.route_open_project') }}">Open project</a>
+                        <br>
+                        <i class="fa fa-plus"></i>
+                        <a href="{{ url_for('landing_blueprint.route_create_project') }}">Create new project</a>
+                        <br>
+                    </div>
+                </div>
+            {% endblock content %}
+        </div>
+    </div>
+{% block javascripts %}
+    {{ super() }}
+{% endblock javascripts %}
+{% endblock body %}

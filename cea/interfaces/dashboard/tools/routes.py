@@ -91,15 +91,24 @@ def is_alive(script):
 
 @blueprint.route('/read/<script>')
 def read(script):
-    """Reads the next message as a json dict {stream: stdout|stdin, message: str}"""
+    """Reads the next message as a json dict {stream: stdout|stderr, message: str}"""
     if not script in current_app.workers:
         return jsonify(None)
     worker, connection = current_app.workers[script]
+    concatenated_message = ''
     try:
-        stream, message = connection.recv()
-    except EOFError:
+        while connection.poll(0):
+            stream, message = connection.recv()
+            concatenated_message += message
+        else:
+            if not len(concatenated_message):
+                # never got any data
+                return jsonify(None)
+    except (EOFError, IOError):
+        if len(concatenated_message):
+            return jsonify(dict(stream=stream, message=concatenated_message))
         return jsonify(None)
-    return jsonify(dict(stream=stream, message=message))
+    return jsonify(dict(stream=stream, message=concatenated_message))
 
 
 @blueprint.route('/open-folder-dialog/<fqname>')

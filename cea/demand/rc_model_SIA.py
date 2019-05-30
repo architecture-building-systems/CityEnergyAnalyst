@@ -853,9 +853,8 @@ def has_sensible_heating_demand(t_int_0, tsd, t):
 
 f_hc_cv_heating_system = {'T1': 1, 'T2': 1, 'T3': 1, 'T4': 0.5}
 # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
-f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1, 'T4': 1} #FIXME check 3for2
-# T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
-
+f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1, 'T4': 1, 'T5': 0.1} #FIXME check 3for2
+# T1 = ceiling cooling, T2 mini-split AC, T3 = AC, T4 = 3for2, T5 = floor cooling
 
 def lookup_f_hc_cv_heating(bpr):
 

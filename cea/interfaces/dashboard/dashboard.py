@@ -7,6 +7,7 @@ import webbrowser
 import threading
 
 import os
+import sys
 
 
 def list_tools():
@@ -22,6 +23,30 @@ def list_tools():
     return result
 
 
+# modified from here: https://stackoverflow.com/a/827398/2260
+def get_drives():
+    """Get a list of valid drive letters on windows:
+
+       In [12]: get_drives()
+       Out[12]: ['C:', 'I:', 'K:', 'S:', 'Y:', 'Z:']
+
+    On on-windows systems, returns None
+    """
+    if sys.platform == 'win32':
+        import string
+        from ctypes import windll
+        drives = []
+        bitmask = windll.kernel32.GetLogicalDrives()
+        for letter in string.uppercase:
+            if bitmask & 1:
+                drives.append(letter + ':')
+            bitmask >>= 1
+
+        return drives
+    else:
+        return None
+
+
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.PlotCache(config.project)
@@ -32,12 +57,20 @@ def main(config):
     # provide the list of tools
     @app.context_processor
     def tools_processor():
-        return dict(tools=list_tools())
+        return dict(tools=list_tools(), drives=get_drives())
+
+    # @app.context_processor
+    # def dashboards_processor():
+    #     dashboards = cea.plots.read_dashboards(config, plot_cache)
+    #     return dict(dashboards=dashboards)
 
     @app.context_processor
-    def dashboards_processor():
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-        return dict(dashboards=dashboards)
+    def project_processor():
+        return dict(project_name=os.path.basename(config.project))
+
+    @app.context_processor
+    def scenario_processor():
+        return dict(scenario_name=os.path.basename(config.scenario_name))
 
     @app.template_filter('escapejs')
     def escapejs(text):
@@ -84,11 +117,13 @@ def main(config):
     import plots.routes
     import inputs.routes
     import project.routes
+    import landing.routes
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(project.routes.blueprint)
+    app.register_blueprint(landing.routes.blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config

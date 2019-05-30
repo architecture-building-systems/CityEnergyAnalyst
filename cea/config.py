@@ -182,10 +182,6 @@ class Configuration(object):
         section, parameter = fqname.split(':')
         return self.sections[section].parameters[parameter]
 
-    def __repr__(self):
-        """Sometimes it would be nice to have a printable version of the config..."""
-        return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
-
 
 def parse_command_line_args(args):
     """Group the arguments into a dictionary: parameter-name -> value"""
@@ -423,7 +419,8 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file.')
+            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
+                weather_path=value))
             weather_path = self.locator.get_weather('Zug')
         return weather_path
 

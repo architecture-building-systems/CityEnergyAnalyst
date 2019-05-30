@@ -15,7 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-class network_opt_main(object):
+class NetworkOptimizationFeatures(object):
     """
     This class just sets-ip constants of the linear model of the distribution.
     These results are extracted form the work of Florian at the chair.
@@ -36,7 +36,7 @@ class network_opt_main(object):
             network_names = ['']
 
         for network_name in network_names:
-            pressure_drop_Pa = pd.read_csv(locator.get_optimization_network_layout_pressure_drop_file(config.thermal_network.network_type, network_name))
+            pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file(config.thermal_network.network_type, network_name))
             if config.thermal_network.network_type == 'DH':
                 for i in range(HOURS_IN_YEAR):
                     self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
@@ -46,7 +46,7 @@ class network_opt_main(object):
 
         for network_name in network_names:
             thermal_loss_sum = 0
-            thermal_losses_kW = pd.read_csv(locator.get_optimization_network_layout_qloss_system_file(config.thermal_network.network_type, network_name))
+            thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file(config.thermal_network.network_type, network_name))
             for column_name in thermal_losses_kW.columns:
                 thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum())*1000
             if config.thermal_network.network_type == 'DH':
@@ -56,12 +56,12 @@ class network_opt_main(object):
 
         for network_name in network_names:
             pipe_cost = 0
-            edges_file = pd.read_csv(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, network_name))
+            edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(config.thermal_network.network_type, network_name))
             internal_diameter = (edges_file['D_int_m'].values) * 1000
             pipe_length = edges_file['pipe length'].values
 
             for i in range(len(internal_diameter)):
-                piping_cost_data = pd.read_excel(locator.get_supply_systems(), sheetname="Piping")
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]

@@ -43,7 +43,7 @@ def input_dropout(urban_input_matrix, urban_taget_matrix):
 
 
 def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, multiprocessing,
-                  config, nn_delay, climatic_variables, year,use_daysim_radiation):
+                  config, nn_delay, climatic_variables, year):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -83,7 +83,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
         demand_main.demand_calculation(locator, config)
         #   prepare the inputs for feeding into the neural network
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
-                                                                    nn_delay, climatic_variables, year,use_daysim_radiation)
+                                                                    nn_delay, climatic_variables, year)
         #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
         urban_input_matrix, urban_taget_matrix = input_dropout(urban_input_matrix, urban_taget_matrix)
         #   get the pathfor saving the files
@@ -109,7 +109,7 @@ def main(config):
     sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path,
                   multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
                   climatic_variables=config.neural_network.climatic_variables,
-                  year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation)
+                  year=config.neural_network.year)
 
 
 if __name__ == '__main__':

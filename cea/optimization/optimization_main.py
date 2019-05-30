@@ -11,7 +11,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization.distribution import network_opt_main
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
@@ -73,7 +73,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print("NETWORK OPTIMIZATION")
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = NetworkOptimizationFeatures(config, locator)
 
     # optimize conversion systems
     print("CONVERSION AND STORAGE OPTIMIZATION")
@@ -136,7 +136,7 @@ def check_input_files(config, locator):
             "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
     if not os.path.exists(locator.get_lake_potential()):
         raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
-    if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
+    if not os.path.exists(locator.get_thermal_network_edge_list_file(config.thermal_network.network_type, '')):
         raise ValueError(
             "Missing thermal network simulation results. Consider running thermal network simulation script first.")
 
