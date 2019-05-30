@@ -16,13 +16,10 @@ __status__ = "Production"
 
 # DEFAULT BUILDING GEOMETRY
 H_F = 3.0  # average height per floor in m
-E_S = 0.9  # fraction of GFA that has electricity in every building
 D = 20.0  # in mm the diameter of the pipe to calculate losses
 
 # SOLAR
 RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
-#F_F = 0.2  # Frame area faction coefficient
-#F_F_SG = 0.1  # Frame area faction coefficient for Singapore [assumption]
 
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
@@ -58,3 +55,11 @@ LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the
 # RC-MODEL TEMPERATURE BOUNDS
 T_WARNING_LOW = -30.0
 T_WARNING_HIGH = 50.0
+
+# SUPPLY AND RETURN TEMPERATURES OF REFRIGERATION SYSTEM
+T_C_REF_SUP_0 = 1  # (°C) refactored from refrigeration loads, without original source
+T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original source
+
+# SUPPLY AND RETURN TEMPERATURES OF DATA CENTER COOLING SYSTEM
+T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original source
+T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source
