@@ -11,7 +11,7 @@ from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro", "Gabriel Happle"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -41,18 +41,35 @@ def calc_Qcre_sys(bpr, tsd, schedules):
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
+    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
     # calculate system loads for data center
     tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
     # writing values to tsd, replacing function and np.vectorize call with simple for loop
-    for h in range(HOURS_IN_YEAR):
-        if tsd['Qcre_sys'][h] > 0:
-            tsd['mcpcre_sys'][h] = tsd['Qcre_sys'][h] / (T_C_REF_RE_0 - T_C_REF_SUP_0)
-            tsd['Tcre_sys_re'][h] = T_C_REF_RE_0
-            tsd['Tcre_sys_sup'][h] = T_C_REF_SUP_0
+    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] =\
+        np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd['Qcre_sys'])
 
     return tsd
+
+
+def calc_refrigeration_temperature_and_massflow(Qcre_sys):
+    """
+    Calculate refrigeration supply and return temperatures and massflows based on the refrigeration load
+    This function is intended to be used in np.vectorize form
+    :param Qcre_sys: refrigeration load including losses
+    :return: refrigeration massflow, refrigeration supply temperature, refrigeration return temperature
+    """
+
+    if Qcre_sys > 0.0:
+        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
+        Tcre_sys_re = T_C_REF_RE_0
+        Tcre_sys_sup = T_C_REF_SUP_0
+    else:
+        mcpcre_sys = np.nan
+        Tcre_sys_re = np.nan
+        Tcre_sys_sup = np.nan
+
+    return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
 
 
 def calc_Qref(locator, bpr, tsd):
