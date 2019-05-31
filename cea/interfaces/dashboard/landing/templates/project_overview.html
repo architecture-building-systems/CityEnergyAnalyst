@@ -54,6 +54,7 @@
                                     <div class="panel-body">
                                         <div class="col-lg-2" style="min-width: 300px;">
                                             <div class="image-placeholder" id="{{ scenario }}-image" data-scenario="{{ scenario }}">
+                                                <h4>No preview available.</h4>
                                             </div>
                                         </div>
                                         <div class="col-lg-8">
@@ -91,7 +92,8 @@
         $("[id$=-image]").each(function() {
             var id = $(this).prop('id');
             $.get('get-image/'+ $(this).data('scenario'), {}, function(path) {
-                $('#'+id).append($('<img>',{src: "data:image/jpeg;base64,"+path}))
+                $('#'+id).empty()
+                .append($('<img>',{src: "data:image/jpeg;base64,"+path}))
             });
         });
      });
