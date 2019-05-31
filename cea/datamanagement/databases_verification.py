@@ -10,7 +10,8 @@ COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_
 COLUMNS_DISTRICT_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 COLUMNS_ZONE_OCCUPANCY = ['MULTI_RES', 'OFFICE', 'RETAIL', 'SCHOOL', 'HOTEL', 'GYM', 'HOSPITAL', 'INDUSTRIAL',
-                          'RESTAURANT','SINGLE_RES', 'SERVERROOM', 'SWIMMING', 'FOODSTORE', 'LIBRARY', 'COOLROOM', 'PARKING']
+                          'RESTAURANT','SINGLE_RES', 'SERVERROOM', 'SWIMMING', 'FOODSTORE', 'LIBRARY', 'COOLROOM',
+                          'PARKING', 'LAB', 'MUSEUM', 'LIBRARY', 'UNIVERSITY']
 
 
 def assert_columns_names(zone_df, columns):

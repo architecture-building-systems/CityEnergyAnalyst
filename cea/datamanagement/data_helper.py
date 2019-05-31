@@ -71,7 +71,12 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     list_uses = []
     for name in columns:
         if name in COLUMNS_ZONE_OCCUPANCY:
-            list_uses.append(name)
+            list_uses.append(name)  # append valid uses
+        elif name in {'Name'}:
+            pass  # do nothing with 'Name'
+        else:
+            raise Exception('occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
+                            ' or customize archetypes database AND databases_verification.py.'.format(name))
 
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
