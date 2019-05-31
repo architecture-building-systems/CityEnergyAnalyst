@@ -5,6 +5,7 @@ import json
 import geopandas
 from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from staticmap import StaticMap, Polygon
 
 import cea.inputlocator
 import cea.api
@@ -158,6 +159,34 @@ def route_open_project_scenario(scenario):
     cea_config.scenario_name = scenario
     cea_config.save()
     return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+
+
+@blueprint.route('/get-image/<scenario>')
+def route_get_images(scenario):
+    cea_config = current_app.cea_config
+    project_path = cea_config.project
+    image_path = os.path.join(project_path, '.cache', scenario+'.png')
+
+    if not os.path.isfile(image_path):
+        zone = os.path.join(project_path, scenario, 'inputs', 'building-geometry', 'zone.shp')
+        zone_df = geopandas.read_file(zone)
+        zone_df = zone_df.to_crs(epsg=4326)
+        polygons = zone_df['geometry']
+
+        polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in range(polygons.shape[0])]
+
+        m = StaticMap(256, 160)
+        for polygon in polygons:
+            out = Polygon(polygon, 'blue', 'black', False)
+            m.add_polygon(out)
+
+        image = m.render()
+        image.save(image_path)
+
+    import base64
+    with open(image_path, 'rb') as imgFile:
+        image = base64.b64encode(imgFile.read())
+    return image
 
 
 @blueprint.route('/create-scenario/<script_name>/settings')

@@ -53,8 +53,7 @@
                                       </div>
                                     <div class="panel-body">
                                         <div class="col-lg-2" style="min-width: 300px;">
-                                            <div class="image-placeholder">
-                                                <h4>Image of Scenario</h4>
+                                            <div class="image-placeholder" id="{{ scenario }}-image" data-scenario="{{ scenario }}">
                                             </div>
                                         </div>
                                         <div class="col-lg-8">
@@ -87,5 +86,14 @@
             $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
         });
     }
+
+    $(document).ready(function() {
+        $("[id$=-image]").each(function() {
+            var id = $(this).prop('id');
+            $.get('get-image/'+ $(this).data('scenario'), {}, function(path) {
+                $('#'+id).append($('<img>',{src: "data:image/jpeg;base64,"+path}))
+            });
+        });
+     });
   </script>
 {% endblock javascripts %}
