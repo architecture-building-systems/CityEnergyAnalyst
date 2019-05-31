@@ -197,8 +197,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         # output_df = output_df.reset_index()
         # output_df = output_df.drop(['index'], axis=1)
         # output_df = output_df.drop(output_df.index[range(7)])
-
-    return building_names
+        Tamb_K = reduced_tsd_df['T_ext'].mean() + 273.15
+    return building_names, Tamb_K
 
 
 def calc_CO2_gains(output_hcs, reduced_tsd_df):

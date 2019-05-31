@@ -28,7 +28,7 @@ def main(case):
     make_directory(path_to_case_folder, new_calculation)
 
     # extract demand outputs
-    building_names = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
+    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
@@ -39,6 +39,7 @@ def main(case):
     for building in building_names:
         print building, ' in ', case
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
+        write_value_to_csv(Tamb, osmose_project_path, "Tamb.csv")
         for tech in TECHS:
             t = time.localtime()
             print time.strftime("%H:%M", t)
@@ -130,7 +131,7 @@ def exec_osmose(tech, osmose_project_path):
 
 if __name__ == '__main__':
     cases = ['WTP_CBD_m_WP1_RET']
-    #cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
     #cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
     #cases = ['ABU_CBD_m_WP1_OFF']
     #cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
