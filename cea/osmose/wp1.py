@@ -20,6 +20,7 @@ osmose_project_path = settings.osmose_project_path
 ampl_lic_path = settings.ampl_lic_path
 result_destination = settings.result_destination
 new_calculation = settings.new_calculation
+season = settings.season
 
 
 def main(case):
@@ -28,7 +29,7 @@ def main(case):
     make_directory(path_to_case_folder, new_calculation)
 
     # extract demand outputs
-    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
+    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
@@ -130,12 +131,12 @@ def exec_osmose(tech, osmose_project_path):
 
 
 if __name__ == '__main__':
-    cases = ['WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_RET']
     # cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
-    #cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
+    cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
     #cases = ['ABU_CBD_m_WP1_OFF']
-    #cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
-    #cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
+    # cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
+    # cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
     for case in cases:
         main(case)
     # stop ampl license

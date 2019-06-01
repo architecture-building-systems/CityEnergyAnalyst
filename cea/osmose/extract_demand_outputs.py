@@ -56,8 +56,8 @@ N_m_ve_max = 3
 # SS553_lps_m2 = 0.6
 
 
-def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
-    start_t = get_start_t(case, timesteps)
+def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings):
+    start_t = get_start_t(case, timesteps, season)
     RH_max, RH_min = get_rh(case)
 
     # read total demand
@@ -81,7 +81,6 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         output_df1 = pd.DataFrame()
         output_hcs = pd.DataFrame()
 
-
         ## output to building.lua
         # de-activate inf when no occupant
         # reduced_tsd_df.ix[output_df.people == 0, 'm_ve_inf'] = 0
@@ -96,8 +95,6 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings):
         output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['x_ve_inf']
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
-
-
 
         ## output to hcs_out
         # change units
@@ -278,8 +275,6 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
 ##  Paths (TODO: connected with cea.config and inputLocator)
 
 
-
-
 def path_to_demand_output(building_name, case):
     path_to_file = {}
     path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
@@ -316,7 +311,7 @@ def path_to_osmose_project_inputT(number):
     return path_to_file
 
 
-def get_start_t(case, timesteps):
+def get_start_t(case, timesteps, season):
     """
     WTP: 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
     ABU: 7/6 - 7/12: 4464
@@ -324,12 +319,16 @@ def get_start_t(case, timesteps):
     :param case:
     :return:
     """
-    START_t_168_dict = {'WTP': 5040, 'ABU': 4464, 'HKG': 4680, 'MDL': 5016}
+    START_t_168_dict = {'ABU': {'Summer': 4464, 'Winter': 456, 'Autumn': 7008, 'Spring': 2424},
+                        'WTP': {'Summer': 5040},
+                        'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
+                        'MDL': {'Wet': 5016, 'Dry': 8016}}
+
     START_t_24_dict = {'WTP': 5040, 'ABU': 4512, 'HKG': 4680, 'MDL': 5016}
     if timesteps == 168:
         for key in START_t_168_dict.keys():
             if key in case:
-                start_t = START_t_168_dict[key]
+                start_t = START_t_168_dict[key][season]
     else:
         for key in START_t_24_dict.keys():
             if key in case:
@@ -353,4 +352,5 @@ if __name__ == '__main__':
     case = 'WTP_CBD_m_WP1_HOT'
     timesteps = 168  # 168 (week)
     specified_buildings = ["B001"]
-    extract_cea_outputs_to_osmose_main(case, timesteps, specified_buildings)
+    season = 'Summer'
+    extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)

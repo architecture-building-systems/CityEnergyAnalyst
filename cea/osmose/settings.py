@@ -6,15 +6,16 @@ def get_start_t(timesteps):
     return start_t
 
 # import from config # TODO: add to config
-TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
-#TECHS = ['HCS_LD']
-specified_buildings = ["B002","B003","B006"]
+TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD']
+# TECHS = ['HCS_ER0']
+specified_buildings = ["B001","B002","B006"]
 #specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-timesteps = 24  # 168 (week)
+timesteps = 168  # 168 (week)
+season = 'Winter'
 start_t = get_start_t(timesteps)
-osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
-ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
-result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+osmose_project_path = "C:\\Users\\Zhongming\\Documents\\hcs_windows_ABU_Winter\\Projects"
+ampl_lic_path = "C:\\Users\\Zhongming\\Desktop\\SH\\ampl"
+result_destination = "C:\\Users\\Zhongming\\Documents\\WP1_results"
 new_calculation = False
 
 
