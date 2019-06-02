@@ -180,8 +180,11 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
                     E_substation_cooling += abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) / COP
                 else:
                     Q_substation_cooling += abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
+                    # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
+                    #     abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0, T_system, np.nan))
                     T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
-                        abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0, T_system, np.nan))
+                        abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0,
+                        buildings_demands[name]['Tcs_sys_sup_' + system + '_C'], np.nan))
 
                 # Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
                 # T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
