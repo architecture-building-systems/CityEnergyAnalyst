@@ -682,7 +682,7 @@ B001_PVT_sensors.csv;total_rad_Whm2;float;[Wh/m2];Total radiatiative potential o
 B001_PVT_sensors.csv;tilt_deg;float;[deg];Tilt angle of roof or walls;{0.0...n}
 B001_PVT_sensors.csv;B_deg;float;[deg];Tilt angle of the installed solar panels;{0.0...n}
 B001_PVT_sensors.csv;array_spacing_m;float;[m];Spacing between solar arrays.;{0.0...n}
-B001_PVT_sensors.csv;surface_azimuth_deg;float;[deg];Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E);{0.0...n}
+B001_PVT_sensors.csv;surface_azimuth_deg;float;[deg];Azimuth angle of the panel surface e.g. south facing = 180 deg;{0.0...n}
 B001_PVT_sensors.csv;area_installed_module_m2;float;[m2];The area of the building suface covered by one solar panel;{0.0...n}
 B001_PVT_sensors.csv;CATteta_z;int;[-];Category according to the surface azimuth of the panel;{0...n}
 B001_PVT_sensors.csv;CATB;int;[-];Category according to the tilt angle of the panel;{0...n}
