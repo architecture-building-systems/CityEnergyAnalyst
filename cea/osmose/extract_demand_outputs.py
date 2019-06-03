@@ -324,7 +324,10 @@ def get_start_t(case, timesteps, season):
                         'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
                         'MDL': {'Wet': 5016, 'Dry': 8016}}
 
-    START_t_24_dict = {'WTP': 5040, 'ABU': 4512, 'HKG': 4680, 'MDL': 5016}
+    START_t_24_dict = {'ABU': {'Summer': 4512, 'Winter': 456, 'Autumn': 7008, 'Spring': 2424},
+                       'WTP': {'Summer': 5040},
+                       'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
+                       'MDL': {'Wet': 5016, 'Dry': 8016}}
     if timesteps == 168:
         for key in START_t_168_dict.keys():
             if key in case:
@@ -332,7 +335,7 @@ def get_start_t(case, timesteps, season):
     else:
         for key in START_t_24_dict.keys():
             if key in case:
-                start_t = START_t_24_dict[key]
+                start_t = START_t_24_dict[key][season]
 
     return start_t
 
