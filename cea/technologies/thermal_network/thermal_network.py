@@ -3491,7 +3491,7 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         print('Running thermal_network with representative week per month.')
     else:
         print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
