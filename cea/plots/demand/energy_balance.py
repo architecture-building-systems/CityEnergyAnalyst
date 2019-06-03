@@ -253,13 +253,10 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
 
 def main():
     import cea.config
-    import cea.inputlocator
     import cea.plots.cache
     config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
-    EnergyBalancePlot(config.project, {'building': locator.get_zone_building_names()[0],
+    EnergyBalancePlot(config.project, {'building': config.plots.building,
                                        'scenario-name': config.scenario_name},
                       cache).plot(auto_open=True)
 
