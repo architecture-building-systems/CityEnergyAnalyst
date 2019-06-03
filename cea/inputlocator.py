@@ -1294,6 +1294,14 @@ class InputLocator(object):
         path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
         return path_a == path_b
 
+    def get_naming(self):
+        """Returns plots/naming.csv"""
+        return os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming.csv')
+
+    def get_docs_folder(self):
+        """Returns docs"""
+        return os.path.join(os.path.dirname(cea.config.__file__), '..\\docs')
+
     # MPC by Concept Project
     def get_mpc_results_folder(self, output_folder="mpc-building"):
         """scenario/outputs/data/optimization"""

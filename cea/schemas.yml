@@ -4621,7 +4621,10 @@ get_terrain:
     description: scenario/inputs/topography/terrain.tif
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/topography\terrain.tif
     file_type: tif
-    schema: {}
+    schema:
+        Mock_variable:
+            sample_data: pixels
+            types_found: [raster]
     used_by: [radiation-daysim]
 get_total_demand:
     created_by: [demand]
