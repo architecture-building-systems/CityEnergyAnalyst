@@ -25,9 +25,6 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
 
     def __init__(self, project, parameters, cache):
         super(CentralizedCostsPerGenerationUnitPlot, self).__init__(project, parameters, cache)
-        self.layout = go.Layout(title=self.title, barmode='relative',
-                       yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
-
         self.analysis_fields_cost_cooling_centralized = ["Capex_a_ACH_USD",
                                                          "Capex_a_CCGT_USD",
                                                          "Capex_a_CT_USD",
@@ -68,6 +65,11 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
         self.input_files = [(self.locator.get_total_demand, []),
                             (self.locator.get_preprocessing_costs, []),
                             (self.locator.get_optimization_checkpoint, [self.generation])]
+
+    @property
+    def layout(self):
+        return go.Layout(title=self.title, barmode='relative',
+                         yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     @property
     def title(self):
