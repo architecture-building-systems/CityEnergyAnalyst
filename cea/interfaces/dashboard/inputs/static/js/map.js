@@ -28,7 +28,7 @@ $(document).ready(function() {
 
         deckgl = new DeckGL({
             container: 'mapid',
-            mapboxApiAccessToken: 'pk.eyJ1IjoidWJlcmRhdGEiLCJhIjoiY2pudzRtaWloMDAzcTN2bzN1aXdxZHB5bSJ9.2bkj3IiRC8wj3jLThvDGdA',
+            mapboxApiAccessToken: 'pk.eyJ1IjoicmV5ZXJ5IiwiYSI6ImNqdzFpcHFlYzA5cDg0OW54eWVmMXVlZHQifQ.gg7RvCVARsrSxq8NjKYsSA',
             mapStyle: 'mapbox://styles/mapbox/streets-v11',
             viewState: currentViewState,
             layers: layers,
