@@ -167,7 +167,8 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     :return:
     """
 
-    # invert sign of I_rad, I_rad was previously negative but it was changed to be consistent with ISO 13790
+    # invert the sign of I_rad. I_rad is a positive term in ISO 13790 and therefore positive in the rest of the code.
+    # I_rad is energy being irradiated from the building to the sky. It is a heat loss in the energy balance.
     data_frame['I_rad_kWh'] = -data_frame['I_rad_kWh']
 
     # calculate losses of heating and cooling system in data frame and adjust signs
@@ -175,7 +176,7 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
     data_frame['Qhs_tot_sen_kWh'] = data_frame['Qhs_sen_sys_kWh'] + abs(data_frame['Qhs_loss_sen_kWh'])
     data_frame['Qcs_loss_sen_kWh'] = -data_frame['Qcs_em_ls_kWh'] - data_frame['Qcs_dis_ls_kWh']
     data_frame['Qcs_tot_sen_kWh'] = data_frame['Qcs_sen_sys_kWh'] - abs(data_frame['Qcs_loss_sen_kWh'])
-    # change sign because this variable is now positive in demand
+    # calculate the latent heat load. the latent heat load is assumed to be the load that the system serves
     data_frame['Qcs_tot_lat_kWh'] = -data_frame['Qcs_lat_sys_kWh']
 
     # split up R-C model heat fluxes into heating and cooling contributions
