@@ -76,5 +76,5 @@ In order to install the interface for ArcGIS do:
     * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
 #. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
 #. Follow the steps of the installation guide of the code base described above.
-#. In the CEA Consoletype ``cea install-arcgis`` and press ENTER.
+#. In the CEA Console type ``cea install-arcgis`` and press ENTER.
 
