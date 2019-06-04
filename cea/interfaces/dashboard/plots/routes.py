@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, current_app, request, abort, make_response, redirect, url_for
 
 import cea.inputlocator
-from cea.config import MultiChoiceParameter
+from cea.config import MultiChoiceParameter, BooleanParameter
 import cea.plots
 import cea.plots.categories
 
@@ -175,6 +175,8 @@ def route_post_plot_parameters(dashboard_index, plot_index):
         print('route_post_plot_parameters: fqname={fqname}, pname={pname}'.format(fqname=fqname, pname=pname))
         if isinstance(parameter, MultiChoiceParameter):
             plot.parameters[pname] = parameter.decode(','.join(request.form.getlist(pname)))
+        if isinstance(parameter, BooleanParameter):
+           plot.parameters[pname] = parameter.decode(request.form[pname]) if pname in request.form else False
         else:
             plot.parameters[pname] = parameter.decode(request.form[pname])
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
