@@ -3203,6 +3203,12 @@ get_life_cycle_inventory_supply_systems:
                     cost from CEA, costs in USD-2015
                 types_found: [string, null]
     used_by: [demand, operation-costs, emissions]
+get_multi_criteria_analysis:
+    created_by: [multi-criteria-analysis]
+    description: utput of the multi-criteria-analysis file
+    file_path: C:\reference-case-cooling\baseline\outputs\data\multicriteria\gen_1_multi_criteria_analysis.csv
+    file_type: csv
+    used_by: []
 get_network_layout_edges_shapefile:
     created_by: [thermal-network, network-layout]
     description: scenario/inputs/network/DH or DC/network-edges.shp
