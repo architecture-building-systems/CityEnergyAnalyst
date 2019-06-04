@@ -57,17 +57,79 @@ $(document).ready(function() {
             });
         });
 
-        setTimeout(function() {
-            console.log(layers)
-        }, 5000);
+        setupButtons();
 
     }).fail(function () {
         console.log("Get zone failed.");
     });
 });
 
-function toggle3D(obj) {
-    extruded = obj.checked;
+function setupButtons() {
+    class dToggle {
+      onAdd(map) {
+        this._map = map;
+        let _this = this;
+
+        this._btn = document.createElement("button");
+        this._btn.id = "3d-button"
+        this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+        this._btn.type = "button";
+        this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("title", "Toggle 3D");
+        this._btn.onclick = toggle3D;
+
+        this._container = document.createElement("div");
+        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.appendChild(this._btn);
+
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    class darkToggle {
+      constructor() {
+        this._dark = false;
+      }
+      onAdd(map) {
+        this._map = map;
+        let _this = this;
+
+        this._btn = document.createElement("button");
+        this._btn.id = "dark-button"
+        this._btn.className = "mapboxgl-ctrl-icon";
+        this._btn.type = "button";
+        this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("title", "Toggle Dark map");
+        this._btn.onclick = function() {
+            this._dark = !this._dark;
+            toggleDark(this._dark);
+        }
+        this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
+
+        this._container = document.createElement("div");
+        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.appendChild(this._btn);
+
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    deckgl.getMapboxMap().addControl(new dToggle(), 'top-left');
+    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
+}
+
+function toggle3D() {
+    extruded = !extruded
     var pitch;
     var bearing;
     if (extruded) {
@@ -77,14 +139,18 @@ function toggle3D(obj) {
         bearing = 0;
     }
 
+    var className = extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+    $('#3d-button').prop('class', className);
+
+
     createLayer('zone', { visible: $('#zone-toggle').prop('checked') });
     createLayer('district', { visible: $('#district-toggle').prop('checked') });
     deckgl.setProps({ layers: [...layers], controller: {dragRotate: extruded},
         viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
 }
 
-function toggleDark(obj) {
-    if (obj.checked) {
+function toggleDark(dark) {
+    if (dark) {
         deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/dark-v10');
     } else {
         deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/streets-v11');
