@@ -36,6 +36,11 @@ $(document).ready(function() {
                 currentViewState = viewState;
                 deckgl.setProps({viewState: currentViewState});
             },
+            onDragStart: (info, event) => {
+                if (event.rightButton && !extruded) {
+                    toggle3D();
+                }
+            },
             controller: {dragRotate: false}
         });
 
