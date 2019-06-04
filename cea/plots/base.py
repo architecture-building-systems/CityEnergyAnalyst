@@ -178,7 +178,9 @@ class PlotBase(object):
         """
         Make sure the buildings parameter contains only buildings in the zone. Returns (and updates) the parameter.
         """
-        # all plots in this category use the buildings parameter. make it easier to access
+        if not 'buildings' in self.parameters:
+            return None
+        # most plots use the buildings parameter. make it easier to access
         # handle special case of buildings... (only allow buildings for the scenario in question)
         zone_building_names = self.locator.get_zone_building_names()
 
