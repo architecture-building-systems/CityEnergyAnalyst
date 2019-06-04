@@ -218,6 +218,8 @@ def geometry_extractor_osm(locator, config):
     # erase overlapping area
     district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
 
+    assert district.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
+
     # clean attributes of height, name and number of floors
     result = clean_attributes(district, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
