@@ -15,7 +15,7 @@ __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jack Hawthorne"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "2.14"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
@@ -33,7 +33,7 @@ def main(output):
     gloss = gloss.set_index(['key'])
 
     # geta all variable sets from the trace.inputlocator schema
-    META_VARIABLES = cea.scripts.get_schema_variables()
+    schema_variables = cea.scripts.get_schema_variables()
 
     # TODO replace once naming merge has been completed
 
@@ -46,18 +46,11 @@ def main(output):
     # naming = naming.set_index(['key'])
     # naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
 
-    # NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
-    # naming = pandas.read_csv(NAMING_FILE_PATH, sep=';')
-    # naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
-    # naming = naming.set_index(['key'])
-    # naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
-
-
     # cross reference all variables(in order of priority) with naming.csv, variables_gloss.csv for descriptions
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
     # if variable not found in either - TO DO labels
 
-    #TODO this could probably be done more easily
+    #TODO this could probably be done better
     csv = pandas.DataFrame()
     vars = []
     desc = []
@@ -68,66 +61,73 @@ def main(output):
     unit = []
     locator_method = []
     files = []
-    oldvar = []
-    newvar = []
+    old_variables = []
+    new_variables = []
 
-
-    for var, method, script, file_name in META_VARIABLES:
-        key = file_name + '!!!' + var
+    for variable, method, script, file_name in schema_variables:
+        key = file_name + '!!!' + variable
         scripts.append(script)
         locator_method.append(method)
         files.append(file_name)
 
-        if var in list(naming['VARIABLE']):
-            vars.append(var)
-            desc.append(str(naming.loc[var]['SHORT_DESCRIPTION']))
-            color.append(naming.loc[var]['COLOR'])
-            unit.append(naming.loc[var]['UNIT'])
+        if variable in list(naming['VARIABLE']):
+            vars.append(variable)
+            desc.append(str(naming.loc[variable]['SHORT_DESCRIPTION']))
+            color.append(naming.loc[variable]['COLOR'])
+            unit.append(naming.loc[variable]['UNIT'])
 
             if key in list(gloss.index.values):
                 dtype.append(gloss.loc[key]['DTYPE'])
                 values.append(str(gloss.loc[key]['VALUES']))
 
-            elif var in list(gloss_vars.index.values):
-                dtype.append(gloss_vars.loc[var]['DTYPE'])
-                values.append(str(gloss_vars.loc[var]['VALUES']))
+            elif variable in list(gloss_vars.index.values):
+                dtype.append(gloss_vars.loc[variable]['DTYPE'])
+                values.append(str(gloss_vars.loc[variable]['VALUES']))
 
             else:
                 dtype.append('TODO')
                 values.append('TODO')
 
         elif key in list(gloss.index.values):
-            vars.append(var)
+            vars.append(variable)
             desc.append(str(gloss.loc[key]['SHORT_DESCRIPTION']))
             dtype.append(gloss.loc[key]['DTYPE'])
             values.append(str(gloss.loc[key]['VALUES']))
             unit.append(gloss.loc[key]['UNIT'])
             color.append('black')
 
-        elif var in list(gloss_vars.index.values):
-            vars.append(var)
-            desc.append(str(gloss_vars.loc[var]['SHORT_DESCRIPTION']))
-            dtype.append(gloss_vars.loc[var]['DTYPE'])
-            values.append(str(gloss_vars.loc[var]['VALUES']))
-            unit.append(gloss_vars.loc[var]['UNIT'])
+        elif variable in list(gloss_vars.index.values):
+            vars.append(variable)
+            desc.append(str(gloss_vars.loc[variable]['SHORT_DESCRIPTION']))
+            dtype.append(gloss_vars.loc[variable]['DTYPE'])
+            values.append(str(gloss_vars.loc[variable]['VALUES']))
+            unit.append(gloss_vars.loc[variable]['UNIT'])
             color.append('black')
 
         else:
-            vars.append(var)
+            vars.append(variable)
             desc.append('TODO')
             dtype.append('TODO')
             values.append('TODO')
             color.append('black')
             unit.append('TODO')
-            newvar.append(var)
+            new_variables.append(variable)
 
     # todo: make this more specific once glossary part removed
-    schema_variables = []
-    for VAR, method, script, file_name in META_VARIABLES:
-        schema_variables.append(VAR)
-    for var in list(naming['VARIABLE']):
-        if var not in schema_variables:
-                oldvar.append(var)
+    list_of_variables = []
+    for variable, method, script, file_name in schema_variables:
+        list_of_variables.append(variable)
+
+    # keep a record of the variables which are in naming.csv but not in
+    # the schema.yml (i.e. potentially outdated variables)
+    for variable in list(naming['VARIABLE']):
+        if variable not in list_of_variables:
+                old_variables.append(variable)
+
+    exceptions = {
+        'new_variables': new_variables,
+        'old_variables': old_variables
+    }
 
     # assign to dataframe and write
     csv['VARIABLE'] = vars
@@ -142,20 +142,17 @@ def main(output):
     csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'VALUES'])
     csv.to_csv(output, columns=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False, sep=',')
 
-    exceptions = {
-        'new_variables': newvar,
-        'old_variables': oldvar
-    }
+
 
     print 'The following variables have not been documented in naming.csv:'
-    for var in exceptions['new_variables']:
-        print var
+    for variable in exceptions['new_variables']:
+        print variable
     print '\n'
     print 'The following variables do not exist within the schema.yml and could be outdated:'
-    for var in exceptions['old_variables']:
-        print var
+    for variable in exceptions['old_variables']:
+        print variable
 
-    print '\n~~~~~~~~ Merge complete ~~~~~~~~ '
+    print '\n~~~~~~~~ Merge complete ~~~~~~~~ \n'
 
     return exceptions
 
