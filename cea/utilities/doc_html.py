@@ -3,7 +3,7 @@ doc_html.py
 
 This script performs the following:
     - Cross references the api documentation, building new files and deleting outdated ones.
-    - Runs a sphinx html build from the docs directory via the docs make.bat.
+    - Runs a sphinx html build from the docs directory via the docs make.bat
     - Opens the html files of the corresponding change files from Gitdiff (not yet functional)
 
 """
@@ -16,13 +16,12 @@ __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jack Hawthorne"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "2.14"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
-
 
 def preview_docs():
     """
@@ -72,6 +71,7 @@ def main(docs_dir):
     rebuild_altered_module_documentation(Preview)
     # run the make.bat from docs
     os.system('make html')
+
     # next step ----- make the changed files automatically open for sphinx build checking
     # for doc in Preview:
         # os.system('./_build/html/%s') etc....

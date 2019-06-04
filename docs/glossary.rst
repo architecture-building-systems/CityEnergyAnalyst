@@ -10,11 +10,11 @@ Input
 Inputlocator methods:
 
 .. toctree::
-    input_files
+    input_methods
 
 Output
 ------
 Inputlocator methods:
 
 .. toctree::
-    output_files
+    output_methods
