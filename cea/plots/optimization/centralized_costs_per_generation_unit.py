@@ -64,7 +64,8 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
                                 else self.analysis_fields_cost_cooling_centralized)
         self.input_files = [(self.locator.get_total_demand, []),
                             (self.locator.get_preprocessing_costs, []),
-                            (self.locator.get_optimization_checkpoint, [self.generation])]
+                            (self.locator.get_optimization_checkpoint, [self.generation]),
+                            (self.locator.get_multi_criteria_analysis, [self.generation]),]
 
     @property
     def layout(self):
