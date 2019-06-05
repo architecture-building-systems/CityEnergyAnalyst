@@ -88,40 +88,40 @@ def get_schema_variables():
     'variable_name'. Along with the locator_method, the set should contain all information necessary for most tasks.
     """
 
-    metadata = schemas()
-    meta_variables = set()
-    for locator_method in metadata:
+    Schemas = schemas()
+    schema_variables = set()
+    for locator_method in Schemas:
 
         # if there is no script mapped to 'created_by', it must be an input_file
         # replace non-existant script with the name of the file without the extension
-        if not metadata[locator_method]['created_by']:
-            script = metadata[locator_method]['file_path'].split('\\')[-1].split('.')[0]
+        if not Schemas[locator_method]['created_by']:
+            script = Schemas[locator_method]['file_path'].split('\\')[-1].split('.')[0]
         else:
-            script = metadata[locator_method]['created_by'][0]
+            script = Schemas[locator_method]['created_by'][0]
 
         # for repetitive variables, include only one instance
-        for VAR in metadata[locator_method]['schema']:
-            if VAR.find('srf') != -1:
-                VAR = VAR.replace(VAR, 'srf0')
-            if VAR.find('PIPE') != -1:
-                VAR = VAR.replace(VAR, 'PIPE0')
-            if VAR.find('NODE') != -1:
-                VAR = VAR.replace(VAR, 'NODE0')
-            if VAR.find('B0') != -1:
-                VAR = VAR.replace(VAR, 'B001')
+        for variable in Schemas[locator_method]['schema']:
+            if variable.find('srf') != -1:
+                variable = variable.replace(variable, 'srf0')
+            if variable.find('PIPE') != -1:
+                variable = variable.replace(variable, 'PIPE0')
+            if variable.find('NODE') != -1:
+                variable = variable.replace(variable, 'NODE0')
+            if variable.find('B0') != -1:
+                variable = variable.replace(variable, 'B001')
 
             # if the variable is one associated with an epw file: exclude for now
-            if metadata[locator_method]['file_type'] == 'epw':
-                VAR = 'EPW file variables'
+            if Schemas[locator_method]['file_type'] == 'epw':
+                variable = 'EPW file variables'
 
             # if the variable is actually a sheet name due to tree data shape
-            if metadata[locator_method]['file_type'] == 'xlsx' or metadata[locator_method]['file_type'] == 'xls':
-                for var in metadata[locator_method]['schema'][VAR]:
-                    file_name = metadata[locator_method]['file_path'].split('\\')[-1] + ':' + VAR
-                    meta_variables.add((var, locator_method, script, file_name))
+            if Schemas[locator_method]['file_type'] == 'xlsx' or Schemas[locator_method]['file_type'] == 'xls':
+                for Variable in Schemas[locator_method]['schema'][variable]:
+                    file_name = Schemas[locator_method]['file_path'].split('\\')[-1] + ':' + variable
+                    schema_variables.add((Variable, locator_method, script, file_name))
             # otherwise create the meta set
             else:
 
-                file_name = metadata[locator_method]['file_path'].split('\\')[-1]
-                meta_variables.add((VAR, locator_method, script, file_name))
-    return meta_variables
+                file_name = Schemas[locator_method]['file_path'].split('\\')[-1]
+                schema_variables.add((variable, locator_method, script, file_name))
+    return schema_variables

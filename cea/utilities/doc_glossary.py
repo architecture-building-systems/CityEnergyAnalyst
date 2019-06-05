@@ -7,9 +7,6 @@ Builds input_files.rst and output_files.rst using a jinja 2 template located in 
 """
 
 import os
-import cea.inputlocator
-import cea.config
-import cea.scripts
 import pandas
 from jinja2 import Template
 
@@ -23,19 +20,13 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
-
-
-def main(documentation_dir):
+def main(documentation_dir, schema_variables, schema_data, naming_csv_file):
     # import naming_new.csv (to be replaced by naming.csv) and the relevant information from schema.yml
-    NAMING_FILE_PATH = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
+    NAMING_FILE_PATH = naming_csv_file
     naming = pandas.read_csv(NAMING_FILE_PATH, sep=',')
     naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
     naming = naming.set_index(['key'])
     naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
-
-    schema_data = cea.scripts.schemas()
-    schema_variables = cea.scripts.get_schema_variables()
 
     # create a set of documentation relevant input_locator_methods and output_locator_methods
     # create a set of extra details (the scripts the file is used_by)
@@ -95,7 +86,4 @@ def main(documentation_dir):
     with open(os.path.join(documentation_dir,'output_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
-    print '\n ~ Glossary files (input_methods.rst and output_methods.rst) have been generated in /docs \n'
-
-if __name__ == '__main__':
-    main(locator.get_docs_folder())
+    print '\n ~~~~~~~~ Glossary files updated ~~~~~~~~\n'
