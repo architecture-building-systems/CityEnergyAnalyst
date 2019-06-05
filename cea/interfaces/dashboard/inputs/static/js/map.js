@@ -303,6 +303,8 @@ function updateTooltip({x, y, object, layer}) {
     const tooltip = document.getElementById('tooltip');
 
     if (object) {
+        tooltip.style.top = `${y}px`;
+        tooltip.style.left = `${x}px`;
         var innerHTML = '';
         for (let prop in object.properties) {
             innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
@@ -311,7 +313,6 @@ function updateTooltip({x, y, object, layer}) {
             var area = turf.area(object);
             innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>
             <div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
-            x += 25
         }
         if (layer.id == 'dc_networks' || layer.id == 'dh_networks') {
             if (!object.properties.hasOwnProperty("Building")) {
@@ -320,8 +321,6 @@ function updateTooltip({x, y, object, layer}) {
             }
         }
         tooltip.innerHTML = innerHTML;
-        tooltip.style.top = `${y}px`;
-        tooltip.style.left = `${x}px`;
     } else {
         tooltip.innerHTML = '';
     }
