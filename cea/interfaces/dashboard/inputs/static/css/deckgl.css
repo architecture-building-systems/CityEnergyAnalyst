@@ -26,3 +26,18 @@
 .mapboxgl-ctrl-icon {
     margin: auto;
 }
+
+#layers-group {
+    display: inline-block;
+    text-align: center;
+    position: absolute;
+    left: 50%;
+    top: 15px;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: rgba(255,255,255,0.9);
+}
+
+#layers-group span {
+    padding: 5px;
+}
