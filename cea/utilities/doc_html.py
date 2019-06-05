@@ -23,7 +23,7 @@ __status__ = "Production"
 
 locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
 
-def preview_docs():
+def preview_set():
     """
     This method performs a Gitdiff, storing the documentation relevant change files as a set.
     :return: preview_docs: set of documentation relevant files produced by Gitdiff
@@ -62,20 +62,16 @@ def rebuild_altered_module_documentation(preview_docs):
     os.system('make-api-doc')
 
 
-def main(docs_dir):
+def main(documentation_dir):
     # get all relevant change files
-    Preview = preview_docs()
+    preview_files = preview_set()
     # change the dir to docs
-    os.chdir(docs_dir)
+    os.chdir(documentation_dir)
     # compare python modules to pre-existing documentation and rebuild
-    rebuild_altered_module_documentation(Preview)
+    rebuild_altered_module_documentation(preview_files)
     # run the make.bat from docs
     os.system('make html')
 
     # next step ----- make the changed files automatically open for sphinx build checking
     # for doc in Preview:
         # os.system('./_build/html/%s') etc....
-
-
-if __name__ == '__main__':
-    main(locator.get_docs_folder())

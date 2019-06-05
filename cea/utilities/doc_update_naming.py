@@ -21,8 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(output):
-    locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
+def main(naming_csv_file, schema_variables):
 
     # create dataframe from variables_gloss.csv without duplicates TODO delete the glossary reference after first run
     gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
@@ -37,7 +36,7 @@ def main(output):
 
     # TODO replace once naming merge has been completed
 
-    naming = locator.get_naming()
+    naming = naming_csv_file
     naming = pandas.read_csv(naming)
     naming = naming.set_index(naming['VARIABLE'])
 
@@ -129,6 +128,10 @@ def main(output):
         'old_variables': old_variables
     }
 
+
+    #todo replace output with naming_csv_file once naming fully merged
+    output = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
+
     # assign to dataframe and write
     csv['VARIABLE'] = vars
     csv['DESCRIPTION'] = desc
@@ -155,9 +158,3 @@ def main(output):
     print '\n~~~~~~~~ Merge complete ~~~~~~~~ \n'
 
     return exceptions
-
-
-
-if __name__ == '__main__':
-    # Todo replace with inputlocator method 'get_naming' once first run is complete
-    main(os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv'))
