@@ -148,7 +148,7 @@ function setupButtons() {
     }
 
     deckgl.getMapboxMap().addControl(new dToggle(), 'top-left');
-    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
+//    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
 }
 
 function toggle3D() {
