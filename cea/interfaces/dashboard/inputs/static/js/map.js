@@ -31,7 +31,28 @@ $(document).ready(function() {
 
         deckgl = new DeckGL({
             container: 'mapid',
-            mapStyle: '',
+            mapStyle: {
+                "version": 8,
+                "sources": {
+                    "osm-tiles": {
+                        "type": "raster",
+                        "tiles": [
+                            "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        ],
+                        "tileSize": 256,
+                        "attribution": "Map data © OpenStreetMap contributors"
+                    }
+                },
+                "layers": [{
+                    "id": "osm-tiles",
+                    "type": "raster",
+                    "source": "osm-tiles",
+                    "minzoom": 0,
+                    "maxzoom": 22
+                }]
+            },
             viewState: currentViewState,
             layers: layers,
             onViewStateChange: ({viewState}) => {
@@ -45,8 +66,6 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
-
-        setMapStyle(lightMap);
 
         // Try to get every other input
         $.each(jsonUrls, function (key, value) {
