@@ -2,10 +2,8 @@ from __future__ import division
 from __future__ import print_function
 
 import pandas as pd
-import numpy as np
 import os
 import cea.inputlocator
-from cea.utilities import epwreader
 
 """
 Implements py:class:`cea.plots.LifeCycleAnalysisPlotBase` as a base class for all plots in the category 

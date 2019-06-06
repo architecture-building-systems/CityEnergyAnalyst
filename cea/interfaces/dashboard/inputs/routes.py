@@ -167,7 +167,6 @@ def route_table_post(db):
 
     return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
 
-
 def df_to_json(file_location):
     table_df = geopandas.GeoDataFrame.from_file(file_location)
     table_df = table_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
