@@ -21,7 +21,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings, consider_only_buildings_with_demand=False, type_network="DH", total_demand=False):
+def calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings,
+                             consider_only_buildings_with_demand=False, type_network="DH", total_demand=False):
     # # get coordinate system and project to WSG 84
     poly = gdf.from_file(input_buildings_shp)
     if connected_buildings != []:
@@ -42,8 +43,8 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
             poly = poly.loc[poly['Name'].isin(buildings_with_load)]
             poly = poly.reset_index(drop=True)
         else:
-            raise Exception("We could not find two or more buildings with thermal energy deamand for cooling or heating,"
-                      " the network layout will not work unless the buildings_with_demand parameter is set to False")
+            raise Exception("We could not find two or more buildings with thermal energy demand the network layout "
+                            "will not work unless the consider_only_buildings_with_demand parameter is set to False")
 
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
