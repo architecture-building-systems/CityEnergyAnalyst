@@ -147,8 +147,39 @@ function setupButtons() {
       }
     }
 
+    class recenterMap {
+      onAdd(map) {
+        this._map = map;
+        let _this = this;
+
+        this._btn = document.createElement("button");
+        this._btn.id = "recenter-button"
+        this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+        this._btn.type = "button";
+        this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("title", "Center to location");
+        this._btn.onclick = function() {
+            deckgl.setProps({ viewState:{...currentViewState, zoom: 16,
+            latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
+            longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2, transitionDuration: 300} });
+        };
+
+        this._container = document.createElement("div");
+        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.appendChild(this._btn);
+
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
     deckgl.getMapboxMap().addControl(new dToggle(), 'top-left');
 //    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
+    deckgl.getMapboxMap().addControl(new recenterMap(), 'top-left');
 }
 
 function toggle3D() {
