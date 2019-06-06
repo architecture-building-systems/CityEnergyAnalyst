@@ -68,6 +68,8 @@ class Network_info(object):
 def thermal_network_optimization(config, gv, locator):
     # initialize timer
     start = time.time()
+    # synchronize representative week method in network simulation
+    config.thermal_network.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
     # read network type and ensure consistency in network layout and network_info
     network_type = config.thermal_network.network_type
     config.network_layout.network_type = network_type
