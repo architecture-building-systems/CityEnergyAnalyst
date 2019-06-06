@@ -119,10 +119,16 @@ def route_create_scenario_save():
             shutil.copyfile(terrain, locator.get_terrain())
         if streets:
             shutil.copyfile(streets, locator.get_street_network())
+
+        from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
         if age:
             shutil.copyfile(age, locator.get_building_age())
+        elif zone:
+            calculate_age_file(geopandas.read_file(zone), cea_config.zone_helper.year_construction, locator.get_building_age())
         if occupancy:
             shutil.copyfile(occupancy, locator.get_building_occupancy())
+        elif zone:
+            calculate_occupancy_file(geopandas.read_file(zone), cea_config.zone_helper.occupancy_type, locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
         shutil.copytree(os.path.join(cea_config.project, request.form.get('scenario'), 'inputs'),
