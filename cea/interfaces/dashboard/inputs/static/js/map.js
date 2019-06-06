@@ -7,6 +7,9 @@ var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_network
 var extruded = false;
 var currentViewState;
 
+const lightMap = 'http://www.arcgis.com/sharing/rest/content/items/3e1a00aeae81496587988075fe529f71/resources/styles/root.json';
+const darkMap = 'https://www.arcgis.com/sharing/rest/content/items/fc3e102d1c464522820d7f957b19a467/resources/styles/root.json';
+
 const jsonUrls = {
     'zone': '/inputs/geojson/zone',
     'district': '/inputs/geojson/district',
@@ -28,8 +31,7 @@ $(document).ready(function() {
 
         deckgl = new DeckGL({
             container: 'mapid',
-            mapboxApiAccessToken: 'pk.eyJ1IjoicmV5ZXJ5IiwiYSI6ImNqdzFpcHFlYzA5cDg0OW54eWVmMXVlZHQifQ.gg7RvCVARsrSxq8NjKYsSA',
-            mapStyle: 'mapbox://styles/mapbox/streets-v11',
+            mapStyle: '',
             viewState: currentViewState,
             layers: layers,
             onViewStateChange: ({viewState}) => {
@@ -43,6 +45,8 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
+
+        setMapStyle(lightMap);
 
         // Try to get every other input
         $.each(jsonUrls, function (key, value) {
@@ -151,9 +155,9 @@ function toggle3D() {
 
 function toggleDark(dark) {
     if (dark) {
-        deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/dark-v10');
+        setMapStyle(darkMap);
     } else {
-        deckgl.getMapboxMap().setStyle('mapbox://styles/mapbox/streets-v11');
+        setMapStyle(lightMap);
     }
 }
 
@@ -342,4 +346,24 @@ function nodeFillColor(type) {
     } else if (type === 'PLANT') {
         return [0, 0, 0]
     }
+}
+
+function setMapStyle(styleUrl) {
+    fetch(styleUrl)
+       .then(response => {
+          return response.json()
+          .then(style => {
+             style.sources.esri = {
+                type: 'vector',
+                maxzoom: 15,
+                tiles: [
+                  style.sources.esri.url + '/' + 'tile/{z}/{y}/{x}.pbf'
+                ],
+                attribution: 'Map data © OpenStreetMap contributors, Map layer by Esri'
+             };
+             console.log(style);
+             deckgl.getMapboxMap().setStyle(style);
+
+          })
+       })
 }
