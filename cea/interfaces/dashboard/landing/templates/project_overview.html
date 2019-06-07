@@ -91,9 +91,9 @@
     $(document).ready(function() {
         $("[id$=-image]").each(function() {
             var id = $(this).prop('id');
-            $.get('get-image/'+ $(this).data('scenario'), {}, function(path) {
+            $.get('get-image/'+ $(this).data('scenario'), {}, function(image) {
                 $('#'+id).empty()
-                .append($('<img>',{src: "data:image/jpeg;base64,"+path}))
+                .append($('<img>',{src: "data:image/jpeg;base64,"+image}))
             });
         });
      });
