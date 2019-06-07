@@ -27,7 +27,6 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'numba',
                     'plotly',
                     'py4design==0.27',
-                    'pymc3',
                     'pysal',
                     'pyyaml',
                     'requests',
