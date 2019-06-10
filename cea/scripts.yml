@@ -74,6 +74,13 @@ Demand forecasting:
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', demand, 'general:debug']
 
+- name: make-building-models
+  label: Make building models
+  description: Create building models including schedules
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.demand.building_properties
+  parameters: ['general:scenario', 'general:weather', 'demand:use-stochastic-occupancy', 'demand:override-variables']
+
 
 Energy potentials:
 

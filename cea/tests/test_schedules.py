@@ -71,7 +71,8 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
-        calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
+        calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr.rc_model, bpr.occupancy,
+                                              archetype_values,
                                               stochastic_occupancy)
 
         config = ConfigParser.SafeConfigParser()

@@ -7,14 +7,18 @@ Classes of building properties
 """
 
 from __future__ import division
+import os
 
 import numpy as np
 import pandas as pd
+import pickle
 from geopandas import GeoDataFrame as Gdf
 
+import cea.config
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.demand import occupancy_model
+from cea.utilities import epwreader
 
 # import constants
 H_F = constants.H_F
@@ -23,6 +27,7 @@ H_MS = constants.H_MS
 H_IS = constants.H_IS
 B_F = constants.B_F
 LAMBDA_AT = constants.LAMBDA_AT
+from cea.constants import HOURS_IN_YEAR
 
 
 class BuildingProperties(object):
@@ -33,7 +38,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, override_variables=False):
+    def __init__(self, locator, year=2005, override_variables=False, use_stochastic_occupancy=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -111,7 +116,7 @@ class BuildingProperties(object):
         self._prop_RC_model = prop_rc_model
 
         # read archetype schedules and calculate yearly schedules for every building
-        building_schedules = self.calc_building_schedules(locator)
+        building_schedules = self.calc_building_schedules(locator, year, use_stochastic_occupancy)
         self._building_schedules = building_schedules
         print("done")
 
@@ -444,20 +449,13 @@ class BuildingProperties(object):
             return list(self._overrides.columns)
         return []
 
-
-    def calc_building_schedules(self, locator):
-
-
-        year = 2005  # TODO: get year
-        HOURS_IN_YEAR = 8760 # TODO: import hours in year
+    def calc_building_schedules(self, locator, year, use_stochastic_occupancy):
 
         date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
         # schedules model
         list_uses = list(self._prop_occupancy.columns)
         archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
-
-        use_stochastic_occupancy = False # TODO: get stochastic occupancy
 
         building_schedules = dict()  # initialize dict for schedules
         for building_name in self.list_building_names():
@@ -633,15 +631,15 @@ class BuildingPropertiesRow(object):
         return factor
 
 
-import pickle
 def save_bpr_to_disc(bpr, locator):
 
     # convert to serializable format
     bpr.solar = bpr.solar.to_dict()
     bpr.architecture = bpr.architecture.to_dict()
 
+    file_path = locator.get_building_model(bpr.name)
 
-    with open('{}.pickle'.format(bpr.name), 'w') as outfile:
+    with open(file_path, 'w') as outfile:
         print('saving building model {} to disc.'.format(bpr.name))
         pickle.dump(bpr, outfile)
     #with open('{}.json'.format(bpr.name), 'w') as outfile:
@@ -650,7 +648,9 @@ def save_bpr_to_disc(bpr, locator):
 
 def load_bpr_from_disc(building_name, locator):
 
-    with open('{}.pickle'.format(building_name),'r') as infile:
+    file_path = locator.get_building_model(building_name)
+
+    with open(file_path, 'r') as infile:
         building_model = pickle.load(infile)
         print('reading building model {} from disc.'.format(building_name))
         return BuildingPropertiesRow(name=building_name,
@@ -1022,3 +1022,25 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resist
 
     return I_sol
 
+
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    override_variables = config.demand.override_variables
+    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
+    year = epwreader.epw_reader(config.weather)['year'][0]
+
+    print('creating building modles with override variables = {}'.format(override_variables))
+    print('Calculating schedules with stochastic occupancy=%s' % use_stochastic_occupancy)
+
+    # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
+    building_properties = BuildingProperties(locator, year=year, override_variables=override_variables,
+                                             use_stochastic_occupancy=use_stochastic_occupancy)
+
+    for building in building_properties.list_building_names():
+        save_bpr_to_disc(building_properties[building], locator)
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())

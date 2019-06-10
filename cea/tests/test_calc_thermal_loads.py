@@ -37,7 +37,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.datamanagement.data_helper
         cea.datamanagement.data_helper.data_helper(cls.locator, cls.config, True, True, True, True, True, True, True)
 
-        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.locator,
+        cls.building_properties, cls.date = properties_and_schedule(cls.locator,
                                                                                          year)
 
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation

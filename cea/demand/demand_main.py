@@ -85,27 +85,25 @@ def demand_calculation(locator, config):
     debug = config.debug
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
-    year = weather_data['year'][0]
 
-    # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, date = properties_and_schedule(locator, year,
-                                                                        override_variables)
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
-        list_building_names = building_properties.list_building_names()
+        list_building_names = locator.get_zone_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
         print('Running demand calculation for the next buildings=%s' % list_building_names)
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
-        calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
+        calc_demand_multiprocessing(date, locator, list_building_names,
                                     weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output, config, write_detailed_output, debug)
     else:
-        calc_demand_singleprocessing(building_properties, date, locator, list_building_names,
+        calc_demand_singleprocessing(date, locator, list_building_names,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output, config, write_detailed_output, debug)
@@ -125,29 +123,13 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def properties_and_schedule(locator, year, override_variables=False):
-    # this script is called from the Neural network please do not mess with it!
-
-    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
-    # building properties model
-
-    building_properties = BuildingProperties(locator, override_variables)
-
-    for building in building_properties.list_building_names():
-
-        save_bpr_to_disc(building_properties[building], [])
-    #
-
-    return building_properties, date
-
-
-def calc_demand_singleprocessing(building_properties, date, locator, list_building_names,
+def calc_demand_singleprocessing(date, locator, list_building_names,
                                  weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output, config, write_detailed_output, debug):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
-        bpr = load_bpr_from_disc(building, [])
+        bpr = load_bpr_from_disc(building, locator)
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, date, locator,
                                          use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
@@ -155,7 +137,7 @@ def calc_demand_singleprocessing(building_properties, date, locator, list_buildi
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
+def calc_demand_multiprocessing(date, locator, list_building_names,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
                                 config, write_detailed_output, debug):
@@ -165,7 +147,7 @@ def calc_demand_multiprocessing(building_properties, date, locator, list_buildin
     joblist = []
     num_buildings = len(list_building_names)
     for building in list_building_names:
-        bpr = load_bpr_from_disc(building, [])
+        bpr = load_bpr_from_disc(building, locator)
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, date, locator,
                                 use_stochastic_occupancy, use_dynamic_infiltration_calculation,
@@ -186,7 +168,7 @@ def main(config):
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
-    print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
+
     if config.demand.write_detailed_output:
         print('Running demand calculation with write detailed output=%s' % config.demand.write_detailed_output)
     if config.debug:

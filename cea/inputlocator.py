@@ -637,6 +637,14 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
 
+    def get_building_model(self, building_name):
+        """
+        Get pickle file of `bpr` object
+        :param building_name: name of the building
+        :return: path to file
+        """
+        return os.path.join(self.get_building_properties_folder(), '{}.pickle'.format(building_name))
+
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
