@@ -98,12 +98,12 @@ def demand_calculation(locator, config):
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
         calc_demand_multiprocessing(date, locator, list_building_names,
-                                    weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
+                                    weather_data, use_dynamic_infiltration,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output, config, write_detailed_output, debug)
     else:
         calc_demand_singleprocessing(date, locator, list_building_names,
-                                     weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
+                                     weather_data, use_dynamic_infiltration,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output, config, write_detailed_output, debug)
 
