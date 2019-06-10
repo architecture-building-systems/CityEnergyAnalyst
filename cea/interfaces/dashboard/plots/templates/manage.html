@@ -37,20 +37,20 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for index in range(0, dashboards|length) %}
+                {% for dashboard in dashboards %}
                   <tr>
-                    <td>{{ dashboards[index].name }}</td>
+                    <td>{{ dashboard.name }}</td>
                     <td>
-                      {% if dashboards[index].description=='' %}
+                      {% if dashboard.description=='' %}
                         -
                       {% else %}
-                        {{ dashboards[index].description }}
+                        {{ dashboard.description }}
                       {% endif %}
                     </td>
                     <td>
-                      <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=index) }}">Open</a>
-                      <a href="#" onclick="openSettings({{ index }}, 'rename')">Rename</a>
-                      <a href="#" onclick="openSettings({{ index }}, 'delete')">Delete</a>
+                      <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=loop.index0) }}">Open</a>
+                      <a href="#" onclick="openSettings({{ loop.index0 }}, 'rename')">Rename</a>
+                      <a href="#" onclick="openSettings({{ loop.index0 }}, 'delete')">Delete</a>
                     </td>
                   </tr>
                 {% endfor %}
