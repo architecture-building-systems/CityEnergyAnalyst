@@ -185,12 +185,14 @@ def task_download_radiation():
 def task_run_demand():
     """run the demand script for each reference cases and weather file"""
     import cea.demand.demand_main
+    import cea.demand.building_properties
 
     def run_demand(scenario_path, weather):
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.weather = weather
+        cea.demand.building_properties.main(config)
         cea.demand.demand_main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():

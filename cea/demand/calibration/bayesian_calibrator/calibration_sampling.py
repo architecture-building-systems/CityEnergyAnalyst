@@ -9,7 +9,7 @@ from __future__ import division
 import pandas as pd
 import cea
 import numpy as np
-from cea.demand import demand_main
+from cea.demand import demand_main, building_properties
 from cea.demand.calibration import latin_sampler
 from geopandas import GeoDataFrame as Gdf
 
@@ -115,6 +115,9 @@ def simulate_demand_sample(locator, building_name, building_load, config):
     config.demand.temperatures_output = ["Tww_sys_sup"] # give one entry so it doe snot plot all ( it saves memory)
     config.demand.format_output = "csv"
 
+    # create building models
+    building_properties.main(config)
+    # run demand
     _ , time_series = demand_main.demand_calculation(locator, config)
     return time_series[0][building_load+"_kWh"].values
 
