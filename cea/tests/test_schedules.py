@@ -64,7 +64,7 @@ class TestScheduleCreation(unittest.TestCase):
         year = weather_data['year'][0]
         date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-        building_properties = BuildingProperties(locator, False)
+        building_properties = BuildingProperties(locator, year, False)
         bpr = building_properties['B01']
         list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}

@@ -48,6 +48,10 @@ class BuildingProperties(object):
         :param override_variables: override_variables from config
         :type override_variables: bool
 
+        :param use_stochastic_occupancy: Boolean specifying whether stochastic occupancy should be used. If False,
+        deterministic schedules are used.
+        :type use_stochastic_occupancy: Boolean
+
         :returns: BuildingProperties
         :rtype: BuildingProperties
         """

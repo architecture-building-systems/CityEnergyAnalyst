@@ -80,7 +80,6 @@ def demand_calculation(locator, config):
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
-    override_variables = config.demand.override_variables
     write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
@@ -124,21 +123,21 @@ def demand_calculation(locator, config):
 
 
 def calc_demand_singleprocessing(date, locator, list_building_names,
-                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
+                                 weather_data, use_dynamic_infiltration_calculation,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output, config, write_detailed_output, debug):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = load_bpr_from_disc(building, locator)
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, date, locator,
-                                         use_stochastic_occupancy, use_dynamic_infiltration_calculation,
+                                         use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
                                          format_output, config, write_detailed_output, debug)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
 def calc_demand_multiprocessing(date, locator, list_building_names,
-                                weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
+                                weather_data, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
                                 config, write_detailed_output, debug):
     number_of_processes = config.get_number_of_processes()
@@ -150,7 +149,7 @@ def calc_demand_multiprocessing(date, locator, list_building_names,
         bpr = load_bpr_from_disc(building, locator)
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, date, locator,
-                                use_stochastic_occupancy, use_dynamic_infiltration_calculation,
+                                use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
                                 format_output, config, write_detailed_output, debug])
         joblist.append(job)

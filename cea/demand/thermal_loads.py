@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 from cea.demand import demand_writers
 from cea.demand import latent_loads
-from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
+from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.technologies import heatpumps
@@ -15,7 +15,7 @@ from cea.utilities import reporting
 from cea.constants import HOURS_IN_YEAR
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, date, locator, use_stochastic_occupancy,
+def calc_thermal_loads(building_name, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output, config, write_detailed_output, debug):
     """
@@ -73,7 +73,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date, locator, use_stoc
     :rtype: NoneType
 
 """
-    tsd = initialize_inputs(bpr, weather_data, use_stochastic_occupancy)
+    tsd = initialize_inputs(bpr, weather_data)
     schedules = bpr.schedules
 
     # CALCULATE ELECTRICITY LOADS
@@ -372,7 +372,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, weather_data):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -381,9 +381,7 @@ def initialize_inputs(bpr, weather_data, use_stochastic_occupancy):
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
         ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
     :type weather_data: pandas.DataFrame
-    :param use_stochastic_occupancy: Boolean specifying whether stochastic occupancy should be used. If False,
-        deterministic schedules are used.
-    :type use_stochastic_occupancy: Boolean
+
 
     :return schedules:
     :rtype schedules:
