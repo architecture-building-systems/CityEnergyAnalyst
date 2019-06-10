@@ -14,6 +14,7 @@ from geopandas import GeoDataFrame as Gdf
 
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand import occupancy_model
 
 # import constants
 H_F = constants.H_F
@@ -96,7 +97,6 @@ class BuildingProperties(object):
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
         # TODO: maybe mergin branch i9 with CItyGML could help with this
-        print("done")
 
         # save resulting data
         self._prop_supply_systems = prop_supply_systems
@@ -109,6 +109,12 @@ class BuildingProperties(object):
         self._prop_age = prop_age
         self._solar = solar
         self._prop_RC_model = prop_rc_model
+
+        # read archetype schedules and calculate yearly schedules for every building
+        building_schedules = self.calc_building_schedules(locator)
+        self._building_schedules = building_schedules
+        print("done")
+
 
     def calc_bounding_box_geom(self, geometry_shapefile):
         import shapefile
@@ -193,6 +199,14 @@ class BuildingProperties(object):
     def get_solar(self, name_building):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
+
+    def get_schedules(self, name_building):
+        """
+        get schedules of building by name
+        :param name_building: building name
+        :return: dict of schedules
+        """
+        return self._building_schedules[name_building]
 
     def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures):
         """
@@ -419,7 +433,8 @@ class BuildingProperties(object):
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
-                                     supply=self.get_prop_supply_systems(building_name))
+                                     supply=self.get_prop_supply_systems(building_name),
+                                     schedules=self.get_schedules(building_name))
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -430,13 +445,39 @@ class BuildingProperties(object):
         return []
 
 
+    def calc_building_schedules(self, locator):
+
+
+        year = 2005  # TODO: get year
+        HOURS_IN_YEAR = 8760 # TODO: import hours in year
+
+        date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+
+        # schedules model
+        list_uses = list(self._prop_occupancy.columns)
+        archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+
+        use_stochastic_occupancy = False # TODO: get stochastic occupancy
+
+        building_schedules = dict()  # initialize dict for schedules
+        for building_name in self.list_building_names():
+
+            schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules,
+                                                       self.get_prop_rc_model(building_name),
+                                                       self.get_prop_occupancy(building_name),
+                                                       archetype_values, use_stochastic_occupancy)
+            building_schedules[building_name] = schedules
+
+        return building_schedules
+
+
 class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
 
     def __init__(self, name, geometry, envelope, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, supply):
+                 rc_model, comfort, internal_loads, age, solar, supply, schedules):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
@@ -452,6 +493,7 @@ class BuildingPropertiesRow(object):
         self.solar = SolarProperties(solar)
         self.supply = supply
         self.building_systems = self._get_properties_building_systems()
+        self.schedules = schedules
 
     def _get_properties_building_systems(self):
 
@@ -591,17 +633,59 @@ class BuildingPropertiesRow(object):
         return factor
 
 
+import pickle
+def save_bpr_to_disc(bpr, locator):
+
+    # convert to serializable format
+    bpr.solar = bpr.solar.to_dict()
+    bpr.architecture = bpr.architecture.to_dict()
+
+
+    with open('{}.pickle'.format(bpr.name), 'w') as outfile:
+        print('saving building model {} to disc.'.format(bpr.name))
+        pickle.dump(bpr, outfile)
+    #with open('{}.json'.format(bpr.name), 'w') as outfile:
+    #    json.dump(bpr, outfile)
+
+
+def load_bpr_from_disc(building_name, locator):
+
+    with open('{}.pickle'.format(building_name),'r') as infile:
+        building_model = pickle.load(infile)
+        print('reading building model {} from disc.'.format(building_name))
+        return BuildingPropertiesRow(name=building_name,
+                                    geometry= building_model.geometry,
+                                    envelope=building_model.architecture,
+                                    occupancy=building_model.occupancy,
+                                    hvac=building_model.hvac,
+                                    rc_model= building_model.rc_model,
+                                    comfort=building_model.comfort,
+                                    internal_loads=building_model.internal_loads,
+                                    age=building_model.age,
+                                    solar=building_model.solar,
+                                    supply=building_model.supply,
+                                    schedules=building_model.schedules)
+
+
+
+
+
+
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
 
-    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
+    __slots__ = [u'a_roof', u'n50', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
                  u'U_roof', u'Hs', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['wwr_south']
+        if 'wwr_south' in envelope.keys():
+            self.win_wall = envelope['wwr_south']  # TODO: why south?
+        else:
+            # this is a hack to read the saved pickle file, which uses the slot names
+            self.win_wall = envelope['win_wall']
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
@@ -617,6 +701,12 @@ class EnvelopeProperties(object):
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
 
+    def to_dict(self):
+        return_dict = dict()
+        for slot in self.__slots__:
+            return_dict[slot] = self.__getattribute__(slot)
+        return return_dict
+
 
 class SolarProperties(object):
     """Encapsulates the solar properties of a building"""
@@ -626,6 +716,11 @@ class SolarProperties(object):
     def __init__(self, solar):
         self.I_sol = solar['I_sol']
 
+    def to_dict(self):
+        return_dict = dict()
+        for slot in self.__slots__:
+            return_dict[slot] = self.__getattribute__(slot)
+        return return_dict
 
 def get_properties_supply_sytems(locator, properties_supply):
     supply_heating = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "HEATING")
@@ -926,3 +1021,4 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resist
     I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
 
     return I_sol
+

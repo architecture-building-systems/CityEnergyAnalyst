@@ -15,7 +15,7 @@ from cea.utilities import reporting
 from cea.constants import HOURS_IN_YEAR
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
+def calc_thermal_loads(building_name, bpr, weather_data, date, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output, config, write_detailed_output, debug):
     """
@@ -73,7 +73,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
+    tsd = initialize_inputs(bpr, weather_data, use_stochastic_occupancy)
+    schedules = bpr.schedules
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
@@ -371,7 +372,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, weather_data, use_stochastic_occupancy):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -394,11 +395,7 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     # this is used in the NN please do not erase or change!!
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
-    list_uses = usage_schedules['list_uses']
-    archetype_schedules = usage_schedules['archetype_schedules']
-    archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
-                                               use_stochastic_occupancy)
+    schedules = bpr.schedules
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = np.floor(schedules['people'])
@@ -407,7 +404,7 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
 
-    return schedules, tsd
+    return tsd
 
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
