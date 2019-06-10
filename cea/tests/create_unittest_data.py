@@ -15,9 +15,10 @@ import json
 import pandas as pd
 
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.demand.demand_main import properties_and_schedule
+from cea.demand import building_properties
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
+from cea.constants import HOURS_IN_YEAR
 
 
 def main(output_file):
@@ -38,6 +39,7 @@ def main(output_file):
     cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True, True)
 
     year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     resolution_outputs = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
@@ -47,13 +49,14 @@ def main(output_file):
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
+    building_models = building_properties.BuildingProperties(locator, year=year, override_variables=False,
+                                                             use_stochastic_occupancy=use_stochastic_occupancy)
 
     print("data for test_calc_thermal_loads:")
-    print(building_properties.list_building_names())
+    print(building_models.list_building_names())
 
-    bpr = building_properties['B01']
-    result = calc_thermal_loads('B01', bpr, weather_data, schedules_dict, date, locator, use_stochastic_occupancy,
+    bpr = building_models['B01']
+    result = calc_thermal_loads('B01', bpr, weather_data, date, locator,
                                 use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                                 massflows_output, temperatures_output, format_output, config, write_detailed_output,
                                 debug)
@@ -85,9 +88,9 @@ def main(output_file):
 
     results = {}
     for building in buildings:
-        bpr = building_properties[building]
-        b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, weather_data, schedules_dict,
-                                                                           date, locator, use_stochastic_occupancy,
+        bpr = building_models[building]
+        b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, weather_data,
+                                                                           date, locator,
                                                                            use_dynamic_infiltration_calculation,
                                                                            resolution_outputs, loads_output,
                                                                            massflows_output, temperatures_output,
@@ -104,10 +107,10 @@ def main(output_file):
     print("Wrote output to %(output_file)s" % locals())
 
 
-def run_for_single_building(building, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
+def run_for_single_building(building, bpr, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                             massflows_output, temperatures_output, format_output, config, write_detailed_output, debug):
-    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator, use_stochastic_occupancy,
+    calc_thermal_loads(building, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output, config, write_detailed_output, debug)
     df = pd.read_csv(locator.get_demand_results_file(building))
