@@ -56,8 +56,8 @@ def route_project_overview():
         zone = os.path.join(scenario_path, 'inputs', 'building-geometry', 'zone.shp')
         if os.path.isfile(zone):
             zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
-            descriptions[scenario]['Coordinates'] = ("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2),
-                                                "%.5f" % ((zone_df.total_bounds[0] + zone_df.total_bounds[2])/2))
+            descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
+                                                     float("%.5f" % ((zone_df.total_bounds[0] + zone_df.total_bounds[2])/2)))
 
         else:
             descriptions[scenario]['Warning'] = 'Zone file does not exist.'

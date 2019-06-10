@@ -58,11 +58,10 @@
                                             </div>
                                         </div>
                                         <div class="col-lg-8">
-                                            <h3>Description</h3>
+                                            <h3 id="{{ scenario }}-description">Description</h3>
                                             {% if descriptions[scenario] %}
                                                 {% for key, value in descriptions[scenario].items() %}
-                                                    <div>{{ key }}</div>
-                                                    <div>{{ value }}</div>
+                                                    <div>{{ key }}: {{ value }}</div>
                                                 {% endfor %}
                                             {% endif %}
                                         </div>
