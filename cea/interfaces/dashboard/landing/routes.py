@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify
+from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify, abort
 
 import os, shutil
 import json
@@ -180,12 +180,19 @@ def route_open_project_scenario(scenario):
 def route_get_images(scenario):
     cea_config = current_app.cea_config
     project_path = cea_config.project
-    image_path = os.path.join(project_path, '.cache', scenario+'.png')
+    zone_path = os.path.join(project_path, scenario, 'inputs', 'building-geometry', 'zone.shp')
+    if not os.path.isfile(zone_path):
+        abort(404, 'Zone file not found')
+    cache_path = os.path.join(project_path, '.cache')
+    image_path = os.path.join(cache_path, scenario+'.png')
 
     if not os.path.isfile(image_path):
-        zone = os.path.join(project_path, scenario, 'inputs', 'building-geometry', 'zone.shp')
-        zone_df = geopandas.read_file(zone)
-        zone_df = zone_df.to_crs(epsg=4326)
+        # Make sure .cache folder exists
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+
+        zone_df = geopandas.read_file(zone_path)
+        zone_df = zone_df.to_crs(get_geographic_coordinate_system())
         polygons = zone_df['geometry']
 
         polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in range(polygons.shape[0])]
