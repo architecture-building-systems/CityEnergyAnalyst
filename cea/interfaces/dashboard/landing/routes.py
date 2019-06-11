@@ -52,8 +52,8 @@ def route_project_overview():
     descriptions = {}
     for scenario in scenarios:
         descriptions[scenario] = {}
-        scenario_path = os.path.join(project_path, scenario)
-        zone = os.path.join(scenario_path, 'inputs', 'building-geometry', 'zone.shp')
+        locator = cea.inputlocator.InputLocator(scenario)
+        zone = locator.get_zone_geometry()
         if os.path.isfile(zone):
             zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
             descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
@@ -180,7 +180,8 @@ def route_open_project_scenario(scenario):
 def route_get_images(scenario):
     cea_config = current_app.cea_config
     project_path = cea_config.project
-    zone_path = os.path.join(project_path, scenario, 'inputs', 'building-geometry', 'zone.shp')
+    locator = cea.inputlocator.InputLocator(scenario)
+    zone_path = locator.get_zone_geometry()
     if not os.path.isfile(zone_path):
         abort(404, 'Zone file not found')
     cache_path = os.path.join(project_path, '.cache')
