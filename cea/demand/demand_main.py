@@ -14,9 +14,9 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import demand_writers
-from cea.demand import occupancy_model
 from cea.demand import thermal_loads
-from cea.demand.building_properties import BuildingProperties, save_bpr_to_disc, load_bpr_from_disc
+# BuildingPropertiesRow is used during the import of the pickled building models
+from cea.demand.building_properties import BuildingPropertiesRow, load_bpr_from_disc
 from cea.utilities import epwreader
 import warnings
 from cea.constants import HOURS_IN_YEAR

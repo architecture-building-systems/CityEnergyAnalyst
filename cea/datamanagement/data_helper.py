@@ -140,12 +140,15 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         # define comfort
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
 
+        # add column for occupant density, initialize with nan
+        prop_comfort_df = prop_comfort_df.assign(people_m2=pd.Series(np.zeros(len(prop_comfort_df)) + np.nan))
+
         # write to shapefile
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
         fields = ['Name', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
-                  'rhum_max_pc']
+                  'rhum_max_pc', 'people_m2']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
@@ -376,6 +379,15 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                     properties_df.loc[building, column] = column_total / people_total
                 else:
                     properties_df.loc[building, column] = 0
+
+        elif column in ['people_m2']:
+            for building in properties_df.index:
+                people_total = 0
+                for use in list_uses:
+                    if use in properties_df.columns:
+                        people_total += properties_df[use][building] * occupant_densities[use]
+                properties_df.loc[building, column] = people_total
+
 
         elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
             for building in properties_df.index:
