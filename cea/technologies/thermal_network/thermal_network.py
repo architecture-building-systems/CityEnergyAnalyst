@@ -831,7 +831,7 @@ def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param network_name: 'Dh' or 'DC' indicating district heating or cooling
+    :param network_name: 'DH' or 'DC' indicating district heating or cooling
     :param t: time step
     :param locator: an InputLocator instance set to the scenario to work on
     :param T_ground_K: Ground Temperature in Kelvin
