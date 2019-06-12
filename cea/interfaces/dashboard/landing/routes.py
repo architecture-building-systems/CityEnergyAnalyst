@@ -137,8 +137,10 @@ def route_create_scenario_save():
         elif zone:
             zone_df = geopandas.read_file(zone)
             if 'category' not in zone_df.columns:
-                zone_df['category'] = 'MULTI_RES'
-            calculate_occupancy_file(zone_df, None, locator.get_building_occupancy())
+                # set 'MULTI_RES' as default
+                calculate_occupancy_file(zone_df, 'MULTI_RES', locator.get_building_occupancy())
+            else:
+                calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
         scenario = os.path.join(cea_config.project, request.form.get('scenario'))
