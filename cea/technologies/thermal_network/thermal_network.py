@@ -485,7 +485,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(),
-                               sheet_name='HEX', index_col=0)
+                               sheetname='HEX', index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
