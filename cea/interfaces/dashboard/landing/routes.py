@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify
+from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify, abort
 
 import os, shutil
 import json
 import geopandas
 from shapely.geometry import shape
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from staticmap import StaticMap, Polygon
 
 import cea.inputlocator
 import cea.api
@@ -46,7 +47,22 @@ def route_project_overview():
 
     # Get the list of scenarios
     scenarios = get_scenarios(project_path)
-    return render_template('project_overview.html', project_name=project_name, scenarios=scenarios)
+
+    # Get scenario descriptions
+    descriptions = {}
+    for scenario in scenarios:
+        descriptions[scenario] = {}
+        locator = cea.inputlocator.InputLocator(scenario)
+        zone = locator.get_zone_geometry()
+        if os.path.isfile(zone):
+            zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
+            descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
+                                                     float("%.5f" % ((zone_df.total_bounds[0] + zone_df.total_bounds[2])/2)))
+
+        else:
+            descriptions[scenario]['Warning'] = 'Zone file does not exist.'
+
+    return render_template('project_overview.html', project_name=project_name, scenarios=scenarios, descriptions=descriptions)
 
 
 @blueprint.route('/project-overview/<scenario>/<func>')
@@ -160,6 +176,42 @@ def route_open_project_scenario(scenario):
     return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
 
 
+@blueprint.route('/get-image/<scenario>')
+def route_get_images(scenario):
+    cea_config = current_app.cea_config
+    project_path = cea_config.project
+    locator = cea.inputlocator.InputLocator(scenario)
+    zone_path = locator.get_zone_geometry()
+    if not os.path.isfile(zone_path):
+        abort(404, 'Zone file not found')
+    cache_path = os.path.join(project_path, '.cache')
+    image_path = os.path.join(cache_path, scenario+'.png')
+
+    if not os.path.isfile(image_path):
+        # Make sure .cache folder exists
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+
+        zone_df = geopandas.read_file(zone_path)
+        zone_df = zone_df.to_crs(get_geographic_coordinate_system())
+        polygons = zone_df['geometry']
+
+        polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in range(polygons.shape[0])]
+
+        m = StaticMap(256, 160)
+        for polygon in polygons:
+            out = Polygon(polygon, 'blue', 'black', False)
+            m.add_polygon(out)
+
+        image = m.render()
+        image.save(image_path)
+
+    import base64
+    with open(image_path, 'rb') as imgFile:
+        image = base64.b64encode(imgFile.read())
+    return image
+
+
 @blueprint.route('/create-scenario/<script_name>/settings')
 def route_script_settings(script_name):
     config = current_app.cea_config
@@ -191,7 +243,8 @@ def route_restore_defaults(script_name):
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
-        parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+        if parameter.name != 'scenario':
+            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
     config.save()
     return jsonify(True)
 
