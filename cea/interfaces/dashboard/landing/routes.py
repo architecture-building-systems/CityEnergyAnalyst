@@ -157,10 +157,8 @@ def route_create_scenario_save():
 
     elif request.form.get('input-files') == 'generate':
         tools = request.form.getlist('tools')
-        print(tools)
         if tools is not None:
             for tool in tools:
-                print(tool)
                 if tool == 'zone-helper':
                     # FIXME: Setup a proper endpoint for site creation
                     data = json.loads(request.form.get('poly-string'))
