@@ -3095,8 +3095,8 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     """
 
     L_pipe = edge_df['pipe length']
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname='MATERIAL PROPERTIES')
-    material_properties = material_properties.set_index(material_properties['material'].values)
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname='MATERIAL PROPERTIES').set_index(
+        'material')
     conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
