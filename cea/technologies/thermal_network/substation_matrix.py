@@ -26,7 +26,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', '
                              'mcphs_sys_ahu_kWperC', 'mcphs_sys_shu_kWperC', 'mcpcs_sys_ahu_kWperC',
                              'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
 
-DC_NETWORK_SETPOINT = 10.0
+DC_NETWORK_SETPOINT = 12.0
 DT_HEX = 4.0
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
