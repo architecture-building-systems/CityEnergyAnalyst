@@ -50,7 +50,8 @@ def route_restore_defaults(script_name):
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
-        parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+        if parameter.name != 'scenario':
+            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
     config.save()
 
     return redirect(url_for('tools_blueprint.route_tool', script_name=script_name))

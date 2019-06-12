@@ -51,8 +51,7 @@ def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.PlotCache(config.project)
     app = Flask(__name__, static_folder='base/static')
-    app.config.from_mapping({'DEBUG': True,
-                             'SECRET_KEY': 'secret'})
+    app.config.from_mapping({'SECRET_KEY': 'secret'})
 
     # provide the list of tools
     @app.context_processor
@@ -116,13 +115,11 @@ def main(config):
     import tools.routes
     import plots.routes
     import inputs.routes
-    import project.routes
     import landing.routes
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
-    app.register_blueprint(project.routes.blueprint)
     app.register_blueprint(landing.routes.blueprint)
 
     # keep a copy of the configuration we're using
