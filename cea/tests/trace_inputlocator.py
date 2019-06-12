@@ -83,8 +83,8 @@ def main(config):
     config.restricted_to = None
 
     meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
-    create_graphviz_output(trace_data, os.path.join(cea.config.Configuration().__getattr__('scenario'), 'outputs//'+'_'.join(scripts)+'.gv'))
     print 'Trace Complete'
+
 
 def meta_to_yaml(trace_data, meta_output_file):
 
@@ -134,40 +134,6 @@ def meta_to_yaml(trace_data, meta_output_file):
 
     with open(meta_output_file, 'w') as fp:
         yaml.dump(locator_meta, fp, indent=4)
-
-def create_graphviz_output(trace_data, graphviz_output_file):
-    # creating new variable to preserve original trace_data used by other methods
-    tracedata = sorted(trace_data)
-    # replacing any relative paths outside the case dir with the last three dirs in the path
-    # this prevents long path names in digraph clusters
-    for i, (direction, script, method, path, db) in enumerate(tracedata):
-        if path.split('/')[0] == '..':
-            path = path.rsplit('/', 3)
-            del path[0]
-            path = '/'.join(path)
-            tracedata[i] = list(tracedata[i])
-            tracedata[i][3] = path
-            tracedata[i] = tuple(tracedata[i])
-
-    # set of unique scripts
-    scripts = sorted(set([td[1] for td in tracedata]))
-
-    # set of common dirs for each file accessed by the script(s)
-    db_group = sorted(set(td[3] for td in tracedata))
-
-    # float containing the node width for the largest file name
-    if max(len(td[4]) for td in tracedata)*0.113 > 3.5:
-        width = max(len(td[4]) for td in tracedata)*0.113
-    else:
-        width = 3.5
-
-    # jinja2 template setup and execution
-    template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
-    template = Template(open(template_path, 'r').read())
-    digraph = template.render(tracedata=tracedata, scripts=scripts, db_group=db_group, width=width)
-    digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
-    with open(graphviz_output_file, 'w') as f:
-        f.write(digraph)
 
 
 def is_date(data):
@@ -239,14 +205,21 @@ def get_schema(filename, file_type):
             schema[sheet.encode('ascii', 'ignore')] = meta
         return schema
 
-    if file_type == 'csv':
+    elif file_type == 'tif' or file_type == 'tiff':
+        schema['raster_value'] = {
+            'sample_data': 1.0,
+            'types_found': [float]
+        }
+        return schema
+
+    elif file_type == 'csv':
         db = pandas.read_csv(filename)
         for attr in db:
             attr = replace_repetitive_attr(attr)
             schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
-    if file_type == 'json':
+    elif file_type == 'json':
         with open(filename, 'r') as f:
             import json
             db = json.load(f)
@@ -255,7 +228,7 @@ def get_schema(filename, file_type):
             schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
-    if file_type == 'epw':
+    elif file_type == 'epw':
         epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
                       'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
                       'dewpoint_C (index = 7)',
@@ -282,14 +255,14 @@ def get_schema(filename, file_type):
             schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
         return schema
 
-    if file_type == 'dbf':
+    elif file_type == 'dbf':
         import pysal
         db = pysal.open(filename, 'r')
         for attr in db.header:
             schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
         return schema
 
-    if file_type == 'shp':
+    elif file_type == 'shp':
         import geopandas
         db = geopandas.read_file(filename)
         for attr in db:
@@ -298,7 +271,15 @@ def get_schema(filename, file_type):
             if attr == 'geometry':
                 meta['sample_data'] = '((x1 y1, x2 y2, ...))'
             schema[attr.encode('ascii', 'ignore')] = meta
-    return schema
+        return schema
+
+    else:
+        schema = {}
+        schema['undefined_file'] = {
+            'sample_data': 'N/A',
+            'types_found': 'N/A'
+        }
+        return schema
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
