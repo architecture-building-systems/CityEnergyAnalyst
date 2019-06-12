@@ -485,7 +485,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(),
-                               sheet_name='HEX', index_col=0)
+                               sheetname='HEX', index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
@@ -831,7 +831,7 @@ def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param network_name: 'Dh' or 'DC' indicating district heating or cooling
+    :param network_name: 'DH' or 'DC' indicating district heating or cooling
     :param t: time step
     :param locator: an InputLocator instance set to the scenario to work on
     :param T_ground_K: Ground Temperature in Kelvin
