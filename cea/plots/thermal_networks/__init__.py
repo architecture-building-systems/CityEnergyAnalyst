@@ -2,8 +2,10 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import numpy as np
 import pandas as pd
 import cea.inputlocator
+from cea.constants import HOURS_IN_YEAR
 
 """
 Implements py:class:`cea.plots.ThermalNetworksPlotBase` as a base class for all plots in the category 
@@ -107,6 +109,53 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     def yearly_pressure_loss(self):
         return self.hourly_pressure_loss.values.sum()
+
+    @property
+    def hourly_relative_pressure_loss(self):
+        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
+        return pd.DataFrame(np.round(relative_loss, 2))
+
+    @property
+    def mean_pressure_loss_relative(self):
+        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
+        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
+        mean_loss = np.round(mean_loss, 2)
+        return mean_loss
+
+    @property
+    def hourly_relative_heat_loss(self):
+        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
+        return pd.DataFrame(np.round(relative_loss, 2))
+
+    @property
+    def mean_heat_loss_relative(self):
+        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
+        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
+        mean_loss = np.round(mean_loss, 2)
+        return mean_loss
+
+    def _calculate_relative_loss(self, absolute_loss):
+        """
+                Calculate relative heat or pressure loss:
+                1. Sum up all plant heat produced in each time step
+                2. Divide absolute losses by that value
+                """
+        # read plant heat supply
+        plant_heat_supply = pd.read_csv(self.locator.get_thermal_network_plant_heat_requirement_file(self.network_type,
+                                                                                                     self.network_name))
+        plant_heat_supply = abs(plant_heat_supply)  # make sure values are positive
+        if len(plant_heat_supply.columns.values) > 1:  # sum of all plants
+            plant_heat_supply = plant_heat_supply.sum(axis=1)
+        plant_heat_supply[plant_heat_supply == 0] = np.nan
+        # necessary to avoid errors from shape mismatch
+        plant_heat_supply = np.reshape(plant_heat_supply.values, (HOURS_IN_YEAR, 1))
+        relative_loss = absolute_loss.values / plant_heat_supply * 100  # calculate relative value in %
+        relative_loss = np.nan_to_num(relative_loss)  # remove nan or inf values to avoid runtime error
+        # if relative losses are more than 100% temperature requirements are not met. All produced heat is lost.
+        relative_loss[relative_loss > 100] = 100
+        # don't show 0 values
+        relative_loss[relative_loss == 0] = np.nan
+        return relative_loss
 
     @property
     def hourly_heat_loss(self):

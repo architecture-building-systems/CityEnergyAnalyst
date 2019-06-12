@@ -24,15 +24,15 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LossCurvePlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]
-        network_args = [self.network_type, self.network_name]
-        self.input_files = [(self.locator.get_thermal_demand_csv_file, network_args),
-                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, network_args)]
+        self.yaxis_title = 'Loss [kWh]'
+        self.network_args = [self.network_type, self.network_name]
+        self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
+                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
+                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
 
     @property
     def layout(self):
-        return dict(title=self.title, yaxis=dict(title='Loss [kWh]'),
+        return dict(title=self.title, yaxis=dict(title=self.yaxis_title),
                     yaxis2=dict(title='Demand [kWh]', overlaying='y',
                                 side='right'), xaxis=dict(rangeselector=dict(buttons=list([
                 dict(count=1, label='1d', step='day', stepmode='backward'),
@@ -45,18 +45,10 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
                 fixedrange=False))
 
     def calc_graph(self):
-        hourly_loads = self.hourly_loads
-        analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]  # plot data names
-        analysis_fields += [str(column) for column in hourly_loads.columns]
-        data_frame = self.hourly_pressure_loss.join(
-            pd.DataFrame(self.hourly_heat_loss.sum(axis=1)))  # join pressure and heat loss data
-        data_frame.index = hourly_loads.index  # match index
-        data_frame = data_frame.join(hourly_loads)  # add demand data
-        data_frame.columns = analysis_fields  # format dataframe columns
-        data_frame.index = self.date
+        data_frame = self.calc_data_frame()
         traces = []
         x = data_frame.index
-        for field in analysis_fields:
+        for field in data_frame.columns:
             y = data_frame[field].values
             name = NAMING[field]
             if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
@@ -69,6 +61,43 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
             traces.append(trace)
         return traces
+
+    def calc_data_frame(self):
+        hourly_loads = self.hourly_loads
+        analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]  # plot data names
+        analysis_fields += [str(column) for column in hourly_loads.columns]
+        data_frame = self.hourly_pressure_loss.join(
+            pd.DataFrame(self.hourly_heat_loss.sum(axis=1)))  # join pressure and heat loss data
+        data_frame.index = hourly_loads.index  # match index
+        data_frame = data_frame.join(hourly_loads)  # add demand data
+        data_frame.columns = analysis_fields  # format dataframe columns
+        data_frame.index = self.date
+        return data_frame
+
+
+class LossCurveRelativePlot(LossCurvePlot):
+    """Implement the relative heat and pressure losses plot"""
+    name = "Relative Heat and Pressure Losses"
+
+    def __init__(self, project, parameters, cache):
+        super(LossCurveRelativePlot, self).__init__(project, parameters, cache)
+        self.yaxis_title = 'Loss [% of Plant Heat Produced]'
+        self.input_files += [(self.locator.get_thermal_network_plant_heat_requirement_file, self.network_args)]
+
+    def calc_data_frame(self):
+        hourly_loads = self.hourly_loads
+        analysis_fields = ["P_loss_%", "Q_loss_%"]  # data headers
+        analysis_fields += [str(column) for column in hourly_loads.columns]
+        df = self.hourly_relative_pressure_loss  # add relative pressure data
+        # format and join dataframes
+        df = df.rename(columns={0: 1})
+        data_frame = df.join(pd.DataFrame(self.hourly_relative_heat_loss.sum(axis=1)))
+        data_frame.index = hourly_loads.index  # match index
+        data_frame = data_frame.join(hourly_loads)
+        data_frame.columns = analysis_fields
+        data_frame = data_frame.abs()  # make sure all data is positive (relevant for DC)
+        data_frame = data_frame.set_index(self.date)
+        return data_frame
 
 
 def loss_curve(data_frame, analysis_fields, title, output_path):
@@ -122,6 +151,11 @@ def main():
                                    'scenario-name': config.scenario_name,
                                    'network-names': config.thermal_network.network_names},
                   cache).plot(auto_open=True)
+
+    LossCurveRelativePlot(config.project, {'network-type': config.thermal_network.network_type,
+                                           'scenario-name': config.scenario_name,
+                                           'network-names': config.thermal_network.network_names},
+                          cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
