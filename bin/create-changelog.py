@@ -32,6 +32,7 @@ from __future__ import division
 
 import subprocess
 import dateutil.parser
+import re
 
 
 def read_commit_id(git_output):
@@ -79,8 +80,16 @@ def read_title(git_output):
     return title_line
 
 
-def read_version(git_output):
-    return '1.0.0'
+def read_version(commit_id):
+    """Try and parse the contents of cea/__init__.py for the version. return "0.1" if nothing is found"""
+    try:
+        init_py = subprocess.check_output("git show {commit_id}:cea/__init__.py".format(commit_id=commit_id))
+        match = re.search('__version__\s+=\s+"([^"]+)"', init_py)
+        if not match:
+            return "0.1"
+        return match.group(1)
+    except:
+        return "<unversioned>"
 
 
 def main():
@@ -97,10 +106,10 @@ def main():
                 # this was not a PR merge
                 continue
             title = read_title(git_output)
-            version = read_version(pr)
-            print('{date} - {pr} {title}'.format(
+            version = read_version(commit_id)
+            print('{date} - {version} - {pr} {title}'.format(
                 date=date,
-                # version=version,
+                version=version,
                 pr=pr,
                 title=title
             ))

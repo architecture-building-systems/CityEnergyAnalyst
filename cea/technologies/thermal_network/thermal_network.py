@@ -436,7 +436,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
         start_t = 0
         stop_t = 2016  # 24 hours x 7 days x 12 months
@@ -458,7 +458,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                    use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
             # and network optimization will fail as they expect 8760 timesteps.
             edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
@@ -588,7 +588,7 @@ def prepare_inputs_of_representative_weeks(thermal_network):
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
-    if thermal_network.config.thermal_network_optimization.use_representative_week_per_month:
+    if thermal_network.config.thermal_network.use_representative_week_per_month:
         # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
         representative_week = True
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
@@ -1106,8 +1106,7 @@ def assign_pipes_to_edges(thermal_network, set_diameter):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheet_name=['PIPING CATALOG'])[
-        'PIPING CATALOG']
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheet_name='PIPING CATALOG')
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values,
@@ -1619,7 +1618,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     """
 
     # create empty DataFrames to store results
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         thermal_network.edge_mass_flow_df = pd.DataFrame(
             data=np.zeros((2016, len(thermal_network.edge_node_df.columns.values))),
             columns=thermal_network.edge_node_df.columns.values)  # stores values for 2016 timesteps
@@ -1724,7 +1723,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         iterations += 1
 
     # output csv files with node mass flows
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
         node_mass_flow_for_csv = pd.DataFrame(thermal_network.node_mass_flow_df)
@@ -2019,7 +2018,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
 
     # Identify time steps of highest 50 demands
     if thermal_network.network_type == 'DH':
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             heating_sum = np.zeros(2016)
         else:
             heating_sum = np.zeros(HOURS_IN_YEAR)
@@ -2032,7 +2031,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                         'Qhs_sys_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             cooling_sum = np.zeros(2016)
         else:
             cooling_sum = np.zeros(HOURS_IN_YEAR)
@@ -3168,8 +3167,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     """
 
     L_pipe = edge_df['pipe length']
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheet_name=['MATERIAL PROPERTIES'])[
-        'MATERIAL PROPERTIES']
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheet_name='MATERIAL PROPERTIES')
     material_properties = material_properties.set_index(material_properties['material'].values)
     conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
