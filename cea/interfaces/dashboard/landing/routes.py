@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, current_app, redirect, request, url_for, jsonify, abort
 
-import os, shutil
+import os
+import shutil
+import glob
 import json
 import geopandas
 from shapely.geometry import shape
@@ -75,7 +77,12 @@ def route_project_overview_function(scenario, func):
 def route_delete_scenario(scenario):
     cea_config = current_app.cea_config
     scenario_path = os.path.join(cea_config.project, scenario)
-    shutil.rmtree(scenario_path)
+    try:
+        shutil.rmtree(scenario_path)
+    except WindowsError:
+        from flask import abort, Response
+        abort(Response('Make sure that the scenario you are trying to delete is not open in any application.<br>'
+                       'Try and refresh the page again.'))
     cea_config.scenario_name = ''
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
@@ -113,26 +120,58 @@ def route_create_scenario_save():
 
     scenario_path = cea_config.scenario
 
+    locator = cea.inputlocator.InputLocator(scenario_path)
+
     if request.form.get('input-files') == 'import':
-        # TODO
-        pass
+        zone = request.form.get('zone')
+        district = request.form.get('district')
+        terrain = request.form.get('terrain')
+        streets = request.form.get('streets')
+        age = request.form.get('age')
+        occupancy = request.form.get('occupancy')
+
+        if zone:
+            for filename in glob.glob(zone.split('.')[:-1][0]+'.*'):
+                shutil.copy(filename, os.path.dirname(locator.get_zone_geometry()))
+        if district:
+            for filename in glob.glob(district.split('.')[:-1][0]+'.*'):
+                shutil.copy(filename, os.path.dirname(locator.get_district_geometry()))
+        if terrain:
+            shutil.copyfile(terrain, locator.get_terrain())
+        if streets:
+            shutil.copyfile(streets, locator.get_street_network())
+
+        from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
+        if age:
+            shutil.copyfile(age, locator.get_building_age())
+        elif zone:
+            zone_df = geopandas.read_file(zone)
+            calculate_age_file(zone_df, None, locator.get_building_age())
+
+        if occupancy:
+            shutil.copyfile(occupancy, locator.get_building_occupancy())
+        elif zone:
+            zone_df = geopandas.read_file(zone)
+            if 'category' not in zone_df.columns:
+                # set 'MULTI_RES' as default
+                calculate_occupancy_file(zone_df, 'MULTI_RES', locator.get_building_occupancy())
+            else:
+                calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
-        shutil.copytree(os.path.join(cea_config.project, request.form.get('scenario'), 'inputs'),
-                        os.path.join(scenario_path, 'inputs'))
+        scenario = os.path.join(cea_config.project, request.form.get('scenario'))
+        shutil.copytree(cea.inputlocator.InputLocator(scenario).get_input_folder(),
+                        locator.get_input_folder())
 
     elif request.form.get('input-files') == 'generate':
         tools = request.form.getlist('tools')
-        print(tools)
         if tools is not None:
             for tool in tools:
-                print(tool)
                 if tool == 'zone-helper':
                     # FIXME: Setup a proper endpoint for site creation
                     data = json.loads(request.form.get('poly-string'))
                     site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
                                                   geometry=[shape(data['geometry'])])
-                    locator = cea.inputlocator.InputLocator(scenario_path)
                     site_path = locator.get_site_polygon()
                     site.to_file(site_path)
                     print('site.shp file created at %s' % site_path)
