@@ -19,3 +19,8 @@ class ScriptNotFoundException(Exception):
 class MissingInputDataException(Exception):
     """Raised when a script can't run because some information is missing"""
     rc = 103
+
+
+class InvalidOccupancyNameException(Exception):
+    """Raised when the occupancy.dbf has an invalid / unknown occupancy column"""
+    rc = 104
