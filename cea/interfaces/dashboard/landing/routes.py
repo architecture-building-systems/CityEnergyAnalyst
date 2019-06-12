@@ -61,7 +61,12 @@ def route_project_overview_function(scenario, func):
 def route_delete_scenario(scenario):
     cea_config = current_app.cea_config
     scenario_path = os.path.join(cea_config.project, scenario)
-    shutil.rmtree(scenario_path)
+    try:
+        shutil.rmtree(scenario_path)
+    except WindowsError:
+        from flask import abort, Response
+        abort(Response('Make sure that the scenario you are trying to delete is not open in any application.<br>'
+                       'Try and refresh the page again.'))
     cea_config.scenario_name = ''
     return redirect(url_for('landing_blueprint.route_project_overview'))
 
