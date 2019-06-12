@@ -116,6 +116,11 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
             if system == 'data':
                 T_system = np.nanmax(buildings_demands[name].Tcdata_sys_sup_C)
                 if T_system < DC_NETWORK_SETPOINT:
+                    delta_T = DC_NETWORK_SETPOINT - T_system
+                    buildings_demands[name].loc[buildings_demands[name][
+                                                    'Tcdata_sys_sup_C'] == T_system, 'Tcdata_sys_re_C'] += delta_T
+                    buildings_demands[name].loc[buildings_demands[name][
+                                                    'Tcdata_sys_sup_C'] == T_system, 'Tcdata_sys_sup_C'] = DC_NETWORK_SETPOINT
                     T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
                         abs(buildings_demands[name].Qcdata_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
                     COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
@@ -135,6 +140,11 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
             elif system == 're':
                 T_system = np.nanmax(buildings_demands[name].Tcre_sys_sup_C)
                 if T_system < DC_NETWORK_SETPOINT:
+                    delta_T = DC_NETWORK_SETPOINT - T_system
+                    buildings_demands[name].loc[buildings_demands[name][
+                                                    'Tcre_sys_sup_C'] == T_system, 'Tcre_sys_re_C'] += delta_T
+                    buildings_demands[name].loc[buildings_demands[name][
+                                                    'Tcre_sys_sup_C'] == T_system, 'Tcre_sys_sup_C'] = DC_NETWORK_SETPOINT
                     T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
                         abs(buildings_demands[name].Qcre_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
                     COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
@@ -154,6 +164,11 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
             elif system == 'pro':
                 T_system = np.nanmax(buildings_demands[name].Tcpro_sys_sup_C)
                 if T_system < DC_NETWORK_SETPOINT:
+                    delta_T = DC_NETWORK_SETPOINT - T_system
+                    buildings_demands[name].loc[
+                        buildings_demands[name]['Tcpro_sys_sup_C'] == T_system, 'Tcpro_sys_re_C'] += delta_T
+                    buildings_demands[name].loc[
+                        buildings_demands[name]['Tcpro_sys_sup_C'] == T_system, 'Tcpro_sys_sup_C'] = DC_NETWORK_SETPOINT
                     T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
                         abs(buildings_demands[name].Qcpro_sys_kWh) > 0, DC_NETWORK_SETPOINT, np.nan))
                     COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system), HP_COP_MAX]), HP_COP_MIN])
@@ -172,6 +187,13 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
             else:
                 T_system = np.nanmax(buildings_demands[name]['Tcs_sys_sup_' + system + '_C'])
                 if T_system < DC_NETWORK_SETPOINT:
+                    delta_T = DC_NETWORK_SETPOINT - T_system
+                    buildings_demands[name].loc[
+                        buildings_demands[name]['Tcs_sys_sup_' + system + '_C'] == T_system,
+                        'Tcs_sys_re_' + system + '_C'] += delta_T
+                    buildings_demands[name].loc[
+                        buildings_demands[name]['Tcs_sys_sup_' + system + '_C'] == T_system,
+                        'Tcs_sys_sup_' + system + '_C'] = DC_NETWORK_SETPOINT
                     T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C, np.where(
                         abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh']) > 0, DC_NETWORK_SETPOINT, np.nan))
                     COP = np.max([np.min([HP_ETA_EX_COOL * (T_system + 273) / (DC_NETWORK_SETPOINT - T_system),
