@@ -136,19 +136,9 @@ def route_create_scenario_save():
             shutil.copyfile(occupancy, locator.get_building_occupancy())
         elif zone:
             zone_df = geopandas.read_file(zone)
-            if 'category' in zone_df.columns:
-                calculate_occupancy_file(zone_df, None, locator.get_building_occupancy())
-            else:
-                from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
-                from cea.utilities.dbf import dataframe_to_dbf
-                occupancy_df = zone_df[['Name']].copy()
-                # set 'MULTI_RES' as default
-                for field in COLUMNS_ZONE_OCCUPANCY:
-                    if field == 'MULTI_RES':
-                        occupancy_df[field] = 1.0
-                    else:
-                        occupancy_df[field] = 0.0
-                dataframe_to_dbf(occupancy_df, locator.get_building_occupancy())
+            if 'category' not in zone_df.columns:
+                zone_df['category'] = 'MULTI_RES'
+            calculate_occupancy_file(zone_df, None, locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
         scenario = os.path.join(cea_config.project, request.form.get('scenario'))
