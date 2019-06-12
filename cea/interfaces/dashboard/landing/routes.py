@@ -151,7 +151,8 @@ def route_create_scenario_save():
                 dataframe_to_dbf(occupancy_df, locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
-        shutil.copytree(os.path.join(cea_config.project, request.form.get('scenario'), 'inputs'),
+        scenario = os.path.join(cea_config.project, request.form.get('scenario'))
+        shutil.copytree(cea.inputlocator.InputLocator(scenario).get_input_folder(),
                         locator.get_input_folder())
 
     elif request.form.get('input-files') == 'generate':
