@@ -1,3 +1,11 @@
+2019-06-13 - 2.15 - #2059 Remove brackets from `sheet_name` instances
+2019-06-12 - 2.15 - #2010 Import input files during scenario creation
+2019-06-12 - 2.15 - #2055 1961 project overview improvements
+2019-06-12 - 2.15 - #2052 Thermal network simulation config file
+2019-06-12 - 2.15 - #2034 I1932 process schedules for lab
+2019-06-11 - 2.15 - #2022 1949 3d visualization
+2019-06-04 - 2.15 - #2050 Improve description of variable `network-type`
+2019-06-04 - 2.15 - #2047 Release 2.15
 2019-06-04 - 2.14 - #2035 fixes building energy balance plots
 2019-06-04 - 2.14 - #2042 fixes #1988
 2019-06-03 - 2.14 - #2029 1761 fix grasshopper installer script
