@@ -504,7 +504,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
     :param substation_HEX_specs: substation heat exchanger properties
 
     :return t_return_DC: the substation return temperature
-    :return mcp_DC: the required heat capacity (mcp) from the DH
+    :return mcp_DC: the required heat capacity (mcp) from the DC
     """
 
     temperatures = []
@@ -597,7 +597,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_old['cs_pro'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_pro'][t][name] = float(cc_value)
 
-    # calculate mix temperature of return DH
+    # calculate mix temperature of return DC
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
     mcp_DC_kWK = sum(mass_flows)  # [kW/K]
     cooling_demand = sum(heat)
