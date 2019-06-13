@@ -103,5 +103,6 @@ def print_valid_script_names():
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -4,7 +4,9 @@ doc.py
 The main module for cea-dev doc tool.
 """
 
+import cea.config
 import cea.inputlocator
+import cea.scripts
 import os
 import cea.utilities.doc_update_naming as update_naming_csv
 import cea.utilities.doc_glossary as create_glossary_rst
@@ -24,6 +26,7 @@ locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
 all_scripts = list(script.name for script in cea.scripts.list_scripts())
 schema = cea.scripts.schemas()
 schema_variables = cea.scripts.get_schema_variables()
+
 
 def main():
     update_naming_csv.main(
