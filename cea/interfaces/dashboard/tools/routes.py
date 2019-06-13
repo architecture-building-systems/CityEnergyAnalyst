@@ -50,7 +50,8 @@ def route_restore_defaults(script_name):
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
-        parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+        if parameter.name != 'scenario':
+            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
     config.save()
 
     return redirect(url_for('tools_blueprint.route_tool', script_name=script_name))
@@ -91,7 +92,7 @@ def is_alive(script):
 
 @blueprint.route('/read/<script>')
 def read(script):
-    """Reads the next message as a json dict {stream: stdout|stdin, message: str}"""
+    """Reads the next message as a json dict {stream: stdout|stderr, message: str}"""
     if not script in current_app.workers:
         return jsonify(None)
     worker, connection = current_app.workers[script]
@@ -105,6 +106,8 @@ def read(script):
                 # never got any data
                 return jsonify(None)
     except (EOFError, IOError):
+        if len(concatenated_message):
+            return jsonify(dict(stream=stream, message=concatenated_message))
         return jsonify(None)
     return jsonify(dict(stream=stream, message=concatenated_message))
 

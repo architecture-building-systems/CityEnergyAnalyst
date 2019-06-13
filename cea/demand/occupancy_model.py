@@ -118,9 +118,9 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
 
     # define schedules and codes
     occupant_schedules = ['ve', 'Qs', 'X']
-    electricity_schedules = ['Ea', 'El', 'Ed']
+    electricity_schedules = ['Ea', 'El', 'Ed', 'Qcre']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro', 'Qcre']
+    process_schedules = ['Epro', 'Qhpro']
 
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
@@ -578,7 +578,7 @@ def read_schedules(use, archetypes_schedules):
     dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24], archetypes_schedules['Sunday_3'].values[:24]]
     month = archetypes_schedules['month'].values[:12]
 
-    if use == "INDUSTRIAL":
+    if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
         pro = [archetypes_schedules['Weekday_4'].values[:24], archetypes_schedules['Saturday_4'].values[:24], archetypes_schedules['Sunday_4'].values[:24]]
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]

@@ -106,6 +106,25 @@ def route_geojson(db):
     return jsonify(json.loads(table_df.to_json(show_bbox=True)))
 
 
+@blueprint.route('/geojson/networks/<type>')
+def route_geojson_networks(type):
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    # TODO: Get a list of names and send all in the json
+    name = ''
+    edges = locator.get_network_layout_edges_shapefile(type, name)
+    nodes = locator.get_network_layout_nodes_shapefile(type, name)
+    network_json = df_to_json(edges)
+    network_json['features'].extend(df_to_json(nodes)['features'])
+    return jsonify(network_json)
+
+
+@blueprint.route('/geojson/others/streets')
+def route_geojson_streets():
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    location = locator.get_street_network()
+    return jsonify(df_to_json(location))
+
+
 @blueprint.route('/table/<db>', methods=['GET'])
 def route_table_get(db):
     if not db in INPUTS:
@@ -147,3 +166,9 @@ def route_table_post(db):
         cea.utilities.dbf.dataframe_to_dbf(table_df, location)
 
     return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
+
+def df_to_json(file_location):
+    table_df = geopandas.GeoDataFrame.from_file(file_location)
+    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+    table_df = table_df.to_crs(get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
+    return json.loads(table_df.to_json())

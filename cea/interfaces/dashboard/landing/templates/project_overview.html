@@ -53,19 +53,17 @@
                                       </div>
                                     <div class="panel-body">
                                         <div class="col-lg-2" style="min-width: 300px;">
-                                            <div class="image-placeholder">
-                                                <h4>Image of Scenario</h4>
+                                            <div class="image-placeholder" id="{{ scenario }}-image" data-scenario="{{ scenario }}">
+                                                <h4>No preview available.</h4>
                                             </div>
                                         </div>
                                         <div class="col-lg-8">
-                                            <h3>Description</h3>
-                                            <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                                                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                                                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-                                                reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-                                                pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-                                                qui officia deserunt mollit anim id est laborum.</div>
+                                            <h3 id="{{ scenario }}-description">Description</h3>
+                                            {% if descriptions[scenario] %}
+                                                {% for key, value in descriptions[scenario].items() %}
+                                                    <div>{{ key }}: {{ value }}</div>
+                                                {% endfor %}
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -87,5 +85,15 @@
             $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
         });
     }
+
+    $(document).ready(function() {
+        $("[id$=-image]").each(function() {
+            var id = $(this).prop('id');
+            $.get('get-image/'+ $(this).data('scenario'), {}, function(image) {
+                $('#'+id).empty()
+                .append($('<img>',{src: "data:image/jpeg;base64,"+image}))
+            });
+        });
+     });
   </script>
 {% endblock javascripts %}
