@@ -10,7 +10,6 @@ The main function used is ``run`` which runs a CEA script (as defined in the ``s
 import subprocess
 import os
 import tempfile
-import ConfigParser
 
 import cea.config
 import cea.scripts

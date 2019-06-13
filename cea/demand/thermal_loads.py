@@ -4,7 +4,6 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
-import pandas as pd
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -101,7 +100,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
-            tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
+            tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
             tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
             tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
@@ -122,6 +121,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
+        tsd['Qcre_sys'] = abs(tsd['Qcre_sys'])  # inverting sign of cooling loads for reporting and graphs
+        tsd['Qcdata_sys'] = abs(tsd['Qcdata_sys'])  # inverting sign of cooling loads for reporting and graphs
 
         tsd = calc_Qcs_sys(bpr, tsd) # final : including fuels and renewables
         tsd = calc_Qhs_sys(bpr, tsd) # final : including fuels and renewables
