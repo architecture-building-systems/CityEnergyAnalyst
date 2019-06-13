@@ -35,9 +35,9 @@
 .image-placeholder {
     background-color: #eee;
     display: flex;
-    height: 180px;
+    height: 160px;
     margin: 5px;
-    width: 260px;
+    width: 256px;
 }
 
 .image-placeholder > h4 {
