@@ -54,12 +54,13 @@ class ThermalNetwork(object):
     :ivar DataFrame edge_df:
     """
 
-    def __init__(self, locator, network_type, network_name, file_type, config):
+    def __init__(self, locator, network_type, network_name, file_type, temperature_control, config):
         self.network_type = network_type
         self.network_name = network_name
         self.config = config
         self.locator = locator
         self.file_type = file_type
+        self.temperature_control = temperature_control
 
         # these fields get set later on in the thermal_network_main function
         self.T_ground_K = None  # to be filled later
@@ -99,7 +100,7 @@ class ThermalNetwork(object):
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
-        mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type, self.config)
+        mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type, self.temperature_control, self.config)
         mini_me.T_ground_K = list(self.T_ground_K)
         mini_me.buildings_demands = self.buildings_demands.copy()
         mini_me.substations_HEX_specs = self.substations_HEX_specs.copy()
@@ -359,7 +360,8 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'q_loss_system', 'p_loss_system_edges'])
 
 
-def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
+def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems,
+                         temperature_control):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -379,6 +381,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     edge (heat at the pipe inlet equals heat at the outlet minus heat losses through the pipe). Finally, the pressure
     loss calculation is carried out based on Todini et al. (1987)
 
+    :param temperature_control: the control strategy of supply temperatures at plants
     :param locator: an InputLocator instance set to the scenario to work on
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -416,7 +419,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # # prepare data for calculation
     print('Initialize network')
     # initiate class, and get edge-node matrix from defined network
-    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
+    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, temperature_control, config)
 
     # calculate ground temperature
     thermal_network.T_ground_K = calculate_ground_temperature(locator, config)
@@ -436,6 +439,18 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
+    # check if the plant supply temperature is feasible
+    if config.thermal_network.temperature_control == 'CT':
+        t_plant_sup_constant_C = config.thermal_network.plant_supply_temperature
+        if (network_type == 'DH' and t_plant_sup_constant_C < np.nanmax(thermal_network.t_target_supply_df.values)):
+            t_max = np.nanmax(thermal_network.t_target_supply_df.values)
+            raise ValueError('\n The highest temperature required in network is : %s C, '
+                             'the plant supply temperature set in config should be higher than this number.' % str(t_max))
+        elif (network_type == 'DC' and t_plant_sup_constant_C > np.nanmin(thermal_network.t_target_supply_df.values)):
+            t_min = np.nanmin(thermal_network.t_target_supply_df.values)
+            raise ValueError('\n The lowest temperature required in network is : %s C, '
+                             'the plant supply temperature set in config should be lower than this number.' % str(t_min))
+
     if config.thermal_network.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
         start_t = 0
@@ -452,7 +467,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
-        # TODO[SH]: this is where you will change the start_t/stop_t for the period you will use for sizing
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
                                                                    start_t, stop_t, substation_systems, config,
                                                                    use_multiprocessing=config.multiprocessing)
@@ -2282,14 +2296,12 @@ def solve_network_temperatures(thermal_network, t):
                                                         thermal_network.network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
-        control = 'CT_VF' # TODO[SH]: This is where to switch the control strategy, 'VT_VF' is the original one
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw, switch_control = calc_supply_temperatures(t, edge_node_df.copy(),
-                                                                               edge_mass_flow_df, k, thermal_network,
-                                                                               control)
+                                                                               edge_mass_flow_df, k, thermal_network)
         if switch_control == True:
-            control = 'CT_VF'
-            # raise ValueError('temperature not reached, control strategy is switched to: ', control) FIXME: remove
+            thermal_network.temperature_control = 'CT'
+            print ('temperature not reached in timestep %s, control strategy is switched to: CT(Constant Temperature)' %str(t))
 
         # write supply temperatures to substation nodes
         t_substation_supply__k = write_nodes_values_to_substations(t_supply_nodes__k, thermal_network.all_nodes_df)
@@ -2343,27 +2355,28 @@ def solve_network_temperatures(thermal_network, t):
                                                                 thermal_network.network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
-            if control == 'VT_VF':
-                # iterate temperature to meet substation requirement
+            if thermal_network.temperature_control == 'VT':
+                # increase temperature (and change flows accordingly) to meet substation requirement
                 t_supply_nodes_2__k, plant_node, \
                 q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
-                                                                       k, thermal_network, control)
-            elif control == 'CT_VF':
+                                                                       k, thermal_network)
+            elif thermal_network.temperature_control == 'CT':
+                # increase flow to meet substation requirement with fixed plant supply temperature
                 VF_flag = True
                 VF_iter = 0
                 while VF_flag == True:
                     # iterate mass flow to meet substation requirement
                     t_supply_nodes_2__k, plant_node, \
-                    q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
-                                                                           k, thermal_network, control)
+                    q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(),
+                                                                           edge_mass_flow_df_2_kgs, k, thermal_network)
                     # check if all substation temperatures are satisfied
                     dt_nodes = t_supply_nodes_2__k - 273.15 - thermal_network.t_target_supply_df.loc[t]
                     dt_nodes_max = dt_nodes.max().copy()
-                    dt_tolerance = 0.00001 # TODO[SH]: defined by users
+                    dt_tolerance = 0.00001 # TODO: defined by users
                     # identify the nodes
                     nodes_insufficient = dt_nodes[dt_nodes > dt_tolerance].index
                     if dt_nodes_max >= dt_tolerance and VF_iter < 10:
-                        print(dt_nodes_max) # FIXME: to be removed (check if it's reducing)
+                        print('maximum dT at substations: ',dt_nodes_max) # FIXME: to be removed (check if it's reducing)
                         # increase node flows
                         substations_nodes_df_old = mass_flow_substations_nodes_df.copy()
                         for node in nodes_insufficient:
@@ -2546,7 +2559,7 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
     return t_substation_supply.T
 
 
-def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, control):
+def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
     """
     This function calculate the node temperatures considering heat losses in the supply network.
     Starting from the plant supply node, the function go through the edge-node index to search for the outlet node, and
@@ -2591,11 +2604,11 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
     # start node temperature calculation
     flag = 0
     # set initial supply temperature guess to the target substation supply temperature
-    if control == 'VT_VF':
+    if thermal_network.temperature_control == 'VT': # VT_VF
         t_plant_sup_0 = 273.15 + t_target_supply__c.max() if network_type == 'DH' else 273.15 + t_target_supply__c.min()
-    elif control == 'CT_VF':
-        # TODO[SH]: This is where to specify the fixed T_plant
-        t_plant_sup_0 = 273.15 + t_target_supply__c.max() + 5 if network_type == 'DH' else 273.15 + t_target_supply__c.min() - 2 # FIXME: get T
+    elif thermal_network.temperature_control == 'CT': # CT_VF
+        t_plant_sup_0 = 273.15 + thermal_network.config.thermal_network.plant_supply_temperature
+
     t_plant_sup = t_plant_sup_0
     iteration = 0
     while flag == 0:
@@ -2690,10 +2703,13 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
             temp_iter = temp_iter + 1
             # if delta_temp_0 < temp_tolerance: print ('number of temp_iter: ', temp_iter) #todo: remove
 
-        t_plant_sup_max = 98 + 273.15  # todo: move to config
-        t_plant_sup_min = 2 + 273.15
+        # set maximum/minimum allowable plant supply temperatures
+        t_boiling_K = 100 + 273.15
+        t_max_dT_K = t_plant_sup_0 + 60 # less than 60C temperature loss in the network TODO: move to settings
+        t_plant_sup_max = max(t_boiling_K, t_max_dT_K) # 98 C or
+        t_plant_sup_min = 1 + 273.15 # 1 C #TODO: move to settings
 
-        if control == 'VT_VF' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max:
+        if (thermal_network.temperature_control == 'VT' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max):
             # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
             if network_type == 'DH':
                 # calculate the difference between node temperature and the target supply temperature at substations
@@ -2762,12 +2778,12 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network, 
                     switch_control = False
         else:
             flag = 1
-            if control == 'CT_VF':
+            if thermal_network.temperature_control == 'CT':
                 # no need to meet target temperature, no iteration
                 switch_control = False
             else:
                 switch_control = True
-                print('switched control: ', control, ' temperature:', t_plant_sup)
+                print('switched control: ', thermal_network.temperature_control, ' temperature:', t_plant_sup)
 
     # calculate pipe heat losses
     q_loss_edges_kw = np.zeros(z_note.shape[1])
@@ -3475,6 +3491,9 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
+    # get temperature control
+    temperature_control = config.thermal_network.temperature_control
+
     if network_type == 'DC':
         substation_cooling_systems = config.thermal_network.substation_cooling_systems  # list of cooling demand types supplied by network to substation
         substation_heating_systems = []
@@ -3489,6 +3508,8 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
+    print('Running thermal_network with %s control' % temperature_control)
+
     if config.thermal_network.use_representative_week_per_month:
         print('Running thermal_network with representative week per month.')
     else:
@@ -3503,7 +3524,7 @@ def main(config):
         network_names = ['']
 
     for network_name in network_names:
-        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
+        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems, temperature_control)
 
     print('test thermal_network_main() succeeded')
     print('total time: ', time.time() - start)
