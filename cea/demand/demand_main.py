@@ -74,7 +74,6 @@ def demand_calculation(locator, config):
     multiprocessing = config.multiprocessing
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
-    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
