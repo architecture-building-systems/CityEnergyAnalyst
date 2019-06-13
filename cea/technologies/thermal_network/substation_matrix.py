@@ -849,7 +849,8 @@ def main(config):
     network_type = config.thermal_network.network_type
     network_name = ''
     file_type = config.thermal_network.file_type
-    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
+    temperature_control = 'VT'
+    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, temperature_control, config)
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME
