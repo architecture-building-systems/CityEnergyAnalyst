@@ -13,7 +13,7 @@ import pandas
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jack Hawthorne"]
+__credits__ = ["Jack Hawthorne","Daren Thomas"]
 __license__ = "MIT"
 __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
@@ -21,7 +21,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(naming_csv_file, schema_variables):
+def main(_):
+    schemas = cea.scripts.schemas()
+    schema_variables = cea.scripts.get_schema_variables(schemas)
 
     # create dataframe from variables_gloss.csv without duplicates TODO delete the glossary reference after first run
     gloss_path = os.path.join(os.path.dirname(cea.config.__file__), '../docs/variables_gloss.csv')
@@ -32,12 +34,8 @@ def main(naming_csv_file, schema_variables):
     gloss = gloss.set_index(['key'])
 
     # geta all variable sets from the trace.inputlocator schema
-    schema_variables = cea.scripts.get_schema_variables()
 
-    # TODO replace once naming merge has been completed
-
-    naming = naming_csv_file
-    naming = pandas.read_csv(naming)
+    naming = pandas.read_csv(os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv'))
     naming = naming.set_index(naming['VARIABLE'])
 
     # naming = pandas.read_csv(locator.get_naming(), sep=',')

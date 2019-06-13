@@ -14,7 +14,7 @@ import os
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jack Hawthorne"]
+__credits__ = ["Jack Hawthorne", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
@@ -22,50 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_schema_scripts(schema):
-    schema_scripts = set()
-    for locator_method in schema:
-        if len(schema[locator_method]['used_by']) > 0:
-            for script in schema[locator_method]['used_by']:
-                schema_scripts.add(script)
-        if len(schema[locator_method]['created_by']) > 0:
-            for script in schema[locator_method]['created_by']:
-                schema_scripts.add(script)
-    return schema_scripts
-
-
-def get_list_of_digraphs(documentation_dir, schema_scripts):
-    list_of_digraphs = []
-    for script in schema_scripts:
-
-        graphviz_file = os.path.join(documentation_dir, 'graphviz/%s.gv' % script)
-        if os.path.isfile(graphviz_file):
-            underline = '-' * len(script)
-            with open(graphviz_file) as viz:
-                digraph = viz.read()
-            contents = [[script, underline, digraph]]
-            list_of_digraphs.extend(contents)
-    return list_of_digraphs
-
-
-def main(documentation_dir, schema):
-    schema_scripts = get_schema_scripts(schema)
-    graphviz_data = {}
-
-    for script in schema_scripts:
-        trace_data = set()
-        for locator_method in schema:
-            file_path = schema[locator_method]['file_path'].replace('\\', '/')
-            file_name = file_path.rsplit('/', 1)[1]
-            path = file_path.rsplit('/', 1)[0]
-            if script in schema[locator_method]['created_by']:
-                trace_data.add(('output', script, locator_method, path, file_name))
-            elif schema[locator_method]['created_by'] == []:
-                trace_data.add(('input', script, locator_method, path, file_name))
-            if script in schema[locator_method]['used_by']:
-                trace_data.add(('input', script, locator_method, path, file_name))
-        graphviz_data[script] = trace_data
-
+def create_graphviz_files(graphviz_data, documentation_dir):
     for script in graphviz_data:
         # creating new variable to preserve original trace_data used by other methods
         tracedata = sorted(graphviz_data[script])
@@ -96,6 +53,44 @@ def main(documentation_dir, schema):
         with open(os.path.join(documentation_dir, 'graphviz/%s.gv' % script), 'w') as f:
             f.write(digraph)
 
+
+def get_list_of_digraphs(documentation_dir, schema_scripts):
+    list_of_digraphs = []
+    for script in schema_scripts:
+
+        graphviz_file = os.path.join(documentation_dir, 'graphviz/%s.gv' % script)
+        if os.path.isfile(graphviz_file):
+            underline = '-' * len(script)
+            with open(graphviz_file) as viz:
+                digraph = viz.read()
+            contents = [[script, underline, digraph]]
+            list_of_digraphs.extend(contents)
+    return list_of_digraphs
+
+
+def main(_):
+    import cea
+    schema = cea.scripts.schemas()
+    schema_scripts = cea.scripts.get_schema_scripts(schema)
+    documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
+
+    graphviz_data = {}
+
+    for script in schema_scripts:
+        trace_data = set()
+        for locator_method in schema:
+            file_path = schema[locator_method]['file_path'].replace('\\', '/')
+            file_name = file_path.rsplit('/', 1)[1]
+            path = file_path.rsplit('/', 1)[0]
+            if script in schema[locator_method]['created_by']:
+                trace_data.add(('output', script, locator_method, path, file_name))
+            elif schema[locator_method]['created_by'] == []:
+                trace_data.add(('input', script, locator_method, path, file_name))
+            if script in schema[locator_method]['used_by']:
+                trace_data.add(('input', script, locator_method, path, file_name))
+        graphviz_data[script] = trace_data
+
+    create_graphviz_files(graphviz_data, documentation_dir)
     list_of_digraphs = get_list_of_digraphs(documentation_dir=documentation_dir, schema_scripts=schema_scripts)
 
     template_path = os.path.join(documentation_dir, 'templates/graphviz_template.rst')
@@ -107,3 +102,6 @@ def main(documentation_dir, schema):
         cea.write(output)
 
     print '~~~~~~~~ script-data-flow.rst updated ~~~~~~~~\n'
+
+if __name__ == '__main__':
+    main(cea.config.Configuration(), cea.scripts.schemas())
