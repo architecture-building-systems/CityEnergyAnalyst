@@ -10,7 +10,7 @@ This script performs the following:
 import cea.config
 import cea.inputlocator
 import os
-from subprocess import check_output
+import subprocess
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -23,14 +23,15 @@ __status__ = "Production"
 
 locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
 
+
 def preview_set():
     """
     This method performs a Gitdiff, storing the documentation relevant change files as a set.
     :return: preview_docs: set of documentation relevant files produced by Gitdiff
     """
-    os.chdir(os.path.dirname(cea.__file__))
+    cea_path = os.path.dirname(cea.__file__)
 
-    gitdiff = check_output('git diff --name-only', shell=True).split('\n')
+    gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path).split('\n')
     preview_docs = set()
     for altered_file in gitdiff:
         if altered_file.split('/')[0] == 'cea' or altered_file.split('/')[0] == 'docs':
@@ -66,11 +67,10 @@ def main(documentation_dir):
     # get all relevant change files
     preview_files = preview_set()
     # change the dir to docs
-    os.chdir(documentation_dir)
     # compare python modules to pre-existing documentation and rebuild
     rebuild_altered_module_documentation(preview_files)
     # run the make.bat from docs
-    os.system('make html')
+    subprocess.check_call(['make.bat', 'html'], cwd=documentation_dir)
 
     # next step ----- make the changed files automatically open for sphinx build checking
     # for doc in Preview:
