@@ -60,6 +60,8 @@ setup(name='cityenergyanalyst',
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
-          'console_scripts': ['cea=cea.interfaces.cli.cli:main', 'cea-config=cea.interfaces.cli.cea_config:main'],
+          'console_scripts': ['cea=cea.interfaces.cli.cli:main',
+                              'cea-config=cea.interfaces.cli.cea_config:main',
+                              'cea-doc=cea.interfaces.cli.cea_doc:main'],
       },
       )

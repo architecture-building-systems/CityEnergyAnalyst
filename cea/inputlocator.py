@@ -1296,11 +1296,11 @@ class InputLocator(object):
 
     def get_naming(self):
         """Returns plots/naming.csv"""
-        return os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming.csv')
+        return os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv')
 
     def get_docs_folder(self):
         """Returns docs"""
-        return os.path.join(os.path.dirname(cea.config.__file__), '..\\docs')
+        return os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
     # MPC by Concept Project
     def get_mpc_results_folder(self, output_folder="mpc-building"):
