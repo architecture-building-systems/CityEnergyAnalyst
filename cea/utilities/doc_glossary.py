@@ -7,12 +7,13 @@ Builds input_files.rst and output_files.rst using a jinja 2 template located in 
 """
 
 import os
+import cea.config
 import pandas
 from jinja2 import Template
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jack Hawthorne"]
+__credits__ = ["Jack Hawthorne", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
@@ -20,10 +21,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(documentation_dir, schema_variables, schema_data, naming_csv_file):
+
+def main(_):
+    schema = cea.scripts.schemas()
+    schema_variables = cea.scripts.get_schema_variables(schema)
+    documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
+
     # import naming_new.csv (to be replaced by naming.csv) and the relevant information from schema.yml
-    NAMING_FILE_PATH = naming_csv_file
-    naming = pandas.read_csv(NAMING_FILE_PATH, sep=',')
+    naming = pandas.read_csv(os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming_new.csv'), sep=',')
     naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
     naming = naming.set_index(['key'])
     naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
@@ -36,17 +41,17 @@ def main(documentation_dir, schema_variables, schema_data, naming_csv_file):
     details = set()
     glossary_data = set()
 
-    for locator_method in schema_data:
+    for locator_method in schema:
         for variable, LOCATOR_METHOD, script, file_name in schema_variables:
             if locator_method == LOCATOR_METHOD:
                 details.add((locator_method, file_name))
         # if the locator_method references an input file
         # it should have been created by no script (i.e. used_by = empty list)
-        if schema_data[locator_method]['created_by'] == []:
-            input_locator_methods.add((locator_method, '-' * len(locator_method),str(schema_data[locator_method]['used_by'])))
+        if schema[locator_method]['created_by'] == []:
+            input_locator_methods.add((locator_method, '-' * len(locator_method),str(schema[locator_method]['used_by'])))
         # otherwise the locator_method references an output file
         else:
-            output_locator_methods.add((locator_method, '-' * len(locator_method), str(schema_data[locator_method]['used_by'])))
+            output_locator_methods.add((locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
 
     input_locator_methods = sorted(input_locator_methods)
     output_locator_methods = sorted(output_locator_methods)
@@ -65,7 +70,7 @@ def main(documentation_dir, schema_variables, schema_data, naming_csv_file):
                     glossary_data.add(tuple(naming.loc[key].iloc[number-1]))
                     redundant_methods.add((locator_method, file_name))
 
-    print '             !!! Redundancy Found !!! \n' \
+    print '\n             !!! Redundancy Found !!! \n' \
           'The following inputlocator methods service similar files:'
     for locator_method, file_name in redundant_methods:
         print 'O   ' + locator_method + '   --->   ' + file_name

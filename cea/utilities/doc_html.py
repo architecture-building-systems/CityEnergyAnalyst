@@ -14,7 +14,7 @@ import subprocess
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jack Hawthorne"]
+__credits__ = ["Jack Hawthorne","Daren Thomas"]
 __license__ = "MIT"
 __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
