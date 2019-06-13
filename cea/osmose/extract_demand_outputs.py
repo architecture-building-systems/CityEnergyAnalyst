@@ -151,6 +151,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
         output_hcs_dict = {}
         output_hcs_copy = output_hcs.copy()
+        T_coil = 16
+        dT_coil = 0.2
         T_iehx = 16
         dT_iehx = 0.15
         T_ER0 = 16
@@ -167,7 +169,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
             input_T_df = pd.DataFrame()
             input_T_df['OAU_T_SA'] = output_hcs_dict[i]['T_OAU_offcoil']
             input_T_df['T_ext_C'] = reduced_tsd_df['T_ext']
-            input_T_df['T_dew_coil'] = 18  # 8 + 10
+            input_T_df['T_dew_coil'] = T_coil  # 8 + 10
+            T_coil = T_coil + dT_coil
             input_T_df['T_dew_iehx'] = T_iehx  #
             T_iehx = T_iehx + dT_iehx
             input_T_df['T_dew_er0'] = T_ER0
@@ -320,12 +323,12 @@ def get_start_t(case, timesteps, season):
     :return:
     """
     START_t_168_dict = {'ABU': {'Summer': 4464, 'Winter': 456, 'Autumn': 7008, 'Spring': 2424},
-                        'WTP': {'Summer': 5040},
+                        'WTP': {'Summer': 5064},
                         'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
                         'MDL': {'Wet': 5016, 'Dry': 8016}}
 
     START_t_24_dict = {'ABU': {'Summer': 4512, 'Winter': 456, 'Autumn': 7008, 'Spring': 2424},
-                       'WTP': {'Summer': 5040},
+                       'WTP': {'Summer': 5136},
                        'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
                        'MDL': {'Wet': 5016, 'Dry': 8016}}
     if timesteps == 168:
