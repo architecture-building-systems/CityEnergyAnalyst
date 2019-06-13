@@ -36,17 +36,15 @@ Pycharm
 
 In order to access and work on the source code of CEA from pycharm do:
 
-#. Make sure to have installed the development version of CEA (see step 2 of the installation guide.
+#. Make sure to have installed the development version of CEA (see step 2 of the installation guide).
 #. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-#. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__ OR your own favorite editor.
-#. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you installed City Energy Analyst).
+#. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__
+#. Open PyCharm from the start menu and open project CityEnergyAnalyst
+   (default location is ``C:\Users\<you>\Documents\CityEnergyAnalyst\CityEnergyAnalyst``).
 #. Open ``File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter``.
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add.
-#. Click ``Conda Environment`` from the left hand list and select existing environment.
-#. Point to the location of your conda environment. It should look something like
-   ``C:\Users\your_name\Miniconda2\envs\cea\python.exe`` or
-   ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``.
-   Where 'your_name' represents your user name in windows.
+#. Click ``System Interpreter`` from the left hand list and select existing environment.
+#. Point to ``C:\Users\<you>\Documents\CityEnergyAnalyst\Dependencies\Python\python.exe``
 #. Click apply changes.
 
 Grasshopper
@@ -61,7 +59,7 @@ In order to install the interface for Rhino/Grasshopper do:
 #. Download and install `Rhino 5.0 <https://www.rhino3d.com/download>`_ (requires a licence).
 #. Download and install the `Grasshopper for rhino 5.0 <https://www.grasshopper3d.com/page/download-1>`_.
 #. Follow the steps of the installation guide of the code base described above.
-#. In the CEA command line Type ``cea install-grasshopper`` and press ENTER.
+#. In the CEA Console type ``cea install-grasshopper`` and press ENTER.
 
 ArcGIS
 -------
@@ -78,5 +76,5 @@ In order to install the interface for ArcGIS do:
     * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
 #. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
 #. Follow the steps of the installation guide of the code base described above.
-#. In the CEA command line Type ``cea install-arcgis`` and press ENTER.
+#. In the CEA Console type ``cea install-arcgis`` and press ENTER.
 

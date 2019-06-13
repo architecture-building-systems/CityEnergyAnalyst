@@ -6,9 +6,7 @@
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-table.css') }}">
   <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-editable.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
-        integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
-        crossorigin=""/>
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/deckgl.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -70,8 +68,36 @@
                 <h2>{{ table_name }}</h2>
                 <div class="clearfix"></div>
               </div>
-              <div id="mapid" class="x_content" style="height: 500px;">
-
+              <div class="x_content">
+              <div id='layers-group'>
+                <span id="zone-cb" hidden>
+                <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
+                       onchange='toggleLayer(this);'>
+                  <label for='zone-toggle'>Zone</label>
+                </span>
+                <span id="district-cb" hidden>
+                <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
+                       onchange='toggleLayer(this);'>
+                  <label for='district-toggle'>District</label>
+                </span>
+                <span id="streets-cb" hidden>
+                <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
+                       onchange='toggleLayer(this);'>
+                  <label for='streets-toggle'>Streets</label>
+                </span>
+                <span id="dh_networks-cb" hidden>
+                <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
+                       onchange='toggleLayer(this);'>
+                  <label for='dh_networks-toggle'>DH Network</label>
+                </span>
+                <span id="dc_networks-cb" hidden>
+                <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
+                       onchange='toggleLayer(this);'>
+                  <label for='dc_networks-toggle'>DC Network</label>
+                </span>
+              </div>
+              <div id="tooltip"></div>
+              <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
               </div>
               <div class="x_content">
                 <table id="cea-table"
@@ -104,11 +130,13 @@
 
 {% block javascripts %}
   {{ super() }}
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <!-- optional if mapbox base map is needed -->
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
-  <!-- <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table-editable.js') }}"></script> -->
-  <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
-          integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
-          crossorigin=""></script>
   <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/map.js', version='0.1') }}"></script>
 {% endblock javascripts %}
