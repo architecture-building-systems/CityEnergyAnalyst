@@ -41,7 +41,7 @@ def preview_set():
     return preview_docs
 
 
-def rebuild_altered_module_documentation(preview_docs):
+def rebuild_altered_module_documentation(preview_docs, documentation_dir):
     """
 
     sphinx-apidoc skips any pre-existing module api documentation, even if changes have occurred.
@@ -56,21 +56,25 @@ def rebuild_altered_module_documentation(preview_docs):
             print 'Rebuilding %s api documentation' % doc
 
             rst_name = doc.rsplit('/', 1)[0].replace('/', '.')+'.rst'
-            if os.path.isfile('modules/%s' % rst_name):
-                os.system('del modules/%s' % rst_name)
-                if not os.path.isfile('../%s' % doc):
-                    os.system('del modules/%s' % rst_name)
-    os.system('make-api-doc')
+            rst_path = os.path.join(documentation_dir, 'modules', rst_name)
+            doc_path = os.path.join(documentation_dir, '..', doc)
+
+            if os.path.isfile(rst_path):
+                os.remove(rst_path)
+                if not os.path.isfile(doc_path):
+                    os.remove(rst_path)
+    subprocess.check_call(os.path.join(documentation_dir, 'make-api-doc.bat'))
 
 
-def main(documentation_dir):
+def main(_):
+    documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
     # get all relevant change files
     preview_files = preview_set()
     # change the dir to docs
     # compare python modules to pre-existing documentation and rebuild
-    rebuild_altered_module_documentation(preview_files)
+    rebuild_altered_module_documentation(preview_files, documentation_dir)
     # run the make.bat from docs
-    subprocess.check_call(['make.bat', 'html'], cwd=documentation_dir)
+    subprocess.check_call([os.path.join(documentation_dir, 'make.bat'), 'html'])
 
     # next step ----- make the changed files automatically open for sphinx build checking
     # for doc in Preview:

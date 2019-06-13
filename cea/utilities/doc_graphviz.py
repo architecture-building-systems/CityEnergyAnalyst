@@ -21,6 +21,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def get_schema_scripts(schema):
     schema_scripts = set()
     for locator_method in schema:
@@ -31,6 +32,7 @@ def get_schema_scripts(schema):
             for script in schema[locator_method]['created_by']:
                 schema_scripts.add(script)
     return schema_scripts
+
 
 def get_list_of_digraphs(documentation_dir, schema_scripts):
     list_of_digraphs = []

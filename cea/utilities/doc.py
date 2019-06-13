@@ -28,7 +28,7 @@ schema = cea.scripts.schemas()
 schema_variables = cea.scripts.get_schema_variables()
 
 
-def main():
+def main(config):
     update_naming_csv.main(
         naming_csv_file=locator.get_naming(),
         schema_variables=schema_variables
@@ -50,4 +50,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
