@@ -18,7 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
-				    'ephem',
+                    'ephem',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',
