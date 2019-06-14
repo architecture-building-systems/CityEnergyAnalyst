@@ -147,14 +147,14 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
-    LossCurvePlot(config.project, {'network-type': config.thermal_network.network_type,
+    LossCurvePlot(config.project, {'network-type': config.plots.network_type,
                                    'scenario-name': config.scenario_name,
-                                   'network-names': config.thermal_network.network_names},
+                                   'network-name': config.plots.network_name},
                   cache).plot(auto_open=True)
 
-    LossCurveRelativePlot(config.project, {'network-type': config.thermal_network.network_type,
+    LossCurveRelativePlot(config.project, {'network-type': config.plots.network_type,
                                            'scenario-name': config.scenario_name,
-                                           'network-names': config.thermal_network.network_names},
+                                           'network-name': config.plots.network_name},
                           cache).plot(auto_open=True)
 
 

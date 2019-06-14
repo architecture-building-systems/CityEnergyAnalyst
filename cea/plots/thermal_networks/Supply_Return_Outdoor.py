@@ -23,8 +23,9 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
 
     expected_parameters = {
         'scenario-name': 'general:scenario-name',
-        'network-type': 'thermal-network:network-type',
-        'network-names': 'thermal-network:network-names',
+        'network-type': 'plots:network-type',
+        'network-name': 'plots:network-name',
+        'plant-node': 'thermal-network:plant-node',
     }
 
     def __init__(self, project, parameters, cache):
@@ -84,15 +85,12 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
-    LossCurvePlot(config.project, {'network-type': config.thermal_network.network_type,
-                                   'scenario-name': config.scenario_name,
-                                   'network-names': config.thermal_network.network_names},
-                  cache).plot(auto_open=True)
+    SupplyReturnAmbientCurvePlot(config.project,
+                                 {'network-type': config.thermal_network.network_type,
+                                  'scenario-name': config.scenario_name,
+                                  'network-names': config.thermal_network.network_names},
+                                 cache).plot(auto_open=True)
 
-    LossCurveRelativePlot(config.project, {'network-type': config.thermal_network.network_type,
-                                           'scenario-name': config.scenario_name,
-                                           'network-names': config.thermal_network.network_names},
-                          cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
