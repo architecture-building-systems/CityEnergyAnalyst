@@ -629,19 +629,13 @@ class PlantNodeParameter(ChoiceParameter):
     typename = 'PlantNodeParameter'
 
     def initialize(self, parser):
-        network_names_fqn = parser.get(self.section.name, self.name + '.network-names')
+        network_name_fqn = parser.get(self.section.name, self.name + '.network-name')
         network_type_fqn = parser.get(self.section.name, self.name + '.network-type')
-        self.network_names_parameter = self.config.get_parameter(network_names_fqn)
-        self.network_type_parameter = self.config.get_parameter(self.network_type_fqn)
 
     def _choices(self):
         locator = cea.inputlocator.InputLocator(scenario=self.config.scenario)
         network_type = self.network_type_parameter.get()
-        network_names = self.network_names_parameter.get()
-        network_name = network_names[0] if network_names else ''
-
-
-
+        network_name = self.network_name_parameter.get()
 
 
 class ScenarioNameParameter(ChoiceParameter):

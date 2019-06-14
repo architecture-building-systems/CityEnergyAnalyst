@@ -32,14 +32,14 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
         'scenario-name': 'general:scenario-name',
-        'network-type': 'thermal-network:network-type',
-        'network-names': 'thermal-network:network-names',
+        'network-type': 'plots:network-type',
+        'network-name': 'plots:network-name',
     }
 
     def __init__(self, project, parameters, cache):
         super(ThermalNetworksPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', self.category_name)
-        self.network_name = parameters['network-names'][0] if parameters['network-names'] else ''  # FIXME: why is this plural?!
+        self.network_name = parameters['network-name'] if parameters['network-name'] else ''
         self.network_type = parameters['network-type']
 
     @property
