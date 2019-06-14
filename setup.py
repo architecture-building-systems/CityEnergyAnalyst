@@ -18,7 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
-				    'ephem',
+                    'ephem',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',
@@ -27,12 +27,13 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'numba',
                     'plotly',
                     'py4design==0.27',
-                    'pymc3',
+                    'pymc3==3.6',  # last version known to work with python2
                     'pysal',
                     'pyyaml',
                     'requests',
                     'seaborn',
                     'setuptools',
+                    'staticmap',
                     'sphinx',
                     'timezonefinder==3.4.2',  # last version to work with python2
                     'twine',
