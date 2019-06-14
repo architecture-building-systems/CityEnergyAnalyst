@@ -373,7 +373,7 @@ class Plots(object):
     def supply_return_ambient_curve(self, category):
         analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
         data = self.plant_temp_data_processed['Data']  # read in plant supply and return temperatures
-        data2 = self.ambient_temp  # read in abient temperatures
+        # read in abient temperatures
         plant_nodes = self.plant_temp_data_processed['Plants']  # plant node names
         for i in range(len(plant_nodes)):  # iterate through all plants
             title = "Supply and Return Temp. at Plant " + str(
@@ -385,7 +385,7 @@ class Plots(object):
                                                                  'Tamb_Tsup_Tret_curve_plant_' + str(
                 plant_nodes[i]), category)
             data_part.columns = analysis_fields
-            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path)
+            plot = supply_return_ambient_temp_plot(data_part, self.ambient_temp, analysis_fields, title, output_path)
         return plot
 
     def loss_duration_curve(self, category):
