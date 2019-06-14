@@ -25,7 +25,7 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
         'scenario-name': 'general:scenario-name',
         'network-type': 'plots:network-type',
         'network-name': 'plots:network-name',
-        'plant-node': 'thermal-network:plant-node',
+        'plant-node': 'plots:plant-node',
     }
 
     def __init__(self, project, parameters, cache):
