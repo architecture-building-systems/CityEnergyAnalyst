@@ -91,6 +91,10 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
+    FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "ALIAS find=$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe $$*"
     FileClose $0
 
@@ -100,6 +104,12 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line

@@ -574,8 +574,7 @@ class InputLocator(object):
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'zone.shp')
-        if os.path.isfile(shapefile_path):
-            self.check_cpg(shapefile_path)
+        self.check_cpg(shapefile_path)
         return shapefile_path
 
     def get_site_polygon(self):
@@ -592,8 +591,9 @@ class InputLocator(object):
 
     def check_cpg(self, shapefile_path):
         # ensures that the CPG file is the correct one
-        from cea.utilities.standardize_coordinates import ensure_cpg_file
-        ensure_cpg_file(shapefile_path)
+        if os.path.isfile(shapefile_path):
+            from cea.utilities.standardize_coordinates import ensure_cpg_file
+            ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""

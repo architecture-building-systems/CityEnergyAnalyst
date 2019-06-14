@@ -588,7 +588,7 @@ def read_schedules(use, archetypes_schedules):
     dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24], archetypes_schedules['Sunday_3'].values[:24]]
     month = archetypes_schedules['month'].values[:12]
 
-    if use == "INDUSTRIAL":
+    if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
         pro = [archetypes_schedules['Weekday_4'].values[:24], archetypes_schedules['Saturday_4'].values[:24], archetypes_schedules['Sunday_4'].values[:24]]
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
