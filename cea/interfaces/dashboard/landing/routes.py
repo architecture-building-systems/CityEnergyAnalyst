@@ -190,6 +190,9 @@ def route_create_scenario_save():
 def route_open_project():
     cea_config = current_app.cea_config
     project = cea_config.project
+    # Check if the path exists
+    if not os.path.exists(project):
+        project = ''
     return render_template('open_project.html', project=project)
 
 
