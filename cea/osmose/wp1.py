@@ -45,7 +45,10 @@ def main(case):
             t = time.localtime()
             print time.strftime("%H:%M", t)
             t0 = time.clock()
-            exec_osmose(tech, osmose_project_path)
+            result_path, run_folder = exec_osmose(tech, osmose_project_path)
+            # rename the files to keep track
+            case_short = case.split('_')[4]
+            os.rename(os.path.join(result_path,run_folder),os.path.join(result_path,case_short+'_'+building+'_'+str(timesteps)))
             time_elapsed = time.clock() - t0
             print round(time_elapsed,0), ' s for running: ', tech, '\n'
 
@@ -125,15 +128,15 @@ def exec_osmose(tech, osmose_project_path):
     run_folder = os.listdir(result_path)[len(os.listdir(result_path))-1]
     OutMsg_path = os.path.join(result_path,run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
     f = open(OutMsg_path, "r")
-    print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline()
+    print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline(), f.readline()
 
-    return 'ok', output.decode('utf-8')
+    return result_path, run_folder
 
 
 if __name__ == '__main__':
-    # cases = ['WTP_CBD_m_WP1_RET']
-    # cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
-    cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
+    cases= ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
+    # c ases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
+    # cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
     #cases = ['ABU_CBD_m_WP1_OFF']
     # cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
     # cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
