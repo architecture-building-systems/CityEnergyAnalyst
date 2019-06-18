@@ -12,10 +12,8 @@ ${StrRep}
 !define MUI_ICON "cea-icon.ico"
 
 
-# download CEA conda env from here (FIXME: update to a more sane download URL)
-# !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
-# !define CEA_ENV_FILENAME "cea.7z"
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.13/Dependencies.7z"
+# download CEA conda env from here
+!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.16/Dependencies.7z"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
