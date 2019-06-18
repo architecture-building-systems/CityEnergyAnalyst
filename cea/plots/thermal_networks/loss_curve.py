@@ -146,7 +146,7 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.PlotCache(config.project)
-    cache = cea.plots.cache.NullPlotCache()
+    # cache = cea.plots.cache.NullPlotCache()
     LossCurvePlot(config.project, {'network-type': config.plots.network_type,
                                    'scenario-name': config.scenario_name,
                                    'network-name': config.plots.network_name},
