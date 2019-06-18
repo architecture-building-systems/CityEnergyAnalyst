@@ -10,7 +10,7 @@ import os
 import time
 import hashlib
 import pandas as pd
-import cPickle
+import functools
 
 
 class NullPlotCache(object):
@@ -136,3 +136,12 @@ class MemoryPlotCache(PlotCache):
         key = self._cached_data_file(data_path, parameters)
         self._cache[key] = data
         return data
+
+
+def cached(producer):
+    """Calls to a function wrapped with this decorator are cached using ``self.cache.lookup``"""
+    @functools.wraps(producer)
+    def wrapper(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, producer.__name__),
+                                 plot=self, producer=lambda: producer(self))
+    return wrapper

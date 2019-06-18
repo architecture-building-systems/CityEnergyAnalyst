@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 import cea.inputlocator
+import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
 
 """
@@ -59,11 +60,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
 
     @property
+    @cea.plots.cache.cached
     def buildings_hourly(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'buildings_hourly'),
-                                 plot=self, producer=self._calculate_buildings_hourly)
-
-    def _calculate_buildings_hourly(self):
         thermal_demand_df = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name),
                                         index_col=0)
         thermal_demand_df.set_index(self.date)
@@ -71,11 +69,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return thermal_demand_df
 
     @property
+    @cea.plots.cache.cached
     def hourly_loads(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
-                                 plot=self, producer=self._calculate_hourly_loads)
-
-    def _calculate_hourly_loads(self):
         hourly_loads = pd.DataFrame(self.buildings_hourly.sum(axis=1))
         if self.network_type == 'DH':
             hourly_loads.columns = ['Q_dem_heat']
@@ -84,23 +79,16 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return hourly_loads
 
     @property
+    @cea.plots.cache.cached
     def date(self):
-        """A pandas.Series of datetime values to be used as an index into the hourly data"""
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'date'),
-                                 plot=self, producer=self._read_date_column_from_demand_results)
-
-    def _read_date_column_from_demand_results(self):
         """Read in the date information from demand results of the first building in the zone"""
         buildings = self.locator.get_zone_building_names()
         df_date = pd.read_csv(self.locator.get_demand_results_file(buildings[0]))
         return df_date["DATE"]
 
     @property
+    @cea.plots.cache.cached
     def hourly_pressure_loss(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_pressure_loss'),
-                                 plot=self, producer=self._calculate_hourly_pressure_loss)
-
-    def _calculate_hourly_pressure_loss(self):
         hourly_pressure_loss = pd.read_csv(
             self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
         hourly_pressure_loss = hourly_pressure_loss['pressure_loss_total_kW']
@@ -158,11 +146,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return relative_loss
 
     @property
+    @cea.plots.cache.cached
     def hourly_heat_loss(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_heat_loss'),
-                                 plot=self, producer=self._calculate_hourly_heat_loss)
-
-    def _calculate_hourly_heat_loss(self):
         hourly_heat_loss = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
         hourly_heat_loss = abs(hourly_heat_loss).sum(axis=1)  # aggregate heat losses of all edges
         return pd.DataFrame(hourly_heat_loss)
