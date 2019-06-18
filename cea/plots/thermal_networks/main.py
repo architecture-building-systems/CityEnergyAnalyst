@@ -300,17 +300,17 @@ class Plots(object):
                                 index_col=0)
         edge_diam = edge_data['D_int_m']  # diameters of each edge
         DN = edge_data['Pipe_DN_y']
-        d1 = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
+        Tnode_hourly_C = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
                                                                                          self.network_name)) - 273.15  # node supply temperature
-        d2 = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
+        Q_loss_kWh = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
                                                                             self.network_name))  # edge loss
-        d3 = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
+        P_loss_kWh = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                          self.network_name))
-        d4 = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
+        P_loss_substation_kWh = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
                                                                                 self.network_name))
         diam = pd.DataFrame(edge_diam)
-        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3,
-                'P_loss_substation_kWh': d4}
+        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': Tnode_hourly_C, 'Q_loss_kWh': Q_loss_kWh, 'P_loss_kWh': P_loss_kWh,
+                'P_loss_substation_kWh': P_loss_substation_kWh}
 
     def preprocessing_network_pumping(self):
         df_pumping_kW = pd.read_csv(

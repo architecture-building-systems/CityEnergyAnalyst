@@ -155,3 +155,14 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     def yearly_heat_loss(self):
         return abs(self.hourly_heat_loss.values).sum()
+
+    @property
+    @cea.plots.cache.cached
+    def P_loss_kWh(self):
+        return pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
+                                                                                           self.network_name))
+    @property
+    @cea.plots.cache.cached
+    def Q_loss_kWh(self):
+        return pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
+                                                                              self.network_name))  # edge loss
