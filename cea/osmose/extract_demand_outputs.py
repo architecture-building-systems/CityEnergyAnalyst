@@ -45,7 +45,12 @@ Rw_JperkgK = 461.5
 # T_offcoil # TODO: move to config or set as a function
 T_low_C = 8.1
 T_high_C = 14.1
+# T_high_C = 18.1
 T_interval = 0.65  # 0.5
+# T_low_C = 8.0
+# T_high_C = 19.0
+# T_interval = 1  # 0.5
+
 
 N_m_ve_max = 3
 
@@ -131,9 +136,12 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_hcs['M_dry_air'] = np.vectorize(calc_m_dry_air)(output_hcs['Vf_m3'], reduced_tsd_df['rho_air_int'],
                                                                reduced_tsd_df['x_int'])
         output_hcs['CO2_ve_min_ppm'] = CO2_ve_min_ppm
-        output_hcs['m_ve_min'] = np.vectorize(
+        output_hcs['m_ve_in_calc'] = np.vectorize(
             calc_m_exhaust_from_CO2)(output_hcs['CO2_ve_min_ppm'], output_hcs['CO2_ext_ppm'],
                                      output_hcs['v_CO2_in_infil_occupant_m3pers'], output_hcs['rho_air'])
+        output_hcs['m_ve_min'] = np.where(
+            (output_hcs['T_ext'] <= output_hcs['T_RA']) & (output_df1['Q_gain_occ_kWh'] <= 0.0), 0, output_hcs['m_ve_in_calc'])
+
         output_hcs['m_ve_max'] = output_hcs['m_ve_min'] * N_m_ve_max
         output_hcs['rh_max'] = RH_max
         output_hcs['rh_min'] = RH_min
@@ -198,6 +206,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # output_df = output_df.drop(['index'], axis=1)
         # output_df = output_df.drop(output_df.index[range(7)])
         Tamb_K = reduced_tsd_df['T_ext'].mean() + 273.15
+        Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
+        print 'wetbulb average: ', Twb_K
     return building_names, Tamb_K
 
 
