@@ -7,8 +7,51 @@ var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_network
 var extruded = false;
 var currentViewState;
 
-const lightMap = 'http://www.arcgis.com/sharing/rest/content/items/3e1a00aeae81496587988075fe529f71/resources/styles/root.json';
-const darkMap = 'https://www.arcgis.com/sharing/rest/content/items/fc3e102d1c464522820d7f957b19a467/resources/styles/root.json';
+const lightMap = {
+    "version": 8,
+    "sources": {
+        "osm-tiles": {
+            "type": "raster",
+            "tiles": [
+                "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "attribution": "Map data © OpenStreetMap contributors"
+        }
+    },
+    "layers": [{
+        "id": "osm-tiles",
+        "type": "raster",
+        "source": "osm-tiles",
+        "minzoom": 0,
+        "maxzoom": 22
+    }]
+};
+
+const darkMap = {
+    "version": 8,
+    "sources": {
+        "carto-tiles": {
+            "type": "raster",
+            "tiles": [
+                "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "attribution": "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL."
+        }
+    },
+    "layers": [{
+        "id": "carto-tiles",
+        "type": "raster",
+        "source": "carto-tiles",
+        "minzoom": 0,
+        "maxzoom": 22
+    }]
+};
 
 const jsonUrls = {
     'zone': '/inputs/geojson/zone',
@@ -31,28 +74,7 @@ $(document).ready(function() {
 
         deckgl = new DeckGL({
             container: 'mapid',
-            mapStyle: {
-                "version": 8,
-                "sources": {
-                    "osm-tiles": {
-                        "type": "raster",
-                        "tiles": [
-                            "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                            "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                            "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        ],
-                        "tileSize": 256,
-                        "attribution": "Map data © OpenStreetMap contributors"
-                    }
-                },
-                "layers": [{
-                    "id": "osm-tiles",
-                    "type": "raster",
-                    "source": "osm-tiles",
-                    "minzoom": 0,
-                    "maxzoom": 22
-                }]
-            },
+            mapStyle: lightMap,
             viewState: currentViewState,
             layers: layers,
             onViewStateChange: ({viewState}) => {
@@ -178,7 +200,7 @@ function setupButtons() {
     }
 
     deckgl.getMapboxMap().addControl(new dToggle(), 'top-left');
-//    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
+    deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
     deckgl.getMapboxMap().addControl(new recenterMap(), 'top-left');
 }
 
@@ -205,9 +227,9 @@ function toggle3D() {
 
 function toggleDark(dark) {
     if (dark) {
-        setMapStyle(darkMap);
+        deckgl.getMapboxMap().setStyle(darkMap);
     } else {
-        setMapStyle(lightMap);
+        deckgl.getMapboxMap().setStyle(lightMap);
     }
 }
 
@@ -398,22 +420,3 @@ function nodeFillColor(type) {
     }
 }
 
-function setMapStyle(styleUrl) {
-    fetch(styleUrl)
-       .then(response => {
-          return response.json()
-          .then(style => {
-             style.sources.esri = {
-                type: 'vector',
-                maxzoom: 15,
-                tiles: [
-                  style.sources.esri.url + '/' + 'tile/{z}/{y}/{x}.pbf'
-                ],
-                attribution: 'Map data © OpenStreetMap contributors, Map layer by Esri'
-             };
-             console.log(style);
-             deckgl.getMapboxMap().setStyle(style);
-
-          })
-       })
-}
