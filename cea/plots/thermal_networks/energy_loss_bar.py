@@ -24,8 +24,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     def __init__(self, project, parameters, cache):
         super(EnergyLossBarPlot, self).__init__(project, parameters, cache)
         self.network_args = [self.network_type, self.network_name]
-        self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
-                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
+        self.input_files = [(self.locator.get_thermal_network_layout_ploss_system_edges_file, self.network_args),
                             (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
 
     @property
@@ -87,6 +86,53 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         column_values = [load_names, total_perc, peak, median, anchors]
         table_df = pd.DataFrame({cn: cv for cn, cv in zip(column_names, column_values)}, columns=column_names)
         return table_df
+
+
+class EnergyLossBarSubstationPlot(EnergyLossBarPlot):
+    """Implement the heat and pressure losses plot"""
+    name = "Pumping requirements per building substation"
+
+    def __init__(self, project, parameters, cache):
+        super(EnergyLossBarSubstationPlot, self).__init__(project, parameters, cache)
+        self.network_args = [self.network_type, self.network_name]
+        self.input_files = [(self.locator.get_thermal_network_layout_ploss_system_edges_file, self.network_args),
+                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+
+    def calc_graph(self):
+        graph = []
+        # format demand values
+        P_loss_substation_kWh = self.P_loss_substation_kWh.fillna(value=0)
+        analysis_field = 'P_loss_kWh'
+        P_loss_substation_kWh = pd.DataFrame(P_loss_substation_kWh.sum(axis=0), columns=[analysis_field])
+        P_loss_substation_kWh = P_loss_substation_kWh.sort_values(by=analysis_field, ascending=False)
+        # iterate through data to plot
+        trace = go.Bar(x=P_loss_substation_kWh.index, y=P_loss_substation_kWh[analysis_field].values,
+                       name=NAMING[analysis_field],
+                       orientation='v',
+                       marker=dict(color=COLOR[analysis_field]))
+        graph.append(trace)
+
+        return graph
+
+    def calc_table(self):
+        analysis_field = 'P_loss_kWh'
+        P_loss_substation_kWh = self.P_loss_substation_kWh.fillna(value=0)
+        P_loss_substation_kWh = pd.DataFrame(P_loss_substation_kWh.sum(axis=0), columns=[analysis_field])  # format individual loss data
+        anchors = []
+        load_names = []
+        median = []
+        peak = []
+        total_perc = []
+        anchors.append(', '.join(calc_top_three_anchor_loads(P_loss_substation_kWh, analysis_field)))
+        load_names.append(NAMING[analysis_field])  # get correct name
+        median.append(round(P_loss_substation_kWh[analysis_field].median(), 2))  # calculate median
+        peak.append(round(P_loss_substation_kWh[analysis_field].abs().max(), 2))  # calculate peak value
+        total = round(P_loss_substation_kWh[analysis_field].sum(), 2)  # calculate total for this building
+        column_names = ['Loss Name', 'Total [kWh/yr]', 'Peak [kW]', 'Median [kWh]', 'Highest 3 Losses']
+        column_values = [load_names, total, peak, median, anchors]
+        table_df = pd.DataFrame({cn: cv for cn, cv in zip(column_names, column_values)}, columns=column_names)
+        return table_df
+
 
 def energy_loss_bar_plot(data_frame, analysis_fields, title, output_path):
     if 'substation' in output_path:
@@ -208,6 +254,10 @@ def main():
                                        'scenario-name': config.scenario_name,
                                        'network-name': config.plots.network_name},
                       cache).plot(auto_open=True)
+    EnergyLossBarSubstationPlot(config.project, {'network-type': config.plots.network_type,
+                                                 'scenario-name': config.scenario_name,
+                                                 'network-name': config.plots.network_name},
+                                cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
