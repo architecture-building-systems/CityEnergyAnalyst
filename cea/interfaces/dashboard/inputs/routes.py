@@ -168,7 +168,11 @@ def route_table_post(db):
     return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
 
 def df_to_json(file_location):
-    table_df = geopandas.GeoDataFrame.from_file(file_location)
-    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-    table_df = table_df.to_crs(get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
-    return json.loads(table_df.to_json())
+    try:
+        table_df = geopandas.GeoDataFrame.from_file(file_location)
+        from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+        table_df = table_df.to_crs(get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
+        return json.loads(table_df.to_json())
+    except IOError as e:
+        print(e)
+        abort(404, 'Input file not found: %s' % file_location)
