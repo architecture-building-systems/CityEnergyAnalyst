@@ -54,8 +54,6 @@ const darkMap = {
 };
 
 const jsonUrls = {
-    'zone': '/inputs/geojson/zone',
-    'district': '/inputs/geojson/district',
     'streets': '/inputs/geojson/others/streets',
     'dh_networks': '/inputs/geojson/networks/DH',
     'dc_networks': '/inputs/geojson/networks/DC'
@@ -63,14 +61,19 @@ const jsonUrls = {
 
 $(document).ready(function() {
     // Get zone file first. Will not create map if zone file does not exist
-    $.getJSON(jsonUrls['zone'], function (json) {
-        console.log(json);
-        jsonStore['zone'] = json;
+    if (geojsons['zone']) {
         createLayer('zone');
         $('#zone-cb').prop('hidden', false);
-        currentViewState = {latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
-            longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2,
-            zoom: 16, bearing: 0, pitch: 0};
+        currentViewState = {
+            latitude: (geojsons['zone'].bbox[1] + geojsons['zone'].bbox[3]) / 2,
+            longitude: (geojsons['zone'].bbox[0] + geojsons['zone'].bbox[2]) / 2,
+            zoom: 16, bearing: 0, pitch: 0
+        };
+
+        if (geojsons['district']) {
+            createLayer('district');
+            $('#district-cb').prop('hidden', false);
+        }
 
         deckgl = new DeckGL({
             container: 'mapid',
@@ -103,10 +106,7 @@ $(document).ready(function() {
         });
 
         setupButtons();
-
-    }).fail(function () {
-        console.log("Get zone failed.");
-    });
+    }
 });
 
 function setupButtons() {
@@ -182,8 +182,8 @@ function setupButtons() {
         this._btn.setAttribute("title", "Center to location");
         this._btn.onclick = function() {
             deckgl.setProps({ viewState:{...currentViewState, zoom: 16,
-            latitude: (jsonStore['zone'].bbox[1] + jsonStore['zone'].bbox[3]) / 2,
-            longitude: (jsonStore['zone'].bbox[0] + jsonStore['zone'].bbox[2]) / 2, transitionDuration: 300} });
+            latitude: (geojsons['zone'].bbox[1] + geojsons['zone'].bbox[3]) / 2,
+            longitude: (geojsons['zone'].bbox[0] + geojsons['zone'].bbox[2]) / 2, transitionDuration: 300} });
         };
 
         this._container = document.createElement("div");
@@ -267,7 +267,7 @@ function createDistrictLayer(options={}) {
 
     layers.splice(4, 0, new GeoJsonLayer({
         id: 'district',
-        data: jsonStore['district'],
+        data: geojsons['district'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
@@ -291,7 +291,7 @@ function createZoneLayer(options={}) {
 
     layers.splice(3, 0, new GeoJsonLayer({
         id: 'zone',
-        data: jsonStore['zone'],
+        data: geojsons['zone'],
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
