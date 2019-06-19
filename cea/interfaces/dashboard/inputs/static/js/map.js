@@ -92,6 +92,12 @@ $(document).ready(function() {
             controller: {dragRotate: false}
         });
 
+        setupButtons();
+        $('[data-toggle="tooltip"]').tooltip({
+            trigger : 'hover',
+            container: 'body'
+        });
+
         // Try to get every other input
         $.each(jsonUrls, function (key, value) {
             $.getJSON(value, function (json) {
@@ -104,8 +110,6 @@ $(document).ready(function() {
                 console.log(`Get ${key} failed.`);
             });
         });
-
-        setupButtons();
     }
 });
 
@@ -116,10 +120,11 @@ function setupButtons() {
         let _this = this;
 
         this._btn = document.createElement("button");
-        this._btn.id = "3d-button"
+        this._btn.id = "3d-button";
         this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
         this._btn.type = "button";
         this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("data-placement", "right");
         this._btn.setAttribute("title", "Toggle 3D");
         this._btn.onclick = toggle3D;
 
@@ -145,15 +150,16 @@ function setupButtons() {
         let _this = this;
 
         this._btn = document.createElement("button");
-        this._btn.id = "dark-button"
+        this._btn.id = "dark-button";
         this._btn.className = "mapboxgl-ctrl-icon";
         this._btn.type = "button";
         this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("data-placement", "right");
         this._btn.setAttribute("title", "Toggle Dark map");
         this._btn.onclick = function() {
             this._dark = !this._dark;
             toggleDark(this._dark);
-        }
+        };
         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
 
         this._container = document.createElement("div");
@@ -175,10 +181,11 @@ function setupButtons() {
         let _this = this;
 
         this._btn = document.createElement("button");
-        this._btn.id = "recenter-button"
+        this._btn.id = "recenter-button";
         this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
         this._btn.type = "button";
         this._btn.setAttribute("data-toggle", "tooltip");
+        this._btn.setAttribute("data-placement", "right");
         this._btn.setAttribute("title", "Center to location");
         this._btn.onclick = function() {
             deckgl.setProps({ viewState:{...currentViewState, zoom: 16,
