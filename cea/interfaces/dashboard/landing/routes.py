@@ -215,7 +215,7 @@ def route_open_project_scenario(scenario):
     assert scenario in get_scenarios(cea_config.project)
     cea_config.scenario_name = scenario
     cea_config.save()
-    return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+    return redirect(url_for('inputs_blueprint.route_building_properties'))
 
 
 @blueprint.route('/get-image/<scenario>')
