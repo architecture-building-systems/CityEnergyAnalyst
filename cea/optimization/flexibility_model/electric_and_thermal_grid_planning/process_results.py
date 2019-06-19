@@ -24,17 +24,15 @@ def initial_network(config, locator):
     """
     Initiate data of main problem
 
-    :param None
-    :type Nonetype
+    :param config:
+    :param locator:
+    :returns:
+        - **points_on_line** : information about every node in study case
+        - **tranches** : tranches
+        - **dict_length** : dictionary containing lengths
+        - **dict_path** : dictionary containing paths
+    :rtype: geodf, geodf, dict, dict
 
-    :returns: points_on_line: information about every node in study case
-    :rtype: GeoDataFrame
-    :returns: tranches
-    :rtype: GeoDataFrame
-    :returns: dict_length
-    :rtype: dictionary
-    :returns: dict_path: list of edges between two nodes
-    :rtype: dictionary
     """
 
     input_buildings_shp = locator.get_electric_substation_input_location()
@@ -56,12 +54,12 @@ def find_gridpath(m, dict_path):
     Find path of edges on STREET network between ELECTRIC consumer and plant node
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param dict_path: list of edges between two nodes
-    :type dictionary
-
+    :type dict_path: dictionary
     :returns: set_tranches: tuples with unique edges (startnode, endnode)
     :rtype: set(int, int)
+
     """
 
     var_x = m.var_x.values()
@@ -91,12 +89,12 @@ def set_to_list_geo(set_tranches, points_on_line):
     Convert set of (startnode, endnode) to a list of coordinate data of each node
 
     :param set_tranches: tuples with unique edges (startnode, endnode)
-    :type set(int, int)
+    :type set_tranches: set(int, int)
     :param points_on_line: information about every node in study case
-    :type GeoDataFrame
-
+    :type points_on_line: GeoDataFrame
     :returns: list_geotranch: tuples with geo data of startnode and endnode
     :rtype: list(float, float)
+
     """
 
     list_geotranch = []
@@ -122,16 +120,17 @@ def find_thermal_network_path(m, points_on_line, set_grid, dict_length, dict_con
     Find path of edges on GRID network between THERMAL consumer and plant node
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param points_on_line: information about every node in study case
-    :type GeoDataFrame
+    :type points_on_line: GeoDataFrame
     :param set_grid: tuples with unique edges (startnode, endnode)
-    :type set(int, int)
+    :type set_grid: set(int, int)
     :param dict_length: length on street network between every node
-    :type dictionary
-
-    :returns: set_thermal_network: tuples with unique edges (startnode, endnode)    :
+    :type dict_length: dictionary
+    :returns:
+        - **set_thermal_network**: tuples with unique edges (startnode, endnode)    :
     :rtype: set(int, int)
+
     """
 
     list_connected = []
@@ -181,14 +180,17 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network, conf
     Connect centroid of every THERMAL consumer building to thermal network
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param points_on_line: information about every node in study case
-    :type GeoDataFrame
-    :param: list_geo_thermal_network: tuples with geo data of startnode and endnode
-    :type: list(float, float)
-
-    :returns: list_geo_thermal_network
+    :type points_on_line: GeoDataFrame
+    :param list_geo_thermal_network: tuples with geo data of startnode and endnode
+    :type list_geo_thermal_network: list(float, float)
+    :param config:
+    :param locator:
+    :param dict_connected:
+    :return: list_geo_thermal_network
     :rtype: list(float, float)
+
     """
 
     input_buildings_shp = locator.get_electric_substation_input_location()
@@ -219,13 +221,13 @@ def write_coordinates_to_shp_file(config, locator, list_geotranch, name):
     """
     Write grid.shp and thermal_network.shp on base of list of coordinate data
 
-    :param: list_geotranch: tuples with geo data of startnode and endnode
-    :type: list(float, float)
-    :param: name: filename of shp file
-    :type: string
-
-    :returns: shp file stored in  \\inputs\\networks\\
+    :param list_geotranch: tuples with geo data of startnode and endnode
+    :type list_geotranch: list(float, float)
+    :param name: filename of shp file
+    :type name: string
+    :return: shp file stored in \\inputs\\networks\\
     :rtype: Nonetype
+
     """
 
     input_street_shp = locator.get_street_network()
@@ -248,10 +250,13 @@ def electrical_network_layout_to_shapefile(m, electrical_grid_file_name, thermal
     network are written as shp files to folder \\inputs\\networks\\
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
+    :param electrical_grid_file_name:
+    :param thermal_network_file_name:
+    :param config:
+    :param locator:
+    :param dict_connected:
 
-    :returns: None
-    :rtype: Nonetype
     """
 
     #CREATE THE ELECTRICAL NETWORK FILE

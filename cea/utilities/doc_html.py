@@ -27,10 +27,8 @@ locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
 def preview_files(documentation_dir):
     """
     This method performs a Gitdiff, storing the documentation relevant change files as a set.
-    :return: preview_docs: set of documentation relevant files produced by Gitdiff
     """
     cea_path = os.path.dirname(cea.__file__)
-
 
     gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path, stderr=open(os.devnull, 'wb')).split('\n')
 
@@ -41,16 +39,17 @@ def preview_files(documentation_dir):
     file_types = ['py', 'rst']
 
     for altered_file in gitdiff:
-        dir_name = os.path.dirname(os.path.split(altered_file)[0])
+        dir_name = altered_file.split('/')[0]
         file_type = altered_file.split('.')[-1]
         if dir_name in dir_list and file_type in file_types:
             preview_docs.add(altered_file)
 
     for doc in preview_docs:
+        print doc
         if os.path.basename(os.path.dirname(doc)) != 'modules' and doc.rsplit('.')[-1] == 'py':
             preview_html = os.path.dirname(doc).replace('/', '.')+'.html'
             os.system(os.path.join(os.path.abspath(documentation_dir), '_build', 'html', 'modules', preview_html))
-        elif os.path.dirname(doc) == 'docs':
+        if os.path.dirname(doc) == 'docs':
             preview_html = os.path.basename(doc).rsplit('.', 1)[0] + '.html'
             os.system(os.path.join(documentation_dir, '_build', 'html', preview_html))
 
@@ -84,10 +83,10 @@ def main(_):
     documentation_dir = os.path.join(os.path.dirname(os.path.dirname(cea.config.__file__)), 'docs')
 
     # compare python modules to pre-existing documentation and rebuild
-    rebuild_altered_module_documentation(documentation_dir)
+    # rebuild_altered_module_documentation(documentation_dir)
 
     # run the make.bat from docs
-    subprocess.check_call([os.path.join(documentation_dir, 'make.bat'), 'html'])
+    # subprocess.check_call([os.path.join(documentation_dir, 'make.bat'), 'html'])
 
     # preview uncommitted module and documentation htmls
     preview_files(documentation_dir)
