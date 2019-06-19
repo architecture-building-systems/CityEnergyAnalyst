@@ -287,7 +287,7 @@ function createDistrictLayer(options={}) {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties,
+        onClick: showProperties,
 
         ...options
     }));
@@ -311,7 +311,7 @@ function createZoneLayer(options={}) {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties,
+        onClick: showProperties,
 
         ...options
     }));
@@ -415,6 +415,27 @@ function editProperties({object}) {
     var pk = object.properties[pk_field];
     var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
     edit_row(row);
+}
+
+function showProperties({object, layer}) {
+    console.log(object.properties);
+    var name = object['properties']['Name'];
+    selectedBuilding = name;
+    $( "#building-properties" ).empty();
+    $('#building-name').empty().append(`<h3>Building Properties: ${name}</h3>`);
+
+    $.each(tables[layer.id][name], function (k, v) {
+                $('#building-properties').append(`<div>${k}:${v}</div>`);
+            });
+    $.each(tables, function (property, buildings) {
+        if (buildings[name] && property !== layer.id) {
+            $('#building-properties').append(`<h3>${property}:</h3>`);
+            $.each(buildings[name], function (k, v) {
+                $('#building-properties').append(`<div>${k}:${v}</div>`);
+            });
+        }
+    });
+
 }
 
 function nodeFillColor(type) {
