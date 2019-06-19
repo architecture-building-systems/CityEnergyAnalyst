@@ -192,7 +192,6 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return df_pumping_kW['pressure_loss_substations_kW']
 
     @property
-    @cea.plots.cache.cached
     def network_pipe_length(self):
         df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))
         total_pipe_length = df['pipe length'].sum()
