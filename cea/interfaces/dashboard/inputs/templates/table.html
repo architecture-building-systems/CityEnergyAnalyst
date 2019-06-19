@@ -129,6 +129,10 @@
 {% endblock content %}
 
 {% block javascripts %}
+  <script>
+    var tables = {{ tables|tojson|safe }}
+    var geojsons = {{ geojsons|tojson|safe }}
+  </script>
   {{ super() }}
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <!-- optional if mapbox base map is needed -->
