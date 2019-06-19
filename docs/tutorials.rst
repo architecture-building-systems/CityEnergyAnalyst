@@ -38,8 +38,8 @@ These are a collection of tutorials related to the specific use of one or more o
 #. :doc:`how-to-run-CEA-optimization`
 
 
-For developers
---------------
+Developers
+----------
 
 These are a collection of tutorials we consider essential for any new developer of CEA. We suggest to take them in order for a better learning experience.
 
@@ -50,7 +50,15 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-name-variables`
 #. :doc:`how-to-add-a-new-script-to-the-cea`
 #. :doc:`how-to-test-the-cea`
-#. :doc:`how-to-document-cea`
 #. :doc:`how-to-set-up-nsis`
 #. :doc:`how-to-create-a-new-release`
 #. :doc:`how-to-publish-cea`
+
+Metadata and Documentation
+--------------------------
+
+These are a collection of tutorials detailing the acquisition of scenario specific metadata and generalized CEA schema as well as how to use the automated documentation tools.
+
+#. :doc:`how-trace-inputlocator-works`
+#. :doc:`how-to-document-cea`
+
