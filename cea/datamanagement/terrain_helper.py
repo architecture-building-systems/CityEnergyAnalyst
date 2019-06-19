@@ -80,6 +80,14 @@ def terrain_elevation_extractor(locator, config):
     x_max = bounding_box_district_file[2] + extra_border
     y_max = bounding_box_district_file[3] + extra_border
 
+    # make sure output is a whole number when min-max is divided by grid size
+    x_extra = grid_size - ((x_max - x_min) % grid_size)/2
+    y_extra = grid_size - ((y_max - y_min) % grid_size)/2
+    x_min -= x_extra
+    y_min -= y_extra
+    x_max += x_extra
+    y_max += y_extra
+
     ##TODO: get the elevation from satellite data. Open-elevation was working, but the project is dying.
     # if elevation is None:
     #     print('extracting elevation from satellite data, this needs connection to the internet')
