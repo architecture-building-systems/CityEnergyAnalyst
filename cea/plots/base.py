@@ -137,6 +137,9 @@ class PlotBase(object):
             f.write(plot_html)
 
         print("Plotted '%s' to %s" % (self.name, self.output_path))
+        if auto_open:
+            import webbrowser
+            webbrowser.open(self.output_path)
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""

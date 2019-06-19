@@ -171,3 +171,29 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     def P_loss_substation_kWh(self):
         return pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
                                                                                   self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def Pumping_allpipes_kWh(self):
+        # FIXME: why the unit conversion?!
+        df_pumping_kW = pd.read_csv(
+            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+        df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
+        df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
+        df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
+        return df_pumping_allpipes_kW
+
+    @property
+    @cea.plots.cache.cached
+    def Pumping_substations_kWh(self):
+        # FIXME: why the unit conversion?!
+        df_pumping_kW = pd.read_csv(
+            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+        return df_pumping_kW['pressure_loss_substations_kW']
+
+    @property
+    @cea.plots.cache.cached
+    def network_pipe_length(self):
+        df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))
+        total_pipe_length = df['pipe length'].sum()
+        return total_pipe_length
