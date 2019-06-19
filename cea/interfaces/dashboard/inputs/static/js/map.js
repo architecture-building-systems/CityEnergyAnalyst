@@ -376,7 +376,7 @@ function createDCNetworksLayer(options={}) {
 }
 
 function updateTooltip({x, y, object, layer}) {
-    const tooltip = document.getElementById('tooltip');
+    const tooltip = document.getElementById('map-tooltip');
 
     if (object) {
         tooltip.style.top = `${y}px`;
