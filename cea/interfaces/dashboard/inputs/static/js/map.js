@@ -6,6 +6,7 @@ var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_network
     new GeoJsonLayer({id:'dc_networks'}), new GeoJsonLayer({id:'zone'}), new GeoJsonLayer({id:'district'})];
 var extruded = false;
 var currentViewState;
+var selectedBuilding = '';
 
 const lightMap = {
     "version": 8,
@@ -212,7 +213,7 @@ function setupButtons() {
 }
 
 function toggle3D() {
-    extruded = !extruded
+    extruded = !extruded;
     var pitch;
     var bearing;
     if (extruded) {
@@ -281,10 +282,14 @@ function createDistrictLayer(options={}) {
         filled: true,
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: [255, 0, 0],
+        getFillColor: f => buildingColor([255, 0, 0], f.properties['Name']),
+        updateTriggers: {
+            getFillColor: {selectedBuilding}
+        },
 
         pickable: true,
         autoHighlight: true,
+        highlightColor: [255, 255, 0, 128],
 
         onHover: updateTooltip,
         onClick: showProperties,
@@ -305,10 +310,14 @@ function createZoneLayer(options={}) {
         filled: true,
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: [0, 0, 255],
+        getFillColor: f => buildingColor([0, 0, 255], f.properties['Name']),
+        updateTriggers: {
+            getFillColor: {selectedBuilding}
+        },
 
         pickable: true,
         autoHighlight: true,
+        highlightColor: [255, 255, 0, 128],
 
         onHover: updateTooltip,
         onClick: showProperties,
@@ -421,6 +430,9 @@ function showProperties({object, layer}) {
     console.log(object.properties);
     var name = object['properties']['Name'];
     selectedBuilding = name;
+    createLayer('zone');
+    createLayer('district');
+    deckgl.setProps({ layers: [...layers] });
     $( "#building-properties" ).empty();
     $('#building-name').empty().append(`<h3>Building Properties: ${name}</h3>`);
 
@@ -448,3 +460,10 @@ function nodeFillColor(type) {
     }
 }
 
+function buildingColor(color, name) {
+    if (name === selectedBuilding) {
+        return [255, 255, 0, 255]
+    } else {
+        return color
+    }
+}
