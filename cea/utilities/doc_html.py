@@ -83,10 +83,10 @@ def main(_):
     documentation_dir = os.path.join(os.path.dirname(os.path.dirname(cea.config.__file__)), 'docs')
 
     # compare python modules to pre-existing documentation and rebuild
-    # rebuild_altered_module_documentation(documentation_dir)
+    rebuild_altered_module_documentation(documentation_dir)
 
     # run the make.bat from docs
-    # subprocess.check_call([os.path.join(documentation_dir, 'make.bat'), 'html'])
+    subprocess.check_call([os.path.join(documentation_dir, 'make.bat'), 'html'])
 
     # preview uncommitted module and documentation htmls
     preview_files(documentation_dir)
