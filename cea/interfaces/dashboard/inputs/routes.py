@@ -125,6 +125,33 @@ def route_geojson_streets():
     return jsonify(df_to_json(location))
 
 
+@blueprint.route('/building-properties')
+def route_building_properties():
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    tables = {}
+    geojsons = {}
+    for db in INPUTS:
+        db_info = INPUTS[db]
+        location = getattr(locator, db_info['location'])()
+        try:
+            if db_info['type'] == 'shp':
+                table_df = geopandas.GeoDataFrame.from_file(location)
+                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                geojsons[db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
+
+                import pandas
+                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                tables[db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+            else:
+                assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
+                table_df = cea.utilities.dbf.dbf_to_dataframe(location)
+                tables[db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+        except IOError as e:
+            print(e)
+            tables['db'] = ''
+    return render_template('table.html', tables=tables, geojsons=geojsons)
+
+
 @blueprint.route('/table/<db>', methods=['GET'])
 def route_table_get(db):
     if not db in INPUTS:
