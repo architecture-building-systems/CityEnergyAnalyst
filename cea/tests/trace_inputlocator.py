@@ -12,6 +12,7 @@ import pandas
 import yaml
 from dateutil.parser import parse
 
+
 def create_trace_function(results_set):
     """results_set is a set of tuples (locator, filename)"""
     def trace_function(frame, event, arg):
@@ -90,14 +91,29 @@ def meta_to_yaml(trace_data, meta_output_file):
 
     locator_meta = {}
 
+    schema = {
+        'xls': get_xls_schema,
+        'xlsx': get_xls_schema,
+        'tif': get_tif_schema,
+        'tiff': get_tif_schema,
+        'csv': get_csv_schema,
+        'json': get_json_schema,
+        'epw': get_epw_schema,
+        'dbf': get_dbf_schema,
+        'shp': get_shp_schema
+    }
+
     for direction, script, locator_method, path, files in trace_data:
         filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
         file_type = os.path.basename(files).split('.')[1]
+
+
+
         if os.path.isfile(filename):
             locator_meta[locator_method] = {}
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
-            locator_meta[locator_method]['schema'] = get_schema(r'%s' % filename, file_type)
+            locator_meta[locator_method]['schema'] = schema['%s' % file_type](filename)
             locator_meta[locator_method]['file_path'] = filename
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
@@ -181,105 +197,106 @@ def get_meta(df_series, attribute_name):
     return meta
 
 
-def get_schema(filename, file_type):
+def get_xls_schema(filename):
+    db = pandas.read_excel(filename, sheet_name=None)
     schema = {}
-    if file_type == 'xlsx' or file_type == 'xls':
-        db = pandas.read_excel(filename, sheet_name=None)
-        for sheet in db:
-            meta = {}
-            nested_df = db[sheet]
-            # if xls seems to have row attributes
-            if 'Unnamed: 1' in db[sheet].keys():
-                nested_df = db[sheet].T
-                # filter the goddamn nans
-                new_cols = []
-                for col in nested_df.columns:
-                    if col == col:
-                        new_cols.append(col)
-                # change index to numbered
-                nested_df.index = range(len(nested_df))
-                # select only non-nan columns
-                nested_df = nested_df[new_cols]
-            for attr in nested_df:
-                meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr)
-            schema[sheet.encode('ascii', 'ignore')] = meta
-        return schema
+    for sheet in db:
+        meta = {}
+        nested_df = db[sheet]
+        # if xls seems to have row attributes
+        if 'Unnamed: 1' in db[sheet].keys():
+            nested_df = db[sheet].T
+            # filter the goddamn nans
+            new_cols = []
+            for col in nested_df.columns:
+                if col == col:
+                    new_cols.append(col)
+            # change index to numbered
+            nested_df.index = range(len(nested_df))
+            # select only non-nan columns
+            nested_df = nested_df[new_cols]
+        for attr in nested_df:
+            meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr)
+        schema[sheet.encode('ascii', 'ignore')] = meta
+    return schema
 
-    elif file_type == 'tif' or file_type == 'tiff':
-        schema['raster_value'] = {
-            'sample_data': 1.0,
-            'types_found': [float]
-        }
-        return schema
 
-    elif file_type == 'csv':
-        db = pandas.read_csv(filename)
-        for attr in db:
-            attr = replace_repetitive_attr(attr)
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
-        return schema
+def get_tif_schema(filename):
+    schema = {}
+    schema['raster_value'] = {
+        'sample_data': 1.0,
+        'types_found': [float]
+    }
+    return schema
 
-    elif file_type == 'json':
-        with open(filename, 'r') as f:
-            import json
-            db = json.load(f)
-        for attr in db:
-            attr = replace_repetitive_attr(attr)
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
-        return schema
 
-    elif file_type == 'epw':
-        epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
-                      'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
-                      'dewpoint_C (index = 7)',
-                      'relhum_percent (index = 8)', 'atmos_Pa (index = 9)', 'exthorrad_Whm2 (index = 10)',
-                      'extdirrad_Whm2 (index = 11)', 'horirsky_Whm2 (index = 12)',
-                      'glohorrad_Whm2 (index = 13)',
-                      'dirnorrad_Whm2 (index = 14)', 'difhorrad_Whm2 (index = 15)',
-                      'glohorillum_lux (index = 16)',
-                      'dirnorillum_lux (index = 17)', 'difhorillum_lux (index = 18)',
-                      'zenlum_lux (index = 19)',
-                      'winddir_deg (index = 20)', 'windspd_ms (index = 21)',
-                      'totskycvr_tenths (index = 22)',
-                      'opaqskycvr_tenths (index = 23)', 'visibility_km (index = 24)',
-                      'ceiling_hgt_m (index = 25)',
-                      'presweathobs (index = 26)', 'presweathcodes (index = 27)',
-                      'precip_wtr_mm (index = 28)',
-                      'aerosol_opt_thousandths (index = 29)', 'snowdepth_cm (index = 30)',
-                      'days_last_snow (index = 31)', 'Albedo (index = 32)',
-                      'liq_precip_depth_mm (index = 33)',
-                      'liq_precip_rate_Hour (index = 34)']
+def get_csv_schema(filename):
+    db = pandas.read_csv(filename)
+    schema = {}
+    for attr in db:
+        attr = replace_repetitive_attr(attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+    return schema
 
-        db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
-        for attr in db:
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
-        return schema
+def get_json_schema(filename):
+    with open(filename, 'r') as f:
+        import json
+        db = json.load(f)
+    schema = {}
+    for attr in db:
+        attr = replace_repetitive_attr(attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+    return schema
 
-    elif file_type == 'dbf':
-        import pysal
-        db = pysal.open(filename, 'r')
-        for attr in db.header:
-            schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
-        return schema
+def get_epw_schema(filename):
+    epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
+                  'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
+                  'dewpoint_C (index = 7)',
+                  'relhum_percent (index = 8)', 'atmos_Pa (index = 9)', 'exthorrad_Whm2 (index = 10)',
+                  'extdirrad_Whm2 (index = 11)', 'horirsky_Whm2 (index = 12)',
+                  'glohorrad_Whm2 (index = 13)',
+                  'dirnorrad_Whm2 (index = 14)', 'difhorrad_Whm2 (index = 15)',
+                  'glohorillum_lux (index = 16)',
+                  'dirnorillum_lux (index = 17)', 'difhorillum_lux (index = 18)',
+                  'zenlum_lux (index = 19)',
+                  'winddir_deg (index = 20)', 'windspd_ms (index = 21)',
+                  'totskycvr_tenths (index = 22)',
+                  'opaqskycvr_tenths (index = 23)', 'visibility_km (index = 24)',
+                  'ceiling_hgt_m (index = 25)',
+                  'presweathobs (index = 26)', 'presweathcodes (index = 27)',
+                  'precip_wtr_mm (index = 28)',
+                  'aerosol_opt_thousandths (index = 29)', 'snowdepth_cm (index = 30)',
+                  'days_last_snow (index = 31)', 'Albedo (index = 32)',
+                  'liq_precip_depth_mm (index = 33)',
+                  'liq_precip_rate_Hour (index = 34)']
 
-    elif file_type == 'shp':
-        import geopandas
-        db = geopandas.read_file(filename)
-        for attr in db:
-            attr = replace_repetitive_attr(attr)
-            meta = get_meta(db[attr], attr)
-            if attr == 'geometry':
-                meta['sample_data'] = '((x1 y1, x2 y2, ...))'
-            schema[attr.encode('ascii', 'ignore')] = meta
-        return schema
+    db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
+    schema = {}
+    for attr in db:
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+    return schema
 
-    else:
-        schema = {}
-        schema['undefined_file'] = {
-            'sample_data': 'N/A',
-            'types_found': 'N/A'
-        }
-        return schema
+
+def get_dbf_schema(filename):
+    import pysal
+    db = pysal.open(filename, 'r')
+    schema = {}
+    for attr in db.header:
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
+    return schema
+
+
+def get_shp_schema(filename):
+    import geopandas
+    db = geopandas.read_file(filename)
+    schema = {}
+    for attr in db:
+        attr = replace_repetitive_attr(attr)
+        meta = get_meta(db[attr], attr)
+        if attr == 'geometry':
+            meta['sample_data'] = '((x1 y1, x2 y2, ...))'
+        schema[attr.encode('ascii', 'ignore')] = meta
+    return schema
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
