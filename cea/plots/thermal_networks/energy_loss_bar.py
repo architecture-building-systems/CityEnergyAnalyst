@@ -18,7 +18,7 @@ __status__ = "Production"
 
 
 class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
-    """Implement the heat and pressure losses plot"""
+    """Implement the Thermal losses and pumping requirements per pipe plot"""
     name = "Thermal losses and pumping requirements per pipe"
 
     def __init__(self, project, parameters, cache):
