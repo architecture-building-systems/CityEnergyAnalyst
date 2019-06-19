@@ -614,13 +614,18 @@ class ChoiceParameter(Parameter):
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        assert str(value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
+            value=value,
+            fqname=self.fqname,
+            choices=', '.join(self._choices)
+        )
         return str(value)
 
     def decode(self, value):
         if str(value) in self._choices:
             return str(value)
         else:
+            assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
             return self._choices[0]
 
 

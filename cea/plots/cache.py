@@ -80,7 +80,7 @@ class PlotCache(object):
             with open(div_file, 'w') as div_fp:
                 div_fp.write(table_div)
         else:
-            print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
+            # print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
             with open(div_file, 'r') as div_fp:
                 table_div = div_fp.read()
         return table_div
