@@ -23,8 +23,11 @@ def register_scripts():
                 parameter_py_name = parameter.name.replace('-', '_')
                 if parameter_py_name in kwargs:
                     parameter.set(kwargs[parameter_py_name])
-            # run the script
             cea_script.print_script_configuration(config)
+            if list(cea_script.missing_input_files(config)):
+                cea_script.print_missing_input_files(config)
+                return
+            # run the script
             script_module.main(config)
         if script_module.__doc__:
             script_runner.__doc__ = script_module.__doc__.strip()
