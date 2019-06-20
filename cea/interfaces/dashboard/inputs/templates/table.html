@@ -130,8 +130,12 @@
 
 {% block javascripts %}
   <script>
-    var tables = {{ tables|tojson|safe }}
-    var geojsons = {{ geojsons|tojson|safe }}
+    var tables = {{ tables|tojson|safe }};
+    var geojsons = {{ geojsons|tojson|safe }};
+    var input_columns = {{ input_columns|tojson|safe }};
+    console.log(tables);
+    console.log(geojsons);
+    console.log(input_columns);
   </script>
   {{ super() }}
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
