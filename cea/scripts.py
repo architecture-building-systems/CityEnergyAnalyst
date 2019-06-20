@@ -35,6 +35,13 @@ class CeaScript(object):
             print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
             print("  (default: %s)" % default_config.get(parameter.fqname))
 
+    def missing_input_files(self, config):
+        """
+        Return a list of :py:class:`cea.inputlocator.InputLocator` methods for each file required as input for this
+        script that is not present yet.
+        :return: a
+        """
+
 
 def _get_categories_dict():
     """Load the categories -> [script] mapping either from the YAML file or, in the case of arcgis / grasshopper,
