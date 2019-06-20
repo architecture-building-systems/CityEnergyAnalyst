@@ -52,58 +52,75 @@
           <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
               <div class="x_content">
-              <div id='layers-group'>
-                <span id="zone-cb" hidden>
-                <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='zone-toggle'>Zone</label>
-                </span>
-                <span id="district-cb" hidden>
-                <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='district-toggle'>District</label>
-                </span>
-                <span id="streets-cb" hidden>
-                <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='streets-toggle'>Streets</label>
-                </span>
-                <span id="dh_networks-cb" hidden>
-                <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='dh_networks-toggle'>DH Network</label>
-                </span>
-                <span id="dc_networks-cb" hidden>
-                <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='dc_networks-toggle'>DC Network</label>
-                </span>
-              </div>
-              <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
+                <div class="col-lg-7 col-md-12 col-sm-12 col-xs-12">
+                <div id='layers-group'>
+                  <span id="zone-cb" hidden>
+                  <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='zone-toggle'>Zone</label>
+                  </span>
+                  <span id="district-cb" hidden>
+                  <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='district-toggle'>District</label>
+                  </span>
+                  <span id="streets-cb" hidden>
+                  <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='streets-toggle'>Streets</label>
+                  </span>
+                  <span id="dh_networks-cb" hidden>
+                  <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='dh_networks-toggle'>DH Network</label>
+                  </span>
+                  <span id="dc_networks-cb" hidden>
+                  <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='dc_networks-toggle'>DC Network</label>
+                  </span>
+                </div>
+                <div id="map-tooltip"></div>
+                <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
+                </div>
+                <div class="col-lg-5 col-md-12 col-sm-12 col-xs-12" style="height: 500px">
+                  <div class="row" style="height: 90%;">
+                    <h3 id="building-name">Building Properties</h3>
+                    <div id="building-properties" style="height:90%; overflow: auto;">
+                      <div id="properties-prompt">Click on a building to see its properties</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: center; margin-top: 10px;">
+                    <button class="btn btn-success">Test</button>
+                    <button class="btn btn-danger">Delete</button>
+                  </div>
+                </div>
               </div>
               <div class="x_content">
-                <table id="cea-table"
-                       data-toggle="table"
-                       data-pagination="true"
-                       data-show-export="true"
-                       data-unique-id="{{ pk }}"
-                       data-url="{{ url_for('inputs_blueprint.route_get_json', db=table_name) }}"
-                       data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
-                  <thead>
-                  {% for column in table_columns %}
-                    <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
-                  {% endfor %}
-                  </thead>
-                </table>
-                <div id="map-tooltip"></div>
+                <div id="example-table"></div>
               </div>
-              <div class="clearfix"></div>
-              <div class="ln_solid"></div>
-              <form id="cea-save-changes-form" class="form-horizontal form-label-left" method="post">
-                <a id="cea-discard-changes" href="{{ request.path }}" class="btn btn-primary">Discard</a>
-                <input type="hidden" name="cea-table-data" id="cea-table-data"/>
-                <input id="cea-save-changes" type="submit" class="btn btn-success" value="Save"/>
-              </form>
+<!--              <div class="x_content">-->
+<!--                <table id="cea-table"-->
+<!--                       data-toggle="table"-->
+<!--                       data-pagination="true"-->
+<!--                       data-show-export="true"-->
+<!--                       data-unique-id="{{ pk }}"-->
+<!--                       data-url="{{ url_for('inputs_blueprint.route_get_json', db=table_name) }}"-->
+<!--                       data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">-->
+<!--                  <thead>-->
+<!--                  {% for column in table_columns %}-->
+<!--                    <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>-->
+<!--                  {% endfor %}-->
+<!--                  </thead>-->
+<!--                </table>-->
+<!--              </div>-->
+<!--              <div class="clearfix"></div>-->
+<!--              <div class="ln_solid"></div>-->
+<!--              <form id="cea-save-changes-form" class="form-horizontal form-label-left" method="post">-->
+<!--                <a id="cea-discard-changes" href="{{ request.path }}" class="btn btn-primary">Discard</a>-->
+<!--                <input type="hidden" name="cea-table-data" id="cea-table-data"/>-->
+<!--                <input id="cea-save-changes" type="submit" class="btn btn-success" value="Save"/>-->
+<!--              </form>-->
             </div>
           </div>
         </div>
@@ -122,8 +139,13 @@
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
   <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+  <link href="https://unpkg.com/tabulator-tables@4.2.7/dist/css/tabulator.min.css" rel="stylesheet">
+  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.2.7/dist/js/tabulator.min.js"></script>
+
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/table.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/map.js', version='0.1') }}"></script>
 {% endblock javascripts %}
