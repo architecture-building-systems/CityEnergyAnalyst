@@ -419,9 +419,9 @@ function updateTooltip({x, y, object, layer}) {
         tooltip.style.top = `${y}px`;
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
-        for (let prop in object.properties) {
-            innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
-        }
+        $.each(input_columns[layer.id], function (index, column)  {
+            innerHTML += `<div><b>${column}</b>: ${object.properties[column]}</div>`;
+        });
         if (layer.id == 'zone' || layer.id == 'district') {
             var area = turf.area(object);
             innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>

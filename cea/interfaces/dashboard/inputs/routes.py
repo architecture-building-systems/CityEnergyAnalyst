@@ -130,6 +130,7 @@ def route_building_properties():
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     tables = {}
     geojsons = {}
+    input_columns = {}
     for db in INPUTS:
         db_info = INPUTS[db]
         location = getattr(locator, db_info['location'])()
@@ -140,16 +141,18 @@ def route_building_properties():
                 geojsons[db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
                 import pandas
-                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))[db_info['fieldnames']]
                 tables[db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
             else:
                 assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
-                table_df = cea.utilities.dbf.dbf_to_dataframe(location)
+                table_df = cea.utilities.dbf.dbf_to_dataframe(location)[db_info['fieldnames']]
                 tables[db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+
+            input_columns[db] = INPUTS[db]['fieldnames']
         except IOError as e:
             print(e)
             tables['db'] = ''
-    return render_template('table.html', tables=tables, geojsons=geojsons)
+    return render_template('table.html', tables=tables, geojsons=geojsons, input_columns=input_columns)
 
 
 @blueprint.route('/table/<db>', methods=['GET'])
