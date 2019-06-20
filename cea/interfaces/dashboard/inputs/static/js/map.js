@@ -305,7 +305,7 @@ function createDistrictLayer(options={}) {
         getElevation: f => f.properties['height_ag'],
         getFillColor: f => buildingColor([255, 0, 0], f.properties['Name']),
         updateTriggers: {
-            getFillColor: {selectedBuilding}
+            getFillColor: selectedBuilding
         },
 
         pickable: true,
@@ -333,7 +333,7 @@ function createZoneLayer(options={}) {
         getElevation: f => f.properties['height_ag'],
         getFillColor: f => buildingColor([0, 0, 255], f.properties['Name']),
         updateTriggers: {
-            getFillColor: {selectedBuilding}
+            getFillColor: selectedBuilding
         },
 
         pickable: true,
@@ -450,13 +450,16 @@ function editProperties({object}) {
 function showProperties({object, layer}) {
     console.log(object.properties);
     var name = object['properties']['Name'];
+
+    //Change the color of the selected building
     selectedBuilding = name;
     createLayer('zone');
     createLayer('district');
     deckgl.setProps({ layers: [...layers] });
-    $( "#building-properties" ).empty();
-    $('#building-name').empty().append(`<h3>Building Properties: ${name}</h3>`);
 
+    $('#building-name').empty().append(`<h3>Building Properties: ${name}</h3>`);
+    $( '#building-properties').empty()
+        .append(`<h3>${layer.id.charAt(0).toUpperCase() + layer.id.slice(1)} building</h3>`);
     $.each(tables[layer.id][name], function (k, v) {
                 $('#building-properties').append(`<div>${k}:${v}</div>`);
             });
