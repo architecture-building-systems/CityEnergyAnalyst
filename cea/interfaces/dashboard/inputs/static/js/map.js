@@ -7,6 +7,7 @@ var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_network
 var extruded = false;
 var currentViewState;
 var selectedBuilding = '';
+var cameraOptions;
 
 const lightMap = {
     "version": 8,
@@ -68,7 +69,7 @@ $(document).ready(function() {
         currentViewState = {
             latitude: (geojsons['zone'].bbox[1] + geojsons['zone'].bbox[3]) / 2,
             longitude: (geojsons['zone'].bbox[0] + geojsons['zone'].bbox[2]) / 2,
-            zoom: 16, bearing: 0, pitch: 0
+            zoom: 0, bearing: 0, pitch: 0
         };
 
         if (geojsons['district']) {
@@ -92,6 +93,20 @@ $(document).ready(function() {
             },
             controller: {dragRotate: false}
         });
+
+        // Set the camera to bounding box
+        cameraOptions = deckgl.getMapboxMap().cameraForBounds(
+            [[geojsons['zone'].bbox[0], geojsons['zone'].bbox[1]], [geojsons['zone'].bbox[2], geojsons['zone'].bbox[3]]],
+            {padding: 10}
+        );
+        currentViewState = {
+            ...currentViewState,
+            zoom: cameraOptions.zoom,
+            latitude: cameraOptions.center.lat,
+            longitude: cameraOptions.center.lng,
+            transitionDuration: 300
+        };
+        deckgl.setProps({viewState: currentViewState});
 
         setupButtons();
         $('[data-toggle="tooltip"]').tooltip({
@@ -188,11 +203,17 @@ function setupButtons() {
         this._btn.setAttribute("data-toggle", "tooltip");
         this._btn.setAttribute("data-placement", "right");
         this._btn.setAttribute("title", "Center to location");
-        this._btn.onclick = function() {
-            deckgl.setProps({ viewState:{...currentViewState, zoom: 16,
-            latitude: (geojsons['zone'].bbox[1] + geojsons['zone'].bbox[3]) / 2,
-            longitude: (geojsons['zone'].bbox[0] + geojsons['zone'].bbox[2]) / 2, transitionDuration: 300} });
-        };
+          this._btn.onclick = function () {
+              deckgl.setProps({
+                  viewState:{
+                      ...currentViewState,
+                      zoom: cameraOptions.zoom,
+                      latitude: cameraOptions.center.lat,
+                      longitude: cameraOptions.center.lng,
+                      transitionDuration: 300
+                  }
+              });
+          };
 
         this._container = document.createElement("div");
         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
