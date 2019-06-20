@@ -62,6 +62,11 @@ Data Management:
   interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.data_helper
   parameters: ['general:scenario', data-helper]
+  input-files:
+    - [get_building_age]
+    - [get_building_occupancy]
+    - [get_archetypes_schedules]
+    - [get_archetypes_properties]
 
 
 Demand forecasting:
@@ -110,6 +115,9 @@ Energy potentials:
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.sewage_heat_exchanger
   parameters: ['general:scenario', sewage]
+  input-files:
+    - [get_total_demand]
+    - [get_demand_results_file, building_name]
 
 - name: solar-collector
   label: Solar collectors
@@ -221,6 +229,10 @@ Thermal networks:
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.network_layout.main
   parameters: ['general:scenario', network-layout]
+  input-files:
+    - [get_street_network]
+    - [get_total_demand]
+    - [get_zone_geometry]
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
