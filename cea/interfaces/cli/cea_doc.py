@@ -1,27 +1,27 @@
 """
-This file implements the ``cea`` command line interface script. Basically, it uses the first argument passed to
-it to look up a module to import in ``scripts.yml``, imports that and then calls the ``main`` function on that module.
-
-The rest of the command line arguments are passed to the ``cea.config.Configuration`` object for processing.
+Run documentation scripts
 """
 
-import sys
-import os
-import importlib
-import datetime
-import ConfigParser
-import cea.config
-import cea.scripts
+from __future__ import division
+from __future__ import print_function
 
+import sys
+import datetime
+import importlib
+import cea.config
+import cea.inputlocator
+import cea.scripts
+from cea import ScriptNotFoundException
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 def main(config=None):
     """
@@ -30,10 +30,8 @@ def main(config=None):
     :return:
     """
     t0 = datetime.datetime.now()
-
     if not config:
         config = cea.config.Configuration()
-
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
@@ -42,14 +40,12 @@ def main(config=None):
         sys.exit(1)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name)
+    if not 'doc' in cea_script.interfaces:
+        print('Invalid script for cea-doc')
+        print_valid_script_names()
+        sys.exit(ScriptNotFoundException.rc)
     config.restrict_to(cea_script.parameters)
     config.apply_command_line_args(args, cea_script.parameters)
-
-    # save the updates to the configuration file (re-running the same tool will result in the
-    # same parameters being set)
-    config.save(cea.config.CEA_CONFIG)
-
-    cea_script.print_script_configuration(config)
 
     script_module = importlib.import_module(cea_script.module)
     try:
@@ -66,7 +62,7 @@ def main(config=None):
 
 
 def print_help(config, remaining_args):
-    """Print out the help message for the ``cea`` command line interface"""
+    """Print out the help message for the ``cea-doc`` command line interface"""
     if remaining_args:
         default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         script_name = remaining_args[0]
@@ -98,7 +94,7 @@ def print_valid_script_names():
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('cli'), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('doc'), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))

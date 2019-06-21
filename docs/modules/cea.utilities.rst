@@ -25,6 +25,38 @@ cea.utilities.dbf module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.doc\_glossary module
+----------------------------------
+
+.. automodule:: cea.utilities.doc_glossary
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.doc\_graphviz module
+----------------------------------
+
+.. automodule:: cea.utilities.doc_graphviz
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.doc\_html module
+------------------------------
+
+.. automodule:: cea.utilities.doc_html
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.doc\_update\_naming module
+----------------------------------------
+
+.. automodule:: cea.utilities.doc_update_naming
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.epwreader module
 ------------------------------
 
@@ -69,6 +101,14 @@ cea.utilities.standardize\_coordinates module
 ---------------------------------------------
 
 .. automodule:: cea.utilities.standardize_coordinates
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.workerstream module
+---------------------------------
+
+.. automodule:: cea.utilities.workerstream
     :members:
     :undoc-members:
     :show-inheritance:
