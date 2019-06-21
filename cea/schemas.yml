@@ -3420,6 +3420,7 @@ get_optimization_network_layout_return_temperature_file:
         NODE0:
             sample_value: 309.611
             types_found: [float]
+    used_by: []
 get_optimization_network_layout_supply_temperature_file:
     created_by: [thermal-network]
     file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__T_Supply_K.csv
@@ -3428,6 +3429,7 @@ get_optimization_network_layout_supply_temperature_file:
         NODE0:
             sample_value: 341.471
             types_found: [float]
+    used_by: []
 get_optimization_network_node_list_file:
     created_by: [thermal-network]
     file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Nodes.csv
@@ -4619,7 +4621,10 @@ get_terrain:
     description: scenario/inputs/topography/terrain.tif
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/topography\terrain.tif
     file_type: tif
-    schema: {}
+    schema:
+        Mock_variable:
+            sample_data: pixels
+            types_found: [raster]
     used_by: [radiation-daysim]
 get_total_demand:
     created_by: [demand]

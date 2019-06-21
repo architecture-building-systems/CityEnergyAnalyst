@@ -1,7 +1,7 @@
-cea.interfaces.dashboard.project package
+cea.interfaces.dashboard.landing package
 ========================================
 
-.. automodule:: cea.interfaces.dashboard.project
+.. automodule:: cea.interfaces.dashboard.landing
     :members:
     :undoc-members:
     :show-inheritance:
@@ -9,10 +9,10 @@ cea.interfaces.dashboard.project package
 Submodules
 ----------
 
-cea.interfaces.dashboard.project.routes module
+cea.interfaces.dashboard.landing.routes module
 ----------------------------------------------
 
-.. automodule:: cea.interfaces.dashboard.project.routes
+.. automodule:: cea.interfaces.dashboard.landing.routes
     :members:
     :undoc-members:
     :show-inheritance:
