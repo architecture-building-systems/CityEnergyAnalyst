@@ -16,6 +16,11 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cea trace-inputlocator --scripts solar-collector
 if %errorlevel% neq 0 exit /b %errorlevel%
 
+cea-config solar-collector --type-scpanel ET
+cea trace-inputlocator --scripts solar-collector
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+
 cea trace-inputlocator --scripts photovoltaic, photovoltaic-thermal
 if %errorlevel% neq 0 exit /b %errorlevel%
 
