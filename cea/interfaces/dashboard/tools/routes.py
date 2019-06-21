@@ -28,7 +28,8 @@ def route_start(script):
     print('/start/%s' % script)
     for parameter in parameters_for_script(script, current_app.cea_config):
         print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        kwargs[parameter.name] = parameter.decode(request.form.get(parameter.name))
+        kwargs[parameter.py_name] = parameter.decode(request.form.get(parameter.name))
+    print('/tools/start: kwargs=%s' % kwargs)
     current_app.workers[script] = worker.main(script, **kwargs)
     return jsonify(script)
 
