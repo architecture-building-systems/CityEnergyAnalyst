@@ -678,13 +678,6 @@ class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
     typename = 'MultiChoiceParameter'
 
-    def get(self):
-        """Handle case of config file containing "bad" data"""
-        try:
-            return super(MultiChoiceParameter, self).get()
-        except ValueError:
-            return self._choices
-
     def encode(self, value):
         assert not isinstance(value, basestring)
         for choice in value:
@@ -694,11 +687,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def decode(self, value):
         choices = parse_string_to_list(value)
-        for choice in choices:
-            if choice not in self._choices:
-                raise ValueError(
-                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
-        return choices
+        return [choice for choice in choices if choice in self._choices]
 
 
 class SingleBuildingParameter(ChoiceParameter):
