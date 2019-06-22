@@ -29,7 +29,8 @@ def main(case):
     make_directory(path_to_case_folder, new_calculation)
 
     # extract demand outputs
-    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
+    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season,
+                                                                                     specified_buildings)
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
@@ -46,19 +47,23 @@ def main(case):
             print time.strftime("%H:%M", t)
             t0 = time.clock()
             result_path, run_folder = exec_osmose(tech, osmose_project_path)
+
             # rename the files to keep track
             case_short = case.split('_')[4]
-            os.rename(os.path.join(result_path,run_folder),os.path.join(result_path,case_short+'_'+building+'_'+str(timesteps)))
+            old_name = run_folder
+            if os.path.exists(os.path.join(result_path, old_name)):
+                new_name = old_name + '_' + case_short + '_' + building + '_' + str(timesteps)
+                os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
             time_elapsed = time.clock() - t0
-            print round(time_elapsed,0), ' s for running: ', tech, '\n'
+            print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
-        #plot results
+        # plot results
         building_timestep_tag = building + "_" + str(timesteps)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
-        #building_result_path = os.path.join(building_result_path, "reduced")
+        # building_result_path = os.path.join(building_result_path, "reduced")
         plot_results.main(building, TECHS, building_result_path)
-        #compare_el.main(building, building_result_path)
-    #start_ampl_license(ampl_lic_path, "stop")
+        # compare_el.main(building, building_result_path)
+        # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
 
 
@@ -115,9 +120,9 @@ def exec_osmose(tech, osmose_project_path):
     if err.decode('utf-8') is not '':
         # print(err.decode('utf-8'))
         if err.decode('utf-8').startswith('WARNING:'):
-             print 'warning' #, err.decode('utf-8')
+            print 'warning'  # , err.decode('utf-8')
         elif err.decode('utf-8').startswith('pandoc: Could not find image'):
-            print 'warning' #, err.decode('utf-8')
+            print 'warning'  # , err.decode('utf-8')
         else:
             print "ERROR"
 
@@ -125,8 +130,8 @@ def exec_osmose(tech, osmose_project_path):
 
     # print OutMsg
     result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
-    run_folder = os.listdir(result_path)[len(os.listdir(result_path))-1]
-    OutMsg_path = os.path.join(result_path,run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
+    run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1]
+    OutMsg_path = os.path.join(result_path, run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
     f = open(OutMsg_path, "r")
     print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline(), f.readline()
 
@@ -134,10 +139,10 @@ def exec_osmose(tech, osmose_project_path):
 
 
 if __name__ == '__main__':
-    cases= ['WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
-    # c ases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_RET']
+    # cases= ['WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET']
     # cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
-    #cases = ['ABU_CBD_m_WP1_OFF']
+    # cases = ['ABU_CBD_m_WP1_OFF']
     # cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
     # cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
     for case in cases:
