@@ -105,8 +105,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # change units
         output_hcs['T_ext'] = reduced_tsd_df['T_ext']
         output_hcs['T_ext_wb'] = reduced_tsd_df['T_ext_wetbulb']
-        output_hcs['COND_TIN'] = reduced_tsd_df['T_ext_wetbulb'] + 3 + 273.15
-        output_hcs['COND_TOUT'] = reduced_tsd_df['T_ext_wetbulb'] + 2.5 + 273.15
+        output_hcs['COND_TIN'] = reduced_tsd_df['T_ext_wetbulb'] + 5 + 273.15
+        output_hcs['COND_TOUT'] = reduced_tsd_df['T_ext_wetbulb'] + 4.5 + 273.15
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
         if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
             output_hcs['w_RA'] = 10.29  # 24C with 55% RH
@@ -206,6 +206,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # output_df = output_df.drop(['index'], axis=1)
         # output_df = output_df.drop(output_df.index[range(7)])
         Tamb_K = reduced_tsd_df['T_ext'].mean() + 273.15
+        print 'ambient average: ', Tamb_K
         Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
         print 'wetbulb average: ', Twb_K
     return building_names, Tamb_K
