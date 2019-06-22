@@ -624,9 +624,9 @@ def set_up_cooling_df(results):
         for i in columns:
             names.append(cooling_df.columns[i])
         raise ValueError('Check cooling results from osmose: ', ' ,'.join(names))
-    if 'q_coi_scu' in results.columns.values:
-        if (abs(results['q_scu_sen'] - results['q_coi_scu']) < 1e3).all() == False:
-            raise ValueError('Check SCU heat balance')
+    # if 'q_coi_scu' in results.columns.values:
+        # if (abs(results['q_scu_sen'] - results['q_coi_scu']) < 1e3).all() == False:
+        #     raise ValueError('Check SCU heat balance')
 
     return cooling_df
 
@@ -1192,25 +1192,25 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B003"]
+    buildings = ["B001"]
     #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     #tech = ["HCS_coil"]
     tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    # cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     #cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    #cases = ["WTP_CBD_m_WP1_RET"]
+    cases = ["WTP_CBD_m_WP1_RET"]
     #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0515"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_168"
+            building_time = building + "_24"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
