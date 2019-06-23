@@ -329,7 +329,10 @@ def analyse_chilled_water_usage(results, tech):
 def analyse_Qc_from_chilled_water(results, tech):
     Qc_from_chilled_water_df = results.filter(like='q_oau_in_').sum(axis=0).reset_index()
     T_low_C, T_high_C = 8.1, 14.1
-    T_interval = 0.65  # 0.5
+    if tech == 'HCS_3for2':
+        T_interval = 0.65*2
+    else:
+        T_interval = 0.65  # 0.5
     T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval).round(2)
     Qc_from_chilled_water_df = Qc_from_chilled_water_df.set_index([T_OAU_offcoil])
     del Qc_from_chilled_water_df['index']
@@ -733,7 +736,11 @@ def set_up_operation_df(tech, results):
     else:
         # output actual temperature and humidity
         number_oau_in = results.filter(like='OAU_T_SA').shape[1]
-        for i in range(number_oau_in):
+        if number_oau_in == 5:
+            oau_range = [0,2,4,6,8]
+        else:
+            oau_range = [0,1,2,3,4,5,6,7,8,9]
+        for i in oau_range:
             m_label = 'm_oau_in_' + str(i + 1)
             T_label = 'OAU_T_SA' + str(i + 1)
             w_label = 'OAU_w_SA' + str(i + 1)
@@ -743,7 +750,7 @@ def set_up_operation_df(tech, results):
         operation_df['w_SA'] = results.filter(like='OAU_w_SA').sum(axis=1)
 
         number_oau_chillers = int(results.filter(like='cop_oau_chi').shape[1] / number_oau_in)
-        for i in range(number_oau_in):
+        for i in oau_range:
             for j in range(number_oau_chillers):
                 cop_tag_name = 'cop_oau_chi' + str(i + 1) + '_' + str(j + 1)
                 el_tag_name = 'el_oau_chi' + str(i + 1) + '_' + str(j + 1)
@@ -1192,10 +1199,10 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B001"]
+    buildings = ["B002"]
     #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    #tech = ["HCS_coil"]
-    tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
+    tech = ["HCS_3for2"]
+    # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     # cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
