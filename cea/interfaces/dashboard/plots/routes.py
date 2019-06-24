@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, request, abort, make_response, redirect, url_for
+from flask import Blueprint, render_template, current_app, request, abort, make_response, redirect, url_for, jsonify
 
 import cea.inputlocator
 from cea.config import MultiChoiceParameter
@@ -172,7 +172,7 @@ def route_post_plot_parameters(dashboard_index, plot_index):
         else:
             plot.parameters[pname] = parameter.decode(request.form[pname])
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+    return jsonify(plot.parameters)
 
 
 
