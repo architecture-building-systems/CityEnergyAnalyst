@@ -33,6 +33,15 @@ $(document).ready(function() {
         });
     });
 
+    $("#cea-dashboard-edit-plot-form").submit(function (e) {
+        e.preventDefault();
+        $.post($("#cea-dashboard-edit-plot-form").attr("action"), get_parameter_values(), function(data){
+            console.log(data);
+            location.reload();
+        }, "json");
+        return false;
+    });
+
     $("#dashboard-selector").change(function () {
         if($(this).val() === "manage") {
             window.location.href = "./" + "manage";

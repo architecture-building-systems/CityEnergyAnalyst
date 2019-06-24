@@ -28,7 +28,8 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
                                 "Opex_Decentralized_USD"]
         self.input_files = [(self.locator.get_total_demand, []),
                             (self.locator.get_preprocessing_costs, []),
-                            (self.locator.get_optimization_checkpoint, [self.generation])]
+                            (self.locator.get_optimization_checkpoint, [self.generation]),
+                            (self.locator.get_multi_criteria_analysis, [self.generation])]
 
     @property
     def layout(self):
