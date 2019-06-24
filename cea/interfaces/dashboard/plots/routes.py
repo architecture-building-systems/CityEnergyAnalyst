@@ -5,12 +5,6 @@ from cea.config import MultiChoiceParameter
 import cea.plots
 import cea.plots.categories
 
-import importlib
-import plotly.offline
-import json
-import yaml
-
-
 blueprint = Blueprint(
     'plots_blueprint',
     __name__,
