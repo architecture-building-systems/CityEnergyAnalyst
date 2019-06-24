@@ -12,6 +12,7 @@ import datetime
 import ConfigParser
 import cea.config
 import cea.scripts
+import cea
 
 
 __author__ = "Daren Thomas"
@@ -22,6 +23,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 def main(config=None):
     """
@@ -40,6 +42,9 @@ def main(config=None):
     if not len(args) or args[0].lower() == '--help':
         print_help(config, args[1:])
         sys.exit(1)
+    if args[0].lower() == '--version':
+        print('City Energy Analyst version %s' % cea.__version__)
+        sys.exit(0)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name)
     config.restrict_to(cea_script.parameters)

@@ -44,7 +44,7 @@ class PlotBase(object):
         # self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
         # self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
-        self.buildings = self.process_buildings_parameter()
+        self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
         for parameter_name in self.expected_parameters:
             assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
@@ -137,6 +137,9 @@ class PlotBase(object):
             f.write(plot_html)
 
         print("Plotted '%s' to %s" % (self.name, self.output_path))
+        if auto_open:
+            import webbrowser
+            webbrowser.open(self.output_path)
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""

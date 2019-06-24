@@ -614,14 +614,35 @@ class ChoiceParameter(Parameter):
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        assert str(value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
+            value=value,
+            fqname=self.fqname,
+            choices=', '.join(self._choices)
+        )
         return str(value)
 
     def decode(self, value):
         if str(value) in self._choices:
             return str(value)
         else:
+            assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
             return self._choices[0]
+
+
+class PlantNodeParameter(ChoiceParameter):
+    """A parameter that refers to valid PLANT nodes of a thermal-network"""
+    typename = 'PlantNodeParameter'
+
+    def initialize(self, parser):
+        self.network_name_fqn = parser.get(self.section.name, self.name + '.network-name')
+        self.network_type_fqn = parser.get(self.section.name, self.name + '.network-type')
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario)
+        network_type = self.config.get(self.network_type_fqn)
+        network_name = self.config.get(self.network_name_fqn)
+        return locator.get_plant_nodes(network_type, network_name)
 
 
 class ScenarioNameParameter(ChoiceParameter):
