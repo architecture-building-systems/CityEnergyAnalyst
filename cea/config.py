@@ -578,6 +578,24 @@ class OptimizationIndividualParameter(Parameter):
                                       for individual in locator.list_optimization_all_individuals())))
         return individuals
 
+    def encode(self, value):
+        scenario_name, generation, individual = value
+        if not generation:
+            generation = "none"
+        if not individual:
+            individual = "none"
+        return '{scenario_name}|{generation}|{individual}'.format(
+            scenario_name=scenario_name, generation=generation, individual=individual)
+
+    def decode(self, value):
+        parts = value.split('|')
+        if len(parts) != 3:
+            raise cea.ConfigError("Bad value for optimization individual: {value}".format(value=value))
+        scenario_name, generation, individual = parts
+        generation = generation if generation != "none" else None
+        individual = individual if individual != "none" else None
+        return (scenario_name, generation, individual)
+
 
 class OptimizationIndividualListParameter(ListParameter):
     typename = 'OptimizationIndividualListParameter'
@@ -595,6 +613,15 @@ class OptimizationIndividualListParameter(ListParameter):
             # project doesn't exist?
             return []
 
+    def encode(self, value):
+        value = [OptimizationIndividualParameter.encode(None, v)
+                 for v in value]
+        return super(OptimizationIndividualListParameter, self).encode(value)
+
+    def decode(self, value):
+        value = super(OptimizationIndividualListParameter, self).decode(value)
+        return [OptimizationIndividualParameter.decode(None, v) for v in value]
+        
 
 class DateParameter(Parameter):
     typename = 'DateParameter'

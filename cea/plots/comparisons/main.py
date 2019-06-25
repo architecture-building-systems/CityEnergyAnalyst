@@ -102,7 +102,7 @@ def pointers_all_scenarios(generations, individuals, scenarios_path):
     generation_pointers = []
     individual_pointers = []
     for scenario_path, generation, individual in zip(scenarios_path, generations, individuals):
-        if generation == "none" or individual == "none":
+        if generation is None or individual is None:
             pointer_gen = "none"
             pointer_ind = "none"
         else:
