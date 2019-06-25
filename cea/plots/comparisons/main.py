@@ -35,14 +35,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
-__license__ = "MIT"
-__version__ = "2.8"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
 
 def plots_main(config):
     print(config.plots_scenario_comparisons.scenarios)
@@ -56,17 +48,14 @@ def plots_main(config):
     scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
     network_type = config.plots_scenario_comparisons.network_type
 
-    generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/')) > 1 else "none"
-    individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/')) > 1 else "none"
+    generation_base = scenario_baseline[1]
+    individual_base = scenario_baseline[2]
 
-    scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
-    scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in
-                      config.plots_scenario_comparisons.scenarios]
+    scenario_base_path = os.path.join(project, scenario_baseline[0])
+    scenarios_path = [os.path.join(project, scenario[0]) for scenario in config.plots_scenario_comparisons.scenarios]
     # scenarios = [[scenario_baseline]+ config.plots_scenario_comparisons.scenarios]
-    generations = [generation_base] + [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
-                                       for scenario in config.plots_scenario_comparisons.scenarios]
-    individuals = [individual_base] + [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
-                                       for scenario in config.plots_scenario_comparisons.scenarios]
+    generations = [generation_base] + [scenario[1] for scenario in config.plots_scenario_comparisons.scenarios]
+    individuals = [individual_base] + [scenario[2] for scenario in config.plots_scenario_comparisons.scenarios]
     categories = config.plots_scenario_comparisons.categories
 
     generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [
@@ -200,19 +189,12 @@ class Plots(object):
         self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
 
     def preprocessing_demand_scenarios(self):
-        data_processed = pd.DataFrame()
-        scenarios_clean = []
-        for i, scenario_name in enumerate(self.scenarios_names):
-            if scenario_name in scenarios_clean:
-                scenario_name = scenario_name + "_duplicated_" + str(i)
-            scenarios_clean.append(scenario_name)
-
-        for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
+        def sum_total_demand(scenario):
             locator = cea.inputlocator.InputLocator(scenario)
-            data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
-            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
-            data_processed = data_processed.append(data_raw_df)
-        return data_processed
+            return (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
+
+        return pd.DataFrame({i: sum_total_demand(scenario)
+                             for i, scenario in enumerate(self.scenarios)})
 
     def preprocessing_supply_scenarios(self):
         data_processed = pd.DataFrame()
@@ -229,7 +211,7 @@ class Plots(object):
                                                                                              self.individual_pointers,
                                                                                              scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            if generation == "none" or individual == "none":
+            if generation is None or individual is None:
                 data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(
                     axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T

@@ -33,7 +33,7 @@ class CeaScript(object):
             parameter_name = parameter.name
             parameter_value = parameter.get()
             print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
-            print("  (default: %s)" % default_config.get(parameter.fqname))
+            print("  (default: {default})".format(default=default_config.get(parameter.fqname)))
 
 
 def _get_categories_dict():

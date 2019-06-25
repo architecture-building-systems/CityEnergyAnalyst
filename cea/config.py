@@ -579,6 +579,10 @@ class OptimizationIndividualParameter(Parameter):
         return individuals
 
     def encode(self, value):
+        return self.encode_individual(value)
+
+    @classmethod
+    def encode_individual(cls, value):
         scenario_name, generation, individual = value
         if not generation:
             generation = "none"
@@ -588,6 +592,10 @@ class OptimizationIndividualParameter(Parameter):
             scenario_name=scenario_name, generation=generation, individual=individual)
 
     def decode(self, value):
+        return self.decode_individual(value)
+
+    @classmethod
+    def decode_individual(cls, value):
         parts = value.split('|')
         if len(parts) != 3:
             raise cea.ConfigError("Bad value for optimization individual: {value}".format(value=value))
@@ -614,13 +622,13 @@ class OptimizationIndividualListParameter(ListParameter):
             return []
 
     def encode(self, value):
-        value = [OptimizationIndividualParameter.encode(None, v)
+        value = [OptimizationIndividualParameter.encode_individual(v)
                  for v in value]
         return super(OptimizationIndividualListParameter, self).encode(value)
 
     def decode(self, value):
         value = super(OptimizationIndividualListParameter, self).decode(value)
-        return [OptimizationIndividualParameter.decode(None, v) for v in value]
+        return [OptimizationIndividualParameter.decode_individual(v) for v in value]
         
 
 class DateParameter(Parameter):
