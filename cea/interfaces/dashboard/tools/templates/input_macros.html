@@ -30,6 +30,13 @@
           {% endfor %}
           </select>
 
+          {% elif parameter.typename == "PlantNodeParameter" %}
+          <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}">
+          {% for choice in parameter._choices %}
+              <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+          {% endfor %}
+          </select>
+
           {% elif parameter.typename == "ScenarioNameParameter" %}
           <select id="{{parameter.name}}" name="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}">
           {% for choice in parameter._choices %}

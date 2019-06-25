@@ -13,8 +13,8 @@ Subpackages
 
     cea.interfaces.dashboard.base
     cea.interfaces.dashboard.inputs
+    cea.interfaces.dashboard.landing
     cea.interfaces.dashboard.plots
-    cea.interfaces.dashboard.project
     cea.interfaces.dashboard.tools
 
 Submodules

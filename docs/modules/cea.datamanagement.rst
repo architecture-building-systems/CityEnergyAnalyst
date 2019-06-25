@@ -57,4 +57,12 @@ cea.datamanagement.terrain\_helper module
     :undoc-members:
     :show-inheritance:
 
+cea.datamanagement.zone\_helper module
+--------------------------------------
+
+.. automodule:: cea.datamanagement.zone_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
