@@ -3,7 +3,7 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 from __future__ import print_function
-
+import datetime
 
 def register_scripts():
     import cea.config
@@ -25,7 +25,14 @@ def register_scripts():
                     parameter.set(kwargs[parameter_py_name])
             # run the script
             cea_script.print_script_configuration(config)
+            t0 = datetime.datetime.now()
             script_module.main(config)
+
+            # print success message
+            msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
+            print("")
+            print("-" * len(msg))
+            print(msg)
         if script_module.__doc__:
             script_runner.__doc__ = script_module.__doc__.strip()
         else:
