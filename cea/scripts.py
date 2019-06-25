@@ -58,7 +58,12 @@ class CeaScript(object):
         input for this script that is not present yet as well as the applied path searched for.
         :return: Sequence[str]
         """
+        # get a locator without triggering the restricted to
+        restricted_to = config.restricted_to
+        config.restricted_to = None
         locator = cea.inputlocator.InputLocator(config.scenario)
+        config.restricted_to = restricted_to
+
         for locator_spec in self.input_files:
             method_name, args = locator_spec[0], locator_spec[1:]
             method = getattr(locator, method_name)
