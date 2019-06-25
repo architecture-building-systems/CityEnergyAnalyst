@@ -56,7 +56,7 @@ def main(building_name, function, line_types, parts_of_data, hours):
             # Set y axis label.
             plt.ylabel("Carnot factor", fontsize=12)
             plt.ylim([-0.08, 0.08])
-            plt.xlim([0, 1250])
+            plt.xlim([0, 2000])
             title = tech
             plt.title(title)
             plt.savefig(os.path.join(folder_path, '0_hourly_carnot_' + line_type + '_' + part_of_data + '.png'))
@@ -161,11 +161,15 @@ def get_exergy_total_exergy(data, part_of_data, line_type, hourly_exergy):
         data_min_heat = data.loc[0:min_heat_index]
         lines_ascend, lines_descend = get_all_lines(data_min_heat, line_type)
         print(' ', lines_ascend, 'ok if empty')
+        # summing up
+        exergy_plus = get_exergy(data,lines_descend)
+        exergy_minus = get_exergy(data, lines_ascend)
+        total = exergy_plus + exergy_minus
         # write to dict
         if name in hourly_exergy.keys():
-            hourly_exergy[name].append(get_exergy(data, lines_descend))
+            hourly_exergy[name].append(total)
         else:
-            hourly_exergy[name] = [get_exergy(data, lines_descend)]
+            hourly_exergy[name] = [total]
     elif part_of_data == 'heating':
         min_heat_index = min(data[data.heat == min_heat].index)
         print(' index with lowest enthalpy: ', min_heat_index)
@@ -185,9 +189,9 @@ def get_exergy_total_exergy(data, part_of_data, line_type, hourly_exergy):
 if __name__ == '__main__':
     # get all file paths
     hcs_folder_name = 'HCS_windows'
-    tech = 'HCS_coil'
+    tech = 'HCS_LD'
     # run_name = 'run_034'
-    case_short = 'HOT'
+    case_short = 'RET'
     building_name = 'B001'
     timesteps = 24
 

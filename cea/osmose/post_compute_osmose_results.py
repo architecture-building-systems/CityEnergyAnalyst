@@ -8,6 +8,7 @@ import cea.osmose.auxiliary_functions as aux
 
 
 def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
+
     # get boundary conditions
     T_ref_C = results['T_ext']
     w_ref_gperkg = results['w_ext']
@@ -41,17 +42,26 @@ def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
     oau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(operation_df['T_SA'], operation_df['w_SA'], T_ref_C,
                                                                   w_ref_sat_gperkg)
     oau_Ex_air_kWh = air_flow_df['OAU_in'] * (oau_ex_air_in - ex_air_ext)
+    oau_ex_w_cond_kJperkg = np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_chw'], T_ref_C, rh_ref)
+    oau_Ex_w_kWh = results['m_w_coil_cond'] * oau_ex_w_cond_kJperkg
     # RAU
     rau_T_SA = 10.27
     rau_w_SA = aux.calc_w_ss_from_T(rau_T_SA)
     rau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(rau_T_SA, rau_w_SA, T_ref_C, w_ref_sat_gperkg)
     m_RAU_kgpers = results['w_lcu'] * 1000 / (w_RA_gperkg - rau_w_SA)
     rau_EX_air_kWh = m_RAU_kgpers * (rau_ex_air_in - ex_air_int)
+    rau_ex_w_cond_kJperkg = np.vectorize(calc_Ex.calc_exergy_liquid_water)(rau_T_SA, T_ref_C, rh_ref)
+    rau_Ex_w_kWh = results['w_lcu'] * rau_ex_w_cond_kJperkg
     # SCU
     scu_T_SA = 20
     scu_Ex_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_scu_sen'], scu_T_SA, T_ref_C)
     # total
-    Ex_process_total = oau_Ex_air_kWh + rau_EX_air_kWh + scu_Ex_kWh
+    Ex_process_total = (oau_Ex_air_kWh + oau_Ex_w_kWh) + (rau_EX_air_kWh + rau_Ex_w_kWh) + scu_Ex_kWh
+
+    ## Exergy of cooling utilities
+    oau_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results.filter(like='q_oau_chi').sum(axis=1), results['T_evap'], T_ref_C)
+    rau_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_chi_lt'], 7, T_ref_C)
+    scu_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_chi_ht'], 16, T_ref_C)
 
     # ex_df
     ex_df = pd.DataFrame()
@@ -59,10 +69,14 @@ def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
     ex_df['Ex_min_air'] = Ex_min_air_kWh.values
     ex_df['Ex_min_water'] = Ex_min_w_kWh.values
     ex_df['Ex_min_total'] = Ex_min_total_kWh.values
-    ex_df['Ex_process_OAU'] = oau_Ex_air_kWh.values
-    ex_df['Ex_process_RAU'] = rau_EX_air_kWh.values
+    ex_df['Ex_process_OAU'] = (oau_Ex_air_kWh + oau_Ex_w_kWh).values
+    ex_df['Ex_process_RAU'] = (rau_EX_air_kWh + rau_Ex_w_kWh).values
     ex_df['Ex_process_SCU'] = scu_Ex_kWh
     ex_df['Ex_process_total'] = Ex_process_total.values
+    ex_df['Ex_cooling_OAU'] = oau_Ex_c_kWh
+    ex_df['Ex_cooling_RAU'] = rau_Ex_c_kWh
+    ex_df['Ex_cooling_SCU'] = scu_Ex_c_kWh
+    ex_df['Ex_cooling_total'] = oau_Ex_c_kWh + rau_Ex_c_kWh + scu_Ex_c_kWh
     el_total = electricity_df.sum(axis=1).reset_index(drop=True)
     ex_df['eff_exergy'] = ex_df['Ex_min_total'] / el_total
     ex_df['eff_process_exergy'] = ex_df['Ex_process_total'] / el_total
@@ -119,3 +133,5 @@ def m_w_removed_min(m_ve_min, w_ext, w_RA, m_w_occ, m_w_RA_kg):
     m_w_occ_kg = m_w_occ
     m_w_removed_min_kg = m_w_air_in_kg - m_w_air_out_kg + m_w_occ_kg
     return m_w_removed_min_kg
+
+

@@ -24,6 +24,13 @@ def main(building, TECHS, building_result_path):
             results = results.rename(columns=results.iloc[0])[1:]
             results = results.fillna(0)
             el_use_sum[tech] = results['SU_elec'].sum()
+            osmose_composite_file = path_to_osmose_composite(building_result_path, tech)
+            if os.path.isfile(osmose_composite_file):
+                composite_df = pd.read_csv(osmose_composite_file, header=None).T.reset_index()
+                composite_df = composite_df.rename(columns=composite_df.iloc[0])[1:]
+                composite_df = composite_df.fillna(0)
+            else:
+                composite_df = pd.DataFrame()
 
             # check balance
             print 'checking balance for: ', tech
@@ -81,12 +88,11 @@ def main(building, TECHS, building_result_path):
                 electricity_df_SAT = electricity_df.iloc[144:168]
                 result_SAT = results.iloc[144:168]
                 plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
-            ## plot exergy loads
+
+            # plot exergy loads
+            results = get_hourly_chilled_water_temperatures(tech, results, composite_df)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
-
-            ## output chilled water temperatures
-            hourly_T_chw = analyse_chilled_water_temperature(results)
 
             ## write output_df
             calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech)
@@ -96,6 +102,7 @@ def main(building, TECHS, building_result_path):
 
     print el_use_sum
     return
+
 
 def check_balance(results, building, building_result_path, tech):
     if 'status' not in tech:
@@ -327,10 +334,11 @@ def analyse_chilled_water_usage(results, tech):
 
 
 def analyse_Qc_from_chilled_water(results, tech):
+    number_oau_in = results.filter(like='OAU_T_SA').shape[1]
     Qc_from_chilled_water_df = results.filter(like='q_oau_in_').sum(axis=0).reset_index()
     T_low_C, T_high_C = 8.1, 14.1
-    if tech == 'HCS_3for2':
-        T_interval = 0.65*2
+    if (tech == 'HCS_3for2' and number_oau_in < 10):
+        T_interval = 0.65 * 2
     else:
         T_interval = 0.65  # 0.5
     T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval).round(2)
@@ -341,22 +349,18 @@ def analyse_Qc_from_chilled_water(results, tech):
     return Qc_from_chilled_water_df
 
 
-def analyse_chilled_water_temperature(results):
-    hourly_chiller_usage = results.filter(like='el_oau_chi').fillna(0)
-    T_low_C = 8.1
-    T_high_C = 14.1
-    T_interval = 0.65  # 0.5
-    T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
-    hourly_chilled_water_temperature = []
-    for i in range(results.shape[0]):
-        chiller_timestep = hourly_chiller_usage.loc[i + 1]
-        if chiller_timestep[chiller_timestep > 0].values.size > 0:
-            chiller_used = str(chiller_timestep[chiller_timestep > 0].index).split('chi')[1].split('_')[0]
-            chiller_number = int(chiller_used) - 1
-            hourly_chilled_water_temperature.append(T_OAU_offcoil[chiller_number])
-        else:
-            hourly_chilled_water_temperature.append(np.nan)
-    return hourly_chilled_water_temperature
+def calc_m_w_cond_results(w_in, w_out, chiller_used, i, results):
+    w_air_in_kgperkg = results[w_in + chiller_used][i + 1]
+    w_air_out_kgperkg = results[w_out + chiller_used][i + 1]
+    m_w_cond_kgpers = results['m_oau_in_' + chiller_used][i + 1] * (w_air_in_kgperkg - w_air_out_kgperkg)
+    return m_w_cond_kgpers
+
+
+def calc_m_w_cond_composite(w_in, w_out, chiller_used, i, results, composite_df):
+    w_air_in_kgperkg = composite_df[w_in + chiller_used][i + 1]
+    w_air_out_kgperkg = composite_df[w_out + chiller_used][i + 1]
+    m_w_cond_kgpers = results['m_oau_in_' + chiller_used][i + 1] * (w_air_in_kgperkg - w_air_out_kgperkg)
+    return m_w_cond_kgpers
 
 
 def set_up_hu_store_df(results):
@@ -532,6 +536,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # calculate minimum exergy required
     output_df['Ex_min'] = ex_df['Ex_min_total']
     output_df['Ex_process'] = ex_df['Ex_process_total']
+    output_df['Ex_cooling'] = ex_df['Ex_cooling_total']
     # get Qh
     output_df['Qh'] = results['SU_Qh']
     output_df['el_tot_with_Qh'] = output_df['Qh'] + output_df['el_total']
@@ -539,7 +544,8 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['T_SA'] = operation_df['T_SA']
     output_df['w_SA'] = operation_df['w_SA']
     # get T_chw
-    output_df['T_chw'] = analyse_chilled_water_temperature(results)
+    output_df['T_chw'] = results['T_chw']
+    output_df['m_w_coil_cond'] = results['m_w_coil_cond']
     # cooling loads at buildings
     output_df['qc_load_sen'] = results['q_tot_sen_load']
     output_df['qc_load_total'] = results['q_tot_load']
@@ -556,7 +562,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['qc_per_m2'] = output_df['qc_sys_total'] / results['Af_m2'].values[0]
     output_df['sys_SHR'] = output_df['qc_sys_sen_total'] / output_df['qc_sys_total']  # sensible heat ratio
     output_df['load_SHR'] = output_df['qc_load_sen'] / output_df['qc_load_total']  # sensible heat ratio
-    output_df['qc_impact'] = output_df['qc_load_total']/ output_df['qc_sys_total']
+    output_df['qc_impact'] = output_df['qc_load_total'] / output_df['qc_sys_total']
     output_df['qc_Wh_sys_per_Af'] = output_df['qc_sys_total'] * 1000 / results.iloc[0]['Af_m2']
     output_df['el_Wh_total_per_Af'] = output_df['el_total'] * 1000 / results.iloc[0]['Af_m2']
     output_df['cop_system'] = output_df['qc_sys_total'] / output_df['el_total']
@@ -628,8 +634,8 @@ def set_up_cooling_df(results):
             names.append(cooling_df.columns[i])
         raise ValueError('Check cooling results from osmose: ', ' ,'.join(names))
     # if 'q_coi_scu' in results.columns.values:
-        # if (abs(results['q_scu_sen'] - results['q_coi_scu']) < 1e3).all() == False:
-        #     raise ValueError('Check SCU heat balance')
+    # if (abs(results['q_scu_sen'] - results['q_coi_scu']) < 1e3).all() == False:
+    #     raise ValueError('Check SCU heat balance')
 
     return cooling_df
 
@@ -737,9 +743,9 @@ def set_up_operation_df(tech, results):
         # output actual temperature and humidity
         number_oau_in = results.filter(like='OAU_T_SA').shape[1]
         if number_oau_in == 5:
-            oau_range = [0,2,4,6,8]
+            oau_range = [0, 2, 4, 6, 8]
         else:
-            oau_range = [0,1,2,3,4,5,6,7,8,9]
+            oau_range = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         for i in oau_range:
             m_label = 'm_oau_in_' + str(i + 1)
             T_label = 'OAU_T_SA' + str(i + 1)
@@ -1058,6 +1064,50 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
     return np.nan
 
 
+def get_hourly_chilled_water_temperatures(tech, results, composite_df):
+    hourly_chiller_usage = results.filter(like='el_oau_chi').fillna(0)
+    T_low_C = 8.1
+    T_high_C = 14.1
+    T_interval = 0.65  # 0.5
+    T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
+    hourly_chilled_water_temperature, hourly_evap_temperature, hourly_water_cond = [], [], []
+    for i in range(results.shape[0]):
+        t = i + 1
+        chiller_timestep = hourly_chiller_usage.loc[i + 1]
+        if chiller_timestep[chiller_timestep > 0].values.size > 0:
+            chiller_used = str(chiller_timestep[chiller_timestep > 0].index).split('chi')[1].split('_')[0]
+            chiller_number = int(chiller_used) - 1
+            hourly_chilled_water_temperature.append(T_OAU_offcoil[chiller_number])
+            hourly_evap_temperature.append(T_OAU_offcoil[chiller_number]-2.0)
+            if tech == 'HCS_ER0':
+                m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_h_', 'w_OA1_c_', chiller_used, i, results)
+            elif tech == 'HCS_coil':
+                m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_', 'w_OA2_', chiller_used, i, results) / 1000
+            elif tech == 'HCS_3for2':
+                m_w_cond_kgpers = calc_m_w_cond_composite('w_OA1_', 'w_OA2_', chiller_used, i, results, composite_df)
+            elif tech == 'HCS_IEHX':
+                m_w_cond_kgpers = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i, results, composite_df)
+            else:
+                m_w_cond_kgpers = 0
+            hourly_water_cond.append(m_w_cond_kgpers)
+
+        else:
+            if tech == 'HCS_LD':
+                m_w_cond_kgpers = results['m_oau_in'][t] * (results['w_OA1'][t] / 1000 - results['w_SA'][t])
+                hourly_chilled_water_temperature.append(results['OAU_T_SA'][t])  # TODO: change to desiccant temperature
+                hourly_water_cond.append(m_w_cond_kgpers)
+                hourly_evap_temperature.append(results['T_s_i_de'][t])
+            else:
+                hourly_chilled_water_temperature.append(np.nan)
+                hourly_water_cond.append(np.nan)
+                hourly_evap_temperature.append(np.nan)
+
+    results['T_chw'] = hourly_chilled_water_temperature
+    results['T_evap'] = hourly_evap_temperature
+    results['m_w_coil_cond'] = hourly_water_cond
+    return results
+
+
 def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     Af_m2 = results['Af_m2'].mean()
     eff_exergy = exergy_df['eff_process_exergy'].values
@@ -1178,6 +1228,12 @@ def path_to_osmose_results(building_result_path, tech):
     return path_to_file
 
 
+def path_to_osmose_composite(building_result_path, tech):
+    format = 'csv'
+    path_to_file = os.path.join(building_result_path, '%s_composite.%s' % (tech, format))
+    return path_to_file
+
+
 def path_to_save_fig(building, building_result_path, tech, fig_type):
     path_to_file = os.path.join(building_result_path, '%s_%s_%s.png' % (building, tech, fig_type))
     return path_to_file
@@ -1199,20 +1255,20 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B002"]
-    #buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_3for2"]
+    buildings = ["B001"]
+    # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    tech = ["HCS_coil"]
+    # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    #tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    # cases = ["WTP_CBD_m_WP1_RET","WTP_CBD_m_WP1_OFF","WTP_CBD_m_WP1_HOT"]
+    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
-    #cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
+    # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
     cases = ["WTP_CBD_m_WP1_RET"]
-    #result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_icc"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
