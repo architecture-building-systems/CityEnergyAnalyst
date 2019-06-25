@@ -300,17 +300,17 @@ class Plots(object):
                                 index_col=0)
         edge_diam = edge_data['D_int_m']  # diameters of each edge
         DN = edge_data['Pipe_DN_y']
-        d1 = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
+        Tnode_hourly_C = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
                                                                                          self.network_name)) - 273.15  # node supply temperature
-        d2 = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
+        Q_loss_kWh = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
                                                                             self.network_name))  # edge loss
-        d3 = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
+        P_loss_kWh = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                          self.network_name))
-        d4 = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
+        P_loss_substation_kWh = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
                                                                                 self.network_name))
         diam = pd.DataFrame(edge_diam)
-        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3,
-                'P_loss_substation_kWh': d4}
+        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': Tnode_hourly_C, 'Q_loss_kWh': Q_loss_kWh, 'P_loss_kWh': P_loss_kWh,
+                'P_loss_substation_kWh': P_loss_substation_kWh}
 
     def preprocessing_network_pumping(self):
         df_pumping_kW = pd.read_csv(
@@ -373,7 +373,7 @@ class Plots(object):
     def supply_return_ambient_curve(self, category):
         analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
         data = self.plant_temp_data_processed['Data']  # read in plant supply and return temperatures
-        data2 = self.ambient_temp  # read in abient temperatures
+        # read in abient temperatures
         plant_nodes = self.plant_temp_data_processed['Plants']  # plant node names
         for i in range(len(plant_nodes)):  # iterate through all plants
             title = "Supply and Return Temp. at Plant " + str(
@@ -385,7 +385,7 @@ class Plots(object):
                                                                  'Tamb_Tsup_Tret_curve_plant_' + str(
                 plant_nodes[i]), category)
             data_part.columns = analysis_fields
-            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path)
+            plot = supply_return_ambient_temp_plot(data_part, self.ambient_temp, analysis_fields, title, output_path)
         return plot
 
     def loss_duration_curve(self, category):

@@ -10,7 +10,7 @@ import os
 import time
 import hashlib
 import pandas as pd
-import cPickle
+import functools
 
 
 class NullPlotCache(object):
@@ -80,7 +80,7 @@ class PlotCache(object):
             with open(div_file, 'w') as div_fp:
                 div_fp.write(table_div)
         else:
-            print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
+            # print('Loading table_div from cache: {div_file}'.format(div_file=div_file))
             with open(div_file, 'r') as div_fp:
                 table_div = div_fp.read()
         return table_div
@@ -136,3 +136,12 @@ class MemoryPlotCache(PlotCache):
         key = self._cached_data_file(data_path, parameters)
         self._cache[key] = data
         return data
+
+
+def cached(producer):
+    """Calls to a function wrapped with this decorator are cached using ``self.cache.lookup``"""
+    @functools.wraps(producer)
+    def wrapper(self):
+        return self.cache.lookup(data_path=os.path.join(self.category_name, producer.__name__),
+                                 plot=self, producer=lambda: producer(self))
+    return wrapper

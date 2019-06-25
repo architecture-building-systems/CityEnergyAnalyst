@@ -729,6 +729,16 @@ class InputLocator(object):
 
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
+    def get_plant_nodes(self, network_type, network_name):
+        """Return the list of "PLANT" nodes in a thermal network"""
+        nodes_csv = self.get_thermal_network_node_types_csv_file(network_type, network_name)
+        if os.path.exists(nodes_csv):
+            import pandas as pd
+            nodes_df = pd.read_csv(nodes_csv)
+            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Name'].values)
+        return []
+
+
     def get_thermal_network_edge_list_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
         List of edges in a district heating or cooling network and their start and end nodes
@@ -1293,6 +1303,14 @@ class InputLocator(object):
         path_a = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_a))))
         path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
         return path_a == path_b
+
+    def get_naming(self):
+        """Returns plots/naming.csv"""
+        return os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv')
+
+    def get_docs_folder(self):
+        """Returns docs"""
+        return os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
     # MPC by Concept Project
     def get_mpc_results_folder(self, output_folder="mpc-building"):

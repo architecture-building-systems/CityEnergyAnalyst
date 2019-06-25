@@ -1,0 +1,127 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "radiation-daysim"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="WTP_CBD_h/inputs/building-geometry";
+        "district.shp"
+        "zone.shp"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="WTP_CBD_h/inputs/building-properties";
+        "age.dbf"
+        "architecture.dbf"
+        "occupancy.dbf"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="WTP_CBD_h/inputs/networks";
+        "streets.shp"
+    }
+    subgraph cluster_3_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="WTP_CBD_h/inputs/topography";
+        "terrain.tif"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="cea/databases/weather";
+        "Singapore.epw"
+    }
+    subgraph cluster_5_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/archetypes";
+        "construction_properties.xlsx"
+        "occupancy_schedules.xlsx"
+        "system_controls.xlsx"
+    }
+    subgraph cluster_6_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/CH/systems";
+        "envelope_systems.xls"
+        "supply_systems.xls"
+        "emission_systems.xls"
+        "thermal_networks.xls"
+    }
+    subgraph cluster_7_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/SG/benchmarks";
+        "benchmark_2000W.xls"
+    }
+    subgraph cluster_8_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="databases/SG/lifecycle";
+        "LCA_buildings.xlsx"
+        "LCA_infrastructure.xlsx"
+    }
+    subgraph cluster_9_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "B001_insolation_Whm2.json"
+        "B001_geometry.csv"
+    }
+    "construction_properties.xlsx" -> "radiation-daysim"[label="(get_archetypes_properties)"]
+    "occupancy_schedules.xlsx" -> "radiation-daysim"[label="(get_archetypes_schedules)"]
+    "system_controls.xlsx" -> "radiation-daysim"[label="(get_archetypes_system_controls)"]
+    "age.dbf" -> "radiation-daysim"[label="(get_building_age)"]
+    "architecture.dbf" -> "radiation-daysim"[label="(get_building_architecture)"]
+    "occupancy.dbf" -> "radiation-daysim"[label="(get_building_occupancy)"]
+    "benchmark_2000W.xls" -> "radiation-daysim"[label="(get_data_benchmark)"]
+    "district.shp" -> "radiation-daysim"[label="(get_district_geometry)"]
+    "envelope_systems.xls" -> "radiation-daysim"[label="(get_envelope_systems)"]
+    "LCA_buildings.xlsx" -> "radiation-daysim"[label="(get_life_cycle_inventory_building_systems)"]
+    "LCA_infrastructure.xlsx" -> "radiation-daysim"[label="(get_life_cycle_inventory_supply_systems)"]
+    "streets.shp" -> "radiation-daysim"[label="(get_street_network)"]
+    "supply_systems.xls" -> "radiation-daysim"[label="(get_supply_systems)"]
+    "emission_systems.xls" -> "radiation-daysim"[label="(get_technical_emission_systems)"]
+    "terrain.tif" -> "radiation-daysim"[label="(get_terrain)"]
+    "thermal_networks.xls" -> "radiation-daysim"[label="(get_thermal_networks)"]
+    "Singapore.epw" -> "radiation-daysim"[label="(get_weather)"]
+    "zone.shp" -> "radiation-daysim"[label="(get_zone_geometry)"]
+    "radiation-daysim" -> "B001_insolation_Whm2.json"[label="(get_radiation_building)"]
+    "radiation-daysim" -> "B001_geometry.csv"[label="(get_radiation_metadata)"]
+    }

@@ -7,6 +7,7 @@ Essential
 These are a collection of tutorials we consider essential for new users. We suggest to take them in order for a better learning experience.
 
 #. How to :ref:`install-and-set-up` CEA?
+#. :doc:`script-data-flow`
 #. `How are databases classified in CEA? <https://docs.google.com/presentation/d/1ECZJNMyTH057jbrpc4QIyfrh1cWaNbR_tThuvdOqlS8/edit?usp=sharing>`__
 #. `What are the input databases of CEA? <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit?usp=sharing>`__
 #. `What are the default databases of CEA? <https://docs.google.com/presentation/d/1xMG-Vhmqh0jwdLih6WgwFzJrzhlPGdocQKdzZvYnviI/edit?usp=sharing>`__
@@ -46,7 +47,6 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-create-user-stories`
 #. :doc:`how-to-report-bugs`
 #. :doc:`how-to-use-github`
-#. :doc:`script-input-outputs`
 #. :doc:`how-to-name-variables`
 #. :doc:`how-to-add-a-new-script-to-the-cea`
 #. :doc:`how-to-test-the-cea`
