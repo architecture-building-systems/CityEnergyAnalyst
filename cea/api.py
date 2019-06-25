@@ -20,9 +20,8 @@ def register_scripts():
             option_list = cea_script.parameters
             config.restrict_to(option_list)
             for section, parameter in config.matching_parameters(option_list):
-                parameter_py_name = parameter.name.replace('-', '_')
-                if parameter_py_name in kwargs:
-                    parameter.set(kwargs[parameter_py_name])
+                if parameter.py_name in kwargs:
+                    parameter.set(kwargs[parameter.py_name])
             # run the script
             cea_script.print_script_configuration(config)
             t0 = datetime.datetime.now()
