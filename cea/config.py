@@ -713,11 +713,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def decode(self, value):
         choices = parse_string_to_list(value)
-        for choice in choices:
-            if choice not in self._choices:
-                raise cea.ConfigError(
-                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
-        return choices
+        return [choice for choice in choices if choice in self._choices]
 
 
 class SingleBuildingParameter(ChoiceParameter):
