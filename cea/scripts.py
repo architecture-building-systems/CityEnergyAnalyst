@@ -50,7 +50,7 @@ class CeaScript(object):
                                   else None)
             print('- {path}'.format(path=path))
             if script_suggestions:
-                print('  - try running {scripts}'.format(path=path, scripts=', '.join(script_suggestions)))
+                print('  (HINT: try running {scripts})'.format(path=path, scripts=', '.join(script_suggestions)))
 
     def missing_input_files(self, config):
         """
