@@ -6,7 +6,6 @@ var layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_network
     new GeoJsonLayer({id:'dc_networks'}), new GeoJsonLayer({id:'zone'}), new GeoJsonLayer({id:'district'})];
 var extruded = false;
 var currentViewState;
-var selectedBuilding = '';
 var cameraOptions;
 
 const lightMap = {
@@ -63,16 +62,16 @@ const jsonUrls = {
 
 $(document).ready(function() {
     // Get zone file first. Will not create map if zone file does not exist
-    if (geojsons['zone']) {
+    if (inputstore.getGeojson('zone')) {
         createLayer('zone');
         $('#zone-cb').prop('hidden', false);
         currentViewState = {
-            latitude: (geojsons['zone'].bbox[1] + geojsons['zone'].bbox[3]) / 2,
-            longitude: (geojsons['zone'].bbox[0] + geojsons['zone'].bbox[2]) / 2,
+            latitude: (inputstore.getGeojson('zone').bbox[1] + inputstore.getGeojson('zone').bbox[3]) / 2,
+            longitude: (inputstore.getGeojson('zone').bbox[0] + inputstore.getGeojson('zone').bbox[2]) / 2,
             zoom: 0, bearing: 0, pitch: 0
         };
 
-        if (geojsons['district']) {
+        if (inputstore.getGeojson('district')) {
             createLayer('district');
             $('#district-cb').prop('hidden', false);
         }
@@ -96,7 +95,7 @@ $(document).ready(function() {
 
         // Set the camera to bounding box
         cameraOptions = deckgl.getMapboxMap().cameraForBounds(
-            [[geojsons['zone'].bbox[0], geojsons['zone'].bbox[1]], [geojsons['zone'].bbox[2], geojsons['zone'].bbox[3]]],
+            [[inputstore.getGeojson('zone').bbox[0], inputstore.getGeojson('zone').bbox[1]], [inputstore.getGeojson('zone').bbox[2], inputstore.getGeojson('zone').bbox[3]]],
             {padding: 10}
         );
         currentViewState = {
@@ -133,7 +132,6 @@ function setupButtons() {
     class dToggle {
       onAdd(map) {
         this._map = map;
-        let _this = this;
 
         this._btn = document.createElement("button");
         this._btn.id = "3d-button";
@@ -163,7 +161,6 @@ function setupButtons() {
       }
       onAdd(map) {
         this._map = map;
-        let _this = this;
 
         this._btn = document.createElement("button");
         this._btn.id = "dark-button";
@@ -194,7 +191,6 @@ function setupButtons() {
     class recenterMap {
       onAdd(map) {
         this._map = map;
-        let _this = this;
 
         this._btn = document.createElement("button");
         this._btn.id = "recenter-button";
@@ -296,16 +292,16 @@ function createDistrictLayer(options={}) {
 
     layers.splice(4, 0, new GeoJsonLayer({
         id: 'district',
-        data: geojsons['district'],
+        data: inputstore.getGeojson('district'),
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
         filled: true,
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: f => buildingColor([255, 0, 0], f.properties['Name']),
+        getFillColor: f => buildingColor([255, 0, 0], f),
         updateTriggers: {
-            getFillColor: selectedBuilding
+            getFillColor: inputstore.getSelected()
         },
 
         pickable: true,
@@ -324,16 +320,17 @@ function createZoneLayer(options={}) {
 
     layers.splice(3, 0, new GeoJsonLayer({
         id: 'zone',
-        data: geojsons['zone'],
+        data: inputstore.getGeojson('zone'),
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
         filled: true,
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: f => buildingColor([0, 0, 255], f.properties['Name']),
+        getFillColor: f => buildingColor([0, 0, 255], f),
         updateTriggers: {
-            getFillColor: selectedBuilding
+            getFillColor: inputstore.getSelected(),
+            getElevation: inputstore.getGeojson('zone')
         },
 
         pickable: true,
@@ -360,7 +357,6 @@ function createStreetsLayer(options={}) {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties,
 
         ...options
     }));
@@ -419,13 +415,18 @@ function updateTooltip({x, y, object, layer}) {
         tooltip.style.top = `${y}px`;
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
-        $.each(input_columns[layer.id], function (index, column)  {
-            innerHTML += `<div><b>${column}</b>: ${object.properties[column]}</div>`;
-        });
+
         if (layer.id == 'zone' || layer.id == 'district') {
+            $.each(inputstore.getColumns(layer.id), function (index, column)  {
+                innerHTML += `<div><b>${column}</b>: ${object.properties[column]}</div>`;
+            });
             var area = turf.area(object);
             innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>
             <div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+        } else {
+            for (let prop in object.properties) {
+                innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
+            }
         }
         if (layer.id == 'dc_networks' || layer.id == 'dh_networks') {
             if (!object.properties.hasOwnProperty("Building")) {
@@ -447,31 +448,41 @@ function editProperties({object}) {
     edit_row(row);
 }
 
-function showProperties({object, layer}) {
-    console.log(object.properties);
-    var name = object['properties']['Name'];
+function showProperties({object, layer}, event) {
+    // console.log('object', object, layer);
+    // console.log('event', event);
 
-    //Change the color of the selected building
-    selectedBuilding = name;
-    createLayer('zone');
-    createLayer('district');
-    deckgl.setProps({ layers: [...layers] });
-
-    $('#building-name').empty().append(`<h3>Building Properties: ${name}</h3>`);
-    $( '#building-properties').empty()
-        .append(`<h3>${layer.id.charAt(0).toUpperCase() + layer.id.slice(1)} building</h3>`);
-    $.each(tables[layer.id][name], function (k, v) {
-                $('#building-properties').append(`<div>${k}:${v}</div>`);
-            });
-    $.each(tables, function (property, buildings) {
-        if (buildings[name] && property !== layer.id) {
-            $('#building-properties').append(`<h3>${property}:</h3>`);
-            $.each(buildings[name], function (k, v) {
-                $('#building-properties').append(`<div>${k}:${v}</div>`);
-            });
+    var selected = inputstore.getSelected();
+    var index = -1;
+    if (event.srcEvent.ctrlKey && event.leftButton) {
+        index = selected.findIndex(x => x === object.properties['Name']);
+        if (index !== -1) {
+            selected.splice(index, 1);
+        } else {
+            selected.push(object.properties['Name']);
         }
-    });
+    } else {
+        selected = [object.properties['Name']];
+    }
 
+    if (layer.id === 'district') {
+        $('#district-tab').trigger('click');
+    }
+    if (layer.id === 'zone' && $('#district-tab').hasClass('active')) {
+        $('#zone-tab').trigger('click');
+    }
+
+    // Select the building in the table
+    currentTable.deselectRow();
+    if (selected.length) {
+        currentTable.selectRow(selected);
+        if (index === -1) {
+            currentTable.scrollToRow(object.properties['Name']);
+        }
+    } else {
+        inputstore.setSelected(['']);
+        redrawBuildings();
+    }
 }
 
 function nodeFillColor(type) {
@@ -484,10 +495,18 @@ function nodeFillColor(type) {
     }
 }
 
-function buildingColor(color, name) {
-    if (name === selectedBuilding) {
-        return [255, 255, 0, 255]
-    } else {
-        return color
+function buildingColor(color, object) {
+    var selected = inputstore.getSelected();
+    for(let i = 0; i < selected.length; i++){
+        if (object.properties['Name'] === selected[i]) {
+            return [255, 255, 0, 255]
+        }
     }
+    return color
+}
+
+function redrawBuildings() {
+    createLayer('zone');
+    createLayer('district');
+    deckgl.setProps({ layers: [...layers] });
 }
