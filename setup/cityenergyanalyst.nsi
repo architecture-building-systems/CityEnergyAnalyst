@@ -161,7 +161,7 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$PROFILE\cea.config" radiation-daysim daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
-    WriteUninstaller "$INSTDIR\Uninstall.exe"
+    WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
 
 SectionEnd
 
@@ -177,6 +177,10 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
+
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
 
 SectionEnd
 
@@ -219,12 +223,21 @@ SectionEnd
 
 Section "Uninstall"
 
-  ;ADD YOUR OWN FILES HERE...
+  ; Delete the shortcuts
+  Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
+  Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+  Delete "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
 
-  Delete "$INSTDIR\Uninstall.exe"
+  Delete "$DESKTOP\CEA Console.lnk"
+  Delete "$DESKTOP\CEA Dashboard.lnk"
+  Delete "$DESKTOP\cea.config.lnk"
 
-  RMDir "$INSTDIR"
+  ; Delete the cea.config file
+  Delete "$PROFILE\cea.config"
 
-  DeleteRegKey /ifempty HKCU "Software\Modern UI Test"
+  SetOutPath $TEMP
+  Delete "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+  RMDir /R /REBOOTOK "$INSTDIR"
 
 SectionEnd
