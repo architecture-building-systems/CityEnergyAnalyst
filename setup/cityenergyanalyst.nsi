@@ -155,6 +155,8 @@ Section "Base Installation" Base_Installation_Section
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
+    DetailPrint "Pip installing Jupyter"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
