@@ -6,7 +6,7 @@
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-table.css') }}">
   <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-editable.css') }}">
-  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/deckgl.css') }}">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -52,52 +52,62 @@
           <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
               <div class="x_content">
-                <div class="col-lg-7 col-md-12 col-sm-12 col-xs-12">
-                <div id='layers-group'>
+                <div>
+                  <div id='layers-group'>
                   <span id="zone-cb" hidden>
                   <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
                          onchange='toggleLayer(this);'>
                     <label for='zone-toggle'>Zone</label>
                   </span>
-                  <span id="district-cb" hidden>
+                    <span id="district-cb" hidden>
                   <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
                          onchange='toggleLayer(this);'>
                     <label for='district-toggle'>District</label>
                   </span>
-                  <span id="streets-cb" hidden>
+                    <span id="streets-cb" hidden>
                   <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
                          onchange='toggleLayer(this);'>
                     <label for='streets-toggle'>Streets</label>
                   </span>
-                  <span id="dh_networks-cb" hidden>
+                    <span id="dh_networks-cb" hidden>
                   <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
                          onchange='toggleLayer(this);'>
                     <label for='dh_networks-toggle'>DH Network</label>
                   </span>
-                  <span id="dc_networks-cb" hidden>
+                    <span id="dc_networks-cb" hidden>
                   <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
                          onchange='toggleLayer(this);'>
                     <label for='dc_networks-toggle'>DC Network</label>
                   </span>
-                </div>
-                <div id="map-tooltip"></div>
-                <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
-                </div>
-                <div class="col-lg-5 col-md-12 col-sm-12 col-xs-12" style="height: 500px">
-                  <div class="row" style="height: 90%;">
-                    <h3 id="building-name">Building Properties</h3>
-                    <div id="building-properties" style="height:90%; overflow: auto;">
-                      <div id="properties-prompt">Click on a building to see its properties</div>
-                    </div>
                   </div>
-                  <div class="row" style="text-align: center; margin-top: 10px;">
-                    <button class="btn btn-success">Test</button>
-                    <button class="btn btn-danger">Delete</button>
-                  </div>
+                  <div id="map-tooltip"></div>
+                  <div id="mapid" style="height: 500px;" oncontextmenu="return false;"></div>
                 </div>
               </div>
-              <div class="x_content">
-                <div id="example-table"></div>
+              <div class="x_content" id="cea-inputs" style="display: none">
+                  <div>
+                    <ul class="nav nav-pills">
+                      {% for (property, _) in store['tables']|dictsort %}
+                      {% if loop.index0 == 0 %}
+                      <li class="tab" id="{{ property }}-tab" data-name="{{ property }}"><a>{{ property }}</a></li>
+                      {% else %}
+                      <li class="tab" id="{{ property }}-tab" data-name="{{ property }}"><a>{{ property }}</a></li>
+                      {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                <div class="panel panel-default">
+                  <div class="panel-heading clearfix">
+                    <div class="pull-right" id="table-buttons">
+                      <button class="btn btn-default" id="select-all-button">Select All</button>
+                      <button class="btn btn-default" id="filter-button">Filter on Selection</button>
+                      <button class="btn btn-default" id="edit-button">Edit Selection</button>
+                      <button class="btn btn-default" id="delete-button">Delete Selection</button>
+                      <button class="btn btn-default" id="clear-button">Clear Selection</button>
+                    </div>
+                  </div>
+                  <div class="panel-body" id="property-table"></div>
+                </div>
               </div>
 <!--              <div class="x_content">-->
 <!--                <table id="cea-table"-->
@@ -129,27 +139,24 @@
 {% endblock content %}
 
 {% block javascripts %}
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/store.js') }}"></script>
   <script>
-    var tables = {{ tables|tojson|safe }};
-    var geojsons = {{ geojsons|tojson|safe }};
-    var input_columns = {{ input_columns|tojson|safe }};
-    console.log(tables);
-    console.log(geojsons);
-    console.log(input_columns);
+    var inputstore = new InputStore({{ store|tojson|safe }});
+    console.log(inputstore);
   </script>
   {{ super() }}
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <!-- optional if mapbox base map is needed -->
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
-  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/turf.min.js') }}"></script>
 
   <link href="https://unpkg.com/tabulator-tables@4.2.7/dist/css/tabulator.min.css" rel="stylesheet">
   <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.2.7/dist/js/tabulator.min.js"></script>
 
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/table.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/map.js', version='0.1') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/inputs.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/table.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/map.js') }}"></script>
 {% endblock javascripts %}
