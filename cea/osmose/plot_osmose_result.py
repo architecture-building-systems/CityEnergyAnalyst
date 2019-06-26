@@ -91,6 +91,7 @@ def main(building, TECHS, building_result_path):
 
             # plot exergy loads
             results = get_hourly_chilled_water_temperatures(tech, results, composite_df)
+            results = get_reheating_energy(tech, results)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
 
@@ -524,6 +525,12 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
         output_df['el_oau'] = output_df['el_aux_oau'] + output_df['el_hp_oau']
     else:
         output_df['el_oau'] = output_df['el_aux_oau'] + output_df['el_chi_oau']
+    if tech == 'HCS_ER0' or 'HCS_IEHX' or 'HCS_coil':
+        output_df['el_oau_reheat'] = results['q_reheat']
+    else:
+        output_df['el_oau_reheat'] = np.zeros(results.shape[0])
+    output_df['el_oau_in_fan'] = results.filter(like='fan').filter(like='oau_in').sum(axis=1)
+    output_df['el_oau_out_fan'] = results.filter(like='fan').filter(like='oau_out').sum(axis=1)
     # calculate total cooling energy produced
     cooling_df = set_up_cooling_df(results)
     # output_df['qc_bui_sen_total'] = cooling_df.filter(like='qc_bui_sen').sum(axis=1)
@@ -536,7 +543,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # calculate minimum exergy required
     output_df['Ex_min'] = ex_df['Ex_min_total']
     output_df['Ex_process'] = ex_df['Ex_process_total']
-    output_df['Ex_cooling'] = ex_df['Ex_cooling_total']
+    output_df['Ex_utility'] = ex_df['Ex_utility_total']
     # get Qh
     output_df['Qh'] = results['SU_Qh']
     output_df['el_tot_with_Qh'] = output_df['Qh'] + output_df['el_total']
@@ -590,6 +597,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # calculate exergy efficiency
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
     output_df['eff_process_exergy'] = output_df['Ex_process'] / output_df['el_total']
+    output_df['eff_utility_exergy'] = output_df['Ex_utility'] / output_df['el_total']
 
     # calculate the percentage used by each component
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
@@ -1108,6 +1116,13 @@ def get_hourly_chilled_water_temperatures(tech, results, composite_df):
     return results
 
 
+def get_reheating_energy(tech, results):
+    if tech == 'HCS_coil' or 'HCS_ER0' or 'HCS_IEHX':
+        results['q_reheat'] = results.filter(like='reheat').sum(axis=1)
+    else:
+        results['q_reheat'] = np.zeros(results.shape[0])
+    return results
+
 def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     Af_m2 = results['Af_m2'].mean()
     eff_exergy = exergy_df['eff_process_exergy'].values
@@ -1255,25 +1270,25 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B001"]
-    # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_coil"]
-    # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
+    # buildings = ["B001"]
+    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    # tech = ["HCS_coil"]
+    tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_RET"]
+    # cases = ["WTP_CBD_m_WP1_HOT"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_icc"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0625"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_24"
+            building_time = building + "_168"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path

@@ -122,6 +122,12 @@ def calc_Ex_Qc(Qc, T_RA_C, T_ref_C):
     Ex_Qc = Qc * (T_ref_K / T_RA_K - 1)
     return Ex_Qc
 
+def calc_Ex_Qh(Qh, T_h_C, T_ref_C):
+    T_ref_K = T_ref_C + 273.15
+    T_h_K = T_h_C + 273.15
+    Ex_Qc = Qh * (T_ref_K / T_h_K - 1)
+    return Ex_Qc
+
 
 def calc_ex_latent(T_ref_C, w_ref_gperkg):
     T_ref_K = T_ref_C + 273.15
