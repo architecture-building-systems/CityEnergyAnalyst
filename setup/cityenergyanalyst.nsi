@@ -227,6 +227,8 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
   Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
   Delete "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
+  Delete "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
+  RMDir "$SMPROGRAMS\${CEA_TITLE}"
 
   Delete "$DESKTOP\CEA Console.lnk"
   Delete "$DESKTOP\CEA Dashboard.lnk"
