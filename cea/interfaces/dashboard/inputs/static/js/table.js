@@ -39,9 +39,18 @@ $("[id$=-tab]").each(function () {
 
 function createTable(parent, name, values, columns, types) {
     var placeholder = '';
+    var tool = '';
     if (!inputstore.getData(name).length) {
-        placeholder = '<div>File cannot be found.</div>' +
-            '<div>You can create the file using the <a href="/tools/data-helper">data-helper</a> tool.</div>'
+        placeholder = '<div>File cannot be found.</div>'
+        if (name === 'zone') {
+            tool = 'zone-helper';
+        } else if (name === 'district') {
+            tool = 'district-helper';
+        } else {
+            tool = 'data-helper';
+        }
+
+        placeholder += `<div>You can create the file using the <a href="/tools/${tool}">${tool}</a> tool.</div>`
     } else {
         placeholder = '<div>No matching records found.</div>'
     }

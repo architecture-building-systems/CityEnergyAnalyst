@@ -125,6 +125,14 @@ $(document).ready(function() {
                 console.log(`Get ${key} failed.`);
             });
         });
+    } else {
+        deckgl = new DeckGL({
+            container: 'mapid',
+            mapStyle: lightMap,
+            longitude: 0,
+            latitude: 0,
+            zoom: 0,
+        });
     }
 });
 
