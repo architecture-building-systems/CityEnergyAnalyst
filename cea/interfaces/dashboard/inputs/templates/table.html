@@ -87,11 +87,11 @@
               <div class="x_content" id="cea-inputs" style="display: none">
                   <div>
                     <ul class="nav nav-pills">
-                      {% for (property, _) in store['tables']|dictsort %}
+                      {% for tab in tabs %}
                       {% if loop.index0 == 0 %}
-                      <li class="tab" id="{{ property }}-tab" data-name="{{ property }}"><a>{{ property }}</a></li>
+                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
                       {% else %}
-                      <li class="tab" id="{{ property }}-tab" data-name="{{ property }}"><a>{{ property }}</a></li>
+                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
                       {% endif %}
                       {% endfor %}
                     </ul>
@@ -106,7 +106,11 @@
                       <button class="btn btn-default" id="clear-button">Clear Selection</button>
                     </div>
                   </div>
-                  <div class="panel-body" id="property-table"></div>
+                  <div id="property-table"></div>
+                </div>
+                <div>
+                  <button class="btn btn-success" id="save-button">Save</button>
+                  <button class="btn btn-danger" id="discard-button">Discard</button>
                 </div>
               </div>
 <!--              <div class="x_content">-->
@@ -139,12 +143,14 @@
 {% endblock content %}
 
 {% block javascripts %}
+  {{ super() }}
+
   <script src="{{ url_for('inputs_blueprint.static', filename='js/store.js') }}"></script>
   <script>
     var inputstore = new InputStore({{ store|tojson|safe }});
     console.log(inputstore);
   </script>
-  {{ super() }}
+
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <!-- optional if mapbox base map is needed -->
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>

@@ -387,7 +387,6 @@ function createDHNetworksLayer(options={}) {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties,
 
         ...options
     }));
@@ -410,7 +409,6 @@ function createDCNetworksLayer(options={}) {
         autoHighlight: true,
 
         onHover: updateTooltip,
-        onClick: editProperties,
 
         ...options
     }));
@@ -446,14 +444,6 @@ function updateTooltip({x, y, object, layer}) {
     } else {
         tooltip.innerHTML = '';
     }
-}
-
-function editProperties({object}) {
-    console.log(object.properties.Name);
-    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
-    var pk = object.properties[pk_field];
-    var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
-    edit_row(row);
 }
 
 function showProperties({object, layer}, event) {

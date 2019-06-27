@@ -127,6 +127,9 @@ def route_geojson_streets():
 
 @blueprint.route('/building-properties')
 def route_building_properties():
+    # FIXME: Find a better way to ensure order of tabs
+    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
+
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}}
     for db in INPUTS:
@@ -155,7 +158,7 @@ def route_building_properties():
         except IOError as e:
             print(e)
             store['tables'][db] = {}
-    return render_template('table.html', store=store)
+    return render_template('table.html', store=store, tabs=tabs)
 
 
 @blueprint.route('/table/<db>', methods=['GET'])

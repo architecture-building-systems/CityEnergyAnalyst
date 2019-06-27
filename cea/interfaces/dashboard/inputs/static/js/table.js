@@ -13,7 +13,9 @@ $("[id$=-tab]").each(function () {
 
         // Store previously selected buildings before creating new table
         if (inputstore.getData(oldtable).length) {
-            tempSelection = [...inputstore.getSelected()];
+            if (inputstore.getSelected()) {
+                tempSelection = [...inputstore.getSelected()];
+            }
         }
 
         var name = $(this).data('name');
@@ -62,8 +64,8 @@ function createTable(parent, name, values, columns, types) {
         columns: defineColumns(columns, types),
         placeholder: placeholder,
 
-        selectable:true,
-        layout: 'fitDataFill',
+        selectable: true,
+        layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
         cellEdited: updateData,
         rowSelectionChanged: addToSelection
@@ -92,49 +94,27 @@ function defineColumns(columns, column_types) {
 }
 
 function updateData(data) {
-    var data = data.getData();
-    console.log(data);
+    var name = data.getData()['Name'];
+    var column = data.getField();
+    var value = data.getValue();
 
     // Find the layer of the property
-    var layer = '';
-    $("[id$=-tab]").each(function () {
-        if ($(this).hasClass('active')) {
-            layer = $(this).attr('id').split('-')[0];
+    var table = $('.tab.active').attr('id').split('-tab')[0];
+
+    // Update input data
+    inputstore.getData(table)[inputstore.getDataID(table, name)][column] = value;
+
+    // Update geometries
+    if (table === 'zone' || table === 'district') {
+        inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'][column] = value;
+        if (column === 'height_ag') {
+            inputstore.createNewGeojson(table);
+            redrawBuildings();
         }
-    });
-
-    if (layer === 'zone' || layer === 'district') {
-        inputstore.getGeojson(layer)['features']['properties'][data.getField()] = data.getValue();
-        // Update inputs
-        inputs['tables'][selectedBuilding.layer][data.getData()['Name']][data.getField()] = data.getValue();
-        //
-        geojsons = JSON.parse(JSON.stringify(geojsons));
-        selectedBuilding['object'] = geojsons[selectedBuilding.layer]['features'][selectedBuilding.object.id];
     }
-    // // Update geojsons
-    // inputstore.getGeojson(selectedBuilding.layer)['features'][selectedBuilding.object.id]
-    //     ['properties'][data.getField()] = data.getValue();
-    // // Update inputs
-    // inputs['tables'][selectedBuilding.layer][data.getData()['Name']][data.getField()] = data.getValue();
-    //     //
-    // geojsons = JSON.parse(JSON.stringify(geojsons));
-    // selectedBuilding['object'] = geojsons[selectedBuilding.layer]['features'][selectedBuilding.object.id];
 
+    inputstore.addChange('update', table, data.getData()['Name'], data.getField(), data.getValue());
 
-    // inputstore.addChange(
-    //     {
-    //         update: {
-    //             [inputstore.getSelected().layer]: {
-    //                 [data.getData()['Name']]: {
-    //                     [data.getField()]: {
-    //                         value: data.getValue()
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     });
-
-    redrawBuildings();
 }
 
 function addToSelection(data, row) {
@@ -188,5 +168,14 @@ $(window).load(function () {
     $('#clear-button').click(function () {
         currentTable.deselectRow();
         filterSelection(inputstore.getSelected());
+    });
+
+    $('#discard-button').click(function () {
+       inputstore.resetChanges();
+       $('.tab.active').trigger('click');
+    });
+
+    $('#save-button').click(function () {
+
     });
 });
