@@ -51,7 +51,8 @@ def main(building, building_result_path, case):
     plot_chiller_T_Qc_scatter(chiller_T_Qc_all_tech_df, tech_rank, building, building_result_path, case)
 
     # # plot T_SA, w_SA
-    plot_el_compare(building, building_result_path, compare_df)
+    if index > 24:
+        plot_el_compare(building, building_result_path, compare_df)
     ## plot hourly COP vs SHR
     plot_COP_SHR_scatter(hourly_cop_shr_dict, building, case, building_result_path)
 
@@ -401,7 +402,7 @@ def path_to_save_cop_shr_scatter(building, building_result_path):
 
 if __name__ == '__main__':
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    buildings = ["B003"]
+    buildings = ["B005", "B008"]
     timestep = "168"
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
@@ -411,8 +412,8 @@ if __name__ == '__main__':
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ['WTP_CBD_m_WP1_RET']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0515'
+    # cases = ['WTP_CBD_m_WP1_HOT']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0625'
     # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
