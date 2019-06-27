@@ -1,3 +1,15 @@
+2019-06-27 - 2.17a0 - #2101 Update how-to-run-CEA-optimization.rst
+2019-06-27 - 2.17a0 - #2099 Fixed documentation build errors
+2019-06-25 - 2.17a0 - #2086 2008 demand tool not working when non existing building selected
+2019-06-25 - 2.17a0 - #2087 2026 dashboard tools parameters ignored
+2019-06-25 - 2.17a0 - #2084 add message for script completion to dashboard
+2019-06-24 - 2.16 - #2083 1984 add thermal networks plots to the dashboard
+2019-06-21 - 2.16 - #2017 1956 glossary to dashboard
+2019-06-19 - 2.16 - #2067 Updated documentation to include trace-inputlocator
+2019-06-19 - 2.16 - #2080 Bugfix: Fix terrain boundary caused by rounding error
+2019-06-18 - 2.16 - #2076 Bugfix: Ignore REFERENCE when checking columns in data_helper
+2019-06-18 - 2.16 - #2077 Bugfix: Remove 'Open project' default value if path does not exists.
+2019-06-14 - 2.16 - #2075 Release 2.16
 2019-06-13 - 2.15 - #2059 Remove brackets from `sheet_name` instances
 2019-06-12 - 2.15 - #2010 Import input files during scenario creation
 2019-06-12 - 2.15 - #2055 1961 project overview improvements
