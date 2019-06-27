@@ -183,7 +183,7 @@ def route_create_scenario_save():
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
 
-    return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+    return redirect(url_for('inputs_blueprint.route_building_properties'))
 
 
 @blueprint.route('/open-project')
