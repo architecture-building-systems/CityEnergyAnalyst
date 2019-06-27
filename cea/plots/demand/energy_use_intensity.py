@@ -32,9 +32,10 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
 
 
     def calc_graph(self):
+        data = self.data.copy()
         if len(self.buildings) == 1:
-            assert len(self.data) == 1, 'Expected DataFrame with only one row'
-            building_data = self.data.iloc[0]
+            assert len(data) == 1, 'Expected DataFrame with only one row'
+            building_data = data.iloc[0]
             traces = []
             area = building_data["GFA_m2"]
             x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
@@ -47,13 +48,14 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
         else:
             # district version of this plot
             traces = []
-            self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
+
+            data['total'] = data[self.analysis_fields].sum(axis=1)
             for field in self.analysis_fields:
-                self.data[field] = self.data[field] * 1000 / self.data["GFA_m2"]  # in kWh/m2y
-                self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
-            x = self.data["Name"].tolist()
+                data[field] = data[field] * 1000 / data["GFA_m2"]  # in kWh/m2y
+                data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+            x = data["Name"].tolist()
             for field in self.analysis_fields:
-                y = self.data[field]
+                y = data[field]
                 name = NAMING[field]
                 trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
