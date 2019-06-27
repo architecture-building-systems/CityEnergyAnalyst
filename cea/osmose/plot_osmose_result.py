@@ -94,6 +94,14 @@ def main(building, TECHS, building_result_path):
             results = get_reheating_energy(tech, results)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             plot_exergy_loads(building, building_result_path, ex_df, results, tech)
+            plot_exergy_usages(building, building_result_path, ex_df, results, tech, '')
+            if results.shape[0] > 24:
+                result_WED = results.iloc[72:96]
+                ex_df_WED = ex_df.iloc[72:96]
+                plot_exergy_usages(building, building_result_path, ex_df_WED, result_WED, tech, 'WED')
+                ex_df_SAT = ex_df.iloc[144:168]
+                result_SAT = results.iloc[144:168]
+                plot_exergy_usages(building, building_result_path, ex_df_SAT, result_SAT, tech, 'SAT')
 
             ## write output_df
             calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech)
@@ -611,6 +619,9 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
         output_df['oau'] = output_df['el_chi_oau'] / output_df['el_total'] * 100
         output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
     output_df['ct'] = output_df['el_ct'] / output_df['el_total'] * 100
+
+    # area
+    output_df['Af_m2'] = results['Af_m2'].max()
 
     ## export results
     output_df.to_csv(path_to_elec_csv(building, building_result_path, tech))
@@ -1167,6 +1178,54 @@ def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'exergy'))
     return np.nan
 
+def plot_exergy_usages(building, building_result_path, exergy_df, results, tech, day):
+    t_0 = results.index.min()
+    t_end = results.index.max()
+    # reset index
+    Af_m2 = results['Af_m2'].mean()
+    exergy_per_area_df = exergy_df * 1000 / Af_m2
+    # extract parameters
+    time_steps = exergy_df.shape[0]
+    x_ticks = exergy_df.index.values
+    fig_size = set_figsize(time_steps)
+    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
+
+    # plotting
+    fig, ax = plt.subplots(figsize=fig_size)
+    bar_width = 0.5
+    opacity = 1
+    # colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
+    colors = [(0.4, 0.76078, 0.647059, 1), (0.70196078, 0.70196078, 0.70196078, 1), (0.70196078, 0.73196078, 0.8, 1),
+              (0.5, 0.5, 0.7, 1)]
+
+    # plot bars
+    i = 0
+    for column in ['Ex_utility_total','Ex_process_total']:
+        ax.bar(x_ticks, exergy_per_area_df[column], bar_width, alpha=opacity, color=colors[i], label=column)
+        i = i + 1
+
+    ax.set(xlabel='Time [hr]', ylabel='Exergy [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 35))
+    ax.xaxis.label.set_size(14)
+    ax.yaxis.label.set_size(14)
+    ax.set_xticks(x_ticks_shown)
+    ax.legend(loc='upper left')
+    # plot line
+    ax1 = ax.twinx()
+    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2)
+    ax1.plot(x_ticks, total_el_float, '-o', linewidth=2, markersize=4, label='total electricity use', color='steelblue')
+    ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
+    ax.legend(loc='upper right')
+
+    if day != '':
+        name = CONFIG_TABLE[tech]
+        plt.title(name + ' ' + building + ' ' + day, fontsize=14)
+    else:
+        plt.title(building + '_' + tech, fontsize=14)
+    # plt.show()
+    # plot layout
+    filename = 'exergy_usages_' + day
+    fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
+    return np.nan
 
 def plot_supply_temperature_humidity(building, building_result_path, operation_df, tech):
     # extract parameters
@@ -1270,8 +1329,8 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    # buildings = ["B001"]
-    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    buildings = ["B001"]
+    # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     # tech = ["HCS_coil"]
     tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
