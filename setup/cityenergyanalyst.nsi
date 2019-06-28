@@ -226,21 +226,21 @@ SectionEnd
 Section "Uninstall"
 
   ; Delete the shortcuts
-  Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
-  Delete "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
-  Delete "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
-  Delete "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
-  RMDir "$SMPROGRAMS\${CEA_TITLE}"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
+  RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
-  Delete "$DESKTOP\CEA Console.lnk"
-  Delete "$DESKTOP\CEA Dashboard.lnk"
-  Delete "$DESKTOP\cea.config.lnk"
+  Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
+  Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
 
   ; Delete the cea.config file
-  Delete "$PROFILE\cea.config"
+  Delete /REBOOTOK "$PROFILE\cea.config"
 
   SetOutPath $TEMP
-  Delete "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+  Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
 
   RMDir /R /REBOOTOK "$INSTDIR"
 
