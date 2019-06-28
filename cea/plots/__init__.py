@@ -43,6 +43,8 @@ def read_dashboards(config, cache):
                 dashboards = [default_dashboard(config, cache)]
             return dashboards
     except (IOError, TypeError):
+        import traceback
+        traceback.print_exc()
         # problems reading the dashboard_yml file - instead, create a default set of dashboards.
         dashboards = [default_dashboard(config, cache)]
         write_dashboards(config, dashboards)
@@ -122,7 +124,7 @@ class Dashboard(object):
 
 def load_plot(project, plot_definition, cache):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
-    print('load_plot', project, plot_definition)
+    # print('load_plot', project, plot_definition)
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)

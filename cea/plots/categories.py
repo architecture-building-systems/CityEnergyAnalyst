@@ -73,6 +73,7 @@ def load_plot_by_id(category_name, plot_id):
         for plot in category.plots:
             if plot.id() == plot_id:
                 return plot
+    print('ERROR: Could not find plot category {category}'.format(category=category_name))
     return None
 
 
@@ -80,7 +81,7 @@ class PlotCategory(object):
     """Contains the data of a plot category."""
     def __init__(self, module):
         self._module = module
-        self.name = module.__name__.split('.')[-1]
+        self.name = module.__name__.split('.')[-1].replace('_', '-')
         self.label = module.label
 
     @property

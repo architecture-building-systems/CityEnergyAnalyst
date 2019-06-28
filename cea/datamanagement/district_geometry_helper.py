@@ -35,8 +35,8 @@ def alpha_shape(points, alpha):
     """
     Compute the alpha shape (concave hull) of a set of points.
 
-    @param points: Iterable container of points.
-    @param alpha: alpha value to influence the gooeyness of the border. Smaller
+    :param points: Iterable container of points.
+    :param alpha: alpha value to influence the gooeyness of the border. Smaller
                   numbers don't fall inward as much as larger numbers. Too large,
                   and you lose everything!
     """
@@ -217,6 +217,8 @@ def geometry_extractor_osm(locator, config):
 
     # erase overlapping area
     district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
+
+    assert district.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
 
     # clean attributes of height, name and number of floors
     result = clean_attributes(district, buildings_height, buildings_floors, key="CEA")

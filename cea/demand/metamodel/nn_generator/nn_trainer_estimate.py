@@ -110,7 +110,7 @@ def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
 
 
 def input_estimate_prepare_multi_processing(building_name, locator, climatic_variables, year,
-                                            use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                                            use_stochastic_occupancy, weather_array, weather_data,
                                             building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
@@ -124,7 +124,7 @@ def input_estimate_prepare_multi_processing(building_name, locator, climatic_var
 
     #   collect inputs from the input reader function
     raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, climatic_variables, year,
-                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                   use_stochastic_occupancy, weather_array, weather_data,
                    building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready = prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay)
@@ -133,7 +133,7 @@ def input_estimate_prepare_multi_processing(building_name, locator, climatic_var
 
 
 def input_prepare_estimate(list_building_names, locator, gv, climatic_variables, year,
-                           use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data):
+                           use_stochastic_occupancy, weather_array, weather_data):
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
     :param list_building_names: a list of building names
@@ -143,7 +143,7 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
 
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
     #   open multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
@@ -153,7 +153,7 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     #   create one job for each data preparation task i.e. each building
     for building_name in list_building_names:
         job = pool.apply_async(input_estimate_prepare_multi_processing,
-                               [building_name, gv, locator, climatic_variables, year, use_daysim_radiation,
+                               [building_name, gv, locator, climatic_variables, year,
                                 use_stochastic_occupancy, weather_array, weather_data,
                                 building_properties, schedules_dict, date])
         joblist.append(job)
@@ -236,14 +236,13 @@ def main(config):
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     settings = config.demand
-    use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
     list_building_names = building_properties.list_building_names()
     climatic_variables = config.neural_network.climatic_variables
     weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
 
     input_prepare_estimate(list_building_names, locator, gv, climatic_variables=config.neural_network.climatic_variables,
-                           year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
+                           year=config.neural_network.year,
                            use_stochastic_occupancy=config.demand.use_stochastic_occupancy,
                            weather_array=np.transpose(np.asarray(weather_data)),
                            weather_data=epwreader.epw_reader(locator.get_default_weather())[climatic_variables])

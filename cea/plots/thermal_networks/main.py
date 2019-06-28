@@ -180,8 +180,8 @@ class Plots(object):
         '''
         plant_nodes = self.preprocessing_network_graph()["Plants_names"]  # read in all plant nodes
         # read in supply and retun temperature of all nodes
-        df_s = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
-        df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
+        df_s = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
+        df_r = pd.read_csv(self.locator.get_thermal_network_layout_return_temperature_file(self.network_type, self.network_name))
         df = pd.DataFrame()
         for i in range(len(plant_nodes)):
             # This segment handles the unit conversion of the given temperatures. In the standard case, they should already be in deg C
@@ -199,7 +199,7 @@ class Plots(object):
         '''
         Read in and format edge heat losses for all 8760 time steps
         '''
-        df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
+        df = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
         df = abs(df).sum(axis=1)  # aggregate heat losses of all edges
         df1 = abs(df.values).sum()  # sum over all timesteps
         return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1}
@@ -208,7 +208,7 @@ class Plots(object):
         '''
         Read in pressure loss data for all time steps.
         '''
-        df = pd.read_csv(self.locator.get_ploss(self.network_name, self.network_type))
+        df = pd.read_csv(self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
         df = df['pressure_loss_total_kW']
         df1 = df.values.sum()  # sum over all timesteps
         return {"hourly_loss": pd.DataFrame(df), "yearly_loss": df1}
@@ -219,7 +219,7 @@ class Plots(object):
         1. Sum up all plant heat produced in each time step
         2. Divide absolute losses by that value
         '''
-        df = pd.read_csv(self.locator.get_qplant(self.network_name, self.network_type))  # read plant heat supply
+        df = pd.read_csv(self.locator.get_thermal_network_plant_heat_requirement_file(self.network_type, self.network_name))  # read plant heat supply
         df = abs(df)  # make sure values are positive
         if len(df.columns.values) > 1:  # sum of all plants
             df = df.sum(axis=1)
@@ -300,17 +300,17 @@ class Plots(object):
                                 index_col=0)
         edge_diam = edge_data['D_int_m']  # diameters of each edge
         DN = edge_data['Pipe_DN_y']
-        d1 = pd.read_csv(
-            self.locator.get_Tnode_s(self.network_name, self.network_type)) - 273.15  # node supply temperature
-        d2 = pd.read_csv(self.locator.get_thermal_network_layout_qloss_system_file(self.network_type,
-                                                                                   self.network_name))  # edge loss
-        d3 = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
+        Tnode_hourly_C = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
+                                                                                         self.network_name)) - 273.15  # node supply temperature
+        Q_loss_kWh = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
+                                                                            self.network_name))  # edge loss
+        P_loss_kWh = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                          self.network_name))
-        d4 = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
+        P_loss_substation_kWh = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
                                                                                 self.network_name))
         diam = pd.DataFrame(edge_diam)
-        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3,
-                'P_loss_substation_kWh': d4}
+        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': Tnode_hourly_C, 'Q_loss_kWh': Q_loss_kWh, 'P_loss_kWh': P_loss_kWh,
+                'P_loss_substation_kWh': P_loss_substation_kWh}
 
     def preprocessing_network_pumping(self):
         df_pumping_kW = pd.read_csv(
@@ -373,7 +373,7 @@ class Plots(object):
     def supply_return_ambient_curve(self, category):
         analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
         data = self.plant_temp_data_processed['Data']  # read in plant supply and return temperatures
-        data2 = self.ambient_temp  # read in abient temperatures
+        # read in abient temperatures
         plant_nodes = self.plant_temp_data_processed['Plants']  # plant node names
         for i in range(len(plant_nodes)):  # iterate through all plants
             title = "Supply and Return Temp. at Plant " + str(
@@ -385,7 +385,7 @@ class Plots(object):
                                                                  'Tamb_Tsup_Tret_curve_plant_' + str(
                 plant_nodes[i]), category)
             data_part.columns = analysis_fields
-            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path)
+            plot = supply_return_ambient_temp_plot(data_part, self.ambient_temp, analysis_fields, title, output_path)
         return plot
 
     def loss_duration_curve(self, category):

@@ -12,6 +12,7 @@ import datetime
 import ConfigParser
 import cea.config
 import cea.scripts
+import cea
 
 
 __author__ = "Daren Thomas"
@@ -22,6 +23,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 def main(config=None):
     """
@@ -40,6 +42,9 @@ def main(config=None):
     if not len(args) or args[0].lower() == '--help':
         print_help(config, args[1:])
         sys.exit(1)
+    if args[0].lower() == '--version':
+        print('City Energy Analyst version %s' % cea.__version__)
+        sys.exit(0)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name)
     config.restrict_to(cea_script.parameters)
@@ -93,10 +98,15 @@ def print_help(config, remaining_args):
 
 
 def print_valid_script_names():
+    """Print out the list of scripts by category."""
     import textwrap
+    import itertools
     print("")
-    print(textwrap.fill("SCRIPT can be one of: %s" % ', '.join(s.name for s in sorted(cea.scripts.for_interface('cli'))),
-                        subsequent_indent='    ', break_on_hyphens=False))
+    print("SCRIPT can be one of:")
+    scripts = sorted(cea.scripts.for_interface('cli'), key=lambda s: s.category)
+    for category, group in itertools.groupby(scripts, lambda s: s.category):
+        print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
+                            subsequent_indent='    ', break_on_hyphens=False))
 
 
 if __name__ == '__main__':
