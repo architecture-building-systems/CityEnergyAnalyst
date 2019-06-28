@@ -53,6 +53,7 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_table(self):
         data_frame = self.data
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         median = data_frame[self.analysis_fields].median().round(2).tolist()
         total = data_frame[self.analysis_fields].sum().round(2).tolist()
         total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
@@ -80,7 +81,7 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                       yaxis=dict(title='Energy [MWh/yr]', domain=[0.35, 1]),
                        xaxis=dict(title='Building Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
