@@ -150,15 +150,17 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is None and buildings_floors is not None:
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is not None and buildings_floors is None:
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
-    else:  # both are not none
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
+    else:
+        shapefile['REFERENCE'] = "User - assumption"
+        if buildings_height is None and buildings_floors is not None:
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
+            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        elif buildings_height is not None and buildings_floors is None:
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+        else:  # both are not none
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
 
     #add description
     if "description" in list_of_columns:
