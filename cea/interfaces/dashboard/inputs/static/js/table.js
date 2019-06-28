@@ -64,9 +64,9 @@ function createTable(parent, name, values, columns, types) {
         columns: defineColumns(columns, types),
         placeholder: placeholder,
 
-        selectable: true,
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
+        cellClick:selectRow,
         cellEdited: updateData,
         rowSelectionChanged: addToSelection
 
@@ -115,6 +115,17 @@ function updateData(data) {
 
     inputstore.addChange('update', table, data.getData()['Name'], data.getField(), data.getValue());
 
+}
+
+function selectRow(e, cell) {
+    var value = cell.getValue();
+    if(cell.getField() === 'Name') {
+        if (cell.getRow().isSelected()) {
+            currentTable.deselectRow(value);
+        } else {
+            currentTable.selectRow(value);
+        }
+    }
 }
 
 function addToSelection(data, row) {
