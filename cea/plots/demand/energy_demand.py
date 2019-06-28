@@ -67,11 +67,12 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
             load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
 
         column_names = ['Load Name', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 Consumers']
-        table_df = pd.DataFrame({'Load Name': load_names,
-                              'Total [MWh/yr]': total_perc,
-                              'Median [MWh/yr]': median,
-                              'Top 3 Consumers': anchors}, columns=column_names)
+        table_df = pd.DataFrame({'Load Name': load_names + ["Total"],
+                                 'Total [MWh/yr]': total_perc + [str(sum(total)) + " (" + str(100) + " %)"],
+                                 'Median [MWh/yr]': median + ["-"],
+                                 'Top 3 Consumers': anchors + ['-']}, columns=column_names)
         return table_df
+
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
