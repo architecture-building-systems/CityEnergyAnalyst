@@ -93,7 +93,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "ALIAS find=$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe $$*"
+    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
@@ -111,7 +111,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$INSTDIR\Dependencies\Python\python.exe -m cea.interfaces.cli.cli dashboard"
+    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -m cea.interfaces.cli.cli dashboard"
     FileClose $0
 
 
