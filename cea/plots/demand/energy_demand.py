@@ -37,15 +37,17 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         graph = []
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-        data = self.data.sort_values(by='total', ascending=False)
-        for field in self.analysis_fields:
-            y = data[field]
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
+        dataframe = self.data
+        dataframe['total'] = dataframe[analysis_fields].sum(axis=1)
+        dataframe.sort_values(by='total', ascending=False, inplace=True)
+        dataframe.reset_index(inplace=True, drop=True)
+        for field in analysis_fields:
+            y = dataframe[field]
             name = NAMING[field]
-            total_percent = (y / data['total'] * 100).round(2).values
+            total_percent = (y / dataframe['total'] * 100).round(2).values
             total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
-            trace = go.Bar(x=data["Name"], y=y, name=name, text=total_percent_txt, orientation='v',
+            trace = go.Bar(x=dataframe["Name"], y=y, name=name, text=total_percent_txt, orientation='v',
                            marker=dict(color=COLOR[field]))
             graph.append(trace)
 
@@ -53,14 +55,14 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_table(self):
         data_frame = self.data
-        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        median = data_frame[self.analysis_fields].median().round(2).tolist()
-        total = data_frame[self.analysis_fields].sum().round(2).tolist()
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
+        median = data_frame[analysis_fields].median().round(2).tolist()
+        total = data_frame[analysis_fields].sum().round(2).tolist()
         total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
         # calculate graph
         anchors = []
         load_names = []
-        for field in self.analysis_fields:
+        for field in analysis_fields:
             anchors.append(', '.join(calc_top_three_anchor_loads(data_frame, field)))
             load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
 
