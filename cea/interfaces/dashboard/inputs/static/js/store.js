@@ -88,5 +88,7 @@ class InputStore {
         this.changes = {update:{},delete:{}};
         this.generateData();
         this.generateGeojsonData();
+        console.log(this.changes);
+    }
     }
 }
