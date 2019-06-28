@@ -176,6 +176,15 @@ $(window).load(function () {
         filterSelection(inputstore.getSelected());
     });
 
+    $('#delete-button').click(function () {
+        var selected = inputstore.getSelected();
+        var layer = ($('.tab.active').attr('id').split('-tab')[0] !== 'district') ? 'zone':'district';
+        if (confirm("This will delete the following buildings: " + selected)) {
+            inputstore.deleteBuildings(layer, selected);
+            $('.tab.active').trigger('click');
+        }
+    });
+
     $('#clear-button').click(function () {
         currentTable.deselectRow();
         filterSelection(inputstore.getSelected());
