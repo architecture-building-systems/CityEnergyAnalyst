@@ -33,7 +33,6 @@ class HeatingResetSchedulePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         return go.Layout(xaxis=dict(title='Outdoor Temperature [C]'),
                          yaxis=dict(title='HVAC System Temperature [C]'))
 
-
     @property
     def data(self):
         return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
