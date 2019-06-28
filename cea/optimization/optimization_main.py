@@ -15,6 +15,8 @@ from cea.optimization.distribution.network_optimization_features import NetworkO
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
+import cea.optimization.preprocessing.processheat as process_heat
+from cea.optimization.preprocessing import electricity
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -67,9 +69,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
-    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
-                                                                                  weather_file, gv, config,
-                                                                                  prices, lca)
+    solar_features = preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print("NETWORK OPTIMIZATION")
@@ -77,9 +77,40 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize conversion systems
     print("CONVERSION AND STORAGE OPTIMIZATION")
-    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2,
-                                                        extra_primary_energy, solar_features,
+    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
                                                         network_features, gv, config, prices, lca)
+
+    print("GETTING EXTRA COSTS AND EMISSIONS FROM ELECTRICITY")
+    extra_costs_emissions_primary_energy(building_names, config, lca, locator, prices, total_demand)
+
+
+def extra_costs_emissions_primary_energy(building_names, config, lca, locator, prices, total_demand):
+    # GET EXTRAS
+    # estimate the extra costs, emissions and primary energy of electricity.
+    print
+    "electricity"
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, lca, config, building_names)
+    # estimate the extra costs, emissions and primary energy for process heat
+    print
+    "Process-heat"
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, lca, config)
+
+    extraCosts = elecCosts + hpCosts
+    extraCO2 = elecCO2 + hpCO2
+    extraPrim = elecPrim + hpPrim
+
+    # Capex_a and Opex_fixed
+    results = pd.DataFrame({"elecCosts": [elecCosts],
+                            "hpCosts": [hpCosts],
+                            "elecCO2": [elecCO2],
+                            "hpCO2": [hpCO2],
+                            "elecPrim": [elecPrim],
+                            "hpPrim": [hpPrim],
+                            "extraCosts": [extraCosts],
+                            "extraCO2":[extraCO2],
+                            "extraPrim": [extraPrim]
+                            })
+    results.to_csv(locator.get_preprocessing_costs(), index=False)
 
 
 # ============================
