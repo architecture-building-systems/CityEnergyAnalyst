@@ -4,14 +4,16 @@
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+; include some string functions
+!include "StrFunc.nsh"
+${StrRep}
+
 # icon stuff
 !define MUI_ICON "cea-icon.ico"
 
 
-# download CEA conda env from here (FIXME: update to a more sane download URL)
-# !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
-# !define CEA_ENV_FILENAME "cea.7z"
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.13/Dependencies.7z"
+# download CEA conda env from here
+!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.16/Dependencies.7z"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
@@ -87,6 +89,10 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
+    FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "ALIAS find=$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe $$*"
     FileClose $0
 
@@ -96,6 +102,12 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
@@ -131,6 +143,14 @@ Section "Base Installation" Base_Installation_Section
     Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
     Delete ${CEA_ENV_FILENAME}
 
+    # make sure qt.conf has the correct paths
+    DetailPrint "Updating qt.conf..."
+    ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now constains the $INSTDIR with forward slashes instead of backward slashes
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
+    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
+
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
@@ -160,9 +180,18 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
 SectionEnd
 
-Section /o "Create Desktop menu shortcuts" Create_Desktop_Menu_Shortcuts_Section
+Section /o "Developer version" Clone_Repository_Section
 
-    # create shortcuts in the start menu for launching the CEA console
+    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
+    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
+    DetailPrint "Binding CEA to repository"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
+
+SectionEnd
+
+Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
+
+    # create shortcuts on the Desktop for launching the CEA console
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
@@ -171,15 +200,6 @@ Section /o "Create Desktop menu shortcuts" Create_Desktop_Menu_Shortcuts_Section
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
-SectionEnd
-
-Section /o "Developer version" Clone_Repository_Section
-
-    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
-    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
-    DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 

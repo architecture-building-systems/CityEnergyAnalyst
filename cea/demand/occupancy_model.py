@@ -118,9 +118,9 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
 
     # define schedules and codes
     occupant_schedules = ['ve', 'Qs', 'X']
-    electricity_schedules = ['Ea', 'El', 'Ed']
+    electricity_schedules = ['Ea', 'El', 'Ed', 'Qcre']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro', 'Qcre']
+    process_schedules = ['Epro', 'Qhpro']
 
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
@@ -137,6 +137,9 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
                 current_schedule = np.rint(np.array(archetype_schedules[num][0]) * archetype_values['people'][num] *
                                            current_share_of_use * bpr.rc_model['NFA_m2'])
+                # make sure there is at least one occupant per occupancy type in the building
+                if np.max(current_schedule) < 1.0:
+                    current_schedule = np.round(np.array(archetype_schedules[num][0]))
                 schedules['people'] += current_schedule
                 for label in occupant_schedules:
                     current_archetype_values = archetype_values[label]
@@ -575,7 +578,7 @@ def read_schedules(use, archetypes_schedules):
     dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24], archetypes_schedules['Sunday_3'].values[:24]]
     month = archetypes_schedules['month'].values[:12]
 
-    if use == "INDUSTRIAL":
+    if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
         pro = [archetypes_schedules['Weekday_4'].values[:24], archetypes_schedules['Saturday_4'].values[:24], archetypes_schedules['Sunday_4'].values[:24]]
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
@@ -668,9 +671,8 @@ def main(config):
     year = weather_data['year'][0]
     dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    config.demand.buildings = locator.get_zone_building_names()[0]
-
-    building_properties = BuildingProperties(locator, True, False)
+    config.demand.buildings = [locator.get_zone_building_names()[0]]
+    building_properties = BuildingProperties(locator=locator, override_variables=False)
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}

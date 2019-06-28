@@ -3,7 +3,7 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 from __future__ import print_function
-
+import datetime
 
 def register_scripts():
     import cea.config
@@ -13,18 +13,29 @@ def register_scripts():
     config = cea.config.Configuration()
 
     def script_wrapper(cea_script):
+        module_path = cea_script.module
+        script_module = importlib.import_module(module_path)
+
         def script_runner(config=config, **kwargs):
             option_list = cea_script.parameters
-            module_path = cea_script.module
-            script_module = importlib.import_module(module_path)
             config.restrict_to(option_list)
             for section, parameter in config.matching_parameters(option_list):
-                parameter_py_name = parameter.name.replace('-', '_')
-                if parameter_py_name in kwargs:
-                    parameter.set(kwargs[parameter_py_name])
+                if parameter.py_name in kwargs:
+                    parameter.set(kwargs[parameter.py_name])
             # run the script
             cea_script.print_script_configuration(config)
+            t0 = datetime.datetime.now()
             script_module.main(config)
+
+            # print success message
+            msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
+            print("")
+            print("-" * len(msg))
+            print(msg)
+        if script_module.__doc__:
+            script_runner.__doc__ = script_module.__doc__.strip()
+        else:
+            script_runner.__doc__ = 'FIXME: Add API documentation to {}'.format(module_path)
         return script_runner
 
     for cea_script in sorted(cea.scripts.list_scripts()):
@@ -33,3 +44,7 @@ def register_scripts():
 
 
 register_scripts()
+
+
+if __name__ == '__main__':
+    print(demand.__doc__)

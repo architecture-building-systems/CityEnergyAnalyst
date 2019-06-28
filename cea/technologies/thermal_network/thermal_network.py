@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
 import math
+import sys
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import collections
@@ -20,6 +21,8 @@ import random
 import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
+from cea.utilities.workerstream import stream_from_queue
+import cea.utilities.workerstream
 from math import ceil
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
@@ -436,7 +439,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
         start_t = 0
         stop_t = 2016  # 24 hours x 7 days x 12 months
@@ -457,7 +460,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                    use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
             # and network optimization will fail as they expect 8760 timesteps.
             edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
@@ -485,7 +488,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(),
-                               sheet_name='HEX', index_col=0)
+                               sheetname='HEX', index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
@@ -497,19 +500,28 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
     number_of_processes = config.get_number_of_processes()
+    nhours = (stop_t - start_t)
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
-        hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
-                                          izip(range(start_t, stop_t),
-                                               repeat(thermal_network, times=(stop_t - start_t)),
-                                               ))
+        queue = multiprocessing.Manager().Queue()
+        map_result = pool.map_async(hourly_thermal_calculation_wrapper,
+                                     izip(repeat(queue, nhours),
+                                          range(start_t, stop_t),
+                                          repeat(thermal_network, nhours)))
+        while not map_result.ready():
+            stream_from_queue(queue)
         pool.close()
         pool.join()
+        # process the rest of the Queue
+        while not queue.empty():
+            stream_from_queue(queue)
+
+        hourly_thermal_results = map_result.get()
     else:
-        hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                     repeat(thermal_network, times=(stop_t - start_t))
-                                     )
+        hourly_thermal_results = map(hourly_thermal_calculation,
+                                     range(start_t, stop_t),
+                                     repeat(thermal_network, nhours))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -587,7 +599,7 @@ def prepare_inputs_of_representative_weeks(thermal_network):
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
-    if thermal_network.config.thermal_network_optimization.use_representative_week_per_month:
+    if thermal_network.config.thermal_network.use_representative_week_per_month:
         # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
         representative_week = True
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
@@ -690,8 +702,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # heat losses over entire network
         q_loss_system_for_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(q_loss_system_for_csv).to_csv(
-            thermal_network.locator.get_thermal_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                 thermal_network.network_name),
+            thermal_network.locator.get_thermal_network_qloss_system_file(thermal_network.network_type,
+                                                                          thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -708,7 +720,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         plant_heat_requirement_for_csv.columns = filter(None, thermal_network.all_nodes_df[
             thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
         plant_heat_requirement_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_plant_heat_requirement_file(
+            thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
                 thermal_network.network_name), index=False,
             float_format='%.3f')
@@ -770,9 +782,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # heat losses over entire network
         pd.DataFrame(csv_outputs['q_loss_system'], columns=thermal_network.edge_node_df.columns).to_csv(
-            thermal_network.locator.get_thermal_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                 thermal_network.network_name,
-                                                                                 representative_week),
+            thermal_network.locator.get_thermal_network_qloss_system_file(thermal_network.network_type,
+                                                                          thermal_network.network_name,
+                                                                          representative_week),
             index=False,
             float_format='%.3f')
 
@@ -788,7 +800,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pd.DataFrame(csv_outputs['plant_heat_requirement'],
                      columns=filter(None, thermal_network.all_nodes_df[
                          thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
-            thermal_network.locator.get_thermal_network_layout_plant_heat_requirement_file(
+            thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
                 thermal_network.network_name, representative_week), index=False,
             float_format='%.3f')
@@ -824,6 +836,10 @@ def calculate_ground_temperature(locator, config):
 def hourly_thermal_calculation_wrapper(args):
     """Wrap hourly_thermal_calculation to accept a tuple of args because multiprocessing.Pool.map only accepts one
     argument for the function."""
+    # set up printing to stderr and stdout to go through the queue
+    queue, args = args[0], args[1:]
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
     return hourly_thermal_calculation(*args)
 
 
@@ -831,7 +847,7 @@ def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param network_name: 'Dh' or 'DC' indicating district heating or cooling
+    :param network_name: 'DH' or 'DC' indicating district heating or cooling
     :param t: time step
     :param locator: an InputLocator instance set to the scenario to work on
     :param T_ground_K: Ground Temperature in Kelvin
@@ -1105,8 +1121,7 @@ def assign_pipes_to_edges(thermal_network, set_diameter):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheet_name=['PIPING CATALOG'])[
-        'PIPING CATALOG']
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheetname='PIPING CATALOG')
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values,
@@ -1615,7 +1630,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     """
 
     # create empty DataFrames to store results
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         thermal_network.edge_mass_flow_df = pd.DataFrame(
             data=np.zeros((2016, len(thermal_network.edge_node_df.columns.values))),
             columns=thermal_network.edge_node_df.columns.values)  # stores values for 2016 timesteps
@@ -1666,13 +1681,21 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         nhours = stop_t - start_t
 
         number_of_processes = config.get_number_of_processes()
-        if number_of_processes > 1:
+        if use_multiprocessing and number_of_processes > 1:
             print("Using %i CPU's" % number_of_processes)
             pool = multiprocessing.Pool(number_of_processes)
-            mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
-                                  izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
+            queue = multiprocessing.Manager().Queue()
+            map_result = pool.map_async(hourly_mass_flow_calculation_wrapper,
+                                        izip(repeat(queue, nhours), t, repeat(diameter_guess, nhours),
+                                             repeat(thermal_network, nhours)))
+            while not map_result.ready():
+                stream_from_queue(queue)
             pool.close()
             pool.join()
+            # process the rest of the Queue
+            while not queue.empty():
+                stream_from_queue(queue)
+            mass_flows = map_result.get()
         else:
             mass_flows = map(hourly_mass_flow_calculation, t,
                              repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
@@ -1720,7 +1743,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         iterations += 1
 
     # output csv files with node mass flows
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
         node_mass_flow_for_csv = pd.DataFrame(thermal_network.node_mass_flow_df)
@@ -1787,6 +1810,10 @@ def read_in_diameters_from_shapefile(thermal_network):
 
 def hourly_mass_flow_calculation_wrapper(args):
     """A wrapper around hourly_mass_flow_calculation because multiprocessing.Pool.map only allows one argument"""
+    # set up printing to stderr and stdout to go through the queue
+    queue, args = args[0], args[1:]
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
     return hourly_mass_flow_calculation(*args)
 
 
@@ -2014,7 +2041,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
 
     # Identify time steps of highest 50 demands
     if thermal_network.network_type == 'DH':
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             heating_sum = np.zeros(2016)
         else:
             heating_sum = np.zeros(HOURS_IN_YEAR)
@@ -2027,7 +2054,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                         'Qhs_sys_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        if config.thermal_network_optimization.use_representative_week_per_month:
+        if config.thermal_network.use_representative_week_per_month:
             cooling_sum = np.zeros(2016)
         else:
             cooling_sum = np.zeros(HOURS_IN_YEAR)
@@ -3096,9 +3123,8 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     """
 
     L_pipe = edge_df['pipe length']
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheet_name=['MATERIAL PROPERTIES'])[
-        'MATERIAL PROPERTIES']
-    material_properties = material_properties.set_index(material_properties['material'].values)
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname='MATERIAL PROPERTIES').set_index(
+        'material')
     conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
@@ -3418,7 +3444,7 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
-    if config.thermal_network_optimization.use_representative_week_per_month:
+    if config.thermal_network.use_representative_week_per_month:
         print('Running thermal_network with representative week per month.')
     else:
         print('Running thermal_network with start-t %s' % config.thermal_network.start_t)

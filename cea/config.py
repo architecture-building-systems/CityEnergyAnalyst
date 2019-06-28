@@ -182,10 +182,6 @@ class Configuration(object):
         section, parameter = fqname.split(':')
         return self.sections[section].parameters[parameter]
 
-    def __repr__(self):
-        """Sometimes it would be nice to have a printable version of the config..."""
-        return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
-
 
 def parse_command_line_args(args):
     """Group the arguments into a dictionary: parameter-name -> value"""
@@ -282,6 +278,7 @@ def construct_parameter(parameter_name, section, config):
 
 class Parameter(object):
     typename = 'Parameter'
+
     def __init__(self, name, section, config):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
@@ -309,6 +306,10 @@ class Parameter(object):
 
     def __repr__(self):
         return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
+
+    @property
+    def py_name(self):
+        return self.name.replace('-', '_')
 
     def initialize(self, parser):
         """
@@ -423,7 +424,8 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file.')
+            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
+                weather_path=value))
             weather_path = self.locator.get_weather('Zug')
         return weather_path
 
@@ -617,14 +619,35 @@ class ChoiceParameter(Parameter):
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        assert str(value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
+            value=value,
+            fqname=self.fqname,
+            choices=', '.join(self._choices)
+        )
         return str(value)
 
     def decode(self, value):
         if str(value) in self._choices:
             return str(value)
         else:
+            assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
             return self._choices[0]
+
+
+class PlantNodeParameter(ChoiceParameter):
+    """A parameter that refers to valid PLANT nodes of a thermal-network"""
+    typename = 'PlantNodeParameter'
+
+    def initialize(self, parser):
+        self.network_name_fqn = parser.get(self.section.name, self.name + '.network-name')
+        self.network_type_fqn = parser.get(self.section.name, self.name + '.network-type')
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario)
+        network_type = self.config.get(self.network_type_fqn)
+        network_name = self.config.get(self.network_name_fqn)
+        return locator.get_plant_nodes(network_type, network_name)
 
 
 class ScenarioNameParameter(ChoiceParameter):
@@ -690,11 +713,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def decode(self, value):
         choices = parse_string_to_list(value)
-        for choice in choices:
-            if choice not in self._choices:
-                raise cea.ConfigError(
-                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
-        return choices
+        return [choice for choice in choices if choice in self._choices]
 
 
 class SingleBuildingParameter(ChoiceParameter):

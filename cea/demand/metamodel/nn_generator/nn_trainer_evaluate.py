@@ -63,12 +63,12 @@ def get_nn_performance(model, scalerT, scalerX, urban_input_matrix, urban_taget_
 
 
 def eval_nn_performance(locator, random_variables, target_parameters, list_building_names,
-                        config, nn_delay, climatic_variables, year, use_daysim_radiation,
+                        config, nn_delay, climatic_variables, year,
                         use_stochastic_occupancy):
     urban_input_matrix, urban_taget_matrix = sampling_single(locator, random_variables, target_parameters,
                                                              list_building_names, config,
                                                              nn_delay, climatic_variables, year,
-                                                             use_daysim_radiation,use_stochastic_occupancy)
+                                                             use_stochastic_occupancy)
     model, scalerT, scalerX = nn_model_collector(locator)
     get_nn_performance(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator)
 
@@ -79,13 +79,12 @@ def main(config):
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     settings = config.demand
-    use_daysim_radiation = settings.use_daysim_radiation
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year)
     list_building_names = building_properties.list_building_names()
     eval_nn_performance(locator, random_variables, target_parameters, list_building_names,
                         config=config, nn_delay=config.neural_network.nn_delay,
                         climatic_variables=config.neural_network.climatic_variables,
-                        year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
+                        year=config.neural_network.year,
                         use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 

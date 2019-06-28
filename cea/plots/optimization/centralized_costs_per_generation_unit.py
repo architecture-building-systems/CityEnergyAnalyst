@@ -65,9 +65,9 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
                                                          "Electricity_Costs_USD"]
         self.analysis_fields = (self.analysis_fields_cost_heating_centralized if self.network_type == 'DH'
                                 else self.analysis_fields_cost_cooling_centralized)
-        self.input_files = [self.locator.get_total_demand(),
-                            self.locator.get_preprocessing_costs(),
-                            self.locator.get_optimization_checkpoint(self.generation)]
+        self.input_files = [(self.locator.get_total_demand, []),
+                            (self.locator.get_preprocessing_costs, []),
+                            (self.locator.get_optimization_checkpoint, [self.generation])]
 
     @property
     def title(self):

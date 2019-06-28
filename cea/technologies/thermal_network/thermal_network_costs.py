@@ -7,7 +7,7 @@ import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices
-import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 import cea.technologies.pumps as pumps
 import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
@@ -94,7 +94,7 @@ def calc_Ctot_network_pump(network_info):
     mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
     # read in total pressure loss in kW
-    deltaP_kW = pd.read_csv(network_info.locator.get_ploss('', network_type))
+    deltaP_kW = pd.read_csv(network_info.locator.get_thermal_network_layout_pressure_drop_kw_file(network_type,''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
     Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
@@ -120,7 +120,7 @@ def calc_Ctot_cooling_plants(network_info):
 
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
-        network_info.locator.get_thermal_network_layout_plant_heat_requirement_file(
+        network_info.locator.get_thermal_network_plant_heat_requirement_file(
             network_info.network_type, network_info.config.thermal_network_optimization.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)
@@ -450,8 +450,7 @@ def calc_Ctot_cs_district(network_info):
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
-    network_info.network_features = network_opt.network_opt_main(network_info.config,
-                                                                 network_info.locator)
+    network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
     ## calculate network costs
@@ -622,4 +621,4 @@ def main(config):
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration(), 0)
+    main(cea.config.Configuration())

@@ -9,10 +9,10 @@ cea.optimization.distribution package
 Submodules
 ----------
 
-cea.optimization.distribution.network\_opt\_main module
--------------------------------------------------------
+cea.optimization.distribution.network\_optimization\_features module
+--------------------------------------------------------------------
 
-.. automodule:: cea.optimization.distribution.network_opt_main
+.. automodule:: cea.optimization.distribution.network_optimization_features
     :members:
     :undoc-members:
     :show-inheritance:

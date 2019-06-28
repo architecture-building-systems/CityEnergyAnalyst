@@ -11,7 +11,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization.distribution import network_opt_main
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
@@ -73,7 +73,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print("NETWORK OPTIMIZATION")
-    network_features = network_opt_main.network_opt_main(config, locator)
+    network_features = NetworkOptimizationFeatures(config, locator)
 
     # optimize conversion systems
     print("CONVERSION AND STORAGE OPTIMIZATION")
