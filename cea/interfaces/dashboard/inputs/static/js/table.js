@@ -43,7 +43,7 @@ function createTable(parent, name, values, columns, types) {
     var placeholder = '';
     var tool = '';
     if (!inputstore.getData(name).length) {
-        placeholder = '<div>File cannot be found.</div>'
+        placeholder = '<div>File cannot be found.</div>';
         if (name === 'zone') {
             tool = 'zone-helper';
         } else if (name === 'district') {
@@ -52,9 +52,9 @@ function createTable(parent, name, values, columns, types) {
             tool = 'data-helper';
         }
 
-        placeholder += `<div>You can create the file using the <a href="/tools/${tool}">${tool}</a> tool.</div>`
+        placeholder += `<div>You can create the file using the <a href="/tools/${tool}">${tool}</a> tool.</div>`;
     } else {
-        placeholder = '<div>No matching records found.</div>'
+        placeholder = '<div>No matching records found.</div>';
     }
 
     $(`#${parent}`).append(`<div id="${name}-table"></div>`);
