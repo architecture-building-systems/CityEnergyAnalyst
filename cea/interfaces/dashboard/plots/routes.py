@@ -9,6 +9,7 @@ import importlib
 import plotly.offline
 import json
 import yaml
+import re
 
 
 blueprint = Blueprint(
@@ -205,7 +206,14 @@ def route_div(dashboard_index, plot_index):
     except Exception as ex:
         return abort(500, ex)
     if not plot.missing_input_files():
-        return make_response(plot.plot_div(), 200)
+        plot_div = plot.plot_div()
+        # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
+        # update id of div to include dashboard_index and plot_index
+        if plot_div.startswith("<div id="):
+            div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
+            plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
+                div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
+        return make_response(plot_div, 200)
     else:
         return render_template('missing_input_files.html',
                                missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
