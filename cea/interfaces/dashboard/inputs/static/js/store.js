@@ -84,6 +84,26 @@ class InputStore {
         });
     }
 
+    // TODO: Remove buidling from changes if being deleted
+    deleteBuildings(layer, buildings) {
+        this.changes['delete'][layer] = this.changes['delete'][layer] || [];
+        this.changes['delete'][layer].push(...buildings);
+        var _this = this;
+        $.each(buildings, function (_, building) {
+            if (layer === 'district') {
+                _this.data[layer] = _this.data[layer].filter(x => x['Name'] !== building);
+            } else {
+                $.each(_this.data, function (table_name, table) {
+                    if (table_name !== 'district') {
+                        _this.data[table_name] = table.filter(x => x['Name'] !== building);
+                    }
+                });
+            }
+            _this.geojsondata[layer]['features'] = _this.geojsondata[layer]['features'].filter(x => x['properties']['Name'] !== building);
+        });
+        this.geojsondata = JSON.parse(JSON.stringify(this.geojsondata));
+    }
+
     resetChanges() {
         this.changes = {update:{},delete:{}};
         this.generateData();
