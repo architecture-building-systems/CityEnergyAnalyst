@@ -1,6 +1,6 @@
 from __future__ import division
 
-from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
+from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
 import random
 from cea.optimization.master import crossover
 from cea.optimization.master import mutations
@@ -25,9 +25,9 @@ from cea.optimization.master import evaluation
 from itertools import repeat, izip
 from cea.optimization import supportFn
 
-__author__ =  "Sreepathi Bhargava Krishna"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Sreepathi Bhargava Krishna"]
+__credits__ = ["Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -40,7 +40,9 @@ config = cea.config.Configuration()
 random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
-def objective_function(individual, individual_number, generation, building_names, locator, solar_features, network_features, gv, config, prices, lca):
+
+def objective_function(individual, individual_number, generation, building_names, locator, solar_features,
+                       network_features, gv, config, prices, lca):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -57,14 +59,15 @@ def objective_function(individual, individual_number, generation, building_names
                                                                                           individual_number, generation)
     return costs, CO2, prim
 
+
 def objective_function_wrapper(args):
     """
     Wrap arguments because multiprocessing only accepts one argument for the function"""
     return objective_function(*args)
 
-def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                            network_features, gv, config, prices, lca):
 
+def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
+                                            network_features, gv, config, prices, lca):
     t0 = time.clock()
 
     genCP = config.optimization.recoverycheckpoint
@@ -82,50 +85,31 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     # get number of buildings
     nBuildings = len(building_names)
 
-
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
     # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
-
     toolbox = base.Toolbox()
-
     toolbox.register("generate", generate_main, nBuildings, config)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function_wrapper)
     toolbox.register("select", tools.selNSGA2)
 
-
+    # configure multiprocessing
     if config.multiprocessing:
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         toolbox.register("map", pool.map)
 
     # Initialization of variables
-    DHN_network_list = ["1"*nBuildings]
-    DCN_network_list = ["1"*nBuildings]
+    DHN_network_list = ["1" * nBuildings]
+    DCN_network_list = ["1" * nBuildings]
     halloffame = []
     halloffame_fitness = []
     epsInd = []
 
-
-    columns_of_saved_files = ['generation', 'individual', 'CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler', 'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-               'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP', 'GHP Share',
-               'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET', 'SC_ET Area Share',
-               'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration', 'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-               'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share', 'DCN Temperature', 'DCN unit configuration']
-    for i in building_names: #DHN
-        columns_of_saved_files.append(str(i) + ' DHN')
-
-    for i in building_names: #DCN
-        columns_of_saved_files.append(str(i) + ' DCN')
-
-    columns_of_saved_files.append('TAC')
-    columns_of_saved_files.append('CO2 emissions')
-    columns_of_saved_files.append('Primary Energy')
+    columns_of_saved_files= initialize_column_names_of_individual(building_names)
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    # stats.register("avg", numpy.mean, axis=0)
-    # stats.register("std", numpy.std, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
 
@@ -138,7 +122,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
 
         for ind in pop:
             evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
-
 
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -157,7 +140,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
-        function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
+        function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
         # evaluations. This can further be used as a stopping criteria in future
         for ind, fit in zip(invalid_ind, fitnesses):
@@ -171,23 +154,11 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
             halloffame.extend(pop)
 
         print "Save Initial population \n"
+        save_generation_dataframe(columns_of_saved_files, genCP, invalid_ind, locator)
 
-        zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
-        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
-
-        for i, ind in enumerate(invalid_ind):
-            saved_dataframe_for_each_generation['individual'][i] = i
-            saved_dataframe_for_each_generation['generation'][i] = genCP
-            for j in range(len(columns_of_saved_files) - 5):
-                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
-            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
-            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
-
-        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
-
-        with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
-            cp = dict(nsga_selected_population=pop, generation=0, DHN_List=DHN_network_list, DCN_list = DCN_network_list, tested_population=[],
+        with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
+            cp = dict(nsga_selected_population=pop, generation=0, DHN_List=DHN_network_list, DCN_list=DCN_network_list,
+                      tested_population=[],
                       tested_population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
@@ -237,14 +208,14 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     # to have a consistent value for normalization, the values of the objectives of the initial generation are taken
     normalization = [max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs)]
 
-    xs = [a / 10**6 for a in xs]
-    ys = [a / 10**6 for a in ys]
-    zs = [a / 10**6 for a in zs]
+    xs = [a / 10 ** 6 for a in xs]
+    ys = [a / 10 ** 6 for a in ys]
+    zs = [a / 10 ** 6 for a in zs]
 
     # Evolution starts !
 
     g = genCP
-    stopCrit = False # Threshold for the Epsilon indicator, Not used
+    stopCrit = False  # Threshold for the Epsilon indicator, Not used
 
     while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
 
@@ -279,27 +250,16 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
-        function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
+        function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
         # evaluations. This can further be used as a stopping criteria in future
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
-        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+        print "Save population \n"
+        save_generation_dataframe(columns_of_saved_files, g, invalid_ind, locator)
 
-        for i, ind in enumerate(invalid_ind):
-            saved_dataframe_for_each_generation['individual'][i] = i
-            saved_dataframe_for_each_generation['generation'][i] = g
-            for j in range(len(columns_of_saved_files) - 5):
-                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
-            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
-            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
-            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
-
-        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(g))
-
-        selection = toolbox.select(pop + invalid_ind, config.optimization.initialind) # assigning crowding distance
+        selection = toolbox.select(pop + invalid_ind, config.optimization.initialind)  # assigning crowding distance
 
         if len(halloffame) <= halloffame_size:
             halloffame.extend(selection)
@@ -332,13 +292,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(nsga_selected_population=pop, generation=g, DHN_List_All=DHN_network_list, DCN_list_All = DCN_network_list,
+                cp = dict(nsga_selected_population=pop, generation=g, DHN_list_All=DHN_network_list,
+                          DCN_list_All=DCN_network_list,
                           DHN_list_selected=DHN_network_list_selected, DCN_list_selected=DCN_network_list_selected,
                           tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
-
 
     if g == config.optimization.ngen:
         print "Final Generation reached"
@@ -349,12 +309,12 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     # multiple generations
     df = pd.read_csv(locator.get_optimization_individuals_in_generation(0))
     for i in range(config.optimization.ngen):
-        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i+1)))
+        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i + 1)))
     df.to_csv(locator.get_optimization_all_individuals())
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
-        cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list = DCN_network_list,
+        cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list=DCN_network_list,
                   tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                   euclidean_distance=euclidean_distance, spread=spread)
@@ -363,11 +323,44 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs
     print "Master Work Complete \n"
     print ("Number of function evaluations = " + str(function_evals))
     t1 = time.clock()
-    print (t1-t0)
+    print (t1 - t0)
     if config.multiprocessing:
         pool.close()
 
     return pop, logbook
+
+
+def save_generation_dataframe(columns_of_saved_files, genCP, invalid_ind, locator):
+    saved_dataframe_for_each_generation = pd.DataFrame()
+    for i, ind in enumerate(invalid_ind):
+        # the next code splits the information form teh individual in everyone of
+        # the prescribed columns_of_saved_files
+        output_individual = {}
+        for k, configuration in enumerate(ind):
+            output_individual[columns_of_saved_files[k]] = configuration
+        # now we append more values to that dict
+        output_individual['individual'] = i
+        output_individual['generation'] = genCP
+        output_individual['TAC'] = ind.fitness.values[0]
+        output_individual['CO2 emissions'] = ind.fitness.values[1]
+        output_individual['Primary Energy'] = ind.fitness.values[2]
+
+        # then we save it to the dataframe
+        saved_dataframe_for_each_generation = saved_dataframe_for_each_generation.append(output_individual,
+                                                                                         ignore_index=True)
+    saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
+
+
+def initialize_column_names_of_individual(building_names):
+    # here we take the names of technologies we consider for each individual
+    # and expanded to the potential connections of buildings to the district heating and cooling networks.
+    Name_of_entries_of_individual = NAMES_TECHNOLOGY_OF_INDIVIDUAL
+    for i in building_names:  # DHN
+        Name_of_entries_of_individual.append(str(i) + ' DHN')
+    for i in building_names:  # DCN
+        Name_of_entries_of_individual.append(str(i) + ' DCN')
+
+    return Name_of_entries_of_individual
 
 def convergence_metric(old_front, new_front, normalization):
     #  This function calculates the metrics corresponding to a Pareto-front
@@ -388,7 +381,8 @@ def convergence_metric(old_front, new_front, normalization):
         distance = []
         for i, indOld in enumerate(old_front):
             (aOld, bOld, cOld) = indOld.fitness.values
-            distance_mix = ((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2
+            distance_mix = ((aNew - aOld) / normalization[0]) ** 2 + ((bNew - bOld) / normalization[1]) ** 2 + (
+                    (cNew - cOld) / normalization[2]) ** 2
             distance_mix = round(distance_mix, 5)
             distance.append(np.sqrt(distance_mix))
 
@@ -405,7 +399,8 @@ def convergence_metric(old_front, new_front, normalization):
         for j, ind_j in enumerate(new_front):
             (cost_j, co2_j, eprim_j) = ind_j.fitness.values
             if i != j:
-                spread_mix = ((cost_i - cost_j) / normalization[0])**2 + ((co2_i - co2_j) / normalization[1])**2 + ((eprim_i - eprim_j) / normalization[2])**2
+                spread_mix = ((cost_i - cost_j) / normalization[0]) ** 2 + ((co2_i - co2_j) / normalization[1]) ** 2 + (
+                        (eprim_i - eprim_j) / normalization[2]) ** 2
                 spread_mix = round(spread_mix, 5)
                 spread.append(np.sqrt(spread_mix))
                 spread_i.append(np.sqrt(spread_mix))
@@ -433,17 +428,16 @@ if __name__ == "__main__":
     gv.num_tot_buildings = total_demand.Name.count()
     lca = LcaCalculations(locator, config.detailed_electricity_pricing)
     prices = Prices(locator, config)
-    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config,
-                                                                             prices, lca)
+    solar_features = preproccessing(locator, total_demand, building_names,weather_file, gv, config,
+                                                                                  prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
     nBuildings = len(building_names)
 
+    network_features = network_opt_main.network_opt_main(config, locator)
+    #network_features = NetworkOptimizationFeatures(config, locator)
 
-    network_features = NetworkOptimizationFeatures(config, locator)
-
-
-    non_dominated_sorting_genetic_algorithm(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+    non_dominated_sorting_genetic_algorithm(locator, building_names,
+                                            solar_features,
                                             network_features, gv, config, prices, lca)
