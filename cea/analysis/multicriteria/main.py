@@ -20,7 +20,7 @@ from math import ceil, log
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -55,11 +55,10 @@ def multi_criteria_main(locator, config):
         compiled_data_df = pd.DataFrame()
         for i, individual in enumerate(individual_list):
             compiled_data_df = compiled_data_df.append(preprocessing_cost_data_DC(individual,
-                                                          locator,
-                                                          data_generation,
-                                                          data_address,
-                                                          config),ignore_index=True)
-            x=1
+                                                                                  locator,
+                                                                                  data_generation,
+                                                                                  data_address,
+                                                                                  config), ignore_index=True)
         compiled_data_df = compiled_data_df.assign(individual=individual_list)
 
     if network_type == 'DH':
@@ -72,10 +71,10 @@ def multi_criteria_main(locator, config):
         compiled_data_df = pd.DataFrame()
         for i, individual in enumerate(individual_list):
             compiled_data_df = compiled_data_df.append(preprocessing_cost_data_DH(individual,
-                                                          locator,
-                                                          data_generation,
-                                                          data_address,
-                                                          config),ignore_index=True)
+                                                                                  locator,
+                                                                                  data_generation,
+                                                                                  data_address,
+                                                                                  config), ignore_index=True)
         compiled_data_df['individual'] = individual_list
 
     # normalize data
@@ -241,14 +240,13 @@ def change_units_hall_of_fame(data):
 
 
 def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, config):
-
-    #local
+    # local
     string_network = data_raw['network'].loc[individual].values[0]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     data_address = data_address[data_address['individual_list'] == individual]
 
-    #get data about individual (pointer)
+    # get data about individual (pointer)
     generation_number = data_address['generation_number_address'].values[0]
     individual_number = data_address['individual_number_address'].values[0]
 
@@ -463,9 +461,8 @@ def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, conf
     return data_costs
 
 
-def preprocessing_cost_data_DH(individual, locator, data_raw,  data_address, config):
-
-    #local variables
+def preprocessing_cost_data_DH(individual, locator, data_raw, data_address, config):
+    # local variables
     string_network = data_raw['network'].loc[individual].values[0]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
