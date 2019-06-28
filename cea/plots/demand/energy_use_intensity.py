@@ -32,10 +32,11 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
 
 
     def calc_graph(self):
+        data = self.data.copy()
         analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         if len(self.buildings) == 1:
-            assert len(self.data) == 1, 'Expected DataFrame with only one row'
-            building_data = self.data.iloc[0]
+            assert len(data) == 1, 'Expected DataFrame with only one row'
+            building_data = data.iloc[0]
             traces = []
             area = building_data["GFA_m2"]
             x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
