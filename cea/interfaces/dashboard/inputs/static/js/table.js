@@ -198,6 +198,8 @@ $(window).load(function () {
     });
 
     $('#save-button').click(function () {
-
+        if (confirm("Any buildings deleted once saved is irreversible.\n" + inputstore.changesToString())) {
+            inputstore.applyChanges();
+        }
     });
 });
