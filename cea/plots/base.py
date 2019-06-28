@@ -82,14 +82,15 @@ class PlotBase(object):
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
         traces = []
-        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-        self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+        data = self.data
+        data['total'] = data[self.analysis_fields].sum(axis=1)
+        data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
         for field in self.analysis_fields:
-            y = self.data[field]
-            total_percent = (y / self.data['total'] * 100).round(2).values
+            y = data[field]
+            total_percent = (y / data['total'] * 100).round(2).values
             total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
             name = NAMING[field]
-            trace = plotly.graph_objs.Bar(x=self.data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+            trace = plotly.graph_objs.Bar(x=data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
         return traces
 
