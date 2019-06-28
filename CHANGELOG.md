@@ -1,3 +1,8 @@
+2019-06-28 - 2.17a0 - #2109 2096 error on creating energy use intensity plot @daren-thomas thanks for this!
+2019-06-28 - 2.17a0 - #2106 I1834 description variables
+2019-06-28 - 2.17a0 - #2108 Bugfix: REFERENCE column is not added when user changes parameters in zone and district helper
+2019-06-28 - 2.17a0 - #2110 I1927 multicriteria for dh cases
+2019-06-28 - 2.17a0 - #2103 Add collapsible fields for tools @reyery it works like a charm. Merging this...
 2019-06-27 - 2.17a0 - #2101 Update how-to-run-CEA-optimization.rst
 2019-06-27 - 2.17a0 - #2099 Fixed documentation build errors
 2019-06-25 - 2.17a0 - #2086 2008 demand tool not working when non existing building selected
