@@ -182,8 +182,10 @@ $(window).load(function () {
     });
 
     $('#discard-button').click(function () {
-       inputstore.resetChanges();
-       $('.tab.active').trigger('click');
+        if (confirm("This will discard all unsaved changes.")) {
+            inputstore.resetChanges();
+            $('.tab.active').trigger('click');
+        }
     });
 
     $('#save-button').click(function () {
