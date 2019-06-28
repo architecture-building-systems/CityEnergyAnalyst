@@ -570,6 +570,9 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df = output_df.append(total_df).reset_index().drop(columns='index')
     ##############################
 
+    # area
+    output_df['Af_m2'] = results['Af_m2'].max()
+
     ## calculate values from column operations
     # output_df['qc_bui_total'] = output_df['qc_bui_sen_total'] + output_df['qc_bui_lat_total']
     # output_df['cop_cooling'] = output_df['qc_bui_total'] / output_df['el_total']
@@ -603,9 +606,12 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df.at[index, 'w_SA'] = w_SA_mean
 
     # calculate exergy efficiency
+    output_df['process_exergy_Wh_per_Af'] = output_df['Ex_process'] * 1000 / output_df['Af_m2']
+    output_df['utility_exergy_Wh_per_Af'] = output_df['Ex_utility'] * 1000 / output_df['Af_m2']
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
     output_df['eff_process_exergy'] = output_df['Ex_process'] / output_df['el_total']
     output_df['eff_utility_exergy'] = output_df['Ex_utility'] / output_df['el_total']
+    output_df['eff_process_utility'] = output_df['Ex_process']/ output_df['Ex_utility']
 
     # calculate the percentage used by each component
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
@@ -620,8 +626,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
         output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
     output_df['ct'] = output_df['el_ct'] / output_df['el_total'] * 100
 
-    # area
-    output_df['Af_m2'] = results['Af_m2'].max()
+
 
     ## export results
     output_df.to_csv(path_to_elec_csv(building, building_result_path, tech))
@@ -1329,10 +1334,10 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B001"]
-    # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    # buildings = ["B001"]
+    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     # tech = ["HCS_coil"]
-    tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
+    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
     # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
@@ -1342,7 +1347,7 @@ if __name__ == '__main__':
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
     # cases = ["WTP_CBD_m_WP1_HOT"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0625"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0628"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
