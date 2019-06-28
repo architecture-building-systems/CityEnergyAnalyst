@@ -30,6 +30,7 @@ class LoadDurationCurveSupplyPlot(cea.plots.demand.load_duration_curve.LoadDurat
         graph = []
         duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         for field in self.remove_unused_fields(self.data, self.analysis_fields):
             name = NAMING[field]
             data = self.data.sort_values(by=field, ascending=False)
