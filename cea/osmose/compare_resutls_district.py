@@ -20,6 +20,7 @@ def main(path_result_folder, case, time_steps):
     all_exergy_eff_dict = {}
     for path in el_compare_paths:
         building = path.split('\\')[6].split('_')[0]
+        print(building)
         el_compare_df = pd.read_csv(path, index_col=0)
         #
         Af_m2 = el_compare_df.loc['el_Wh_total_per_Af'] / (el_compare_df.loc['el_total'] / 1000)
@@ -40,11 +41,12 @@ def main(path_result_folder, case, time_steps):
 
         ## write qc all tech to one dict
         qc_all_tech_per_building_dict = {}
-        # change order of columns
-        new_column_list = []
-        for tech in ['coil', 'ER0', '3for2', 'LD', 'IEHX']:
-            if tech in el_compare_df.columns:
-                new_column_list.append(tech)
+        ## change order of columns
+        # new_column_list = []
+        # for tech in ['coil', 'ER0', '3for2', 'LD', 'IEHX']:
+        #     if tech in el_compare_df.columns:
+        #         new_column_list.append(tech)
+        new_column_list = el_compare_df.loc['el_total'].sort_values(ascending=True).index
         ordered_el_compare_df = el_compare_df[new_column_list]
         # qc_sys
         qc_sys_total = ordered_el_compare_df.loc['qc_sys_total']
@@ -154,7 +156,7 @@ def plot_overlapping_bar(building, time_steps, techs, ex_all_tech_per_building_d
     ax.yaxis.label.set_size(16)
     ax.xaxis.set_tick_params(labelsize=14)
     ax.yaxis.set_tick_params(labelsize=14)
-    ax.legend(loc='lower right', fontsize=16)
+    ax.legend(loc='upper right', fontsize=12, ncol=3, mode="expand")
     case_name = case.split('_')[4]
     title = CASE_TABLE[case_name] + ' ' + building
     ax.set_title(title, fontsize=16)
@@ -284,7 +286,6 @@ def path_to_el_compare_files(path_district_result_folder, time_steps):
     all_folders_in_path = os.listdir(path_district_result_folder)
     path_to_files = []
     for folder in all_folders_in_path:
-        print folder
         if '.csv' not in folder and '.png' not in folder:  # avoid opening a file
             if '_' in folder and float(folder.split('_')[1]) == time_steps:
                 path_to_building_folder = os.path.join(path_district_result_folder, folder)
@@ -328,6 +329,6 @@ if __name__ == '__main__':
     for case in cases:
         print case
         # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_0628"
+        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
         time_steps = 168
         main(path_result_folder, case, time_steps)
