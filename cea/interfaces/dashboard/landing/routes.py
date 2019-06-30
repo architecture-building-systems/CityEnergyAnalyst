@@ -57,9 +57,13 @@ def route_project_overview():
         locator = cea.inputlocator.InputLocator(os.path.join(project_path, scenario))
         zone = locator.get_zone_geometry()
         if os.path.isfile(zone):
-            zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
-            descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
+            try:
+                zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
+                descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
                                                      float("%.5f" % ((zone_df.total_bounds[0] + zone_df.total_bounds[2])/2)))
+            except RuntimeError as e:
+                descriptions[scenario]['Warning'] = 'Could not read the Zone file. ' \
+                                                    'Check if your geometries have a coordinate system.'
 
         else:
             descriptions[scenario]['Warning'] = 'Zone file does not exist.'
@@ -183,7 +187,7 @@ def route_create_scenario_save():
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
 
-    return redirect(url_for('inputs_blueprint.route_building_properties'))
+    return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
 
 @blueprint.route('/open-project')
@@ -215,7 +219,7 @@ def route_open_project_scenario(scenario):
     assert scenario in get_scenarios(cea_config.project)
     cea_config.scenario_name = scenario
     cea_config.save()
-    return redirect(url_for('inputs_blueprint.route_building_properties'))
+    return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
 
 @blueprint.route('/get-image/<scenario>')

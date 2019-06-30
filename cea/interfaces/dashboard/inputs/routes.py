@@ -125,8 +125,8 @@ def route_geojson_streets():
     return jsonify(df_to_json(location))
 
 
-@blueprint.route('/building-properties')
-def route_building_properties():
+@blueprint.route('/building-properties', methods=['GET'])
+def route_get_building_properties():
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
 
@@ -160,6 +160,44 @@ def route_building_properties():
             store['tables'][db] = {}
     return render_template('table.html', store=store, tabs=tabs)
 
+@blueprint.route('/building-properties', methods=['POST'])
+def route_save_building_properties():
+    import pandas
+    data = request.get_json()
+    changes = data['changes']
+    tables = data['tables']
+    geojson = data['geojson']
+
+    out = {'tables': {}, 'geojsons': {}}
+
+    # TODO: Maybe save the files to temp location in case something fails
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    for db in INPUTS:
+        db_info = INPUTS[db]
+        location = getattr(locator, db_info['location'])()
+
+        if len(tables[db]) != 0:
+            if db_info['type'] == 'shp':
+                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
+
+                out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
+                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+            elif db_info['type'] == 'dbf':
+                table_df = pandas.read_json(json.dumps(tables[db]))
+                cea.utilities.dbf.dataframe_to_dbf(table_df, location)
+
+                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+        else:  # delete file if empty
+            out['tables'][db] = {}
+            if os.path.isfile(location):
+                os.remove(location)
+            if db_info['type'] == 'shp':
+                out['geojsons'][db] = {}
+
+    return jsonify(out)
 
 @blueprint.route('/table/<db>', methods=['GET'])
 def route_table_get(db):

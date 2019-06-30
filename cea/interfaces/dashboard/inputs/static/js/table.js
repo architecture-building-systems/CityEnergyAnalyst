@@ -101,8 +101,15 @@ function updateData(data) {
     // Find the layer of the property
     var table = $('.tab.active').attr('id').split('-tab')[0];
 
+    // TODO: Move updates to InputStore class
+    // FIXME: Not very efficient. Too many loops to find index of data
     // Update input data
-    inputstore.getData(table)[inputstore.getDataID(table, name)][column] = value;
+    var row = inputstore.getData(table)[inputstore.getDataID(table, name)];
+    row[column] = value;
+    if (row['REFERENCE']) {
+        row['REFERENCE'] = 'User - assumption';
+        $('.tab.active').trigger('click');
+    }
 
     // Update geometries
     if (table === 'zone' || table === 'district') {
@@ -130,9 +137,8 @@ function selectRow(e, cell) {
 
 function addToSelection(data, row) {
     var buttons = [$('#clear-button'),$('#delete-button'),$('#edit-button')];
-    var selection = data.length;
     $.each(buttons, function (_, button) {
-        if (selection) {
+        if (data.length) {
             button.show();
         } else {
             button.hide();
@@ -162,6 +168,18 @@ function filterSelection(selection) {
     }
 }
 
+function showSavingPopup() {
+
+            $.post('save-config/' + script, get_parameter_values(), null, 'json')
+                .done(function () {
+                    $('#modal-prompt').text('Configuration Saved!')
+                    setTimeout(function(){
+                        $('#config-modal-prompt').modal('hide');
+                        closeSettings();
+                    }, 1000);
+                });
+}
+
 $(window).load(function () {
     $('#cea-inputs').show();
 
@@ -179,7 +197,11 @@ $(window).load(function () {
     $('#delete-button').click(function () {
         var selected = inputstore.getSelected();
         var layer = ($('.tab.active').attr('id').split('-tab')[0] !== 'district') ? 'zone':'district';
-        if (confirm("This will delete the following buildings: " + selected)) {
+        var out = '\n';
+        $.each(selected, function (_, building) {
+            out += `${building}\n`
+        });
+        if (confirm("This will delete the following buildings from every table:" + out)) {
             inputstore.deleteBuildings(layer, selected);
             $('.tab.active').trigger('click');
         }
@@ -191,15 +213,54 @@ $(window).load(function () {
     });
 
     $('#discard-button').click(function () {
-        if (confirm("This will discard all unsaved changes.")) {
-            inputstore.resetChanges();
-            $('.tab.active').trigger('click');
+        var changes = inputstore.changes;
+        if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
+            alert('No changes detected');
+        } else {
+            if (confirm("This will discard all unsaved changes.\n" + inputstore.changesToString())) {
+                inputstore.resetChanges();
+                $('.tab.active').trigger('click');
+            }
         }
     });
 
     $('#save-button').click(function () {
-        if (confirm("Any buildings deleted once saved is irreversible.\n" + inputstore.changesToString())) {
-            inputstore.applyChanges();
+        var changes = inputstore.changes;
+        if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
+            alert('No changes detected');
+        } else {
+            if (confirm("Save these changes?\n" +
+                "WARNING: Any buildings deleted this way cannot be recovered once saved!\n" +
+                inputstore.changesToString())) {
+                $('#saving-text').text('Saving Changes...');
+                $('#saving-popup').modal({'show': true, 'backdrop': 'static'});
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/inputs/building-properties',
+                    data: JSON.stringify({
+                        changes: changes,
+                        geojson: inputstore.geojsondata,
+                        tables: inputstore.data
+                    }),
+                    contentType: 'application/json'
+                }).done(function (data) {
+                    // TODO: Either refresh page or do applyChanges()
+                    inputstore.applyChanges(data);
+
+                    $('#saving-text').text('✔ Changes Saved!');
+                    setTimeout(function(){
+                        $('#saving-popup').modal('hide');
+                    }, 1500);
+                }).fail(function () {
+                    var header =
+                        '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
+                        'Back' +
+                        '</button>';
+                    $('#saving-text').text('Something went wrong');
+                    $('#saving-text').append(header);
+                });
+            }
         }
     });
 });

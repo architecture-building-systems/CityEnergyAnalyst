@@ -73,7 +73,7 @@ class InputStore {
         var out = '';
 
         if (!$.isEmptyObject(this.changes['update'])) {
-            out += '\nUpdated:\n';
+            out += '\nUPDATED:\n';
             $.each(this.changes['update'], function (table, buildings) {
                 out += `${table}:\n`;
                 $.each(buildings, function (name, properties) {
@@ -85,13 +85,12 @@ class InputStore {
                 });
                 out += '\n';
             });
-            out += '\n';
         }
 
         if (!$.isEmptyObject(this.changes['delete'])) {
-            out += '\nDeleted:\n';
+            out += '\nDELETED:\n';
             $.each(this.changes['delete'], function (layer, buildings) {
-                out += `${layer}: ${buildings}\n`;
+                out += `${layer}:\n${buildings}\n\n`;
             });
             out += '\n';
         }
@@ -138,10 +137,30 @@ class InputStore {
         this.changes = {update:{},delete:{}};
         this.generateData();
         this.generateGeojsonData();
-        console.log(this.changes);
     }
 
-    applyChanges() {
+    applyChanges(data) {
+        var _this = this;
+        if (Object.keys(data['tables']).length) {
+            $.each(data['tables'], function (table, columns) {
+                _this.tables[table] = columns;
+            })
+        }
 
+        if (Object.keys(data['geojsons']).length) {
+            console.log('geojsons',data['geojsons']);
+            $.each(data['geojsons'], function (table, props) {
+                console.log('props',props);
+                if (Object.keys(props).length) {
+                    _this.geojsons[table] = props;
+                } else {
+                    console.log('delete');
+                    delete _this.geojsons[table];
+                }
+
+            })
+        }
+
+        this.resetChanges();
     }
 }
