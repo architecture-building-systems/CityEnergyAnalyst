@@ -26,11 +26,6 @@ class InputStore {
         return this.data[table]
     }
 
-    getDataID(name, building) {
-        var table = this.data[name];
-        return table.findIndex(x => x['Name'] === building);
-    }
-
     getSelected() {
         return this.selected
     }
