@@ -280,15 +280,15 @@ def check_bui_energy_bal(results, building, building_result_path, tech):
     return np.nan
 
 
-def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, building, building_result_path, tech,
+def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, timesteps, building, building_result_path, tech,
                                    name):
     # plotting
     fig, ax = plt.subplots()
     bar_width = 0.3
-    x_ticks = np.arange(length) + 1
+    x_ticks = np.arange(timesteps) + 1
     # left stack
     x_axis_left = x_ticks - 0.2
-    y_offset = np.zeros(length)
+    y_offset = np.zeros(timesteps)
     colors = ['#AD4456', '#D76176', '#E3909F', '#742D3A', '#270F14', '#FF4B31']  # PINKS
     c = 0
     for key in left_stack_dict.keys():
@@ -298,7 +298,7 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, bu
     y_max = y_offset.max()
     # right stack
     x_axis_right = x_ticks + 0.2
-    y_offset = np.zeros(length)
+    y_offset = np.zeros(timesteps)
     colors = ['#29465A', '#39617E', '#718C60', '#77AACF', '#111C24', '#507C88', '#111C24', '#507C88']  # BLUES
     c = 0
     for key in right_stack_dict.keys():
@@ -307,7 +307,8 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, length, bu
         c = c + 1
     y_max = max(y_offset.max(), y_max)
     # plot settings
-    ax.set_xticks(x_ticks)
+    x_ticks_shown = set_xtick_shown(x_ticks, timesteps)
+    ax.set_xticks(x_ticks_shown)
     # put legend to the right
     ax.legend(loc='center left', bbox_to_anchor=(1.04, 0.5))
     ax.set(xlabel='Time [hr]', ylabel=name, ylim=(0, y_max + 0.05 * y_max))
@@ -344,7 +345,7 @@ def analyse_chilled_water_usage(results, tech):
 
 def analyse_Qc_from_chilled_water(results, tech):
     number_oau_in = results.filter(like='OAU_T_SA').shape[1]
-    Qc_from_chilled_water_df = results.filter(like='q_oau_in_').sum(axis=0).reset_index()
+    Qc_from_chilled_water_df = (results.filter(like='q_oau_in_')*1000/results['Af_m2'].max()).sum(axis=0).reset_index()
     T_low_C, T_high_C = 8.1, 14.1
     if (tech == 'HCS_3for2' and number_oau_in < 10):
         T_interval = 0.65 * 2
@@ -939,6 +940,7 @@ def plot_water_balance(building, building_result_path, humidity_df, results, tec
 
 
 def plot_air_flow(air_flow_df, results, tech, building, building_result_path):
+    specific_air_flow_df = (air_flow_df*1000)/results['Af_m2'].max()
     # extract parameters
     time_steps = results.shape[0]
     x_ticks = results.index.values
@@ -949,16 +951,16 @@ def plot_air_flow(air_flow_df, results, tech, building, building_result_path):
     fig, ax = plt.subplots(figsize=fig_size)
     bar_width = 0.5
     opacity = 1
-    colors = plt.cm.Set2(np.linspace(0, 1, len(air_flow_df.columns)))
+    colors = plt.cm.Set2(np.linspace(0, 1, len(specific_air_flow_df.columns)))
     # initialize the vertical-offset for the stacked bar chart
-    y_offset = np.zeros(air_flow_df.shape[0])
+    y_offset = np.zeros(specific_air_flow_df.shape[0])
     # plot bars
-    for c in range(len(air_flow_df.columns)):
-        column = air_flow_df.columns[c]
-        ax.bar(x_ticks, air_flow_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
+    for c in range(len(specific_air_flow_df.columns)):
+        column = specific_air_flow_df.columns[c]
+        ax.bar(x_ticks, specific_air_flow_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=column)
-        y_offset = y_offset + air_flow_df[column]
-    ax.set(xlabel='Time [hr]', ylabel='Air flow [kg/s]', xlim=(1, time_steps), ylim=(0, 50))
+        y_offset = y_offset + specific_air_flow_df[column]
+    ax.set(xlabel='Time [hr]', ylabel='Air flow [g/s/m2]', xlim=(1, time_steps), ylim=(0, 2))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
     ax.legend(loc='upper left')
@@ -1183,7 +1185,12 @@ def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'exergy'))
     return np.nan
 
+def format_func(value, tick_number):
+    return value%24
+
 def plot_exergy_usages(building, building_result_path, exergy_df, results, tech, day):
+    results.reset_index(inplace=True)
+    exergy_df.reset_index(inplace=True)
     t_0 = results.index.min()
     t_end = results.index.max()
     # reset index
@@ -1193,33 +1200,28 @@ def plot_exergy_usages(building, building_result_path, exergy_df, results, tech,
     time_steps = exergy_df.shape[0]
     x_ticks = exergy_df.index.values
     fig_size = set_figsize(time_steps)
-    x_ticks_shown = set_xtick_shown(x_ticks, time_steps)
 
     # plotting
     fig, ax = plt.subplots(figsize=fig_size)
     bar_width = 0.5
     opacity = 1
-    # colors = plt.cm.Set2(np.linspace(0, 1, len(electricity_df.columns)))
-    colors = [(0.4, 0.76078, 0.647059, 1), (0.70196078, 0.70196078, 0.70196078, 1), (0.70196078, 0.73196078, 0.8, 1),
-              (0.5, 0.5, 0.7, 1)]
+
+    COLOR_TABLE = {'Ex_process_total': '#080808', 'Ex_utility_total': '#707070',
+                   'el_Wh_total_per_Af': '#C8C8C8'}  # Gray scale
+    KEY_TABLE = {'Ex_process_total': 'process exergy', 'Ex_utility_total': 'utility exergy',
+                 'el_Wh_total_per_Af': 'electricity'}
 
     # plot bars
-    i = 0
+    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2)
+    ax.bar(x_ticks, total_el_float, bar_width, alpha=opacity, color=COLOR_TABLE['el_Wh_total_per_Af'],
+           label=KEY_TABLE['el_Wh_total_per_Af'])
     for column in ['Ex_utility_total','Ex_process_total']:
-        ax.bar(x_ticks, exergy_per_area_df[column], bar_width, alpha=opacity, color=colors[i], label=column)
-        i = i + 1
+        ax.bar(x_ticks, exergy_per_area_df[column], bar_width, alpha=opacity, color=COLOR_TABLE[column], label=KEY_TABLE[column])
 
-    ax.set(xlabel='Time [hr]', ylabel='Exergy [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 35))
+    ax.set(xlabel='Time [hr]', ylabel='Energy [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 20))
     ax.xaxis.label.set_size(14)
     ax.yaxis.label.set_size(14)
-    ax.set_xticks(x_ticks_shown)
-    ax.legend(loc='upper left')
-    # plot line
-    ax1 = ax.twinx()
-    total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2)
-    ax1.plot(x_ticks, total_el_float, '-o', linewidth=2, markersize=4, label='total electricity use', color='steelblue')
-    ax1.set(xlim=ax.get_xlim(), ylim=ax.get_ylim())
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', fontsize=12, ncol=3, mode="expand")
 
     if day != '':
         name = CONFIG_TABLE[tech]
@@ -1287,7 +1289,6 @@ def plot_supply_temperature_humidity(building, building_result_path, operation_d
 ## auxiliary functions
 def set_xtick_shown(x_ticks, time_steps):
     reduced_x_ticks = np.insert(np.arange(0, time_steps, 12)[1:], 0, 1)
-    x_ticks_24 = np.arange(1, 25, 1)  # FIXME
     x_ticks_shown = x_ticks if time_steps <= 24 else reduced_x_ticks
     return x_ticks_shown
 
@@ -1334,20 +1335,20 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    # buildings = ["B001"]
-    buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    # tech = ["HCS_coil"]
-    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD"]
-    # tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    buildings = ["B006"]
+    # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
+    # tech = ["HCS_ER0"]
+    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
+    #  tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
+    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ["WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_RET"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0628"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
