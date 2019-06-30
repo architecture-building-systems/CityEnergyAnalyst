@@ -189,11 +189,22 @@ $(window).load(function () {
 
     $('#edit-button').click(function () {
         var table = $('.tab.active').data('name');
-        var selected = inputstore.getSelected().join(', ');
         var columns = inputstore.getColumns(table);
 
         $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
-        $('#selected-buildings').text(`Buidlings selected: ${selected}`);
+        $('#selected-buildings').text(`Buidlings selected:`);
+        $.each(inputstore.getSelected(), function (_, building) {
+            var row = currentTable.getRow(building).getData();
+            var out = {};
+            $.each(inputstore.getColumns(table), function (_, column) {
+                out[column] = row[column];
+            });
+            delete out['Name'];
+            delete out['REFERENCE'];
+            out = JSON.stringify(out);
+            $('#selected-buildings').append(`<div>${building}: ${out}</div>`);
+        });
+
         // TODO: Add input validation
         $('#cea-column-editor-form').empty();
         $.each(columns, function (_, column) {
