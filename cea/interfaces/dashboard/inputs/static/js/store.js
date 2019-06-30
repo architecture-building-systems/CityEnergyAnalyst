@@ -59,6 +59,9 @@ class InputStore {
             //Check if update is the same as default
             if (this.tables[table][building][column] === value) {
                 delete this.changes[method][table][building][column];
+                if (!Object.keys(this.changes[method][table][building]).length) {
+                    delete this.changes[method][table][building];
+                }
             } else {
                 this.changes[method][table] = this.changes[method][table] || {};
                 this.changes[method][table][building] = this.changes[method][table][building] || {};
@@ -148,13 +151,11 @@ class InputStore {
         }
 
         if (Object.keys(data['geojsons']).length) {
-            console.log('geojsons',data['geojsons']);
             $.each(data['geojsons'], function (table, props) {
                 console.log('props',props);
                 if (Object.keys(props).length) {
                     _this.geojsons[table] = props;
                 } else {
-                    console.log('delete');
                     delete _this.geojsons[table];
                 }
 
