@@ -105,7 +105,7 @@ function updateData(data) {
     // TODO: Move updates to InputStore class
     // FIXME: Not very efficient. Too many loops to find index of data
     // Update table data
-    var row = inputstore.getData(table)[inputstore.getDataID(table, name)];
+    var row = currentTable.getRow(name).getData();
     row[column] = value;
     if (row['REFERENCE']) {
         row['REFERENCE'] = 'User - assumption';
@@ -114,10 +114,10 @@ function updateData(data) {
 
     // Update geometries
     if (table === 'zone' || table === 'district') {
-        var row = inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'];
-        row[column] = value;
-        if (row['REFERENCE']) {
-            row['REFERENCE'] = 'User - assumption';
+        var properties = inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'];
+        properties[column] = value;
+        if (properties['REFERENCE']) {
+            properties['REFERENCE'] = 'User - assumption';
         }
         if (column === 'height_ag') {
             inputstore.createNewGeojson(table);
