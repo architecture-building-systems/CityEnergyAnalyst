@@ -23,19 +23,19 @@ def main(path_result_folder, case, time_steps):
         print(building)
         el_compare_df = pd.read_csv(path, index_col=0)
         #
-        Af_m2 = el_compare_df.loc['el_Wh_total_per_Af'] / (el_compare_df.loc['el_total'] / 1000)
+        Af_m2 = el_compare_df.loc['Af_m2'].max()
         el_compare_df.loc['qc_load_Wh_per_Af'] = el_compare_df.loc['qc_load_total'] / Af_m2
         list_of_labels = []
         for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean',
                       'eff_exergy', 'Qh', 'cop_Qh', 'el_Wh_total_per_Af', 'qc_load_Wh_per_Af',
                       'qc_Wh_sys_per_Af', 'process_exergy_Wh_per_Af', 'utility_exergy_Wh_per_Af',
-                      'eff_process_utility']:
+                      'eff_process_utility', 'sys_SHR', 'load_SHR']:
             list_of_labels.append(el_compare_df.loc[label])
         building_result_df = pd.concat(list_of_labels, axis=1)
         building_result_df = building_result_df.sort_values(by=['el_total']).T
         all_results_dict[building] = building_result_df
 
-        all_el_total_dict[building] = el_compare_df.loc['el_Wh_total_per_Af'].to_dict()
+        all_el_total_dict[building] = (el_compare_df.loc['el_Wh_total_per_Af']/1000).to_dict()
         all_cop_dict[building] = el_compare_df.loc['cop_system_mean'].to_dict()  # FIXME
         all_exergy_eff_dict[building] = (el_compare_df.loc['eff_exergy'] * 100).to_dict()
 
@@ -72,6 +72,9 @@ def main(path_result_folder, case, time_steps):
 
     # scatter plot of exergy eff
     plot_scatter_EX(all_exergy_eff_dict, path_district_result_folder)
+
+    # scatter plot of el_total
+    plot_scatter_el_total(all_el_total_dict, path_district_result_folder)
 
     return np.nan
 
@@ -195,7 +198,8 @@ def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folde
         #area = (all_el_total_dict[building][tech] / 600) ** 2  # qc_Wh_sys_per_Af
         el_tot_list.append(area)  # Wh/m2
     el_tot = tuple(el_tot_list)
-    area = el_tot
+    # area = el_tot
+    area = tuple(map(lambda x: 100, anno))
     # area = tuple(map(lambda x:100, anno))
     # marker colors
     anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
@@ -260,6 +264,47 @@ def plot_scatter_EX(all_exergy_eff_dict, path_district_result_folder):
     plt.scatter(x, y, c=anno_colors, s=area)
     # plt.show()
     plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'EX'))
+    return np.nan
+
+def plot_scatter_el_total(all_el_total_dict, path_district_result_folder):
+    # get all the points
+    look_up_first_level_key, second_level_key, value = get_all_points_from_dict(all_el_total_dict)
+
+    # x axis
+    x = look_up_first_level_key
+    x_labels = list(all_el_total_dict.keys())
+    x_labels.sort()
+    x_values = list(range(len(x_labels)))
+    # y axis
+    y = value
+    # y_values = np.arange(round(min(y)),round(max(y))+2)
+    y_values = np.arange(0.4, 1.6, 0.2)
+    y_minor_values = y_values + 0.1
+    # y_labels = [0, 0.5, 1, 1.5, 2]
+    # marker size
+    anno = second_level_key
+    area = tuple(map(lambda x:65, anno))
+    # marker colors
+    anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
+
+    # format the plt
+    plt.figure()
+    case_names = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
+    case_shown = case_names[case.split('_')[4]]
+    plt.title(case_shown, fontsize=18)
+    plt.ylabel('electricity usage [kWh/m2]', fontsize=18)
+    x_labels_shown = []
+    for label in x_labels:
+        A, B, C = label.split("0")
+        label_shown = A + B + C if C != '' else A + B + '0'
+        x_labels_shown.append(label_shown)
+    plt.xticks(x_values, x_labels_shown, fontsize=18, rotation=40)
+    plt.yticks(y_values, fontsize=18)
+    plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
+              min(y_values), max(y_values)])
+    plt.scatter(x, y, c=anno_colors, s=area)
+    # plt.show()
+    plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'el_total'))
     return np.nan
 
 
