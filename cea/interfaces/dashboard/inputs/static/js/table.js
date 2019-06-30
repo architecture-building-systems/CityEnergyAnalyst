@@ -77,7 +77,8 @@ function createTable(parent, name, values, columns, types) {
 }
 
 function defineColumns(columns, column_types) {
-    out = [];
+    var out = [];
+    var editor = '';
     $.each(columns, function (index, column) {
         if (column === 'Name' || column === 'REFERENCE') {
             out.push({title: column, field: column});
@@ -99,11 +100,11 @@ function updateData(data) {
     var value = data.getValue();
 
     // Find the layer of the property
-    var table = $('.tab.active').attr('id').split('-tab')[0];
+    var table = $('.tab.active').data('name');
 
     // TODO: Move updates to InputStore class
     // FIXME: Not very efficient. Too many loops to find index of data
-    // Update input data
+    // Update table data
     var row = inputstore.getData(table)[inputstore.getDataID(table, name)];
     row[column] = value;
     if (row['REFERENCE']) {
@@ -113,7 +114,11 @@ function updateData(data) {
 
     // Update geometries
     if (table === 'zone' || table === 'district') {
-        inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'][column] = value;
+        var row = inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'];
+        row[column] = value;
+        if (row['REFERENCE']) {
+            row['REFERENCE'] = 'User - assumption';
+        }
         if (column === 'height_ag') {
             inputstore.createNewGeojson(table);
             redrawBuildings();
@@ -168,18 +173,6 @@ function filterSelection(selection) {
     }
 }
 
-function showSavingPopup() {
-
-            $.post('save-config/' + script, get_parameter_values(), null, 'json')
-                .done(function () {
-                    $('#modal-prompt').text('Configuration Saved!')
-                    setTimeout(function(){
-                        $('#config-modal-prompt').modal('hide');
-                        closeSettings();
-                    }, 1000);
-                });
-}
-
 $(window).load(function () {
     $('#cea-inputs').show();
 
@@ -194,9 +187,40 @@ $(window).load(function () {
         filterSelection(inputstore.getSelected());
     });
 
+    $('#edit-button').click(function () {
+        var table = $('.tab.active').data('name');
+        var selected = inputstore.getSelected().join(', ');
+        var columns = inputstore.getColumns(table);
+
+        $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
+        $('#selected-buildings').text(`Buidlings selected: ${selected}`);
+        // TODO: Add input validation
+        $('#cea-column-editor-form').empty();
+        $.each(columns, function (_, column) {
+            var type = (inputstore.getColumnTypes(table)[column] === 'str') ? 'text':'number';
+            if (column !== 'Name' && column !== 'REFERENCE') {
+                var input =
+                    `<div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>
+                      <div class="col-md-6 col-sm-6 col-xs-12">
+                        <input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
+                               class="form-control col-md-7 col-xs-12">
+                      </div>
+                    </div>`;
+                $('#cea-column-editor-form').append(input);
+                if (type === 'text') {
+                    $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
+                        .prop('title', 'T[number]');
+                }
+            }
+        });
+
+        $('#cea-column-editor').modal({'show': true, 'backdrop': 'static'});
+    });
+
     $('#delete-button').click(function () {
         var selected = inputstore.getSelected();
-        var layer = ($('.tab.active').attr('id').split('-tab')[0] !== 'district') ? 'zone':'district';
+        var layer = ($('.tab.active').data('name') !== 'district') ? 'zone':'district';
         var out = '\n';
         $.each(selected, function (_, building) {
             out += `${building}\n`
@@ -257,10 +281,58 @@ $(window).load(function () {
                         '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
                         'Back' +
                         '</button>';
-                    $('#saving-text').text('Something went wrong');
-                    $('#saving-text').append(header);
+                    $('#saving-text').text('Something went wrong')
+                        .append(header);
                 });
             }
         }
+    });
+
+    $('#cea-column-editor-form').submit(function (e) {
+        e.preventDefault();
+        var table = $('.tab.active').data('name');
+        var props = {};
+        var form = $('#cea-column-editor-form').serialize().split('&');
+        $.each(form, function (_, prop) {
+            var temp = prop.split('=');
+            if (temp[1] !== '') {
+                var value = temp[1];
+                if (inputstore.getColumnTypes(table)[temp[0]] !== 'str'){
+                    value = Number(value);
+                }
+                props[temp[0]] = value;
+            }
+        });
+
+        var data = [];
+        $.each(inputstore.getSelected(), function (_, building) {
+            // Add to changes
+            $.each(props, function (key, value) {
+                inputstore.addChange('update', table, building, key, value);
+            });
+
+            // Update table data
+            var out = {Name: building, ...props};
+            var row = currentTable.getRow(building).getData();
+            if (row['REFERENCE']) {
+                out['REFERENCE'] = 'User - assumption';
+            }
+            data.push(out);
+
+            // Update geojsons
+            // FIXME: Copied from updateData()
+            if (table === 'zone' || table === 'district') {
+                Object.assign(inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, building)]['properties'], out);
+            }
+        });
+
+        if (props['height_ag']) {
+            inputstore.createNewGeojson(table);
+            redrawBuildings();
+        }
+
+        currentTable.updateData(data);
+
+        $('#cea-column-editor').modal('hide');
     });
 });
