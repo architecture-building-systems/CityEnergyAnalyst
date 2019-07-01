@@ -2673,7 +2673,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
             # Identify all nodes with no in or outflows and delete those values from the z matrixes
             # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
             for i in range(z_note.shape[0]):
-                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])), 0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])), 0):
+                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])), 0.0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])), 0.0):
                     t_node[i] = np.nan
                     # no in our outflows, clear in and outflows at this node
                     # and clear node incoming flows from the corresponding edges
