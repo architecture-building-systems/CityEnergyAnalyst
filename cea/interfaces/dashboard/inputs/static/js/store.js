@@ -4,6 +4,7 @@ class InputStore {
         this.geojsons = store['geojsons'];
         this.columns = store['columns'];
         this.column_types = store['column_types'];
+        this.crs = store['crs'];
         this.changes = {update:{},delete:{}};
 
         this.data = {};
