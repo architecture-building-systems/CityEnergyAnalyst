@@ -63,6 +63,10 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
+
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
     addcosts_Capex_a_USD = 0
@@ -150,7 +154,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     Capex_Sewage_USD = 0
     Capex_pump_USD = 0
 
-    if config.district_heating_network:
+    if district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
@@ -162,7 +166,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
             else:
                 nBuildinNtw += 1
-    if config.district_cooling_network:
+    if district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
@@ -325,7 +329,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
 
     # Add the features for the distribution
 
-    if DHN_barcode.count("1") > 0 and config.district_heating_network:
+    if DHN_barcode.count("1") > 0 and district_heating_network:
         os.chdir(locator.get_optimization_slave_results_folder(master_to_slave_vars.generation_number))
         # Add the investment costs of the energy systems
         # Furnace
@@ -576,21 +580,20 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
 
     # Pump operation costs
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca,config.optimization.district_heating_network,
-        config.optimization.district_cooling_network)
+        master_to_slave_vars, network_features, locator, lca, district_heating_network,district_cooling_network)
     addcosts_Capex_a_USD += Capex_a_pump_USD
     addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
     addcosts_Capex_USD += Capex_pump_USD
 
     # import gas consumption data from:
-    if DHN_barcode.count("1") > 0 and config.district_heating_network:
+    if DHN_barcode.count("1") > 0 and district_heating_network:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
                                                                master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
-    elif DCN_barcode.count("1") > 0 and config.district_cooling_network:
+    elif DCN_barcode.count("1") > 0 and district_cooling_network:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
                                                                master_to_slave_vars.generation_number))

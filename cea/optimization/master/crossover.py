@@ -25,6 +25,11 @@ def cxUniform(ind1, ind2, proba, nBuildings, config):
     :return: child1, child2
     :rtype: list, list
     """
+
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
+
     child1 = toolbox.clone(ind1)
     child2 = toolbox.clone(ind2)
     
@@ -56,12 +61,12 @@ def cxUniform(ind1, ind2, proba, nBuildings, config):
             swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
 
     # Swap DHN and DCN, connected buildings
-    if config.district_cooling_network:
+    if district_cooling_network:
         for i in range(nBuildings):
             if random.random() < proba:
                 swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
 
-    if config.district_cooling_network:
+    if district_cooling_network:
         for i in range(nBuildings):
             if random.random() < proba:
                 swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings + i)

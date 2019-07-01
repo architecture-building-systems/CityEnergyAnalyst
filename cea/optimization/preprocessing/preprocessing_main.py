@@ -93,7 +93,11 @@ class SolarFeatures(object):
         A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
         A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
         A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
-        if config.optimization.district_heating_network:
+
+        # local variables
+        district_heating_network = config.optimization.district_heating_network
+        district_cooling_network = config.optimization.district_cooling_network
+        if district_heating_network:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
                 building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
@@ -118,7 +122,7 @@ class SolarFeatures(object):
             self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
             self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
             self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
-        elif config.optimization.district_cooling_network:
+        elif district_cooling_network:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
                 building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))

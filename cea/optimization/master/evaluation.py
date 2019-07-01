@@ -226,7 +226,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     # District Electricity Calculations
     (costs_electricity_USD, GHG_electricity_tonCO2,
      PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(
-        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, district_heating_network, district_cooling_network)
+
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
@@ -238,7 +239,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
-    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, config)
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network, district_cooling_network)
 
     # Capex Calculations
     print "Add extra costs"

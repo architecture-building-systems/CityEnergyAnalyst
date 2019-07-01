@@ -28,7 +28,7 @@ def mutFlip(individual, proba, nBuildings, config):
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    if config.district_heating_network:
+    if district_heating_network:
         # Flip the CHP
         if individual[0] > 0:
             if random.random() < proba:

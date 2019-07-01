@@ -23,11 +23,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config):
+def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, district_heating_network, district_cooling_network):
 
     # Electricity Requirement of the Buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
+
 
     costs_electricity_USD = 0
     GHG_electricity_tonCO2 = 0
@@ -90,7 +91,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
 
     # Step3. Electricity of Energy Systems
     # if there is district cooling and at least one building is in the network
-    if config.district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
+    if district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
 
         data_cooling = pd.read_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
@@ -236,7 +237,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
                     E_from_CHP_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
 
     # if there is district heating and at least one building is in the network
-    if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
+    if district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
 
         data_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
@@ -572,7 +573,7 @@ def main(config):
     individual = 10
     print("Calculating imports and exports of individual" + str(individual) + " of generation " + str(generation))
 
-    electricity_calculations_of_all_buildings(generation, individual, locator, config)
+    electricity_calculations_of_all_buildings(generation, individual, locator, district_heating_network, district_cooling_network)
 
 
 if __name__ == '__main__':

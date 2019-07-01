@@ -428,10 +428,15 @@ class Plots(object):
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
+        # local variables
+        district_heating_network = config.optimization.district_heating_network
+        district_cooling_network = config.optimization.district_cooling_network
         data_imports_exports_electricity_W = electricity_calculations_of_all_buildings(generation_pointer,
                                                                                        individual_pointer, locator,
-                                                                                       config)
-        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
+                                                                                       district_heating_network, district_cooling_network)
+        district_heating_network = config.optimization.district_heating_network
+        district_cooling_network = config.optimization.district_cooling_network
+        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, district_heating_network, district_cooling_network)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
                  "NG_hourly_Wh": data_imports_natural_gas_W,
