@@ -102,7 +102,7 @@ def route_get_building_properties():
         except IOError as e:
             print(e)
             store['tables'][db] = {}
-    return render_template('table.html', store=store, tabs=tabs)
+    return render_template('table.html', store=store, tabs=tabs, last_updated=dir_last_updated())
 
 
 @blueprint.route('/building-properties', methods=['POST'])
@@ -161,3 +161,9 @@ def df_to_json(file_location):
     except IOError as e:
         print(e)
         abort(404, 'Input file not found: %s' % file_location)
+
+
+def dir_last_updated():
+    return str(max(os.path.getmtime(os.path.join(root_path, f))
+               for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+               for f in files))
