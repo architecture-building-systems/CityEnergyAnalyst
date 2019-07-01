@@ -131,13 +131,14 @@ def route_get_building_properties():
     tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}}
+    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}}
     for db in INPUTS:
         db_info = INPUTS[db]
         location = getattr(locator, db_info['location'])()
         try:
             if db_info['type'] == 'shp':
                 table_df = geopandas.GeoDataFrame.from_file(location)
+                store['crs'][db] = table_df.crs
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                 store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
@@ -167,6 +168,7 @@ def route_save_building_properties():
     changes = data['changes']
     tables = data['tables']
     geojson = data['geojson']
+    crs = data['crs']
 
     out = {'tables': {}, 'geojsons': {}}
 
@@ -178,8 +180,9 @@ def route_save_building_properties():
 
         if len(tables[db]) != 0:
             if db_info['type'] == 'shp':
-                from cea.utilities.standardize_coordinates import get_projected_coordinate_system
-                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_projected_coordinate_system())
+                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                table_df = table_df.to_crs(crs[db])
                 table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
                 out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
