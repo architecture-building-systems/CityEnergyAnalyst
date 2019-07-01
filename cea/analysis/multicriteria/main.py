@@ -30,49 +30,43 @@ __status__ = "Production"
 
 def multi_criteria_main(locator, config):
     # local variables
-    generation = config.multi_criteria.generations
-    network_type = config.multi_criteria.network_type
+    generation = config.multi_criteria.generation
 
     # This calculates the exact path of the individual
-    # It might be that this inidividual was repeated already some generations back
-    # so we make sure that a pointer to the right adress exists first
+    # It might be that this individual was repeated already some generations back
+    # so we make sure that a pointer to the right address exists first
     if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
         data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
-    # import data storing information about the geneartion
-    generation_data = pd.read_csv(locator.get_optimization_individuals_in_generation(generation))
+    # import data storing information about the generation
+    data_processed, district_heating_network, district_cooling_network = preprocessing_generations_data(locator, generation)
 
     # compile cost data
-    if network_type == 'DC':
-        # Preprocess data
-        data_generation = preprocessing_generations_data(locator, generation, network_type)
-        objectives = data_generation['population']
-        individual_list = objectives.axes[0].values
-
-        # This does the work
+    if district_cooling_network:
         compiled_data_df = pd.DataFrame()
+        individual_list = data_processed['individual_list']
         for i, individual in enumerate(individual_list):
+            df_current_individual = pd.DataFrame(data_processed['data_generation'].loc[i])
             compiled_data_df = compiled_data_df.append(preprocessing_cost_data_DC(individual,
+                                                                                  df_current_individual,
                                                                                   locator,
-                                                                                  data_generation,
+                                                                                  data_processed,
                                                                                   data_address,
                                                                                   config), ignore_index=True)
         compiled_data_df = compiled_data_df.assign(individual=individual_list)
 
-    if network_type == 'DH':
-        # Preprocess data
-        data_generation = preprocessing_generations_data(locator, generation, config.multi_criteria.network_type)
-        objectives = data_generation['population']
-        individual_list = objectives.axes[0].values
-
+    if district_heating_network:
         # compile the data
         compiled_data_df = pd.DataFrame()
+        individual_list = data_processed['individual_list']
         for i, individual in enumerate(individual_list):
+            df_current_individual = pd.DataFrame(data_processed['data_generation'].loc[i])
             compiled_data_df = compiled_data_df.append(preprocessing_cost_data_DH(individual,
+                                                                                  df_current_individual,
                                                                                   locator,
-                                                                                  data_generation,
+                                                                                  data_processed,
                                                                                   data_address,
                                                                                   config), ignore_index=True)
         compiled_data_df['individual'] = individual_list
@@ -156,7 +150,7 @@ def normalize_compiled_data(compiled_data_df):
     return compiled_data_df
 
 
-def preprocessing_generations_data(locator, generation_number, district_netowrk_type):
+def preprocessing_generations_data(locator, generation_number):
     """
     compile data from all individuals in this generation
     :param locator:
@@ -164,12 +158,15 @@ def preprocessing_generations_data(locator, generation_number, district_netowrk_
     :return:
     """
 
-    # load data of geneartion
+    # load data of generation
     with open(locator.get_optimization_checkpoint(generation_number), "rb") as fp:
         data = json.load(fp)
 
+    district_heating_network = data['district_heating_network']
+    district_cooling_network = data['district_cooling_network']
+
     # change units of population (e.g., form kW to MW)
-    df_population, individual_barcode, individual_names = Change_units_population(generation_number, locator, data)
+    df_population, individual_barcode, individual_names = Change_units_population(data)
 
     # change units of the hall of fame (e.g., form kW to MW)
     df_halloffame = change_units_hall_of_fame(data)
@@ -178,34 +175,42 @@ def preprocessing_generations_data(locator, generation_number, district_netowrk_
     df_individual_barcode = pd.DataFrame({'Name': individual_names,
                                           'individual_barcode': individual_barcode}).set_index("Name")
 
+    # get list of individuals
+    individual_list = df_population.axes[0].values
+
     # compile network barcodes
-    df_network = df_network_barcodes(data, district_netowrk_type, individual_names)
+    df_network = df_network_barcodes(data, district_heating_network, district_cooling_network, individual_names)
+
+    #get metadata of the genearation
+    data_generation = pd.read_csv(locator.get_optimization_individuals_in_generation(generation_number))
 
     data_processed = {'population': df_population,
                       'halloffame': df_halloffame,
                       'network': df_network,
                       'spread': data['spread'],
                       'euclidean_distance': data['euclidean_distance'],
-                      'individual_barcode': df_individual_barcode}
+                      'individual_barcode': df_individual_barcode,
+                      'individual_list':individual_list,
+                      'data_generation':data_generation}
 
     print('compiled data of all individuals in this generation: ', generation_number)
 
-    return data_processed
+    return data_processed, district_heating_network, district_cooling_network
 
 
-def df_network_barcodes(data, network_type, individual_names):
+def df_network_barcodes(data, district_heating_network, district_cooling_network, individual_names):
     network_dict = {}
     for i, ind in enumerate(individual_names):
-        if network_type == 'DC':
+        if district_cooling_network:
             district_network_list = data['DCN_list_All']
-        else:  # DH
+        elif district_heating_network:
             district_network_list = data['DHN_list_All']
         network_dict[ind] = str("".join(map(str, district_network_list)))
     df_network = pd.DataFrame.from_dict(network_dict, orient='index', columns=['network'])
     return df_network
 
 
-def Change_units_population(generation_number, locator, data):
+def Change_units_population(data):
     # compile objectives of all individuals in this generation
     # convert to millions
     costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in data['tested_population_fitness']]
@@ -239,14 +244,16 @@ def change_units_hall_of_fame(data):
     return df_halloffame
 
 
-def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, config):
-    # local
-    string_network = data_raw['network'].loc[individual].values[0]
+def preprocessing_cost_data_DC(individual, df_current_individual, locator, data_raw, data_address, config):
+
+    # local variables
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    data_address = data_address[data_address['individual_list'] == individual]
+    string_network = data_raw['network'].loc[individual].values[0]
+    individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
 
     # get data about individual (pointer)
+    data_address = data_address[data_address['individual_list'] == individual]
     generation_number = data_address['generation_number_address'].values[0]
     individual_number = data_address['individual_number_address'].values[0]
 
@@ -349,8 +356,7 @@ def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, conf
     data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
     # Network costs
-    network_features = network_opt.network_opt_main(config,
-                                                    locator)  # TODO: check if it is using the latest run of result, if yes, it is wrong
+    network_features = network_opt.network_opt_main(config,locator)  # TODO: check if it is using the latest run of result, if yes, it is wrong
     network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(
         DCN_barcode)  # FIXME: what does this mean?
     data_costs['Network_costs_USD'] = network_costs_a_USD
@@ -461,14 +467,14 @@ def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, conf
     return data_costs
 
 
-def preprocessing_cost_data_DH(individual, locator, data_raw, data_address, config):
+def preprocessing_cost_data_DH(individual, df_current_individual, locator, data_raw, data_address, config):
+
     # local variables
     string_network = data_raw['network'].loc[individual].values[0]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
 
-    # get generation/individual number
+    # get data about individual (pointer)
     data_address = data_address[data_address['individual_list'] == individual]
     generation_number = data_address['generation_number_address'].values[0]
     individual_number = data_address['individual_number_address'].values[0]
@@ -582,7 +588,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running multicriteria with scenario = %s" % config.scenario)
-    print("Running multicriteria for generation = %s" % config.multi_criteria.generations)
+    print("Running multicriteria for generation = %s" % config.multi_criteria.generation)
 
     multi_criteria_main(locator, config)
 

@@ -25,11 +25,13 @@ def calc_pareto_electricity(locator, lca, config, building_names):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
+    # local variables
+    detailed_electricity_pricing = config.optimization.detailed_electricity_pricing
     df = pd.read_csv(locator.get_total_demand(), usecols=["E_sys_MWhyr"])
     arrayTotal = np.array(df) * 1E6
     totalElec = np.sum(arrayTotal)  # [Wh]
 
-    if config.detailed_electricity_pricing:
+    if detailed_electricity_pricing:
         elecCosts = 0
         for name in building_names:
             df = pd.read_csv(locator.get_demand_results_file(name), usecols=["E_sys_kWh"])
