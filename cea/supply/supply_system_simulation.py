@@ -43,7 +43,9 @@ GENERATION_NUMBER = 100
 
 
 def supply_calculation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
-                       solar_features, network_features, gv, config, prices, lca):
+                       solar_features, network_features, gv, config, prices, lca,
+                       district_heating_network, district_cooling_network
+                       ):
     """
     This function evaluates one supply system configuration of the case study.
     :param individual: a list that indicates the supply system configuration
@@ -63,7 +65,13 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     :param prices:
     :return:
     """
-    individual = evaluation.check_invalid(individual, len(building_names), config)
+
+    #local variables
+    # local variables
+    district_heating_network = config.supply_system_simulation.district_heating_network
+    district_cooling_network = config.supply_system_simulation.district_cooling_network
+
+    individual = evaluation.check_invalid(individual, len(building_names), config, district_heating_network, district_cooling_network)
 
     # Initialize objective functions costs, CO2 and primary energy
     costs_USD = 0.0
@@ -187,10 +195,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     PEN_MJoil += PEN_heating_MJoil
 
     # slave optimization of cooling networks
-    if config.district_cooling_network and DCN_barcode.count("1") > 0:
+    if district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = cooling_main.cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features,
-                                                                                       prices, lca, config, reduced_timesteps_flag)
+                                                                                       prices, lca, config, reduced_timesteps_flag,
+                                                                                       district_heating_network, district_cooling_network)
         # if reduced_timesteps_flag:
         #     # reduced timesteps simulation for a month (May)
         #     coolCosts = coolCosts * (8760/(3624/2880))

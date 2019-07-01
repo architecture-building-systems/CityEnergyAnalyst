@@ -35,7 +35,6 @@ __status__ = "Production"
 
 def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
              Q_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca):
-
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -72,7 +71,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     addCO2 = 0
     addPrim = 0
     nBuildinNtw = 0
-    
+
     # Add the features from the disconnected buildings
     CostDiscBuild = 0
     CO2DiscBuild = 0
@@ -156,9 +155,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
                 dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                 Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                 Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
             else:
@@ -166,12 +165,13 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     if config.district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
-            if index == "0": # choose the best decentralized configuration
-                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
+            if index == "0":  # choose the best decentralized configuration
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                 Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                 Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                 to_PV = 1
@@ -183,16 +183,17 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                     to_PV = 0
 
 
-            else: # adding costs for buildings in which the centralized plant provides a part of the load requirements
+            else:  # adding costs for buildings in which the centralized plant provides a part of the load requirements
                 DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -201,15 +202,15 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                     if dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
-
                 if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -221,11 +222,12 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -237,11 +239,12 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -253,11 +256,12 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -269,11 +273,12 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU'
                     df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
@@ -282,12 +287,11 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                     if dfBest["single effect ACH to AHU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
-                if DCN_unit_configuration == 7: # corresponds to AHU + ARU + SCU from central plant
+                if DCN_unit_configuration == 7:  # corresponds to AHU + ARU + SCU from central plant
                     to_PV = 1
 
                 nBuildinNtw += 1
             PV_barcode = PV_barcode + str(to_PV)
-
 
     addcosts_Capex_a_USD += CostDiscBuild
     addCO2 += CO2DiscBuild
@@ -328,9 +332,10 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         if master_to_slave_vars.Furnace_on == 1:
             P_design_W = master_to_slave_vars.Furnace_Q_max_W
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern_heating(master_to_slave_vars.configKey,
-                                                                                     master_to_slave_vars.individual_number,
-                                                                                     master_to_slave_vars.generation_number)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern_heating(
+                master_to_slave_vars.configKey,
+                master_to_slave_vars.individual_number,
+                master_to_slave_vars.generation_number)
             dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
             arrayFurnace_W = np.array(dfFurnace)
 
@@ -338,7 +343,10 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             for i in range(int(np.shape(arrayFurnace_W)[0])):
                 Q_annual_W += arrayFurnace_W[i][0]
 
-            Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, config, locator, 'FU1')
+            Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W,
+                                                                                                       Q_annual_W,
+                                                                                                       config, locator,
+                                                                                                       'FU1')
             addcosts_Capex_a_USD += Capex_a_furnace_USD
             addcosts_Opex_fixed_USD += Opex_fixed_furnace_USD
             addcosts_Capex_USD += Capex_furnace_USD
@@ -365,7 +373,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
 
-            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = boiler.calc_Cinv_boiler(Q_design_W, locator,
+                                                                                                  config, 'BO1')
             addcosts_Capex_a_USD += Capex_a_Boiler_USD
             addcosts_Opex_fixed_USD += Opex_fixed_Boiler_USD
             addcosts_Capex_USD += Capex_Boiler_USD
@@ -383,7 +392,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             Q_annual_W = 0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
+            Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(
+                Q_design_W, locator, config, 'BO1')
             addcosts_Capex_a_USD += Capex_a_Boiler_peak_USD
             addcosts_Opex_fixed_USD += Opex_fixed_Boiler_peak_USD
             addcosts_Capex_USD += Capex_Boiler_peak_USD
@@ -399,7 +409,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         # HP Sewage
         if master_to_slave_vars.HP_Sew_on == 1:
             HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
-            Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+            Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
+                                                                                          'HP2')
             addcosts_Capex_a_USD += Capex_a_Sewage_USD
             addcosts_Opex_fixed_USD += Opex_fixed_Sewage_USD
             addcosts_Capex_USD += Capex_Sewage_USD
@@ -419,7 +430,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             addcosts_Capex_USD += Capex_GHP_USD
 
         # Back-up boiler
-        Capex_a_Boiler_backup_USD, Opex_fixed_Boiler_backup_USD, Capex_Boiler_backup_USD = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')
+        Capex_a_Boiler_backup_USD, Opex_fixed_Boiler_backup_USD, Capex_Boiler_backup_USD = boiler.calc_Cinv_boiler(
+            Q_uncovered_design_W, locator, config, 'BO1')
         addcosts_Capex_a_USD += Capex_a_Boiler_backup_USD
         addcosts_Opex_fixed_USD += Opex_fixed_Boiler_backup_USD
         addcosts_Capex_USD += Capex_Boiler_backup_USD
@@ -428,11 +440,13 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         # Hex and HP for Heat recovery
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             df = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.network_data_file_heating),
+                os.path.join(locator.get_optimization_network_results_folder(),
+                             master_to_slave_vars.network_data_file_heating),
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config, 'HEX1')
+            Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
+                Q_HEX_max_kWh, locator, config, 'HEX1')
             addcosts_Capex_a_USD += (Capex_a_wasteserver_HEX_USD)
             addcosts_Opex_fixed_USD += Opex_fixed_wasteserver_HEX_USD
             addcosts_Capex_USD += Capex_wasteserver_HEX_USD
@@ -443,7 +457,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 usecols=["HPServerHeatDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HP_USD, Opex_fixed_wasteserver_HP_USD, Capex_wasteserver_HP_USD = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
+            Capex_a_wasteserver_HP_USD, Opex_fixed_wasteserver_HP_USD, Capex_wasteserver_HP_USD = hp.calc_Cinv_HP(
+                Q_HP_max_kWh, locator, config, 'HP2')
             addcosts_Capex_a_USD += (Capex_a_wasteserver_HP_USD)
             addcosts_Opex_fixed_USD += Opex_fixed_wasteserver_HP_USD
             addcosts_Capex_USD += Capex_wasteserver_HP_USD
@@ -455,12 +470,14 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         array = np.array(df)
         Q_HP_max_PVT_wh = np.amax(array[:, 1])
         Q_HP_max_SC_Wh = np.amax(array[:, 0])
-        Capex_a_HP_PVT_USD, Opex_fixed_HP_PVT_USD, Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config, 'HP2')
+        Capex_a_HP_PVT_USD, Opex_fixed_HP_PVT_USD, Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config,
+                                                                                      'HP2')
         Capex_a_storage_HP += (Capex_a_HP_PVT_USD)
         addcosts_Opex_fixed_USD += Opex_fixed_HP_PVT_USD
         addcosts_Capex_USD += Capex_HP_PVT_USD
 
-        Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config, 'HP2')
+        Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config,
+                                                                                   'HP2')
         Capex_a_storage_HP += (Capex_a_HP_SC_USD)
         addcosts_Opex_fixed_USD += Opex_fixed_HP_SC_USD
         addcosts_Capex_USD += Capex_HP_SC_USD
@@ -477,7 +494,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             elif array[i][1] > 0:
                 Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
 
-        Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W, locator, config, 'HP2')
+        Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W,
+                                                                                                  locator, config,
+                                                                                                  'HP2')
         addcosts_Capex_a_USD += (Capex_a_HP_storage_USD)
         addcosts_Opex_fixed_USD += Opex_fixed_HP_storage_USD
         addcosts_Capex_USD += Capex_HP_storage_USD
@@ -487,7 +506,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                                                                                master_to_slave_vars.generation_number),
                          usecols=["Storage_Size_m3"], nrows=1)
         StorageVol_m3 = np.array(df)[0][0]
-        Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3, locator, config, 'TES2')
+        Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
+                                                                                                   locator, config,
+                                                                                                   'TES2')
         addcosts_Capex_a_USD += Capex_a_storage_USD
         addcosts_Opex_fixed_USD += Opex_fixed_storage_USD
         addcosts_Capex_USD += Capex_storage_USD
@@ -495,7 +516,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         # Costs from distribution configuration
         NetworkCost_USD = network_features.pipesCosts_DHN_USD
         NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-        NetworkCost_a_USD = NetworkCost_USD * PIPEINTERESTRATE * (1+ PIPEINTERESTRATE) ** PIPELIFETIME / ((1+PIPEINTERESTRATE) ** PIPELIFETIME - 1)
+        NetworkCost_a_USD = NetworkCost_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
+                    (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
         addcosts_Capex_a_USD += NetworkCost_a_USD
         addcosts_Capex_USD += NetworkCost_USD
 
@@ -507,7 +529,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 subsArray = np.array(df)
 
                 Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-                Capex_a_HEX_building_USD, Opex_fixed_HEX_building_USD, Capex_HEX_building_USD = hex.calc_Cinv_HEX(Q_max_W, locator, config, 'HEX1')
+                Capex_a_HEX_building_USD, Opex_fixed_HEX_building_USD, Capex_HEX_building_USD = hex.calc_Cinv_HEX(
+                    Q_max_W, locator, config, 'HEX1')
                 addcosts_Capex_a_USD += Capex_a_HEX_building_USD
                 addcosts_Opex_fixed_USD += Opex_fixed_HEX_building_USD
                 addcosts_Capex_USD += Capex_HEX_building_USD
@@ -525,28 +548,36 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             index = DHN_barcode[i]
             if index == "1":
                 share = roof_area_m2[i][0] / areaAvail
-                #print share, "solar area share", buildList[i]
-                
+                # print share, "solar area share", buildList[i]
+
                 Q_max_SC_ET_Wh = solar_features.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
-                Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config, 'HEX1')
+                Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh,
+                                                                                                         locator,
+                                                                                                         config, 'HEX1')
                 addcosts_Capex_a_USD += Capex_a_HEX_SC_ET_USD
                 addcosts_Opex_fixed_USD += Opex_fixed_HEX_SC_ET_USD
                 addcosts_Capex_USD += Capex_HEX_SC_ET_USD
 
                 Q_max_SC_FP_Wh = solar_features.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
-                Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config, 'HEX1')
+                Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,
+                                                                                                         locator,
+                                                                                                         config, 'HEX1')
                 addcosts_Capex_a_USD += Capex_a_HEX_SC_FP_USD
                 addcosts_Opex_fixed_USD += Opex_fixed_HEX_SC_FP_USD
                 addcosts_Capex_USD += Capex_HEX_SC_FP_USD
 
                 Q_max_PVT_Wh = solar_features.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
-                Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config, 'HEX1')
+                Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh,
+                                                                                                   locator, config,
+                                                                                                   'HEX1')
                 addcosts_Capex_a_USD += Capex_a_HEX_PVT_USD
                 addcosts_Opex_fixed_USD += Opex_fixed_HEX_PVT_USD
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
     # Pump operation costs
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, config)
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(
+        master_to_slave_vars, network_features, locator, lca,config.optimization.district_heating_network,
+        config.optimization.district_cooling_network)
     addcosts_Capex_a_USD += Capex_a_pump_USD
     addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
     addcosts_Capex_USD += Capex_pump_USD
@@ -556,13 +587,13 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
-                                                                          master_to_slave_vars.generation_number))
+                                                               master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
     elif DCN_barcode.count("1") > 0 and config.district_cooling_network:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
-                                                                          master_to_slave_vars.generation_number))
+                                                               master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
     else:
@@ -572,7 +603,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     # Save data
     results = pd.DataFrame({
         "Capex_a_SC_ET_USD": [Capex_a_SC_ET_USD],
-        "Capex_a_SC_FP_USD":[Capex_a_SC_FP_USD],
+        "Capex_a_SC_FP_USD": [Capex_a_SC_FP_USD],
         "Opex_fixed_SC": [Opex_fixed_SC],
         "Capex_a_PVT": [Capex_a_PVT_USD],
         "Opex_fixed_PVT": [Opex_fixed_PVT_USD],
@@ -603,7 +634,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_Disconnected": [Capex_Disconnected],
         "Opex_Disconnected": [Opex_Disconnected],
         "Capex_a_Lake": [Capex_a_Lake_USD],
-        "Opex_fixed_Lake":[Opex_fixed_Lake_USD],
+        "Opex_fixed_Lake": [Opex_fixed_Lake_USD],
         "Capex_a_Sewage": [Capex_a_Sewage_USD],
         "Opex_fixed_Sewage": [Opex_fixed_Sewage_USD],
         "SCHEXCost_Capex": [SCHEXCost_Capex],

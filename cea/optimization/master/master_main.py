@@ -125,8 +125,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
 
         # Evaluate the initial population
         print "Evaluate initial population"
-        DHN_network_list = DHN_network_list[
-                           1:]  # done this to remove the first individual in the ntwList as it is an initial value
+        DHN_network_list = DHN_network_list[1:]
+        # done this to remove the first individual in the ntwList as it is an initial value
         DCN_network_list = DCN_network_list[1:]
 
         # Evaluate the individuals with an invalid fitness
@@ -292,12 +292,23 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(nsga_selected_population=pop, generation=g, DHN_list_All=DHN_network_list,
+                cp = dict(nsga_selected_population=pop,
+                          generation=g,
+                          DHN_list_All=DHN_network_list,
                           DCN_list_All=DCN_network_list,
-                          DHN_list_selected=DHN_network_list_selected, DCN_list_selected=DCN_network_list_selected,
-                          tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
-                          halloffame=halloffame, halloffame_fitness=halloffame_fitness,
-                          euclidean_distance=euclidean_distance, spread=spread)
+                          DHN_list_selected=DHN_network_list_selected,
+                          DCN_list_selected=DCN_network_list_selected,
+                          tested_population=invalid_ind,
+                          tested_population_fitness=fitnesses,
+                          epsIndicator=epsInd,
+                          halloffame=halloffame,
+                          halloffame_fitness=halloffame_fitness,
+                          euclidean_distance=euclidean_distance,
+                          spread=spread,
+                          detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
+                          district_heating_network=config.optimization.district_heating_network,
+                          district_cooling_network=config.optimization.district_cooling_network
+                          )
                 json.dump(cp, fp)
 
     if g == config.optimization.ngen:
@@ -314,10 +325,20 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
-        cp = dict(nsga_selected_population=pop, generation=g, DHN_List=DHN_network_list, DCN_list=DCN_network_list,
-                  tested_population=invalid_ind, tested_population_fitness=fitnesses, epsIndicator=epsInd,
-                  halloffame=halloffame, halloffame_fitness=halloffame_fitness,
-                  euclidean_distance=euclidean_distance, spread=spread)
+        cp = dict(nsga_selected_population=pop,
+                  generation=g,
+                  DHN_List_All=DHN_network_list,
+                  DCN_list_All=DCN_network_list,
+                  tested_population=invalid_ind,
+                  tested_population_fitness=fitnesses,
+                  epsIndicator=epsInd,
+                  halloffame=halloffame,
+                  halloffame_fitness=halloffame_fitness,
+                  euclidean_distance=euclidean_distance,
+                  spread=spread,
+                  detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
+                  district_heating_network=config.optimization.district_heating_network,
+                  district_cooling_network=config.optimization.district_cooling_network)
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
