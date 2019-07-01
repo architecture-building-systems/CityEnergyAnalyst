@@ -38,6 +38,7 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
         graph = []
         duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         for field in self.analysis_fields:
             name = NAMING[field]
             y = self.data.sort_values(by=field, ascending=False)[field].values
@@ -48,6 +49,7 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
 
     def calc_table(self):
         # calculate variables for the analysis
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         load_peak = self.data[self.analysis_fields].max().round(2).tolist()
         load_total = (self.data[self.analysis_fields].sum() / 1000).round(2).tolist()
 

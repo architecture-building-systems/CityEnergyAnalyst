@@ -24,7 +24,6 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
 
     def calc_graph(self):
         analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-
         if len(self.buildings) == 1:
             assert len(self.data) == 1, 'Expected DataFrame with only one row'
             building_data = self.data.iloc[0]
@@ -38,17 +37,17 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
                 traces.append(trace)
             return traces
         else:
-            # district version of this plot
             traces = []
-            self.data['total'] = self.data[analysis_fields].sum(axis=1)
+            dataframe = self.data
             for field in analysis_fields:
-                self.data[field] = self.data[field] * 1000 / self.data["GFA_m2"]  # in kWh/m2y
-                data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
-            x = data["Name"].tolist()
+                dataframe[field] = dataframe[field] * 1000 / dataframe["GFA_m2"]  # in kWh/m2y
+            dataframe['total'] = dataframe[analysis_fields].sum(axis=1)
+            dataframe.sort_values(by='total', ascending=False, inplace=True)
+            dataframe.reset_index(inplace=True, drop=True)
             for field in analysis_fields:
-                y = data[field]
+                y = dataframe[field]
                 name = NAMING[field]
-                trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
             return traces
 

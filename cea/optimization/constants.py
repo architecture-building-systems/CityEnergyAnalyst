@@ -12,6 +12,45 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# Length of entries of an individual and the name of every entry
+# this is the firts part of the individual and only considers technologies
+# in the optimization algorithm we add more entries to specify network connections to buildings.
+NAMES_TECHNOLOGY_OF_INDIVIDUAL = ['CHP/Furnace',
+                                  'CHP/Furnace Share',
+                                  'Base Boiler',
+                                  'Base Boiler Share',
+                                  'Peak Boiler',
+                                  'Peak Boiler Share',
+                                  'Heating Lake',
+                                  'Heating Lake Share',
+                                  'Heating Sewage',
+                                  'Heating Sewage Share',
+                                  'GHP',
+                                  'GHP Share',
+                                  'Data Centre',
+                                  'Compressed Air',
+                                  'PV',
+                                  'PV Area Share',
+                                  'PVT',
+                                  'PVT Area Share',
+                                  'SC_ET',
+                                  'SC_ET Area Share',
+                                  'SC_FP',
+                                  'SC_FP Area Share',
+                                  'DHN Temperature',
+                                  'DHN unit configuration',
+                                  'Lake Cooling',
+                                  'Lake Cooling Share',
+                                  'VCC Cooling',
+                                  'VCC Cooling Share',
+                                  'Absorption Chiller',
+                                  'Absorption Chiller Share',
+                                  'Storage',
+                                  'Storage Share',
+                                  'DCN Temperature',
+                                  'DCN unit configuration']
+NUMBER_TECHNOLOGY_INDIVIDUAL = len(NAMES_TECHNOLOGY_OF_INDIVIDUAL)
+
 # Losses and margins
 DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
 DH_NETWORK_LOSS = 0.12  # Heating ntw losses

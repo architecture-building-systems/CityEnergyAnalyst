@@ -28,7 +28,8 @@ def route_start(script):
     print('/start/%s' % script)
     for parameter in parameters_for_script(script, current_app.cea_config):
         print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        kwargs[parameter.name] = parameter.decode(request.form.get(parameter.name))
+        kwargs[parameter.py_name] = parameter.decode(request.form.get(parameter.name))
+    print('/tools/start: kwargs=%s' % kwargs)
     current_app.workers[script] = worker.main(script, **kwargs)
     return jsonify(script)
 
@@ -199,7 +200,18 @@ def route_tool(script_name):
     locator = cea.inputlocator.InputLocator(config.scenario)
     script = cea.scripts.by_name(script_name)
     weather_dict = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
-    return render_template('tool.html', script=script, parameters=parameters_for_script(script_name, config),
+
+    parameters = []
+    categories = {}
+    for _, parameter in config.matching_parameters(script.parameters):
+        if parameter.category:
+            if parameter.category not in categories:
+                categories[parameter.category] = []
+            categories[parameter.category].append(parameter)
+        else:
+            parameters.append(parameter)
+
+    return render_template('tool.html', script=script, parameters=parameters, categories=categories,
                            weather_dict=weather_dict)
 
 
