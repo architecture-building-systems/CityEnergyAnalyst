@@ -146,9 +146,8 @@ Optimization:
   description: Run optimization for the given scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
-  parameters: ['general:scenario', 'general:weather', 'general:district-heating-network',
-               'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
-               'optimization', 'decentralized', 'general:detailed-electricity-pricing', 'general:multiprocessing']
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing'
+               'optimization', 'decentralized']
 
 - name: decentralized
   label: Decentralized supply system
@@ -165,7 +164,6 @@ Optimization:
   interfaces: [cli, arcgis, dashboard]
   module: cea.supply.supply_system_simulation
   parameters: ['general:scenario', 'general:weather', 'supply-system-simulation',
-               'general:district-heating-network', 'general:district-cooling-network',
                'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
 - name: mpc-building

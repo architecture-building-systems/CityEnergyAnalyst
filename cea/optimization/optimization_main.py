@@ -63,7 +63,7 @@ def moo_optimization(locator, weather_file, gv, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
-    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
@@ -152,7 +152,7 @@ def check_input_files(config, locator):
         raise ValueError("Missing total demand of the scenario. Consider running demand script first.")
     if not os.path.exists(locator.PV_totals()):
         raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first.")
-    if config.district_heating_network:
+    if config.optimization.district_heating_network:
         if not os.path.exists(locator.PVT_totals()):
             raise ValueError(
                 "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
