@@ -1,3 +1,8 @@
+2019-07-01 - 2.17a1 - #2121 Bugfix: Maintain original coordinate system when saving new input files
+2019-07-01 - 2.17a1 - #2093 1978 create an uninstaller for the cea sure! @daren-thomas
+2019-07-01 - 2.17a0 - #2119 creating warning
+2019-07-01 - 2.17a0 - #2118 Bugfix: Update scenario image if zone file is modified
+2019-07-01 - 2.17a0 - #2116 FEATURE: Improvements to Dashboard input editor @reyery great job. It works also with files without the reference tab
 2019-06-28 - 2.17a0 - #2109 2096 error on creating energy use intensity plot @daren-thomas thanks for this!
 2019-06-28 - 2.17a0 - #2106 I1834 description variables
 2019-06-28 - 2.17a0 - #2108 Bugfix: REFERENCE column is not added when user changes parameters in zone and district helper
