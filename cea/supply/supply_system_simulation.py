@@ -176,7 +176,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     PEN_MJoil += PEN_storage_MJoil
 
     # slave optimization of heating networks
-    if config.district_heating_network:
+    if district_heating_network:
         if DHN_barcode.count("1") > 0:
             (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_uncovered_design_W, Q_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars, gv,
@@ -211,13 +211,13 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # District Electricity Calculations
     costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil = electricity_main.electricity_calculations_of_all_buildings(
-        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, config)
+        DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca, district_heating_network, district_cooling_network)
 
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
     PEN_MJoil += PEN_electricity_MJoil
 
-    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, config)
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_heating_network, district_cooling_network)
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
@@ -290,14 +290,15 @@ def calc_individual_number(locator):
     return individual_number
 
 
-def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, buildList):
+def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, buildList,
+                                      district_heating_network, district_cooling_network):
     CostDiscBuild_BEST = 0
     CO2DiscBuild_BEST = 0
     PrimDiscBuild_BEST = 0
 
-    if config.district_heating_network:
+    if district_heating_network:
         raise ValueError('This function only works for cooling case at the moment.')
-    if config.district_cooling_network:
+    if district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
@@ -475,7 +476,7 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if config.district_heating_network:
+        if config.supply_system_simulation.district_heating_network:
             if not os.path.exists(locator.PVT_totals()):
                 raise ValueError(
                     "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")

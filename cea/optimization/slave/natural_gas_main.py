@@ -25,7 +25,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def natural_gas_imports(master_to_slave_vars, locator, config):
+def natural_gas_imports(master_to_slave_vars, locator, district_heating_network, district_cooling_network):
 
     NG_total_heating_W = np.zeros(HOURS_IN_YEAR)
     NG_total_cooling_W = np.zeros(HOURS_IN_YEAR)
@@ -33,7 +33,7 @@ def natural_gas_imports(master_to_slave_vars, locator, config):
     storage_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
     date = storage_data.DATE.values
 
-    if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
+    if district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
         data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
         NG_used_HPSew_W = data_heating["NG_used_HPSew_W"]
         NG_used_HPLake_W = data_heating["NG_used_HPLake_W"]
@@ -50,7 +50,7 @@ def natural_gas_imports(master_to_slave_vars, locator, config):
                                        NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
 
 
-    if config.district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
+    if district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
         data_cooling = pd.read_csv(
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
 
@@ -74,8 +74,10 @@ def main(config):
     generation = 2
     individual = 2
     print("Calculating imports of natural gas of individual" + str(individual) + " of generation " + str(generation))
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
-    natural_gas_imports(generation, individual, locator, config)
+    natural_gas_imports(generation, individual, locator, district_heating_network, district_cooling_network)
 
 
 if __name__ == '__main__':

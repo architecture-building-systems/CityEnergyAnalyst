@@ -58,6 +58,10 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
     :rtype: tuple
     """
 
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
+
     ############# Recover the cooling needs
     # Cooling demands in a neighborhood are divided into three categories currently. They are
     # 1. Space Cooling in buildings
@@ -115,7 +119,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, prices, config):
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
-    if config.district_heating_network:
+    if district_heating_network:
         try:
             dfSlave = pd.read_csv(
                 locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
