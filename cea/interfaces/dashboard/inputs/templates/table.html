@@ -121,7 +121,7 @@
 {% block javascripts %}
   {{ super() }}
 
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/store.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/store.js') }}?u={{ last_updated }}"></script>
   <script>
     var inputstore = new InputStore({{ store|tojson|safe }});
     console.log(inputstore);
@@ -129,11 +129,12 @@
 
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
   <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
 
   <script src="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.js') }}"></script>
 
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/inputs.js') }}"></script>
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/table.js') }}"></script>
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/map.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/inputs.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/table.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/map.js') }}?u={{ last_updated }}"></script>
 {% endblock javascripts %}
