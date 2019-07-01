@@ -34,14 +34,15 @@ class PlotBase(object):
 
     @classmethod
     def id(cls):
-        return cls.name.lower().replace(' ', '-')  # use for js/html etc.
+        name = re.sub('\s+\(.*\)', '', cls.name)  # remove parenthesis
+        return name.lower().replace(' ', '_').replace('/', '_')  # use for js/html etc.
 
     def __init__(self, project, parameters, cache):
         self.cache = cache  # a PlotCache implementation for reading cached data
         self.project = project  # full path to the project this plot belongs to
         self.category_path = None  # override this in the __init__.py subclasses for each category (see cea/plots/demand/__init__.py for an example)
-        self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
-        self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
+        # self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
+        # self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
         self.buildings = self.process_buildings_parameter()
 
@@ -104,12 +105,8 @@ class PlotBase(object):
             prefix = 'Selected_Buildings'
         else:
             prefix = 'District'
-        file_name = "%s_%s" % (prefix, self.sanitize_name(self.name))
+        file_name = "%s_%s" % (prefix, self.id())
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
-
-    def sanitize_name(self, name):
-        name = re.sub('\s+\(.*\)', '', name)
-        return name.lower().replace(' ', '_')
 
     def remove_unused_fields(self, data, fields):
         """
