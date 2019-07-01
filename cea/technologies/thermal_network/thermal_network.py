@@ -2429,7 +2429,8 @@ def solve_network_temperatures(thermal_network, t):
                         VF_flag = False
 
             else:
-                raise ('control strategy not specified: ', control)
+                raise ValueError(
+                    'control strategy not specified: {control}'.format(control=thermal_network.temperature_control))
             # calculate edge temperature for heat transfer coefficient within iteration
             t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
 
