@@ -21,72 +21,134 @@ The most common tool for documenting methods and functions within Python code is
 within the ``""" Three Quotation Marks """`` will be parsed by Sphinx when rendering the API documentation, with ``# Python comments``
 ignored.
 
-Module Documentation Standard Example::
+Sphinx Module Documentation Standard Example::
 
     """
-    Title of module without section denotation
+    Title of module without section denotation (e.g. i_like_pie.py)
+
+    Brief description of what the module does.
     """
 
-    def method(parameter1, parameter2):
+
+    def non_return_method(parameter1, parameter2):
         """
-        This method does this and that
-
-        The following file is created:
-            - output_file: .pdf Plot of some variables.
-
-        :param parameter1: a list of variables
-        :type list: List[]
-        :param parameter2: the filename (pdf) to save the results as.
-        :type output_file: str
-
-        :return: if anything is returned
-
+        This method does this and that. More information about why this method
+        exists.
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
+        :param parameter1: description of parameter1
+        :type parameter1: type of parameter1
+        :param parameter2: description of parameter2
+        :type parameter2: type of parameter2
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
         """
 
+
+    def single_return_method(parameter1, parameter2):
+        """
+        This method does this and that. More information about why this method
+        exists.
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
+        :param parameter1: description of parameter1
+        :type parameter1: type of parameter1
+        :param parameter2: description of parameter2
+        :type parameter2: type of parameter2
+        :returns:
+            - **return1**: description of returned
+        :rtype: return1_type
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
+        """
+
+    def multiple_return_method(parameter1, parameter2):
+        """
+        This method does this and that. More information about why this method
+        exists.
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
+        :param parameter1: description of parameter1
+        :type parameter1: type of parameter1
+        :param parameter2: description of parameter2
+        :type parameter2: type of parameter2
+        :returns:
+            - **return1** : description of return1
+            - **return2** : description of return2
+            - **return3** : description of return3
+        :rtype: return1_type, return2_type, return3_type
+                          <--------- THIS BLANK LINE IS IMPORTANT!!!
+        """
      # these comments are ignored by Sphinx
 
 
 You can check if your documentation will render as intended using the `Online Sphinx Editor <https://livesphinx.herokuapp.com/>`_.
 Bear in mind, some documentation strings will still malfunction but it's a great starting point.
 
-Sphinx Tools
+cea-doc tool
 ------------
-Once you are ready to generate the API for your new or altered module, a couple of tools exist to assist you. You can run these
-from anaconda prompt within the docs repository: ``CityEnergyAnalyst\docs``. Please ensure you have activated the cea virtual
-environment by calling ``activate cea``.
 
-You can run the batch files by typing the following titles:
+Assuming you are a developer and have installed the relevant version of CEA, a couple of tools exist to assist you in documenting your code.
+Please ensure you have activated the cea virtual environment by calling ``activate cea``, have installed Sphinx and created the relevant python
+entry points by calling ``pip install -e .``
 
-make-warnings
-^^^^^^^^^^^^^
-This batch file runs sphinx-build_ , stopping the build when the
-first error is encountered. This tool is great for de-bugging documentation builds, allowing you to check and fix errors one by one.
+You can run the documentation processes by typing the following titles:
 
-.. _sphinx-build: http://www.sphinx-doc.org/en/master/man/sphinx-build.html
-
-make-api-doc
+cea-doc html
 ^^^^^^^^^^^^
-This batch file will delete all the existing auto-generated module documentation, i.e. ``cea*.rst`` files, within the
-``CityEnergyAnalyst\docs\modules`` repository. Then, it will run the `sphinx-apidoc <http://www.sphinx-doc.org/en/master/man/sphinx-apidoc.html>`_
-function, rebuilding the documentation for all modules in the ``CityEnergyAnalyst\cea`` repository.
 
-Note, the following paths/modules are currently excluded::
+This tool performs the following:
+    - Cross references the api documentation, running a `sphinx-apidoc <http://www.sphinx-doc.org/en/master/man/sphinx-apidoc.html>`_
+        for all modules in the ``CityEnergyAnalyst\cea`` repository and deleting outdated ones.
+    - Runs a sphinx-build_ from the docs directory via the docs make.bat (see sphinx-tools: make html)
+    - Opens the documentation relevant html files of the corresponding change files from a Gitdiff
+
+Note, the following paths/modules are currently excluded by Sphinx::
 
     ../cea/databases*^
     ../cea/optimization/master/generation*^
 
-make clean
-^^^^^^^^^^
-This extension of the make.bat removes the contents of the ``CityEnergyAnalyst\docs\build`` repository,
-containing all the html files and `TOC trees <http://www.sphinx-doc.org/en/1.5.1/markup/toctree.html>`_ generated
-from previous sphinx-build_. This tool should be run in conjunction with
-make-api-doc when major changes to documentation occur, such as the addition of new modules.
+.. _sphinx-build: http://www.sphinx-doc.org/en/master/man/sphinx-build.html
+
+cea-doc naming-merge
+^^^^^^^^^^^^^^^^^^^^
+
+This tool merges the ``schema.yml`` with the ``plots\naming.csv``, checking for undocumented variables and
+raising potentially outdated ones. The ``naming.csv`` should contain all relevant documentation for written
+data which can be accessed by the dashboard.
+
+NOTE: PLEASE AVOID USING COMMAS IN ANY DESCRIPTIONS, TYPES etc... (as sphinx's csv-table method will throw an error)
+
+cea-doc glossary
+^^^^^^^^^^^^^^^^
+
+This tool automatically updates the glossary based on the information found within the ``schema.yml``, generating
+two .rst files:
+
+- **input_methods.rst**
+    file containing all inputlocator methods associated with files which are NOT generated by CEA scripts.
+- **output_methods.rst**
+    file containing all inputlocator methods asscoaited with files which ARE generated by CEA scripts.
+
+cea-doc graphviz
+^^^^^^^^^^^^^^^^
+
+This tool automatically creates the data flow digraphs for each script from the ``schema.yml``, stored in
+``docs\graphviz\``. Then, it renders the ``script-data-flow.rst`` containing all the graphviz diagrams for
+documentation purposes.
+
+sphinx tools
+------------
+
+Along with the ``cea-doc`` tool, some handy sphinx commands exist within the ``docs\make.bat`` and ``docs\make-warnings.bat``.
+These can be run from the ``docs`` repository by typing in the following:
 
 make html
 ^^^^^^^^^
 This extension of the make batch runs sphinx-build_ to generate html files in the ``CityEnergyAnalyst\docs\_build``
 from each of the rst files within the ``CityEnergyAnalyst\docs`` and ``CityEnergyAnalyst\docs\modules`` repositories.
-This tool will generate html files from any new rst files created since the last build,
-skipping pre-existing rst and corresponding html files.
+This tool will generate html files from any new rst files created since the last build, skipping pre-existing rst and corresponding html files.\
 
+make clean
+^^^^^^^^^^
+This will remove all html files from the previous sphinx-build_.
 
+make-warnings
+^^^^^^^^^^^^^
+This batch file runs sphinx-build_ , stopping the build when the first error is encountered.
+This tool is great for de-bugging documentation builds, allowing you to check and fix errors one by one.

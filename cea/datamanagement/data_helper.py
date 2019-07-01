@@ -73,8 +73,8 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     for name in columns:
         if name in COLUMNS_ZONE_OCCUPANCY:
             list_uses.append(name)  # append valid uses
-        elif name in {'Name'}:
-            pass  # do nothing with 'Name'
+        elif name in {'Name', 'REFERENCE'}:
+            pass  # do nothing with 'Name' and 'Reference'
         else:
             raise InvalidOccupancyNameException(
                 'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'

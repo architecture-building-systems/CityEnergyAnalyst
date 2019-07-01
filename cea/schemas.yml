@@ -3244,6 +3244,39 @@ get_network_layout_nodes_shapefile:
             sample_data: ((x1 y1, x2 y2, ...))
             types_found: [Point]
     used_by: [thermal-network]
+get_thermal_network_layout_pressure_drop_kw_file:
+    created_by: [thermal-network]
+    file_path: C:\reference-case-cooling\baseline\outputs\data\thermal-network\DC__P_DeltaP_kW.csv
+    file_type: csv
+    schema:
+        pressure_loss_supply_kW:
+            sample_value: NONE
+            types_found: [float]
+        pressure_loss_return_kW:
+            sample_value: NODE25
+            types_found: [float]
+        pressure_loss_substations_kW:
+            sample_value: 223.0
+            types_found: [float]
+        pressure_loss_total_kW:
+            sample_value: 46.0
+            types_found: [float]
+    used_by: []
+get_thermal_network_qloss_system_file:
+    created_by: [thermal-network]
+    file_path: C:\reference-case-cooling\baseline\outputs\data\thermal-network\DC__P_DeltaP_kW.csv
+    file_type: csv
+    schema:
+        PIPE0:
+            sample_value: 0.0
+            types_found: [float]
+        PIPE1:
+            sample_value: 0.0
+            types_found: [float]
+        PIPEN:
+            sample_value: 0.0
+            types_found: [float]
+    used_by: []
 get_network_node_types_csv_file:
     created_by: [thermal-network]
     file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Nodes.csv
@@ -3420,6 +3453,7 @@ get_optimization_network_layout_return_temperature_file:
         NODE0:
             sample_value: 309.611
             types_found: [float]
+    used_by: []
 get_optimization_network_layout_supply_temperature_file:
     created_by: [thermal-network]
     file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__T_Supply_K.csv
@@ -3428,6 +3462,7 @@ get_optimization_network_layout_supply_temperature_file:
         NODE0:
             sample_value: 341.471
             types_found: [float]
+    used_by: []
 get_optimization_network_node_list_file:
     created_by: [thermal-network]
     file_path: c:\reference-case-open\WTP_CBD_h\outputs\data\optimization\network\layout\DH__Nodes.csv
@@ -4619,7 +4654,10 @@ get_terrain:
     description: scenario/inputs/topography/terrain.tif
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/topography\terrain.tif
     file_type: tif
-    schema: {}
+    schema:
+        Mock_variable:
+            sample_data: pixels
+            types_found: [raster]
     used_by: [radiation-daysim]
 get_total_demand:
     created_by: [demand]

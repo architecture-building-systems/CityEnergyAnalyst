@@ -28,17 +28,13 @@ def initial_network(config, locator):
     """
     Initiate data of main problem (not all the dict_length is included in this case)
 
-    :param None
-    :type Nonetype
+    :returns:
+        - **points_on_line** : information about every node in study case
+        - **tranches** : tranches
+        - **dict_length** : dictionary containing lengths
+        - **dict_path** : dictionary containing paths
+    :rtype: geodf, geodf, dict, dict
 
-    :returns: points_on_line: information about every node in study case
-    :rtype: GeoDataFrame
-    :returns: tranches
-    :rtype: GeoDataFrame
-    :returns: dict_length
-    :rtype: dictionary
-    :returns: dict_path: list of edges between two nodes
-    :rtype: dictionary
     """
 
     # localfiles
@@ -60,12 +56,13 @@ def annuity_factor(n, i):
     Calculates the annuity factor derived by formula (1+i)**n * i / ((1+i)**n - 1)
 
     :param n: depreciation period (40 = 40 years)
-    :type int
+    :type n: int
     :param i: interest rate (0.06 = 6%)
-    :type float
-    
-    :returns: a: annuity factor
+    :type i: float
+    :returns:
+        - **a**: annuity factor
     :rtype: float
+
     """
 
     a = (1 + i) ** n * i / ((1 + i) ** n - 1)
@@ -78,11 +75,11 @@ def get_peak_electric_demand(points_on_line):
     Initialize Power Demand
 
     :param points_on_line: information about every node in study case
-    :type GeoDataFrame
+    :type points_on_line: GeoDataFrame
+    :returns:
+        - **dict_peak_el**: Value is the ELECTRIC peak demand depending on thermally connected or disconnected.
+    :rtype: dict[node index][thermally connected bool]
 
-    :returns: dict_peak_el: first  key is node index. Second key is thermally connected or disconnected.
-                            Value is the ELECTRIC peak demand depending on thermally connected or discinnected
-    :rtype: dictionary[node index][thermally connected?] = ELECTRIC peak demand
     """
 
     dict_peak_el = {}
@@ -118,14 +115,15 @@ def cost_rule(m, cost_type):
     Cost rules of objective function. Calculation is depending on type cost
 
     :param m: complete pyomo model
-    :type pyomo model
-    :param cost_type:   'inv_electric' investment costs for electric network
-                        'om_electric' operation and maintenance cost for electric network
-                        'losses' cost for power losses in lines
-    :type string
+    :type m: pyomo model
+    :param cost_type: - 'inv_electric' investment costs for electric network
+        - 'om_electric' operation and maintenance cost for electric network
+        - 'losses' cost for power losses in lines
+    :type cost_type: string
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     if cost_type == 'inv_electric':
@@ -177,12 +175,13 @@ def power_balance_rule(m, i):
     Power balance of network. p_node_in of node equals to p_node_out.
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: node index of set_nodes
-    :type int
+    :type i: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     p_node_in = 0.0
@@ -212,16 +211,17 @@ def power_over_line_rule(m, i, j, t):
     Calculation of power over line with linear DC POWER FLOW MODEL.
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
     :param t: type index of set_linetypes
-    :type int
+    :type t: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     power_over_line = ((
@@ -237,12 +237,13 @@ def slack_voltage_angle_rule(m, i):
     Set the voltage angle of Substation node to zero
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: node index of set_nodes_sub
-    :type int
+    :type i: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     return m.var_theta[i] == 0.0  # Voltage angle of slack has to be zero
@@ -253,16 +254,17 @@ def slack_pos_rule(m, i, j, t):
     If decision variable m.var_x[i, j, t] is set to FALSE, the positive slack varibale var_slack[i, j, t] is nonzero
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
     :param t: type index of set_linetypes
-    :type int
+    :type t: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     return (m.var_slack[i, j, t]) <= (1 - m.var_x[i, j, t]) * 1000000
@@ -273,16 +275,17 @@ def slack_neg_rule(m, i, j, t):
     If decision variable m.var_x[i, j, t] is set to FALSE, the negative slack varibale var_slack[i, j, t] is nonzero
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
     :param t: type index of set_linetypes
-    :type int
+    :type t: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     return (m.var_slack[i, j, t]) >= (-1) * (1 - m.var_x[i, j, t]) * 1000000
@@ -294,16 +297,17 @@ def power_over_line_rule_pos_rule(m, i, j, t):
     limited by power_line_limit
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
     :param t: type index of set_linetypes
-    :type int
+    :type t: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     power_line_limit = m.var_x[i, j, t] \
@@ -318,16 +322,17 @@ def power_over_line_rule_neg_rule(m, i, j, t):
     limited by power_line_limit
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
     :param t: type index of set_linetypes
-    :type int
+    :type t: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     power_line_limit = (-1) * m.var_x[i, j, t] \
@@ -342,10 +347,10 @@ def radial_rule(m):
     limited to the "number of nodes" - "number of substations"
 
     :param m: complete pyomo model
-    :type pyomo model
-
-    :returns: pyomo equality function
-    :rtype: pyomo rule
+    :type m: pyomo model
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
     """
 
     return summation(m.var_x) == (len(m.set_nodes) - len(m.set_nodes_sub))
@@ -356,14 +361,15 @@ def one_linetype_rule(m, i, j):
     To decrease computational time, the number of line types is limited to a maximum one between two nodes
 
     :param m: complete pyomo model
-    :type pyomo model
+    :type m: pyomo model
     :param i: startnode index of set_edge
-    :type int
+    :type i: int
     :param j: endnode index of set_edge
-    :type int
+    :type j: int
+    :returns:
+        - **pyomo equality function**: pyomo rule
+    :rtype: function
 
-    :returns: pyomo equality function
-    :rtype: pyomo rule
     """
 
     number_of_linetypes = 0
@@ -377,10 +383,11 @@ def main(dict_connected, config, locator):
     Main function of electric grid optimization tool. Generates pyomo model of grid problem
 
     :param dict_connected: key is node index. Value is binary and indicates if building is connected to thermal network
-    :type dictionary
-
-    :returns: m: complete pyomo model
+    :type dict_connected: dictionary
+    :returns:
+        - **m**: complete pyomo model
     :rtype: pyomo model
+
     """
 
     # ===========================================

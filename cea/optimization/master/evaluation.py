@@ -488,43 +488,51 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     return master_to_slave_vars
 
 
-def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config, building_names):
+def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config, building_names):
     """
-    This function calls the distribution routine if necessary
+    This function adds new DH/DC networks to lists and run network simulations for new networks.
     
     :param individual: network configuration considered
-    :param ntwList: list of DHN configurations previously encounterd in the master
+    :param DHN_barcode_list: list of DHN configurations previously encountered in the master
+    :param DCN_barcode_list: list of DCN configurations previously encountered in the master
     :param locator: path to the folder
     :type individual: list
-    :type ntwList: list
+    :type DHN_barcode_list: list
+    :type DCN_barcode_list: list
     :type locator: string
     :return: None
+    files changes: DHN_network_list, DCN_network_list
     :rtype: Nonetype
     """
+
+    # decode an individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual, building_names)
 
-    if not (DHN_barcode in DHN_network_list) and DHN_barcode.count("1") > 0:
-        DHN_network_list.append(DHN_barcode)
+    ## add network barcodes to lists and run network simulation
+    if not (DHN_barcode in DHN_barcode_list) and DHN_barcode.count("1") > 0:
+        DHN_barcode_list.append(DHN_barcode)
 
         total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
         substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
-
+        # Run thermal network simulation
         summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
 
-    if not (DCN_barcode in DCN_network_list) and DCN_barcode.count("1") > 0:
-        DCN_network_list.append(DCN_barcode)
+    if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
+        DCN_barcode_list.append(DCN_barcode)
 
         total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
         substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
-
+        # Run thermal network simulation
         summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+
+    return np.nan
 
 def epsIndicator(frontOld, frontNew):
     """
