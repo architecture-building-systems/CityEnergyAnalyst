@@ -4,123 +4,113 @@
 
 {% block stylesheets %}
   {{ super() }}
-  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-table.css') }}">
-  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-editable.css') }}">
-  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/deckgl.css') }}">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
 
-    <!-- modal dialog for editing table row data -->
-    <div class="modal fade" id="cea-row-editor" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
-            </button>
-            <h4 class="modal-title" id="myModalLabel">{{ table_name }} - <span id="cea-row-name"></span></h4>
+      <!-- modal dialog for saving popup -->
+      <div class="modal fade" id="saving-popup" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-body" id="saving-text"></div>
           </div>
-          <div class="modal-body">
-            <form id="cea-row-editor-form" class="form-horizontal form-label-left" method="post"
-                    action="save">
-              {% for column in table_columns %}
-              <div class="form-group">
-                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-{{ column }}">{{ column }}</label>
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <input type="text" id="cea-input-{{ column }}" name="{{ column }}" value="..." required="required"
-                           {% if column == pk %}readonly{% endif %}
-                           class="form-control col-md-7 col-xs-12">
-                  </div>
-              </div>
-              {% endfor %}
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
-                    onclick="cea_save_row_to_table()">OK</button>
-          </div>
-
         </div>
       </div>
-    </div>
 
-      <div class="">
-        <div class="page-title">
-          <div class="title_left">
-            <h3>Inputs</h3>
-          </div>
+      <!-- modal dialog for editing table row data -->
+      <div class="modal fade" id="cea-column-editor" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
 
-          <div class="title_right">
-            <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+              </button>
+              <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body">
+              <div id="selected-buildings"></div>
+              <br>
+              <h4>Properties</h4>
+              <form id="cea-column-editor-form" class="form-horizontal form-label-left">
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-default cea-modal-ok" form="cea-column-editor-form">OK</button>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="clearfix"></div>
-
+      <div class="">
         <div class="row">
           <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
-              <div class="x_title">
-                <h2>{{ table_name }}</h2>
-                <div class="clearfix"></div>
-              </div>
               <div class="x_content">
-              <div id='layers-group'>
-                <span id="zone-cb" hidden>
-                <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='zone-toggle'>Zone</label>
-                </span>
-                <span id="district-cb" hidden>
-                <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='district-toggle'>District</label>
-                </span>
-                <span id="streets-cb" hidden>
-                <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='streets-toggle'>Streets</label>
-                </span>
-                <span id="dh_networks-cb" hidden>
-                <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='dh_networks-toggle'>DH Network</label>
-                </span>
-                <span id="dc_networks-cb" hidden>
-                <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
-                       onchange='toggleLayer(this);'>
-                  <label for='dc_networks-toggle'>DC Network</label>
-                </span>
+                <div>
+                  <div id='layers-group'>
+                  <span id="zone-cb" hidden>
+                  <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='zone-toggle'>Zone</label>
+                  </span>
+                    <span id="district-cb" hidden>
+                  <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='district-toggle'>District</label>
+                  </span>
+                    <span id="streets-cb" hidden>
+                  <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='streets-toggle'>Streets</label>
+                  </span>
+                    <span id="dh_networks-cb" hidden>
+                  <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='dh_networks-toggle'>DH Network</label>
+                  </span>
+                    <span id="dc_networks-cb" hidden>
+                  <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
+                         onchange='toggleLayer(this);'>
+                    <label for='dc_networks-toggle'>DC Network</label>
+                  </span>
+                  </div>
+                  <div id="map-tooltip"></div>
+                  <div id="mapid" style="height: 500px;" oncontextmenu="return false;"></div>
+                </div>
               </div>
-              <div id="tooltip"></div>
-              <div id="mapid" class="x_content" style="height: 500px;" oncontextmenu="return false;"></div>
+              <div class="x_content" id="cea-inputs" style="display: none">
+                  <div>
+                    <ul class="nav nav-pills">
+                      {% for tab in tabs %}
+                      {% if loop.index0 == 0 %}
+                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
+                      {% else %}
+                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
+                      {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                <div class="panel panel-default">
+                  <div class="panel-heading clearfix">
+                    <div class="pull-right" id="table-buttons">
+                      <button class="btn btn-default" id="select-all-button">Select All</button>
+                      <button class="btn btn-default" id="filter-button">Filter on Selection</button>
+                      <button class="btn btn-default" id="edit-button">Edit Selection</button>
+                      <button class="btn btn-default" id="clear-button">Clear Selection</button>
+                      <button class="btn btn-danger" id="delete-button">Delete Selection</button>
+                    </div>
+                  </div>
+                  <div id="property-table"></div>
+                </div>
+                <div>
+                  <button class="btn btn-default" id="save-button">Save</button>
+                  <button class="btn btn-default" id="discard-button">Discard Changes</button>
+                </div>
               </div>
-              <div class="x_content">
-                <table id="cea-table"
-                       data-toggle="table"
-                       data-pagination="true"
-                       data-show-export="true"
-                       data-unique-id="{{ pk }}"
-                       data-url="{{ url_for('inputs_blueprint.route_get_json', db=table_name) }}"
-                       data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
-                  <thead>
-                  {% for column in table_columns %}
-                    <th data-field="{{ column }}" data-editable="{{ (column != pk)|lower}}">{{ column }}</th>
-                  {% endfor %}
-                  </thead>
-                </table>
-              </div>
-              <div class="clearfix"></div>
-              <div class="ln_solid"></div>
-              <form id="cea-save-changes-form" class="form-horizontal form-label-left" method="post">
-                <a id="cea-discard-changes" href="{{ request.path }}" class="btn btn-primary">Discard</a>
-                <input type="hidden" name="cea-table-data" id="cea-table-data"/>
-                <input id="cea-save-changes" type="submit" class="btn btn-success" value="Save"/>
-              </form>
             </div>
           </div>
         </div>
@@ -130,13 +120,21 @@
 
 {% block javascripts %}
   {{ super() }}
+
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/store.js') }}?u={{ last_updated }}"></script>
+  <script>
+    var inputstore = new InputStore({{ store|tojson|safe }});
+    console.log(inputstore);
+  </script>
+
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-  <!-- optional if mapbox base map is needed -->
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
-  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
-  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/inputs.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/map.js', version='0.1') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
+
+  <script src="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.js') }}"></script>
+
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/inputs.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/table.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/map.js') }}?u={{ last_updated }}"></script>
 {% endblock javascripts %}

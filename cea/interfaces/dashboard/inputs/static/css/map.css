@@ -1,7 +1,7 @@
-#tooltip:empty {
+#map-tooltip:empty {
   display: none;
 }
-#tooltip {
+#map-tooltip {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 11px;
   position: absolute;

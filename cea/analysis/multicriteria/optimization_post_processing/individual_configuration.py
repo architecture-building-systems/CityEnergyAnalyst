@@ -21,29 +21,54 @@ __status__ = "Production"
 
 
 def supply_system_configuration(generation, individual, locator, output_type_network):
-    district_supply_sys_columns = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
-                                   'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW', 'SC_FP_m2', 'SC_ET_m2',
-                                   'PV_m2', 'Storage_thermal_kW', 'CT_kW', 'Capex_Centralized', 'Opex_Centralized',
-                                   'Capex_Decentralized', 'Opex_Decentralized']
-    district_supply_sys = pd.DataFrame(columns=district_supply_sys_columns)
+
     # get supply system configuration of a particular individual
     all_individuals = pd.read_csv(locator.get_optimization_all_individuals())
     individual_system_configuration = all_individuals.loc[
         (all_individuals['generation'].isin([generation])) & all_individuals['individual'].isin([individual])]
 
     if output_type_network == "DH":
-        raise ValueError('This function is not ready for DH yet.')
+        #raise ValueError('This function is not ready for DH yet.')
         # TODO: update the results from optimization for DH (not available at the moment)
+        district_supply_sys_columns = ['Boiler_kW', 'CHP_thermal_kW', 'Furnace_kW', 'GHP_kW',
+                                       'HPLake_kW', 'HPSewage_kW',
+                                       'SC_FP_m2', 'SC_ET_m2', 'PV_m2',
+                                       'Storage_thermal_kW',
+                                       'Capex_Centralized', 'Opex_Centralized',
+                                       'Capex_Decentralized', 'Opex_Decentralized']
+        district_supply_sys = pd.DataFrame(columns=district_supply_sys_columns)
         network_name = 'DHN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
+        # get centralized system (technology sizes and costs)
+        cen_cooling_sys_detail = calc_cen_supply_sys_heating(generation, individual, district_supply_sys_columns,
+                                                             locator)
+        district_supply_sys = district_supply_sys.append(cen_cooling_sys_detail)
+
+        # get supply systems at decentralized buildings
+        for building in decentralized_buildings:
+            bui_cooling_sys_config = calc_building_supply_system(individual_system_configuration, network_name)
+            district_supply_sys = district_supply_sys.append(
+                calc_bui_sys_decentralized_heating(building, bui_cooling_sys_config, district_supply_sys_columns, locator))
+
+        # get supply systems at network connected buildings
+        for building in network_connected_buildings:
+            district_supply_sys = district_supply_sys.append(
+                calc_bui_sys_network_connected(building, district_supply_sys_columns, locator))
 
     if output_type_network == "DC":
+        district_supply_sys_columns = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                                       'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW', 'SC_FP_m2',
+                                       'SC_ET_m2', 'PV_m2', 'Storage_thermal_kW', 'CT_kW',
+                                       'Capex_Centralized', 'Opex_Centralized',
+                                       'Capex_Decentralized', 'Opex_Decentralized']
+        district_supply_sys = pd.DataFrame(columns=district_supply_sys_columns)
+
         network_name = 'DCN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
 
-        # get centralized system
+        # get centralized system (technology sizes and costs)
         cen_cooling_sys_detail = calc_cen_supply_sys_cooling(generation, individual, district_supply_sys_columns,
                                                              locator)
         district_supply_sys = district_supply_sys.append(cen_cooling_sys_detail)
@@ -52,7 +77,7 @@ def supply_system_configuration(generation, individual, locator, output_type_net
         for building in decentralized_buildings:
             bui_cooling_sys_config = calc_building_supply_system(individual_system_configuration, network_name)
             district_supply_sys = district_supply_sys.append(
-                calc_bui_sys_decentralized(building, bui_cooling_sys_config, district_supply_sys_columns, locator))
+                calc_bui_sys_decentralized_cooling(building, bui_cooling_sys_config, district_supply_sys_columns, locator))
 
         # get supply systems at network connected buildings
         for building in network_connected_buildings:
@@ -77,18 +102,22 @@ def calc_bui_sys_network_connected(building, district_supply_sys_columns, locato
     bui_sys_detail.loc[building, 'Opex_Decentralized'] = Opex_a_PV
     return bui_sys_detail
 
-
-def calc_cen_costs_cooling(generation, individual, locator):
-    cooling_costs = pd.read_csv(
-        locator.get_optimization_slave_investment_cost_detailed_cooling(individual, generation))
-    capex_a_columns = [item for item in cooling_costs.columns if 'Capex_a' in item]
-    cen_capex_a = cooling_costs[capex_a_columns].sum(axis=1).values[0]
-    opex_a_columns = [item for item in cooling_costs.columns if 'Opex' in item]
-    cen_opex_a = cooling_costs[opex_a_columns].sum(axis=1).values[0]
+def calc_annual_capex_opex(costs):
+    capex_a_columns = [item for item in costs.columns if 'Capex_a' in item]
+    cen_capex_a = costs[capex_a_columns].sum(axis=1).values[0]
+    opex_a_columns = [item for item in costs.columns if 'Opex' in item]
+    cen_opex_a = costs[opex_a_columns].sum(axis=1).values[0]
     return cen_capex_a, cen_opex_a
 
-
 def calc_cen_supply_sys_cooling(generation, individual, district_supply_sys_columns, locator):
+    """
+    Get installed capacities of all technologies in the centralized plant.
+    :param generation:
+    :param individual:
+    :param district_supply_sys_columns:
+    :param locator:
+    :return:
+    """
     cooling_activation_column = ['Q_from_ACH_W', 'Q_from_Lake_W', 'Q_from_VCC_W', 'Q_from_VCC_backup_W',
                                  'Q_from_storage_tank_W', 'Qc_CT_associated_with_all_chillers_W',
                                  'Qh_CCGT_associated_with_absorption_chillers_W']
@@ -110,11 +139,46 @@ def calc_cen_supply_sys_cooling(generation, individual, district_supply_sys_colu
                                                                    'Qc_CT_associated_with_all_chillers_W'] / 1000  # to kW
     cen_cooling_sys_detail.loc['Centralized Plant', 'CHP_CCGT_thermal_kW'] = cen_cooling_sys[
                                                                                  'Qh_CCGT_associated_with_absorption_chillers_W'] / 1000  # to kW
-    cen_capex_a, cen_opex_a = calc_cen_costs_cooling(generation, individual, locator)
+    # get costs
+    costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(individual, generation))
+    cen_capex_a, cen_opex_a = calc_annual_capex_opex(costs)
     cen_cooling_sys_detail.loc['Centralized Plant', 'Capex_Centralized'] = cen_capex_a
     cen_cooling_sys_detail.loc['Centralized Plant', 'Opex_Centralized'] = cen_opex_a
 
     return cen_cooling_sys_detail
+
+def calc_cen_supply_sys_heating(generation, individual, district_supply_sys_columns, locator):
+    """
+    Get installed capacities of all technologies in the centralized plant.
+    :param generation:
+    :param individual:
+    :param district_supply_sys_columns:
+    :param locator:
+    :return:
+    """
+    heating_activation_column = ['Q_AddBoiler_W', 'Q_BaseBoiler_W', 'Q_PeakBoiler_W', 'Q_CHP_W', 'Q_Furnace_W',
+                                 'Q_GHP_W', 'Q_HPLake_W', 'Q_HPSew_W']
+    heating_activation_pattern = pd.read_csv(
+        locator.get_optimization_slave_heating_activation_pattern(individual, generation))
+    cen_heating_sys = heating_activation_pattern[heating_activation_column].max()
+
+    cen_heating_sys_detail = pd.DataFrame(columns=district_supply_sys_columns, index=['Centralized Plant'])
+    cen_heating_sys_detail = cen_heating_sys_detail.fillna(0.0)
+
+    cen_heating_sys_detail.loc['Centralized Plant', 'Boiler_kW'] = cen_heating_sys.filter(like='Boiler').sum() / 1000  # to kW
+    cen_heating_sys_detail.loc['Centralized Plant', 'CHP_thermal_kW'] = cen_heating_sys['Q_CHP_W'] / 1000 # to kW
+    cen_heating_sys_detail.loc['Centralized Plant', 'Furnace_kW'] = cen_heating_sys['Q_Furnace_W'] / 1000  # to kW
+    cen_heating_sys_detail.loc['Centralized Plant', 'GHP_kW'] = cen_heating_sys['Q_GHP_W'] / 1000  # to kW
+    cen_heating_sys_detail.loc['Centralized Plant', 'HPLake_kW'] = cen_heating_sys['Q_HPLake_W'] / 1000  # to kW
+    cen_heating_sys_detail.loc['Centralized Plant', 'HPSewage_kW'] = cen_heating_sys['Q_HPSew_W'] / 1000  # to kW
+
+    # get costs
+    costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual, generation))
+    cen_capex_a, cen_opex_a = calc_annual_capex_opex(costs)
+    cen_heating_sys_detail.loc['Centralized Plant', 'Capex_Centralized'] = cen_capex_a
+    cen_heating_sys_detail.loc['Centralized Plant', 'Opex_Centralized'] = cen_opex_a
+
+    return cen_heating_sys_detail
 
 
 # def calc_cen_supply_sys_electricity(network_name, generation, individual, locator):
@@ -155,17 +219,24 @@ def calc_building_lists(individual_system_configuration, network_name):
 
 
 def calc_building_supply_system(individual_system_configuration, network_name):
-    all_configuration_dict = {1: "ARU_SCU", 2: "AHU_SCU", 3: "AHU_ARU", 4: "SCU", 5: "ARU", 6: "AHU", 7: "AHU_ARU_SCU"}
+
     unit_configuration_name = network_name + ' unit configuration'
+    if network_name == 'DCN':
+        all_configuration_dict = {1: "ARU_SCU", 2: "AHU_SCU", 3: "AHU_ARU", 4: "SCU", 5: "ARU", 6: "AHU", 7: "AHU_ARU_SCU"}
+    elif network_name == 'DHN':
+        all_configuration_dict = {1: "ARU_SCU", 2: "AHU_SCU", 3: "AHU_ARU", 4: "SCU", 5: "ARU", 6: "AHU",
+                                  7: "AHU_ARU_SCU"} # TODO: check whether they are the same as DCN
+
+    # get building system configuration of the current individual
     unit_configuration = int(individual_system_configuration[unit_configuration_name].values[0])
     if unit_configuration in all_configuration_dict:
         decentralized_config = all_configuration_dict[unit_configuration]
     else:
-        raise ValueError('DCN unit configuration does not exist.')
+        raise ValueError(network_name, ' unit configuration does not exist.')
     return decentralized_config
 
 
-def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_columns, locator):
+def calc_bui_sys_decentralized_cooling(building, bui_sys_config, district_supply_sys_columns, locator):
     # get nominal power and costs from disconnected calculation
     bui_results = pd.read_csv(
         locator.get_optimization_decentralized_folder_building_result_cooling(building, bui_sys_config))
@@ -259,6 +330,32 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
 
     else:
         raise ValueError('No cooling system is specified for the decentralized building ', building)
+
+    return bui_sys_detail
+
+
+def calc_bui_sys_decentralized_heating(building, bui_sys_config, district_supply_sys_columns, locator):
+    ## get best decentralized configuration
+    bui_results = pd.read_csv(
+        locator.get_optimization_decentralized_folder_building_result_heating(building))
+    bui_results_best = bui_results[bui_results['Best configuration'] > 0.0]
+
+    technology_columns = [item for item in bui_results_best.columns if 'Nominal Power' in item]
+    cost_columns = [item for item in bui_results_best.columns if 'Costs' in item]
+    technology_columns.extend(cost_columns)
+    bui_results_best = bui_results_best[technology_columns].reset_index(drop=True)
+
+    ## write building system configuration to output
+    bui_sys_detail = pd.DataFrame(columns=district_supply_sys_columns, index=[building])
+    bui_sys_detail = bui_sys_detail.fillna(0.0)
+    # get PV costs
+    Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, locator)
+    bui_sys_detail.loc[building, 'PV_m2'] = PV_installed_area_m2
+    # get decentralized capex/opex
+    Capex_a_total = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]'] + Capex_a_PV
+    Opex_a_total = bui_results_best.loc[0, 'Operation Costs [CHF]'] + Opex_a_PV
+    bui_sys_detail.loc[building, 'Capex_Decentralized'] = Capex_a_total
+    bui_sys_detail.loc[building, 'Opex_Decentralized'] = Opex_a_total
 
     return bui_sys_detail
 
