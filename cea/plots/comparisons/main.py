@@ -183,7 +183,7 @@ class Plots(object):
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
 
         self.data_processed_demand = self.preprocessing_demand_scenarios()
-        self.data_processed_supply = self.preprocessing_supply_scenarios()
+        # self.data_processed_supply = self.preprocessing_supply_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
         self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
@@ -244,10 +244,10 @@ class Plots(object):
                                                                                              self.individual_pointers,
                                                                                              scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            if generation == "none" or individual == "none":
+            if generation == None or individual == None:
                 scenario_name = os.path.basename(scenario)
                 data_raw = (pd.read_csv(locator.get_costs_operation_file())[
-                                self.analysis_fields_costs + self.analysis_fields_costs_m2 + ["GFA_m2"]]).sum(axis=0)
+                                self.analysis_fields_costs + self.analysis_fields_costs_m2 + ["NFA_m2"]]).sum(axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
                 data_raw_df["Opex_Centralized"] = data_raw_df['DC_cs_cost_yr'] + data_raw_df['DC_cdata_cost_yr'] + \
                                                   data_raw_df['DC_cre_cost_yr'] + data_raw_df['DH_ww_cost_yr'] + \
@@ -258,14 +258,14 @@ class Plots(object):
                                                     data_raw_df['WOOD_hs_cost_yr'] + data_raw_df['NG_ww_cost_yr'] + \
                                                     data_raw_df['COAL_ww_cost_yr'] + data_raw_df['OIL_ww_cost_yr'] + \
                                                     data_raw_df['WOOD_ww_cost_yr'] + data_raw_df['GRID_cost_yr']
-                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/data_raw_df["GFA_m2"]
-                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/data_raw_df["GFA_m2"]
+                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/data_raw_df["NFA_m2"]
+                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/data_raw_df["NFA_m2"]
                 data_raw_df["Capex_Centralized"] = 0.0 ##TODO: to calculate the capex annualized
                 data_raw_df["Capex_Decentralized"] = 0.0
                 data_raw_df["Capex_Centralized_m2"] = 0.0
                 data_raw_df["Capex_Decentralized_m2"] = 0.0
             else:
-                area = (pd.read_csv(locator.get_costs_operation_file())[["GFA_m2"]]).sum(axis=0).values[0]
+                area = (pd.read_csv(locator.get_costs_operation_file())[["NFA_m2"]]).sum(axis=0).values[0]
                 data_individual = preprocessing_generations_data(locator, generation)
                 data_raw = processing_mcda_data(self.config, data_individual['generation'], generation, gen_pointer, individual,
                                                    ind_pointer, locator, self.network_type).iloc[0]
@@ -378,7 +378,7 @@ class Plots(object):
     def comparison_supply_mix(self, category):
         title = "Energy supply per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
-        data = self.data_processed_supply.copy()
+        data = self.preprocessing_supply_scenarios()
         analysis_fields = ["E_PV_to_directload_MWhyr",
                            "GRID_MWhyr",
                            "NG_CCGT_MWhyr",
@@ -390,7 +390,7 @@ class Plots(object):
     def comparison_supply_mix_intensity(self, category):
         title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
-        data = self.data_processed_supply.copy()
+        data = self.preprocessing_supply_scenarios()
         analysis_fields = ["E_PV_to_directload_MWhyr",
                            "GRID_MWhyr",
                            "NG_CCGT_MWhyr",
