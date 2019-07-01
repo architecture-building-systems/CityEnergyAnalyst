@@ -68,6 +68,14 @@ def route_project_overview():
         else:
             descriptions[scenario]['Warning'] = 'Zone file does not exist.'
 
+    # Clean .cache images
+    for filepath in glob.glob(os.path.join(os.path.join(project_path, '.cache', '*.png'))):
+        print(filepath)
+        image = os.path.basename(filepath).split('.')[0]
+        if image not in scenarios:
+            os.remove(filepath)
+
+
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios, descriptions=descriptions)
 
 
