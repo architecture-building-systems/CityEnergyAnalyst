@@ -136,10 +136,10 @@ def route_create_scenario_save():
 
         if zone:
             for filename in glob.glob(zone.split('.')[:-1][0]+'.*'):
-                shutil.copy(filename, os.path.dirname(locator.get_zone_geometry()))
+                shutil.copy(filename, locator.get_building_geometry_folder())
         if district:
             for filename in glob.glob(district.split('.')[:-1][0]+'.*'):
-                shutil.copy(filename, os.path.dirname(locator.get_district_geometry()))
+                shutil.copy(filename, locator.get_building_geometry_folder())
         if terrain:
             shutil.copyfile(terrain, locator.get_terrain())
         if streets:
