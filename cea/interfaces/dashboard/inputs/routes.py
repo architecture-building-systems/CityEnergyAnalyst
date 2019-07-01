@@ -178,8 +178,8 @@ def route_save_building_properties():
 
         if len(tables[db]) != 0:
             if db_info['type'] == 'shp':
-                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                from cea.utilities.standardize_coordinates import get_projected_coordinate_system
+                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_projected_coordinate_system())
                 table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
                 out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
