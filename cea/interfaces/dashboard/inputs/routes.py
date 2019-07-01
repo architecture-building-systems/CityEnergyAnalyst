@@ -193,7 +193,12 @@ def route_save_building_properties():
         else:  # delete file if empty
             out['tables'][db] = {}
             if os.path.isfile(location):
-                os.remove(location)
+                if db_info['type'] == 'shp':
+                    import glob
+                    for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                        os.remove(filepath)
+                elif db_info['type'] == 'dbf':
+                    os.remove(location)
             if db_info['type'] == 'shp':
                 out['geojsons'][db] = {}
 
