@@ -374,3 +374,33 @@ default:
   interfaces: [cli]
   module: cea.tests.cooling_case_workflow
   parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
+
+
+Documentation:
+- name: html
+  label: html
+  description: Run all documentation methods via the command line
+  interfaces: [doc]
+  module: cea.utilities.doc_html
+  parameters: []
+
+- name: graphviz
+  label: graphviz
+  description: Render the graphviz.gv files for all scripts in the schema data
+  interfaces: [doc]
+  module: cea.utilities.doc_graphviz
+  parameters: []
+
+- name: update-naming
+  label: update-naming
+  description: Updates the naming.csv using the schema.yml
+  interfaces: [doc]
+  module: cea.utilities.doc_update_naming
+  parameters: []
+
+- name: glossary
+  label: glossary
+  description: Updates the glossary documentation
+  interfaces: [doc]
+  module: cea.utilities.doc_glossary
+  parameters: []
