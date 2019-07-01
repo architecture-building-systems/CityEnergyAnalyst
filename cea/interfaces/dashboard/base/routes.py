@@ -4,7 +4,6 @@ import cea.plots
 import os
 import csv
 
-# start the login system
 
 blueprint = Blueprint(
     'base_blueprint',
