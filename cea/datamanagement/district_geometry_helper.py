@@ -35,8 +35,8 @@ def alpha_shape(points, alpha):
     """
     Compute the alpha shape (concave hull) of a set of points.
 
-    @param points: Iterable container of points.
-    @param alpha: alpha value to influence the gooeyness of the border. Smaller
+    :param points: Iterable container of points.
+    :param alpha: alpha value to influence the gooeyness of the border. Smaller
                   numbers don't fall inward as much as larger numbers. Too large,
                   and you lose everything!
     """
@@ -150,15 +150,17 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is None and buildings_floors is not None:
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is not None and buildings_floors is None:
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
-    else:  # both are not none
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
+    else:
+        shapefile['REFERENCE'] = "User - assumption"
+        if buildings_height is None and buildings_floors is not None:
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
+            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        elif buildings_height is not None and buildings_floors is None:
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+        else:  # both are not none
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
 
     #add description
     if "description" in list_of_columns:
@@ -217,6 +219,8 @@ def geometry_extractor_osm(locator, config):
 
     # erase overlapping area
     district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
+
+    assert district.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
 
     # clean attributes of height, name and number of floors
     result = clean_attributes(district, buildings_height, buildings_floors, key="CEA")

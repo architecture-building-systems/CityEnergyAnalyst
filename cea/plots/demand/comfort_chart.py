@@ -9,6 +9,7 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.config
+import cea.plots.demand
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 
 
@@ -39,18 +40,27 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(ComfortChartPlot, self).__init__(project, parameters, cache)
-        if len(self.buildings) > 1:
-            self.buildings = [self.buildings[0]]
-        self.data = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
         self.analysis_fields = None
-        self.layout = create_layout(self.title)
+
+    @property
+    def layout(self):
+        return create_layout(self.title)
+
+    @property
+    def data(self):
+        return self.hourly_loads[self.hourly_loads['Name'] == self.building]
+
+    @property
+    def dict_graph(self):
+        if not hasattr(self, '_dict_graph'):
+            self._dict_graph = calc_data(self.data, self.locator)
+        return self._dict_graph
 
     def calc_graph(self):
         # calculate points of comfort in different conditions
-        dict_graph = calc_data(self.data, self.locator)
 
         # create scatter of comfort
-        traces_graph = calc_graph(dict_graph)
+        traces_graph = calc_graph(self.dict_graph)
 
         # create lines of constant relative humidity
         traces_relative_humidity = create_relative_humidity_lines()
@@ -67,6 +77,40 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         )
         traces_graph.append(trace_layout)
         return traces_graph
+
+    def calc_table(self):
+        """
+        draws table of monthly energy balance
+        """
+
+        # create table arrays
+        # check winter comfort
+        count_winter_comfort, count_winter_uncomfort = check_comfort(self.dict_graph['t_op_occupied_winter'],
+                                                                     self.dict_graph['x_int_occupied_winter'],
+                                                                     VERTICES_WINTER_COMFORT)
+        winter_hours = len(self.dict_graph['t_op_occupied_winter'])
+        perc_winter_comfort = count_winter_comfort / winter_hours if winter_hours > 0 else 0
+        cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, perc_winter_comfort)
+        perc_winter_uncomfort = count_winter_uncomfort / winter_hours if winter_hours > 0 else 0
+        cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_uncomfort, perc_winter_uncomfort)
+
+        # check summer comfort
+        count_summer_comfort, count_summer_uncomfort = check_comfort(self.dict_graph['t_op_occupied_summer'],
+                                                                     self.dict_graph['x_int_occupied_summer'],
+                                                                     VERTICES_SUMMER_COMFORT)
+        summer_hours = len(self.dict_graph['t_op_occupied_summer'])
+        perc_summer_comfort = count_summer_comfort / summer_hours if summer_hours > 0 else 0
+        cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, perc_summer_comfort)
+        perc_summer_uncomfort = count_summer_uncomfort / summer_hours if summer_hours > 0 else 0
+        cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_uncomfort, perc_summer_uncomfort)
+
+        # draw table
+        column_names = ['condition', 'comfort [h]', 'uncomfort [h]']
+        column_data = [['summer occupied', 'winter occupied'], [cell_summer_comfort, cell_winter_comfort],
+                      [cell_summer_uncomfort, cell_winter_uncomfort]]
+        table_df = pd.DataFrame({cn: cd for cn, cd in zip(column_names, column_data)}, columns=column_names)
+        return table_df
+
 
 def comfort_chart(data_frame, title, output_path, config, locator):
     """
@@ -118,7 +162,7 @@ def create_layout(title):
 
     layout = {
         'xaxis': {
-            'title': 'Operative Temperature [Â°C]',
+            'title': 'Operative Temperature [°C]',
             'range': [5, 35],
             'domain': XAXIS_DOMAIN_GRAPH
         },
@@ -498,15 +542,19 @@ def calc_constant_rh_curve(t_array, rh, p):
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
 
+def main():
+    import cea.config
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
+
+    ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
+                                      'scenario-name': config.scenario_name},
+                     cache).plot(auto_open=True)
+
+
 if __name__ == '__main__':
-    def main():
-        import cea.config
-        import cea.inputlocator
-
-        config = cea.config.Configuration()
-        locator = cea.inputlocator.InputLocator(config.scenario)
-
-        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
-        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[1]]).plot(auto_open=True)
-        ComfortChartPlot(config, locator, [locator.get_zone_building_names()[2]]).plot(auto_open=True)
     main()

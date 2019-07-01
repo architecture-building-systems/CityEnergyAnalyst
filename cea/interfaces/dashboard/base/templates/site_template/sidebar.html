@@ -1,12 +1,10 @@
 <div class="left_col scroll-view">
   <div class="navbar nav_title" style="border: 0;">
-    <a href="/" class="site_title"><img src="/static/images/cea-logo.png" height="30px" />
-      <span style="font-size: large;">City Energy Analyst</span></a>
+    <a href="/" class="site_title"><img src="/static/images/cea-logo.png" height="40px" />
+      <span asdfstyle="font-size: 0.8em">CEA</span></a>
   </div>
 
   <div class="clearfix"></div>
-
-  <br />
 
   <!-- sidebar menu -->
   <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
@@ -25,16 +23,16 @@
           </ul>
         </li>
       {% if scenario_name != '' %}
-        <li><a><i class="fa fa-building-o"></i> Inputs <span class="fa fa-chevron-down"></span></a>
+        <li><a><i class="fa fa-building-o"></i> Input Editor <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
-            <li><a href="/inputs/table/zone">Zone</a></li>
-            <li><a href="/inputs/table/district">District</a></li>
-            <li><a href="/inputs/table/age">Age</a></li>
-            <li><a href="/inputs/table/occupancy">Occupancy</a></li>
-            <li><a href="/inputs/table/internal-loads">Internal Loads</a></li>
-            <li><a href="/inputs/table/supply-systems">Supply Systems</a></li>
-            <li><a href="/inputs/table/architecture">Architecture</a></li>
-            <li><a href="/inputs/table/restrictions">Restrictions</a></li>
+            <li><a href="/inputs/building-properties">Building Properties</a></li>
+<!--            <li><a href="/inputs/table/district">District</a></li>-->
+<!--            <li><a href="/inputs/table/age">Age</a></li>-->
+<!--            <li><a href="/inputs/table/occupancy">Occupancy</a></li>-->
+<!--            <li><a href="/inputs/table/internal-loads">Internal Loads</a></li>-->
+<!--            <li><a href="/inputs/table/supply-systems">Supply Systems</a></li>-->
+<!--            <li><a href="/inputs/table/architecture">Architecture</a></li>-->
+<!--            <li><a href="/inputs/table/restrictions">Restrictions</a></li>-->
           </ul>
         </li>
         <li><a><i class="fa fa-wrench"></i> Tools <span class="fa fa-chevron-down"></span></a>
@@ -79,7 +77,7 @@
 
   <!-- /menu footer buttons -->
   <div class="sidebar-footer hidden-small">
-    <a data-toggle="tooltip" data-placement="top" title="Settings" href="/project/show">
+    <a data-toggle="tooltip" data-placement="top" title="Settings">
       <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
     </a>
     <a data-toggle="tooltip" data-placement="top" title="FullScreen">
@@ -88,7 +86,7 @@
     <a data-toggle="tooltip" data-placement="top" title="Lock">
       <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
     </a>
-    <a data-toggle="tooltip" data-placement="top" title="Logout" href="login">
+    <a data-toggle="tooltip" data-placement="top" title="Logout">
       <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
     </a>
   </div>

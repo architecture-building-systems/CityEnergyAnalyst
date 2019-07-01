@@ -9,6 +9,7 @@ import importlib
 import plotly.offline
 import json
 import yaml
+import re
 
 
 blueprint = Blueprint(
@@ -204,7 +205,39 @@ def route_div(dashboard_index, plot_index):
         plot = load_plot(dashboard_index, plot_index)
     except Exception as ex:
         return abort(500, ex)
-    return make_response(plot.plot_div(), 200)
+    if not plot.missing_input_files():
+        plot_div = plot.plot_div()
+        # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
+        # update id of div to include dashboard_index and plot_index
+        if plot_div.startswith("<div id="):
+            div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
+            plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
+                div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
+        return make_response(plot_div, 200)
+    else:
+        return render_template('missing_input_files.html',
+                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
+                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
+
+@blueprint.route('/table/<int:dashboard_index>/<int:plot_index>')
+def route_table(dashboard_index, plot_index):
+    """Return the table for the plot as a div to be used in an AJAX call"""
+    try:
+        plot = load_plot(dashboard_index, plot_index)
+    except Exception as ex:
+        return abort(500, ex)
+    if not plot.missing_input_files():
+        return make_response(plot.table_div(), 200)
+
+
+def script_suggestions(locator_names):
+    """Return a list of CeaScript objects that produce the output for each locator name"""
+    import cea.scripts
+    schemas = cea.scripts.schemas()
+    script_names = []
+    for name in locator_names:
+        script_names.extend(schemas[name]['created_by'])
+    return [cea.scripts.by_name(n) for n in sorted(set(script_names))]
 
 
 def load_plot(dashboard_index, plot_index):

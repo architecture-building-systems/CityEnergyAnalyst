@@ -48,14 +48,14 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
                                                          "Opex_var_PV_USD",
                                                          "Electricitycosts_for_appliances_USD",
                                                          "Electricitycosts_for_hotwater_USD"]
-        self.analysis_fields_cost_heating_centralized = ["Capex_SC_USD",
-                                                         "Capex_PVT_USD",
-                                                         "Capex_furnace_USD",
-                                                         "Capex_Boiler_Total_USD",
-                                                         "Capex_CHP_USD",
-                                                         "Capex_Lake_USD",
-                                                         "Capex_Sewage_USD",
-                                                         "Capex_pump_USD",
+        self.analysis_fields_cost_heating_centralized = ["Capex_a_SC_USD",
+                                                         "Capex_a_PVT_USD",
+                                                         "Capex_a_furnace_USD",
+                                                         "Capex_a_Boiler_Total_USD",
+                                                         "Capex_a_CHP_USD",
+                                                         "Capex_a_Lake_USD",
+                                                         "Capex_a_Sewage_USD",
+                                                         "Capex_a_pump_USD",
                                                          "Opex_HP_Sewage_USD",
                                                          "Opex_HP_Lake_USD",
                                                          "Opex_GHP_USD",
@@ -65,9 +65,9 @@ class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationO
                                                          "Electricity_Costs_USD"]
         self.analysis_fields = (self.analysis_fields_cost_heating_centralized if self.network_type == 'DH'
                                 else self.analysis_fields_cost_cooling_centralized)
-        self.input_files = [self.locator.get_total_demand(),
-                            self.locator.get_preprocessing_costs(),
-                            self.locator.get_optimization_checkpoint(self.generation)]
+        self.input_files = [(self.locator.get_total_demand, []),
+                            (self.locator.get_preprocessing_costs, []),
+                            (self.locator.get_optimization_checkpoint, [self.generation])]
 
     @property
     def title(self):

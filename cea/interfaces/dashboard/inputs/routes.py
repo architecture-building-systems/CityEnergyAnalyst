@@ -106,6 +106,104 @@ def route_geojson(db):
     return jsonify(json.loads(table_df.to_json(show_bbox=True)))
 
 
+@blueprint.route('/geojson/networks/<type>')
+def route_geojson_networks(type):
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    # TODO: Get a list of names and send all in the json
+    name = ''
+    edges = locator.get_network_layout_edges_shapefile(type, name)
+    nodes = locator.get_network_layout_nodes_shapefile(type, name)
+    network_json = df_to_json(edges)
+    network_json['features'].extend(df_to_json(nodes)['features'])
+    return jsonify(network_json)
+
+
+@blueprint.route('/geojson/others/streets')
+def route_geojson_streets():
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    location = locator.get_street_network()
+    return jsonify(df_to_json(location))
+
+
+@blueprint.route('/building-properties', methods=['GET'])
+def route_get_building_properties():
+    # FIXME: Find a better way to ensure order of tabs
+    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
+
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}}
+    for db in INPUTS:
+        db_info = INPUTS[db]
+        location = getattr(locator, db_info['location'])()
+        try:
+            if db_info['type'] == 'shp':
+                table_df = geopandas.GeoDataFrame.from_file(location)
+                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
+
+                import pandas
+                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
+                    table_df['REFERENCE'] = None
+                store['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+            else:
+                assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
+                table_df = cea.utilities.dbf.dbf_to_dataframe(location)
+                if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
+                    table_df['REFERENCE'] = None
+                store['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+
+            store['columns'][db] = db_info['fieldnames']
+            store['column_types'][db] = {k: v.__name__ for k, v in db_info['fieldtypes'].items()}
+        except IOError as e:
+            print(e)
+            store['tables'][db] = {}
+    return render_template('table.html', store=store, tabs=tabs)
+
+@blueprint.route('/building-properties', methods=['POST'])
+def route_save_building_properties():
+    import pandas
+    data = request.get_json()
+    changes = data['changes']
+    tables = data['tables']
+    geojson = data['geojson']
+
+    out = {'tables': {}, 'geojsons': {}}
+
+    # TODO: Maybe save the files to temp location in case something fails
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    for db in INPUTS:
+        db_info = INPUTS[db]
+        location = getattr(locator, db_info['location'])()
+
+        if len(tables[db]) != 0:
+            if db_info['type'] == 'shp':
+                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
+
+                out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
+                table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+            elif db_info['type'] == 'dbf':
+                table_df = pandas.read_json(json.dumps(tables[db]))
+                cea.utilities.dbf.dataframe_to_dbf(table_df, location)
+
+                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+        else:  # delete file if empty
+            out['tables'][db] = {}
+            if os.path.isfile(location):
+                if db_info['type'] == 'shp':
+                    import glob
+                    for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                        os.remove(filepath)
+                elif db_info['type'] == 'dbf':
+                    os.remove(location)
+            if db_info['type'] == 'shp':
+                out['geojsons'][db] = {}
+
+    return jsonify(out)
+
 @blueprint.route('/table/<db>', methods=['GET'])
 def route_table_get(db):
     if not db in INPUTS:
@@ -147,3 +245,13 @@ def route_table_post(db):
         cea.utilities.dbf.dataframe_to_dbf(table_df, location)
 
     return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
+
+def df_to_json(file_location):
+    try:
+        table_df = geopandas.GeoDataFrame.from_file(file_location)
+        from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+        table_df = table_df.to_crs(get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
+        return json.loads(table_df.to_json())
+    except IOError as e:
+        print(e)
+        abort(404, 'Input file not found: %s' % file_location)

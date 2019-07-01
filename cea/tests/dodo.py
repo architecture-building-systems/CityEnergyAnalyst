@@ -191,7 +191,6 @@ def task_run_demand():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.weather = weather
-        config.demand.use_daysim_radiation = False
         cea.demand.demand_main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():

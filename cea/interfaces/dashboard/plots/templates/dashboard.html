@@ -13,8 +13,8 @@
         <div class="page-title">
           <div class="title_left" style="width:100%;">
             <select class="selectpicker" id="dashboard-selector" data-size="5">
-              {% for index in range(0, dashboards|length) %}
-                <option value="{{ index }}">{{ dashboards[index].name }}</option>
+              {% for dashboard in dashboards %}
+                <option value="{{ loop.index0 }}">{{ dashboard.name }}</option>
               {% endfor %}
               <option data-divider="true"></option>
               <option value="manage">Manage Dashboards</option>
@@ -75,6 +75,9 @@
               </div>
               <div class="x_content" id="x_content-{{ dashboard_index }}-{{ loop.index0 }}">
                   <p>Loading plot...</p>
+              </div>
+              <div class="x_content" id="x_table-{{ dashboard_index }}-{{ loop.index0 }}">
+                  <p>Loading table...</p>
               </div>
             </div>
           </div>
