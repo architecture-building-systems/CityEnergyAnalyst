@@ -233,7 +233,13 @@ def route_get_images(scenario):
     cache_path = os.path.join(project_path, '.cache')
     image_path = os.path.join(cache_path, scenario+'.png')
 
+    zone_modified = os.path.getmtime(zone_path)
     if not os.path.isfile(image_path):
+        image_modified = 0
+    else:
+        image_modified = os.path.getmtime(image_path)
+
+    if zone_modified > image_modified:
         # Make sure .cache folder exists
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
