@@ -146,6 +146,9 @@ class SolarFeatures(object):
             self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
             self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
             self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
+        else:
+            raise Exception("neither heating, nor cooling networks to optimize have been selected")
+
 #============================
 #test
 #============================

@@ -76,7 +76,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
 
         deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
 
     if district_cooling_network:
 
@@ -98,7 +98,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config,
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                              locator, 'PU1')  # investment of Machinery
 
 
@@ -107,7 +107,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology_type):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
