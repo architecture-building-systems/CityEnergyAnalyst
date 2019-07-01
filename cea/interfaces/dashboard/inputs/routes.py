@@ -34,63 +34,6 @@ def read_inputs_field_types():
 INPUTS = read_inputs_field_types()
 
 
-@blueprint.route('/json/<db>',  methods=['GET'])
-def route_get_json(db):
-    """Return the records of an input database in JSON format suitable for the bootstrap-table-editable"""
-    if not db in INPUTS:
-        abort(404, 'Input file not found: %s' % db)
-
-    db_info = INPUTS[db]
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    location = getattr(locator, db_info['location'])()
-    if db_info['type'] == 'shp':
-        table_df = geopandas.GeoDataFrame.from_file(location)
-    else:
-        assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
-        table_df = cea.utilities.dbf.dbf_to_dataframe(location)
-
-    # Check for any missing columns from input and set it to null
-    for column in db_info['fieldnames']:
-        if column not in table_df.columns:
-            table_df[column] = 'null'
-
-    result = [{column: db_info['fieldtypes'][column](getattr(row, column))
-               for column in db_info['fieldnames']} for row in table_df.itertuples()]
-    return jsonify(result)
-
-
-@blueprint.route('/json/<db>', methods=['POST'])
-def route_post_json(db):
-    """Save a row to the database"""
-    if not db in INPUTS:
-        abort(404, 'Input file not found: %s' % db)
-
-    print('request variables: %s' % request.form)
-    pk = request.form['pk']
-    column = request.form['name']
-    value = request.form['value']
-
-    db_info = INPUTS[db]
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    location = getattr(locator, db_info['location'])()
-    if db_info['type'] == 'shp':
-        table_df = geopandas.GeoDataFrame.from_file(location)
-    else:
-        assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
-        table_df = cea.utilities.dbf.dbf_to_dataframe(location)
-
-    rows = table_df[table_df[db_info['pk']] == pk].index
-    assert len(rows) == 1, "PK for table %s is not unique!" % db
-    row = rows[0]
-    table_df.loc[row, column] = value
-
-    if db_info['type'] == 'shp':
-        table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
-    else:
-        cea.utilities.dbf.dataframe_to_dbf(table_df, location)
-    return jsonify(True)
-
-
 @blueprint.route('/geojson/<db>')
 def route_geojson(db):
     """Return a GeoJSON representation of the input file for use in Leaflet.js"""
@@ -161,6 +104,7 @@ def route_get_building_properties():
             store['tables'][db] = {}
     return render_template('table.html', store=store, tabs=tabs)
 
+
 @blueprint.route('/building-properties', methods=['POST'])
 def route_save_building_properties():
     import pandas
@@ -207,47 +151,6 @@ def route_save_building_properties():
 
     return jsonify(out)
 
-@blueprint.route('/table/<db>', methods=['GET'])
-def route_table_get(db):
-    if not db in INPUTS:
-        abort(404, 'Input file not found: %s' % db)
-    db_info = INPUTS[db]
-    return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
-
-
-@blueprint.route('/table/<db>', methods=['POST'])
-def route_table_post(db):
-    if not db in INPUTS:
-        abort(404, 'Input file not found: %s' % db)
-    db_info = INPUTS[db]
-    pk = db_info['pk']
-
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    location = getattr(locator, db_info['location'])()
-    if db_info['type'] == 'shp':
-        table_df = geopandas.GeoDataFrame.from_file(location)
-    else:
-        assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
-        table_df = cea.utilities.dbf.dbf_to_dataframe(location)
-
-    # copy data from form POST data
-    new_data = json.loads(request.form.get('cea-table-data'))
-    column_types = table_df.dtypes
-    for row in new_data:
-        for column in row.keys():
-            table_df.loc[table_df[pk] == row[pk], column] = row[column]
-    print table_df
-    # allow columns to maintain their original type
-    for (types, column) in zip(column_types, table_df):
-        table_df[column] = table_df[column].astype(types)
-
-    # safe dataframe back to disk
-    if db_info['type'] == 'shp':
-        table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
-    else:
-        cea.utilities.dbf.dataframe_to_dbf(table_df, location)
-
-    return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
 
 def df_to_json(file_location):
     try:
