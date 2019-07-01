@@ -93,7 +93,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "ALIAS find=$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe $$*"
+    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
@@ -111,7 +111,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$INSTDIR\Dependencies\Python\python.exe -m cea.interfaces.cli.cli dashboard"
+    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -m cea.interfaces.cli.cli dashboard"
     FileClose $0
 
 
@@ -155,13 +155,15 @@ Section "Base Installation" Base_Installation_Section
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
+    DetailPrint "Pip installing Jupyter"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
     WriteINIStr "$PROFILE\cea.config" radiation-daysim daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
-    WriteUninstaller "$INSTDIR\Uninstall.exe"
+    WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
 
 SectionEnd
 
@@ -177,6 +179,10 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
+
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
 
 SectionEnd
 
@@ -219,12 +225,23 @@ SectionEnd
 
 Section "Uninstall"
 
-  ;ADD YOUR OWN FILES HERE...
+  ; Delete the shortcuts
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
+  RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
-  Delete "$INSTDIR\Uninstall.exe"
+  Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
+  Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
 
-  RMDir "$INSTDIR"
+  ; Delete the cea.config file
+  Delete /REBOOTOK "$PROFILE\cea.config"
 
-  DeleteRegKey /ifempty HKCU "Software\Modern UI Test"
+  SetOutPath $TEMP
+  Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+  RMDir /R /REBOOTOK "$INSTDIR"
 
 SectionEnd

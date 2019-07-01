@@ -57,12 +57,24 @@ def route_project_overview():
         locator = cea.inputlocator.InputLocator(os.path.join(project_path, scenario))
         zone = locator.get_zone_geometry()
         if os.path.isfile(zone):
-            zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
-            descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
+            try:
+                zone_df = geopandas.read_file(zone).to_crs(get_geographic_coordinate_system())
+                descriptions[scenario]['Coordinates'] = (float("%.5f" % ((zone_df.total_bounds[1] + zone_df.total_bounds[3])/2)),
                                                      float("%.5f" % ((zone_df.total_bounds[0] + zone_df.total_bounds[2])/2)))
+            except RuntimeError as e:
+                descriptions[scenario]['Warning'] = 'Could not read the Zone file. ' \
+                                                    'Check if your geometries have a coordinate system.'
 
         else:
             descriptions[scenario]['Warning'] = 'Zone file does not exist.'
+
+    # Clean .cache images
+    for filepath in glob.glob(os.path.join(os.path.join(project_path, '.cache', '*.png'))):
+        print(filepath)
+        image = os.path.basename(filepath).split('.')[0]
+        if image not in scenarios:
+            os.remove(filepath)
+
 
     return render_template('project_overview.html', project_name=project_name, scenarios=scenarios, descriptions=descriptions)
 
@@ -132,10 +144,10 @@ def route_create_scenario_save():
 
         if zone:
             for filename in glob.glob(zone.split('.')[:-1][0]+'.*'):
-                shutil.copy(filename, os.path.dirname(locator.get_zone_geometry()))
+                shutil.copy(filename, locator.get_building_geometry_folder())
         if district:
             for filename in glob.glob(district.split('.')[:-1][0]+'.*'):
-                shutil.copy(filename, os.path.dirname(locator.get_district_geometry()))
+                shutil.copy(filename, locator.get_building_geometry_folder())
         if terrain:
             shutil.copyfile(terrain, locator.get_terrain())
         if streets:
@@ -183,7 +195,7 @@ def route_create_scenario_save():
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
 
-    return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+    return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
 
 @blueprint.route('/open-project')
@@ -215,7 +227,7 @@ def route_open_project_scenario(scenario):
     assert scenario in get_scenarios(cea_config.project)
     cea_config.scenario_name = scenario
     cea_config.save()
-    return redirect(url_for('inputs_blueprint.route_table_get', db='zone'))
+    return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
 
 @blueprint.route('/get-image/<scenario>')
@@ -229,7 +241,13 @@ def route_get_images(scenario):
     cache_path = os.path.join(project_path, '.cache')
     image_path = os.path.join(cache_path, scenario+'.png')
 
+    zone_modified = os.path.getmtime(zone_path)
     if not os.path.isfile(image_path):
+        image_modified = 0
+    else:
+        image_modified = os.path.getmtime(image_path)
+
+    if zone_modified > image_modified:
         # Make sure .cache folder exists
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
