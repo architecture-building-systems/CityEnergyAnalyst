@@ -278,6 +278,7 @@ def construct_parameter(parameter_name, section, config):
 
 class Parameter(object):
     typename = 'Parameter'
+
     def __init__(self, name, section, config):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
@@ -305,6 +306,10 @@ class Parameter(object):
 
     def __repr__(self):
         return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
+
+    @property
+    def py_name(self):
+        return self.name.replace('-', '_')
 
     def initialize(self, parser):
         """
@@ -708,11 +713,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def decode(self, value):
         choices = parse_string_to_list(value)
-        for choice in choices:
-            if choice not in self._choices:
-                raise cea.ConfigError(
-                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
-        return choices
+        return [choice for choice in choices if choice in self._choices]
 
 
 class SingleBuildingParameter(ChoiceParameter):

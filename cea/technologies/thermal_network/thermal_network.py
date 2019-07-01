@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
 import math
+import sys
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import collections
@@ -20,6 +21,8 @@ import random
 import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
+from cea.utilities.workerstream import stream_from_queue
+import cea.utilities.workerstream
 from math import ceil
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
@@ -497,19 +500,28 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
     number_of_processes = config.get_number_of_processes()
+    nhours = (stop_t - start_t)
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
-        hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
-                                          izip(range(start_t, stop_t),
-                                               repeat(thermal_network, times=(stop_t - start_t)),
-                                               ))
+        queue = multiprocessing.Manager().Queue()
+        map_result = pool.map_async(hourly_thermal_calculation_wrapper,
+                                     izip(repeat(queue, nhours),
+                                          range(start_t, stop_t),
+                                          repeat(thermal_network, nhours)))
+        while not map_result.ready():
+            stream_from_queue(queue)
         pool.close()
         pool.join()
+        # process the rest of the Queue
+        while not queue.empty():
+            stream_from_queue(queue)
+
+        hourly_thermal_results = map_result.get()
     else:
-        hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                     repeat(thermal_network, times=(stop_t - start_t))
-                                     )
+        hourly_thermal_results = map(hourly_thermal_calculation,
+                                     range(start_t, stop_t),
+                                     repeat(thermal_network, nhours))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -824,6 +836,10 @@ def calculate_ground_temperature(locator, config):
 def hourly_thermal_calculation_wrapper(args):
     """Wrap hourly_thermal_calculation to accept a tuple of args because multiprocessing.Pool.map only accepts one
     argument for the function."""
+    # set up printing to stderr and stdout to go through the queue
+    queue, args = args[0], args[1:]
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
     return hourly_thermal_calculation(*args)
 
 
@@ -1665,13 +1681,21 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         nhours = stop_t - start_t
 
         number_of_processes = config.get_number_of_processes()
-        if number_of_processes > 1:
+        if use_multiprocessing and number_of_processes > 1:
             print("Using %i CPU's" % number_of_processes)
             pool = multiprocessing.Pool(number_of_processes)
-            mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
-                                  izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
+            queue = multiprocessing.Manager().Queue()
+            map_result = pool.map_async(hourly_mass_flow_calculation_wrapper,
+                                        izip(repeat(queue, nhours), t, repeat(diameter_guess, nhours),
+                                             repeat(thermal_network, nhours)))
+            while not map_result.ready():
+                stream_from_queue(queue)
             pool.close()
             pool.join()
+            # process the rest of the Queue
+            while not queue.empty():
+                stream_from_queue(queue)
+            mass_flows = map_result.get()
         else:
             mass_flows = map(hourly_mass_flow_calculation, t,
                              repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
@@ -1786,6 +1810,10 @@ def read_in_diameters_from_shapefile(thermal_network):
 
 def hourly_mass_flow_calculation_wrapper(args):
     """A wrapper around hourly_mass_flow_calculation because multiprocessing.Pool.map only allows one argument"""
+    # set up printing to stderr and stdout to go through the queue
+    queue, args = args[0], args[1:]
+    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
+    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
     return hourly_mass_flow_calculation(*args)
 
 

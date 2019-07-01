@@ -7,7 +7,7 @@ function cea_run(script) {
     $('#cea-console-output-body').text('');
     $('#cea-console-output').modal({'show': true, 'backdrop': 'static'});
     $.post('start/' + script, get_parameter_values(), function(data) {
-        setTimeout(update_output, 100, script);
+        setTimeout(update_output, 1000, script);
     }, 'json');
 }
 
@@ -40,7 +40,7 @@ function update_output(script) {
        if (msg === null) {
            $.getJSON('is-alive/' + script, {}, function(msg) {
                if (msg) {
-                   setTimeout(update_output, 100, script);
+                   setTimeout(update_output, 1000, script);
                } else {
                    $('.cea-modal-close').removeAttr('disabled');
                    $.getJSON('exitcode/' + script, {}, function(msg){
@@ -56,7 +56,7 @@ function update_output(script) {
        }
        else {
            $('#cea-console-output-body').append(msg.message);
-           setTimeout(update_output, 100, script);
+           setTimeout(update_output, 1000, script);
        }
     });
 }

@@ -95,6 +95,28 @@
                     {% for parameter in parameters %}
                     {{ input_macros.input(parameter, weather_dict) }}
                     {% endfor %}
+
+                    {% if categories|length != 0 %}
+                    <h3>Other Settings</h3>
+                    {% for category, parameters in categories.items() %}
+                    <div class="panel panel-default">
+                      <div class="panel-heading" role="tab" id="heading-{{ category|replace(' ', '-') }}">
+                        <h4 class="panel-title">
+                          <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-{{ category|replace(' ', '-') }}" aria-expanded="false" aria-controls="collapse-{{ category|replace(' ', '-') }}">
+                            {{ category }}
+                          </a>
+                        </h4>
+                      </div>
+                      <div id="collapse-{{ category|replace(' ', '-') }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-{{ category|replace(' ', '-') }}">
+                        <div class="panel-body">
+                          {% for parameter in parameters %}
+                          {{ input_macros.input(parameter, weather_dict) }}
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
                   </form>
                 </div>
 
