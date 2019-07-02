@@ -4,11 +4,11 @@ PVT_metadata_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_PVT_sensors.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_pvt_sensors.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
-     AREA_m2,Area of the unique surface for each building.,[m2],float,{0.0...n}
+     AREA_m2,Surface area.,[m2],float,{0.0...n}
      BUILDING,Unique building ID. It must start with a letter.,[-],string,alphanumeric
      B_deg,Tilt angle of the installed solar panels,[deg],float,{0.0...n}
      CATB,Category according to the tilt angle of the panel,[-],int,{0...n}
@@ -37,7 +37,7 @@ PVT_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_PVT.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_pvt.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -73,7 +73,7 @@ PVT_total_buildings
 The following file is used by scripts: []
 
 
-.. csv-table:: **PVT_total_buildings.csv**
+.. csv-table:: **outputs/data/potentials/solar/pvt_total_buildings.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -106,7 +106,7 @@ PVT_totals
 The following file is used by scripts: []
 
 
-.. csv-table:: **PVT_total.csv**
+.. csv-table:: **outputs/data/potentials/solar/pvt_total.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -142,7 +142,7 @@ PV_metadata_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_PV_sensors.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_pv_sensors.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -175,7 +175,7 @@ PV_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_PV.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_pv.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -200,7 +200,7 @@ PV_total_buildings
 The following file is used by scripts: []
 
 
-.. csv-table:: **PV_total_buildings.csv**
+.. csv-table:: **outputs/data/potentials/solar/pv_total_buildings.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -225,7 +225,7 @@ PV_totals
 The following file is used by scripts: []
 
 
-.. csv-table:: **PV_total.csv**
+.. csv-table:: **outputs/data/potentials/solar/pv_total.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -250,7 +250,7 @@ SC_metadata_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_SC_ET_sensors.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_sc_et_sensors.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -283,7 +283,7 @@ SC_results
 The following file is used by scripts: []
 
 
-.. csv-table:: **B001_SC_ET.csv**
+.. csv-table:: **outputs/data/potentials/solar/b001_sc_et.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -313,7 +313,7 @@ SC_total_buildings
 The following file is used by scripts: []
 
 
-.. csv-table:: **SC_ET_total_buildings.csv**
+.. csv-table:: **outputs/data/potentials/solar/sc_et_total_buildings.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -340,7 +340,7 @@ SC_totals
 The following file is used by scripts: []
 
 
-.. csv-table:: **SC_ET_total.csv**
+.. csv-table:: **outputs/data/potentials/solar/sc_et_total.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -370,7 +370,7 @@ get_building_architecture
 The following file is used by scripts: ['radiation-daysim', 'emissions', 'demand']
 
 
-.. csv-table:: **architecture.dbf**
+.. csv-table:: **inputs/building-properties/architecture.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -396,7 +396,7 @@ get_building_comfort
 The following file is used by scripts: ['demand']
 
 
-.. csv-table:: **indoor_comfort.dbf**
+.. csv-table:: **inputs/building-properties/indoor_comfort.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -415,15 +415,15 @@ get_building_hvac
 The following file is used by scripts: ['demand']
 
 
-.. csv-table:: **technical_systems.dbf**
+.. csv-table:: **inputs/building-properties/technical_systems.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
-     type_cs,Type of cooling system (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
+     type_cs,Type of cooling supply system,[code],string,{T0...Tn}
      type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
-     type_dhw,Type of hot water system (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
-     type_hs,Type of heating system (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
+     type_dhw,Type of hot water supply system,[code],string,{T0...Tn}
+     type_hs,Type of heating supply system,[code],string,{T0...Tn}
      type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
 
 
@@ -432,7 +432,7 @@ get_building_internal
 The following file is used by scripts: ['demand']
 
 
-.. csv-table:: **internal_loads.dbf**
+.. csv-table:: **inputs/building-properties/internal_loads.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -454,7 +454,7 @@ get_building_restrictions
 The following file is used by scripts: []
 
 
-.. csv-table:: **restrictions.dbf**
+.. csv-table:: **inputs/building-properties/restrictions.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -471,7 +471,7 @@ get_building_supply
 The following file is used by scripts: ['demand', 'operation-costs', 'emissions']
 
 
-.. csv-table:: **supply_systems.dbf**
+.. csv-table:: **inputs/building-properties/supply_systems.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -487,7 +487,7 @@ get_costs_operation_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **operation_costs.csv**
+.. csv-table:: **outputs/data/costs/operation_costs.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -534,18 +534,18 @@ get_demand_results_file
 The following file is used by scripts: ['sewage-potential', 'thermal-network']
 
 
-.. csv-table:: **B001.csv**
+.. csv-table:: **outputs/data/demand/b001.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
-     COAL_hs_kWh,Coal consumption due to space heating,kWh,float,{0.0...n}
-     COAL_ww_kWh,Coal consumption due to hotwater,kWh,float,{0.0...n}
+     COAL_hs_kWh,Coal requirement for space heating supply,kWh,float,{0.0...n}
+     COAL_ww_kWh,Coal requirement for hotwater supply,kWh,float,{0.0...n}
      DATE,Time stamp for each day of the year ascending in hour intervals.,[smalldatetime],date,YYYY-MM-DD hh:mm:ss
      DC_cdata_kWh,District cooling for data center cooling demand,kWh,float,{0.0...n}
      DC_cre_kWh,District cooling for refrigeration demand,kWh,float,{0.0...n}
      DC_cs_kWh,District cooling for space cooling demand,kWh,float,{0.0...n}
-     DH_hs_kWh,District heating for space heating demand,kWh,float,{0.0...n}
-     DH_ww_kWh,District heating for hotwater demand,kWh,float,{0.0...n}
+     DH_hs_kWh,Energy requirement by district heating (space heating supply),kWh,float,{0.0...n}
+     DH_ww_kWh,Energy requirement by district heating (hotwater supply),kWh,float,{0.0...n}
      E_cdata_kWh,Data centre cooling specific electricity consumption.,[kWh],float,{0.0...n}
      E_cre_kWh,Refrigeration system electricity consumption.,[kWh],float,{0.0...n}
      E_cs_kWh,Cooling system electricity consumption.,[kWh],float,{0.0...n}
@@ -560,11 +560,11 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      I_rad_kWh,Radiative heat loss,kWh,float,{0.0...n}
      I_sol_and_I_rad_kWh,Net radiative heat gain,[kWh],float,{0.0...n}
      I_sol_kWh,Solar heat gain,kWh,float,{0.0...n}
-     NG_hs_kWh,NG consumption due to space heating,kWh,float,{0.0...n}
-     NG_ww_kWh,NG consumption due to hotwater,kWh,float,{0.0...n}
+     NG_hs_kWh,NG requirement for space heating supply,kWh,float,{0.0...n}
+     NG_ww_kWh,NG requirement for hotwater supply,kWh,float,{0.0...n}
      Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
-     OIL_hs_kWh,OIL consumption due to space heating,kWh,float,{0.0...n}
-     OIL_ww_kWh,OIL consumption due to hotwater,kWh,float,{0.0...n}
+     OIL_hs_kWh,OIL requirement for space heating supply,kWh,float,{0.0...n}
+     OIL_ww_kWh,OIL requirement for hotwater supply,kWh,float,{0.0...n}
      PV_kWh,PV electricity consumption,kWh,float,{0.0...n}
      QC_sys_kWh,Total cool consumption,[kWh],float,{0.0...n}
      QH_sys_kWh,Total heat consumption,[kWh],float,{0.0...n}
@@ -615,8 +615,8 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      Qhs_sys_shu_kWh,SHU system heat demand,[kWh],float,{0.0...n}
      Qww_kWh,DHW specific heat demand,[kWh],float,{0.0...n}
      Qww_sys_kWh,End-use hotwater demand,kWh,float,{0.0...n}
-     SOLAR_hs_kWh,Solar energy consumption due to space heating,kWh,float,{0.0...n}
-     SOLAR_ww_kWh,Solar energy consumption due to hotwater,kWh,float,{0.0...n}
+     SOLAR_hs_kWh,Solar thermal energy requirement for space heating supply,kWh,float,{0.0...n}
+     SOLAR_ww_kWh,Solar thermal energy requirement for hotwater supply,kWh,float,{0.0...n}
      T_ext_C,Outdoor temperature,C,float,{0.0...n}
      T_int_C,Indoor temperature,C,float,{0.0...n}
      Tcdata_sys_re_C,Cooling supply temperature of the data centre,[C],float,{0.0...n}
@@ -641,8 +641,8 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      Ths_sys_sup_shu_C,Supply temperature heating system,C,float,{0.0...n}
      Tww_sys_re_C,Return temperature hotwater system,C,float,{0.0...n}
      Tww_sys_sup_C,Supply temperature hotwater system,C,float,{0.0...n}
-     WOOD_hs_kWh,WOOD consumption due to space heating,kWh,float,{0.0...n}
-     WOOD_ww_kWh,WOOD consumption due to hotwater,kWh,float,{0.0...n}
+     WOOD_hs_kWh,WOOD requirement for space heating supply,kWh,float,{0.0...n}
+     WOOD_ww_kWh,WOOD requirement for hotwater supply,kWh,float,{0.0...n}
      mcpcdata_sys_kWperC,Capacity flow rate (mass flow* specific heat capacity) of the chilled water delivered to data centre.,[kW/Cap],float,{0.0...n}
      mcpcre_sys_kWperC,Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to refrigeration.,[kW/Cap],float,{0.0...n}
      mcpcs_sys_ahu_kWperC,Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to air handling units (space cooling).,[kW/Cap],float,{0.0...n}
@@ -665,7 +665,7 @@ get_edge_mass_flow_csv_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **Nominal_EdgeMassFlow_at_design_DH__kgpers.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/nominal_edgemassflow_at_design_dh__kgpers.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -678,7 +678,7 @@ get_lake_potential
 The following file is used by scripts: []
 
 
-.. csv-table:: **Lake_potential.csv**
+.. csv-table:: **outputs/data/potentials/lake_potential.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -691,7 +691,7 @@ get_lca_embodied
 The following file is used by scripts: []
 
 
-.. csv-table:: **Total_LCA_embodied.csv**
+.. csv-table:: **outputs/data/emissions/total_lca_embodied.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -708,7 +708,7 @@ get_lca_mobility
 The following file is used by scripts: []
 
 
-.. csv-table:: **Total_LCA_mobility.csv**
+.. csv-table:: **outputs/data/emissions/total_lca_mobility.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -725,7 +725,7 @@ get_lca_operation
 The following file is used by scripts: []
 
 
-.. csv-table:: **Total_LCA_operation.csv**
+.. csv-table:: **outputs/data/emissions/total_lca_operation.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -816,7 +816,7 @@ get_network_layout_edges_shapefile
 The following file is used by scripts: []
 
 
-.. csv-table:: **edges.shp**
+.. csv-table:: **inputs/networks/dc/edges.shp**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -832,7 +832,7 @@ get_network_layout_nodes_shapefile
 The following file is used by scripts: ['thermal-network']
 
 
-.. csv-table:: **nodes.shp**
+.. csv-table:: **inputs/networks/dc/nodes.shp**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -847,7 +847,7 @@ get_network_node_types_csv_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__Nodes.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__nodes.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -868,7 +868,7 @@ get_node_mass_flow_csv_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **Nominal_NodeMassFlow_at_design_DH__kgpers.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/nominal_nodemassflow_at_design_dh__kgpers.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -881,7 +881,7 @@ get_optimization_network_edge_list_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__Edges.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__edges.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -908,7 +908,7 @@ get_optimization_network_edge_node_matrix_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__EdgeNode.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__edgenode.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -921,7 +921,7 @@ get_optimization_network_layout_massflow_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__MassFlow_kgs.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__massflow_kgs.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -933,7 +933,7 @@ get_optimization_network_layout_plant_heat_requirement_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__Plant_heat_requirement_kW.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__plant_heat_requirement_kw.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -945,7 +945,7 @@ get_optimization_network_layout_ploss_system_edges_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__ploss_System_edges_kW.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__ploss_system_edges_kw.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -957,7 +957,7 @@ get_optimization_network_layout_pressure_drop_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__P_DeltaP_Pa.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__p_deltap_pa.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -972,7 +972,7 @@ get_optimization_network_layout_qloss_system_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__qloss_System_kW.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__qloss_system_kw.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -984,7 +984,7 @@ get_optimization_network_layout_return_temperature_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__T_Return_K.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__t_return_k.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -996,7 +996,7 @@ get_optimization_network_layout_supply_temperature_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__T_Supply_K.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__t_supply_k.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1008,7 +1008,7 @@ get_optimization_network_node_list_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__Nodes.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__nodes.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1029,7 +1029,7 @@ get_optimization_network_substation_ploss_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **DH__ploss_Substations_kW.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/dh__ploss_substations_kw.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1041,7 +1041,7 @@ get_radiation_building
 The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand']
 
 
-.. csv-table:: **B001_insolation_Whm2.json**
+.. csv-table:: **outputs/data/solar-radiation/b001_insolation_whm2.json**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1053,7 +1053,7 @@ get_radiation_metadata
 The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand']
 
 
-.. csv-table:: **B001_geometry.csv**
+.. csv-table:: **outputs/data/solar-radiation/b001_geometry.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1075,7 +1075,7 @@ get_sewage_heat_potential
 The following file is used by scripts: []
 
 
-.. csv-table:: **SWP.csv**
+.. csv-table:: **outputs/data/potentials/swp.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1092,7 +1092,7 @@ get_thermal_demand_csv_file
 The following file is used by scripts: []
 
 
-.. csv-table:: **Aggregated_Demand_DH__Wh.csv**
+.. csv-table:: **outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1100,31 +1100,58 @@ The following file is used by scripts: []
      Unnamed: 0,TODO,TODO,TODO,TODO
 
 
+get_thermal_network_layout_pressure_drop_kw_file
+------------------------------------------------
+The following file is used by scripts: []
+
+
+.. csv-table:: **outputs/data/thermal-network/dc__p_deltap_kw.csv**
+    :header: "Variable", "Description", "Unit", "Type", "Values"
+    :widths: 10,40,6,6,10
+
+     pressure_loss_return_kW,TODO,TODO,TODO,TODO
+     pressure_loss_substations_kW,TODO,TODO,TODO,TODO
+     pressure_loss_supply_kW,TODO,TODO,TODO,TODO
+     pressure_loss_total_kW,TODO,TODO,TODO,TODO
+
+
+get_thermal_network_qloss_system_file
+-------------------------------------
+The following file is used by scripts: []
+
+
+.. csv-table:: **outputs/data/thermal-network/dc__p_deltap_kw.csv**
+    :header: "Variable", "Description", "Unit", "Type", "Values"
+    :widths: 10,40,6,6,10
+
+     PIPE0,TODO,TODO,TODO,TODO
+
+
 get_total_demand
 ----------------
 The following file is used by scripts: ['sewage-potential', 'emissions', 'operation-costs', 'network-layout']
 
 
-.. csv-table:: **Total_demand.csv**
+.. csv-table:: **outputs/data/demand/total_demand.csv**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Af_m2,Conditioned floor area (heated/cooled),[m2],float,{0.0...n}
      Aroof_m2,Roof area,[m2],float,{0.0...n}
-     COAL_hs0_kW,Nominal Coal consumption due to space heating,kW,float,{0.0...n}
-     COAL_hs_MWhyr,Coal consumption due to space heating,MWh/yr,float,{0.0...n}
-     COAL_ww0_kW,Nominal Coal consumption due to hotwater,kW,float,{0.0...n}
-     COAL_ww_MWhyr,Coal consumption due to hotwater,MWh/yr,float,{0.0...n}
+     COAL_hs0_kW,Nominal Coal requirement for space heating supply,kW,float,{0.0...n}
+     COAL_hs_MWhyr,Coal requirement for space heating supply,MWh/yr,float,{0.0...n}
+     COAL_ww0_kW,Nominal Coal requirement for hotwater supply,kW,float,{0.0...n}
+     COAL_ww_MWhyr,Coal requirement for hotwater supply,MWh/yr,float,{0.0...n}
      DC_cdata0_kW,Nominal district cooling for final data center cooling demand,kW,float,{0.0...n}
      DC_cdata_MWhyr,District cooling for data center cooling demand,MWh/yr,float,{0.0...n}
      DC_cre0_kW,Nominal district cooling for refrigeration demand,kW,float,{0.0...n}
      DC_cre_MWhyr,District cooling for refrigeration demand,MWh/yr,float,{0.0...n}
      DC_cs0_kW,Nominal district cooling for space cooling demand,kW,float,{0.0...n}
      DC_cs_MWhyr,District cooling for space cooling demand,MWh/yr,float,{0.0...n}
-     DH_hs0_kW,Nominal district heating for space heating demand,kW,float,{0.0...n}
-     DH_hs_MWhyr,District heating for space heating demand,MWh/yr,float,{0.0...n}
-     DH_ww0_kW,Nominal district heating for hotwater demand,kW,float,{0.0...n}
-     DH_ww_MWhyr,District heating for hotwater demand,MWh/yr,float,{0.0...n}
+     DH_hs0_kW,Nominal energy requirement by district heating (space heating supply),kW,float,{0.0...n}
+     DH_hs_MWhyr,Energy requirement by district heating (space heating supply),MWh/yr,float,{0.0...n}
+     DH_ww0_kW,Nominal Energy requirement by district heating (hotwater supply),kW,float,{0.0...n}
+     DH_ww_MWhyr,Energy requirement by district heating (hotwater supply),MWh/yr,float,{0.0...n}
      E_cdata0_kW,Nominal Data centre cooling specific electricity consumption.,[kW/year],float,{0.0...n}
      E_cdata_MWhyr,Electricity consumption due to data center cooling,MWh/yr,float,{0.0...n}
      E_cre0_kW,Nominal Refrigeration system electricity consumption.,[kW/year],float,{0.0...n}
@@ -1142,22 +1169,22 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      Eaux0_kW,Nominal Auxiliary electricity consumption.,[kW/year],float,{0.0...n}
      Eaux_MWhyr,Electricity consumption due to auxiliary equipment,MWh/yr,float,{0.0...n}
      Edata0_kW,Nominal Data centre electricity consumption.,[kW/year],float,{0.0...n}
-     Edata_MWhyr,Electricity consumption for data center,MWh/yr,float,{0.0...n}
+     Edata_MWhyr,Electricity consumption for data centers,MWh/yr,float,{0.0...n}
      Epro0_kW,Nominal Industrial processes electricity consumption.,[kW/year],float,{0.0...n}
      Epro_MWhyr,Electricity supplied to industrial processes,MWh/yr,float,{0.0...n}
      GFA_m2,Gross floor area,[m2],float,{0.0...n}
      GRID0_kW,Nominal Grid electricity consumption,kW,float,{0.0...n}
      GRID_MWhyr,Grid electricity consumption,MWh/yr,float,{0.0...n}
      NFA_m2,TODO,TODO,TODO,TODO
-     NG_hs0_kW,Nominal NG consumption due to space heating,kW,float,{0.0...n}
-     NG_hs_MWhyr,NG consumption due to space heating,MWh/yr,float,{0.0...n}
-     NG_ww0_kW,Nominal NG consumption due to hotwater,kW,float,{0.0...n}
-     NG_ww_MWhyr,NG consumption due to hotwater,MWh/yr,float,{0.0...n}
+     NG_hs0_kW,Nominal NG requirement for space heating supply,kW,float,{0.0...n}
+     NG_hs_MWhyr,NG requirement for space heating supply,MWh/yr,float,{0.0...n}
+     NG_ww0_kW,Nominal NG requirement for hotwater supply,kW,float,{0.0...n}
+     NG_ww_MWhyr,NG requirement for hotwater supply,MWh/yr,float,{0.0...n}
      Name,Unique building ID. It must start with a letter.,[-],string,alphanumeric
-     OIL_hs0_kW,Nominal OIL consumption due to space heating,kW,float,{0.0...n}
-     OIL_hs_MWhyr,OIL consumption due to space heating,MWh/yr,float,{0.0...n}
-     OIL_ww0_kW,Nominal OIL consumption due to hotwater,kW,float,{0.0...n}
-     OIL_ww_MWhyr,OIL consumption due to hotwater,MWh/yr,float,{0.0...n}
+     OIL_hs0_kW,Nominal OIL requirement for space heating supply,kW,float,{0.0...n}
+     OIL_hs_MWhyr,OIL requirement for space heating supply,MWh/yr,float,{0.0...n}
+     OIL_ww0_kW,Nominal OIL requirement for hotwater supply,kW,float,{0.0...n}
+     OIL_ww_MWhyr,OIL requirement for hotwater supply,MWh/yr,float,{0.0...n}
      PV0_kW,Nominal PV electricity consumption,kW,float,{0.0...n}
      PV_MWhyr,PV electricity consumption,MWh/yr,float,{0.0...n}
      QC_sys0_kW,Nominal Total system cooling demand.,[kW/year],float,{0.0...n}
@@ -1234,13 +1261,13 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      Qww_MWhyr,DHW heat demand,[MWh/year],float,{0.0...n}
      Qww_sys0_kW,Nominal end-use hotwater demand,kW,float,{0.0...n}
      Qww_sys_MWhyr,End-use hotwater demand,MWh/yr,float,{0.0...n}
-     SOLAR_hs0_kW,Nominal solar energy consumption due to space heating,kW,float,{0.0...n}
-     SOLAR_hs_MWhyr,Solar energy consumption due to space heating,MWh/yr,float,{0.0...n}
-     SOLAR_ww0_kW,Nominal solar energy consumption due to hotwater,kW,float,{0.0...n}
-     SOLAR_ww_MWhyr,Solar energy consumption due to hotwater,MWh/yr,float,{0.0...n}
-     WOOD_hs0_kW,Nominal WOOD consumption due to space heating,kW,float,{0.0...n}
-     WOOD_hs_MWhyr,WOOD consumption due to space heating,MWh/yr,float,{0.0...n}
-     WOOD_ww0_kW,Nominal WOOD consumption due to hotwater,kW,float,{0.0...n}
-     WOOD_ww_MWhyr,WOOD consumption due to hotwater,MWh/yr,float,{0.0...n}
+     SOLAR_hs0_kW,Nominal solar thermal energy requirement for space heating supply,kW,float,{0.0...n}
+     SOLAR_hs_MWhyr,Solar thermal energy requirement for space heating supply,MWh/yr,float,{0.0...n}
+     SOLAR_ww0_kW,Nominal solar thermal energy requirement for hotwater supply,kW,float,{0.0...n}
+     SOLAR_ww_MWhyr,Solar thermal energy requirement for hotwater supply,MWh/yr,float,{0.0...n}
+     WOOD_hs0_kW,Nominal WOOD requirement for space heating supply,kW,float,{0.0...n}
+     WOOD_hs_MWhyr,WOOD requirement for space heating supply,MWh/yr,float,{0.0...n}
+     WOOD_ww0_kW,Nominal WOOD requirement for hotwater supply,kW,float,{0.0...n}
+     WOOD_ww_MWhyr,WOOD requirement for hotwater supply,MWh/yr,float,{0.0...n}
      people0,Nominal occupancy,[people],int,{0...n}
 

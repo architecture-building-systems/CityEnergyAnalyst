@@ -4,44 +4,44 @@ get_archetypes_properties
 The following file is used by scripts: ['data-helper', 'demand']
 
 
-.. csv-table:: **construction_properties.xlsx:ARCHITECTURE**
+.. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Es,TODO,TODO,TODO,TODO
-     Hs,Fraction of heated space in building archetype,[-],float,{0.0...1}
+     Hs,Fraction of gross floor area air-conditioned.,[m2/m2],float,{0.0...1}
      Ns,TODO,TODO,TODO,TODO
      building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
      type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],string,{T1...Tn}
      type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],string,{T1...Tn}
-     type_roof,Roof construction. It relates to the contents of the default database of Envelope Properties: roof,[code],string,{T1...Tn}
-     type_shade,Shading system type. It relates to the contents of the default database of Envelope Properties: shade,[code],string,{T1...Tn}
-     type_wall,Wall construction. It relates to the contents of the default database of Envelope Properties: walll,[code],string,{T1...Tn}
-     type_win,Window type. It relates to the contents of the default database of Envelope Properties: windows,[code],string,{T1...Tn}
+     type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],string,{T1...Tn}
+     type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],float,{T1...Tn}
+     type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],float,{T1...Tn}
+     type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],float,{T1...Tn}
      void_deck,Share of floors with an open envelope (default = 0),[floor/floor],float,{0.0...1}
-     wwr_east,Window to wall ratio in building archetype,[-],float,{0.0...1}
-     wwr_north,Window to wall ratio in building archetype,[-],float,{0.0...1}
-     wwr_south,Window to wall ratio in building archetype,[-],float,{0.0...1}
-     wwr_west,Window to wall ratio in building archetype,[-],float,{0.0...1}
+     wwr_east,Window to wall ratio in in facades facing east,[m2/m2],float,{0.0...1}
+     wwr_north,Window to wall ratio in in facades facing north,[m2/m2],float,{0.0...1}
+     wwr_south,Window to wall ratio in in facades facing south,[m2/m2],float,{0.0...1}
+     wwr_west,Window to wall ratio in in facades facing west,[m2/m2],float,{0.0...1}
      year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
      year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
 
-.. csv-table:: **construction_properties.xlsx:HVAC**
+.. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:HVAC**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
-     building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,[-]
+     building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
      type_cs,Type of cooling supply system,[code],string,{T0...Tn}
-     type_ctrl,Type of control system,[code],string,{T0...Tn}
+     type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
      type_dhw,Type of hot water supply system,[code],string,{T0...Tn}
      type_hs,Type of heating supply system,[code],string,{T0...Tn}
-     type_vent,Type of ventilation system,[code],string,{T0...Tn}
+     type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],string,{T1...Tn}
      year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
      year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
 
-.. csv-table:: **construction_properties.xlsx:INDOOR_COMFORT**
+.. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -54,7 +54,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      rhum_max_pc,TODO,TODO,TODO,TODO
      rhum_min_pc,TODO,TODO,TODO,TODO
 
-.. csv-table:: **construction_properties.xlsx:INTERNAL_LOADS**
+.. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -70,7 +70,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      Vww_lpd,Peak specific daily hot water consumption,[lpd],float,{0.0...n}
      X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],float,{0.0...n}
 
-.. csv-table:: **construction_properties.xlsx:SUPPLY**
+.. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:SUPPLY**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -89,7 +89,7 @@ get_archetypes_schedules
 The following file is used by scripts: ['data-helper', 'demand']
 
 
-.. csv-table:: **occupancy_schedules.xlsx:COOLROOM**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:COOLROOM**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -105,7 +105,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:FOODSTORE**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:FOODSTORE**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -121,7 +121,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:GYM**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:GYM**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -137,42 +137,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:HOSPITAL**
-    :header: "Variable", "Description", "Unit", "Type", "Values"
-    :widths: 10,40,6,6,10
-
-     Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
-     Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     Saturday_4,TODO,TODO,TODO,TODO
-     Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
-     Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     Sunday_4,TODO,TODO,TODO,TODO
-     Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
-     Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     Weekday_4,TODO,TODO,TODO,TODO
-     density,m2 per person,[m2/p],float,{0.0...n}
-     month,Probability of use for the month,[p/p],float,{0.0...1}
-
-.. csv-table:: **occupancy_schedules.xlsx:HOTEL**
-    :header: "Variable", "Description", "Unit", "Type", "Values"
-    :widths: 10,40,6,6,10
-
-     Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
-     Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
-     Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
-     Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
-     Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
-     density,m2 per person,[m2/p],float,{0.0...n}
-     month,Probability of use for the month,[p/p],float,{0.0...1}
-
-.. csv-table:: **occupancy_schedules.xlsx:INDUSTRIAL**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:HOSPITAL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -191,7 +156,23 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:LAB**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:HOTEL**
+    :header: "Variable", "Description", "Unit", "Type", "Values"
+    :widths: 10,40,6,6,10
+
+     Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+     Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+     Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+     Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     density,m2 per person,[m2/p],float,{0.0...n}
+     month,Probability of use for the month,[p/p],float,{0.0...1}
+
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:INDUSTRIAL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -210,7 +191,26 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:LIBRARY**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:LAB**
+    :header: "Variable", "Description", "Unit", "Type", "Values"
+    :widths: 10,40,6,6,10
+
+     Saturday_1,Probability of maximum occupancy per hour on Saturday,[p/p],float,{0.0...1}
+     Saturday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Saturday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     Saturday_4,TODO,TODO,TODO,TODO
+     Sunday_1,Probability of maximum occupancy per hour on Sunday,[p/p],float,{0.0...1}
+     Sunday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Sunday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     Sunday_4,TODO,TODO,TODO,TODO
+     Weekday_1,Probability of maximum occupancy per hour in a weekday,[p/p],float,{0.0...1}
+     Weekday_2,Probability of use of lighting and applicances (daily) for each hour,[p/p],float,{0.0...1}
+     Weekday_3,Probability of domestic hot water consumption (daily) for each hour,[p/p],float,{0.0...1}
+     Weekday_4,TODO,TODO,TODO,TODO
+     density,m2 per person,[m2/p],float,{0.0...n}
+     month,Probability of use for the month,[p/p],float,{0.0...1}
+
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:LIBRARY**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -226,7 +226,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:MULTI_RES**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:MULTI_RES**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -242,7 +242,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:MUSEUM**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:MUSEUM**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -258,7 +258,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:OFFICE**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:OFFICE**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -274,7 +274,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:PARKING**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:PARKING**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -290,7 +290,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:RESTAURANT**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:RESTAURANT**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -306,7 +306,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:RETAIL**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:RETAIL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -322,7 +322,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:SCHOOL**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:SCHOOL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -338,7 +338,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:SERVERROOM**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:SERVERROOM**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -354,7 +354,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:SINGLE_RES**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:SINGLE_RES**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -370,7 +370,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      density,m2 per person,[m2/p],float,{0.0...n}
      month,Probability of use for the month,[p/p],float,{0.0...1}
 
-.. csv-table:: **occupancy_schedules.xlsx:SWIMMING**
+.. csv-table:: **databases/ch/archetypes/occupancy_schedules.xlsx:SWIMMING**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -392,7 +392,7 @@ get_archetypes_system_controls
 The following file is used by scripts: ['demand']
 
 
-.. csv-table:: **system_controls.xlsx:heating_cooling**
+.. csv-table:: **databases/ch/archetypes/system_controls.xlsx:heating_cooling**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -409,7 +409,7 @@ get_building_age
 The following file is used by scripts: ['data-helper', 'emissions', 'demand']
 
 
-.. csv-table:: **age.dbf**
+.. csv-table:: **inputs/building-properties/age.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -428,7 +428,7 @@ get_building_occupancy
 The following file is used by scripts: ['data-helper', 'emissions', 'demand']
 
 
-.. csv-table:: **occupancy.dbf**
+.. csv-table:: **inputs/building-properties/occupancy.dbf**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -456,7 +456,7 @@ get_data_benchmark
 The following file is used by scripts: ['emissions']
 
 
-.. csv-table:: **benchmark_2000W.xls:EMBODIED**
+.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:EMBODIED**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -472,7 +472,7 @@ The following file is used by scripts: ['emissions']
      PEN_today,Present primary energy demand,[-],float,{0.0...n}
      code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-.. csv-table:: **benchmark_2000W.xls:MOBILITY**
+.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:MOBILITY**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -488,7 +488,7 @@ The following file is used by scripts: ['emissions']
      PEN_today,Present primary energy demand,[-],float,{0.0...n}
      code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-.. csv-table:: **benchmark_2000W.xls:OPERATION**
+.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:OPERATION**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -504,7 +504,7 @@ The following file is used by scripts: ['emissions']
      PEN_today,Present primary energy demand,[-],float,{0.0...n}
      code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-.. csv-table:: **benchmark_2000W.xls:TOTAL**
+.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:TOTAL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -526,7 +526,7 @@ get_district_geometry
 The following file is used by scripts: ['radiation-daysim']
 
 
-.. csv-table:: **district.shp**
+.. csv-table:: **inputs/building-geometry/district.shp**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -543,42 +543,42 @@ get_envelope_systems
 The following file is used by scripts: ['radiation-daysim', 'demand']
 
 
-.. csv-table:: **envelope_systems.xls:CONSTRUCTION**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:CONSTRUCTION**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],float,{0.0...1}
      Description,Describes the source of the benchmark standards.,[-],string,[-]
-     code,Unique ID of component in the construction category,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-.. csv-table:: **envelope_systems.xls:LEAKAGE**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:LEAKAGE**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Description,Describes the source of the benchmark standards.,[-],string,[-]
-     code,Unique ID of component in the leakage category,[-],string,{T1..Tn}
-     n50,Air exchanges due to leakage at a pressure of 50 Pa.,[1/h],float,{0.0...n}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+     n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],float,{0.0...10}
 
-.. csv-table:: **envelope_systems.xls:ROOF**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:ROOF**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Description,Describes the source of the benchmark standards.,[-],string,[-]
      U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
      a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
-     code,Unique ID of component in the window category,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
      r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],float,{0.0...1}
 
-.. csv-table:: **envelope_systems.xls:SHADING**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:SHADING**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Description,Describes the source of the benchmark standards.,[-],string,[-]
-     code,Unique ID of component in the window category,[-],string,{T1...Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],float,{0.0...1}
 
-.. csv-table:: **envelope_systems.xls:WALL**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:WALL**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -586,18 +586,18 @@ The following file is used by scripts: ['radiation-daysim', 'demand']
      U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.0...1}
      U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
      a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
-     code,Unique ID of component in the window category,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
      r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],float,{0.0...1}
 
-.. csv-table:: **envelope_systems.xls:WINDOW**
+.. csv-table:: **databases/ch/systems/envelope_systems.xls:WINDOW**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Description,Describes the source of the benchmark standards.,[-],string,[-]
      G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],float,{0.0...1}
      U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],float,{0.1...n}
-     code,Unique ID of component in the window category,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],float,{0.0...1}
 
 
@@ -606,26 +606,7 @@ get_life_cycle_inventory_building_systems
 The following file is used by scripts: ['emissions']
 
 
-.. csv-table:: **LCA_buildings.xlsx:EMBODIED_EMISSIONS**
-    :header: "Variable", "Description", "Unit", "Type", "Values"
-    :widths: 10,40,6,6,10
-
-     Excavation,Typical embodied CO2 equivalent emissions for site excavation.,[kgCO2],float,{0.0....n}
-     Floor_g,Typical embodied CO2 equivalent emissions of the ground floor.,[kgCO2],float,{0.0....n}
-     Floor_int,Typical embodied CO2 equivalent emissions of the interior floor.,[kgCO2],float,{0.0....n}
-     Roof,Typical embodied CO2 equivalent emissions of the roof.,[kgCO2],float,{0.0....n}
-     Services,Typical embodied CO2 equivalent emissions of the building services.,[kgCO2],float,{0.0....n}
-     Wall_ext_ag,Typical embodied CO2 equivalent emissions of the exterior above ground walls.,[kgCO2],float,{0.0....n}
-     Wall_ext_bg,Typical embodied CO2 equivalent emissions of the exterior below ground walls.,[kgCO2],float,{0.0....n}
-     Wall_int_nosup,nan,[kgCO2],float,{0.0....n}
-     Wall_int_sup,nan,[kgCO2],float,{0.0....n}
-     Win_ext,Typical embodied CO2 equivalent emissions of the external glazing.,[kgCO2],float,{0.0....n}
-     building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
-     standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
-     year_end,Upper limit of year interval where the building properties apply,[-],int,{0...n}
-     year_start,Lower limit of year interval where the building properties apply,[-],int,{0...n}
-
-.. csv-table:: **LCA_buildings.xlsx:EMBODIED_ENERGY**
+.. csv-table:: **databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -641,8 +622,27 @@ The following file is used by scripts: ['emissions']
      Win_ext,Typical embodied energy of the external glazing.,[GJ],float,{0.0....n}
      building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
-     year_end,Upper limit of year interval where the building properties apply,[-],int,{0...n}
-     year_start,Lower limit of year interval where the building properties apply,[-],int,{0...n}
+     year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
+     year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
+
+.. csv-table:: **databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY**
+    :header: "Variable", "Description", "Unit", "Type", "Values"
+    :widths: 10,40,6,6,10
+
+     Excavation,Typical embodied energy for site excavation.,[GJ],float,{0.0....n}
+     Floor_g,Typical embodied energy of the ground floor.,[GJ],float,{0.0....n}
+     Floor_int,Typical embodied energy of the interior floor.,[GJ],float,{0.0....n}
+     Roof,Typical embodied energy of the roof.,[GJ],float,{0.0....n}
+     Services,Typical embodied energy of the building services.,[GJ],float,{0.0....n}
+     Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[GJ],float,{0.0....n}
+     Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[GJ],float,{0.0....n}
+     Wall_int_nosup,nan,[GJ],float,{0.0....n}
+     Wall_int_sup,nan,[GJ],float,{0.0....n}
+     Win_ext,Typical embodied energy of the external glazing.,[GJ],float,{0.0....n}
+     building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
+     standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],string,{C or R}
+     year_end,Upper limit of year interval where the building properties apply,[yr],int,{0...n}
+     year_start,Lower limit of year interval where the building properties apply,[yr],int,{0...n}
 
 
 get_life_cycle_inventory_supply_systems
@@ -650,7 +650,7 @@ get_life_cycle_inventory_supply_systems
 The following file is used by scripts: ['demand', 'operation-costs', 'emissions']
 
 
-.. csv-table:: **LCA_infrastructure.xlsx:COOLING**
+.. csv-table:: **databases/sg/lifecycle/lca_infrastructure.xlsx:COOLING**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -661,7 +661,7 @@ The following file is used by scripts: ['demand', 'operation-costs', 'emissions'
      scale_cs,TODO,TODO,TODO,TODO
      source_cs,TODO,TODO,TODO,TODO
 
-.. csv-table:: **LCA_infrastructure.xlsx:DHW**
+.. csv-table:: **databases/sg/lifecycle/lca_infrastructure.xlsx:DHW**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -672,7 +672,7 @@ The following file is used by scripts: ['demand', 'operation-costs', 'emissions'
      scale_dhw,TODO,TODO,TODO,TODO
      source_dhw,TODO,TODO,TODO,TODO
 
-.. csv-table:: **LCA_infrastructure.xlsx:ELECTRICITY**
+.. csv-table:: **databases/sg/lifecycle/lca_infrastructure.xlsx:ELECTRICITY**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -683,7 +683,7 @@ The following file is used by scripts: ['demand', 'operation-costs', 'emissions'
      scale_el,TODO,TODO,TODO,TODO
      source_el,TODO,TODO,TODO,TODO
 
-.. csv-table:: **LCA_infrastructure.xlsx:HEATING**
+.. csv-table:: **databases/sg/lifecycle/lca_infrastructure.xlsx:HEATING**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -694,14 +694,14 @@ The following file is used by scripts: ['demand', 'operation-costs', 'emissions'
      scale_hs,TODO,TODO,TODO,TODO
      source_hs,TODO,TODO,TODO,TODO
 
-.. csv-table:: **LCA_infrastructure.xlsx:RESOURCES**
+.. csv-table:: **databases/sg/lifecycle/lca_infrastructure.xlsx:RESOURCES**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      CO2,Refers to the equivalent CO2 required to run the heating or cooling system.,[kg/kWh],float,{0.0....n}
-     Description,Description of the heating and cooling network (related to the code). E.g. heatpump -soil/water,[-],string,[-]
+     Description,Describes the source of the benchmark standards.,[-],string,[-]
      PEN,Refers to the amount of primary energy needed (PEN) to run the heating or cooling system.,[kWh/kWh],float,{0.0....n}
-     code,Unique ID of component of the heating and cooling network,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
      costs_kWh,Refers to the financial costs required to run the heating or cooling system.,[$/kWh],float,{0.0....n}
      reference,nan,[-],string,[-]
 
@@ -711,7 +711,7 @@ get_street_network
 The following file is used by scripts: ['network-layout']
 
 
-.. csv-table:: **streets.shp**
+.. csv-table:: **inputs/networks/streets.shp**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -724,7 +724,7 @@ get_supply_systems
 The following file is used by scripts: ['thermal-network', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector']
 
 
-.. csv-table:: **supply_systems.xls:Absorption_chiller**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Absorption_chiller**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -756,7 +756,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      type,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:BH**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:BH**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -776,7 +776,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Boiler**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Boiler**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -796,7 +796,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:CCGT**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:CCGT**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -816,7 +816,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:CT**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:CT**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -836,7 +836,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Chiller**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Chiller**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -856,7 +856,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:FC**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:FC**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -876,7 +876,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Furnace**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Furnace**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -896,7 +896,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:HEX**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:HEX**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -921,7 +921,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e_p,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:HP**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:HP**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -941,7 +941,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:PV**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:PV**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -973,7 +973,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      type,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:PVT**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:PVT**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -993,19 +993,19 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Piping**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Piping**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
      Currency ,TODO,TODO,TODO,TODO
-     Description,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],string,alphanumeric
+     Description,Describes the source of the benchmark standards.,[-],string,[-]
      Diameter_max,Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],float,{0.0....n}
      Diameter_min,Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.,[-],float,{0.0....n}
      Investment,Typical cost of investment for a given pipe diameter.,[$/m],float,{0.0....n}
      Unit,Defines the unit of measurement for the diameter values.,[mm],string,[-]
      assumption,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Pricing**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Pricing**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1014,7 +1014,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      currency,TODO,TODO,TODO,TODO
      value,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:Pump**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:Pump**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1034,7 +1034,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      e,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:SC**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:SC**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1072,7 +1072,7 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      type,TODO,TODO,TODO,TODO
      unit,TODO,TODO,TODO,TODO
 
-.. csv-table:: **supply_systems.xls:TES**
+.. csv-table:: **databases/ch/systems/supply_systems.xls:TES**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1098,7 +1098,7 @@ get_technical_emission_systems
 The following file is used by scripts: ['demand']
 
 
-.. csv-table:: **emission_systems.xls:controller**
+.. csv-table:: **databases/ch/systems/emission_systems.xls:controller**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1107,7 +1107,7 @@ The following file is used by scripts: ['demand']
      dT_Qcs,TODO,TODO,TODO,TODO
      dT_Qhs,TODO,TODO,TODO,TODO
 
-.. csv-table:: **emission_systems.xls:cooling**
+.. csv-table:: **databases/ch/systems/emission_systems.xls:cooling**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1124,16 +1124,16 @@ The following file is used by scripts: ['demand']
      dTcs0_scu_C,TODO,TODO,TODO,TODO
      dTcs_C,TODO,TODO,TODO,TODO
 
-.. csv-table:: **emission_systems.xls:dhw**
+.. csv-table:: **databases/ch/systems/emission_systems.xls:dhw**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
-     Description,Description of the typical supply and return temperatures related to HVAC: hot water and sanitation.,[-],string,[-]
+     Description,Describes the source of the benchmark standards.,[-],string,[-]
      Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).,[W/m2],float,{0.0....n}
      Tsww0_C,Typical supply water temperature.,[C],float,{0.0....n}
-     code,Unique ID of component of the typical supply and return temperature bins.,[-],string,{T1..Tn}
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],string,Those stored in Zone_occupancy
 
-.. csv-table:: **emission_systems.xls:heating**
+.. csv-table:: **databases/ch/systems/emission_systems.xls:heating**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1150,7 +1150,7 @@ The following file is used by scripts: ['demand']
      dThs0_shu_C,TODO,TODO,TODO,TODO
      dThs_C,TODO,TODO,TODO,TODO
 
-.. csv-table:: **emission_systems.xls:ventilation**
+.. csv-table:: **databases/ch/systems/emission_systems.xls:ventilation**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1168,7 +1168,7 @@ get_terrain
 The following file is used by scripts: ['radiation-daysim']
 
 
-.. csv-table:: **terrain.tif**
+.. csv-table:: **inputs/topography/terrain.tif**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1180,7 +1180,7 @@ get_thermal_networks
 The following file is used by scripts: ['thermal-network']
 
 
-.. csv-table:: **thermal_networks.xls:MATERIAL PROPERTIES**
+.. csv-table:: **databases/ch/systems/thermal_networks.xls:MATERIAL PROPERTIES**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1190,7 +1190,7 @@ The following file is used by scripts: ['thermal-network']
      material,TODO,TODO,TODO,TODO
      rho_kgm3,Density of transmission fluid.,[kg/m3],float,{0.0...n}
 
-.. csv-table:: **thermal_networks.xls:PIPING CATALOG**
+.. csv-table:: **databases/ch/systems/thermal_networks.xls:PIPING CATALOG**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1207,7 +1207,7 @@ get_weather
 The following file is used by scripts: ['radiation-daysim', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand', 'thermal-network']
 
 
-.. csv-table:: **Singapore.epw**
+.. csv-table:: **c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
@@ -1219,7 +1219,7 @@ get_zone_geometry
 The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 'emissions', 'network-layout', 'radiation-daysim', 'demand', 'solar-collector']
 
 
-.. csv-table:: **zone.shp**
+.. csv-table:: **inputs/building-geometry/zone.shp**
     :header: "Variable", "Description", "Unit", "Type", "Values"
     :widths: 10,40,6,6,10
 
