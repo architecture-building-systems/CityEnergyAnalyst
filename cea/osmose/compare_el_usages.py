@@ -319,7 +319,7 @@ def plot_electricity_usages_units(ax, el_per_unit_df, config):
     y_offset = np.zeros(el_per_unit_df.shape[0])
     # plot bars
     unit_table = {'OAU': 'el_oau', 'RAU': 'el_lcu', 'SCU': 'el_scu'}
-    for unit in unit_table.keys():
+    for unit in ['OAU','RAU','SCU']:
         column = unit_table[unit]
         ax.bar(x_ticks, el_per_unit_df[column], bar_width, bottom=y_offset, alpha=opacity, color=color_table[unit],
                label=unit)
@@ -402,7 +402,7 @@ def path_to_save_cop_shr_scatter(building, building_result_path):
 
 if __name__ == '__main__':
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    buildings = ["B005", "B008"]
+    buildings = ["B005", "B006"]
     timestep = "168"
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
@@ -412,8 +412,8 @@ if __name__ == '__main__':
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ['WTP_CBD_m_WP1_HOT']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_0625'
+    # cases = ['WTP_CBD_m_WP1_OFF']
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0629'
     # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
