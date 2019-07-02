@@ -8,19 +8,21 @@ def get_start_t(timesteps):
 # import from config # TODO: add to config
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']
 # TECHS = ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
-TECHS = ['HCS_ER0']
-specified_buildings = ["B004"]
+TECHS = ['HCS_3for2']
+specified_buildings = ["B001"]
 #specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
 timesteps = 168  # 168 (week)
 season = 'Summer'
 start_t = get_start_t(timesteps)
+PLOTS = []
+# PLOTS = ['electricity','air_flow','OAU_T_w_supply','exergy_usages']
 # osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
 # ampl_lic_path = "C:\\Users\\Zhongming\\Desktop\\SH\\ampl"
 # result_destination = "C:\\Users\\Zhongming\\Documents\\WP1_results"
 
-osmose_project_path = "C:\\OSMOSE_projects\\hcs_windows\\Projects"
+osmose_project_path = "C:\\OSMOSE_projects\\HCS_20190625\\Projects"
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
-result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_results"
+result_destination = "C:\\Users\\Shanshan\\Documents\\WP1_0702"
 new_calculation = False
 
 
