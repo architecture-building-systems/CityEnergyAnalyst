@@ -78,44 +78,44 @@ def evaluation_main(individual, buildings_in_this_network, locator, solar_featur
                                                                                                      buildings_in_this_network)
 
     if DHN_barcode.count("1") == gv.num_tot_buildings:
-        network_file_name_heating = "Network_summary_result_all.csv"
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DHNf_W"]).values
+        network_file_name_heating = "DH_Network_summary_result_all.csv"
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
     elif DHN_barcode.count("1") == 0:
-        network_file_name_heating = "Network_summary_result_all.csv"
+        network_file_name_heating = "DH_Network_summary_result_all.csv"
         Q_heating_max_W = 0
     else:
-        network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
-            total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
+        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
+            total_demand = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
             buildings_in_this_network = total_demand.Name.values
             # Run the substation and distribution routines
             substation.substation_main(locator, total_demand, buildings_in_this_network, DHN_configuration, DCN_configuration,
                                        Flag=True)
             summarize_network.network_main(locator, total_demand, buildings_in_this_network, config, gv, DHN_barcode)
 
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
     if DCN_barcode.count("1") == gv.num_tot_buildings:
-        network_file_name_cooling = "Network_summary_result_all.csv"
+        network_file_name_cooling = "DC_Network_summary_result_all.csv"
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
                                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
                                    usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
     elif DCN_barcode.count("1") == 0:
-        network_file_name_cooling = "Network_summary_result_all.csv"
+        network_file_name_cooling = "DC_Network_summary_result_all.csv"
         Q_cooling_max_W = 0
     else:
-        network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
-        if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
-            total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
+        if not os.path.exists(locator.get_optimization_network_results_summary('DC',DCN_barcode)):
+            total_demand = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
             buildings_in_this_network = total_demand.Name.values
 
             # Run the substation and distribution routines
@@ -125,10 +125,10 @@ def evaluation_main(individual, buildings_in_this_network, locator, solar_featur
 
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                    usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
 
@@ -552,11 +552,11 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
     ## add network barcodes to lists and run network simulation
     if not (DHN_barcode in DHN_barcode_list) and DHN_barcode.count("1") > 0:
         DHN_barcode_list.append(DHN_barcode)
-        demand_this_network = supportFn.createTotalNtwCsv(DHN_barcode, locator)
+        demand_this_network = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
         buildings_in_this_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main(locator, demand_this_network, buildings_in_this_network, DHN_configuration, DCN_configuration,
+        substation.substation_main_heating(locator, demand_this_network, buildings_in_this_network, DHN_configuration,
                                    Flag=True)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr'))
@@ -564,11 +564,11 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
 
     if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
         DCN_barcode_list.append(DCN_barcode)
-        demand_this_network = supportFn.createTotalNtwCsv(DCN_barcode, locator)
+        demand_this_network = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
         buildings_in_this_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main(locator, demand_this_network, building_names, DHN_configuration, DCN_configuration,
+        substation.substation_main_cooling(locator, demand_this_network, buildings_in_this_network, DCN_configuration,
                                    Flag=True)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_connected_according_to_load(total_demand, load_name='QC_sys_MWhyr'))

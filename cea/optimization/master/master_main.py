@@ -146,9 +146,20 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         save_generation_dataframe(columns_of_saved_files, genCP, invalid_ind, locator)
 
         with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
-            cp = dict(nsga_selected_population=pop, generation=0, DHN_List=DHN_network_list, DCN_list=DCN_network_list,
-                      tested_population=[],
-                      tested_population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
+            cp = dict(nsga_selected_population=pop,
+                      generation=0,
+                      DHN_list_All=DHN_network_list,
+                      DCN_list_All=DCN_network_list,
+                      tested_population=invalid_ind,
+                      tested_population_fitness=fitnesses,
+                      epsIndicator=epsInd,
+                      halloffame=halloffame,
+                      halloffame_fitness=halloffame_fitness,
+                      euclidean_distance=euclidean_distance,
+                      spread=spread,
+                      detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
+                      district_heating_network=config.optimization.district_heating_network,
+                      district_cooling_network=config.optimization.district_cooling_network)
             json.dump(cp, fp)
 
     else:
