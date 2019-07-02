@@ -78,7 +78,8 @@ def schemas():
 
 def get_schema_variables(schema):
     """
-    This method returns a set of all variables within the schema.yml. The set is organised by: (variable_name, locator_method, script, file_name:sheet_name)
+    This method returns a set of all variables within the schema.yml. The set is organised by:
+    (variable_name, locator_method, script, file_name:sheet_name)
     If the variable is from an input database, the script is replaced by the name of the file - without extension:
 
         - i.e. if 'created_by' is an empty list and the variable is stored in 'LCA_buildings.xlsx': script = 'LCA_buildings'
@@ -114,10 +115,11 @@ def get_schema_variables(schema):
                 variable = 'EPW file variables'
 
             # if the variable is actually a sheet name due to tree data shape
-            if schema[locator_method]['file_type'] == 'xlsx' or schema[locator_method]['file_type'] == 'xls':
-                for Variable in schema[locator_method]['schema'][variable]:
-                    file_name = schema[locator_method]['file_path'].split('\\')[-1] + ':' + variable
-                    schema_variables.add((Variable, locator_method, script, file_name))
+            if schema[locator_method]['file_type'] in {'xlsx', 'xls'}:
+                worksheet = variable
+                for variable_in_sheet in schema[locator_method]['schema'][worksheet]:
+                    file_name = schema[locator_method]['file_path'].split('\\')[-1] + ':' + worksheet
+                    schema_variables.add((variable_in_sheet, locator_method, script, file_name))
             # otherwise create the meta set
             else:
 
