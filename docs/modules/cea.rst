@@ -59,6 +59,14 @@ cea.globalvar module
     :undoc-members:
     :show-inheritance:
 
+cea.glossary module
+-------------------
+
+.. automodule:: cea.glossary
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.inputlocator module
 -----------------------
 
