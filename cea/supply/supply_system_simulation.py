@@ -510,7 +510,7 @@ def main(config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config, prices, lca)
+                                                                             weather_file,config)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     network_features = NetworkOptimizationFeatures(config, locator)

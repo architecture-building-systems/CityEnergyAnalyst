@@ -20,6 +20,10 @@ from cea.optimization import slave_data
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.optimization.slave import natural_gas_main
+from cea.resources.geothermal import calc_ground_temperature
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_connected_according_to_load
+from cea.utilities import epwreader
+
 import summarize_individual
 
 
@@ -538,31 +542,37 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
     # decode an individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
                                                                                                      building_names)
+    #local variables
+    weather_file = config.weather
+    network_depth_m = Z0
+    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
+    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
+    total_demand = pd.read_csv(locator.get_total_demand())
 
     ## add network barcodes to lists and run network simulation
     if not (DHN_barcode in DHN_barcode_list) and DHN_barcode.count("1") > 0:
         DHN_barcode_list.append(DHN_barcode)
-
-        total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
-        building_names = total_demand.Name.values
+        demand_this_network = supportFn.createTotalNtwCsv(DHN_barcode, locator)
+        buildings_in_this_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+        substation.substation_main(locator, demand_this_network, buildings_in_this_network, DHN_configuration, DCN_configuration,
                                    Flag=True)
         # Run thermal network simulation
-        summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        num_tot_buildings = len(get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr'))
+        summarize_network.network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildings, "DH", DHN_barcode)
 
     if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
         DCN_barcode_list.append(DCN_barcode)
-
-        total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
-        building_names = total_demand.Name.values
+        demand_this_network = supportFn.createTotalNtwCsv(DCN_barcode, locator)
+        buildings_in_this_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+        substation.substation_main(locator, demand_this_network, building_names, DHN_configuration, DCN_configuration,
                                    Flag=True)
         # Run thermal network simulation
-        summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+        num_tot_buildings = len(get_building_names_connected_according_to_load(total_demand, load_name='QC_sys_MWhyr'))
+        summarize_network.network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildings, "DC", DCN_barcode)
 
     return np.nan
 
