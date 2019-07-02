@@ -1,9 +1,7 @@
 """
-Electricity Operation
+Disconnected buildings
 
-All buildings are connected to the grid which completely cover their needs
-(as the buying / selling electricity prices are the same and are independent 
-from the hour in the day / the day in the year)
+This computes the close-to-optimal supply system for single buildings.
 
 """
 import cea.config
@@ -14,13 +12,13 @@ from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing import decentralized_buildings_heating
 from cea.optimization.preprocessing import decentralized_buildings_cooling
 from cea.optimization.lca_calculations import LcaCalculations
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_connected_according_to_load
 
 
 
-def disconnected_building_main(locator, building_names, config, prices, lca):
+def disconnected_building_main(locator, building_names, total_demand, config, prices, lca):
     """
-    This function computes the parameters for the electrical demand contributing to the pareto optimal alternatives.
-    in the future, this aspect should be included in the optimization itself.
+    This functions optimizes disconnected buildings individually
 
     :param locator: locator class
     :param gv: global variables class
@@ -29,15 +27,16 @@ def disconnected_building_main(locator, building_names, config, prices, lca):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
-    controls = pd.read_excel(locator.get_archetypes_system_controls())
-    if controls['has-cooling-season'].item() or controls['has-heating-season'].item():
-        if controls['has-cooling-season'].item():
-            decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
-        if controls['has-heating-season'].item():
-            decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices, lca)
-    else:
-        raise ValueError("The case study has neither a heating nor a cooling season, please specify in system_controls.xlsx")
+    # local variables
+    buildings_name_with_heating = get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr')
+    buildings_name_with_cooling = get_building_names_connected_according_to_load(total_demand, load_name='QC_sys_MWhyr')
 
+    if buildings_name_with_heating != []:
+        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names,
+                                                                            config, prices,lca)
+    if buildings_name_with_cooling != []:
+        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names,
+                                                                            config, prices, lca)
     print "Run decentralized model for buildings"
 
 def main(config):
@@ -46,9 +45,10 @@ def main(config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
+    detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
+    lca = LcaCalculations(locator, detailed_electricity_pricing)
 
-    disconnected_building_main(locator=locator, building_names=building_names, config=config, prices=prices, lca=lca)
+    disconnected_building_main(locator=locator, building_names=building_names, total_demand=total_demand, config=config, prices=prices, lca=lca)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
