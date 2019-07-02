@@ -1,7 +1,7 @@
 PVT_metadata_results:
   created_by: [photovoltaic-thermal]
   description: scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_pvt_sensors.csv'
+  file_path: outputs/data/potentials/solar/b001_pvt_sensors.csv
   file_type: csv
   schema:
     AREA_m2:
@@ -74,7 +74,7 @@ PVT_metadata_results:
 PVT_results:
   created_by: [photovoltaic-thermal]
   description: scenario/outputs/data/potentials/solar/{building_name}_SC.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_pvt.csv'
+  file_path: outputs/data/potentials/solar/b001_pvt.csv
   file_type: csv
   schema:
     Area_PVT_m2:
@@ -156,7 +156,7 @@ PVT_results:
 PVT_total_buildings:
   created_by: [photovoltaic-thermal]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\pvt_total_buildings.csv'
+  file_path: outputs/data/potentials/solar/pvt_total_buildings.csv
   file_type: csv
   schema:
     Area_PVT_m2:
@@ -229,7 +229,7 @@ PVT_total_buildings:
 PVT_totals:
   created_by: [photovoltaic-thermal]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\pvt_total.csv'
+  file_path: outputs/data/potentials/solar/pvt_total.csv
   file_type: csv
   schema:
     Area_PVT_m2:
@@ -314,7 +314,7 @@ PVT_totals:
 PV_metadata_results:
   created_by: [photovoltaic]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_pv_sensors.csv'
+  file_path: outputs/data/potentials/solar/b001_pv_sensors.csv
   file_type: csv
   schema:
     AREA_m2:
@@ -387,7 +387,7 @@ PV_metadata_results:
 PV_results:
   created_by: [photovoltaic]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_pv.csv'
+  file_path: outputs/data/potentials/solar/b001_pv.csv
   file_type: csv
   schema:
     Area_PV_m2:
@@ -436,7 +436,7 @@ PV_results:
 PV_total_buildings:
   created_by: [photovoltaic]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\pv_total_buildings.csv'
+  file_path: outputs/data/potentials/solar/pv_total_buildings.csv
   file_type: csv
   schema:
     Area_PV_m2:
@@ -485,7 +485,7 @@ PV_total_buildings:
 PV_totals:
   created_by: [photovoltaic]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\pv_total.csv'
+  file_path: outputs/data/potentials/solar/pv_total.csv
   file_type: csv
   schema:
     Area_PV_m2:
@@ -537,7 +537,7 @@ PV_totals:
 SC_metadata_results:
   created_by: [solar-collector]
   description: scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_sc_et_sensors.csv'
+  file_path: outputs/data/potentials/solar/b001_sc_et_sensors.csv
   file_type: csv
   schema:
     AREA_m2:
@@ -610,7 +610,7 @@ SC_metadata_results:
 SC_results:
   created_by: [solar-collector]
   description: scenario/outputs/data/potentials/solar/{building_name}_SC.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\b001_sc_et.csv'
+  file_path: outputs/data/potentials/solar/b001_sc_et.csv
   file_type: csv
   schema:
     Area_SC_m2:
@@ -674,7 +674,7 @@ SC_results:
 SC_total_buildings:
   created_by: [solar-collector]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\sc_et_total_buildings.csv'
+  file_path: outputs/data/potentials/solar/sc_et_total_buildings.csv
   file_type: csv
   schema:
     Area_SC_m2:
@@ -729,7 +729,7 @@ SC_total_buildings:
 SC_totals:
   created_by: [solar-collector]
   description: scenario/outputs/data/potentials/solar/{building_name}_PV.csv
-  file_path: '{general:scenario}\outputs\data\potentials\solar\sc_et_total.csv'
+  file_path: outputs/data/potentials/solar/sc_et_total.csv
   file_type: csv
   schema:
     Area_SC_m2:
@@ -798,7 +798,7 @@ get_archetypes_properties:
   description: "Returns the database of construction properties to be used by the\
     \ data-helper. These are copied\n        to the scenario if they are not yet present,\
     \ based on the configured region for the scenario."
-  file_path: '{general:scenario}\databases\ch\archetypes\construction_properties.xlsx'
+  file_path: databases/ch/archetypes/construction_properties.xlsx
   file_type: xlsx
   schema:
     ARCHITECTURE:
@@ -974,7 +974,7 @@ get_archetypes_schedules:
   description: "Returns the database of schedules to be used by the data-helper. These\
     \ are copied\n        to the scenario if they are not yet present, based on the\
     \ configured region for the scenario."
-  file_path: '{general:scenario}\databases\ch\archetypes\occupancy_schedules.xlsx'
+  file_path: databases/ch/archetypes/occupancy_schedules.xlsx
   file_type: xlsx
   schema:
     COOLROOM:
@@ -1623,7 +1623,7 @@ get_archetypes_system_controls:
     \ These are copied\n        to the scenario if they are not yet present, based\
     \ on the configured region for the scenario.\n\n        :param region:\n     \
     \   :return:\n        "
-  file_path: '{general:scenario}\databases\ch\archetypes\system_controls.xlsx'
+  file_path: databases/ch/archetypes/system_controls.xlsx
   file_type: xlsx
   schema:
     heating_cooling:
@@ -1649,7 +1649,7 @@ get_archetypes_system_controls:
 get_building_age:
   created_by: []
   description: scenario/inputs/building-properties/age.dbf
-  file_path: '{general:scenario}\inputs\building-properties\age.dbf'
+  file_path: inputs/building-properties/age.dbf
   file_type: dbf
   schema:
     HVAC:
@@ -1682,7 +1682,7 @@ get_building_architecture:
   description: "scenario/inputs/building-properties/architecture.dbf\n        This\
     \ file is generated by the data-helper script.\n        This file is used in the\
     \ embodied energy script (cea/embodied.py)\n        and the demand script (cea/demand_main.py)"
-  file_path: '{general:scenario}\inputs\building-properties\architecture.dbf'
+  file_path: inputs/building-properties/architecture.dbf
   file_type: dbf
   schema:
     Es:
@@ -1734,7 +1734,7 @@ get_building_architecture:
 get_building_comfort:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/indoor_comfort.dbf
-  file_path: '{general:scenario}\inputs\building-properties\indoor_comfort.dbf'
+  file_path: inputs/building-properties/indoor_comfort.dbf
   file_type: dbf
   schema:
     Name:
@@ -1765,7 +1765,7 @@ get_building_comfort:
 get_building_hvac:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/technical_systems.dbf
-  file_path: '{general:scenario}\inputs\building-properties\technical_systems.dbf'
+  file_path: inputs/building-properties/technical_systems.dbf
   file_type: dbf
   schema:
     Name:
@@ -1790,7 +1790,7 @@ get_building_hvac:
 get_building_internal:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/internal_loads.dbf
-  file_path: '{general:scenario}\inputs\building-properties\internal_loads.dbf'
+  file_path: inputs/building-properties/internal_loads.dbf
   file_type: dbf
   schema:
     Ea_Wm2:
@@ -1830,7 +1830,7 @@ get_building_internal:
 get_building_occupancy:
   created_by: []
   description: scenario/inputs/building-properties/building_occupancy.dbf
-  file_path: '{general:scenario}\inputs\building-properties\occupancy.dbf'
+  file_path: inputs/building-properties/occupancy.dbf
   file_type: dbf
   schema:
     COOLROOM:
@@ -1888,7 +1888,7 @@ get_building_occupancy:
 get_building_restrictions:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/technical_systems.dbf
-  file_path: '{general:scenario}\inputs\building-properties\restrictions.dbf'
+  file_path: inputs/building-properties/restrictions.dbf
   file_type: dbf
   schema:
     BIOGAS:
@@ -1913,7 +1913,7 @@ get_building_restrictions:
 get_building_supply:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/building_supply.dbf
-  file_path: '{general:scenario}\inputs\building-properties\supply_systems.dbf'
+  file_path: inputs/building-properties/supply_systems.dbf
   file_type: dbf
   schema:
     Name:
@@ -1935,7 +1935,7 @@ get_building_supply:
 get_costs_operation_file:
   created_by: [operation-costs]
   description: scenario/outputs/data/costs/{load}_cost_operation.pdf
-  file_path: '{general:scenario}\outputs\data\costs\operation_costs.csv'
+  file_path: outputs/data/costs/operation_costs.csv
   file_type: csv
   schema:
     COAL_hs_cost_m2yr:
@@ -2052,7 +2052,7 @@ get_data_benchmark:
   description: "Returns the database of life cycle inventory for supply systems. These\
     \ are copied\n        to the scenario if they are not yet present, based on the\
     \ configured region for the scenario."
-  file_path: '{general:scenario}\databases\sg\benchmarks\benchmark_2000w.xls'
+  file_path: databases/sg/benchmarks/benchmark_2000w.xls
   file_type: xls
   schema:
     EMBODIED:
@@ -2195,7 +2195,7 @@ get_data_benchmark:
 get_demand_results_file:
   created_by: [demand]
   description: scenario/outputs/data/demand/{building_name}.csv
-  file_path: '{general:scenario}\outputs\data\demand\b001.csv'
+  file_path: outputs/data/demand/b001.csv
   file_type: csv
   schema:
     COAL_hs_kWh:
@@ -2562,7 +2562,7 @@ get_demand_results_file:
 get_district_geometry:
   created_by: []
   description: scenario/inputs/building-geometry/district.shp
-  file_path: '{general:scenario}\inputs\building-geometry\district.shp'
+  file_path: inputs/building-geometry/district.shp
   file_type: shp
   schema:
     Name:
@@ -2586,7 +2586,7 @@ get_district_geometry:
   used_by: [radiation-daysim]
 get_edge_mass_flow_csv_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\nominal_edgemassflow_at_design_dh__kgpers.csv'
+  file_path: outputs/data/optimization/network/layout/nominal_edgemassflow_at_design_dh__kgpers.csv
   file_type: csv
   schema:
     PIPE0:
@@ -2599,7 +2599,7 @@ get_edge_mass_flow_csv_file:
 get_envelope_systems:
   created_by: []
   description: databases/Systems/emission_systems.csv
-  file_path: '{general:scenario}\databases\ch\systems\envelope_systems.xls'
+  file_path: databases/ch/systems/envelope_systems.xls
   file_type: xls
   schema:
     CONSTRUCTION:
@@ -2693,7 +2693,7 @@ get_envelope_systems:
 get_lake_potential:
   created_by: [lake-potential]
   description: null
-  file_path: '{general:scenario}\outputs\data\potentials\lake_potential.csv'
+  file_path: outputs/data/potentials/lake_potential.csv
   file_type: csv
   schema:
     hour:
@@ -2706,7 +2706,7 @@ get_lake_potential:
 get_lca_embodied:
   created_by: [emissions]
   description: scenario/outputs/data/emissions/Total_LCA_embodied.csv
-  file_path: '{general:scenario}\outputs\data\emissions\total_lca_embodied.csv'
+  file_path: outputs/data/emissions/total_lca_embodied.csv
   file_type: csv
   schema:
     E_ghg_kgm2:
@@ -2731,7 +2731,7 @@ get_lca_embodied:
 get_lca_mobility:
   created_by: [emissions]
   description: scenario/outputs/data/emissions/Total_LCA_mobility.csv
-  file_path: '{general:scenario}\outputs\data\emissions\total_lca_mobility.csv'
+  file_path: outputs/data/emissions/total_lca_mobility.csv
   file_type: csv
   schema:
     GFA_m2:
@@ -2756,7 +2756,7 @@ get_lca_mobility:
 get_lca_operation:
   created_by: [emissions]
   description: scenario/outputs/data/emissions/Total_LCA_operation.csv
-  file_path: '{general:scenario}\outputs\data\emissions\total_lca_operation.csv'
+  file_path: outputs/data/emissions/total_lca_operation.csv
   file_type: csv
   schema:
     COAL_hs_ghg_kgm2:
@@ -3005,7 +3005,7 @@ get_life_cycle_inventory_building_systems:
   description: "Returns the database of life cycle inventory for buildings systems.\
     \ These are copied\n        to the scenario if they are not yet present, based\
     \ on the configured region for the scenario."
-  file_path: '{general:scenario}\databases\sg\lifecycle\lca_buildings.xlsx'
+  file_path: databases/sg/lifecycle/lca_buildings.xlsx
   file_type: xlsx
   schema:
     EMBODIED_EMISSIONS:
@@ -3100,7 +3100,7 @@ get_life_cycle_inventory_supply_systems:
   description: "Returns the database of life cycle inventory for supply systems. These\
     \ are copied\n        to the scenario if they are not yet present, based on the\
     \ configured region for the scenario."
-  file_path: '{general:scenario}\databases\sg\lifecycle\lca_infrastructure.xlsx'
+  file_path: databases/sg/lifecycle/lca_infrastructure.xlsx
   file_type: xlsx
   schema:
     COOLING:
@@ -3203,7 +3203,7 @@ get_life_cycle_inventory_supply_systems:
 get_network_layout_edges_shapefile:
   created_by: [thermal-network, network-layout]
   description: scenario/inputs/network/DH or DC/network-edges.shp
-  file_path: '{general:scenario}\inputs\networks\dc\edges.shp'
+  file_path: inputs/networks/dc/edges.shp
   file_type: shp
   schema:
     Name:
@@ -3225,7 +3225,7 @@ get_network_layout_edges_shapefile:
 get_network_layout_nodes_shapefile:
   created_by: [network-layout]
   description: scenario/inputs/network/DH or DC/network-nodes.shp
-  file_path: '{general:scenario}\inputs\networks\dc\nodes.shp'
+  file_path: inputs/networks/dc/nodes.shp
   file_type: shp
   schema:
     Building:
@@ -3243,7 +3243,7 @@ get_network_layout_nodes_shapefile:
   used_by: [thermal-network]
 get_network_node_types_csv_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__nodes.csv'
+  file_path: outputs/data/optimization/network/layout/dh__nodes.csv
   file_type: csv
   schema:
     Building:
@@ -3279,7 +3279,7 @@ get_network_node_types_csv_file:
   used_by: []
 get_node_mass_flow_csv_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\nominal_nodemassflow_at_design_dh__kgpers.csv'
+  file_path: outputs/data/optimization/network/layout/nominal_nodemassflow_at_design_dh__kgpers.csv
   file_type: csv
   schema:
     NODE0:
@@ -3291,7 +3291,7 @@ get_node_mass_flow_csv_file:
   used_by: []
 get_optimization_network_edge_list_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__edges.csv'
+  file_path: outputs/data/optimization/network/layout/dh__edges.csv
   file_type: csv
   schema:
     D_ext_m:
@@ -3345,7 +3345,7 @@ get_optimization_network_edge_list_file:
   used_by: []
 get_optimization_network_edge_node_matrix_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__edgenode.csv'
+  file_path: outputs/data/optimization/network/layout/dh__edgenode.csv
   file_type: csv
   schema:
     PIPE0:
@@ -3357,7 +3357,7 @@ get_optimization_network_edge_node_matrix_file:
   used_by: []
 get_optimization_network_layout_massflow_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__massflow_kgs.csv'
+  file_path: outputs/data/optimization/network/layout/dh__massflow_kgs.csv
   file_type: csv
   schema:
     PIPE0:
@@ -3366,7 +3366,7 @@ get_optimization_network_layout_massflow_file:
   used_by: []
 get_optimization_network_layout_plant_heat_requirement_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__plant_heat_requirement_kw.csv'
+  file_path: outputs/data/optimization/network/layout/dh__plant_heat_requirement_kw.csv
   file_type: csv
   schema:
     NONE:
@@ -3375,7 +3375,7 @@ get_optimization_network_layout_plant_heat_requirement_file:
   used_by: []
 get_optimization_network_layout_ploss_system_edges_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__ploss_system_edges_kw.csv'
+  file_path: outputs/data/optimization/network/layout/dh__ploss_system_edges_kw.csv
   file_type: csv
   schema:
     PIPE0:
@@ -3384,7 +3384,7 @@ get_optimization_network_layout_ploss_system_edges_file:
   used_by: []
 get_optimization_network_layout_pressure_drop_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__p_deltap_pa.csv'
+  file_path: outputs/data/optimization/network/layout/dh__p_deltap_pa.csv
   file_type: csv
   schema:
     pressure_loss_return_Pa:
@@ -3402,7 +3402,7 @@ get_optimization_network_layout_pressure_drop_file:
   used_by: []
 get_optimization_network_layout_qloss_system_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__qloss_system_kw.csv'
+  file_path: outputs/data/optimization/network/layout/dh__qloss_system_kw.csv
   file_type: csv
   schema:
     PIPE0:
@@ -3411,7 +3411,7 @@ get_optimization_network_layout_qloss_system_file:
   used_by: []
 get_optimization_network_layout_return_temperature_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__t_return_k.csv'
+  file_path: outputs/data/optimization/network/layout/dh__t_return_k.csv
   file_type: csv
   schema:
     NODE0:
@@ -3420,7 +3420,7 @@ get_optimization_network_layout_return_temperature_file:
   used_by: []
 get_optimization_network_layout_supply_temperature_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__t_supply_k.csv'
+  file_path: outputs/data/optimization/network/layout/dh__t_supply_k.csv
   file_type: csv
   schema:
     NODE0:
@@ -3429,7 +3429,7 @@ get_optimization_network_layout_supply_temperature_file:
   used_by: []
 get_optimization_network_node_list_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__nodes.csv'
+  file_path: outputs/data/optimization/network/layout/dh__nodes.csv
   file_type: csv
   schema:
     Building:
@@ -3465,7 +3465,7 @@ get_optimization_network_node_list_file:
   used_by: []
 get_optimization_network_substation_ploss_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\dh__ploss_substations_kw.csv'
+  file_path: outputs/data/optimization/network/layout/dh__ploss_substations_kw.csv
   file_type: csv
   schema:
     B001:
@@ -3475,7 +3475,7 @@ get_optimization_network_substation_ploss_file:
 get_radiation_building:
   created_by: [radiation-daysim]
   description: scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json
-  file_path: '{general:scenario}\outputs\data\solar-radiation\b001_insolation_whm2.json'
+  file_path: outputs/data/solar-radiation/b001_insolation_whm2.json
   file_type: json
   schema:
     srf0:
@@ -3485,7 +3485,7 @@ get_radiation_building:
 get_radiation_metadata:
   created_by: [radiation-daysim]
   description: scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv
-  file_path: '{general:scenario}\outputs\data\solar-radiation\b001_geometry.csv'
+  file_path: outputs/data/solar-radiation/b001_geometry.csv
   file_type: csv
   schema:
     AREA_m2:
@@ -3525,7 +3525,7 @@ get_radiation_metadata:
 get_sewage_heat_potential:
   created_by: [sewage-potential]
   description: null
-  file_path: '{general:scenario}\outputs\data\potentials\swp.csv'
+  file_path: outputs/data/potentials/swp.csv
   file_type: csv
   schema:
     Qsw_kW:
@@ -3550,7 +3550,7 @@ get_sewage_heat_potential:
 get_street_network:
   created_by: []
   description: null
-  file_path: '{general:scenario}\inputs\networks\streets.shp'
+  file_path: inputs/networks/streets.shp
   file_type: shp
   schema:
     FID:
@@ -3565,7 +3565,7 @@ get_supply_systems:
   description: "Returns the database of supply systems for cost analysis. These are\
     \ copied\n        to the scenario if they are not yet present, based on the configured\
     \ region for the scenario."
-  file_path: '{general:scenario}\databases\ch\systems\supply_systems.xls'
+  file_path: databases/ch/systems/supply_systems.xls
   file_type: xls
   schema:
     Absorption_chiller:
@@ -4434,7 +4434,7 @@ get_supply_systems:
 get_technical_emission_systems:
   created_by: []
   description: databases/Systems/emission_systems.csv
-  file_path: '{general:scenario}\databases\ch\systems\emission_systems.xls'
+  file_path: databases/ch/systems/emission_systems.xls
   file_type: xls
   schema:
     controller:
@@ -4563,7 +4563,7 @@ get_technical_emission_systems:
 get_terrain:
   created_by: []
   description: scenario/inputs/topography/terrain.tif
-  file_path: '{general:scenario}\inputs\topography\terrain.tif'
+  file_path: inputs/topography/terrain.tif
   file_type: tif
   schema:
     Mock_variable:
@@ -4572,7 +4572,7 @@ get_terrain:
   used_by: [radiation-daysim]
 get_thermal_demand_csv_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\optimization\network\layout\aggregated_demand_dh__wh.csv'
+  file_path: outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv
   file_type: csv
   schema:
     B001:
@@ -4584,7 +4584,7 @@ get_thermal_demand_csv_file:
   used_by: []
 get_thermal_network_layout_pressure_drop_kw_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\thermal-network\dc__p_deltap_kw.csv'
+  file_path: outputs/data/thermal-network/dc__p_deltap_kw.csv
   file_type: csv
   schema:
     pressure_loss_return_kW:
@@ -4602,7 +4602,7 @@ get_thermal_network_layout_pressure_drop_kw_file:
   used_by: []
 get_thermal_network_qloss_system_file:
   created_by: [thermal-network]
-  file_path: '{general:scenario}\outputs\data\thermal-network\dc__p_deltap_kw.csv'
+  file_path: outputs/data/thermal-network/dc__p_deltap_kw.csv
   file_type: csv
   schema:
     PIPE0:
@@ -4617,7 +4617,7 @@ get_thermal_network_qloss_system_file:
   used_by: []
 get_thermal_networks:
   created_by: []
-  file_path: '{general:scenario}\databases\ch\systems\thermal_networks.xls'
+  file_path: databases/ch/systems/thermal_networks.xls
   file_type: xls
   schema:
     !!python/unicode 'MATERIAL PROPERTIES':
@@ -4659,7 +4659,7 @@ get_thermal_networks:
 get_total_demand:
   created_by: [demand]
   description: scenario/outputs/data/demand/Total_demand.csv
-  file_path: '{general:scenario}\outputs\data\demand\total_demand.csv'
+  file_path: outputs/data/demand/total_demand.csv
   file_type: csv
   schema:
     Af_m2:
@@ -5071,7 +5071,7 @@ get_weather:
     \ ``name``. This can either be one\n        of the pre-configured weather files\
     \ (see ``get_weather_names``) or a path to an existing weather file.\n       \
     \ Returns the default weather file if no other file can be resolved."
-  file_path: c:\users\assistenz\documents\github\cityenergyanalyst\cea\databases\weather\singapore.epw
+  file_path: c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw
   file_type: epw
   schema:
     Albedo (index = 32):
@@ -5184,7 +5184,7 @@ get_weather:
 get_zone_geometry:
   created_by: []
   description: scenario/inputs/building-geometry/zone.shp
-  file_path: '{general:scenario}\inputs\building-geometry\zone.shp'
+  file_path: inputs/building-geometry/zone.shp
   file_type: shp
   schema:
     Name:
