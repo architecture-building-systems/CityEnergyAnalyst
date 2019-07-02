@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from extract_demand_outputs import calc_w_from_rh
-import cea.osmose.exergy_calculation as calc_Ex
+import cea.osmose.exergy_functions as calc_Ex
 import cea.osmose.auxiliary_functions as aux
 
 
