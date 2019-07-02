@@ -63,15 +63,15 @@ function createTable(parent, name, values, columns, types) {
         data: values,
         columns: defineColumns(columns, types),
         placeholder: placeholder,
-        tooltipsHeader:true,
 
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
-        cellClick:selectRow,
+        cellClick: selectRow,
         cellEdited: updateData,
         rowSelectionChanged: addToSelection,
-        tooltips: createTooltip
     });
+
+    createTooltip();
 
     $('#select-all-button').prop('disabled', !values.length);
     $('#filter-button').prop('disabled', !values.length);
@@ -174,8 +174,17 @@ function filterSelection(selection) {
     }
 }
 
-function createTooltip(column) {
+function createTooltip() {
+    var table = $('.tab.active').data('name');
 
+    $.each(inputstore.getColumns(table), function (_, column) {
+        var glossary = inputstore.glossary[table][column];
+        if (glossary) {
+            $(`.tabulator-col-title:contains("${column}")`)
+                .prop('data-toggle', 'tooltip')
+                .prop('title', `UNIT: ${glossary['UNIT']}\nDESCRIPTION: ${glossary['DESCRIPTION']}`);
+        }
+    });
 }
 
 $(window).load(function () {

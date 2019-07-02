@@ -70,11 +70,15 @@ def route_geojson_streets():
 
 @blueprint.route('/building-properties', methods=['GET'])
 def route_get_building_properties():
+    import pandas
+    import cea.plots
+
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}}
+    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}
+    glossary = pandas.read_csv(os.path.join(os.path.dirname(cea.plots.__file__), 'naming_new.csv'))
     for db in INPUTS:
         db_info = INPUTS[db]
         location = getattr(locator, db_info['location'])()
@@ -85,7 +89,6 @@ def route_get_building_properties():
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                 store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
-                import pandas
                 table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
                 if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
@@ -99,6 +102,9 @@ def route_get_building_properties():
 
             store['columns'][db] = db_info['fieldnames']
             store['column_types'][db] = {k: v.__name__ for k, v in db_info['fieldtypes'].items()}
+            store['glossary'][db] = json.loads(glossary[glossary['SCRIPT'] == db][['VARIABLE', 'UNIT', 'DESCRIPTION']]
+                                               .set_index('VARIABLE').to_json(orient='index'))
+
         except IOError as e:
             print(e)
             store['tables'][db] = {}
