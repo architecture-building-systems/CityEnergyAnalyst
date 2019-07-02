@@ -75,21 +75,8 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     iteration = 0
 
     for building_name in buildings_in_this_network:
-        buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
-                                     usecols=['DATE', 'mcpcdata_sys_kWperC', 'Qcdata_sys_kWh']))
-        substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                       usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
-                                                'mdot_space_cooling_and_refrigeration_result_kgpers',
-                                                'mdot_space_cooling_data_center_and_refrigeration_result_kgpers',
-                                                'Q_heating_W', 'Q_dhw_W',
-                                                'Q_space_cooling_and_refrigeration_W',
-                                                'Q_space_cooling_data_center_and_refrigeration_W',
-                                                'T_return_DH_result_K',
-                                                'T_return_DC_space_cooling_and_refrigeration_result_K',
-                                                'T_return_DC_space_cooling_data_center_and_refrigeration_result_K',
-                                                'T_supply_DH_result_K',
-                                                'T_supply_DC_space_cooling_and_refrigeration_result_K',
-                                                'T_supply_DC_space_cooling_data_center_and_refrigeration_result_K']))
+        buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
+        substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type)))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
         mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values

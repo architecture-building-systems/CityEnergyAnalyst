@@ -158,7 +158,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
                                                               "Total_%(DHN_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode, "DH")
 
     if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
         if DCN_barcode.count("0") == 0:
@@ -167,7 +167,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
                                                               "Total_%(DCN_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode, "DC")
 
     costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
 

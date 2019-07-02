@@ -15,7 +15,6 @@ from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
-import cea.technologies.substation as substation
 from cea.constants import HOURS_IN_YEAR
 
 
@@ -46,9 +45,6 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
     ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
-    total_demand = pd.read_csv(locator.get_total_demand())
-
-
     def calc_new_load(mdot, TsupDH, Tret):
         """
         This function calculates the load distribution side of the district heating distribution.
@@ -69,9 +65,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
 
     for building_name in building_names:
         print building_name
-        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
-                                   cooling_configuration=7, Flag=False)
-        loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+        loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
                                             loads["T_return_DH_result_K"])
