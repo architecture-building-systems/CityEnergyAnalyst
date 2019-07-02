@@ -28,10 +28,11 @@
         <link href="{{ url_for('static', filename='vendors/bootstrap-progressbar/css/bootstrap-progressbar-3.3.4.min.css') }}" rel="stylesheet">
         <!-- JQVMap -->
         <link href="{{ url_for('static', filename='vendors/jqvmap/dist/jqvmap.min.css') }}" rel="stylesheet"/>
-
+        <!-- EasyAutocomplete -->
+        <link href="{{ url_for('static', filename='vendors/EasyAutocomplete/easy-autocomplete.css') }}" rel="stylesheet"/>
+        <link href="{{ url_for('static', filename='vendors/EasyAutocomplete/easy-autocomplete.themes.css') }}" rel="stylesheet"/>
         <!-- switchery -->
         <link href="{{ url_for('static', filename='vendors/switchery/dist/switchery.css') }}" rel="stylesheet">
-
       {% endblock stylesheets %}
       <!-- Custom Theme Style -->
       <link href="{{ url_for('static', filename='build/css/custom.css') }}" rel="stylesheet">
@@ -97,6 +98,7 @@
         <script src="{{ url_for('static', filename='vendors/autosize/dist/autosize.min.js') }}"></script>
         <!-- jQuery autocomplete -->
         <script src="{{ url_for('static', filename='vendors/devbridge-autocomplete/dist/jquery.autocomplete.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='build/js/glossary_search.js') }}"></script>
         <!-- starrr -->
         <script src="{{ url_for('static', filename='vendors/starrr/dist/starrr.js') }}"></script>
       {% endblock %}
