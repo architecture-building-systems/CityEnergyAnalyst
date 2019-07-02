@@ -74,29 +74,31 @@ def multi_criteria_main(locator, config):
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
     # rank data
+    compiled_data_df = rakn_normalized_data(compiled_data_df, config)
+
+    compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
+    return
+
+def rakn_normalized_data(compiled_data_df, config):
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
     compiled_data_df['emissions_rank'] = compiled_data_df['normalized_emissions'].rank(ascending=True)
     compiled_data_df['prim_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)
-
     ## user defined mcda
     compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * \
                                     config.multi_criteria.capextotal * \
                                     config.multi_criteria.economicsustainability + \
-                                    compiled_data_df[ 'normalized_Opex'] * \
+                                    compiled_data_df['normalized_Opex'] * \
                                     config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
                                     compiled_data_df['normalized_TAC'] * \
                                     config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
-                                    compiled_data_df['normalized_emissions'] *\
+                                    compiled_data_df['normalized_emissions'] * \
                                     config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
-                                    compiled_data_df['normalized_prim'] *\
+                                    compiled_data_df['normalized_prim'] * \
                                     config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
-                                    compiled_data_df['normalized_renewable_share'] *\
+                                    compiled_data_df['normalized_renewable_share'] * \
                                     config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
-
     compiled_data_df['user_MCDA_rank'] = compiled_data_df['user_MCDA'].rank(ascending=True)
-
-    compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
-    return
+    return compiled_data_df
 
 
 def normalize_compiled_data(compiled_data_df):
