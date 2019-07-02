@@ -527,10 +527,10 @@ def calc_substations_costs_advanced(building_names, data_costs, df_current_indiv
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
             if df_current_individual['Data Centre'][0] == 1:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC"),
                                  usecols=["Q_space_cooling_and_refrigeration_W"])
             else:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC"),
                                  usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
 
             subsArray = np.array(df)
@@ -625,7 +625,7 @@ def calc_substations_costs(data_costs, building_names, config, district_network_
     substation_costs_total_USD = 0
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
-            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
                              usecols=["Q_dhw_W", "Q_heating_W"])
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])

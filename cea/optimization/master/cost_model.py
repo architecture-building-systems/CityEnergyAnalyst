@@ -528,7 +528,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         # HEX (1 per building in ntw)
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "1":
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
                                  usecols=["Q_dhw_W", "Q_heating_W"])
                 subsArray = np.array(df)
 

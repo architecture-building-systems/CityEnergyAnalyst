@@ -390,13 +390,13 @@ class InputLocator(object):
         Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
-    def get_optimization_substations_results_file(self, building_name):
+    def get_optimization_substations_results_file(self, building_name, network_type):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
-        return os.path.join(self.get_optimization_substations_folder(), "%(building_name)s_result.csv" % locals())
+        return os.path.join(self.get_optimization_substations_folder(), "%(network_type)s_%(building_name)s_result.csv" % locals())
 
-    def get_optimization_substations_total_file(self, genome):
+    def get_optimization_substations_total_file(self, genome, network_type):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
-        return os.path.join(self.get_optimization_substations_folder(), "Total_%(genome)s.csv" % locals())
+        return os.path.join(self.get_optimization_substations_folder(), "Total_%(network_type)s_%(genome)s.csv" % locals())
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax

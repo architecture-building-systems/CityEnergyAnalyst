@@ -31,13 +31,13 @@ import summarize_individual
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, solar_features, network_features, gv, config, prices, lca,
+def evaluation_main(individual, buildings_in_this_network, locator, solar_features, network_features, gv, config, prices, lca,
                     ind_num, gen):
     """
     This function evaluates an individual
 
     :param individual: list with values of the individual
-    :param building_names: list with names of buildings
+    :param buildings_in_this_network: list with names of buildings
     :param locator: locator class
     :param solar_features: solar features call to class
     :param network_features: network features call to class
@@ -46,7 +46,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     :param config: configuration file
     :param prices: class of prices used in optimization
     :type individual: list
-    :type building_names: list
+    :type buildings_in_this_network: list
     :type locator: string
     :type solar_features: class
     :type network_features: class
@@ -64,7 +64,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     district_cooling_network = config.optimization.district_cooling_network
 
     # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
-    individual = evaluate_constrains(individual, len(building_names), config, district_heating_network, district_cooling_network)
+    individual = evaluate_constrains(individual, len(buildings_in_this_network), config, district_heating_network, district_cooling_network)
 
     # INTITIALIZE OBJECTIVE FUNCTIONS =  costs, CO2 and primary energy
     costs_USD = 0
@@ -75,7 +75,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # CREATE THE INDIVIDUAL
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                     building_names)
+                                                                                                     buildings_in_this_network)
 
     if DHN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_heating = "Network_summary_result_all.csv"
@@ -88,11 +88,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
             total_demand = supportFn.createTotalNtwCsv(DHN_barcode, locator)
-            building_names = total_demand.Name.values
+            buildings_in_this_network = total_demand.Name.values
             # Run the substation and distribution routines
-            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, buildings_in_this_network, DHN_configuration, DCN_configuration,
                                        Flag=True)
-            summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+            summarize_network.network_main(locator, total_demand, buildings_in_this_network, config, gv, DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
@@ -116,12 +116,12 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
         if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
             total_demand = supportFn.createTotalNtwCsv(DCN_barcode, locator)
-            building_names = total_demand.Name.values
+            buildings_in_this_network = total_demand.Name.values
 
             # Run the substation and distribution routines
-            substation.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+            substation.substation_main(locator, total_demand, buildings_in_this_network, DHN_configuration, DCN_configuration,
                                        Flag=True)
-            summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+            summarize_network.network_main(locator, total_demand, buildings_in_this_network, config, gv, DCN_barcode)
 
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -142,11 +142,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         print "No GHP constraint check possible \n"
 
     # Export to context
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, building_names,
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, buildings_in_this_network,
                                                           ind_num, gen)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
-    master_to_slave_vars.total_buildings = len(building_names)
+    master_to_slave_vars.total_buildings = len(buildings_in_this_network)
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
 
@@ -157,7 +157,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
                                                               "Total_%(DHN_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode, "DH")
 
     if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
         if DCN_barcode.count("0") == 0:
@@ -166,7 +166,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
                                                               "Total_%(DCN_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode, "DC")
 
     # Thermal Storage Calculations; Run storage optimization
     costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator,
@@ -247,7 +247,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # CAPEX CALCULATIONS
     print "Add extra costs"
-    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator,
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(buildings_in_this_network, locator,
                                                                                               master_to_slave_vars,
                                                                                               Q_heating_uncovered_design_W,
                                                                                               Q_heating_uncovered_annual_W,
