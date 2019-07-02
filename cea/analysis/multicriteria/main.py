@@ -64,9 +64,7 @@ def multi_criteria_main(locator, config):
         compiled_data_df = pd.DataFrame()
         individual_list = data_processed['individual_list']
         for i, individual in enumerate(individual_list):
-            df_current_individual = pd.DataFrame(data_processed['data_generation'].loc[i])
             compiled_data_df = compiled_data_df.append(preprocessing_cost_data_DH(individual,
-                                                                                  df_current_individual,
                                                                                   locator,
                                                                                   data_processed,
                                                                                   data_address,
@@ -81,23 +79,23 @@ def multi_criteria_main(locator, config):
     compiled_data_df['prim_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)
 
     ## user defined mcda
-    compiled_data_df['user_MCDA'] = compiled_data_df[
-                                        'normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
-                                    compiled_data_df[
-                                        'normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
-                                    compiled_data_df[
-                                        'normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
-                                    compiled_data_df[
-                                        'normalized_emissions'] * config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
-                                    compiled_data_df[
-                                        'normalized_prim'] * config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
-                                    compiled_data_df[
-                                        'normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
+    compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * \
+                                    config.multi_criteria.capextotal * \
+                                    config.multi_criteria.economicsustainability + \
+                                    compiled_data_df[ 'normalized_Opex'] * \
+                                    config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                    compiled_data_df['normalized_TAC'] * \
+                                    config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                    compiled_data_df['normalized_emissions'] *\
+                                    config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                    compiled_data_df['normalized_prim'] *\
+                                    config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
+                                    compiled_data_df['normalized_renewable_share'] *\
+                                    config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
 
     compiled_data_df['user_MCDA_rank'] = compiled_data_df['user_MCDA'].rank(ascending=True)
 
     compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
-
     return
 
 
@@ -270,58 +268,221 @@ def preprocessing_cost_data_DC(individual, df_current_individual, locator, data_
         locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
     data_cooling = pd.read_csv(
         os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
-    data_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
     data_emissions = pd.read_csv(
         os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number)))
 
-    # Total CAPEX calculations
+    # CONNECTED UNITS COSTS
+    data_costs = calc_connected_costs_advanced(data_costs, data_cooling, data_emissions)
+
+    # DISCONNECTED UNITS COSTS
+    data_costs = calc_disconnected_costs_advanced(data_costs, building_names, district_network_barcode, locator)
+
+    # GET OBJECTIVES
+    data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
+    data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
+    data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
+
+    # NETWORK COSTS TODO:this should be part of the optimization
+    data_costs = calc_network_costs(data_costs, config, district_cooling_network, district_heating_network,
+                                    district_network_barcode, locator)
+
+    # SUBSTATIONS COSTS
+    data_costs = calc_substations_costs_advanced(building_names, data_costs, df_current_individual,
+                                                 district_network_barcode, locator)
+
+    # ELECTRICITY EXTRA COSTS
+    lca = LcaCalculations(locator, detailed_electricity_pricing)
+    data_electricity = pd.read_csv(os.path.join(
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
+    data_costs = calc_electricity_costs_advanced(data_costs, data_electricity, lca)
+
+    # SUMMARIZE ALL COSTS
+    data_costs['Capex_a_total_Mio'] = data_costs['Capex_a_connected_Mio'] + \
+                                      data_costs['Capex_a_disconnected_Mio'] + \
+                                      data_costs['Capex_a_substation_Mio'] + \
+                                      data_costs['Capex_a_network_Mio']
+
+    data_costs['Capex_total_Mio'] = data_costs['Capex_total_connected_Mio'] + \
+                                    data_costs['Capex_total_disconnected_Mio'] + \
+                                    data_costs['Capex_total_substation_Mio'] + \
+                                    data_costs['Capex_total_network_Mio']
+
+    data_costs['Opex_total_Mio'] = data_costs['Opex_total_connected_Mio'] + \
+                                   data_costs['Opex_total_disconnected_Mio'] + \
+                                   data_costs['Opex_total_electricity_Mio']
+
+    data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
+
+    # temporary fix for bug in emissions calculation, change it after executive course
+    data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(
+        2 * data_emissions['CO2_PV_disconnected'] / 1E6)
+    data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(
+        2 * data_emissions['Eprim_PV_disconnected'] / 1E6)
+
+    return data_costs
+
+
+def preprocessing_cost_data_DH(individual, locator, data_raw, data_address, config):
+    # local variables
+    district_network_barcode = data_raw['network'].loc[individual].values[0]
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    district_heating_network = data_raw['district_heating_network']
+    district_cooling_network = data_raw['district_cooling_network']
+    detailed_electricity_pricing = data_raw['detailed_electricity_pricing']
+
+    # get data about individual (pointer)
+    data_address = data_address[data_address['individual_list'] == individual]
+    generation_number = data_address['generation_number_address'].values[0]
+    individual_number = data_address['individual_number_address'].values[0]
+
+    # GET COSTS FOR CONNECTED UNITS
+    data_costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual_number,
+                                                                                     generation_number))
+    data_costs['Capex_a_connected_Mio'] = data_costs.filter(like='Capex_a').sum(axis=1)[0] / 1E6
+    data_costs['Capex_total_connected_Mio'] = data_costs.filter(like='Capex').sum(axis=1)[0] / 1E6
+    data_costs['Opex_total_connected_Mio'] = data_costs.filter(like='Opex').sum(axis=1)[0] / 1E6
+
+    # GET OBJECTIVES
+    data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
+    data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
+    data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
+
+    # COSTS OF DISCONNECTED UNITS TODO:this should be part of the optimization
+    data_costs = calc_disconnected_buildings_costs(building_names, data_costs, district_network_barcode, locator)
+
+    # NETWORK COSTS TODO:this should be part of the optimization
+    data_costs = calc_network_costs(data_costs, config, district_cooling_network, district_heating_network,
+                                    district_network_barcode, locator)
+
+    # SUBSTATIONS COSTS TODO:this should be part of the optimization
+    data_costs = calc_substations_costs(data_costs, building_names, config, district_network_barcode, locator)
+
+    # EXTRA - ELECTRICITY COSTS (AN UGLY FIX) - TODO:this should be part of the optimization
+    data_electricity = pd.read_csv(
+        locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number,
+                                                                              generation_number))
+    lca = LcaCalculations(locator, detailed_electricity_pricing)
+    data_costs = calc_electricity_costs(data_costs, data_electricity, lca)
+
+    # SUMMARY OF ALL TOTAL COSTS (CAPEX AND OPEX)
+    data_costs['Capex_a_total_Mio'] = data_costs['Capex_a_connected_Mio'] + \
+                                      data_costs['Capex_a_disconnected_Mio'] + \
+                                      data_costs['Capex_a_substation_Mio'] + \
+                                      data_costs['Capex_a_network_Mio']
+    data_costs['Capex_total_Mio'] = data_costs['Capex_total_connected_Mio'] + \
+                                    data_costs['Capex_total_disconnected_Mio'] + \
+                                    data_costs['Capex_total_substation_Mio'] + \
+                                    data_costs['Capex_total_network_Mio']
+
+    data_costs['Opex_total_Mio'] =  data_costs['Opex_total_connected_Mio'] + \
+                                    data_costs['Opex_total_disconnected_Mio'] + \
+                                    data_costs['Opex_total_electricity_Mio']
+
+    data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
+
+    # SUMMARY OF ALL EMISSIONS (AN UGLY FIX) - TODO:there was a message saying that it should be fixed in 2018, did that happen?
+    data_emissions = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual_number,
+                                                                                         generation_number))
+    data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(
+        2 * data_emissions['CO2_PV_disconnected'] / 1E6)
+    data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(
+        2 * data_emissions['Eprim_PV_disconnected'] / 1E6)
+
+    return data_costs
+
+
+def calc_electricity_costs_advanced(data_costs, data_electricity, lca):
+    data_costs['Total_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1E9  # GW
+    data_costs['Electricity_for_hotwater_GW'] = (data_electricity['E_hotwater_total_W'].sum()) / 1E9  # GW
+    data_costs['Electricity_for_appliances_GW'] = (data_electricity['E_appliances_total_W'].sum()) / 1E9  # GW
+    renewable_share_electricity = (data_electricity['E_PV_directload_W'].sum() +
+                                   data_electricity['E_PV_grid_W'].sum() + data_electricity[
+                                       'E_PVT_directload_W'].sum() +
+                                   data_electricity['E_PVT_grid_W'].sum()) * 100 / \
+                                  (data_costs['Total_electricity_demand_GW'] * 1E9)
+    data_costs['renewable_share_electricity'] = renewable_share_electricity
+    data_costs['Opex_total_electricity_Mio'] = ((data_electricity['E_GRID_directload_W'].sum() +
+                                            data_electricity['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean()) / 1E6
+
+
+def calc_connected_costs_advanced(data_costs, data_cooling, data_emissions):
     # Absorption Chiller
     data_costs['Capex_total_ACH_USD'] = data_costs['Capex_ACH_USD'].values[0]
     data_costs['Opex_total_ACH_USD'] = np.sum(data_cooling['Opex_var_ACH_USD']) + data_costs['Opex_fixed_ACH_USD']
-
     # VCC
     data_costs['Capex_total_VCC_USD'] = data_costs['Capex_VCC_USD'].values[0]
     data_costs['Opex_total_VCC_USD'] = np.sum(data_cooling['Opex_var_VCC_USD']) + data_costs['Opex_fixed_VCC_USD']
-
     # VCC Backup
     data_costs['Capex_total_VCC_backup_USD'] = data_costs['Capex_VCC_backup_USD']
     data_costs['Opex_total_VCC_backup_USD'] = np.sum(data_cooling['Opex_var_VCC_backup_USD']) + data_costs[
         'Opex_fixed_VCC_backup_USD']
-
     # Storage Tank
     data_costs['Capex_total_storage_tank_USD'] = data_costs['Capex_Tank_USD']
     data_costs['Opex_total_storage_tank_USD'] = data_costs['Opex_fixed_Tank_USD']
-
     # Cooling Tower
     data_costs['Capex_total_CT_USD'] = data_costs['Capex_CT_USD']
     data_costs['Opex_total_CT_USD'] = np.sum(data_cooling['Opex_var_CT_USD']) + data_costs['Opex_fixed_CT_USD']
-
     # CCGT
     data_costs['Capex_total_CCGT_USD'] = data_costs['Capex_CCGT_USD']
     data_costs['Opex_total_CCGT_USD'] = np.sum(data_cooling['Opex_var_CCGT_USD']) + data_costs['Opex_fixed_CCGT_USD']
-
     # pump
     data_costs['Capex_total_pumps_USD'] = data_emissions['Capex_pump'].values[0]
     data_costs['Opex_total_pumps_USD'] = data_costs['Opex_fixed_pump_USD'] + data_costs['Opex_var_pump_USD']
-
     # Lake - No lake in singapore, should be modified in future
     data_costs['Opex_fixed_Lake_USD'] = [0]
     data_costs['Opex_total_Lake_USD'] = [0]
     data_costs['Capex_total_Lake_USD'] = [0]
     data_costs['Capex_a_Lake_USD'] = [0]
-
     # PV
     data_costs['Capex_total_PV_USD'] = data_emissions['Capex_PV'].values[0]
     data_costs['Opex_total_PV_USD'] = data_emissions['Opex_fixed_PV'].values[0]
     data_costs['Opex_fixed_PV_USD'] = data_emissions['Opex_fixed_PV'].values[0]
     data_costs['Capex_a_PV_USD'] = data_emissions['Capex_a_PV'].values[0]
+    # ALL ANNUALIZED
+    data_costs['Capex_a_ACH_USD'] = data_costs['Capex_a_ACH_USD'].values[0]
+    data_costs['Capex_a_VCC_USD'] = data_costs['Capex_a_VCC_USD'].values[0]
+    data_costs['Capex_a_VCC_backup_USD'] = data_costs['Capex_a_VCC_backup_USD'].values[0]
+    data_costs['Capex_a_CT_USD'] = data_costs['Capex_a_CT_USD'].values[0]
+    data_costs['Capex_a_storage_tank_USD'] = data_costs['Capex_a_Tank_USD'].values[0]
+    data_costs['Capex_a_total_pumps_USD'] = data_emissions['Capex_a_pump'].values[0]
+    data_costs['Capex_a_CCGT_USD'] = data_costs['Capex_a_CCGT_USD'].values[0]
+    data_costs['Capex_a_PV_USD'] = data_emissions['Capex_a_PV'].values[0]
 
-    # Disconnected Buildings
+    data_costs['Capex_a_connected_Mio'] = (data_costs['Capex_a_ACH_USD'] +
+                                           data_costs['Capex_a_VCC_USD'] +
+                                           data_costs['Capex_a_VCC_backup_USD'] +
+                                           data_costs['Capex_a_CT_USD'] +
+                                           data_costs['Capex_a_storage_tank_USD'] +
+                                           data_costs['Capex_a_total_pumps_USD'] +
+                                           data_costs['Capex_a_CCGT_USD'] +
+                                           data_costs['Capex_a_PV_USD']) / 1E6
+
+    data_costs['Capex_total_connected_Mio'] = (data_costs['Capex_total_ACH_USD'] +
+                                               data_costs['Capex_total_VCC_USD'] +
+                                               data_costs['Capex_total_VCC_backup_USD'] +
+                                               data_costs['Capex_total_storage_tank_USD'] +
+                                               data_costs['Capex_total_CT_USD'] +
+                                               data_costs['Capex_total_CCGT_USD'] +
+                                               data_costs['Capex_total_pumps_USD'] +
+                                               data_costs['Capex_total_PV_USD']) / 1E6
+
+    data_costs['Opex_total_connected_Mio'] = (data_costs['Opex_total_ACH_USD'] +
+                                              data_costs['Opex_total_VCC_USD'] +
+                                              data_costs['Opex_total_VCC_backup_USD'] +
+                                              data_costs['Opex_total_storage_tank_USD'] +
+                                              data_costs['Opex_total_CT_USD'] +
+                                              data_costs['Opex_total_CCGT_USD'] +
+                                              data_costs['Opex_total_pumps_USD'] +
+                                              data_costs['Opex_total_PV_USD']) / 1E6
+
+    return data_costs
+
+
+def calc_disconnected_costs_advanced(data_costs, building_names, district_network_barcode, locator):
     Capex_total_disconnected_USD = 0
     Opex_total_disconnected_USD = 0
     Capex_a_total_disconnected_USD = 0
-
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index is '0':
             df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
@@ -351,21 +512,14 @@ def preprocessing_cost_data_DC(individual, df_current_individual, locator, data_
             Capex_total_disconnected_USD += (
                     dfBest["Annualized Investment Costs [CHF]"].iloc[0] * ((1 + Inv_IR) ** Inv_LT - 1) / (
                 Inv_IR) * (1 + Inv_IR) ** Inv_LT)
-    data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected_USD / 1000000
-    data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected_USD / 1000000
-    data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected_USD / 1000000
+    data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected_USD / 1E6
+    data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected_USD / 1E6
+    data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected_USD / 1E6
+    return data_costs
 
-    data_costs['Capex_a_disconnected_USD'] = Capex_a_total_disconnected_USD
-    data_costs['Opex_total_disconnected_USD'] = Opex_total_disconnected_USD
 
-    data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
-    data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
-    data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
-
-    # NETWORK COSTS TODO:this should be part of the optimization
-    data_costs = calc_network_costs(data_costs, config, district_cooling_network, district_heating_network,
-                                    district_network_barcode, locator)
-    # Substation costs
+def calc_substations_costs_advanced(building_names, data_costs, df_current_individual, district_network_barcode,
+                                    locator):
     substation_costs_a_USD = 0
     substation_costs_total_USD = 0
     for (index, building_name) in zip(district_network_barcode, building_names):
@@ -399,141 +553,12 @@ def preprocessing_cost_data_DC(individual, df_current_individual, locator, data_
             Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-
             Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
             Opex_fixed = Capex_a * Inv_OM
             substation_costs_total_USD += InvC
             substation_costs_a_USD += Capex_a + Opex_fixed
-
-    data_costs['Substation_costs_USD'] = substation_costs_a_USD
-    data_costs['Substation_costs_Total_USD'] = substation_costs_total_USD
-    # Electricity Details/Renewable Share
-    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
-
-    data_costs['Total_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000  # GW
-    data_costs['Electricity_for_hotwater_GW'] = (data_electricity['E_hotwater_total_W'].sum()) / 1000000000  # GW
-    data_costs['Electricity_for_appliances_GW'] = (data_electricity['E_appliances_total_W'].sum()) / 1000000000  # GW
-
-    renewable_share_electricity = (data_electricity['E_PV_directload_W'].sum() +
-                                   data_electricity['E_PV_grid_W'].sum() + data_electricity[
-                                       'E_PVT_directload_W'].sum() +
-                                   data_electricity['E_PVT_grid_W'].sum()) * 100 / \
-                                  (data_costs['Total_electricity_demand_GW'] * 1000000000)
-    data_costs['renewable_share_electricity'] = renewable_share_electricity
-
-    data_costs['Electricity_Costs_Mio'] = ((data_electricity['E_GRID_directload_W'].sum() +
-                                            data_electricity[
-                                                'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE.mean()) / 1000000
-
-    data_costs['Capex_a_ACH_USD'] = data_costs['Capex_a_ACH_USD'].values[0]
-    data_costs['Capex_a_VCC_USD'] = data_costs['Capex_a_VCC_USD'].values[0]
-    data_costs['Capex_a_VCC_backup_USD'] = data_costs['Capex_a_VCC_backup_USD'].values[0]
-    data_costs['Capex_a_CT_USD'] = data_costs['Capex_a_CT_USD'].values[0]
-    data_costs['Capex_a_storage_tank_USD'] = data_costs['Capex_a_Tank_USD'].values[0]
-    data_costs['Capex_a_total_pumps_USD'] = data_emissions['Capex_a_pump'].values[0]
-    data_costs['Capex_a_CCGT_USD'] = data_costs['Capex_a_CCGT_USD'].values[0]
-    data_costs['Capex_a_PV_USD'] = data_emissions['Capex_a_PV'].values[0]
-
-    data_costs['Capex_a_total_Mio'] = (data_costs['Capex_a_ACH_USD'] + data_costs['Capex_a_VCC_USD'] + \
-                                       data_costs['Capex_a_VCC_backup_USD'] + data_costs['Capex_a_CT_USD'] + data_costs[
-                                           'Capex_a_storage_tank_USD'] + \
-                                       data_costs['Capex_a_total_pumps_USD'] + data_costs['Capex_a_CCGT_USD'] +
-                                       data_costs[
-                                           'Capex_a_PV_USD'] + Capex_a_total_disconnected_USD + substation_costs_a_USD + network_costs_a_USD) / 1000000
-
-    data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH_USD'] + data_costs['Capex_total_VCC_USD'] + data_costs[
-        'Capex_total_VCC_backup_USD'] + \
-                                     data_costs['Capex_total_storage_tank_USD'] + data_costs['Capex_total_CT_USD'] +
-                                     data_costs['Capex_total_CCGT_USD'] + \
-                                     data_costs['Capex_total_pumps_USD'] + data_costs[
-                                         'Capex_total_PV_USD'] + Capex_total_disconnected_USD + substation_costs_total_USD + network_costs_total_USD) / 1000000
-
-    data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH_USD'] + data_costs['Opex_total_VCC_USD'] + data_costs[
-        'Opex_total_VCC_backup_USD'] + \
-                                      data_costs['Opex_total_storage_tank_USD'] + data_costs['Opex_total_CT_USD'] +
-                                      data_costs['Opex_total_CCGT_USD'] + \
-                                      data_costs['Opex_total_pumps_USD'] + Opex_total_disconnected_USD)) + data_costs[
-                                        'Opex_total_PV_USD'] + \
-                                    data_costs[
-                                        'Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE.mean()) / 1000000
-
-    data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
-
-    # temporary fix for bug in emissions calculation, change it after executive course
-    data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(
-        2 * data_emissions['CO2_PV_disconnected'] / 1000000)
-    data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(
-        2 * data_emissions['Eprim_PV_disconnected'] / 1000000)
-
-    return data_costs
-
-
-def preprocessing_cost_data_DH(individual, df_current_individual, locator, data_raw, data_address, config):
-    # local variables
-    district_network_barcode = data_raw['network'].loc[individual].values[0]
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
-    district_heating_network = data_raw['district_heating_network']
-    district_cooling_network = data_raw['district_cooling_network']
-    detailed_electricity_pricing = data_raw['detailed_electricity_pricing']
-
-    # get data about individual (pointer)
-    data_address = data_address[data_address['individual_list'] == individual]
-    generation_number = data_address['generation_number_address'].values[0]
-    individual_number = data_address['individual_number_address'].values[0]
-
-    # GET COSTS FOR GENERATION UNITS
-    data_costs = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual_number,
-                                                                                     generation_number))
-    data_costs['Capex_a_connected_Mio'] = data_costs.filter(like='Capex_a').sum(axis=1)[0] / 1E6
-    data_costs['Capex_total_connected_Mio'] = data_costs.filter(like='Capex').sum(axis=1)[0] / 1E6
-    data_costs['Opex_total_connected_Mio'] = data_costs.filter(like='Opex').sum(axis=1)[0] / 1E6
-
-    # GET OBJECTIVES
-    data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
-    data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
-    data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
-
-    # COSTS OF DISCONNECTED BUILDINGS TODO:this should be part of the optimization
-    data_costs = calc_disconnected_buildings_costs(building_names, data_costs, district_network_barcode, locator)
-
-    # NETWORK COSTS TODO:this should be part of the optimization
-    data_costs = calc_network_costs(data_costs, config, district_cooling_network, district_heating_network,
-                                    district_network_barcode, locator)
-
-    # SUBSTATIONS COSTS TODO:this should be part of the optimization
-    data_costs = calc_substations_costs(data_costs, building_names, config, district_network_barcode, locator)
-
-    # EXTRA - ELECTRICITY COSTS (AN UGLY FIX) - TODO:this should be part of the optimization
-    data_electricity = pd.read_csv(
-        locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number,
-                                                                              generation_number))
-    lca = LcaCalculations(locator, detailed_electricity_pricing)
-    data_costs = calc_electricity_costs(data_costs, data_electricity, lca)
-
-    # SUMMARY OF ALL TOTAL COSTS (CAPEX AND OPEX)
-    data_costs['Capex_a_total_Mio'] = data_costs['Capex_a_connected_Mio'] + \
-                                      data_costs['Capex_a_disconnected_Mio'] + \
-                                      data_costs['Substation_costs_USD'] / 1E6 + \
-                                      data_costs['Network_costs_USD'] / 1E6
-    data_costs['Capex_total_Mio'] = data_costs['Capex_total_connected_Mio'] + \
-                                    data_costs['Capex_total_disconnected_Mio'] + \
-                                    data_costs['Substation_costs_Total_USD'] / 1E6 + \
-                                    data_costs['Network_costs_Total_USD'] / 1E6
-
-    data_costs['Opex_total_Mio'] = (data_costs['Opex_total_connected_Mio'] +
-                                    data_costs['Total_electricity_demand_GW'] * 1E9 * lca.ELEC_PRICE.mean()) / 1E6
-
-    data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
-
-    # SUMMARY OF ALL EMISSIONS (AN UGLY FIX) - TODO:there was a message saying that it should be fixed in 20018, did that happen?
-    data_emissions = pd.read_csv(locator.get_optimization_slave_investment_cost_detailed(individual_number,
-                                                                                         generation_number))
-    data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(
-        2 * data_emissions['CO2_PV_disconnected'] / 1E6)
-    data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(
-        2 * data_emissions['Eprim_PV_disconnected'] / 1E6)
-
+    data_costs['Capex_a_substation_Mio'] = substation_costs_a_USD / 1E6
+    data_costs['Capex_total_substation_Mio'] = substation_costs_total_USD / 1E6
     return data_costs
 
 
@@ -551,8 +576,6 @@ def calc_disconnected_buildings_costs(building_names, data_costs, district_netwo
     data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected_USD / 1E6
     data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected_USD / 1E6
     data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected_USD / 1E6
-    data_costs['Capex_a_disconnected_USD'] = Capex_a_total_disconnected_USD
-    data_costs['Opex_total_disconnected_USD'] = Opex_total_disconnected_USD
     return data_costs
 
 
@@ -566,7 +589,7 @@ def calc_electricity_costs(data_costs, data_electricity, lca):
                                    data_electricity['E_PVT_grid_W'].sum()) * 100 / \
                                   (data_costs['Total_electricity_demand_GW'] * 1E9)  # [%]
     data_costs['renewable_share_electricity'] = renewable_share_electricity
-    data_costs['Electricity_Costs_Mio'] = ((data_electricity['E_GRID_directload_W'].sum() +
+    data_costs['Opex_total_electricity_Mio'] = ((data_electricity['E_GRID_directload_W'].sum() +
                                             data_electricity['E_total_to_grid_W_negative'].sum()) *
                                            lca.ELEC_PRICE.mean()) / 1E6
     return data_costs
@@ -579,21 +602,19 @@ def calc_network_costs(data_costs, config, district_cooling_network, district_he
     network_features.district_heating_network = district_heating_network
     network_features.district_cooling_network = district_cooling_network
 
-    data_costs['Network_costs_USD'] = 0.0
+    data_costs['Capex_a_network_Mio'] = 0.0
+    num_buildings_connected = district_network_barcode.count("1")
+    num_all_buildings = len(district_network_barcode)
+    ratio_connected = num_buildings_connected / num_all_buildings
     if district_heating_network:
-        # get costs
-        data_costs['Network_costs_USD'] += network_features.pipesCosts_DHN_USD * district_network_barcode.count(
-            "1") / len(
-            district_network_barcode)
+        data_costs['Capex_a_network_Mio'] += network_features.pipesCosts_DHN_USD * ratio_connected / 1E6
     if district_cooling_network:
-        data_costs['Network_costs_USD'] += network_features.pipesCosts_DCN_USD * district_network_barcode.count(
-            "1") / len(
-            district_network_barcode)
+        data_costs['Capex_a_network_Mio'] += network_features.pipesCosts_DCN_USD * ratio_connected / 1E6
 
     Inv_IR = 0.05
     Inv_LT = 20
-    data_costs['Network_costs_Total_USD'] = (
-            data_costs['Network_costs_USD'] * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+    data_costs['Capex_total_network_Mio'] = (data_costs['Capex_a_network_Mio'] *
+                                             ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
     return data_costs
 
 
@@ -612,8 +633,8 @@ def calc_substations_costs(data_costs, building_names, config, district_network_
                                                                                                           'HEX1')
             substation_costs_total_USD += Capex_HEX_building_USD
             substation_costs_a_USD += Capex_a_HEX_building_USD + Opex_fixed_HEX_building_USD
-    data_costs['Substation_costs_USD'] = substation_costs_a_USD
-    data_costs['Substation_costs_Total_USD'] = substation_costs_total_USD
+    data_costs['Capex_a_substation_Mio'] = substation_costs_a_USD / 1E6
+    data_costs['Capex_total_substation_Mio'] = substation_costs_total_USD / 1E6
     return data_costs
 
 
