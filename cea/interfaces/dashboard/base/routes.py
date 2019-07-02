@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, redirect, request, url_for, jsonify
 
 import cea.plots
-import os
-import csv
+import cea.glossary
 
 
 blueprint = Blueprint(
@@ -22,10 +21,8 @@ def route_default():
 @blueprint.route('/glossary_search')
 def route_glossary_search():
     query = request.args.get('query')
-    with open(os.path.join(os.path.dirname(cea.plots.__file__), 'naming_new.csv')) as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-    return jsonify(filter(lambda row: query.lower() in row['VARIABLE'].lower(), rows))
+    glossary = cea.glossary.read_glossary_dicts()
+    return jsonify(filter(lambda row: query.lower() in row['VARIABLE'].lower(), glossary))
 
 
 @blueprint.route('/fixed_<template>')

@@ -1,14 +1,15 @@
 """
 doc_glossary.py
 
-Builds input_files.rst and output_files.rst using a jinja 2 template located in docs/templates. Both input_files.rst and output_files.rst
- are referenced by glossary.rst.
+Builds input_files.rst and output_files.rst using a jinja 2 template located in docs/templates. Both input_files.rst
+and output_files.rst are referenced by glossary.rst.
 
 """
 
 import os
 import cea.config
-import pandas
+import cea.scripts
+import cea.glossary
 from jinja2 import Template
 
 __author__ = "Jack Hawthorne"
@@ -27,11 +28,8 @@ def main(_):
     schema_variables = cea.scripts.get_schema_variables(schema)
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
-    # import naming_new.csv (to be replaced by naming.csv) and the relevant information from schema.yml
-    naming = pandas.read_csv(os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming_new.csv'), sep=',')
-    naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
-    naming = naming.set_index(['key'])
-    naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
+    # import glossary.csv and the relevant information from schema.yml
+    glossary_df = cea.glossary.read_glossary_df()
 
     # create a set of documentation relevant input_locator_methods and output_locator_methods
     # create a set of extra details (the scripts the file is used_by)
@@ -61,13 +59,13 @@ def main(_):
     redundant_methods = set()
     for variable, locator_method, script, file_name in schema_variables:
         key = file_name + '!!!' + variable
-        if key in list(naming.index):
-            if naming.loc[key].size == len(naming.columns):
-                glossary_data.add(tuple(naming.loc[key]))
+        if key in list(glossary_df.index):
+            if glossary_df.loc[key].size == len(glossary_df.columns):
+                glossary_data.add(tuple(glossary_df.loc[key]))
             # in case there are multiple inputlocator methods which service the same file
             else:
-                for number in range(naming.loc[key].size/len(naming.columns)):
-                    glossary_data.add(tuple(naming.loc[key].iloc[number-1]))
+                for number in range(glossary_df.loc[key].size/len(glossary_df.columns)):
+                    glossary_data.add(tuple(glossary_df.loc[key].iloc[number-1]))
                     redundant_methods.add((locator_method, file_name))
 
     print '\n             !!! Redundancy Found !!! \n' \
