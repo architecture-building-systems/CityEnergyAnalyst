@@ -63,13 +63,14 @@ function createTable(parent, name, values, columns, types) {
         data: values,
         columns: defineColumns(columns, types),
         placeholder: placeholder,
+        tooltipsHeader:true,
 
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
         cellClick:selectRow,
         cellEdited: updateData,
-        rowSelectionChanged: addToSelection
-
+        rowSelectionChanged: addToSelection,
+        tooltips: createTooltip
     });
 
     $('#select-all-button').prop('disabled', !values.length);
@@ -171,6 +172,10 @@ function filterSelection(selection) {
     } else {
         currentTable.clearFilter();
     }
+}
+
+function createTooltip(column) {
+
 }
 
 $(window).load(function () {
