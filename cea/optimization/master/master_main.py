@@ -5,12 +5,6 @@ import random
 from cea.optimization.master import crossover
 from cea.optimization.master import mutations
 import cea.config
-import cea.globalvar
-import cea.inputlocator
-from cea.optimization.prices import Prices as Prices
-from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
-from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from cea.optimization.lca_calculations import LcaCalculations
 import json
 import cea
 import pandas as pd
@@ -71,11 +65,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
     t0 = time.clock()
 
     genCP = config.optimization.recoverycheckpoint
-
-    # genCP = 2
-    # NDIM = 30
-    # MU = 500
-
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
     function_evals = 0
@@ -107,7 +96,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
     halloffame_fitness = []
     epsInd = []
 
-    columns_of_saved_files= initialize_column_names_of_individual(building_names)
+    columns_of_saved_files = initialize_column_names_of_individual(building_names)
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("min", np.min, axis=0)
@@ -383,6 +372,7 @@ def initialize_column_names_of_individual(building_names):
 
     return Name_of_entries_of_individual
 
+
 def convergence_metric(old_front, new_front, normalization):
     #  This function calculates the metrics corresponding to a Pareto-front
     #  combined_euclidean_distance calculates the euclidean distance between the current front and the previous one
@@ -440,25 +430,4 @@ def convergence_metric(old_front, new_front, normalization):
 
 
 if __name__ == "__main__":
-    config = cea.config.Configuration()
-    gv = cea.globalvar.GlobalVariables()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_file = config.weather
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
-    gv.num_tot_buildings = total_demand.Name.count()
-    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
-    prices = Prices(locator, config)
-    solar_features = preproccessing(locator, total_demand, building_names,weather_file, gv, config,
-                                                                                  prices, lca)
-
-    # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    print "NETWORK OPTIMIZATION"
-    nBuildings = len(building_names)
-
-    network_features = network_opt_main.network_opt_main(config, locator)
-    #network_features = NetworkOptimizationFeatures(config, locator)
-
-    non_dominated_sorting_genetic_algorithm(locator, building_names,
-                                            solar_features,
-                                            network_features, gv, config, prices, lca)
+    x = 'no_testing_todo'

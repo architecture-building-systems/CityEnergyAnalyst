@@ -11,9 +11,7 @@ import numpy as np
 import pandas as pd
 
 from cea.optimization.constants import K_DH, ZERO_DEGREES_CELSIUS_IN_KELVIN
-from cea.resources.geothermal import calc_ground_temperature
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.utilities import epwreader
 from cea.constants import HOURS_IN_YEAR
 
 
@@ -27,7 +25,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_main(locator, total_demand, building_names, config, gv, key):
+def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildings, network_type, key):
     """
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
@@ -35,44 +33,26 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
-    :param building_names: vector with names of buildings
-    :param gv: global variables class
+    :param buildings_in_this_network: vector with names of buildings
     :param key: when called by the optimization, a key will provide an id for the individual
         and the generation.
     :type locator: class
     :type total_demand: list
-    :type building_names: vector
-    :type gv: class
+    :type buildings_in_this_network: vector
     :type key: int
     :return: csv file stored in locator.get_optimization_network_results_folder() as fName_result
         where fName_result: FIXME: what?
     :rtype: Nonetype
     """
 
+    #local variables
     t0 = time.clock()
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
-                                                              'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
-    # import properties of distribution
-    network_type = config.thermal_network.network_type
-    list_network_name = ['', '']  # config.thermal_network.network_names
-    num_buildings_network = total_demand.Name.count()
-    if len(list_network_name) == 0:
-        network_name = ''
-        pipes_tot_length = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name),
-                                       usecols=['pipe length']).sum().values
-    else:
-        for i, network_name in enumerate(list_network_name):
-            if i == 0:
-                pipes_tot_length = pd.read_csv(
-                    locator.get_thermal_network_edge_list_file(network_type, network_name),
-                    usecols=['pipe length']).sum().values
-            else:
-                pipes_tot_length = pipes_tot_length + pd.read_csv(
-                    locator.get_thermal_network_edge_list_file(network_type, network_name),
-                    usecols=['pipe length']).sum().values
+    num_buildings_network = len(buildings_in_this_network)
 
-    ntwk_length = pipes_tot_length.sum() * num_buildings_network / gv.num_tot_buildings
+    #CALCULATE RELATIVE LENGTH OF THIS NETWORK
+    data_network = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type))
+    pipes_tot_length = data_network['pipe length'].sum() *2 #this considers return and supply
+    ntwk_length = pipes_tot_length * num_buildings_network / num_tot_buildings
 
     # empty vectors
     buildings = []
@@ -94,7 +74,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.zeros(HOURS_IN_YEAR) + 1E6
     iteration = 0
 
-    for building_name in building_names:
+    for building_name in buildings_in_this_network:
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
                                      usecols=['DATE', 'mcpcdata_sys_kWperC', 'Qcdata_sys_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
@@ -219,14 +199,13 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
-    for i in range(HOURS_IN_YEAR):
-        if T_DCN_space_cooling_data_center_and_refrigeration_sup_K[i] > T_DCN_space_cooling_data_center_and_refrigeration_re_K[i]:
-            print (i)
+    # for i in range(HOURS_IN_YEAR):
+    #     if T_DCN_space_cooling_data_center_and_refrigeration_sup_K[i] > T_DCN_space_cooling_data_center_and_refrigeration_re_K[i]:
+    #
+    #     if T_DCN_space_cooling_and_refrigeration_sup_K[i] > T_DCN_space_cooling_and_refrigeration_re_K[i]:
 
-        if T_DCN_space_cooling_and_refrigeration_sup_K[i] > T_DCN_space_cooling_and_refrigeration_re_K[i]:
-            print (i)
 
-    date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
+    date = pd.read_csv(locator.get_demand_results_file(buildings_in_this_network[0])).DATE.values
     results = pd.DataFrame({"DATE": date,
                             "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
                             "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers": mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers,
@@ -254,7 +233,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     else:
         results.to_csv(locator.get_optimization_network_results_summary(key), index=False)
 
-    print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
+    print time.clock() - t0, "seconds process time for Network summary for configuration", key
 
 
 # ============================

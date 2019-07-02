@@ -43,28 +43,6 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     """
 
     t0 = time.clock()
-    # generate empty vectors
-    # Ths_ahu_supply = np.zeros(HOURS_IN_YEAR)
-    # Ths_aru_supply = np.zeros(HOURS_IN_YEAR)
-    # Ths_shu_supply = np.zeros(HOURS_IN_YEAR)
-    # Ths_ahu_return = np.zeros(HOURS_IN_YEAR)
-    # Ths_aru_return = np.zeros(HOURS_IN_YEAR)
-    # Ths_shu_return = np.zeros(HOURS_IN_YEAR)
-    # Tww_supply = np.zeros(HOURS_IN_YEAR)
-    # Tww_return = np.zeros(HOURS_IN_YEAR)
-    T_cooling_supply_initial = np.zeros(HOURS_IN_YEAR) + 1E6
-    T_cooling_return_initial = np.zeros(HOURS_IN_YEAR) - 1E6
-    # Tcdata_sys_supply = np.zeros(HOURS_IN_YEAR) + 1E6
-    # Tcref_supply = np.zeros(HOURS_IN_YEAR) + 1E6
-    # Tcs_ahu_supply = np.zeros(HOURS_IN_YEAR) + 1E6
-    # Tcs_aru_supply = np.zeros(HOURS_IN_YEAR) + 1E6
-    # Tcs_scu_supply = np.zeros(HOURS_IN_YEAR) + 1E6
-    # Tcdata_sys_return = np.zeros(HOURS_IN_YEAR) - 1E6
-    # Tcref_return = np.zeros(HOURS_IN_YEAR) - 1E6
-    # Tcs_ahu_return = np.zeros(HOURS_IN_YEAR) - 1E6
-    # Tcs_aru_return = np.zeros(HOURS_IN_YEAR) - 1E6
-    # Tcs_scu_return = np.zeros(HOURS_IN_YEAR) - 1E6
-
     # Calculate the plant supply temperautres according to all building demands
     # hence, the lowest temperature for DC, and the highest temperature for DH
     buildings_dict = {}

@@ -739,7 +739,7 @@ class InputLocator(object):
         return []
 
 
-    def get_thermal_network_edge_list_file(self, network_type, network_name):
+    def get_thermal_network_edge_list_file(self, network_type, network_name=''):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
         List of edges in a district heating or cooling network and their start and end nodes
         """
