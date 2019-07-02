@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from cea.osmose.post_compute_osmose_results import set_up_ex_df, calc_qc_loads
 from cea.osmose.auxiliary_functions import calc_RH_from_w
+from cea.osmose.settings import PLOTS
 
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
 CO2_max_ppm = 800 / 1e6
@@ -20,17 +21,11 @@ def main(building, TECHS, building_result_path):
     for tech in TECHS:
         osmose_result_file = path_to_osmose_results(building_result_path, tech)
         if os.path.isfile(osmose_result_file):
+            ## read results (outputs)
             results = pd.read_csv(osmose_result_file, header=None).T.reset_index()
             results = results.rename(columns=results.iloc[0])[1:]
             results = results.fillna(0)
             el_use_sum[tech] = results['SU_elec'].sum()
-            osmose_composite_file = path_to_osmose_composite(building_result_path, tech)
-            if os.path.isfile(osmose_composite_file):
-                composite_df = pd.read_csv(osmose_composite_file, header=None).T.reset_index()
-                composite_df = composite_df.rename(columns=composite_df.iloc[0])[1:]
-                composite_df = composite_df.fillna(0)
-            else:
-                composite_df = pd.DataFrame()
 
             # check balance
             print 'checking balance for: ', tech
@@ -46,31 +41,37 @@ def main(building, TECHS, building_result_path):
 
             ## plot air flows
             air_flow_df = set_up_air_flow_df(results)
-            plot_air_flow(air_flow_df, results, tech, building, building_result_path)
+            if 'air_flow' in PLOTS:
+                plot_air_flow(air_flow_df, results, tech, building, building_result_path)
 
             # plot T_SA and w_SA
             if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
                 operation_df = np.nan  # do nothing
             else:
                 operation_df = set_up_operation_df(tech, results)
-                plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
+                if 'OAU_T_w_supply' in PLOTS:
+                    plot_supply_temperature_humidity(building, building_result_path, operation_df, tech)
 
             # plot water balance
             humidity_df = set_up_humidity_df(tech, results)
-            plot_water_balance(building, building_result_path, humidity_df, results, tech)
-            # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
+            if 'humidity_balance' in PLOTS:
+                plot_water_balance(building, building_result_path, humidity_df, results, tech)
+                # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
 
             ## plot humidity level (storage)
             hu_store_df = set_up_hu_store_df(results)
-            plot_hu_store(building, building_result_path, hu_store_df, tech)
+            if 'humidity_storage' in PLOTS:
+                plot_hu_store(building, building_result_path, hu_store_df, tech)
 
             ## plot co2 level (storage)
             co2_store_df = set_up_co2_store_df(results)
-            plot_co2_store(building, building_result_path, co2_store_df, tech)
+            if 'co2_storage' in PLOTS:
+                plot_co2_store(building, building_result_path, co2_store_df, tech)
 
             ## plot heat balance
             heat_df = set_up_heat_df(tech, results)
-            plot_heat_balance(building, building_result_path, heat_df, results, tech)
+            if 'heat_balance' in PLOTS:
+                plot_heat_balance(building, building_result_path, heat_df, results, tech)
 
             ## calculate cooling loads
             results = calc_qc_loads(results, humidity_df, heat_df)
@@ -80,28 +81,37 @@ def main(building, TECHS, building_result_path):
             electricity_df = set_up_electricity_df(tech, results)
             output_el_usage_by_units(tech, electricity_df, results, building, building_result_path)
             # output_df
-            plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
-            if results.shape[0] > 24:
-                result_WED = results.iloc[72:96]
-                electricity_df_WED = electricity_df.iloc[72:96]
-                plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
-                electricity_df_SAT = electricity_df.iloc[144:168]
-                result_SAT = results.iloc[144:168]
-                plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
+            if 'electricity_usages' in PLOTS:
+                plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
+                if results.shape[0] > 24:
+                    result_WED = results.iloc[72:96]
+                    electricity_df_WED = electricity_df.iloc[72:96]
+                    plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
+                    electricity_df_SAT = electricity_df.iloc[144:168]
+                    result_SAT = results.iloc[144:168]
+                    plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
 
             # plot exergy loads
+            osmose_composite_file = path_to_osmose_composite(building_result_path, tech)
+            if os.path.isfile(osmose_composite_file):
+                composite_df = pd.read_csv(osmose_composite_file, header=None).T.reset_index()
+                composite_df = composite_df.rename(columns=composite_df.iloc[0])[1:]
+                composite_df = composite_df.fillna(0)
+            else:
+                composite_df = pd.DataFrame()
             results = get_hourly_chilled_water_temperatures(tech, results, composite_df)
             results = get_reheating_energy(tech, results)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
-            plot_exergy_loads(building, building_result_path, ex_df, results, tech)
-            plot_exergy_usages(building, building_result_path, ex_df, results, tech, '')
-            if results.shape[0] > 24:
-                result_WED = results.iloc[72:96]
-                ex_df_WED = ex_df.iloc[72:96]
-                plot_exergy_usages(building, building_result_path, ex_df_WED, result_WED, tech, 'WED')
-                ex_df_SAT = ex_df.iloc[144:168]
-                result_SAT = results.iloc[144:168]
-                plot_exergy_usages(building, building_result_path, ex_df_SAT, result_SAT, tech, 'SAT')
+            if 'exergy_usages' in PLOTS:
+                plot_exergy_loads(building, building_result_path, ex_df, results, tech)
+                plot_exergy_usages(building, building_result_path, ex_df, results, tech, '')
+                if results.shape[0] > 24:
+                    result_WED = results.iloc[72:96]
+                    ex_df_WED = ex_df.iloc[72:96]
+                    plot_exergy_usages(building, building_result_path, ex_df_WED, result_WED, tech, 'WED')
+                    ex_df_SAT = ex_df.iloc[144:168]
+                    result_SAT = results.iloc[144:168]
+                    plot_exergy_usages(building, building_result_path, ex_df_SAT, result_SAT, tech, 'SAT')
 
             ## write output_df
             calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech)
@@ -345,7 +355,8 @@ def analyse_chilled_water_usage(results, tech):
 
 def analyse_Qc_from_chilled_water(results, tech):
     number_oau_in = results.filter(like='OAU_T_SA').shape[1]
-    Qc_from_chilled_water_df = (results.filter(like='q_oau_in_')*1000/results['Af_m2'].max()).sum(axis=0).reset_index()
+    # Qc_from_chilled_water_df = (results.filter(like='q_oau_in_')*1000/results['Af_m2'].max()).sum(axis=0).reset_index()
+    Qc_from_chilled_water_df = results.filter(like='q_oau_in_').sum(axis=0).reset_index()
     T_low_C, T_high_C = 8.1, 14.1
     if (tech == 'HCS_3for2' and number_oau_in < 10):
         T_interval = 0.65 * 2
@@ -551,7 +562,13 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['qc_sys_lat_total'] = cooling_df.filter(like='qc_sys_lat').sum(axis=1)
     # calculate minimum exergy required
     output_df['Ex_min'] = ex_df['Ex_min_total']
+    output_df['Ex_process_OAU'] = ex_df['Ex_process_OAU']
+    output_df['Ex_process_RAU'] = ex_df['Ex_process_RAU']
+    output_df['Ex_process_SCU'] = ex_df['Ex_process_SCU']
     output_df['Ex_process'] = ex_df['Ex_process_total']
+    output_df['Ex_utility_OAU'] = ex_df['Ex_utility_OAU']
+    output_df['Ex_utility_RAU'] = ex_df['Ex_utility_RAU']
+    output_df['Ex_utility_SCU'] = ex_df['Ex_utility_SCU']
     output_df['Ex_utility'] = ex_df['Ex_utility_total']
     # get Qh
     output_df['Qh'] = results['SU_Qh']
@@ -578,12 +595,15 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # output_df['qc_bui_total'] = output_df['qc_bui_sen_total'] + output_df['qc_bui_lat_total']
     # output_df['cop_cooling'] = output_df['qc_bui_total'] / output_df['el_total']
     output_df['qc_sys_total'] = output_df['qc_sys_sen_total'] + output_df['qc_sys_lat_total']
-    output_df['qc_per_m2'] = output_df['qc_sys_total'] / results['Af_m2'].values[0]
+    output_df['qc_per_m2'] = output_df['qc_sys_total'] / output_df['Af_m2']
     output_df['sys_SHR'] = output_df['qc_sys_sen_total'] / output_df['qc_sys_total']  # sensible heat ratio
     output_df['load_SHR'] = output_df['qc_load_sen'] / output_df['qc_load_total']  # sensible heat ratio
     output_df['qc_impact'] = output_df['qc_load_total'] / output_df['qc_sys_total']
-    output_df['qc_Wh_sys_per_Af'] = output_df['qc_sys_total'] * 1000 / results.iloc[0]['Af_m2']
-    output_df['el_Wh_total_per_Af'] = output_df['el_total'] * 1000 / results.iloc[0]['Af_m2']
+    output_df['qc_Wh_sys_per_Af'] = output_df['qc_sys_total'] * 1000 / output_df['Af_m2']
+    output_df['el_Wh_total_per_Af'] = output_df['el_total'] * 1000 / output_df['Af_m2']
+    output_df['el_Wh_OAU_per_Af'] = output_df['el_oau'] * 1000 / output_df['Af_m2']
+    output_df['el_Wh_RAU_per_Af'] = output_df['el_lcu'] * 1000 / output_df['Af_m2']
+    output_df['el_Wh_SCU_per_Af'] = output_df['el_scu'] * 1000 / output_df['Af_m2']
     output_df['cop_system'] = output_df['qc_sys_total'] / output_df['el_total']
 
     ## calculate values to add to the last row
@@ -607,7 +627,13 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df.at[index, 'w_SA'] = w_SA_mean
 
     # calculate exergy efficiency
+    output_df['process_exergy_OAU_Wh_per_Af'] = output_df['Ex_process_OAU'] * 1000 / output_df['Af_m2']
+    output_df['process_exergy_RAU_Wh_per_Af'] = output_df['Ex_process_RAU'] * 1000 / output_df['Af_m2']
+    output_df['process_exergy_SCU_Wh_per_Af'] = output_df['Ex_process_SCU'] * 1000 / output_df['Af_m2']
     output_df['process_exergy_Wh_per_Af'] = output_df['Ex_process'] * 1000 / output_df['Af_m2']
+    output_df['utility_exergy_OAU_Wh_per_Af'] = output_df['Ex_utility_OAU'] * 1000 / output_df['Af_m2']
+    output_df['utility_exergy_RAU_Wh_per_Af'] = output_df['Ex_utility_RAU'] * 1000 / output_df['Af_m2']
+    output_df['utility_exergy_SCU_Wh_per_Af'] = output_df['Ex_utility_SCU'] * 1000 / output_df['Af_m2']
     output_df['utility_exergy_Wh_per_Af'] = output_df['Ex_utility'] * 1000 / output_df['Af_m2']
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
     output_df['eff_process_exergy'] = output_df['Ex_process'] / output_df['el_total']
@@ -1189,8 +1215,9 @@ def format_func(value, tick_number):
     return value%24
 
 def plot_exergy_usages(building, building_result_path, exergy_df, results, tech, day):
-    results.reset_index(inplace=True)
-    exergy_df.reset_index(inplace=True)
+    timesteps = results.shape[0]
+    results.set_index(np.arange(1,timesteps+1,1),inplace=True)
+    exergy_df.set_index(np.arange(1,timesteps+1,1),inplace=True)
     t_0 = results.index.min()
     t_end = results.index.max()
     # reset index
@@ -1335,18 +1362,18 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B006"]
+    buildings = ["B005","B006"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    # tech = ["HCS_ER0"]
-    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
+    tech = ["HCS_ER0"]
+    # tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
     #  tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_RET"]
+    # cases = ["WTP_CBD_m_WP1_HOT"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
