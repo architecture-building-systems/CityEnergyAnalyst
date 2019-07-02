@@ -281,7 +281,8 @@ $(window).load(function () {
                     data: JSON.stringify({
                         changes: changes,
                         geojson: inputstore.geojsondata,
-                        tables: inputstore.data
+                        tables: inputstore.data,
+                        crs: inputstore.crs
                     }),
                     contentType: 'application/json'
                 }).done(function (data) {

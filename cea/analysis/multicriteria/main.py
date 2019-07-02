@@ -13,7 +13,7 @@ import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.heat_exchangers import calc_Cinv_HEX
-import cea.optimization.distribution.network_opt_main as network_opt
+import cea.optimization.distribution.network_optimization_features as network_opt
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
     locating_individuals_in_generation_script, create_data_address_file
 from math import ceil, log
@@ -349,7 +349,7 @@ def preprocessing_cost_data_DC(individual, locator, data_raw, data_address, conf
     data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
     # Network costs
-    network_features = network_opt.network_opt_main(config,
+    network_features = network_opt.NetworkOptimizationFeatures(config,
                                                     locator)  # TODO: check if it is using the latest run of result, if yes, it is wrong
     network_costs_a_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count("1") / len(
         DCN_barcode)  # FIXME: what does this mean?
@@ -510,7 +510,7 @@ def preprocessing_cost_data_DH(individual, locator, data_raw, data_address, conf
     data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
     # get Network costs
-    network_features = network_opt.network_opt_main(config, locator)
+    network_features = network_opt.NetworkOptimizationFeatures(config, locator)
     network_costs_a_USD = network_features.pipesCosts_DCN_USD * district_network_barcode.count("1") / len(
         district_network_barcode)
     data_costs['Network_costs_USD'] = network_costs_a_USD
