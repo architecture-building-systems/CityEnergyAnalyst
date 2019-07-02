@@ -297,6 +297,7 @@ $(window).load(function () {
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
+                    redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
                     setTimeout(function(){
