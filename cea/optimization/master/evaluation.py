@@ -59,17 +59,17 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names), config, district_heating_network, district_cooling_network)
+    # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
+    individual = evaluate_constrains(individual, len(building_names), config, district_heating_network, district_cooling_network)
 
-    # Initialize objective functions costs, CO2 and primary energy
+    # INTITIALIZE OBJECTIVE FUNCTIONS =  costs, CO2 and primary energy
     costs_USD = 0
     GHG_tonCO2 = 0
     PEN_MJoil = 0
     Q_heating_uncovered_design_W = 0
     Q_heating_uncovered_annual_W = 0
 
-    # Create the string representation of the individual
+    # CREATE THE INDIVIDUAL
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
                                                                                                      building_names)
 
@@ -241,7 +241,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     # This is to save the files for further processing and plots
     natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network, district_cooling_network)
 
-    # Capex Calculations
+    # CAPEX CALCULATIONS
     print "Add extra costs"
     (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator,
                                                                                               master_to_slave_vars,
@@ -280,7 +280,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 # +++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings, config, district_heating_network, district_cooling_network):
+def evaluate_constrains(individual, nBuildings, config, district_heating_network, district_cooling_network):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -359,7 +359,6 @@ def check_invalid(individual, nBuildings, config, district_heating_network, dist
     # CHECK IF AT THE END OF THE PROBLEM THE FLAG TURNED INTO NOT VALID
     if not valid:
         newInd = generation.generate_main(nBuildings, config)
-
         L = (N_HEAT + N_SOLAR) * 2 + N_HR
         for i in range(L):
             individual[i] = newInd[i]

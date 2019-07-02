@@ -74,12 +74,12 @@ def multi_criteria_main(locator, config):
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
     # rank data
-    compiled_data_df = rakn_normalized_data(compiled_data_df, config)
+    compiled_data_df = rank_normalized_data(compiled_data_df, config)
 
     compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
     return
 
-def rakn_normalized_data(compiled_data_df, config):
+def rank_normalized_data(compiled_data_df, config):
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
     compiled_data_df['emissions_rank'] = compiled_data_df['normalized_emissions'].rank(ascending=True)
     compiled_data_df['prim_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)

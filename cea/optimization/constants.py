@@ -49,7 +49,6 @@ NAMES_TECHNOLOGY_OF_INDIVIDUAL = ['CHP/Furnace',
                                   'Storage Share',
                                   'DCN Temperature',
                                   'DCN unit configuration']
-NUMBER_TECHNOLOGY_INDIVIDUAL = len(NAMES_TECHNOLOGY_OF_INDIVIDUAL)
 
 # Losses and margins
 DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
@@ -251,37 +250,10 @@ T_SUP_SC_ET80 = 80 + 273.0  # K
 # solar PV and PVT
 N_PV = 0.16
 N_PVT = 0.16
-# ==============================================================================================================
-# solar thermal collector # FIXME: redundant???
-# ==============================================================================================================
-
-T_IN = 75  # average temeperature
-MODULE_LENGTH_SC = 2  # m # 1 for PV and 2 for solar collectors
-MIN_PRODUCTION = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-GRID_SIDE = 2  # in a rectangular grid of points, one side of the square. this cannot be changed if the solra potential was made with this.
-ANGLE_NORTH = 122.5
-TYPE_SC_PANEL = 1  # Flatplate collector
-
-# ==============================================================================================================
-# sewage potential
-# ==============================================================================================================
-
-SW_RATIO = 0.95  # ratio of waste water to fresh water production.
-WIDTH_HEX = 0.40  # in m
-VEL_FLOW = 3  # in m/s
-MIN_FLOW = 9  # in lps
-T_MIN = 8  # tmin of extraction
-H0 = 1.5  # kW/m2K # heat trasnfer coefficient/
-AT_HEX = 5
-AT_MIN = 2
 
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
 LHV_BG = 21.4E6  # [J/kg]
-
-# DCN
-T_SUP_COOL = 6 + 273
-T_RE_COOL_MAX = 12 + 273.0
 
 # Values for the calculation of Delta P (from F. Muller network optimization code)
 # WARNING : current = values for Inducity SQ
