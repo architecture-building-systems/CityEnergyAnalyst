@@ -178,7 +178,7 @@ function createTooltip() {
     var table = $('.tab.active').data('name');
 
     $.each(inputstore.getColumns(table), function (_, column) {
-        var glossary = inputstore.glossary[table][column];
+        var glossary = inputstore.glossary[column];
         if (glossary) {
             $(`.tabulator-col-title:contains("${column}")`)
                 .prop('data-toggle', 'tooltip')

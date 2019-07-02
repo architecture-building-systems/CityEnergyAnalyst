@@ -102,8 +102,10 @@ def route_get_building_properties():
 
             store['columns'][db] = db_info['fieldnames']
             store['column_types'][db] = {k: v.__name__ for k, v in db_info['fieldtypes'].items()}
-            store['glossary'][db] = json.loads(glossary[glossary['SCRIPT'] == db][['VARIABLE', 'UNIT', 'DESCRIPTION']]
-                                               .set_index('VARIABLE').to_json(orient='index'))
+
+            table_
+            store['glossary'].update(json.loads(glossary[glossary['FILE_NAME'] == '%s.%s' % (db, db_info['type'])]
+                                                [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index')))
 
         except IOError as e:
             print(e)
