@@ -66,11 +66,12 @@ function createTable(parent, name, values, columns, types) {
 
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
-        cellClick:selectRow,
+        cellClick: selectRow,
         cellEdited: updateData,
-        rowSelectionChanged: addToSelection
-
+        rowSelectionChanged: addToSelection,
     });
+
+    createTooltip();
 
     $('#select-all-button').prop('disabled', !values.length);
     $('#filter-button').prop('disabled', !values.length);
@@ -171,6 +172,19 @@ function filterSelection(selection) {
     } else {
         currentTable.clearFilter();
     }
+}
+
+function createTooltip() {
+    var table = $('.tab.active').data('name');
+
+    $.each(inputstore.getColumns(table), function (_, column) {
+        var glossary = inputstore.glossary[column];
+        if (glossary) {
+            $(`.tabulator-col-title:contains("${column}")`)
+                .prop('data-toggle', 'tooltip')
+                .prop('title', `UNIT: ${glossary['UNIT']}\nDESCRIPTION: ${glossary['DESCRIPTION']}`);
+        }
+    });
 }
 
 $(window).load(function () {
