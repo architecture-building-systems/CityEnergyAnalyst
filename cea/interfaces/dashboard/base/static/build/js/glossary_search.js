@@ -1,10 +1,10 @@
-const docsUrl = 'https://city-energy-analyst.readthedocs.io/en/latest/';
+const docsUrl = "https://city-energy-analyst.readthedocs.io/en/latest/";
 
-$('#glossary').autocomplete({
-    serviceUrl: '/glossary_search',
-    dataType: 'json',
-    groupBy: 'category',
-    width: 'flex',
+$("#glossary").autocomplete({
+    serviceUrl: "/glossary_search",
+    dataType: "json",
+    groupBy: "category",
+    width: "flex",
     forceFixPosition: true,
 
     transformResult: function(response) {
@@ -21,7 +21,9 @@ $('#glossary').autocomplete({
     },
 
     onSelect: function (suggestion) {
-        var type = 'input';
-        window.open(`${docsUrl}${type}_methods.html?highlight=${suggestion.value}#${suggestion.data.locator.split('_').join('-')}`);
+        var type = suggestion.category === "-" ? "input" : "output";
+        console.log(type);
+        console.log(suggestion);
+        window.open(`${docsUrl}${type}_methods.html?highlight=${suggestion.value}#${suggestion.data.locator.split("_").join("-")}`);
     }
 });
