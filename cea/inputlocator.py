@@ -246,24 +246,24 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + buildingname + '_result_heating.csv')
 
-    def get_optimization_network_results_summary(self, key):
+    def get_optimization_network_results_summary(self, network_type, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        if 'Network_summary_result_' in key:
+        if network_type+ '_'+ 'Network_summary_result_' in key:
             path = os.path.join(self.get_optimization_network_results_folder(), key)
         else:
             path = os.path.join(self.get_optimization_network_results_folder(),
-                                'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+                                network_type + '_' + 'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
         return path
 
 
-    def get_optimization_network_all_results_summary(self, key):
+    def get_optimization_network_all_results_summary(self, network_type, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_results_folder(), 'Network_summary_result_' + key + '.csv')
+        return os.path.join(self.get_optimization_network_results_folder(), network_type+'_'+'Network_summary_result_' + key + '.csv')
 
-    def get_optimization_network_totals_folder_total(self, indCombi):
+    def get_optimization_network_totals_folder_total(self, network_type, indCombi):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_network_totals_folder(),
-                            "Total_" + hex(int(str(indCombi), 2)) + ".csv")
+                            network_type+'_'+"Total_"+ hex(int(str(indCombi), 2)) + ".csv")
 
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network

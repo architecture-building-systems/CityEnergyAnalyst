@@ -73,7 +73,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     # Space cooling previously aggregated in the substation routine
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
         df = pd.read_csv(
-            locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
+            locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling),
             usecols=["T_DCNf_space_cooling_and_refrigeration_sup_K", "T_DCNf_space_cooling_and_refrigeration_re_K",
                      "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         df = df.fillna(0)
@@ -82,7 +82,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
     else:
         df = pd.read_csv(
-            locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
+            locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling),
             usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
                      "T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
                      "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
@@ -446,7 +446,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     costs_a_USD += Capex_a_pump_USD + Opex_fixed_pump_USD + Opex_var_pump_USD
 
     network_data = pd.read_csv(
-        locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling))
+        locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling))
 
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,

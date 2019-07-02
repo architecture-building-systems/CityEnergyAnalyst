@@ -64,20 +64,14 @@ def preproccessing(locator, total_demand, building_names, weather_file, config, 
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    print("PRE-PROCESSING 1/5: weather properties")
+    print("PRE-PROCESSING 1/4: weather properties")
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
 
-    print("PRE-PROCESSING 2/5: solar features")
+    print("PRE-PROCESSING 2/4: solar features")
     solar_features = SolarFeatures(locator, building_names)
 
-    print("PRE-PROCESSING 3/5: building substations")
-    substation.substation_main(locator, total_demand, building_names,
-                               heating_configuration=7,
-                               cooling_configuration=7,
-                               Flag=False)  # True if disconnected buildings are calculated
-
-    print("PRE-PROCESSING 4/5: thermal networks")# at first estimate a distribution with all the buildings connected
+    print("PRE-PROCESSING 3/4: thermal networks")# at first estimate a distribution with all the buildings connected
     if district_heating_network:
         buildings_names_connected = get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr')
         num_tot_buildings = len(buildings_names_connected)
@@ -90,7 +84,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, config, 
         summarize_network.network_main(locator, buildings_names_connected,
                                        ground_temp, num_tot_buildings, "DC","all")  # "_all" key for all buildings
 
-    print("PRE-PROCESSING 5/5: thermal networks""GETTING EXTRA COSTS AND EMISSIONS FROM ELECTRICITY")
+    print("PRE-PROCESSING 4/4: thermal networks""GETTING EXTRA COSTS AND EMISSIONS FROM ELECTRICITY")
     elecCosts, elecCO2, elecPrim = extra_costs_emissions_primary_energy(building_names, config, lca, locator, prices,
                                                                         total_demand)
 

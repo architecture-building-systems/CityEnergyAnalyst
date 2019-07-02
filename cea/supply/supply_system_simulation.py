@@ -86,11 +86,11 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # read the total loads from buildings connected to thermal networks
     if DHN_barcode.count("1") == gv.num_tot_buildings:
-        network_file_name_heating = "Network_summary_result_all.csv"
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DHNf_W"]).values
+        network_file_name_heating = "DH_Network_summary_result_all.csv"
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
     elif DHN_barcode.count("1") == 0:
-        network_file_name_heating = "Network_summary_result_all.csv"
+        network_file_name_heating = "DH_Network_summary_result_all.csv"
         Q_heating_max_W = 0.0
     else:
         # Run the substation and distribution routines
@@ -98,23 +98,23 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
         summarize_network.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
-        network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
+        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
     if DCN_barcode.count("1") == gv.num_tot_buildings:
-        network_file_name_cooling = "Network_summary_result_all.csv"
+        network_file_name_cooling = "DC_Network_summary_result_all.csv"
         if individual[
                     N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC','all'),
                                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
                                    usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
     elif DCN_barcode.count("1") == 0:
-        network_file_name_cooling = "Network_summary_result_none.csv"
+        network_file_name_cooling = "DC_Network_summary_result_none.csv"
         Q_cooling_max_W = 0
     else:
         # Run the substation and distribution routines
@@ -122,14 +122,14 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
         summarize_network.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
-        network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
         if individual[
                     N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                    usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
 
