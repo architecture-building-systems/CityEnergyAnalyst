@@ -71,7 +71,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     district_heating_network = config.supply_system_simulation.district_heating_network
     district_cooling_network = config.supply_system_simulation.district_cooling_network
 
-    individual = evaluation.check_invalid(individual, len(building_names), config, district_heating_network, district_cooling_network)
+    individual = evaluation.evaluate_constrains(individual, len(building_names), config, district_heating_network, district_cooling_network)
 
     # Initialize objective functions costs, CO2 and primary energy
     costs_USD = 0.0
