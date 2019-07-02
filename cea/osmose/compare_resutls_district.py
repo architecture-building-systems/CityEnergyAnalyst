@@ -4,11 +4,12 @@ import pandas as pd
 import os
 import operator
 import matplotlib.pyplot as plt
+from cea.osmose.settings import PLOTS
 
 CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
 COLOR_CODES = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3',
                'status': '#707070'}
-
+LABEL_DICT = {'coil': 'Config|1', 'ER0': 'Config|2', '3for2': 'Config|3', 'LD': 'Config|4', 'IEHX': 'Config|5'}
 
 def main(path_result_folder, case, time_steps):
     path_district_result_folder = os.path.join(path_result_folder, case)
@@ -27,9 +28,14 @@ def main(path_result_folder, case, time_steps):
         el_compare_df.loc['qc_load_Wh_per_Af'] = el_compare_df.loc['qc_load_total'] / Af_m2
         list_of_labels = []
         for label in ['cop_system', 'el_total', 'qc_sys_total', 'cop_system_mean',
-                      'eff_exergy', 'Qh', 'cop_Qh', 'el_Wh_total_per_Af', 'qc_load_Wh_per_Af',
-                      'qc_Wh_sys_per_Af', 'process_exergy_Wh_per_Af', 'utility_exergy_Wh_per_Af',
-                      'eff_process_utility', 'sys_SHR', 'load_SHR']:
+                      'eff_exergy', 'Qh', 'cop_Qh','eff_process_utility',
+                      'sys_SHR', 'load_SHR',
+                      'el_Wh_total_per_Af', 'qc_load_Wh_per_Af', 'qc_Wh_sys_per_Af',
+                      'el_Wh_OAU_per_Af', 'el_Wh_RAU_per_Af', 'el_Wh_SCU_per_Af',
+                      'process_exergy_Wh_per_Af', 'utility_exergy_Wh_per_Af',
+                      'process_exergy_OAU_Wh_per_Af', 'utility_exergy_OAU_Wh_per_Af',
+                      'process_exergy_RAU_Wh_per_Af', 'utility_exergy_RAU_Wh_per_Af',
+                      'process_exergy_SCU_Wh_per_Af', 'utility_exergy_SCU_Wh_per_Af']:
             list_of_labels.append(el_compare_df.loc[label])
         building_result_df = pd.concat(list_of_labels, axis=1)
         building_result_df = building_result_df.sort_values(by=['el_total']).T
@@ -58,11 +64,26 @@ def main(path_result_folder, case, time_steps):
         plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case)
 
         # ex_Wh_per_Af
-        ex_all_tech_per_building_dict = {}
-        for label in ['process_exergy_Wh_per_Af', 'utility_exergy_Wh_per_Af', 'el_Wh_total_per_Af']:
-            ex_all_tech_per_building_dict[label] = ordered_el_compare_df.loc[label]
-        techs = ordered_el_compare_df.columns
-        plot_overlapping_bar(building, time_steps, techs, ex_all_tech_per_building_dict, path_district_result_folder, case)
+        if 'ex_overlap_bar' in PLOTS:
+            ex_all_tech_per_building_dict = {}
+            for label in ['process_exergy_Wh_per_Af', 'utility_exergy_Wh_per_Af', 'el_Wh_total_per_Af']:
+                ex_all_tech_per_building_dict[label] = ordered_el_compare_df.loc[label]
+            techs = ordered_el_compare_df.columns
+            plot_overlapping_bar(building, time_steps, techs, ex_all_tech_per_building_dict, path_district_result_folder, case)
+
+        ## plot three stacked bar side by side
+        left_stack_dict, middle_stack_dict, right_stack_dict = {}, {}, {}
+        list_left = ['process_exergy_OAU_Wh_per_Af','process_exergy_RAU_Wh_per_Af','process_exergy_SCU_Wh_per_Af']
+        for label in list_left:
+            left_stack_dict[label] = ordered_el_compare_df.loc[label]
+        list_middle = ['utility_exergy_OAU_Wh_per_Af', 'utility_exergy_RAU_Wh_per_Af', 'utility_exergy_SCU_Wh_per_Af']
+        for label in list_middle:
+            middle_stack_dict[label] = ordered_el_compare_df.loc[label]
+        list_right = ['el_Wh_OAU_per_Af', 'el_Wh_RAU_per_Af', 'el_Wh_SCU_per_Af']
+        for label in list_right:
+            right_stack_dict[label] = ordered_el_compare_df.loc[label]
+        plot_three_stacked_bars_side_by_side(left_stack_dict, middle_stack_dict, right_stack_dict, building, time_steps,
+                                             path_district_result_folder, techs, case)
 
     all_results_df = pd.concat(all_results_dict).round(2)
     all_results_df.to_csv(path_to_save_all_dirstrict_df(case, path_district_result_folder))
@@ -100,7 +121,7 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
         x_values = x_ticks
         bar_values = qc_all_tech_per_building_dict[key]
         ax.bar(x_values, bar_values, bar_width, bottom=y_offset, alpha=opacity, color=COLOR_TABLE[stack_label],
-               label=stack_label)
+               label=stack_label, hatch='.')
         y_offset = y_offset + qc_all_tech_per_building_dict[key]
         i = i + 1
     ax.set(ylabel='% of heat removed', xlim=(-0.5, 4.5), ylim=(0, 1))
@@ -114,7 +135,7 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     ax.yaxis.label.set_size(16)
     ax.xaxis.set_tick_params(labelsize=14)
     ax.yaxis.set_tick_params(labelsize=14)
-    ax.legend(loc='lower right', fontsize=16)
+    ax.legend(loc='lower center',bbox_to_anchor=(0.5, -0.21), fontsize=14, ncol=3)
     case_name = case.split('_')[4]
     title = CASE_TABLE[case_name] + ' ' + building
     ax.set_title(title, fontsize=16)
@@ -122,7 +143,7 @@ def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict,
     # plt.show()
     # plot layout
     filename = building + '_total_heat_supplied.png'
-    fig.savefig(path_to_save_building_fig(filename, building, time_steps, path_district_result_folder))
+    fig.savefig(path_to_save_building_fig(filename, building, time_steps, path_district_result_folder),bbox_inches="tight")
 
     return np.nan
 
@@ -171,6 +192,63 @@ def plot_overlapping_bar(building, time_steps, techs, ex_all_tech_per_building_d
 
     return np.nan
 
+
+def plot_three_stacked_bars_side_by_side(left_stack_dict, middle_stack_dict, right_stack_dict, building, time_steps,
+                                         path_district_result_folder, techs, case):
+    plt.rcParams['hatch.color'] = '#ffffff'
+    COLOR_TABLE = {'OAU': '#080808', 'RAU': '#707070', 'SCU': '#C8C8C8'}
+    # plotting
+    fig, ax = plt.subplots()
+    bar_width = 0.2
+    x_ticks = np.arange(len(techs))
+    ## left stack
+    x_axis_left = x_ticks - 0.2
+    y_offset = np.zeros(len(techs))
+    for key in ['process_exergy_OAU_Wh_per_Af','process_exergy_RAU_Wh_per_Af','process_exergy_SCU_Wh_per_Af']: # process
+        color = COLOR_TABLE[key.split('_')[2]]
+        label = key.split('_Wh')[0]
+        ax.bar(x_axis_left, left_stack_dict[key], bar_width, bottom=y_offset, label=label, color=color, hatch = 2*"x")
+        y_offset = y_offset + left_stack_dict[key]
+    y_max = y_offset.max()
+    ## middle stack
+    x_axis_middle = x_ticks
+    y_offset = np.zeros(len(techs))
+    for key in ['utility_exergy_OAU_Wh_per_Af', 'utility_exergy_RAU_Wh_per_Af', 'utility_exergy_SCU_Wh_per_Af']: # utility
+        color = COLOR_TABLE[key.split('_')[2]]
+        label = key.split('_Wh')[0]
+        ax.bar(x_axis_middle, middle_stack_dict[key], bar_width, bottom=y_offset, label=label, color=color, hatch = "//")
+        y_offset = y_offset + middle_stack_dict[key]
+    y_max = max(y_offset.max(), y_max)
+    # right stack
+    x_axis_right = x_ticks + 0.2
+    y_offset = np.zeros(len(techs))
+    for key in ['el_Wh_OAU_per_Af', 'el_Wh_RAU_per_Af', 'el_Wh_SCU_per_Af']: # electricity
+        color = COLOR_TABLE[key.split('_')[2]]
+        label = key.split('_')[0] + '_' + key.split('_')[2]
+        ax.bar(x_axis_right, right_stack_dict[key], bar_width, bottom=y_offset, label=label, color=color)
+        y_offset = y_offset + right_stack_dict[key]
+    y_max = max(y_offset.max(), y_max)
+    # plot settings
+    x_tick_shown = [0]
+    for tech in techs:
+        x_tick_shown.append(LABEL_DICT[tech])
+    ax.set_xticklabels(x_tick_shown)
+    # set sizes
+    ax.xaxis.set_tick_params(labelsize=16)
+    ax.yaxis.set_tick_params(labelsize=16)
+    ax.yaxis.label.set_size(16)
+    # put legend to the right
+    ax.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), fontsize=16)
+    # ax.set(ylabel='Energy [Wh/m2]', xlim=(-0.5, 4.5), ylim=(0, y_max + 0.05 * y_max))
+    ax.set(ylabel='Energy [Wh/m2]', xlim=(-0.5, 4.5), ylim=(0, 1400))
+
+    # plt.show()
+
+    plt.title(CASE_TABLE[case.split('_')[4]], fontsize=18)
+    filename = 'exergy_stacked_all'
+    fig.savefig(path_to_save_building_fig(filename, building, time_steps, path_district_result_folder), bbox_inches="tight")
+
+    return np.nan
 
 def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folder):
     # get all the points
@@ -221,7 +299,7 @@ def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folde
               min(y_values) - 0.2, max(y_values) + 0.2])
     plt.scatter(x, y, c=anno_colors, s=area)
     # plt.show()
-    plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'COP'))
+    plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'COP'), bbox_inches="tight")
     return np.nan
 
 
@@ -304,7 +382,7 @@ def plot_scatter_el_total(all_el_total_dict, path_district_result_folder):
               min(y_values), max(y_values)])
     plt.scatter(x, y, c=anno_colors, s=area)
     # plt.show()
-    plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'el_total'))
+    plt.savefig(path_to_all_district_plot(case, path_district_result_folder, 'el_total'), bbox_inches="tight")
     return np.nan
 
 
@@ -370,7 +448,7 @@ if __name__ == '__main__':
     #cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ['WTP_CBD_m_WP1_RET']
+    # cases = ['WTP_CBD_m_WP1_OFF']
     for case in cases:
         print case
         # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
