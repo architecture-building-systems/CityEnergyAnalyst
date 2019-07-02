@@ -126,10 +126,10 @@ def route_save_building_properties():
             if db_info['type'] == 'shp':
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                 table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
                 table_df = table_df.to_crs(crs[db])
                 table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
-                out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
                 table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
                 out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
             elif db_info['type'] == 'dbf':
