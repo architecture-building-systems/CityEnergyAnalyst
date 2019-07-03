@@ -126,8 +126,7 @@ Energy potentials:
   description: Use Daysim to calculate solar radiation for a scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.radiation_daysim.radiation_main
-  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:debug',
-               radiation-daysim]
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:debug', radiation-daysim]
 
 Life cycle analysis:
 
@@ -146,16 +145,14 @@ Optimization:
   description: Run optimization for the given scenario
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.optimization_main
-  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing'
-               'optimization', 'decentralized']
+  parameters: ['general:scenario', 'general:weather', 'optimization', 'decentralized']
 
 - name: decentralized
   label: Decentralized supply system
   description: Run decentralized building optimization
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.preprocessing.decentralized_building_main
-  parameters: ['general:scenario', 'general:weather', 'decentralized',
-               'general:detailed-electricity-pricing']
+  parameters: ['general:scenario', 'general:weather', 'decentralized']
 
 
 - name: supply-system-simulation

@@ -255,7 +255,6 @@ def preprocessing_cost_data_DC(individual, df_current_individual, locator, data_
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     district_network_barcode = data_raw['network'].loc[individual].values[0]
-    individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
     district_heating_network = data_raw['district_heating_network']
     district_cooling_network = data_raw['district_cooling_network']
     detailed_electricity_pricing = data_raw['detailed_electricity_pricing']
@@ -431,6 +430,7 @@ def calc_connected_costs_advanced(data_costs, data_cooling, data_emissions):
     # pump
     data_costs['Capex_total_pumps_USD'] = data_emissions['Capex_pump'].values[0]
     data_costs['Opex_total_pumps_USD'] = data_costs['Opex_fixed_pump_USD'] + data_costs['Opex_var_pump_USD']
+
     # Lake - No lake in singapore, should be modified in future
     data_costs['Opex_fixed_Lake_USD'] = [0]
     data_costs['Opex_total_Lake_USD'] = [0]

@@ -73,6 +73,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers = np.zeros(HOURS_IN_YEAR) + 1E6
     mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.zeros(HOURS_IN_YEAR) + 1E6
 
+    #RUN FOR HEATING NETWORKS
     if network_type == "DH":
         iteration = 0
         for building_name in buildings_in_this_network:
@@ -137,6 +138,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                                 "Electr_netw_total_W": Electr_netw_total_W,
                                 "Q_DH_losses_W": Q_DH_losses_W})
 
+    #RUN FOR COOLING NETWORKS
     if network_type == "DC":
         iteration = 0
         for building_name in buildings_in_this_network:
