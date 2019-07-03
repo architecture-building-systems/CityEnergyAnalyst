@@ -85,7 +85,6 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         Opex_a_var_USD[0][0] = 1
         Opex_a_var_USD[1][1] = 1
         Opex_a_var_USD[2][2] = 1
-        InvCosts = np.zeros((13, 1))
         resourcesRes = np.zeros((13, 4))
         QannualB_GHP = np.zeros((10, 1))  # For the investment costs of the boiler used with GHP
         Wel_GHP = np.zeros((10, 1))  # For the investment costs of the GHP

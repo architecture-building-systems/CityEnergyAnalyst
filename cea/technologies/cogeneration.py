@@ -464,7 +464,7 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
     Capex_a_CCGT_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_CCGT_USD = Capex_a_CCGT_USD * Inv_OM
+    Opex_fixed_CCGT_USD = InvC * Inv_OM
     Capex_CCGT_USD = InvC
 
     return Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD
@@ -501,7 +501,7 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
 
     Capex_a_FC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_FC_USD = Capex_a_FC_USD * Inv_OM
+    Opex_fixed_FC_USD = InvC * Inv_OM
     Capex_FC_USD = InvC
 
     return Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD

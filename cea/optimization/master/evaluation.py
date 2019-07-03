@@ -255,7 +255,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     print ('Total TAC in USD = ' + str(costs_USD))
     print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_tonCO2))
-    print ('Total GHG emissions in MJoil ' + str(PEN_MJoil) + "\n")
+    print ('Total PEN emissions in MJoil ' + str(PEN_MJoil) + "\n")
 
     return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
