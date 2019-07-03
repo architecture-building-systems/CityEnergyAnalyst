@@ -66,11 +66,12 @@ function createTable(parent, name, values, columns, types) {
 
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
-        cellClick:selectRow,
+        cellClick: selectRow,
         cellEdited: updateData,
-        rowSelectionChanged: addToSelection
-
+        rowSelectionChanged: addToSelection,
     });
+
+    createTooltip();
 
     $('#select-all-button').prop('disabled', !values.length);
     $('#filter-button').prop('disabled', !values.length);
@@ -173,6 +174,19 @@ function filterSelection(selection) {
     }
 }
 
+function createTooltip() {
+    var table = $('.tab.active').data('name');
+
+    $.each(inputstore.getColumns(table), function (_, column) {
+        var glossary = inputstore.glossary[column];
+        if (glossary) {
+            $(`.tabulator-col-title:contains("${column}")`)
+                .prop('data-toggle', 'tooltip')
+                .prop('title', `UNIT: ${glossary['UNIT']}\nDESCRIPTION: ${glossary['DESCRIPTION']}`);
+        }
+    });
+}
+
 $(window).load(function () {
     $('#cea-inputs').show();
 
@@ -222,6 +236,9 @@ $(window).load(function () {
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
                         .prop('title', 'T[number]');
+                } else if (type === 'number') {
+                    $(`#cea-input-${ column }`).prop('step', 'any')
+                        .prop('min', '0');
                 }
             }
         });
@@ -276,12 +293,14 @@ $(window).load(function () {
                     data: JSON.stringify({
                         changes: changes,
                         geojson: inputstore.geojsondata,
-                        tables: inputstore.data
+                        tables: inputstore.data,
+                        crs: inputstore.crs
                     }),
                     contentType: 'application/json'
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
+                    redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
                     setTimeout(function(){

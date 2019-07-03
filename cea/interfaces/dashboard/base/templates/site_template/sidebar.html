@@ -1,7 +1,7 @@
 <div class="left_col scroll-view">
   <div class="navbar nav_title" style="border: 0;">
     <a href="/" class="site_title"><img src="/static/images/cea-logo.png" height="40px" />
-      <span asdfstyle="font-size: 0.8em">CEA</span></a>
+      <span style="font-size: 0.8em">CEA</span></a>
   </div>
 
   <div class="clearfix"></div>
@@ -9,8 +9,11 @@
   <!-- sidebar menu -->
   <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
     <div class="menu_section">
-      <h3>City Energy Analyst</h3>
       <ul class="nav side-menu">
+        <li>
+          <input class="form-control" type="text" name="glossary" id="glossary"
+                 placeholder="Glossary Search" aria-label="Search" style="border-radius: 30px; margin: 0 auto 30px;">
+        </li>
         <li><a><i class="fa fa-file-text"></i> Project Management <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="{{ url_for('landing_blueprint.route_project_overview') }}">Project Overview</a></li>
@@ -63,7 +66,7 @@
           <ul class="nav child_menu">
             <li><a href="https://github.com/architecture-building-systems/cityenergyanalyst/issues/new"
                    target="_blank">Report an issue</a></li>
-            <li><a href="https://city-energy-analyst.readthedocs.io/en/latest/known-issues.html"
+            <li><a href="https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+"
                    target="_blank">Known issues</a></li>
           </ul>
         </li>

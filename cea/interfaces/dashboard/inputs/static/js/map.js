@@ -465,18 +465,17 @@ function showProperties({object, layer}, event) {
 
     if (layer.id === 'district') {
         $('#district-tab').trigger('click');
-    }
-    if (layer.id === 'zone' && $('#district-tab').hasClass('active')) {
+    } else if (layer.id === 'zone' && $('#district-tab').hasClass('active') || !currentTable.getData().length) {
         $('#zone-tab').trigger('click');
     }
 
     // Select the building in the table
     currentTable.deselectRow();
     if (selected.length) {
-        currentTable.selectRow(selected);
         if (index === -1) {
             currentTable.scrollToRow(object.properties['Name']);
         }
+        currentTable.selectRow(selected);
     } else {
         inputstore.setSelected(['']);
         redrawBuildings();
