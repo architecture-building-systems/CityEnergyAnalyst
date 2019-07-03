@@ -67,15 +67,14 @@ def moo_optimization(locator, weather_file, gv, config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
-    _, _, _, solar_features, ground_temp = preproccessing(locator, total_demand, building_names, weather_file, config,
-                                                 prices,lca)
+    solar_features, ground_temp = preproccessing(locator, total_demand, building_names, weather_file, config, prices,lca)
 
     # optimize the distribution and linearize the results
     print("NETWORK OPTIMIZATION")
     network_features = NetworkOptimizationFeatures(config, locator)
 
     # optimize conversion systems
-    print("CONVERSION AND STORAGE OPTIMIZATION")
+    print("SUPPLY SYSTEMS OPTIMIZATION")
     master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
                                                         network_features, gv, config, prices, lca)
 

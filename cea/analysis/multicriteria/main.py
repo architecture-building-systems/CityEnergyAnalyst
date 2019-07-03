@@ -41,7 +41,7 @@ def multi_criteria_main(locator, config):
         data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
     # import data storing information about the generation
-    data_processed = preprocessing_generations_data(locator, generation)
+    # data_processed = preprocessing_generations_data(locator, generation)
     district_heating_network = data_processed['district_heating_network']
     district_cooling_network = data_processed['district_cooling_network']
 

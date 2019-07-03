@@ -64,34 +64,39 @@ def preproccessing(locator, total_demand, building_names, weather_file, config, 
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    print("PRE-PROCESSING 1/4: weather properties")
+    print("PRE-PROCESSING 1/2: weather properties")
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
 
-    print("PRE-PROCESSING 2/4: solar features")
+    print("PRE-PROCESSING 2/3: solar features")
     solar_features = SolarFeatures(locator, building_names)
 
-    print("PRE-PROCESSING 3/4: thermal networks")# at first estimate a distribution with all the buildings connected
+    print("PRE-PROCESSING 3/3: thermal networks")  # at first estimate a distribution with all the buildings connected
     if district_heating_network:
-        buildings_names_connected = get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr')
+        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+        if len(buildings_names_connected) <= 1:
+            raise Exception(
+                "There is just one or zero buildings with heating load, a district heating network will not work,"
+                "CEA can not continue")
         num_tot_buildings = len(buildings_names_connected)
         summarize_network.network_main(locator, buildings_names_connected,
                                        ground_temp, num_tot_buildings, "DH",
                                        "all")  # "_all" key for all buildings
     if district_cooling_network:
-        buildings_names_connected = get_building_names_connected_according_to_load(total_demand, load_name='QC_sys_MWhyr')
+        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+        if len(buildings_names_connected) <= 1:
+            raise Exception(
+                "There is just one or zero buildings with a cooling load, a district coooling network will not work,"
+                "CEA can not continue")
         num_tot_buildings = len(buildings_names_connected)
         summarize_network.network_main(locator, buildings_names_connected,
-                                       ground_temp, num_tot_buildings, "DC","all")  # "_all" key for all buildings
-
-    print("PRE-PROCESSING 4/4: thermal networks""GETTING EXTRA COSTS AND EMISSIONS FROM ELECTRICITY")
-    elecCosts, elecCO2, elecPrim = extra_costs_emissions_primary_energy(building_names, config, lca, locator, prices,
-                                                                        total_demand)
-
-    return elecCosts, elecCO2, elecPrim, solar_features, ground_temp
+                                       ground_temp, num_tot_buildings, "DC", "all")  # "_all" key for all buildings
 
 
-def get_building_names_connected_according_to_load(total_demand, load_name):
+    return solar_features, ground_temp
+
+
+def get_building_names_with_load(total_demand, load_name):
     building_names = total_demand.Name.values
     buildings_names_connected = []
     for building in building_names:
@@ -99,38 +104,6 @@ def get_building_names_connected_according_to_load(total_demand, load_name):
         if demand > 0.0:
             buildings_names_connected.append(building)
     return buildings_names_connected
-
-
-def extra_costs_emissions_primary_energy(building_names, config, lca, locator, prices, total_demand):
-    # GET EXTRAS
-    # estimate the extra costs, emissions and primary energy of electricity.
-    print
-    "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, lca, config, building_names)
-    # estimate the extra costs, emissions and primary energy for process heat
-    print
-    "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, lca, config)
-
-    extraCosts = elecCosts + hpCosts
-    extraCO2 = elecCO2 + hpCO2
-    extraPrim = elecPrim + hpPrim
-
-    # Capex_a and Opex_fixed
-    results = pd.DataFrame({"elecCosts": [elecCosts],
-                            "hpCosts": [hpCosts],
-                            "elecCO2": [elecCO2],
-                            "hpCO2": [hpCO2],
-                            "elecPrim": [elecPrim],
-                            "hpPrim": [hpPrim],
-                            "extraCosts": [extraCosts],
-                            "extraCO2": [extraCO2],
-                            "extraPrim": [extraPrim]
-                            })
-    results.to_csv(locator.get_preprocessing_costs(), index=False)
-
-    return elecCosts, elecCO2, elecPrim
-
 
 class SolarFeatures(object):
     def __init__(self, locator, building_names, ):

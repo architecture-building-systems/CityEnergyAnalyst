@@ -12,7 +12,7 @@ from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing import decentralized_buildings_heating
 from cea.optimization.preprocessing import decentralized_buildings_cooling
 from cea.optimization.lca_calculations import LcaCalculations
-from cea.optimization.preprocessing.preprocessing_main import get_building_names_connected_according_to_load
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 import cea.technologies.substation as substation
 
 
@@ -29,8 +29,8 @@ def disconnected_building_main(locator, building_names, total_demand, config, pr
     """
 
     # local variables
-    buildings_name_with_heating = get_building_names_connected_according_to_load(total_demand, load_name='QH_sys_MWhyr')
-    buildings_name_with_cooling = get_building_names_connected_according_to_load(total_demand, load_name='QC_sys_MWhyr')
+    buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+    buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
 
     # calculate substations
 
