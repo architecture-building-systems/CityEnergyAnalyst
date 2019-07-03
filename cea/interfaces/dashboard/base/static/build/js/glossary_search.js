@@ -10,8 +10,11 @@ $("#glossary").autocomplete({
     transformResult: function(response) {
         return {
             suggestions: $.map(response, function(dataItem) {
+                if (dataItem.SCRIPT === '-') {
+                    dataItem.SCRIPT = 'input'
+                }
                 return { value: dataItem.VARIABLE, data: { category: dataItem.SCRIPT,
-                        description: dataItem.DESCRIPTION, locator: dataItem.LOCATOR_METHOD} };
+                        description: dataItem.DESCRIPTION, unit: dataItem.UNIT, locator: dataItem.LOCATOR_METHOD} };
             })
         };
     },
@@ -21,7 +24,7 @@ $("#glossary").autocomplete({
     },
 
     onSelect: function (suggestion) {
-        var type = suggestion.category === "-" ? "input" : "output";
+        var type = suggestion.data.category === "input" ? "input" : "output";
         console.log(type);
         console.log(suggestion);
         window.open(`${docsUrl}${type}_methods.html?highlight=${suggestion.value}#${suggestion.data.locator.split("_").join("-")}`);
