@@ -1,3 +1,25 @@
+2019-07-01 - 2.17a1 - #2121 Bugfix: Maintain original coordinate system when saving new input files
+2019-07-01 - 2.17a1 - #2093 1978 create an uninstaller for the cea sure! @daren-thomas
+2019-07-01 - 2.17a0 - #2119 creating warning
+2019-07-01 - 2.17a0 - #2118 Bugfix: Update scenario image if zone file is modified
+2019-07-01 - 2.17a0 - #2116 FEATURE: Improvements to Dashboard input editor @reyery great job. It works also with files without the reference tab
+2019-06-28 - 2.17a0 - #2109 2096 error on creating energy use intensity plot @daren-thomas thanks for this!
+2019-06-28 - 2.17a0 - #2106 I1834 description variables
+2019-06-28 - 2.17a0 - #2108 Bugfix: REFERENCE column is not added when user changes parameters in zone and district helper
+2019-06-28 - 2.17a0 - #2110 I1927 multicriteria for dh cases
+2019-06-28 - 2.17a0 - #2103 Add collapsible fields for tools @reyery it works like a charm. Merging this...
+2019-06-27 - 2.17a0 - #2101 Update how-to-run-CEA-optimization.rst
+2019-06-27 - 2.17a0 - #2099 Fixed documentation build errors
+2019-06-25 - 2.17a0 - #2086 2008 demand tool not working when non existing building selected
+2019-06-25 - 2.17a0 - #2087 2026 dashboard tools parameters ignored
+2019-06-25 - 2.17a0 - #2084 add message for script completion to dashboard
+2019-06-24 - 2.16 - #2083 1984 add thermal networks plots to the dashboard
+2019-06-21 - 2.16 - #2017 1956 glossary to dashboard
+2019-06-19 - 2.16 - #2067 Updated documentation to include trace-inputlocator
+2019-06-19 - 2.16 - #2080 Bugfix: Fix terrain boundary caused by rounding error
+2019-06-18 - 2.16 - #2076 Bugfix: Ignore REFERENCE when checking columns in data_helper
+2019-06-18 - 2.16 - #2077 Bugfix: Remove 'Open project' default value if path does not exists.
+2019-06-14 - 2.16 - #2075 Release 2.16
 2019-06-13 - 2.15 - #2059 Remove brackets from `sheet_name` instances
 2019-06-12 - 2.15 - #2010 Import input files during scenario creation
 2019-06-12 - 2.15 - #2055 1961 project overview improvements

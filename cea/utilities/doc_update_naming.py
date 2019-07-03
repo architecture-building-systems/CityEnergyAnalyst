@@ -5,9 +5,13 @@ Rebuilds all restructured text files for the api documentation
 Returns a dict containing potentially outdated files and ones yet to be documented.
 
 """
+from __future__ import print_function
+from __future__ import division
+
 import cea.config
 import cea.scripts
 import cea.inputlocator
+import cea.glossary
 import os
 import pandas
 
@@ -47,8 +51,8 @@ def main(_):
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
     # if variable not found in either - TO DO labels
 
-    #TODO this could probably be done better
-    csv = pandas.DataFrame()
+    # TODO: this could probably be done better
+    csv_df = pandas.DataFrame()
     vars = []
     desc = []
     dtype = []
@@ -126,33 +130,31 @@ def main(_):
         'old_variables': old_variables
     }
 
-
-    #todo replace output with naming_csv_file once naming fully merged
-    output = os.path.join(os.path.dirname(cea.config.__file__), 'plots/naming_new.csv')
+    glossary_csv = cea.glossary._path_to_glossary_csv()
 
     # assign to dataframe and write
-    csv['VARIABLE'] = vars
-    csv['DESCRIPTION'] = desc
-    csv['TYPE'] = dtype
-    csv['VALUES'] = values
-    csv['SCRIPT'] = scripts
-    csv['UNIT'] = unit
-    csv['COLOR'] = color
-    csv['LOCATOR_METHOD'] = locator_method
-    csv['FILE_NAME'] = files
-    csv = csv.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'VALUES'])
-    csv.to_csv(output, columns=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE', 'COLOR'], index=False, sep=',')
+    csv_df['VARIABLE'] = vars
+    csv_df['DESCRIPTION'] = desc
+    csv_df['TYPE'] = dtype
+    csv_df['VALUES'] = values
+    csv_df['SCRIPT'] = scripts
+    csv_df['UNIT'] = unit
+    csv_df['COLOR'] = color
+    csv_df['LOCATOR_METHOD'] = locator_method
+    csv_df['FILE_NAME'] = files
+    csv_df = csv_df.sort_values(by=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'VALUES'])
+    csv_df.to_csv(glossary_csv,
+                  columns=['SCRIPT', 'LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE', 'DESCRIPTION', 'UNIT', 'VALUES', 'TYPE',
+                           'COLOR'], index=False, sep=',')
 
-
-
-    print 'The following variables have not been documented in naming.csv:'
+    print("The following variables have not been documented in naming.csv:")
     for variable in exceptions['new_variables']:
-        print variable
-    print '\n'
-    print 'The following variables do not exist within the schema.yml and could be outdated:'
+        print(variable)
+    print("\n")
+    print("The following variables do not exist within the schema.yml and could be outdated:")
     for variable in exceptions['old_variables']:
-        print variable
+        print(variable)
 
-    print '\n~~~~~~~~ Merge complete ~~~~~~~~ \n'
+    print("\n~~~~~~~~ Merge complete ~~~~~~~~ \n")
 
     return exceptions
