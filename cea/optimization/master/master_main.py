@@ -44,7 +44,7 @@ def objective_function(individual, individual_number, generation, building_names
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
-    print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
+    print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
                                                                                           locator, solar_features,
