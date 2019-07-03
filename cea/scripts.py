@@ -126,11 +126,9 @@ def schemas():
 
 def get_schema_variables(schema):
     """
-    This method returns a set of all variables within the schema.yml. The set is organised by: (variable_name, locator_method, script, file_name:sheet_name)
-    If the variable is from an input database, the script is replaced by the name of the file - without extension:
-
-        - i.e. if 'created_by' is an empty list and the variable is stored in 'LCA_buildings.xlsx': script = 'LCA_buildings'
-
+    This method returns a set of all variables within the schema.yml. The set is organised by:
+    (variable_name, locator_method, script, file_name:sheet_name)
+    If the variable is from an input database, the script is replaced by "-"
     Also, if the variable is not from a tree data shape (such as xlsx or xls), the 'file_name:sheet_name' becomes 'file_name' only.
     The sheet_name is important to consider as a primary key for each variable can only be made through combining the 'file_name:sheet_name' and
     'variable_name'. Along with the locator_method, the set should contain all information necessary for most tasks.
@@ -142,7 +140,7 @@ def get_schema_variables(schema):
         # if there is no script mapped to 'created_by', it must be an input_file
         # replace non-existant script with the name of the file without the extension
         if not schema[locator_method]['created_by']:
-            script = schema[locator_method]['file_path'].split('\\')[-1].split('.')[0]
+            script = "-"
         else:
             script = schema[locator_method]['created_by'][0]
 
@@ -162,14 +160,16 @@ def get_schema_variables(schema):
                 variable = 'EPW file variables'
 
             # if the variable is actually a sheet name due to tree data shape
-            if schema[locator_method]['file_type'] == 'xlsx' or schema[locator_method]['file_type'] == 'xls':
-                for Variable in schema[locator_method]['schema'][variable]:
-                    file_name = schema[locator_method]['file_path'].split('\\')[-1] + ':' + variable
-                    schema_variables.add((Variable, locator_method, script, file_name))
+            if schema[locator_method]['file_type'] in {'xlsx', 'xls'}:
+                worksheet = variable
+                for variable_in_sheet in schema[locator_method]['schema'][worksheet]:
+                    file_name = "{file_path}:{worksheet}".format(file_path=schema[locator_method]['file_path'],
+                                                                 worksheet=worksheet)
+                    schema_variables.add((variable_in_sheet, locator_method, script, file_name))
             # otherwise create the meta set
             else:
 
-                file_name = schema[locator_method]['file_path'].split('\\')[-1]
+                file_name = schema[locator_method]['file_path']
                 schema_variables.add((variable, locator_method, script, file_name))
     return schema_variables
 

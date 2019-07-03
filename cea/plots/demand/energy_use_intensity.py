@@ -32,13 +32,15 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
 
 
     def calc_graph(self):
+        data = self.data.copy()
+        analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         if len(self.buildings) == 1:
-            assert len(self.data) == 1, 'Expected DataFrame with only one row'
-            building_data = self.data.iloc[0]
+            assert len(data) == 1, 'Expected DataFrame with only one row'
+            building_data = data.iloc[0]
             traces = []
             area = building_data["GFA_m2"]
             x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
-            for field in self.analysis_fields:
+            for field in analysis_fields:
                 name = NAMING[field]
                 y = [building_data[field], building_data[field] / area * 1000]
                 trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
@@ -47,15 +49,16 @@ class EnergyUseIntensityPlot(cea.plots.demand.DemandPlotBase):
         else:
             # district version of this plot
             traces = []
-            self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-            for field in self.analysis_fields:
-                self.data[field] = self.data[field] * 1000 / self.data["GFA_m2"]  # in kWh/m2y
-                self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
-            x = self.data["Name"].tolist()
-            for field in self.analysis_fields:
-                y = self.data[field]
+            dataframe = self.data
+            for field in analysis_fields:
+                dataframe[field] = dataframe[field] * 1000 / dataframe["GFA_m2"]  # in kWh/m2y
+            dataframe['total'] = dataframe[analysis_fields].sum(axis=1)
+            dataframe.sort_values(by='total', ascending=False, inplace=True)
+            dataframe.reset_index(inplace=True, drop=True)
+            for field in analysis_fields:
+                y = dataframe[field]
                 name = NAMING[field]
-                trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
             return traces
 

@@ -1,3 +1,5 @@
+:orphan:
+
 Script Data Flow
 ================
 This section aims to clarify the files used (inputs) or created (outputs) by each script, along with the methods used

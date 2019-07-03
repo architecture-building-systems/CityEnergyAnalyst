@@ -120,8 +120,9 @@ class DemandSingleBuildingPlotBase(DemandPlotBase):
     }
 
     def __init__(self, project, parameters, cache):
-        parameters['buildings'] = [parameters['building']]
         super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
+        self.building = parameters['building']
+        self.buildings = [self.building]  # some parts of DemandPlotBase require this
 
 
 def main():

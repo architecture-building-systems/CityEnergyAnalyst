@@ -11,9 +11,8 @@ import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
-import cea.optimization.preprocessing.processheat as process_heat
+
 from cea.optimization.master import summarize_network
-from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
@@ -73,40 +72,14 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     print "Run substation model for each building separately"
     substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
                                Flag=False)  # True if disconnected buildings are calculated
-    # GET COMPETITIVE ALTERNATIVES TO A NETWORK
-    # estimate what would be the operation of single buildings only for heating.
-    # For cooling all buildings are assumed to be connected to the cooling distribution on site.
 
-    # GET DH NETWORK
+    # GET DH adn DC NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"
     summarize_network.network_main(locator, total_demand, building_names, config, gv, "all") #"_all" key for all buildings
 
-    # GET EXTRAS
-    # estimate the extra costs, emissions and primary energy of electricity.
-    print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, lca, config, building_names)
 
-    # estimate the extra costs, emissions and primary energy for process heat
-    print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, lca, config)
-
-    extraCosts = elecCosts + hpCosts
-    extraCO2 = elecCO2 + hpCO2
-    extraPrim = elecPrim + hpPrim
-
-    # Capex_a and Opex_fixed
-    results = pd.DataFrame({"elecCosts": [elecCosts],
-                            "hpCosts": [hpCosts],
-                            "elecCO2": [elecCO2],
-                            "hpCO2": [hpCO2],
-                            "elecPrim": [elecPrim],
-                            "hpPrim": [hpPrim]
-                            })
-
-    results.to_csv(locator.get_preprocessing_costs(), index=False)
-
-    return extraCosts, extraCO2, extraPrim, solar_features
+    return  solar_features
 
 
 class SolarFeatures(object):

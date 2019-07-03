@@ -22,11 +22,11 @@ The results from the optimization is a collection of pareto-optimum solutions.
 Optimization Variables
 ----------------------
 Beside the objectives, the main outputs from the optimization is the energy supply system configurations.
-Each perato-optimum solution implies a unique energy supply system configuration. A configuration is combination of
+Each pareto-optimum solution implies a unique energy supply system configuration. A configuration is combination of
 energy supply technologies and sizes.
 All possible configurations that is incorporated in the CEA is presented in this figure:
 
-.. image:: flowchart_thermal_electric_network_planning.png
+.. image:: supply_system_superstructure.png
     :align: center
 
 Supply technology selection and sizing
