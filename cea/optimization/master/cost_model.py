@@ -130,6 +130,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     addcosts_Opex_fixed_USD += Opex_fixed_PV_USD
     addcosts_Capex_USD += Capex_PV_USD
 
+
     SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
     Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
     addcosts_Capex_a_USD += Capex_a_SC_ET_USD
@@ -422,6 +423,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         GasConnectionInvCost = 0.0
 
     addcosts_Capex_a_USD += GasConnectionInvCost
+
+    print(addcosts_Capex_USD, addcosts_Capex_a_USD,addcosts_Opex_fixed_USD)
 
     TAC_USD = addcosts_Capex_a_USD + addcosts_Opex_fixed_USD
     GH_toneq_disconnected = (CO2DiscBuild_heating + CO2DiscBuild_cooling) / 1E3 #from kg to ton
