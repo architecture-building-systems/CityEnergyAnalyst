@@ -362,7 +362,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
 
             Capex_a_HP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_HP_USD = Capex_a_HP_USD * Inv_OM
+            Opex_fixed_HP_USD = InvC * Inv_OM
             Capex_HP_USD = InvC
 
         else:
@@ -385,7 +385,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
 
                 Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Opex_fixed_HP_USD = Opex_fixed_HP_USD + Capex_a_HP_USD * Inv_OM
+                Opex_fixed_HP_USD = Opex_fixed_HP_USD + InvC * Inv_OM
                 Capex_HP_USD = InvC
 
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
@@ -423,7 +423,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_GHP = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_GHP_USD = Capex_a_GHP_USD * Inv_OM
+    Opex_fixed_GHP_USD = InvC_GHP * Inv_OM
     
     BH_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="BH")
     technology_code = list(set(BH_cost_data['code']))
@@ -447,7 +447,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_BH = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_BH_USD = InvC_BH * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_BH_USD = Capex_a_BH_USD * Inv_OM
+    Opex_fixed_BH_USD = InvC_BH * Inv_OM
 
     Capex_a_GHP_total_USD = Capex_a_BH_USD + Capex_a_GHP_USD
     Opex_fixed_GHP_total_USD = Opex_fixed_BH_USD + Opex_fixed_GHP_USD

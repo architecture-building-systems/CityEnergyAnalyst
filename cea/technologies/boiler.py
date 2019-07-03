@@ -210,7 +210,7 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
             Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_a_fix_Boiler_USD = Capex_a_Boiler_USD * Inv_OM
+            Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 
         else:
@@ -232,7 +232,7 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
             Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_a_fix_Boiler_USD = Capex_a_Boiler_USD * Inv_OM
+            Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 
     return Capex_a_Boiler_USD, Opex_a_fix_Boiler_USD, Capex_Boiler_USD

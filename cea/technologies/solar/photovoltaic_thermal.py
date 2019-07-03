@@ -669,7 +669,7 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+    Opex_fixed = InvC * Inv_OM
     Capex = InvC
 
     return Capex_a, Opex_fixed, Capex
