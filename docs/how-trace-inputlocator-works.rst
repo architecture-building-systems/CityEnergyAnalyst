@@ -26,10 +26,9 @@ if trace-inputlocator is run for 'demand', without having run 'radiation_daysim'
 erroneously empty for files written by 'radiation_daysim'. Once parent locator methods are accounted for, the script order should not
 matter.
 
-An example of the metadata for an 'input' inputlocator method:
+An example of the metadata for an 'input' inputlocator method::
 
-```
-get_archetypes_system_controls:
+ get_archetypes_system_controls:
     created_by: []
     description: " Returns the database of region-specific system control parameters.\
         \ These are copied\n        to the scenario if they are not yet present, based\
@@ -58,12 +57,10 @@ get_archetypes_system_controls:
                 sample_data: !!python/unicode '09-16'
                 types_found: [date]
     used_by: [demand]
-```
 
-An example of the metadata for an 'output' inputlocator method:
+An example of the metadata for an 'output' inputlocator method::
 
-```
-get_building_supply:
+ get_building_supply:
     created_by: [data-helper]
     description: scenario/inputs/building-properties/building_supply.dbf
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-properties\supply_systems.dbf
@@ -85,7 +82,6 @@ get_building_supply:
             sample_data: T0
             types_found: [string]
     used_by: [demand, operation-costs, emissions]
-```
 
 CEA Schema
 ----------

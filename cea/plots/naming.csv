@@ -89,60 +89,60 @@ demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltratio
 demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
 demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
 
-demand,DH_ww_kWh,kWh,District heating for hotwater demand,orange_light
-demand,DH_ww_MWhyr,MWh/yr,District heating for hotwater demand,orange_light
-demand,DH_ww0_kW,kW,Nominal district heating for hotwater demand,orange_light
+demand,DH_ww_kWh,kWh,Energy requirement by district heating (hotwater supply),orange_light
+demand,DH_ww_MWhyr,MWh/yr,Energy requirement by district heating (hotwater supply),orange_light
+demand,DH_ww0_kW,kW,Nominal Energy requirement by district heating (hotwater supply),orange_light
 
-demand,DH_hs_kWh,kWh,District heating for space heating demand,orange
-demand,DH_hs_MWhyr,MWh/yr,District heating for space heating demand,orange
-demand,DH_hs0_kW,kW,Nominal district heating for space heating demand,orange
+demand,DH_hs_kWh,kWh,Energy requirement by district heating (space heating supply),orange
+demand,DH_hs_MWhyr,MWh/yr,Energy requirement by district heating (space heating supply),orange
+demand,DH_hs0_kW,kW,Nominal energy requirement by district heating (space heating supply),orange
 
-demand,COAL_ww_kWh,kWh,Coal consumption due to hotwater,grey
-demand,COAL_ww_MWhyr,MWh/yr,Coal consumption due to hotwater,grey
-demand,COAL_ww0_kW,kW,Nominal Coal consumption due to hotwater,grey
+demand,COAL_ww_kWh,kWh,Coal requirement for hotwater supply,grey
+demand,COAL_ww_MWhyr,MWh/yr,Coal requirement for hotwater supply,grey
+demand,COAL_ww0_kW,kW,Nominal Coal requirement for hotwater supply,grey
 
-demand,COAL_hs_kWh,kWh,Coal consumption due to space heating,black
-demand,COAL_hs_MWhyr,MWh/yr,Coal consumption due to space heating,black
-demand,COAL_hs0_kW,kW,Nominal Coal consumption due to space heating,black
+demand,COAL_hs_kWh,kWh,Coal requirement for space heating supply,black
+demand,COAL_hs_MWhyr,MWh/yr,Coal requirement for space heating supply,black
+demand,COAL_hs0_kW,kW,Nominal Coal requirement for space heating supply,black
 
-demand,NG_ww_kWh,kWh,NG consumption due to hotwater,red_light
-demand,NG_ww_MWhyr,MWh/yr,NG consumption due to hotwater,red_light
-demand,NG_ww0_kW,kW,Nominal NG consumption due to hotwater,red_light
+demand,NG_ww_kWh,kWh,NG requirement for hotwater supply,red_light
+demand,NG_ww_MWhyr,MWh/yr,NG requirement for hotwater supply,red_light
+demand,NG_ww0_kW,kW,Nominal NG requirement for hotwater supply,red_light
 
 
 supply,NG_CCGT_MWhyr,MWh/yr,NG-fired CGGT unit,blue_light
 
-demand,NG_hs_kWh,kWh,NG consumption due to space heating,red
-demand,NG_hs_MWhyr,MWh/yr,NG consumption due to space heating,red
-demand,NG_hs0_kW,kW,Nominal NG consumption due to space heating,red
+demand,NG_hs_kWh,kWh,NG requirement for space heating supply,red
+demand,NG_hs_MWhyr,MWh/yr,NG requirement for space heating supply,red
+demand,NG_hs0_kW,kW,Nominal NG requirement for space heating supply,red
 
-demand,OIL_ww_kWh,kWh,OIL consumption due to hotwater,orange_light
-demand,OIL_ww_MWhyr,MWh/yr,OIL consumption due to hotwater,orange_light
-demand,OIL_ww0_kW,kW,Nominal OIL consumption due to hotwater,orange_light
+demand,OIL_ww_kWh,kWh,OIL requirement for hotwater supply,orange_light
+demand,OIL_ww_MWhyr,MWh/yr,OIL requirement for hotwater supply,orange_light
+demand,OIL_ww0_kW,kW,Nominal OIL requirement for hotwater supply,orange_light
 
-demand,OIL_hs_kWh,kWh,OIL consumption due to space heating,orange
-demand,OIL_hs_MWhyr,MWh/yr,OIL consumption due to space heating,orange
-demand,OIL_hs0_kW,kW,Nominal OIL consumption due to space heating,orange
+demand,OIL_hs_kWh,kWh,OIL requirement for space heating supply,orange
+demand,OIL_hs_MWhyr,MWh/yr,OIL requirement for space heating supply,orange
+demand,OIL_hs0_kW,kW,Nominal OIL requirement for space heating supply,orange
 
-demand,WOOD_ww_kWh,kWh,WOOD consumption due to hotwater,brown_light
-demand,WOOD_ww_MWhyr,MWh/yr,WOOD consumption due to hotwater,brown_light
-demand,WOOD_ww0_kW,kW,Nominal WOOD consumption due to hotwater,brown_light
+demand,WOOD_ww_kWh,kWh,WOOD requirement for hotwater supply,brown_light
+demand,WOOD_ww_MWhyr,MWh/yr,WOOD requirement for hotwater supply,brown_light
+demand,WOOD_ww0_kW,kW,Nominal WOOD requirement for hotwater supply,brown_light
 
-demand,WOOD_hs_kWh,kWh,WOOD consumption due to space heating,brown
-demand,WOOD_hs_MWhyr,MWh/yr,WOOD consumption due to space heating,brown
-demand,WOOD_hs0_kW,kW,Nominal WOOD consumption due to space heating,brown
+demand,WOOD_hs_kWh,kWh,WOOD requirement for space heating supply,brown
+demand,WOOD_hs_MWhyr,MWh/yr,WOOD requirement for space heating supply,brown
+demand,WOOD_hs0_kW,kW,Nominal WOOD requirement for space heating supply,brown
 
-demand,SOLAR_ww_kWh,kWh,Solar energy consumption due to hotwater,yellow_light
-demand,SOLAR_ww_MWhyr,MWh/yr,Solar energy consumption due to hotwater,yellow_light
-demand,SOLAR_ww0_kW,kW,Nominal solar energy consumption due to hotwater,yellow_light
+demand,SOLAR_ww_kWh,kWh,Solar thermal energy requirement for hotwater supply,yellow_light
+demand,SOLAR_ww_MWhyr,MWh/yr,Solar thermal energy requirement for hotwater supply,yellow_light
+demand,SOLAR_ww0_kW,kW,Nominal solar thermal energy requirement for hotwater supply,yellow_light
 
-demand,SOLAR_hs_kWh,kWh,Solar energy consumption due to space heating,yellow
-demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yellow
-demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
+demand,SOLAR_hs_kWh,kWh,Solar thermal energy requirement for space heating supply,yellow
+demand,SOLAR_hs_MWhyr,MWh/yr,Solar thermal energy requirement for space heating supply,yellow
+demand,SOLAR_hs0_kW,kW,Nominal solar thermal energy requirement for space heating supply,yellow
 
 
 demand,Epro_MWhyr,MWh/yr,Electricity supplied to industrial processes,brown_lighter
-demand,Edata_MWhyr,MWh/yr,Electricity consumption for data center,blue_lighter
+demand,Edata_MWhyr,MWh/yr,Electricity consumption for data centers,blue_lighter
 demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
 demand,E_cs_MWhyr,MWh/yr,Electricity consumption due to space cooling,blue_light
 demand,E_hs_MWhyr,MWh/yr,Electricity consumption due to space heating,green_light

@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, redirect, request, url_for
+from flask import Blueprint, render_template, redirect, request, url_for, jsonify
 
-# start the login system
+import cea.plots
+import cea.glossary
+
 
 blueprint = Blueprint(
     'base_blueprint',
@@ -14,6 +16,13 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def route_default():
     return redirect(url_for('landing_blueprint.index'))
+
+
+@blueprint.route('/glossary_search')
+def route_glossary_search():
+    query = request.args.get('query')
+    glossary = cea.glossary.read_glossary_dicts()
+    return jsonify(filter(lambda row: query.lower() in row['VARIABLE'].lower(), glossary))
 
 
 @blueprint.route('/fixed_<template>')
@@ -51,6 +60,8 @@ def not_found_error(error):
     return render_template('errors/page_404.html'), 404
 
 
-@blueprint.errorhandler(500)
+@blueprint.app_errorhandler(500)
 def internal_error(error):
-    return render_template('errors/page_500.html'), 500
+    import traceback
+    error_trace = traceback.format_exc()
+    return render_template('errors/page_500.html', error=error_trace), 500

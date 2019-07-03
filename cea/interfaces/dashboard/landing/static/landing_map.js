@@ -84,7 +84,7 @@ function removePoly() {
 }
 
 function polyToString() {
-	if ($('#zone').prop('checked') && latlngs.length < 3) {
+	if ($('#zone-helper').prop('checked') && latlngs.length < 3) {
 		alert("Please select a site with a polygon")
 	} else {
 		// TODO: Check if polygon is empty
