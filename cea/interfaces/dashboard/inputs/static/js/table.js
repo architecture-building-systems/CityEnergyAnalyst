@@ -236,6 +236,9 @@ $(window).load(function () {
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
                         .prop('title', 'T[number]');
+                } else if (type === 'number') {
+                    $(`#cea-input-${ column }`).prop('step', 'any')
+                        .prop('min', '0');
                 }
             }
         });
