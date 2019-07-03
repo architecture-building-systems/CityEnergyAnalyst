@@ -64,7 +64,6 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         index = 0
         combi = [0] * len(buildings_name_with_heating)
         for name in buildings_name_with_heating:
-            print(name)
             dfRes = total_demand[(total_demand.Name == name)]
             combi[index] = 1
             DHN_key = "".join(str(e) for e in combi)
@@ -80,7 +79,6 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
     else:
         # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
         for name in buildings_name_with_heating:
-            print(name)
             substation_model_heating(buildings_dict[name],
                                      DHN_supply,
                                      heating_system_temperatures_dict[name],
@@ -146,7 +144,6 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
             index = 0
             combi = [0] * len(buildings_name_with_cooling)
             for name in buildings_name_with_cooling:
-                print(name)
                 dfRes = total_demand[(total_demand.Name == name)]
                 combi[index] = 1
                 DCN_key = "".join(str(e) for e in combi)
@@ -164,7 +161,6 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
         else:
             # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
             for name in buildings_name_with_cooling:
-                print(name)
                 substation_model_cooling(buildings_dict[name],
                                          DCN_supply,
                                          cooling_system_temperatures_dict[name],

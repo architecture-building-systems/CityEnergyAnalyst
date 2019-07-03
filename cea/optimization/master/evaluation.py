@@ -199,20 +199,21 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # DISTRICT COOLING NETWORK
     if district_cooling_network:
-        print("CALCULATING ECOLOGICAL COSTS OF COOLING ENERGY CONSUMPTION - CONNECTED BUILDINGS")
-        reduced_timesteps_flag = False
-        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) \
-            = cooling_main.cooling_calculations_of_DC_buildings(locator,
-                                                                master_to_slave_vars,
-                                                                network_features,
-                                                                prices,
-                                                                lca,
-                                                                config,
-                                                                reduced_timesteps_flag,district_cooling_network,
-                                                                district_cooling_network)
-    costs_USD += costs_cooling_USD
-    GHG_tonCO2 += GHG_cooling_tonCO2
-    PEN_MJoil += PEN_cooling_MJoil
+        print("CALCULATING ECOLOGICAL COSTS OF COOLING ENERGY CONSUMPTION AND COOLING EQUIPMENT - CONNECTED BUILDINGS")
+        if DCN_barcode.count("1") > 0:
+            reduced_timesteps_flag = False
+            (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) \
+                = cooling_main.cooling_calculations_of_DC_buildings(locator,
+                                                                    master_to_slave_vars,
+                                                                    network_features,
+                                                                    prices,
+                                                                    lca,
+                                                                    config,
+                                                                    reduced_timesteps_flag,district_cooling_network,
+                                                                    district_cooling_network)
+        costs_USD += costs_cooling_USD
+        GHG_tonCO2 += GHG_cooling_tonCO2
+        PEN_MJoil += PEN_cooling_MJoil
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING ECOLOGICAL COSTS OF ELECTRICITY CONSUMPTION")
@@ -235,8 +236,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
 
     # ENERGY GENERATION UNITS, PUMPS, HEX, SUBSTATIONS, CONNECTION TO GAS NETWORK
-    print("CALCULATING ECOLOGICAL COSTS OF ENERGY GENERATION UNITS, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
-    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator,
+    print("CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
+    (costs_additional_USD, GHG_additional_tonCO2_decentralized, PEN_additional_MJoil_decentralized) = cost_model.addCosts(building_names, locator,
                                                                                               master_to_slave_vars,
                                                                                               Q_heating_uncovered_design_W,
                                                                                               Q_heating_uncovered_annual_W,
@@ -245,8 +246,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                                               config, prices, lca)
 
     costs_USD += costs_additional_USD
-    GHG_tonCO2 += GHG_additional_tonCO2
-    PEN_MJoil += PEN_additional_MJoil
+    GHG_tonCO2 += GHG_additional_tonCO2_decentralized #beacause we already calculated heating and electricity for the connected buildings
+    PEN_MJoil += PEN_additional_MJoil_decentralized #beacause we already calculated heating and electricity for the connected buildings
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
