@@ -40,8 +40,6 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(ComfortChartPlot, self).__init__(project, parameters, cache)
-        if len(self.buildings) > 1:
-            self.buildings = [self.buildings[0]]
         self.analysis_fields = None
 
     @property
@@ -50,7 +48,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        return self.hourly_loads[self.hourly_loads['Name'] == self.building]
 
     @property
     def dict_graph(self):

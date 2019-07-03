@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cea.optimization.flexibility_model.electric_and_thermal_grid_planning
     cea.optimization.flexibility_model.model_building
     cea.optimization.flexibility_model.mpc_building
     cea.optimization.flexibility_model.mpc_district
