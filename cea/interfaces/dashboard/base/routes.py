@@ -60,6 +60,8 @@ def not_found_error(error):
     return render_template('errors/page_404.html'), 404
 
 
-@blueprint.errorhandler(500)
+@blueprint.app_errorhandler(500)
 def internal_error(error):
-    return render_template('errors/page_500.html'), 500
+    import traceback
+    error_trace = traceback.format_exc()
+    return render_template('errors/page_500.html', error=error_trace), 500
