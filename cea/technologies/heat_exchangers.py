@@ -63,9 +63,9 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
         Capex_HEX_USD = InvC
 
     else:
-        Capex_a_HEX_USD = 0
-        Opex_fixed_HEX_USD = 0
-        Capex_HEX_USD = 0
+        Capex_a_HEX_USD = 0.0
+        Opex_fixed_HEX_USD = 0.0
+        Capex_HEX_USD = 0.0
 
     return Capex_a_HEX_USD, Opex_fixed_HEX_USD, Capex_HEX_USD
 
