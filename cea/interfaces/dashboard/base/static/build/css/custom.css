@@ -4258,3 +4258,8 @@ table thead .checkbox.radio { margin-top:-7px;margin-top:-21px; }
 .autocomplete-suggestion {
     padding-right: 30px;
 }
+
+#stack-trace {
+    width: 60%;
+    margin: auto;
+}
