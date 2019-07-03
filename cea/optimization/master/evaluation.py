@@ -70,14 +70,6 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     costs_USD = 0
     GHG_tonCO2 = 0
     PEN_MJoil = 0
-    costs_cooling_USD = 0.0
-    GHG_cooling_tonCO2 = 0.0
-    PEN_cooling_MJoil = 0.0
-    GHG_heating_tonCO2 = 0.0
-    costs_heating_USD = 0.0
-    PEN_heating_MJoil = 0.0
-    Q_heating_uncovered_design_W = 0
-    Q_heating_uncovered_annual_W = 0
 
     # CREATE THE INDIVIDUAL
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
@@ -110,6 +102,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     PEN_MJoil += PEN_storage_MJoil
 
     # DISTRICT HEATING NETWORK
+    Q_heating_uncovered_design_W = 0
+    Q_heating_uncovered_annual_W = 0
+    costs_heating_USD = 0.0
+    PEN_heating_MJoil = 0.0
+    GHG_heating_tonCO2 = 0.0
     if district_heating_network:
         print("CALCULATING ECOLOGICAL COSTS OF HEATING ENERGY CONSUMPTION - CONNECTED BUILDINGS")
         if DHN_barcode.count("1") > 0:
@@ -122,6 +119,9 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         PEN_MJoil += PEN_heating_MJoil
 
     # DISTRICT COOLING NETWORK
+    costs_cooling_USD = 0.0
+    GHG_cooling_tonCO2 = 0.0
+    PEN_cooling_MJoil = 0.0
     if district_cooling_network:
         print("CALCULATING ECOLOGICAL COSTS OF COOLING ENERGY CONSUMPTION AND COOLING EQUIPMENT - CONNECTED BUILDINGS")
         if DCN_barcode.count("1") > 0:
