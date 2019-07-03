@@ -130,7 +130,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     addcosts_Opex_fixed_USD += Opex_fixed_PV_USD
     addcosts_Capex_USD += Capex_PV_USD
 
-
     SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
     Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
     addcosts_Capex_a_USD += Capex_a_SC_ET_USD
@@ -149,7 +148,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     addcosts_Opex_fixed_USD += Opex_fixed_PVT_USD
     addcosts_Capex_USD += Capex_PVT_USD
 
-    # ADD COSTS AND EMISSIONS DUE OTHER TECHNOLOGIES FOR HEATING NETWORK
+    # ADD COSTS DUE OTHER TECHNOLOGIES FOR HEATING NETWORK
     if DHN_barcode.count("1") > 0 and district_heating_network:
         os.chdir(locator.get_optimization_slave_results_folder(master_to_slave_vars.generation_number))
         # Add the investment costs of the energy systems
@@ -413,6 +412,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                                                                master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
+
     elif DCN_barcode.count("1") > 0 and district_cooling_network:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
