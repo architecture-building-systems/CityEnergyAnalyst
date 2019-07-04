@@ -428,19 +428,23 @@ function updateTooltip({x, y, object, layer}) {
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
 
-        if (layer.id == 'zone' || layer.id == 'district') {
+        if (layer.id === 'zone' || layer.id === 'district') {
             $.each(inputstore.getColumns(layer.id), function (index, column)  {
-                innerHTML += `<div><b>${column}</b>: ${object.properties[column]}</div>`;
+                var property = object.properties[column];
+                var unit = '';
+                if (column==='height_ag'){unit = 'm'; property = property.toFixed(2);}
+                if (column==='REFERENCE' && !property) return;
+                innerHTML += `<div><b>${column}</b>: ${property}${unit}</div>`;
             });
             var area = turf.area(object);
-            innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>
-            <div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+            innerHTML += `<br><div><b>area</b>: ${area.toFixed(2)}m<sup>2</sup></div>` +
+            `<div><b>volume</b>: ${(area * object.properties['height_ag']).toFixed(2)}m<sup>3</sup></div>`;
         } else {
             for (let prop in object.properties) {
                 innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
             }
         }
-        if (layer.id == 'dc_networks' || layer.id == 'dh_networks') {
+        if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
             if (!object.properties.hasOwnProperty("Building")) {
                 var length = turf.length(object) * 1000;
                 innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
