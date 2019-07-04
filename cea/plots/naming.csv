@@ -280,8 +280,13 @@ Cost Analysis,Opex_CHP_Total_USD,$USD(2015),OPEX of combined cycle heat pump,blu
 Cost Analysis,Opex_Furnace_Total_USD,$USD(2015),OPEX of furnace,orange_light
 Cost Analysis,Opex_Boiler_Total_USD,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
 Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
+
+Cost Analysis,Capex_Decentralized_MioUSD,Mio $USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
+Cost Analysis,Opex_Decentralized_MioUSD,Mio $USD(2015),OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_Centralized_MioUSD,Mio $USD(2015),Annualized CAPEX of district energy system,green
+Cost Analysis,Opex_Centralized_MioUSD,Mio $USD(2015),OPEX of district energy system,brown
 Cost Analysis,Capex_Centralized_USD,$USD(2015),Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized_USD,$USD(2015),OPEX of district energy system,brown
 
@@ -452,9 +457,9 @@ Urban,SWIMMING,m2,Swimming halls,purple
 
 
 potential_duplicate,individual,-,Individual ID,red
-potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
-potential_duplicate,total_emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
-potential_duplicate,total_prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
-potential_duplicate,renewable_share_electricity,-,Renewable share (%),red
-potential_duplicate,Capex_total_Mio,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
-potential_duplicate,Opex_total_Mio,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red
+potential_duplicate,TAC_MioUSD,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
+potential_duplicate,GHG_ktonCO2, CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
+potential_duplicate,PEN_TJoil,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
+potential_duplicate,RES_el,-,Renewable share for electricity (%),red
+potential_duplicate,Capex_total_MioUSD,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
+potential_duplicate,Opex_total_MioUSD,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red

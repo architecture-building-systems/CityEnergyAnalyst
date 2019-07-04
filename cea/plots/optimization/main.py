@@ -102,10 +102,10 @@ class Plots(object):
                                                          "Electricitycosts_for_appliances_USD",
                                                          "Electricitycosts_for_hotwater_USD"]
 
-        self.analysis_fields_cost_central_decentral = ["Capex_Centralized_USD",
-                                                       "Capex_Decentralized_USD",
-                                                       "Opex_Centralized_USD",
-                                                       "Opex_Decentralized_USD"]
+        self.analysis_fields_cost_central_decentral = ["Capex_Centralized_MioUSD",
+                                                       "Capex_Decentralized_MioUSD",
+                                                       "Opex_Centralized_MioUSD",
+                                                       "Opex_Decentralized_MioUSD"]
         self.analysis_fields_cost_heating_centralized = ["Capex_SC_USD",
                                                          "Capex_PVT_USD",
                                                          "Capex_furnace_USD",
@@ -352,7 +352,7 @@ class Plots(object):
                                                                         'Opex_fixed_pump']
                 data_processed.loc[index]['Capex_CHP'] = data_processed.loc[index]['Capex_a_CHP'] + \
                                                                    data_processed.loc[index]['Opex_fixed_CHP']
-                data_processed.loc[index]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
+                data_processed.loc[index]['Disconnected_costs'] = df_heating_costs['TAC_disconnected_USD']
 
                 data_processed.loc[index]['Capex_Boiler_Total'] = data_processed.loc[index][
                                                                                 'Capex_Boiler'] + \
@@ -385,6 +385,10 @@ class Plots(object):
                 data_processed.loc[index]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
                 data_processed.loc[index]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
+
+                data_processed.loc[index]['Capex_Decentralized_USD'] = df_heating_costs['Capex_a_disconnected_USD']
+                data_processed.loc[index]['Opex_Decentralized_USD'] = df_heating_costs['Opex_a_disconnected_USD']
+
                 data_processed.loc[index]['Opex_Centralized'] \
                     = data_processed.loc[index]['Opex_HP_Sewage'] + data_processed.loc[index][
                     'Opex_HP_Lake'] + \
@@ -402,37 +406,23 @@ class Plots(object):
                       data_processed.loc[index]['Electricity_Costs'] + data_processed.loc[index][
                           'Process_Heat_Costs']
 
-                data_processed.loc[index]['Capex_Centralized'] = data_processed.loc[index][
-                                                                               'Capex_SC'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_PVT'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_Boiler_backup'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_storage_HEX'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_furnace'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_Boiler'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_Boiler_peak'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_Lake'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_Sewage'] + \
-                                                                           data_processed.loc[index][
-                                                                               'Capex_pump']
+                data_processed.loc[index]['Capex_Centralized_USD'] = data_processed.loc[index]['Capex_SC'] +\
+                                                                     data_processed.loc[index]['Capex_PVT'] + \
+                                                                     data_processed.loc[index]['Capex_Boiler_backup'] + \
+                                                                     data_processed.loc[index]['Capex_storage_HEX'] + \
+                                                                     data_processed.loc[index]['Capex_furnace'] + \
+                                                                     data_processed.loc[index]['Capex_Boiler'] + \
+                                                                     data_processed.loc[index]['Capex_Boiler_peak'] + \
+                                                                     data_processed.loc[index]['Capex_Lake'] + \
+                                                                     data_processed.loc[index]['Capex_Sewage'] + \
+                                                                     data_processed.loc[index]['Capex_pump']
 
-                data_processed.loc[index]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
-                data_processed.loc[index]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
-                data_processed.loc[index]['Capex_Total'] = data_processed.loc[index][
-                                                                         'Capex_Centralized'] + \
-                                                                     data_processed.loc[index][
-                                                                         'Capex_Decentralized']
-                data_processed.loc[index]['Opex_Total'] = data_processed.loc[index][
-                                                                        'Opex_Centralized'] + \
+                data_processed.loc[index]['Capex_Total_USD'] = data_processed.loc[index]['Capex_Centralized_USD'] + \
+                                                               data_processed.loc[index]['Capex_Decentralized_USD']
+                data_processed.loc[index]['Opex_Total_USD'] = data_processed.loc[index][
+                                                                        'Opex_Centralized_USD'] + \
                                                                     data_processed.loc[index][
-                                                                        'Opex_Decentralized']
+                                                                        'Opex_Decentralized_USD']
 
             elif config.plots_optimization.network_type == 'DC':
                 data_mcda_ind = data_mcda[data_mcda['individual'] == ind_name_list[index]]
@@ -581,10 +571,10 @@ class Plots(object):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve',
                                                              category)
-        objectives = ['TAC_Mio', 'total_emissions_kiloton', 'total_prim_energy_TJ']
-        analysis_fields = ['individual', 'TAC_Mio', 'total_emissions_kiloton', 'total_prim_energy_TJ',
-                           'renewable_share_electricity',
-                           'Capex_total_Mio', 'Opex_total_Mio']
+        objectives = ['TAC_MioUSD', 'GHG_ktonCO2', 'PEN_TJoil']
+        analysis_fields = ['individual', 'TAC_MioUSD', 'GHG_ktonCO2', 'PEN_TJoil',
+                           'RES_el',
+                           'Capex_total_MioUSD', 'Opex_total_MioUSD']
         data = self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
         return plot

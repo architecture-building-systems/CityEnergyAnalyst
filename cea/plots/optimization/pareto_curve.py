@@ -149,8 +149,8 @@ def calc_graph(data, objectives, table):
 def calc_table(data_frame, analysis_fields):
     least_annualized_cost = data_frame.loc[
         data_frame["TAC_rank"] < 2]  # less than two because in the case there are two individuals MCDA calculates 1.5
-    least_emissions = data_frame.loc[data_frame["emissions_rank"] < 2]
-    least_primaryenergy = data_frame.loc[data_frame["prim_rank"] < 2]
+    least_emissions = data_frame.loc[data_frame["GHG_rank"] < 2]
+    least_primaryenergy = data_frame.loc[data_frame["PEN_rank"] < 2]
     user_defined_mcda = data_frame.loc[data_frame["user_MCDA_rank"] < 2]
 
     # do a check in the case more individuals had the same ranking.

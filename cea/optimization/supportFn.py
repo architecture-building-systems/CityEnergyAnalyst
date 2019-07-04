@@ -71,7 +71,7 @@ def individual_to_barcode(individual, building_list):
     len_of_heating_supply_systems = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
     # two indices for heating technologies and solar technologies
     len_of_cooling_supply_systems = N_COOL * 2 + INDICES_CORRESPONDING_TO_DHN
-    frank = len(individual)
+
     DHN_barcode = ""
     DCN_barcode = ""
     cooling = len_of_heating_supply_systems + len(building_list) + len_of_cooling_supply_systems
