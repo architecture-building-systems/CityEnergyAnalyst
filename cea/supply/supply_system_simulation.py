@@ -149,7 +149,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
                                                                      GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
-    master_to_slave_vars.total_buildings = len(building_names)
+    master_to_slave_vars.num_total_buildings = len(building_names)
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
         if DHN_barcode.count("0") == 0:

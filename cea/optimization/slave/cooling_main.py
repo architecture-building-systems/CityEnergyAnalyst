@@ -208,7 +208,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.total_buildings
+    network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.num_total_buildings
     network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
             (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
     costs_a_USD = network_costs_a_USD

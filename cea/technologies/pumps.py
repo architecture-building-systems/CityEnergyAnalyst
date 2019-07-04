@@ -74,7 +74,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
 
-        deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
+        deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.num_total_buildings)
 
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
 
@@ -96,7 +96,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE[i] / PUMP_ETA
 
-        deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
+        deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.num_total_buildings)
 
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                              locator, 'PU1')  # investment of Machinery

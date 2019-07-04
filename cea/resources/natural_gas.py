@@ -33,6 +33,6 @@ def calc_Cinv_gas(PnomGas):
     """
 
     InvCa = 0
-    InvCa = GASCONNECTION_COST * PnomGas # from Energie360 - Zurich
+    InvCa = GAS_CONNECTION_COST * PnomGas # from Energie360 - Zurich
 
     return InvCa
