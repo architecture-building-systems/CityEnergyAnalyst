@@ -81,11 +81,7 @@
                   <div>
                     <ul class="nav nav-pills">
                       {% for tab in tabs %}
-                      {% if loop.index0 == 0 %}
                       <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
-                      {% else %}
-                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
-                      {% endif %}
                       {% endfor %}
                     </ul>
                   </div>
