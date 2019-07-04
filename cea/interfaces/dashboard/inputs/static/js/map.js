@@ -446,8 +446,9 @@ function updateTooltip({x, y, object, layer}) {
         }
         if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
             if (!object.properties.hasOwnProperty("Building")) {
-                var length = turf.length(object) * 1000;
-                innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                object.properties.weight = parseFloat(object.properties.weight).toFixed(2);
+                var length = (turf.length(object) * 1000).toFixed(2);
+                innerHTML += `<br><div><b>length</b>: ${length}m</div>`;
             }
         }
         tooltip.innerHTML = innerHTML;
