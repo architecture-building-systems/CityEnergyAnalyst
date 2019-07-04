@@ -7,7 +7,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
-from cea.optimization.constants import BOILER_P_AUX
+from cea.technologies.constants import BOILER_P_AUX
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

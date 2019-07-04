@@ -137,22 +137,7 @@ CC_DELTA_T_DH = 5.0  # pinch for condenser
 
 ST_GEN_ETA = 0.9  # generator efficiency after steam turbine
 
-# Boiler
-# Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
-# ELCO-Loesungsbeispiel-Huber.pdf
-
-BOILER_C_FUEL = 20.0  # € / MWh_therm_bought(for LHV), AFO
-BOILER_P_AUX = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
-BOILER_MIN = 0.05  # minimum Part Load of Boiler
-BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
-BOILER_ETA_HP = 0.9
-
-# Furnace
-FURNACE_FUEL_COST_WET = 0.057 * 1E-3  # CHF / Wh = 5.7 Rp / kWh for wet (50wt%) Wood Chips, after
-FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Wood Chips,
-FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
-FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant
 
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True

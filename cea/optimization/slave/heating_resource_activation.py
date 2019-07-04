@@ -1,11 +1,12 @@
 from __future__ import division
 import numpy as np
-from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE_ALLOWED, CC_ALLOWED, BOILER_MIN, ACT_SECOND, ACT_THIRD, ACT_FOURTH
+from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE_ALLOWED, CC_ALLOWED, ACT_SECOND, ACT_THIRD, ACT_FOURTH
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.boiler import cond_boiler_op_cost
+from cea.technologies.constants import FURNACE_MIN_LOAD, BOILER_MIN
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -17,7 +18,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                             gv, prices, lca, T_ground, config):
+                             prices, lca, T_ground):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -188,8 +189,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                 Wood_used_Furnace_W = 0.0
                 Q_Furn_prim_W = 0.0
 
-                if Q_therm_req_W > (
-                        gv.Furn_min_Load * master_to_slave_vars.Furnace_Q_max_W):  # Operate only if its above minimal load
+                # Operate only if its above minimal load
+                if Q_therm_req_W > (FURNACE_MIN_LOAD * master_to_slave_vars.Furnace_Q_max_W):
 
                     if Q_therm_req_W > master_to_slave_vars.Furnace_Q_max_W:  # scale down if above maximum load, Furnace operates at max. capacity
                         Furnace_Cost_Data = furnace_op_cost(master_to_slave_vars.Furnace_Q_max_W, master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,

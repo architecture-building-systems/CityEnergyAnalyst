@@ -4,6 +4,7 @@ natural gas
 
 
 from __future__ import division
+from cea.technologies.constants import GASCONNECTION_COST
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -16,7 +17,7 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_gas(PnomGas, gv):
+def calc_Cinv_gas(PnomGas):
     """
     Calculate investment cost of natural gas connections.
 
@@ -30,6 +31,6 @@ def calc_Cinv_gas(PnomGas, gv):
     """
 
     InvCa = 0
-    InvCa = gv.GasConnectionCost * PnomGas # from Energie360 - Zurich
+    InvCa = GASCONNECTION_COST * PnomGas # from Energie360 - Zurich
 
     return InvCa

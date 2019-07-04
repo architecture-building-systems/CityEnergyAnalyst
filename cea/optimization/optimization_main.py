@@ -28,7 +28,7 @@ __status__ = "Production"
 
 # optimization
 
-def moo_optimization(locator, weather_file, gv, config):
+def moo_optimization(locator, weather_file, config):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case
     study. It requires that the energy demand, technology potential and thermal networks are simulated, as follows:
@@ -60,7 +60,6 @@ def moo_optimization(locator, weather_file, gv, config):
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    gv.num_tot_buildings = total_demand.Name.count()
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
@@ -76,7 +75,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
     master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
-                                                        network_features, gv, config, prices, lca)
+                                                        network_features, config, prices, lca)
 
 
 
@@ -89,7 +88,6 @@ def main(config):
     """
     run the whole optimization routine
     """
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
 
@@ -101,7 +99,7 @@ def main(config):
         sys.exit(1)
 
     print(config.optimization.initialind)
-    moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
+    moo_optimization(locator=locator, weather_file=weather_file, config=config)
 
     print('test_optimization_main() succeeded')
 

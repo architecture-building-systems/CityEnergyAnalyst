@@ -31,7 +31,7 @@ from cea.utilities import epwreader
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, solar_features, network_features, gv, config, prices, lca,
+def evaluation_main(individual, building_names, locator, solar_features, network_features, config, prices, lca,
                     ind_num, gen):
     """
     This function evaluates an individual
@@ -77,7 +77,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names,
                                                                 num_total_buildings,
                                                                 DHN_barcode, DCN_barcode, DHN_configuration,
-                                                                DCN_configuration, config, gv)
+                                                                DCN_configuration, config)
 
     # INTITIALIZE OBJECTIVE FUNCTIONS =  costs, CO2 and primary energy
     total_costs_df = {}
@@ -108,7 +108,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         if DHN_barcode.count("1") > 0:
             (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W,
              Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
-                                                                                               master_to_slave_vars, gv,
+                                                                                               master_to_slave_vars,
                                                                                                config, prices, lca)
         costs_USD += costs_heating_USD
         GHG_tonCO2 += GHG_heating_tonCO2
@@ -163,7 +163,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                Q_heating_uncovered_design_W,
                                                                Q_heating_uncovered_annual_W,
                                                                solar_features,
-                                                               network_features, gv,
+                                                               network_features,
                                                                config, prices, lca)
 
     costs_USD += costs_additional_USD
@@ -544,7 +544,7 @@ def calc_master_to_slave_variables(gen,
     return master_to_slave_vars
 
 
-def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config, building_names):
+def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, building_names):
     """
     This function adds new DH/DC networks to lists and run network simulations for new networks.
     
