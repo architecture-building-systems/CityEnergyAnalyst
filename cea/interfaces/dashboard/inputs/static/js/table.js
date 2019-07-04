@@ -1,5 +1,6 @@
 var currentTable;
 var tempSelection;
+var editform = $('#cea-column-editor-form');
 
 // Add onclick function to tabs
 $("[id$=-tab]").each(function () {
@@ -210,21 +211,9 @@ $(window).load(function () {
         var columns = inputstore.getColumns(table);
 
         $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
-        $('#selected-buildings').text(`Buidlings selected:`);
-        $.each(inputstore.getSelected(), function (_, building) {
-            var row = currentTable.getRow(building).getData();
-            var out = {};
-            $.each(inputstore.getColumns(table), function (_, column) {
-                out[column] = row[column];
-            });
-            delete out['Name'];
-            delete out['REFERENCE'];
-            out = JSON.stringify(out);
-            $('#selected-buildings').append(`<div>${building}: ${out}</div>`);
-        });
 
         // TODO: Add input validation
-        $('#cea-column-editor-form').empty();
+        editform.empty();
         $.each(columns, function (_, column) {
             var type = (inputstore.getColumnTypes(table)[column] === 'str') ? 'text':'number';
             if (column !== 'Name' && column !== 'REFERENCE') {
@@ -236,7 +225,7 @@ $(window).load(function () {
                                class="form-control col-md-7 col-xs-12">` +
                       `</div>` +
                     `</div>`;
-                $('#cea-column-editor-form').append(input);
+                editform.append(input);
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
                         .prop('title', 'T[number]');
@@ -244,7 +233,14 @@ $(window).load(function () {
             }
         });
 
-        $('#cea-column-editor').modal({'show': true, 'backdrop': 'static'});
+        $('#cea-column-editor').on('shown.bs.modal', function () {
+            new Tabulator("#selected-buildings", {
+                data: currentTable.getSelectedData(),
+                columns: currentTable.getColumnDefinitions(),
+                layout:"fitColumns",
+                height: 200
+            });
+        }).modal({'show': true, 'backdrop': 'static'});
     });
 
     $('#delete-button').click(function () {
@@ -319,11 +315,11 @@ $(window).load(function () {
         }
     });
 
-    $('#cea-column-editor-form').submit(function (e) {
+    editform.submit(function (e) {
         e.preventDefault();
         var table = $('.tab.active').data('name');
         var props = {};
-        var form = $('#cea-column-editor-form').serialize().split('&');
+        var form = editform.serialize().split('&');
         $.each(form, function (_, prop) {
             var temp = prop.split('=');
             if (temp[1] !== '') {
