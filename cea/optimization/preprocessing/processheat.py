@@ -9,7 +9,8 @@ It is considered that whenever the case, the most competitive alternative is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boiler
-from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN
+from cea.technologies.constants import BOILER_ETA_HP
+from cea.optimization.constants import SIZING_MARGIN
 from cea.constants import HOURS_IN_YEAR
 
 

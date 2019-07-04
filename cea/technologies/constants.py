@@ -4,6 +4,8 @@ Constants used throughout the cea.technologies package.
 History lesson: This is a first step at removing the `cea.globalvars.GlobalVariables` object.
 """
 
+from __future__ import division
+
 # Heat Exchangers
 U_COOL = 2500.0  # W/m2K
 U_HEAT = 2500.0  # W/m2K
@@ -57,11 +59,11 @@ FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Woo
 # Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
 # ELCO-Loesungsbeispiel-Huber.pdf
-BOILER_C_FUEL = 20.0  # € / MWh_therm_bought(for LHV), AFO
+BOILER_C_FUEL = 20.0  # eu / MWh_therm_bought(for LHV), AFO
 BOILER_P_AUX = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
 BOILER_MIN = 0.05  # minimum Part Load of Boiler
 BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
 BOILER_ETA_HP = 0.9
 
 #natural gas conncetion
-GASCONNECTION_COST = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
+GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW

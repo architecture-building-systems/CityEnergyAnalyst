@@ -3,8 +3,10 @@ natural gas
 """
 
 
+from __future__ import print_function
 from __future__ import division
-from cea.technologies.constants import GASCONNECTION_COST
+
+from cea.technologies.constants import GAS_CONNECTION_COST
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
