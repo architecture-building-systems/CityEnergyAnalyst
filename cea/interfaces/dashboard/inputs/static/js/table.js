@@ -281,9 +281,8 @@ $(window).load(function () {
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
             alert('No changes detected');
         } else {
-            if (confirm("Save these changes?\n" +
-                "WARNING: Any buildings deleted this way cannot be recovered once saved!\n" +
-                inputstore.changesToString())) {
+            var deletemsg = Object.keys(changes['delete']).length ? "WARNING: Any buildings deleted this way cannot be recovered once saved!\n":"";
+            if (confirm("Save these changes?\n"+ deletemsg +inputstore.changesToString())) {
                 $('#saving-text').text('Saving Changes...');
                 $('#saving-popup').modal({'show': true, 'backdrop': 'static'});
 
