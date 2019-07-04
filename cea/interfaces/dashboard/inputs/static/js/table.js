@@ -365,3 +365,13 @@ $(window).load(function () {
         $('#cea-column-editor').modal('hide');
     });
 });
+
+window.addEventListener("beforeunload", function (e) {
+    var confirmationMessage = 'There are still some unsaved changes.' +
+        'Any unsaved changes will be discarded';
+
+    if (Object.keys(inputstore.changes['update']).length || Object.keys(inputstore.changes['delete']).length) {
+        e.returnValue = confirmationMessage;
+        return  confirmationMessage;
+    }
+});
