@@ -181,8 +181,12 @@ function createTooltip() {
         var glossary = inputstore.glossary[column];
         if (glossary) {
             $(`.tabulator-col-title:contains("${column}")`)
-                .prop('data-toggle', 'tooltip')
-                .prop('title', `UNIT: ${glossary['UNIT']}\nDESCRIPTION: ${glossary['DESCRIPTION']}`);
+                .attr('data-toggle', 'tooltip')
+                .attr('data-placement', 'top')
+                .attr('data-container', 'body')
+                .attr('data-html', true)
+                .prop('title', `DESCRIPTION: ${glossary['DESCRIPTION']}<br>UNIT: ${glossary['UNIT']}`)
+                .tooltip();
         }
     });
 }
@@ -225,13 +229,13 @@ $(window).load(function () {
             var type = (inputstore.getColumnTypes(table)[column] === 'str') ? 'text':'number';
             if (column !== 'Name' && column !== 'REFERENCE') {
                 var input =
-                    `<div class="form-group">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>
-                      <div class="col-md-6 col-sm-6 col-xs-12">
-                        <input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
-                               class="form-control col-md-7 col-xs-12">
-                      </div>
-                    </div>`;
+                    `<div class="form-group">` +
+                      `<label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>` +
+                      `<div class="col-md-6 col-sm-6 col-xs-12">` +
+                        `<input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
+                               class="form-control col-md-7 col-xs-12">` +
+                      `</div>` +
+                    `</div>`;
                 $('#cea-column-editor-form').append(input);
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
