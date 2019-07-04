@@ -72,10 +72,6 @@ class GlobalVariables(object):
         gam = 0.2
         threshErr = 0.2
 
-        # Resource prices
-
-        self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
-
         # Substation data
         self.mdot_step_counter_heating = [0.05, 0.1, 0.15, 0.3, 0.4, 0.5, 0.6, 1]
         self.mdot_step_counter_cooling = [0, 0.2, 0.5, 0.8, 1]

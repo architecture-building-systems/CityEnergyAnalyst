@@ -36,7 +36,7 @@ __status__ = "Production"
 
 
 def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
-             Q_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca):
+             Q_uncovered_annual_W, solar_features, network_features, config, prices, lca):
     """
     Computes costs / GHG emisions / primary energy needs
     for the individual
@@ -414,14 +414,14 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
                                                                master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
-        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
+        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W)
 
     elif DCN_barcode.count("1") > 0 and district_cooling_network:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
                                                                master_to_slave_vars.generation_number))
         E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
-        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
+        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W)
     else:
         GasConnectionInvCost = 0.0
 

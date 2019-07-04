@@ -36,7 +36,7 @@ np.random.seed(config.optimization.random_seed)
 
 
 def objective_function(individual, individual_number, generation, building_names, locator, solar_features,
-                       network_features, gv, config, prices, lca):
+                       network_features, config, prices, lca):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -48,7 +48,7 @@ def objective_function(individual, individual_number, generation, building_names
         generation) + '/' + str(config.optimization.ngen))
     costs_USD, CO2_ton, prim_MJ, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
                                                                                           locator, solar_features,
-                                                                                          network_features, gv, config,
+                                                                                          network_features, config,
                                                                                           prices, lca,
                                                                                           individual_number, generation)
 
@@ -62,7 +62,7 @@ def objective_function_wrapper(args):
 
 
 def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
-                                            network_features, gv, config, prices, lca):
+                                            network_features, config, prices, lca):
     t0 = time.clock()
 
     genCP = config.optimization.recoverycheckpoint
@@ -111,7 +111,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         pop = toolbox.population(n=config.optimization.initialind)
 
         for ind in pop:
-            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
 
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -126,7 +126,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
                                      repeat(building_names, len(invalid_ind)),
                                      repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
-                                     repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                     repeat(network_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
@@ -176,7 +176,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
             DCN_network_list = DCN_network_list
 
             for ind in pop:
-                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
 
             # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -185,7 +185,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
                                     izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
                                          repeat(building_names, len(invalid_ind)),
                                          repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
-                                         repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                         repeat(network_features, len(invalid_ind)),
                                          repeat(config, len(invalid_ind)),
                                          repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
@@ -240,14 +240,14 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
 
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(g, len(invalid_ind)),
                                      repeat(building_names, len(invalid_ind)),
                                      repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
-                                     repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                     repeat(network_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 

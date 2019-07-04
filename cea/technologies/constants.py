@@ -47,3 +47,21 @@ CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the H
 CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
 DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calulation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 
+#Furnace
+FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
+FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant
+FURNACE_FUEL_COST_WET = 0.057 * 1E-3  # CHF / Wh = 5.7 Rp / kWh for wet (50wt%) Wood Chips, after
+FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Wood Chips,
+
+# Boiler
+# Operating figures, quality parameters and investment costs for district heating systems (AFO)
+
+# ELCO-Loesungsbeispiel-Huber.pdf
+BOILER_C_FUEL = 20.0  # € / MWh_therm_bought(for LHV), AFO
+BOILER_P_AUX = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
+BOILER_MIN = 0.05  # minimum Part Load of Boiler
+BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
+BOILER_ETA_HP = 0.9
+
+#natural gas conncetion
+GASCONNECTION_COST = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW

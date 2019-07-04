@@ -30,7 +30,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, config, prices, lca):
+def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, prices, lca):
     """
     Computes the parameters for the heating of the complete DHN
 
@@ -173,7 +173,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, gv, conf
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices, lca, ground_temp[hour], config)
+            tdhret_K[hour], TretsewArray_K[hour], prices, lca, ground_temp[hour])
 
         Opex_var_HP_Sewage_USD[hour] = opex_output['Opex_var_HP_Sewage_USD']
         Opex_var_HP_Lake_USD[hour] = opex_output['Opex_var_HP_Lake_USD']
