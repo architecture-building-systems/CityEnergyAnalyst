@@ -116,12 +116,15 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     # DISCONNECTED BUILDINGS  - HEATING LOADS
     CO2DiscBuild_heating, Capex_Disconnected_heating, \
     CostDiscBuild_heating, Opex_Disconnected_heating, \
-    PrimDiscBuild_heating = calc_costs__emissions_decentralized_DH(DHN_barcode, buildList, locator)
+    PrimDiscBuild_heating, Capex_total_Disconnected_heating = calc_costs__emissions_decentralized_DH(DHN_barcode,
+                                                                                             buildList, locator)
 
     # DISCONNECTED BUILDINGS - COOLING LOADS
     CO2DiscBuild_cooling, Capex_Disconnected_cooling, \
     CostDiscBuild_cooling, Opex_Disconnected_cooling, \
-    PrimDiscBuild_cooling = calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator, master_to_slave_vars)
+    PrimDiscBuild_cooling, Capex_total_Disconnected_cooling = calc_costs_emissions_decentralized_DC(DCN_barcode,
+                                                                                                    buildList, locator,
+                                                                                                    master_to_slave_vars)
 
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
@@ -452,21 +455,24 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "SubstHEXCost": [SubstHEXCost_capex],
         "DHNInvestCost": [addcosts_Capex_a_USD - (CostDiscBuild_heating)],
         "PVTHEXCost_Capex": [PVTHEXCost_Capex],
-        "Capex_a_USD_disconnected_heating": [Capex_Disconnected_heating],
-        "Opex_a_USD_disconnected_heating": [Opex_Disconnected_heating],
-        "TAC_USD_disconnected_heating": [CostDiscBuild_heating],
-        "GHG_kgCO2_disconnected_heating": [CO2DiscBuild_heating],
-        "PEN_MJoil_disconnected_heating": [PrimDiscBuild_heating],
-        "Capex_a_USD_disconnected_cooling": [Capex_Disconnected_cooling],
-        "Opex_a_USD_disconnected_cooling": [Opex_Disconnected_cooling],
-        "TAC_USD_disconnected_cooling": [CostDiscBuild_cooling],
-        "GHG_kgCO2_disconnected_cooling": [CO2DiscBuild_cooling],
-        "PEN_MJoil_disconnected_cooling": [PrimDiscBuild_cooling],
-        "Capex_a_USD_disconnected": [Capex_Disconnected_heating + Capex_Disconnected_cooling],
-        "Opex_a_USD_disconnected": [Opex_Disconnected_heating + Opex_Disconnected_cooling],
-        "TAC_USD_disconnected": [CO2DiscBuild_heating + CostDiscBuild_cooling],
-        "GHG_kgCO2_disconnected": [CO2DiscBuild_heating + CO2DiscBuild_cooling],
-        "PEN_MJoil_disconnected": [PrimDiscBuild_heating + PrimDiscBuild_cooling],
+        "Capex_a_disconnected_heating_USD": [Capex_Disconnected_heating],
+        "Capex_total_disconnected_heating_USD": [Capex_total_Disconnected_heating],
+        "Opex_a_disconnected_heating_USD": [Opex_Disconnected_heating],
+        "TAC_disconnected_heating_USD": [CostDiscBuild_heating],
+        "GHG_disconnected_heating_kgCO2": [CO2DiscBuild_heating],
+        "PEN_disconnected_heating_MJoil": [PrimDiscBuild_heating],
+        "Capex_a_disconnected_cooling_USD": [Capex_Disconnected_cooling],
+        "Capex_total_disconnected_cooling_USD": [Capex_total_Disconnected_cooling],
+        "Opex_a_disconnected_cooling_USD": [Opex_Disconnected_cooling],
+        "TAC_disconnected_cooling_USD": [CostDiscBuild_cooling],
+        "GHG_disconnected_cooling_kgCO2": [CO2DiscBuild_cooling],
+        "PEN_disconnected_cooling_MJoil": [PrimDiscBuild_cooling],
+        "Capex_a_disconnected_USD": [Capex_Disconnected_heating + Capex_Disconnected_cooling],
+        "Capex_total_disconnected_USD": [Capex_total_Disconnected_heating + Capex_total_Disconnected_cooling],
+        "Opex_a_disconnected_USD": [Opex_Disconnected_heating + Opex_Disconnected_cooling],
+        "TAC_disconnected_USD": [CostDiscBuild_heating + CostDiscBuild_cooling],
+        "GHG_disconnected_kgCO2": [CO2DiscBuild_heating + CO2DiscBuild_cooling],
+        "PEN_disconnected_MJoil": [PrimDiscBuild_heating + PrimDiscBuild_cooling],
         "Capex_a_furnace": [Capex_a_furnace_USD],
         "Opex_fixed_furnace": [Opex_fixed_furnace_USD],
         "Capex_a_Boiler": [Capex_a_Boiler_USD],
@@ -518,6 +524,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
     CostDiscBuild = 0.0
     Opex_Disconnected = 0.0
     PrimDiscBuild = 0.0
+    Capex_total_Disconnected = 0.0
     total_demand = pd.read_csv(locator.get_total_demand())
     buildings_names_with_cooling_load = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
     for (index, building_name) in zip(DCN_barcode, buildList):
@@ -530,6 +537,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                 CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                 PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                 Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                 Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                 to_PV = 1
                 if dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0] == 1:
@@ -553,6 +561,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0] == 1:
@@ -570,6 +579,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0] == 1:
@@ -587,6 +597,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0] == 1:
@@ -604,6 +615,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
@@ -621,6 +633,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to ARU Share (FP)"].iloc[0] == 1:
@@ -637,6 +650,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
                     CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
+                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
                     to_PV = 1
@@ -649,7 +663,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                     to_PV = 1
             else:
                 to_PV = 0
-    return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild
+    return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild, Capex_total_Disconnected
 
 
 def calc_costs__emissions_decentralized_DH(DHN_barcode, buildList, locator):
@@ -658,6 +672,7 @@ def calc_costs__emissions_decentralized_DH(DHN_barcode, buildList, locator):
     CostDiscBuild = 0.0
     Opex_Disconnected = 0.0
     PrimDiscBuild = 0.0
+    Capex_total_Disconnected = 0.0
     total_demand = pd.read_csv(locator.get_total_demand())
     buildings_names_with_heating_load = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
     for (index, building_name) in zip(DHN_barcode, buildList):
@@ -668,6 +683,7 @@ def calc_costs__emissions_decentralized_DH(DHN_barcode, buildList, locator):
                 CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [USD]
                 CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
                 PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
+                Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                 Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                 Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-    return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild
+    return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild, Capex_total_Disconnected

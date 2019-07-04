@@ -5,26 +5,26 @@ Evaluation function of an individual
 from __future__ import division
 
 import os
-import pandas as pd
+
 import numpy as np
-from cea.optimization.master import generation
-from cea.optimization.master import summarize_network
-from cea.optimization.constants import *
-from cea.optimization.master import cost_model
-from cea.optimization.slave import cooling_main
-from cea.optimization.slave import heating_main
-from cea.optimization import supportFn
-from cea.technologies import substation
+import pandas as pd
+
 import check
 from cea.optimization import slave_data
-from cea.optimization.slave import electricity_main
-from cea.optimization.slave.seasonal_storage import storage_main
-from cea.optimization.slave import natural_gas_main
-from cea.resources.geothermal import calc_ground_temperature
+from cea.optimization import supportFn
+from cea.optimization.constants import *
+from cea.optimization.master import cost_model
+from cea.optimization.master import generation
+from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.optimization.slave import cooling_main
+from cea.optimization.slave import electricity_main
+from cea.optimization.slave import heating_main
+from cea.optimization.slave import natural_gas_main
+from cea.optimization.slave.seasonal_storage import storage_main
+from cea.resources.geothermal import calc_ground_temperature
+from cea.technologies import substation
 from cea.utilities import epwreader
-
-import summarize_individual
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -62,37 +62,33 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     # local variables
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
+    num_total_buildings = len(building_names)
 
     # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
-    individual = evaluate_constrains(individual, len(building_names), config, district_heating_network, district_cooling_network)
+    individual = evaluate_constrains(individual, num_total_buildings, config, district_heating_network,
+                                     district_cooling_network)
+
+    # CREATE THE INDIVIDUAL BARCODE
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
+                                                                                                     building_names)
+
+    # CREATE CLASS AND PASS KEY CHACTERISTICS OF INDIVIDUAL
+    # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
+    master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names,
+                                                                num_total_buildings,
+                                                                DHN_barcode, DCN_barcode, DHN_configuration,
+                                                                DCN_configuration, config, gv)
 
     # INTITIALIZE OBJECTIVE FUNCTIONS =  costs, CO2 and primary energy
+    total_costs_df = {}
+    total_emissions_df = {}
+    total_energy_df = {}
     costs_USD = 0
     GHG_tonCO2 = 0
     PEN_MJoil = 0
 
-    # CREATE THE INDIVIDUAL
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                     building_names)
-
-    # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
-    Q_cooling_max_W, Q_heating_max_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(
-        DCN_barcode, DCN_configuration, DHN_barcode, DHN_configuration, config, gv, individual, locator)
-
-    # Modify the individual with the extra GHP constraint
-    try:
-        check.GHPCheck(individual, locator, Q_heating_nom_W, gv)
-    except:
-        print "No GHP constraint check possible \n"
-
-    #PASS INDIVIDUAL AND CONFIGURATION TO MASTER_TO_SLAVE_VARS CLASS
-    master_to_slave_vars = export_data_to_master_to_slave_class(DCN_barcode, DHN_barcode, Q_cooling_max_W,
-                                                                Q_heating_max_W, building_names, gen, ind_num,
-                                                                individual, locator, network_file_name_cooling,
-                                                                network_file_name_heating)
-
     # THERMAL STORAGE
-    print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE (IF ANY)")
+    print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
     costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator,
                                                                                                  master_to_slave_vars,
                                                                                                  lca, prices, config)
@@ -133,7 +129,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     prices,
                                                                     lca,
                                                                     config,
-                                                                    reduced_timesteps_flag,district_cooling_network,
+                                                                    reduced_timesteps_flag, district_cooling_network,
                                                                     district_cooling_network)
         costs_USD += costs_cooling_USD
         GHG_tonCO2 += GHG_cooling_tonCO2
@@ -153,25 +149,26 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 += GHG_electricity_tonCO2
     PEN_MJoil += PEN_electricity_MJoil
 
-
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
-    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network, district_cooling_network)
-
+    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
+                                         district_cooling_network)
 
     # ENERGY GENERATION UNITS, PUMPS, HEX, SUBSTATIONS, CONNECTION TO GAS NETWORK
-    print("CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
-    (costs_additional_USD, GHG_additional_tonCO2_decentralized, PEN_additional_MJoil_decentralized) = cost_model.addCosts(building_names, locator,
-                                                                                              master_to_slave_vars,
-                                                                                              Q_heating_uncovered_design_W,
-                                                                                              Q_heating_uncovered_annual_W,
-                                                                                              solar_features,
-                                                                                              network_features, gv,
-                                                                                              config, prices, lca)
+    print(
+        "CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
+    (costs_additional_USD, GHG_additional_tonCO2_decentralized,
+     PEN_additional_MJoil_decentralized) = cost_model.addCosts(building_names, locator,
+                                                               master_to_slave_vars,
+                                                               Q_heating_uncovered_design_W,
+                                                               Q_heating_uncovered_annual_W,
+                                                               solar_features,
+                                                               network_features, gv,
+                                                               config, prices, lca)
 
     costs_USD += costs_additional_USD
-    GHG_tonCO2 += GHG_additional_tonCO2_decentralized #beacause we already calculated heating and electricity for the connected buildings
-    PEN_MJoil += PEN_additional_MJoil_decentralized #beacause we already calculated heating and electricity for the connected buildings
+    GHG_tonCO2 += GHG_additional_tonCO2_decentralized  # beacause we already calculated heating and electricity for the connected buildings
+    PEN_MJoil += PEN_additional_MJoil_decentralized  # beacause we already calculated heating and electricity for the connected buildings
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
@@ -182,48 +179,63 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_tonCO2))
     print ('Total PEN emissions in MJoil ' + str(PEN_MJoil) + "\n")
 
+    # TODO:CALCULATE CAPEX TOTAL, OPEX TOTAL and RENEWABLE ERNGY SHARE (to be used in multicriteria.
+
     return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
 
-def export_data_to_master_to_slave_class(DCN_barcode, DHN_barcode, Q_cooling_max_W, Q_heating_max_W, building_names,
-                                         gen, ind_num, individual, locator, network_file_name_cooling,
-                                         network_file_name_heating):
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Q_heating_max_W,
-                                                          Q_cooling_max_W,
+def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,
+                                         DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration, config):
+
+    # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
+    Q_cooling_nom_W, Q_heating_nom_W, \
+    network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(locator, individual,
+                                                                                              DCN_barcode,
+                                                                                              DCN_configuration,
+                                                                                              DHN_barcode,
+                                                                                              DHN_configuration,
+                                                                                              config,
+                                                                                              num_total_buildings)
+
+    # MODIFY EXTRA CONSTRAINT
+    try:
+        check.GHPCheck(individual, locator, Q_heating_nom_W, building_names)
+    except:
+        print "No GHP constraint check possible \n"
+
+    # CREATE MASTER TO SLAVE AND FILL-IN
+    master_to_slave_vars = calc_master_to_slave_variables(gen,
+                                                          ind_num,
+                                                          individual,
                                                           building_names,
-                                                          ind_num, gen)
-    master_to_slave_vars.network_data_file_heating = network_file_name_heating
-    master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
-    master_to_slave_vars.total_buildings = len(building_names)
-    master_to_slave_vars.DHN_barcode = DHN_barcode
-    master_to_slave_vars.DCN_barcode = DCN_barcode
-    if master_to_slave_vars.number_of_buildings_connected_heating > 1:
-        if DHN_barcode.count("0") == 0:
-            master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
-        else:
-            master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
-                                                              "Total_%(DHN_barcode)s.csv" % locals())
-    else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode, "DH")
-    if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
-        if DCN_barcode.count("0") == 0:
-            master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
-        else:
-            master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
-                                                              "Total_%(DCN_barcode)s.csv" % locals())
-    else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode, "DC")
+                                                          num_total_buildings,
+                                                          DHN_barcode,
+                                                          DCN_barcode,
+                                                          DHN_configuration,
+                                                          DCN_configuration,
+                                                          network_file_name_heating,
+                                                          network_file_name_cooling,
+                                                          Q_heating_nom_W,
+                                                          Q_cooling_nom_W)
+
     return master_to_slave_vars
 
 
-def extract_capacities_from_individual(DCN_barcode, DCN_configuration, DHN_barcode, DHN_configuration, config, gv,
-                                       individual, locator):
-    if DHN_barcode.count("1") == gv.num_tot_buildings:
+def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_configuration, DHN_barcode,
+                                       DHN_configuration, config, num_total_buildings):
+    # local variables
+    weather_file = config.weather
+    network_depth_m = Z0
+    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
+    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
+
+    # EVALUATE CASES TO CREATE A NETWORK OR NOT
+    if DHN_barcode.count("1") == num_total_buildings:
         network_file_name_heating = "DH_Network_summary_result_all.csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'),
                                usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
-    elif DHN_barcode.count("1") == 0:
+    elif DHN_barcode.count("1") == 0:  # no network at all
         network_file_name_heating = "DH_Network_summary_result_all.csv"
         Q_heating_max_W = 0
     else:
@@ -234,12 +246,14 @@ def extract_capacities_from_individual(DCN_barcode, DCN_configuration, DHN_barco
             # Run the substation and distribution routines
             substation.substation_main_heating(locator, total_demand, buildings_in_heating_network, DHN_configuration,
                                                Flag=True)
-            summarize_network.network_main(locator, total_demand, buildings_in_heating_network, config, gv, DHN_barcode)
+            summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
+                                           "DH", DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
-    if DCN_barcode.count("1") == gv.num_tot_buildings:
+
+    if DCN_barcode.count("1") == num_total_buildings:
         network_file_name_cooling = "DC_Network_summary_result_all.csv"
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -262,7 +276,8 @@ def extract_capacities_from_individual(DCN_barcode, DCN_configuration, DHN_barco
             # Run the substation and distribution routines
             substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network, DCN_configuration,
                                                Flag=True)
-            summarize_network.network_main(locator, total_demand, buildings_in_cooling_network, config, gv, DCN_barcode)
+            summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
+                                           'DC', DCN_barcode)
 
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -274,7 +289,7 @@ def extract_capacities_from_individual(DCN_barcode, DCN_configuration, DHN_barco
         Q_cooling_max_W = Q_DCNf_W.max()
     Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
     Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
-    return Q_cooling_max_W, Q_heating_max_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
+    return Q_cooling_nom_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
 
 
 # +++++++++++++++++++++++++++++++++++
@@ -347,7 +362,7 @@ def evaluate_constrains(individual, nBuildings, config, district_heating_network
             for rank in range(N_COOL):
                 if individual[heating_part + 2 * rank] > 0 and i != rank:
                     individual[heating_part + 2 * rank + 1] += individual[heating_part + 2 * rank + 1] / (
-                                1 - oldValue) * shareGain
+                            1 - oldValue) * shareGain
         elif individual[heating_part + 2 * i] == 0:
             individual[heating_part + 2 * i + 1] = 0
 
@@ -368,7 +383,19 @@ def evaluate_constrains(individual, nBuildings, config, district_heating_network
     return individual
 
 
-def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, building_names, ind_num, gen):
+def calc_master_to_slave_variables(gen,
+                                   ind_num,
+                                   individual,
+                                   building_names,
+                                   num_total_buildings,
+                                   DHN_barcode,
+                                   DCN_barcode,
+                                   DHN_configuration,
+                                   DCN_configuration,
+                                   network_file_name_heating,
+                                   network_file_name_cooling,
+                                   Q_heating_nom_W,
+                                   Q_cooling_nom_W):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
@@ -386,23 +413,24 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
-
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                     building_names)
     configkey = configkey[:-2 * len(DHN_barcode)] + hex(int(str(DHN_barcode), 2)) + hex(int(str(DCN_barcode), 2))
+
     master_to_slave_vars.configKey = configkey
-    master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count(
-        "1")  # counting the number of buildings connected in DHN
-    master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count(
-        "1")  # counting the number of buildings connectedin DCN
+    master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1")
+    master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1")
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
-
-    Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
-    Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
+    master_to_slave_vars.num_total_buildings = num_total_buildings
+    master_to_slave_vars.building_names = building_names
+    master_to_slave_vars.network_data_file_heating = network_file_name_heating
+    master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
+    master_to_slave_vars.num_total_buildings = num_total_buildings
+    master_to_slave_vars.DHN_barcode = DHN_barcode
+    master_to_slave_vars.DCN_barcode = DCN_barcode
+    master_to_slave_vars.DHN_supplyunits = DHN_configuration
+    master_to_slave_vars.DCN_supplyunits = DCN_configuration
 
     # Heating systems
-
     # CHP units with NG & furnace with biomass wet
     if individual[0] == 1 or individual[0] == 3:
         if FURNACE_ALLOWED == True:
@@ -474,15 +502,17 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
     master_to_slave_vars.WasteCompressorHeatRecovery = 0
 
-    # Solar systems
+    # SOLAR SYSTEMS
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
-
     irank = N_HEAT * 2 + N_HR
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * shareAvail, 0)
+    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * shareAvail, 0)
+
 
     heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
-    master_to_slave_vars.DHN_supplyunits = DHN_configuration
-    # cooling systems
-
+    # COOLING SYSTEMS
     # Lake Cooling
     if individual[heating_block] == 1 and LAKE_COOLING_ALLOWED is True:
         master_to_slave_vars.Lake_cooling_on = 1
@@ -511,12 +541,6 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
             if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
                 master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
-    master_to_slave_vars.DCN_supplyunits = DCN_configuration
-    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * shareAvail, 0)
-
     return master_to_slave_vars
 
 
@@ -540,7 +564,7 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
     # decode an individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
                                                                                                      building_names)
-    #local variables
+    # local variables
     weather_file = config.weather
     network_depth_m = Z0
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
@@ -554,11 +578,13 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
         buildings_in_heating_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main_heating(locator, demand_this_network, buildings_in_heating_network, DHN_configuration,
-                                   Flag=True)
+        substation.substation_main_heating(locator, demand_this_network, buildings_in_heating_network,
+                                           DHN_configuration,
+                                           Flag=True)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr'))
-        summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_tot_buildings, "DH", DHN_barcode)
+        summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_tot_buildings, "DH",
+                                       DHN_barcode)
 
     if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
         DCN_barcode_list.append(DCN_barcode)
@@ -566,11 +592,13 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, gv, config
         buildings_in_cooling_network = demand_this_network.Name.values
 
         # Run the substation and distribution routines
-        substation.substation_main_cooling(locator, demand_this_network, buildings_in_cooling_network, DCN_configuration,
-                                   Flag=True)
+        substation.substation_main_cooling(locator, demand_this_network, buildings_in_cooling_network,
+                                           DCN_configuration,
+                                           Flag=True)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr'))
-        summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_tot_buildings, "DC", DCN_barcode)
+        summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_tot_buildings, "DC",
+                                       DCN_barcode)
 
     return np.nan
 
