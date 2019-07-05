@@ -98,18 +98,18 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     PEN_MJoil += PEN_storage_MJoil
 
     # DISTRICT HEATING NETWORK
-    Q_heating_uncovered_design_W = 0
-    Q_heating_uncovered_annual_W = 0
     costs_heating_USD = 0.0
     PEN_heating_MJoil = 0.0
     GHG_heating_tonCO2 = 0.0
     if district_heating_network:
-        print("CALCULATING ECOLOGICAL COSTS OF HEATING ENERGY CONSUMPTION - CONNECTED BUILDINGS")
+        print("CALCULATING PERFROMANCE OF HEATING NETWORK - CONNECTED BUILDINGS")
         if DHN_barcode.count("1") > 0:
             (costs_heating_USD, GHG_tonCO2, PEN_heating_MJoil, Q_heating_uncovered_design_W,
              Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
-                                                                                               config, prices, lca)
+                                                                                               config, prices, lca,
+                                                                                               solar_features,
+                                                                                               network_features)
         costs_USD += costs_heating_USD
         GHG_tonCO2 += GHG_heating_tonCO2
         PEN_MJoil += PEN_heating_MJoil
@@ -119,7 +119,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_cooling_tonCO2 = 0.0
     PEN_cooling_MJoil = 0.0
     if district_cooling_network:
-        print("CALCULATING ECOLOGICAL COSTS OF COOLING ENERGY CONSUMPTION AND COOLING EQUIPMENT - CONNECTED BUILDINGS")
+        print("CALCULATING PERFORMANCE OF COOLING NETWORK - CONNECTED BUILDINGS")
         if DCN_barcode.count("1") > 0:
             reduced_timesteps_flag = False
             (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) \
@@ -136,7 +136,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         PEN_MJoil += PEN_cooling_MJoil
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
-    print("CALCULATING ECOLOGICAL COSTS OF ELECTRICITY CONSUMPTION")
+    print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
     (costs_electricity_USD, GHG_electricity_tonCO2,
      PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
                                                                                          DCN_barcode,
@@ -154,20 +154,14 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
                                          district_cooling_network)
 
-    # ENERGY GENERATION UNITS, PUMPS, HEX, SUBSTATIONS, CONNECTION TO GAS NETWORK
-    print("CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
-    (costs_additional_USD, GHG_additional_tonCO2_decentralized,
-     PEN_additional_MJoil_decentralized) = cost_model.addCosts(building_names, locator,
-                                                               master_to_slave_vars,
-                                                               Q_heating_uncovered_design_W,
-                                                               Q_heating_uncovered_annual_W,
-                                                               solar_features,
-                                                               network_features,
-                                                               config, prices, lca)
+    # DISCONNECTED BUILDINGS
+    print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
+    (costs_additional_USD, GHG_additional_tonCO2,
+     PEN_additional_MJoil) = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
-    costs_USD += costs_additional_USD #TODO:This is missing variable costs
-    GHG_tonCO2 += GHG_additional_tonCO2_decentralized  # beacause we already calculated heating and electricity for the connected buildings
-    PEN_MJoil += PEN_additional_MJoil_decentralized  # beacause we already calculated heating and electricity for the connected buildings
+    costs_USD += costs_additional_USD
+    GHG_tonCO2 += GHG_additional_tonCO2
+    PEN_MJoil += PEN_additional_MJoil
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
@@ -185,7 +179,6 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,
                                          DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration, config):
-
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     Q_cooling_nom_W, Q_heating_nom_W, \
     network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(locator, individual,
@@ -423,7 +416,6 @@ def calc_master_to_slave_variables(gen,
     master_to_slave_vars.building_names = building_names
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
-    master_to_slave_vars.num_total_buildings = num_total_buildings
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
     master_to_slave_vars.DHN_supplyunits = DHN_configuration
@@ -508,7 +500,6 @@ def calc_master_to_slave_variables(gen,
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail, 0)
     master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * shareAvail, 0)
     master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * shareAvail, 0)
-
 
     heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
     # COOLING SYSTEMS

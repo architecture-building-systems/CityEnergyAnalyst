@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, district_cooling_network):
+def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, network_type):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -62,7 +62,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
     # ntot = len(buildList)
 
     Opex_var_pumps = 0
-    if district_heating_network:
+    if network_type == "DH":
 
         df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
         mdotA_kgpers = np.array(df)
@@ -78,7 +78,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, district_heating_network, 
 
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
 
-    if district_cooling_network:
+    if network_type == "DC":
 
         if dicoSupply.WasteServersHeatRecovery == 1:
             df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating),

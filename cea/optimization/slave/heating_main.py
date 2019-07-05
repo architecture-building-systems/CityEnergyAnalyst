@@ -7,13 +7,17 @@ USING PRESET ORDER
 from __future__ import division
 
 import time
+from math import log
 
 import numpy as np
 import pandas as pd
 
+import cea.optimization.distribution.network_optimization_features as network_opt
+import cea.technologies.pumps as PumpModel
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import HP_SEW_ALLOWED
+from cea.optimization.master import cost_model
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.boiler import cond_boiler_op_cost
@@ -33,7 +37,8 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, prices, lca):
+def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, prices, lca, solar_features,
+                                         network_features):
     """
     Computes the parameters for the heating of the complete DHN
 
@@ -56,6 +61,10 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     """
     t = time.time()
+
+    # local variables:
+    DHN_barcode = master_to_slave_vars.DHN_barcode
+    building_names = master_to_slave_vars.building_names
 
     # Import data from storage optimization
     centralized_plant_data = pd.read_csv(
@@ -299,48 +308,68 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Opex_var_PeakBoiler_BG_USDhr = Opex_var_PeakBoiler_USDhr
         Opex_var_BackupBoiler_BG_USDhr = Opex_var_BackupBoiler_USDhr
 
+    # COSTS GENERATION UNITS
+    performance_costs = cost_model.addCosts(building_names, locator, master_to_slave_vars, Q_uncovered_design_W,
+                                            solar_features, network_features,
+                                            config, prices, lca)
+    # COSTS HEATING NETWORK
+    Capex_DHN_USD, \
+    Capex_a_DHN_USD, \
+    Opex_fixed_DHN_USD, \
+    Opex_var_DHN_USD = calc_network_costs_heating(config, DHN_barcode, locator, master_to_slave_vars,
+                                                  network_features, lca)
+
+    # COSTS HEATING SUBSTATIONS
+    Capex_SubstationsHeating_USD, \
+    Capex_a_SubstationsHeating_USD, \
+    Opex_fixed_SubstationsHeating_USD, \
+    Opex_var_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
+                                                                     locator)
+
     # THIS CALCUALTES EMISSIONS
     if master_to_slave_vars.gt_fuel == "NG":
-        performance_parameters = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
-                                                            Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W,
-                                                            Q_uncovered_W,
-                                                            Q_coldsource_HPSew_W, Q_coldsource_HPLake_W,
-                                                            Q_coldsource_GHP_W,
-                                                            E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W,
-                                                            E_PeakBoiler_req_W,
-                                                            NG_used_CHP_W, NG_used_BaseBoiler_W, NG_used_PeakBoiler_W,
-                                                            Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
-                                                            np.sum(E_BackupBoiler_req_W),
-                                                            master_to_slave_vars, locator, lca, fuel='NG')
-        performance_parameters['GHG_BaseBoiler_BG_tonCO2'] = 0.0
-        performance_parameters['GHG_PeakBoiler_BG_tonCO2'] = 0.0
-        performance_parameters['GHG_BackupBoiler_BG_tonCO2'] = 0.0
-        performance_parameters['GHG_CHP_BG_connected_tonCO2'] = 0.0
-        performance_parameters['PEN_CHP_BG_connected_MJoil'] = 0.0
-        performance_parameters['PEN_BaseBoiler_BG_MJoil'] = 0.0
-        performance_parameters['PEN_PeakBoiler_BG_MJoil'] = 0.0
-        performance_parameters['PEN_BackupBoiler_BG_MJoil'] = 0.0
+        performance_emissions_pen = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
+                                                                Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W,
+                                                                Q_uncovered_W,
+                                                                Q_coldsource_HPSew_W, Q_coldsource_HPLake_W,
+                                                                Q_coldsource_GHP_W,
+                                                                E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W,
+                                                                E_PeakBoiler_req_W,
+                                                                NG_used_CHP_W, NG_used_BaseBoiler_W,
+                                                                NG_used_PeakBoiler_W,
+                                                                Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
+                                                                np.sum(E_BackupBoiler_req_W),
+                                                                master_to_slave_vars, locator, lca, fuel='NG')
+        performance_emissions_pen['GHG_BaseBoiler_BG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_PeakBoiler_BG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_BackupBoiler_BG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_CHP_BG_connected_tonCO2'] = 0.0
+        performance_emissions_pen['PEN_CHP_BG_connected_MJoil'] = 0.0
+        performance_emissions_pen['PEN_BaseBoiler_BG_MJoil'] = 0.0
+        performance_emissions_pen['PEN_PeakBoiler_BG_MJoil'] = 0.0
+        performance_emissions_pen['PEN_BackupBoiler_BG_MJoil'] = 0.0
 
     if master_to_slave_vars.gt_fuel == "BG":
-        performance_parameters = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
-                                                            Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W,
-                                                            Q_uncovered_W,
-                                                            Q_coldsource_HPSew_W, Q_coldsource_HPLake_W,
-                                                            Q_coldsource_GHP_W,
-                                                            E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W,
-                                                            E_PeakBoiler_req_W,
-                                                            BG_used_CHP_W, BG_used_BaseBoiler_W, BG_used_PeakBoiler_W,
-                                                            Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
-                                                            np.sum(E_BackupBoiler_req_W),
-                                                            master_to_slave_vars, locator, lca, fuel='BG')
-        performance_parameters['GHG_BaseBoiler_NG_tonCO2'] = 0.0
-        performance_parameters['GHG_PeakBoiler_NG_tonCO2'] = 0.0
-        performance_parameters['GHG_BackupBoiler_NG_tonCO2'] = 0.0
-        performance_parameters['GHG_CHP_NG_connected_tonCO2'] = 0.0
-        performance_parameters['PEN_CHP_NG_connected_MJoil'] = 0.0
-        performance_parameters['PEN_BaseBoiler_NG_MJoil'] = 0.0
-        performance_parameters['PEN_PeakBoiler_NG_MJoil'] = 0.0
-        performance_parameters['PEN_BackupBoiler_NG_MJoil'] = 0.0
+        performance_emissions_pen = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
+                                                                Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W,
+                                                                Q_uncovered_W,
+                                                                Q_coldsource_HPSew_W, Q_coldsource_HPLake_W,
+                                                                Q_coldsource_GHP_W,
+                                                                E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W,
+                                                                E_PeakBoiler_req_W,
+                                                                BG_used_CHP_W, BG_used_BaseBoiler_W,
+                                                                BG_used_PeakBoiler_W,
+                                                                Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
+                                                                np.sum(E_BackupBoiler_req_W),
+                                                                master_to_slave_vars, locator, lca, fuel='BG')
+        performance_emissions_pen['GHG_BaseBoiler_NG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_PeakBoiler_NG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_BackupBoiler_NG_tonCO2'] = 0.0
+        performance_emissions_pen['GHG_CHP_NG_connected_tonCO2'] = 0.0
+        performance_emissions_pen['PEN_CHP_NG_connected_MJoil'] = 0.0
+        performance_emissions_pen['PEN_BaseBoiler_NG_MJoil'] = 0.0
+        performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'] = 0.0
+        performance_emissions_pen['PEN_BackupBoiler_NG_MJoil'] = 0.0
 
     # SUMMARIZE ALL DATA
     Opex_var_HP_Sewage_USD = sum(Opex_var_HP_Sewage_USDhr)
@@ -357,75 +386,106 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_BackupBoiler_BG_USD = sum(Opex_var_BackupBoiler_BG_USDhr)
     Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
 
+    # Costs
+    Capex_a_connected_USD = addcosts_Capex_a_USD
+    Capex_total_connected_USD = addcosts_Capex_USD
+    Opex_a_connected_USD = addcosts_Opex_fixed_USD
+    TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
 
+    TAC_USD = np.float64(TAC_connected_USD)
+    GHG_tonCO2 = np.float64(CO2_emitted)
+    PEN_MJoil = np.float64(PEN_used)
 
-    TAC_USD =
-    GHG_tonCO2 = CO2_emitted
-    PEN_MJoil = PEN_used
     # saving pattern activation to disk
     date = network_data.DATE.values
-    results = pd.DataFrame({"DATE": date,
-                            # annualized capex
+    results = pd.DataFrame(
+        {"DATE": date,
+         # annualized capex
+         "Capex_a_DHN_USD": Capex_a_DHN_USD,
+         "Capex_a_SubstationsHeating_USD": Capex_a_SubstationsHeating_USD,
+
+         # total capex
+         "Capex_DHN_USD": Capex_DHN_USD,
+         "Capex_SubstationsHeating_USD": Capex_SubstationsHeating_USD,
 
 
-                            # total capex
+         # opex fixed
+         "Opex_fixed_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_USD'],
+         "Opex_fixed_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_USD'],
+         "Opex_fixed_GHP_connected_USD": performance_costs['Opex_fixed_GHP_USD'],
+         "Opex_fixed_CHP_BG_connected_USD": performance_costs['Opex_fixed_CHP_BG_USD'],
+         "Opex_fixed_CHP_NG_connected_USD": performance_costs['Opex_fixed_CHP_NG_USD'],
+         "Opex_fixed_Furnace_wet_connected_USD": performance_costs['Opex_fixed_Furnace_wet_USD'],
+         "Opex_fixed_Furnace_dry_connected_USD": performance_costs['Opex_fixed_Furnace_dry_USD'],
+         "Opex_fixed_BaseBoiler_BG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_BG_USD'],
+         "Opex_fixed_BaseBoiler_NG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_NG_USD'],
+         "Opex_fixed_PeakBoiler_BG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_BG_USD'],
+         "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_USD'],
+         "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_USD'],
+         "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_USD'],
+         "Opex_fixed_Storage_connected_USD": performance_costs['Opex_fixed_Storage_USD'],
+         "Opex_fixed_DHN_USD": Opex_fixed_DHN_USD,
+         "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
+         # opex variable
+         "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
+         "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
+         "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
+         "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
+         "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
+         "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
+         "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
+         "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
+         "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
+         "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
+         "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
+         "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
+         "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
+         "Opex_var_Storage_USD": Opex_var_Storage_USD,
+         "Opex_var_DHN_USD": Opex_var_DHN_USD,
+         "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
-                            # opex fixed
+         # opex annual
 
+         # totals of connected to network
+         "Capex_total_connected_USD": [Capex_total_connected_USD],
+         "Capex_a_connected_USD": [Capex_a_connected_USD],
+         "Opex_a_connected_USD": [Opex_a_connected_USD],
+         "TAC_connected_USD": [TAC_connected_USD],
 
-                            # opex variable
-                            "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
-                            "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
-                            "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
-                            "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
-                            "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
-                            "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
-                            "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
-                            "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
-                            "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
-                            "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
-                            "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
-                            "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
-                            "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD
+         # emissions
+         "GHG_HP_Sewage_connected_tonCO2": performance_emissions_pen['GHG_HP_Sewage_tonCO2'],
+         "GHG_HP_Lake_connected_tonCO2": performance_emissions_pen['GHG_HP_Lake_tonCO2'],
+         "GHG_GHP_connected_tonCO2": performance_emissions_pen['GHG_GHP_tonCO2'],
+         "GHG_CHP_BG_connected_tonCO2": performance_emissions_pen['GHG_CHP_BG_tonCO2'],
+         "GHG_CHP_NG_connected_tonCO2": performance_emissions_pen['GHG_CHP_NG_tonCO2'],
+         "GHG_Furnace_wet_connected_tonCO2": performance_emissions_pen['GHG_Furnace_wet_tonCO2'],
+         "GHG_Furnace_dry_connected_tonCO2": performance_emissions_pen['GHG_Furnace_dry_tonCO2'],
+         "GHG_BaseBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_BG_tonCO2'],
+         "GHG_BaseBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_NG_tonCO2'],
+         "GHG_PeakBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_BG_tonCO2'],
+         "GHG_PeakBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_NG_tonCO2'],
+         "GHG_BackupBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_BG_tonCO2'],
+         "GHG_BackupBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_NG_tonCO2'],
 
-                            # opex annual
-
-                            # annualized capex
-
-                            # emissions
-                            "GHG_HP_Sewage_connected_tonCO2": performance_parameters['GHG_HP_Sewage_tonCO2'],
-                            "GHG_HP_Lake_connected_tonCO2": performance_parameters['GHG_HP_Lake_tonCO2'],
-                            "GHG_GHP_connected_tonCO2": performance_parameters['GHG_GHP_tonCO2'],
-                            "GHG_CHP_BG_connected_tonCO2": performance_parameters['GHG_CHP_BG_tonCO2'],
-                            "GHG_CHP_NG_connected_tonCO2": performance_parameters['GHG_CHP_NG_tonCO2'],
-                            "GHG_Furnace_wet_connected_tonCO2": performance_parameters['GHG_Furnace_wet_tonCO2'],
-                            "GHG_Furnace_dry_connected_tonCO2": performance_parameters['GHG_Furnace_dry_tonCO2'],
-                            "GHG_BaseBoiler_BG_connected_tonCO2": performance_parameters['GHG_BaseBoiler_BG_tonCO2'],
-                            "GHG_BaseBoiler_NG_connected_tonCO2": performance_parameters['GHG_BaseBoiler_NG_tonCO2'],
-                            "GHG_PeakBoiler_BG_connected_tonCO2": performance_parameters['GHG_PeakBoiler_BG_tonCO2'],
-                            "GHG_PeakBoiler_NG_connected_tonCO2": performance_parameters['GHG_PeakBoiler_NG_tonCO2'],
-                            "GHG_BackupBoiler_BG_connected_tonCO2": performance_parameters['GHG_BackupBoiler_BG_tonCO2'],
-                            "GHG_BackupBoiler_NG_connected_tonCO2": performance_parameters['GHG_BackupBoiler_NG_tonCO2'],
-
-                            # primary energy
-                            "PEN_HP_Sewage_connected_MJoil": performance_parameters['PEN_HP_Sewage_MJoil'],
-                            "PEN_HP_Lake_connected_MJoil": performance_parameters['PEN_HP_Lake_MJoil'],
-                            "PEN_GHP_connected_MJoil": performance_parameters['PEN_GHP_MJoil'],
-                            "PEN_CHP_BG_connected_MJoil": performance_parameters['PEN_CHP_BG_MJoil'],
-                            "PEN_CHP_NG_connected_MJoil": performance_parameters['PEN_CHP_NG_MJoil'],
-                            "PEN_Furnace_wet_connected_MJoil": performance_parameters['PEN_Furnace_wet_MJoil'],
-                            "PEN_Furnace_dry_connected_MJoil": performance_parameters['PEN_Furnace_dry_MJoil'],
-                            "PEN_BaseBoiler_BG_connected_MJoil": performance_parameters['PEN_BaseBoiler_BG_MJoil'],
-                            "PEN_BaseBoiler_NG_connected_MJoil": performance_parameters['PEN_BaseBoiler_NG_MJoil'],
-                            "PEN_PeakBoiler_BG_connected_MJoil": performance_parameters['PEN_PeakBoiler_BG_MJoil'],
-                            "PEN_PeakBoiler_NG_connected_MJoil": performance_parameters['PEN_PeakBoiler_NG_MJoil'],
-                            "PEN_BackupBoiler_BG_connected_MJoil": performance_parameters['PEN_BackupBoiler_BG_MJoil'],
-                            "PEN_BackupBoiler_NG_connected_MJoil": performance_parameters['PEN_BackupBoiler_NG_MJoil']
-                            })
+         # primary energy
+         "PEN_HP_Sewage_connected_MJoil": performance_emissions_pen['PEN_HP_Sewage_MJoil'],
+         "PEN_HP_Lake_connected_MJoil": performance_emissions_pen['PEN_HP_Lake_MJoil'],
+         "PEN_GHP_connected_MJoil": performance_emissions_pen['PEN_GHP_MJoil'],
+         "PEN_CHP_BG_connected_MJoil": performance_emissions_pen['PEN_CHP_BG_MJoil'],
+         "PEN_CHP_NG_connected_MJoil": performance_emissions_pen['PEN_CHP_NG_MJoil'],
+         "PEN_Furnace_wet_connected_MJoil": performance_emissions_pen['PEN_Furnace_wet_MJoil'],
+         "PEN_Furnace_dry_connected_MJoil": performance_emissions_pen['PEN_Furnace_dry_MJoil'],
+         "PEN_BaseBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_BG_MJoil'],
+         "PEN_BaseBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_NG_MJoil'],
+         "PEN_PeakBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_BG_MJoil'],
+         "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'],
+         "PEN_BackupBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_BG_MJoil'],
+         "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_MJoil']
+         })
 
     results.to_csv(locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number),
+                                                                      master_to_slave_vars.generation_number),
                    index=False)
 
     results = pd.DataFrame({"DATE": date,
@@ -489,8 +549,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                              master_to_slave_vars.generation_number),
                    index=False)
 
-
-    return TAC_USD, GHG_tonCO2, PEN_MJoil, Q_uncovered_design_W, Q_uncovered_annual_W
+    return TAC_USD, GHG_tonCO2, PEN_MJoil
 
 
 def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W,
@@ -637,12 +696,14 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     GHG_GHP_tonCO2 = (np.sum(Q_GHP_gen_W) / COP_GHP_avg * WH_TO_J / 1.0E6) * (lca.GHP_TO_CO2_STD / 1E3)
     GHG_HPLake_tonCO2 = (np.sum(Q_HPLake_gen_W) / COP_HPLake_avg / 1.0E6) * (lca.LAKEHP_TO_CO2_STD / 1.0E3)
     GHG_CHP_tonCO2 = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * WH_TO_J / 1.0E6
-    GHG_BaseBoiler_tonCO2 = (1 / eta_Boiler_avg * np.sum(Q_BaseBoiler_gen_W) * WH_TO_J / 1.0E6) * (gas_to_co2_BoilerBase_std / 1E3)
+    GHG_BaseBoiler_tonCO2 = (1 / eta_Boiler_avg * np.sum(Q_BaseBoiler_gen_W) * WH_TO_J / 1.0E6) * (
+            gas_to_co2_BoilerBase_std / 1E3)
     GHG_PeakBoiler_tonCO2 = (1 / eta_PeakBoiler_avg * np.sum(
         Q_PeakBoiler_gen_W) * WH_TO_J / 1.0E6) * (gas_to_co2_BoilerPeak_std / 1E3)
     GHG_AddBoiler_tonCO2 = (1 / eta_AddBackup_avg * np.sum(Q_uncovered_W) * WH_TO_J / 1.0E6) * (
-                gas_to_co2_BoilerBackup_std / 1.0E3)
-    GHG_Furnace_tonCO2 = ( 1/ eta_furnace_avg * np.sum(Q_Furnace_gen_W) * WH_TO_J / 1.0E6) * (lca.FURNACE_TO_CO2_STD / 1E3)
+            gas_to_co2_BoilerBackup_std / 1.0E3)
+    GHG_Furnace_tonCO2 = (1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * WH_TO_J / 1.0E6) * (
+            lca.FURNACE_TO_CO2_STD / 1E3)
 
     ################## Primary energy needs
     PEN_Sewage_MJoil = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
@@ -662,18 +723,88 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "GHG_HP_Sewage_tonCO2": [GHG_Sewage_tonCO2],
         "GHG_GHP_tonCO2": [GHG_GHP_tonCO2],
         "GHG_HP_Lake_tonCO2": [GHG_HPLake_tonCO2],
-        "GHG_CHP_"+fuel+"_tonCO2": [GHG_CHP_tonCO2],
-        "GHG_BaseBoiler_"+fuel+"_tonCO2": [GHG_BaseBoiler_tonCO2],
-        "GHG_PeakBoiler_"+fuel+"_tonCO2": [GHG_PeakBoiler_tonCO2],
-        "GHG_BackupBoiler_"+fuel+"_tonCO2": [GHG_AddBoiler_tonCO2],
+        "GHG_CHP_" + fuel + "_tonCO2": [GHG_CHP_tonCO2],
+        "GHG_BaseBoiler_" + fuel + "_tonCO2": [GHG_BaseBoiler_tonCO2],
+        "GHG_PeakBoiler_" + fuel + "_tonCO2": [GHG_PeakBoiler_tonCO2],
+        "GHG_BackupBoiler_" + fuel + "_tonCO2": [GHG_AddBoiler_tonCO2],
         "GHG_Furnace_tonCO2": [GHG_Furnace_tonCO2],
         "PEN_HP_Sewage_MJoil": [PEN_Sewage_MJoil],
         "PEN_GHP_MJoil": [PEN_GHP_MJoil],
         "PEN_HP_Lake_MJoil": [PEN_HPLake_MJoil],
-        "PEN_CHP_"+fuel+"_MJoil": [PEN_CC_MJoil],
-        "PEN_BaseBoiler_"+fuel+"_MJoil": [PEN_BaseBoiler_MJoil],
-        "PEN_PeakBoiler_"+fuel+"_MJoil": [PEN_PeakBoiler_MJoil],
-        "PEN_BackupBoiler_"+fuel+"_MJoil": [PEN_AddBoiler_MJoil],
+        "PEN_CHP_" + fuel + "_MJoil": [PEN_CC_MJoil],
+        "PEN_BaseBoiler_" + fuel + "_MJoil": [PEN_BaseBoiler_MJoil],
+        "PEN_PeakBoiler_" + fuel + "_MJoil": [PEN_PeakBoiler_MJoil],
+        "PEN_BackupBoiler_" + fuel + "_MJoil": [PEN_AddBoiler_MJoil],
         "PEN_Furnace_MJoil": [PEN_Furnace_MJoil]}
 
     return performance_parameters
+
+
+def calc_network_costs_heating(config, district_network_barcode, locator, master_to_slave_vars,
+                               ntwFeat, lca):
+    # costs of pumps
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(
+        master_to_slave_vars, ntwFeat, locator, lca, "DC")
+
+    # Intitialize class
+    network_features = network_opt.NetworkOptimizationFeatures(config, locator)
+    num_buildings_connected = district_network_barcode.count("1")
+    num_all_buildings = len(district_network_barcode)
+    ratio_connected = num_buildings_connected / num_all_buildings
+
+    # Capital costs
+    Inv_IR = 0.05
+    Inv_LT = 20
+    Inv_OM = 0.10
+    Capex_Network_USD = network_features.pipesCosts_DCN_USD * ratio_connected
+    Capex_a_Network_USD = (Capex_Network_USD * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+    Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
+
+    # summarize
+    Capex_Network_USD += Capex_pump_USD
+    Capex_a_Network_USD += Capex_a_pump_USD
+    Opex_fixed_Network_USD += Opex_fixed_pump_USD
+    Opex_var_Network_USD = Opex_var_pump_USD
+
+    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD
+
+
+def calc_substations_costs_heating(building_names, district_network_barcode, locator):
+    Capex_Substations_USD = 0.0
+    Capex_a_Substations_USD = 0.0
+    Opex_fixed_Substations_USD = 0.0
+    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
+    for (index, building_name) in zip(district_network_barcode, building_names):
+        if index == "1":
+            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
+                             usecols=["Q_dhw_W", "Q_heating_W"])
+
+            subsArray = np.array(df)
+            Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
+            HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
+            HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
+                Q_max_W = HEX_cost_data.iloc[0]['cap_min']
+            HEX_cost_data = HEX_cost_data[
+                (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
+
+            Inv_a = HEX_cost_data.iloc[0]['a']
+            Inv_b = HEX_cost_data.iloc[0]['b']
+            Inv_c = HEX_cost_data.iloc[0]['c']
+            Inv_d = HEX_cost_data.iloc[0]['d']
+            Inv_e = HEX_cost_data.iloc[0]['e']
+            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
+            Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_USD = InvC_USD * Inv_OM
+
+            Capex_Substations_USD += InvC_USD
+            Capex_a_Substations_USD += Capex_a_USD
+            Opex_fixed_Substations_USD += Opex_fixed_USD
+
+    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
