@@ -127,6 +127,10 @@ class InputLocator(object):
                 result.append('%(scenario)s/%(generation)i/ind%(individual)i' % locals())
         return result
 
+    def get_optimization_slave_heating_opex_var_pattern(self, ind_num, gen_num):
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Heating_Opex_var_pattern.csv' % locals())
+
     def get_optimization_slave_heating_activation_pattern(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
@@ -136,6 +140,12 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Activation_Pattern.csv' % locals())
+
+    def get_optimization_slave_cooling_opex_var(self, ind_num, gen_num):
+
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Cooling_Opex_var.csv' % locals())
 
     def get_optimization_slave_electricity_activation_pattern_heating(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -206,10 +216,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_detailed_capacity.csv' % locals())
 
-    def get_optimization_slave_investment_cost_detailed_cooling(self, ind_num, gen_num):
+    def get_optimization_slave_heating_performance(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_cooling_InvestmentCostDetailed.csv' % locals())
+                            'ind_%(ind_num)s_heating_performance.csv' % locals())
+
+    def get_optimization_slave_cooling_performance(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_cooling_performance.csv' % locals())
 
     def get_preprocessing_costs(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
