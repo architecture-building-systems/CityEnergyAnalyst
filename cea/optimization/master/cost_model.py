@@ -114,13 +114,13 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     Capex_Sewage_USD = 0
 
     # DISCONNECTED BUILDINGS  - HEATING LOADS
-    GHG_disconnected_heating_kgCO2, Capex_Disconnected_heating, \
-    TAC_disconnected_heating_USD, Opex_Disconnected_heating, \
-    PEN_disconnected_heating_MJoil, Capex_total_Disconnected_heating = calc_costs__emissions_decentralized_DH(DHN_barcode,
+    GHG_disconnected_heating_tonCO2, Capex_a_disconnected_heating_USD, \
+    TAC_disconnected_heating_USD, Opex_a_disconnected_heating_USD, \
+    PEN_disconnected_heating_MJoil, Capex_total_disconnected_heating_USD = calc_costs__emissions_decentralized_DH(DHN_barcode,
                                                                                              buildList, locator)
 
     # DISCONNECTED BUILDINGS - COOLING LOADS
-    GHG_disconnected_cooling_kgCO2, Capex_a_disconnected_cooling_USD, \
+    GHG_disconnected_cooling_tonCO2, Capex_a_disconnected_cooling_USD, \
     TAC_disconnected_cooling_USD, Opex_a_disconnected_cooling_USD, \
     PEN_disconnected_cooling_MJoil, Capex_total_disconnected_cooling_USD = calc_costs_emissions_decentralized_DC(DCN_barcode,
                                                                                                     buildList, locator,
@@ -427,18 +427,24 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
 
     addcosts_Capex_a_USD += GasConnectionInvCost
 
-
-    TAC_connected_USD = addcosts_Capex_a_USD + addcosts_Opex_fixed_USD
-
-
-
+    #SUMMARIZE RESULTS
+    #Costs
+    Capex_a_connected_USD = addcosts_Capex_a_USD
+    Capex_total_connected_USD = addcosts_Capex_USD
+    Opex_a_connected_USD = addcosts_Opex_fixed_USD
+    Capex_a_disconnected_USD = Capex_a_disconnected_cooling_USD + Capex_a_disconnected_heating_USD
+    Capex_total_disconnected_USD = Capex_total_disconnected_cooling_USD + Capex_total_disconnected_heating_USD
+    Opex_a_disconnected_USD = Opex_a_disconnected_cooling_USD + Opex_a_disconnected_heating_USD
+    Capex_a_sys_USD = Capex_a_connected_USD + Capex_a_disconnected_USD
+    Capex_total_sys_USD =Capex_total_connected_USD + Capex_total_disconnected_USD
+    Opex_sys_USD = Opex_a_connected_USD + Opex_a_disconnected_USD
+    TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
     TAC_disconnected_USD = TAC_disconnected_heating_USD + TAC_disconnected_cooling_USD
-    GHG_disconnected_tonCO2 = (GHG_disconnected_heating_kgCO2 + GHG_disconnected_cooling_kgCO2) / 1E3 #from kg to ton
-    PEN_disconnected_MJoil = PEN_disconnected_heating_MJoil + PEN_disconnected_cooling_MJoil
-    Capex_a_connected_USD =
-    Capex_total_connected_USD =
-    Opex_a_connected_USD =
     TAC_sys_USD = TAC_connected_USD + TAC_disconnected_USD
+
+    #emissions
+    GHG_disconnected_tonCO2 = (GHG_disconnected_heating_tonCO2 + GHG_disconnected_cooling_tonCO2) / 1E3 #from kg to ton
+    PEN_disconnected_MJoil = PEN_disconnected_heating_MJoil + PEN_disconnected_cooling_MJoil
 
 
     # Save data
@@ -461,31 +467,32 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
         "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
         "NetworkCost": [NetworkCost_a_USD],
         "SubstHEXCost": [SubstHEXCost_capex],
-        "DHNInvestCost": [addcosts_Capex_a_USD - (TAC_disconnected_heating_USD)],
         "PVTHEXCost_Capex": [PVTHEXCost_Capex],
-        "Capex_a_connected_USD": [Capex_Disconnected_heating],
-        "Capex_total_connected_USD": [Capex_total_Disconnected_heating],
-        "Opex_a_connected_USD": [Opex_Disconnected_heating],
-
-
-        "Capex_a_disconnected_heating_USD": [Capex_Disconnected_heating],
-        "Capex_total_disconnected_heating_USD": [Capex_total_Disconnected_heating],
-        "Opex_a_disconnected_heating_USD": [Opex_Disconnected_heating],
+        "Capex_a_sys_USD" : [Capex_a_sys_USD], #sys is of all the energy system
+        "Capex_total_sys_USD": [Capex_total_sys_USD],
+        "Opex_sys_USD": [Opex_sys_USD],
+        "Capex_a_connected_USD": [Capex_a_connected_USD],
+        "Capex_total_connected_USD": [Capex_total_connected_USD],
+        "Opex_a_connected_USD": [Opex_a_connected_USD],
+        "TAC_connected_USD": [TAC_connected_USD],
+        "Capex_a_disconnected_heating_USD": [Capex_a_disconnected_heating_USD],
+        "Capex_total_disconnected_heating_USD": [Capex_total_disconnected_heating_USD],
+        "Opex_a_disconnected_heating_USD": [Opex_a_disconnected_heating_USD],
         "TAC_disconnected_heating_USD": [TAC_disconnected_heating_USD],
-        "GHG_disconnected_heating_kgCO2": [GHG_disconnected_heating_kgCO2],
+        "GHG_disconnected_heating_tonCO2": [GHG_disconnected_heating_tonCO2],
         "PEN_disconnected_heating_MJoil": [PEN_disconnected_heating_MJoil],
         "Capex_a_disconnected_cooling_USD": [Capex_a_disconnected_cooling_USD],
         "Capex_total_disconnected_cooling_USD": [Capex_total_disconnected_cooling_USD],
         "Opex_a_disconnected_cooling_USD": [Opex_a_disconnected_cooling_USD],
         "TAC_disconnected_cooling_USD": [TAC_disconnected_cooling_USD],
-        "GHG_disconnected_cooling_kgCO2": [GHG_disconnected_cooling_kgCO2],
+        "GHG_disconnected_cooling_tonCO2": [GHG_disconnected_cooling_tonCO2],
         "PEN_disconnected_cooling_MJoil": [PEN_disconnected_cooling_MJoil],
-        "Capex_a_disconnected_USD": [Capex_Disconnected_heating + Capex_a_disconnected_cooling_USD],
-        "Capex_total_disconnected_USD": [Capex_total_Disconnected_heating + Capex_total_disconnected_cooling_USD],
-        "Opex_a_disconnected_USD": [Opex_Disconnected_heating + Opex_a_disconnected_cooling_USD],
-        "TAC_disconnected_USD": [TAC_disconnected_heating_USD + TAC_disconnected_cooling_USD],
-        "GHG_disconnected_kgCO2": [GHG_disconnected_heating_kgCO2 + GHG_disconnected_cooling_kgCO2],
-        "PEN_disconnected_MJoil": [PEN_disconnected_heating_MJoil + PEN_disconnected_cooling_MJoil],
+        "Capex_a_disconnected_USD": [Capex_a_disconnected_USD],
+        "Capex_total_disconnected_USD": [Capex_total_disconnected_USD],
+        "Opex_a_disconnected_USD": [Opex_a_disconnected_USD],
+        "TAC_disconnected_USD": [TAC_disconnected_USD],
+        "GHG_disconnected_tonCO2": [GHG_disconnected_tonCO2],
+        "PEN_disconnected_MJoil": [PEN_disconnected_MJoil],
         "Capex_a_furnace": [Capex_a_furnace_USD],
         "Opex_fixed_furnace": [Opex_fixed_furnace_USD],
         "Capex_a_Boiler": [Capex_a_Boiler_USD],
