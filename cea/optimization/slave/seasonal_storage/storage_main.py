@@ -82,7 +82,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX, T_ST_MIN)
     V1 = V_storage_possible_needed
     Q_initial_W = min(Q_stored_max0_W / 2.0, Q_storage_content_final_W[-1])
-    T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+    T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
     STORE_DATA = "yes"
@@ -104,7 +104,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
         V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_W, T_ST_MAX, T_ST_MIN)
         V2 = V_storage_possible_needed
         Q_initial_W = min(Q_disc_seasonstart_opt_W[0], Q_storage_content_fin_op_W[-1])
-        T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
+        T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_possible_needed)
         Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                  config)
@@ -123,7 +123,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
             V3 = V_storage_possible_needed
 
             Q_initial_W = min(Q_disc_seasonstart_opt2_W[0], Q_storage_content_fin_op2_W[-1])
-            T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+            T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
             Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
                                                      V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
@@ -139,7 +139,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                 V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_4_W, T_ST_MAX, T_ST_MIN)
                 V4 = V_storage_possible_needed
                 Q_initial_W = min(Q_disc_seasonstart_opt3_W[0], Q_storage_content_fin_op3_W[-1])
-                T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+                T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
                 Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
                                                          V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
@@ -161,10 +161,10 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                             Q_storage_content_fin_op4_W)  # assuming the minimum at the end of the season
                         Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * MS_Var.dT_buffer / WH_TO_J
                         Q_initial_W = Q_initial_min + Q_buffer
-                        T_initial_real = T_ST_MIN + Q_initial_min * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
+                        T_initial_real = calc_T_initial_from_Q_and_V(Q_initial_min, T_ST_MIN, V_storage_possible_needed)
                         T_initial_K = MS_Var.dT_buffer + T_initial_real
                     else:
-                        T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+                        T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
                     Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
                                                              V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
@@ -327,6 +327,12 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
 
     return costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil
+
+
+def calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3):
+    T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (
+                DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+    return T_initial_K
 
 
 def calc_temperature_convergence(Q_storage_content_fin_op2_W):
