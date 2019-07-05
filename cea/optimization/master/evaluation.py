@@ -106,7 +106,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     if district_heating_network:
         print("CALCULATING ECOLOGICAL COSTS OF HEATING ENERGY CONSUMPTION - CONNECTED BUILDINGS")
         if DHN_barcode.count("1") > 0:
-            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W,
+            (costs_heating_USD, GHG_tonCO2, PEN_heating_MJoil, Q_heating_uncovered_design_W,
              Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
                                                                                                config, prices, lca)

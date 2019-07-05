@@ -479,9 +479,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
 
     # Converting costs into float64 to avoid longer values
-    costs_a_USD = np.float64(TAC_connected_USD)
+    TAC_USD = np.float64(TAC_connected_USD)
     GHG_tonCO2 = np.float64(GHG_tonCO2)
-    prim_MJoil = np.float64(prim_MJoil)
+    PEN_MJoil = np.float64(prim_MJoil)
 
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
@@ -559,7 +559,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                             "PEN_CCGT_connected_tonCO2": prim_energy_CCGT_MJoil,
                             })
 
-    results.to_csv(locator.get_optimization_slave_cooling_ecological_costs(master_to_slave_vars.individual_number,
+    results.to_csv(locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
                    index=False)
 
@@ -585,4 +585,4 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                                                              master_to_slave_vars.generation_number),
                    index=False)
 
-    return (costs_a_USD, GHG_tonCO2, prim_MJoil)
+    return (TAC_USD, GHG_tonCO2, PEN_MJoil)
