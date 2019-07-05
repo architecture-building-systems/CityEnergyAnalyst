@@ -127,6 +127,10 @@ class InputLocator(object):
                 result.append('%(scenario)s/%(generation)i/ind%(individual)i' % locals())
         return result
 
+    def get_optimization_slave_heating_opex_var_pattern(self, ind_num, gen_num):
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Heating_Opex_var_pattern.csv' % locals())
+
     def get_optimization_slave_heating_activation_pattern(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
