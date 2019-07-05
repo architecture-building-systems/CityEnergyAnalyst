@@ -311,10 +311,12 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                             NG_used_CHP_W, NG_used_BaseBoiler_W, NG_used_PeakBoiler_W,
                                                             Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
                                                             np.sum(E_BackupBoiler_req_W),
-                                                            master_to_slave_vars, locator, lca)
+                                                            master_to_slave_vars, locator, lca, fuel='NG')
         performance_parameters['GHG_BaseBoiler_BG_tonCO2'] = 0.0
         performance_parameters['GHG_PeakBoiler_BG_tonCO2'] = 0.0
         performance_parameters['GHG_BackupBoiler_BG_tonCO2'] = 0.0
+        performance_parameters['GHG_CHP_BG_connected_tonCO2'] = 0.0
+        performance_parameters['PEN_CHP_BG_connected_MJoil'] = 0.0
         performance_parameters['PEN_BaseBoiler_BG_MJoil'] = 0.0
         performance_parameters['PEN_PeakBoiler_BG_MJoil'] = 0.0
         performance_parameters['PEN_BackupBoiler_BG_MJoil'] = 0.0
@@ -330,10 +332,12 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                             BG_used_CHP_W, BG_used_BaseBoiler_W, BG_used_PeakBoiler_W,
                                                             Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
                                                             np.sum(E_BackupBoiler_req_W),
-                                                            master_to_slave_vars, locator, lca)
+                                                            master_to_slave_vars, locator, lca, fuel='BG')
         performance_parameters['GHG_BaseBoiler_NG_tonCO2'] = 0.0
         performance_parameters['GHG_PeakBoiler_NG_tonCO2'] = 0.0
         performance_parameters['GHG_BackupBoiler_NG_tonCO2'] = 0.0
+        performance_parameters['GHG_CHP_NG_connected_tonCO2'] = 0.0
+        performance_parameters['PEN_CHP_NG_connected_MJoil'] = 0.0
         performance_parameters['PEN_BaseBoiler_NG_MJoil'] = 0.0
         performance_parameters['PEN_PeakBoiler_NG_MJoil'] = 0.0
         performance_parameters['PEN_BackupBoiler_NG_MJoil'] = 0.0
@@ -371,53 +375,53 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
 
                             # opex variable
-                            "Opex_var_HP_Sewage_USD": Opex_var_HP_Sewage_USD,
-                            "Opex_var_HP_Lake_USD": Opex_var_HP_Lake_USD,
-                            "Opex_var_GHP_USD": Opex_var_GHP_USD,
-                            "Opex_var_CHP_BG_USD": Opex_var_CHP_BG_USD,
-                            "Opex_var_CHP_NG_USD": Opex_var_CHP_NG_USD,
-                            "Opex_var_Furnace_wet_USD": Opex_var_Furnace_wet_USD,
-                            "Opex_var_Furnace_dry_USD": Opex_var_Furnace_dry_USD,
-                            "Opex_var_BaseBoiler_BG_USD": Opex_var_BaseBoiler_BG_USD,
-                            "Opex_var_BaseBoiler_NG_USD": Opex_var_BaseBoiler_NG_USD,
-                            "Opex_var_PeakBoiler_BG_USD": Opex_var_PeakBoiler_BG_USD,
-                            "Opex_var_PeakBoiler_NG_USD": Opex_var_PeakBoiler_NG_USD,
-                            "Opex_var_BackupBoiler_BG_USD": Opex_var_BackupBoiler_BG_USD,
-                            "Opex_var_BackupBoiler_NG_USD": Opex_var_BackupBoiler_NG_USD
+                            "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
+                            "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
+                            "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
+                            "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
+                            "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
+                            "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
+                            "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
+                            "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
+                            "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
+                            "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
+                            "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
+                            "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
+                            "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD
 
                             # opex annual
 
                             # annualized capex
 
                             # emissions
-                            "GHG_HP_Sewage_tonCO2": performance_parameters['GHG_HP_Sewage_tonCO2'],
-                            "GHG_HP_Lake_tonCO2": performance_parameters['GHG_HP_Lake_tonCO2'],
-                            "GHG_GHP_tonCO2": performance_parameters['GHG_GHP_tonCO2'],
-                            "GHG_CHP_BG_tonCO2": performance_parameters['GHG_CHP_BG_tonCO2'],
-                            "GHG_CHP_NG_tonCO2": performance_parameters['GHG_CHP_NG_tonCO2'],
-                            "GHG_Furnace_wet_tonCO2": performance_parameters['GHG_Furnace_wet_tonCO2'],
-                            "GHG_Furnace_dry_tonCO2": performance_parameters['GHG_Furnace_dry_tonCO2'],
-                            "GHG_BaseBoiler_BG_tonCO2": performance_parameters['GHG_BaseBoiler_BG_tonCO2'],
-                            "GHG_BaseBoiler_NG_tonCO2": performance_parameters['GHG_BaseBoiler_NG_tonCO2'],
-                            "GHG_PeakBoiler_BG_tonCO2": performance_parameters['GHG_PeakBoiler_BG_tonCO2'],
-                            "GHG_PeakBoiler_NG_tonCO2": performance_parameters['GHG_PeakBoiler_NG_tonCO2'],
-                            "GHG_BackupBoiler_BG_tonCO2": performance_parameters['GHG_BackupBoiler_BG_tonCO2'],
-                            "GHG_BackupBoiler_NG_tonCO2": performance_parameters['GHG_BackupBoiler_NG_tonCO2'],
+                            "GHG_HP_Sewage_connected_tonCO2": performance_parameters['GHG_HP_Sewage_tonCO2'],
+                            "GHG_HP_Lake_connected_tonCO2": performance_parameters['GHG_HP_Lake_tonCO2'],
+                            "GHG_GHP_connected_tonCO2": performance_parameters['GHG_GHP_tonCO2'],
+                            "GHG_CHP_BG_connected_tonCO2": performance_parameters['GHG_CHP_BG_tonCO2'],
+                            "GHG_CHP_NG_connected_tonCO2": performance_parameters['GHG_CHP_NG_tonCO2'],
+                            "GHG_Furnace_wet_connected_tonCO2": performance_parameters['GHG_Furnace_wet_tonCO2'],
+                            "GHG_Furnace_dry_connected_tonCO2": performance_parameters['GHG_Furnace_dry_tonCO2'],
+                            "GHG_BaseBoiler_BG_connected_tonCO2": performance_parameters['GHG_BaseBoiler_BG_tonCO2'],
+                            "GHG_BaseBoiler_NG_connected_tonCO2": performance_parameters['GHG_BaseBoiler_NG_tonCO2'],
+                            "GHG_PeakBoiler_BG_connected_tonCO2": performance_parameters['GHG_PeakBoiler_BG_tonCO2'],
+                            "GHG_PeakBoiler_NG_connected_tonCO2": performance_parameters['GHG_PeakBoiler_NG_tonCO2'],
+                            "GHG_BackupBoiler_BG_connected_tonCO2": performance_parameters['GHG_BackupBoiler_BG_tonCO2'],
+                            "GHG_BackupBoiler_NG_connected_tonCO2": performance_parameters['GHG_BackupBoiler_NG_tonCO2'],
 
                             # primary energy
-                            "PEN_HP_Sewage_MJoil": performance_parameters['PEN_HP_Sewage_MJoil'],
-                            "PEN_HP_Lake_MJoil": performance_parameters['PEN_HP_Lake_MJoil'],
-                            "PEN_GHP_MJoil": performance_parameters['PEN_GHP_MJoil'],
-                            "PEN_CHP_BG_MJoil": performance_parameters['PEN_CHP_BG_MJoil'],
-                            "PEN_CHP_NG_MJoil": performance_parameters['PEN_CHP_NG_MJoil'],
-                            "PEN_Furnace_wet_MJoil": performance_parameters['PEN_Furnace_wet_MJoil'],
-                            "PEN_Furnace_dry_MJoil": performance_parameters['PEN_Furnace_dry_MJoil'],
-                            "PEN_BaseBoiler_BG_MJoil": performance_parameters['PEN_BaseBoiler_BG_MJoil'],
-                            "PEN_BaseBoiler_NG_MJoil": performance_parameters['PEN_BaseBoiler_NG_MJoil'],
-                            "PEN_PeakBoiler_BG_MJoil": performance_parameters['PEN_PeakBoiler_BG_MJoil'],
-                            "PEN_PeakBoiler_NG_MJoil": performance_parameters['PEN_PeakBoiler_NG_MJoil'],
-                            "PEN_BackupBoiler_BG_MJoil": performance_parameters['PEN_BackupBoiler_BG_MJoil'],
-                            "PEN_BackupBoiler_NG_MJoil": performance_parameters['PEN_BackupBoiler_NG_MJoil']
+                            "PEN_HP_Sewage_connected_MJoil": performance_parameters['PEN_HP_Sewage_MJoil'],
+                            "PEN_HP_Lake_connected_MJoil": performance_parameters['PEN_HP_Lake_MJoil'],
+                            "PEN_GHP_connected_MJoil": performance_parameters['PEN_GHP_MJoil'],
+                            "PEN_CHP_BG_connected_MJoil": performance_parameters['PEN_CHP_BG_MJoil'],
+                            "PEN_CHP_NG_connected_MJoil": performance_parameters['PEN_CHP_NG_MJoil'],
+                            "PEN_Furnace_wet_connected_MJoil": performance_parameters['PEN_Furnace_wet_MJoil'],
+                            "PEN_Furnace_dry_connected_MJoil": performance_parameters['PEN_Furnace_dry_MJoil'],
+                            "PEN_BaseBoiler_BG_connected_MJoil": performance_parameters['PEN_BaseBoiler_BG_MJoil'],
+                            "PEN_BaseBoiler_NG_connected_MJoil": performance_parameters['PEN_BaseBoiler_NG_MJoil'],
+                            "PEN_PeakBoiler_BG_connected_MJoil": performance_parameters['PEN_PeakBoiler_BG_MJoil'],
+                            "PEN_PeakBoiler_NG_connected_MJoil": performance_parameters['PEN_PeakBoiler_NG_MJoil'],
+                            "PEN_BackupBoiler_BG_connected_MJoil": performance_parameters['PEN_BackupBoiler_BG_MJoil'],
+                            "PEN_BackupBoiler_NG_connected_MJoil": performance_parameters['PEN_BackupBoiler_NG_MJoil']
                             })
 
     results.to_csv(locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
@@ -496,7 +500,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
                                 E_gas_CHP_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W,
                                 E_wood_Furnace_W,
                                 Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
-                                master_to_slave_vars, locator, lca):
+                                master_to_slave_vars, locator, lca, fuel):
     """
     This function calculates the emissions and primary energy consumption
 
@@ -658,18 +662,18 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "GHG_HP_Sewage_tonCO2": [GHG_Sewage_tonCO2],
         "GHG_GHP_tonCO2": [GHG_GHP_tonCO2],
         "GHG_HP_Lake_tonCO2": [GHG_HPLake_tonCO2],
-        "GHG_CHP_tonCO2": [GHG_CHP_tonCO2],
-        "GHG_BaseBoiler_tonCO2": [GHG_BaseBoiler_tonCO2],
-        "GHG_PeakBoiler_tonCO2": [GHG_PeakBoiler_tonCO2],
-        "GHG_BackupBoiler_tonCO2": [GHG_AddBoiler_tonCO2],
+        "GHG_CHP_"+fuel+"_tonCO2": [GHG_CHP_tonCO2],
+        "GHG_BaseBoiler_"+fuel+"_tonCO2": [GHG_BaseBoiler_tonCO2],
+        "GHG_PeakBoiler_"+fuel+"_tonCO2": [GHG_PeakBoiler_tonCO2],
+        "GHG_BackupBoiler_"+fuel+"_tonCO2": [GHG_AddBoiler_tonCO2],
         "GHG_Furnace_tonCO2": [GHG_Furnace_tonCO2],
         "PEN_HP_Sewage_MJoil": [PEN_Sewage_MJoil],
         "PEN_GHP_MJoil": [PEN_GHP_MJoil],
         "PEN_HP_Lake_MJoil": [PEN_HPLake_MJoil],
-        "PEN_CHP_MJoil": [PEN_CC_MJoil],
-        "PEN_BaseBoiler_MJoil": [PEN_BaseBoiler_MJoil],
-        "PEN_PeakBoiler_MJoil": [PEN_PeakBoiler_MJoil],
-        "PEN_BackupBoiler_MJoil": [PEN_AddBoiler_MJoil],
+        "PEN_CHP_"+fuel+"_MJoil": [PEN_CC_MJoil],
+        "PEN_BaseBoiler_"+fuel+"_MJoil": [PEN_BaseBoiler_MJoil],
+        "PEN_PeakBoiler_"+fuel+"_MJoil": [PEN_PeakBoiler_MJoil],
+        "PEN_BackupBoiler_"+fuel+"_MJoil": [PEN_AddBoiler_MJoil],
         "PEN_Furnace_MJoil": [PEN_Furnace_MJoil]}
 
     return performance_parameters
