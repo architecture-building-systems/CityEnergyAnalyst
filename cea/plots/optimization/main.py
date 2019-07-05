@@ -263,7 +263,7 @@ class Plots(object):
                                       'Capex_VCC_USD', 'Capex_a_PV_USD',
                                       'Capex_VCC_backup_USD', 'Opex_Total_USD', 'Capex_Total_USD', 'Opex_var_pumps_USD',
                                       'Disconnected_costs_USD',
-                                      'Capex_Decentralized_USD', 'Opex_Decentralized_USD', 'Capex_Centralized_USD',
+                                      'Capex_Decentralized_USD', 'Opex_Decentralized_USD', 'Capex_total_centralized_USD',
                                       'Opex_Centralized_USD', 'Electricitycosts_for_hotwater_USD',
                                       'Electricitycosts_for_appliances_USD', 'Process_Heat_Costs_USD', 'Network_costs_USD',
                                       'Substation_costs_USD'])
@@ -406,7 +406,7 @@ class Plots(object):
                       data_processed.loc[index]['Electricity_Costs'] + data_processed.loc[index][
                           'Process_Heat_Costs']
 
-                data_processed.loc[index]['Capex_Centralized_USD'] = (data_processed.loc[index]['Capex_SC'] +\
+                data_processed.loc[index]['Capex_total_centralized_USD'] = (data_processed.loc[index]['Capex_SC'] +\
                                                                      data_processed.loc[index]['Capex_PVT'] + \
                                                                      data_processed.loc[index]['Capex_Boiler_backup'] + \
                                                                      data_processed.loc[index]['Capex_storage_HEX'] + \
@@ -417,7 +417,7 @@ class Plots(object):
                                                                      data_processed.loc[index]['Capex_Sewage'] + \
                                                                      data_processed.loc[index]['Capex_pump'])
 
-                data_processed.loc[index]['Capex_Total_USD'] = (data_processed.loc[index]['Capex_Centralized_USD'] + \
+                data_processed.loc[index]['Capex_Total_USD'] = (data_processed.loc[index]['Capex_total_centralized_USD'] + \
                                                                data_processed.loc[index]['Capex_Decentralized_USD'])
                 data_processed.loc[index]['Opex_Total_USD'] = (data_processed.loc[index][
                                                                         'Opex_Centralized_USD'] + \
@@ -430,10 +430,8 @@ class Plots(object):
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[index][column_name] = df_cooling_costs[column_name].values[0]
 
-                data_processed.loc[index]['Opex_var_ACH_USD'] = data_mcda_ind['Opex_total_ACH_USD'].values[0] - \
-                                                                      data_mcda_ind['Opex_fixed_ACH_USD'].values[0]
-                data_processed.loc[index]['Opex_var_CCGT_USD'] = data_mcda_ind['Opex_total_CCGT_USD'].values[0] - \
-                                                                       data_mcda_ind['Opex_fixed_CCGT_USD'].values[0]
+                data_processed.loc[index]['Opex_var_ACH_USD'] = data_mcda_ind['Opex_var_ACH_USD'].values[0]
+                data_processed.loc[index]['Opex_var_CCGT_USD'] = data_mcda_ind['Opex_var_CCGT_USD'].values[0]
                 data_processed.loc[index]['Opex_var_CT_USD'] = data_mcda_ind['Opex_total_CT_USD'].values[0] - \
                                                                      data_mcda_ind['Opex_fixed_CT_USD'].values[0]
                 data_processed.loc[index]['Opex_var_Lake_USD'] = data_mcda_ind['Opex_total_Lake_USD'].values[0] - \
@@ -499,7 +497,7 @@ class Plots(object):
                                                                           data_processed.loc[index][
                                                                               'Electricitycosts_for_appliances_USD']
 
-                data_processed.loc[index]['Capex_Centralized_USD'] = data_processed.loc[index][
+                data_processed.loc[index]['Capex_total_centralized_USD'] = data_processed.loc[index][
                                                                                'Capex_a_ACH_USD'] + \
                                                                            data_processed.loc[index][
                                                                                'Capex_a_CCGT_USD'] + \
@@ -534,8 +532,8 @@ class Plots(object):
                                                                            data_processed.loc[index][
                                                                                'Network_costs_USD']
 
-                data_processed.loc[index]['Capex_Total_USD'] = data_processed.loc[index][
-                                                                         'Capex_Centralized_USD'] + \
+                data_processed.loc[index]['Capex_Total_sys_USD'] = data_processed.loc[index][
+                                                                         'Capex_total_centralized_USD'] + \
                                                                      data_processed.loc[index][
                                                                          'Capex_Decentralized_USD']
                 data_processed.loc[index]['Opex_Total_USD'] = data_processed.loc[index][
