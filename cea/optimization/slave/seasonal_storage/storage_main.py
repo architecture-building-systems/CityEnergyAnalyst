@@ -335,14 +335,14 @@ def calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3):
     return T_initial_K
 
 
-def calc_temperature_convergence(Q_storage_content_fin_op2_W):
-    InitialStorageContent = float(Q_storage_content_fin_op2_W[0])
-    FinalStorageContent = float(Q_storage_content_fin_op2_W[-1])
+def calc_temperature_convergence(Q_storage_content_final_W):
+    InitialStorageContent = float(Q_storage_content_final_W[0])
+    FinalStorageContent = float(Q_storage_content_final_W[-1])
     if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-        storageDeviation2 = 0
+        storageDeviation = 0
     else:
-        storageDeviation2 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
-    return storageDeviation2
+        storageDeviation = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+    return storageDeviation
 
 
 def calc_storage_volume_from_heat_requirement(Q_loss0_W, Q_stored_max0_W, T_ST_MAX, T_ST_MIN):
