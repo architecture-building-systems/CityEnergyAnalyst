@@ -316,7 +316,9 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
                                      'E_used_VCC_W': np.sum(E_used_VCC_W),
                                      'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
                                      'E_used_ACH_W': np.sum(E_used_ACH_W),
-                                     'E_used_Lake_W': np.sum(E_used_Lake_W)}
+                                     'E_used_Lake_W': np.sum(E_used_Lake_W),
+                                     'mdot_DCN_kgpers': mdot_DCN_kgpers,
+                                     'deltaPmax': deltaP_Pa}
 
     Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
