@@ -216,10 +216,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_detailed_capacity.csv' % locals())
 
-    def get_optimization_slave_cooling_ecological_costs(self, ind_num, gen_num):
+    def get_optimization_slave_heating_performance(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_cooling_ecological_costs.csv' % locals())
+                            'ind_%(ind_num)s_heating_performance.csv' % locals())
+
+    def get_optimization_slave_cooling_performance(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_cooling_performance.csv' % locals())
 
     def get_preprocessing_costs(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
