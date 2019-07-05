@@ -1847,7 +1847,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_AHU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_AHU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_AHU[:, 7]
-        dico["GHG_kgCO2"] = result_AHU[:, 8]
+        dico["GHG_tonCO2"] = result_AHU[:, 8]/1E3
         dico["PEN_MJoil"] = result_AHU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
@@ -1918,7 +1918,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_ARU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_ARU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_ARU[:, 7]
-        dico["GHG_kgCO2"] = result_ARU[:, 8]
+        dico["GHG_tonCO2"] = result_ARU[:, 8]/1E3
         dico["PEN_MJoil"] = result_ARU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
@@ -1989,7 +1989,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_SCU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_SCU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_SCU[:, 7]
-        dico["GHG_kgCO2"] = result_SCU[:, 8]
+        dico["GHG_tonCO2"] = result_SCU[:, 8]/1E3
         dico["PEN_MJoil"] = result_SCU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
@@ -2060,7 +2060,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_AHU_ARU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_AHU_ARU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_AHU_ARU[:, 7]
-        dico["GHG_kgCO2"] = result_AHU_ARU[:, 8]
+        dico["GHG_tonCO2"] = result_AHU_ARU[:, 8]/1E3
         dico["PEN_MJoil"] = result_AHU_ARU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
@@ -2134,7 +2134,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_AHU_SCU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_AHU_SCU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_AHU_SCU[:, 7]
-        dico["GHG_kgCO2"] = result_AHU_SCU[:, 8]
+        dico["GHG_tonCO2"] = result_AHU_SCU[:, 8]/1E3
         dico["PEN_MJoil"] = result_AHU_SCU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
 
@@ -2208,7 +2208,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_ARU_SCU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_ARU_SCU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_ARU_SCU[:, 7]
-        dico["GHG_kgCO2"] = result_ARU_SCU[:, 8]
+        dico["GHG_tonCO2"] = result_ARU_SCU[:, 8]/1E3
         dico["PEN_MJoil"] = result_ARU_SCU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
 
@@ -2285,7 +2285,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_AHU_ARU_SCU_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_AHU_ARU_SCU_USD[:, 0]
         dico["Opex_a_var_USD"] = result_AHU_ARU_SCU[:, 7]
-        dico["GHG_kgCO2"] = result_AHU_ARU_SCU[:, 8]
+        dico["GHG_tonCO2"] = result_AHU_ARU_SCU[:, 8]/1E3
         dico["PEN_MJoil"] = result_AHU_ARU_SCU[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
