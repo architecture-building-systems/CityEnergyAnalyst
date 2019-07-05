@@ -18,13 +18,13 @@ import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cogeneration as cogeneration
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.pumps as PumpModel
+from cea.technologies.pumps import calc_Cinv_pump
 import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
-    T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, \
-    PIPELIFETIME
+    T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME, PUMP_ETA
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
@@ -446,6 +446,13 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     network_data = pd.read_csv(
         locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling))
 
+    #LAKE
+    if sum(E_used_Lake_W) > 0: #there is lake cooling
+        mdotnMax_kgpers = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'mdot_DCN_kgpers'].iloc[0]
+        deltaPmax = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'deltaPmax'].iloc[0]
+        Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
+                                                                               locator, 'PU1')
+
     # SUMMARIZE NUMBERS
     Opex_var_Lake_connected_USD = sum(opex_var_Lake_USDhr),
     Opex_var_VCC_connected_USD = sum(opex_var_VCC_USDhr),
@@ -472,7 +479,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
 
     # Converting costs into float64 to avoid longer values
-    costs_a_USD = np.float64(costs_a_USD)
+    costs_a_USD = np.float64(TAC_connected_USD)
     GHG_tonCO2 = np.float64(GHG_tonCO2)
     prim_MJoil = np.float64(prim_MJoil)
 
