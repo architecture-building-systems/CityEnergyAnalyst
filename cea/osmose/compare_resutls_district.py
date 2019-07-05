@@ -209,7 +209,10 @@ def plot_three_stacked_bars_side_by_side(left_stack_dict, middle_stack_dict, rig
         label = key.split('_Wh')[0]
         ax.bar(x_axis_left, left_stack_dict[key], bar_width, bottom=y_offset, label=label, color=color, hatch = 2*"x")
         y_offset = y_offset + left_stack_dict[key]
+    losses = pd.DataFrame(middle_stack_dict).sum(axis=1) - pd.DataFrame(left_stack_dict).sum(axis=1)
+    ax.bar(x_axis_left, losses, bar_width, bottom=y_offset, label='Exergy Losses', ls='dashed', alpha=0.3, color="#2E8DEF")
     y_max = y_offset.max()
+
     ## middle stack
     x_axis_middle = x_ticks
     y_offset = np.zeros(len(techs))
@@ -240,7 +243,7 @@ def plot_three_stacked_bars_side_by_side(left_stack_dict, middle_stack_dict, rig
     # put legend to the right
     ax.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), fontsize=16)
     # ax.set(ylabel='Energy [Wh/m2]', xlim=(-0.5, 4.5), ylim=(0, y_max + 0.05 * y_max))
-    ax.set(ylabel='Energy [Wh/m2]', xlim=(-0.5, 4.5), ylim=(0, 1400))
+    ax.set(ylabel='Exergy [Wh/m2]', xlim=(-0.5, 4.5), ylim=(0, 1400))
 
     # plt.show()
 
@@ -262,7 +265,7 @@ def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folde
     # y axis
     y = value
     # y_values = np.arange(round(min(y)),round(max(y))+2)
-    y_values = np.arange(4, 8)
+    y_values = np.arange(4, 9.5)
     y_minor_values = y_values + 0.5
     y_labels = [str(v) for v in y_values]
     # marker size
@@ -356,7 +359,7 @@ def plot_scatter_el_total(all_el_total_dict, path_district_result_folder):
     # y axis
     y = value
     # y_values = np.arange(round(min(y)),round(max(y))+2)
-    y_values = np.arange(0.4, 1.6, 0.2)
+    y_values = np.arange(0.3, 1.8, 0.3)
     y_minor_values = y_values + 0.1
     # y_labels = [0, 0.5, 1, 1.5, 2]
     # marker size
@@ -448,10 +451,11 @@ if __name__ == '__main__':
     #cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ['WTP_CBD_m_WP1_OFF']
+    # cases = ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-        path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
+        path_result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0704'
+        # path_result_folder = "D:\\SH\\WP1_3for2\\WP1_0702_3for2"
+        # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
         time_steps = 168
         main(path_result_folder, case, time_steps)
