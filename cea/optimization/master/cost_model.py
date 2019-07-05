@@ -34,9 +34,58 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+def add_disconnected_costs(buildList, locator, master_to_slave_vars):
 
-def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
-             Q_uncovered_annual_W, solar_features, network_features, config, prices, lca):
+    DHN_barcode = master_to_slave_vars.DHN_barcode
+    DCN_barcode = master_to_slave_vars.DCN_barcode
+
+    # DISCONNECTED BUILDINGS  - HEATING LOADS
+    GHG_heating_disconnected_tonCO2, Capex_a_heating_disconnected_USD, \
+    TAC_heating_disconnected_USD, Opex_a_heating_disconnected_USD, \
+    PEN_heating_disconnected_MJoil, Capex_total_heating_disconnected_USD = calc_costs__emissions_decentralized_DH(
+        DHN_barcode,
+        buildList, locator)
+
+    # DISCONNECTED BUILDINGS - COOLING LOADS
+    GHG_cooling_disconnected_tonCO2, Capex_a_cooling_disconnected_USD, \
+    TAC_cooling_disconnected_USD, Opex_a_cooling_disconnected_USD, \
+    PEN_cooling_disconnected_MJoil, Capex_total_cooling_disconnected_USD = calc_costs_emissions_decentralized_DC(
+        DCN_barcode,
+        buildList, locator,
+        master_to_slave_vars)
+
+    Capex_a_disconnected_USD = Capex_a_cooling_disconnected_USD + Capex_a_heating_disconnected_USD
+    Capex_total_disconnected_USD = Capex_total_cooling_disconnected_USD + Capex_total_heating_disconnected_USD
+    Opex_a_disconnected_USD = Opex_a_cooling_disconnected_USD + Opex_a_heating_disconnected_USD
+    TAC_disconnected_USD = TAC_heating_disconnected_USD + TAC_cooling_disconnected_USD
+    GHG_disconnected_tonCO2 = (GHG_heating_disconnected_tonCO2 + GHG_cooling_disconnected_tonCO2)
+    PEN_disconnected_MJoil = PEN_heating_disconnected_MJoil + PEN_cooling_disconnected_MJoil
+
+    results = pd.DataFrame({"Capex_a_heating_disconnected_USD": [Capex_a_heating_disconnected_USD],
+        "Capex_total_heating_disconnected_USD": [Capex_total_heating_disconnected_USD],
+        "Opex_a_heating_disconnected_USD": [Opex_a_heating_disconnected_USD],
+        "TAC_heating_disconnected_USD": [TAC_heating_disconnected_USD],
+        "GHG_heating_disconnected_tonCO2": [GHG_heating_disconnected_tonCO2],
+        "PEN_heating_disconnected_MJoil": [PEN_heating_disconnected_MJoil],
+        "Capex_a_cooling_disconnected_USD": [Capex_a_cooling_disconnected_USD],
+        "Capex_total_cooling_disconnected_USD": [Capex_total_cooling_disconnected_USD],
+        "Opex_a_cooling_disconnected_USD": [Opex_a_cooling_disconnected_USD],
+        "TAC_cooling_disconnected_USD": [TAC_cooling_disconnected_USD],
+        "GHG_cooling_disconnected_tonCO2": [GHG_cooling_disconnected_tonCO2],
+        "PEN_cooling_disconnected_MJoil": [PEN_cooling_disconnected_MJoil],
+        "Capex_a_disconnected_USD": [Capex_a_disconnected_USD],
+        "Capex_total_disconnected_USD": [Capex_total_disconnected_USD],
+        "Opex_a_disconnected_USD": [Opex_a_disconnected_USD],
+        "TAC_disconnected_USD": [TAC_disconnected_USD],
+        "GHG_disconnected_tonCO2": [GHG_disconnected_tonCO2],
+        "PEN_disconnected_MJoil": [PEN_disconnected_MJoil]})
+
+    return TAC_disconnected_USD, GHG_disconnected_tonCO2, PEN_disconnected_MJoil
+
+
+
+def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, solar_features, network_features,
+             config, prices, lca):
     """
     Computes costs / GHG emisions / primary energy needs
     for the individual
@@ -105,7 +154,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     Eprim_PV_disconnected = 0
     Capex_Boiler_backup_USD = 0
     Capex_HP_storage_USD = 0
-    Capex_storage_HP = 0
     Capex_CHP_USD = 0
     Capex_furnace_USD = 0
     Capex_Boiler_USD = 0
@@ -113,18 +161,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
     Capex_Lake_USD = 0
     Capex_Sewage_USD = 0
 
-    # DISCONNECTED BUILDINGS  - HEATING LOADS
-    GHG_disconnected_heating_tonCO2, Capex_a_disconnected_heating_USD, \
-    TAC_disconnected_heating_USD, Opex_a_disconnected_heating_USD, \
-    PEN_disconnected_heating_MJoil, Capex_total_disconnected_heating_USD = calc_costs__emissions_decentralized_DH(DHN_barcode,
-                                                                                             buildList, locator)
-
-    # DISCONNECTED BUILDINGS - COOLING LOADS
-    GHG_disconnected_cooling_tonCO2, Capex_a_disconnected_cooling_USD, \
-    TAC_disconnected_cooling_USD, Opex_a_disconnected_cooling_USD, \
-    PEN_disconnected_cooling_MJoil, Capex_total_disconnected_cooling_USD = calc_costs_emissions_decentralized_DC(DCN_barcode,
-                                                                                                    buildList, locator,
-                                                                                                    master_to_slave_vars)
 
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
@@ -400,12 +436,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
                 addcosts_Opex_fixed_USD += Opex_fixed_HEX_PVT_USD
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
-    # PUMPING COSTS OF THE NETWORK (BOTH CASES, DISTRICT HEATING AND DISTRICT COOLING)
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = pumps.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, district_heating_network, district_cooling_network)
-    addcosts_Capex_a_USD += Capex_a_pump_USD
-    addcosts_Opex_fixed_USD += Opex_fixed_pump_USD
-    addcosts_Capex_USD += Capex_pump_USD
 
     # CONNECTION TO GAS (IN CASE OF CC-GT)
     if DHN_barcode.count("1") > 0 and district_heating_network:
@@ -427,113 +457,81 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
 
     addcosts_Capex_a_USD += GasConnectionInvCost
 
+
     #SUMMARIZE RESULTS
+
     #Costs
     Capex_a_connected_USD = addcosts_Capex_a_USD
     Capex_total_connected_USD = addcosts_Capex_USD
     Opex_a_connected_USD = addcosts_Opex_fixed_USD
-    Capex_a_disconnected_USD = Capex_a_disconnected_cooling_USD + Capex_a_disconnected_heating_USD
-    Capex_total_disconnected_USD = Capex_total_disconnected_cooling_USD + Capex_total_disconnected_heating_USD
-    Opex_a_disconnected_USD = Opex_a_disconnected_cooling_USD + Opex_a_disconnected_heating_USD
-    Capex_a_sys_USD = Capex_a_connected_USD + Capex_a_disconnected_USD
-    Capex_total_sys_USD =Capex_total_connected_USD + Capex_total_disconnected_USD
-    Opex_sys_USD = Opex_a_connected_USD + Opex_a_disconnected_USD
     TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
-    TAC_disconnected_USD = TAC_disconnected_heating_USD + TAC_disconnected_cooling_USD
-    TAC_sys_USD = TAC_connected_USD + TAC_disconnected_USD
-
-    #emissions
-    GHG_disconnected_tonCO2 = (GHG_disconnected_heating_tonCO2 + GHG_disconnected_cooling_tonCO2) / 1E3 #from kg to ton
-    PEN_disconnected_MJoil = PEN_disconnected_heating_MJoil + PEN_disconnected_cooling_MJoil
 
 
     # Save data
-    results = pd.DataFrame({
+    performance_costs = {
+        #annualized capex
+        "Capex_a_HP_Lake_USD": [Capex_a_Lake_USD],
+        "Capex_a_HP_Sewage_USD": [Capex_a_Sewage_USD],
         "Capex_a_SC_ET_USD": [Capex_a_SC_ET_USD],
         "Capex_a_SC_FP_USD": [Capex_a_SC_FP_USD],
-        "Opex_fixed_SC": [Opex_fixed_SC],
-        "Capex_a_PVT": [Capex_a_PVT_USD],
-        "Opex_fixed_PVT": [Opex_fixed_PVT_USD],
-        "Capex_a_PV": [Capex_a_PV_USD],
-        "Opex_fixed_PV": [Opex_fixed_PV_USD],
-        "Capex_a_Boiler_backup": [Capex_a_Boiler_backup_USD],
-        "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup_USD],
-        "Capex_a_storage_HEX": [Capex_a_HP_storage_USD],
-        "Opex_fixed_storage_HEX": [Opex_fixed_HP_storage_USD],
-        "Capex_a_storage_HP": [Capex_a_storage_HP],
-        "Capex_a_CHP": [Capex_a_CHP_USD],
-        "Opex_fixed_CHP": [Opex_fixed_CHP_USD],
-        "StorageInvC": [StorageInvC],
-        "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
-        "NetworkCost": [NetworkCost_a_USD],
-        "SubstHEXCost": [SubstHEXCost_capex],
-        "PVTHEXCost_Capex": [PVTHEXCost_Capex],
-        "Capex_a_sys_USD" : [Capex_a_sys_USD], #sys is of all the energy system
-        "Capex_total_sys_USD": [Capex_total_sys_USD],
-        "Opex_sys_USD": [Opex_sys_USD],
-        "Capex_a_connected_USD": [Capex_a_connected_USD],
+        "Capex_a_PVT_USD": [Capex_a_PVT_USD],
+        "Capex_a_PV_USD": [Capex_a_PV_USD],
+        "Capex_a_BaseBoiler_USD": [Capex_a_Boiler_USD],
+        "Capex_a_BackupBoiler_USD": [Capex_a_Boiler_backup_USD],
+        "Capex_a_PeakBoiler_USD": [Capex_a_Boiler_peak_USD],
+        "Capex_a_Storage_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD + Capex_a_storage_HP],
+        "Capex_a_CHP_USD": [Capex_a_CHP_USD],
+        "Capex_a_Furnace_USD": [Capex_a_furnace_USD],
+
+        #total_capex
+        "Capex_total_HP_Lake_USD": [Capex_Lake_USD],
+        "Capex_total_HP_Sewage_USD": [Capex_Sewage_USD],
+        "Capex_total_SC_ET_USD": [Capex_SC_ET_USD + SCHEXCost_Capex],
+        "Capex_total_SC_FP_USD": [Capex_SC_FP_USD + SCHEXCost_Capex],
+        "Capex_total_PVT_USD": [Capex_PVT_USD + PVTHEXCost_Capex],
+        "Capex_total_PV_USD": [Capex_PV_USD],
+        "Capex_total_BaseBoiler_USD": [Capex_Boiler_USD],
+        "Capex_total_BackupBoiler_USD": [Capex_Boiler_backup_USD],
+        "Capex_total_PeakBoiler_USD": [Capex_Boiler_peak_USD],
+        "Capex_total_Storage_USD": [Capex_storage_USD + Capex_HP_storage_USD + Capex_storage_HP],
+        "Capex_total_CHP_USD": [Capex_CHP_USD],
+        "Capex_total_Furnace_USD": [Capex_furnace_USD],
+
+        #opex fixed costs
+        "Opex_fixed_HP_Lake_USD": [Opex_fixed_Lake_USD],
+        "Opex_fixed_HP_Sewage_USD": [Opex_fixed_Sewage_USD],
+        "Opex_fixed_SC_USD": [Opex_fixed_SC],
+        "Opex_fixed_PVT_USD": [Opex_fixed_PVT_USD],
+        "Opex_fixed_PV_USD": [Opex_fixed_PV_USD],
+        "Opex_fixed_Furnace_USD": [Opex_fixed_furnace_USD],
+        "Opex_fixed_BaseBoiler_USD": [Opex_fixed_Boiler_USD],
+        "Opex_fixed_BackupBoiler_USD": [Opex_fixed_Boiler_backup_USD],
+        "Opex_fixed_PeakBoiler_USD": [Opex_fixed_Boiler_peak_USD],
+        "Opex_fixed_Storage_USD": [Opex_fixed_HP_storage_USD],
+        "Opex_fixed_Lake_USD": [Opex_fixed_Lake_USD],
+        "Opex_fixed_CHP_USD": [Opex_fixed_CHP_USD],
+
+        #opex variable costs
+
+
+        # totals of connected to network
         "Capex_total_connected_USD": [Capex_total_connected_USD],
+        "Capex_a_connected_USD": [Capex_a_connected_USD],
         "Opex_a_connected_USD": [Opex_a_connected_USD],
         "TAC_connected_USD": [TAC_connected_USD],
-        "Capex_a_disconnected_heating_USD": [Capex_a_disconnected_heating_USD],
-        "Capex_total_disconnected_heating_USD": [Capex_total_disconnected_heating_USD],
-        "Opex_a_disconnected_heating_USD": [Opex_a_disconnected_heating_USD],
-        "TAC_disconnected_heating_USD": [TAC_disconnected_heating_USD],
-        "GHG_disconnected_heating_tonCO2": [GHG_disconnected_heating_tonCO2],
-        "PEN_disconnected_heating_MJoil": [PEN_disconnected_heating_MJoil],
-        "Capex_a_disconnected_cooling_USD": [Capex_a_disconnected_cooling_USD],
-        "Capex_total_disconnected_cooling_USD": [Capex_total_disconnected_cooling_USD],
-        "Opex_a_disconnected_cooling_USD": [Opex_a_disconnected_cooling_USD],
-        "TAC_disconnected_cooling_USD": [TAC_disconnected_cooling_USD],
-        "GHG_disconnected_cooling_tonCO2": [GHG_disconnected_cooling_tonCO2],
-        "PEN_disconnected_cooling_MJoil": [PEN_disconnected_cooling_MJoil],
-        "Capex_a_disconnected_USD": [Capex_a_disconnected_USD],
-        "Capex_total_disconnected_USD": [Capex_total_disconnected_USD],
-        "Opex_a_disconnected_USD": [Opex_a_disconnected_USD],
-        "TAC_disconnected_USD": [TAC_disconnected_USD],
-        "GHG_disconnected_tonCO2": [GHG_disconnected_tonCO2],
-        "PEN_disconnected_MJoil": [PEN_disconnected_MJoil],
-        "Capex_a_furnace": [Capex_a_furnace_USD],
-        "Opex_fixed_furnace": [Opex_fixed_furnace_USD],
-        "Capex_a_Boiler": [Capex_a_Boiler_USD],
-        "Opex_fixed_Boiler": [Opex_fixed_Boiler_USD],
-        "Capex_a_Boiler_peak": [Capex_a_Boiler_peak_USD],
-        "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak_USD],
-        "Capex_a_Lake": [Capex_a_Lake_USD],
-        "Opex_fixed_Lake": [Opex_fixed_Lake_USD],
-        "Capex_a_Sewage": [Capex_a_Sewage_USD],
-        "Opex_fixed_Sewage": [Opex_fixed_Sewage_USD],
-        "SCHEXCost_Capex": [SCHEXCost_Capex],
-        "Capex_a_pump": [Capex_a_pump_USD],
-        "Opex_fixed_pump": [Opex_fixed_pump_USD],
-        "Opex_var_pump": [Opex_var_pump_USD],
-        "Sum_CAPEX": [addcosts_Capex_a_USD],
-        "Sum_OPEX_fixed": [addcosts_Opex_fixed_USD],
-        "GasConnectionInvCa": [GasConnectionInvCost],
-        "CO2_PV_disconnected": [CO2_PV_disconnected],
-        "cost_PV_disconnected": [cost_PV_disconnected],
-        "Eprim_PV_disconnected": [Eprim_PV_disconnected],
-        "Capex_SC_ET_USD": [Capex_SC_ET_USD],
-        "Capex_SC_FP_USD": [Capex_SC_FP_USD],
-        "Capex_PVT": [Capex_PVT_USD],
-        "Capex_PV": [Capex_PV_USD],
-        "Capex_Boiler_backup": [Capex_Boiler_backup_USD],
-        "Capex_storage_HEX": [Capex_HP_storage_USD],
-        "Capex_storage_HP": [Capex_storage_HP],
-        "Capex_CHP": [Capex_CHP_USD],
-        "Capex_furnace": [Capex_furnace_USD],
-        "Capex_Boiler_base": [Capex_Boiler_USD],
-        "Capex_Boiler_peak": [Capex_Boiler_peak_USD],
-        "Capex_Lake": [Capex_Lake_USD],
-        "Capex_Sewage": [Capex_Sewage_USD],
-        "Capex_pump": [Capex_pump_USD]
-    })
 
-    results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number),
-                   sep=',')
 
-    return TAC_sys_USD, GHG_disconnected_tonCO2, PEN_disconnected_MJoil
+
+        "NetworkCost": [NetworkCost_a_USD],
+        "SubstHEXCost": [SubstHEXCost_capex],
+
+        "GasConnectionInvCa_USD": [GasConnectionInvCost],
+        "CO2_PV_disconnected_USD": [CO2_PV_disconnected],
+        "cost_PV_disconnected_USD": [cost_PV_disconnected],
+        "Eprim_PV_disconnected_USD": [Eprim_PV_disconnected],
+
+
+    return performance_costs
 
 
 def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
@@ -554,7 +552,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                                        configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                 PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                 Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                 Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -578,7 +576,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -596,7 +594,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -614,7 +612,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -632,7 +630,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -650,7 +648,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
@@ -668,7 +666,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
                                                                                               decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_kgCO2"].iloc[0]  # [kg CO2]
+                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
                     PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
                     Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
                     Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
