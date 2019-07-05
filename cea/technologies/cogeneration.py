@@ -12,6 +12,7 @@ from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import SPEC_VOLUME_STEAM
+import cea.resources.natural_gas as ngas
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -445,12 +446,17 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     CCGT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
+
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if CC_size_W < CCGT_cost_data['cap_min'][0]:
         CC_size_W = CCGT_cost_data['cap_min'][0]
     CCGT_cost_data = CCGT_cost_data[
         (CCGT_cost_data['cap_min'] <= CC_size_W) & (CCGT_cost_data['cap_max'] > CC_size_W)]
+
+
+    #costs of connection
+    connection_costs = ngas.calc_Cinv_gas(CC_size_W)
 
     Inv_a = CCGT_cost_data.iloc[0]['a']
     Inv_b = CCGT_cost_data.iloc[0]['b']
@@ -463,7 +469,7 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
-    Capex_a_CCGT_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_CCGT_USD = (InvC+connection_costs) * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_CCGT_USD = InvC * Inv_OM
     Capex_CCGT_USD = InvC
 

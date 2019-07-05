@@ -10,7 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import cea.resources.natural_gas as ngas
+
 import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
@@ -116,50 +116,11 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
     """
     # local variables
     district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
 
     DHN_barcode = master_to_slave_vars.DHN_barcode
-    DCN_barcode = master_to_slave_vars.DCN_barcode
     addcosts_Capex_a_USD = 0
     addcosts_Opex_fixed_USD = 0
     addcosts_Capex_USD = 0
-
-    # Add the features from the disconnected buildings
-    Capex_a_furnace_USD = 0
-    Capex_a_CHP_USD = 0
-    Capex_a_Boiler_USD = 0
-    Capex_a_Boiler_peak_USD = 0
-    Capex_a_Lake_USD = 0
-    Capex_a_Sewage_USD = 0
-    Capex_a_Boiler_backup_USD = 0
-    Capex_a_HEX = 0
-    Capex_a_storage_HP = 0
-    Capex_a_HP_storage_USD = 0
-    Opex_fixed_SC = 0
-    Opex_fixed_furnace_USD = 0
-    Opex_fixed_CHP_USD = 0
-    Opex_fixed_Boiler_USD = 0
-    Opex_fixed_Boiler_peak_USD = 0
-    Opex_fixed_Boiler_backup_USD = 0
-    Opex_fixed_Lake_USD = 0
-    Opex_fixed_Sewage_USD = 0
-    Opex_fixed_HP_storage_USD = 0
-    StorageInvC = 0
-    NetworkCost_a_USD = 0
-    SubstHEXCost_capex = 0
-    PVTHEXCost_Capex = 0
-    SCHEXCost_Capex = 0
-    cost_PV_disconnected = 0
-    CO2_PV_disconnected = 0
-    Eprim_PV_disconnected = 0
-    Capex_Boiler_backup_USD = 0
-    Capex_HP_storage_USD = 0
-    Capex_CHP_USD = 0
-    Capex_furnace_USD = 0
-    Capex_Boiler_USD = 0
-    Capex_Boiler_peak_USD = 0
-    Capex_Lake_USD = 0
-    Capex_Sewage_USD = 0
 
 
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
@@ -220,8 +181,22 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
             addcosts_Capex_a_USD += Capex_a_CHP_USD
             addcosts_Opex_fixed_USD += Opex_fixed_CHP_USD
             addcosts_Capex_USD += Capex_CHP_USD
+            if master_to_slave_vars.gt_fuel == "BG":
+                Capex_a_CHP_BG_USD =  Capex_a_CHP_USD
+                Opex_fixed_CHP_BG_USD = Opex_fixed_CHP_USD
+                Capex_CHP_BG_USD = Capex_CHP_USD
+                Capex_a_CHP_NG_USD = 0.0
+                Opex_fixed_CHP_NG_USD = 0.0
+                Capex_CHP_NG_USD = 0.0
+            elif master_to_slave_vars.gt_fuel == "NG":
+                Capex_a_CHP_BG_USD = 0.0
+                Opex_fixed_CHP_BG_USD = 0.0
+                Capex_CHP_BG_USD = 0.0
+                Capex_a_CHP_NG_USD = Capex_a_CHP_USD
+                Opex_fixed_CHP_NG_USD = Opex_fixed_CHP_USD
+                Capex_CHP_NG_USD = Capex_CHP_USD
 
-        # BOILER BASE LOAD
+            # BOILER BASE LOAD
         if master_to_slave_vars.Boiler_on == 1:
             Q_design_W = master_to_slave_vars.Boiler_Q_max_W
 
@@ -291,6 +266,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
             addcosts_Opex_fixed_USD += Opex_fixed_GHP_USD * prices.EURO_TO_CHF
             addcosts_Capex_USD += Capex_GHP_USD
 
+
         # BACK-UP BOILER
         Capex_a_Boiler_backup_USD, Opex_fixed_Boiler_backup_USD, Capex_Boiler_backup_USD = boiler.calc_Cinv_boiler(
             Q_uncovered_design_W, locator, config, 'BO1')
@@ -335,14 +311,18 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         Capex_a_HP_PVT_USD, Opex_fixed_HP_PVT_USD, Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config,
                                                                                       'HP2')
         Capex_a_storage_HP += (Capex_a_HP_PVT_USD)
+        Capex_storage_HP += (Capex_HP_PVT_USD)
         addcosts_Opex_fixed_USD += Opex_fixed_HP_PVT_USD
         addcosts_Capex_USD += Capex_HP_PVT_USD
+        addcosts_Capex_a_USD += Capex_a_HP_PVT_USD
 
         Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config,
                                                                                    'HP2')
         Capex_a_storage_HP += (Capex_a_HP_SC_USD)
+        Capex_storage_HP += (Capex_HP_SC_USD)
         addcosts_Opex_fixed_USD += Opex_fixed_HP_SC_USD
         addcosts_Capex_USD += Capex_HP_SC_USD
+        addcosts_Capex_a_USD += Capex_a_HP_SC_USD
 
         # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
@@ -437,27 +417,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
                 addcosts_Capex_USD += Capex_HEX_PVT_USD
 
 
-    # CONNECTION TO GAS (IN CASE OF CC-GT)
-    if DHN_barcode.count("1") > 0 and district_heating_network:
-        # import gas consumption data from:
-        EgasPrimaryDataframe_W = pd.read_csv(
-            locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
-                                                               master_to_slave_vars.generation_number))
-        E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
-        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W)
-
-    elif DCN_barcode.count("1") > 0 and district_cooling_network:
-        EgasPrimaryDataframe_W = pd.read_csv(
-            locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
-                                                               master_to_slave_vars.generation_number))
-        E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
-        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W)
-    else:
-        GasConnectionInvCost = 0.0
-
-    addcosts_Capex_a_USD += GasConnectionInvCost
-
-
     #SUMMARIZE RESULTS
 
     #Costs
@@ -470,66 +429,60 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
     # Save data
     performance_costs = {
         #annualized capex
-        "Capex_a_HP_Lake_USD": [Capex_a_Lake_USD],
-        "Capex_a_HP_Sewage_USD": [Capex_a_Sewage_USD],
-        "Capex_a_SC_ET_USD": [Capex_a_SC_ET_USD],
-        "Capex_a_SC_FP_USD": [Capex_a_SC_FP_USD],
-        "Capex_a_PVT_USD": [Capex_a_PVT_USD],
-        "Capex_a_PV_USD": [Capex_a_PV_USD],
+        "Capex_a_HP_Sewage_connected_USD": [Capex_a_Sewage_USD],
+        "Capex_a_HP_Lake_connected_USD": [Capex_a_Lake_USD],
+        "Capex_a_SC_ET_connected_USD": [Capex_a_SC_ET_USD],
+        "Capex_a_SC_FP_connected_USD": [Capex_a_SC_FP_USD],
+        "Capex_a_PVT_connected_USD": [Capex_a_PVT_USD],
+        "Capex_a_PV_connected_USD": [Capex_a_PV_USD],
+        "Capex_a_GHP_USD": [Capex_a_GHP_USD],
+        "Capex_a_CHP_BG_USD": [Capex_a_CHP_BG_USD],
+        "Capex_a_CHP_NG_USD": [Capex_a_CHP_NG_USD],
+        "Capex_a_Furnace_USD": [Capex_a_furnace_USD],
         "Capex_a_BaseBoiler_USD": [Capex_a_Boiler_USD],
         "Capex_a_BackupBoiler_USD": [Capex_a_Boiler_backup_USD],
         "Capex_a_PeakBoiler_USD": [Capex_a_Boiler_peak_USD],
         "Capex_a_Storage_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD + Capex_a_storage_HP],
-        "Capex_a_CHP_USD": [Capex_a_CHP_USD],
-        "Capex_a_Furnace_USD": [Capex_a_furnace_USD],
 
         #total_capex
-        "Capex_total_HP_Lake_USD": [Capex_Lake_USD],
-        "Capex_total_HP_Sewage_USD": [Capex_Sewage_USD],
-        "Capex_total_SC_ET_USD": [Capex_SC_ET_USD + SCHEXCost_Capex],
-        "Capex_total_SC_FP_USD": [Capex_SC_FP_USD + SCHEXCost_Capex],
-        "Capex_total_PVT_USD": [Capex_PVT_USD + PVTHEXCost_Capex],
-        "Capex_total_PV_USD": [Capex_PV_USD],
-        "Capex_total_BaseBoiler_USD": [Capex_Boiler_USD],
-        "Capex_total_BackupBoiler_USD": [Capex_Boiler_backup_USD],
-        "Capex_total_PeakBoiler_USD": [Capex_Boiler_peak_USD],
-        "Capex_total_Storage_USD": [Capex_storage_USD + Capex_HP_storage_USD + Capex_storage_HP],
-        "Capex_total_CHP_USD": [Capex_CHP_USD],
-        "Capex_total_Furnace_USD": [Capex_furnace_USD],
+        "Capex_total_HP_Sewage_connected_USD": [Capex_Sewage_USD],
+        "Capex_total_HP_Lake_connected_USD": [Capex_Lake_USD],
+        "Capex_total_SC_ET_connected_USD": [Capex_SC_ET_USD + SCHEXCost_Capex],
+        "Capex_total_SC_FP_connected_USD": [Capex_SC_FP_USD + SCHEXCost_Capex],
+        "Capex_total_PVT_connected_USD": [Capex_PVT_USD + PVTHEXCost_Capex],
+        "Capex_total_PV_connected_USD": [Capex_PV_USD],
+        "Capex_total_GHP_USD": [Capex_GHP_USD],
+        "Capex_total_CHP_BG_USD": [Capex_CHP_BG_USD],
+        "Capex_total_CHP_NG_USD": [Capex_CHP_NG_USD],
+        "Capex_total_Furnace_wet_connected_USD": [Capex_furnace_wet_USD],
+        "Capex_total_Furnace_dry_connected_USD": [Capex_furnace_dry_USD],
+        "Capex_total_BaseBoiler_BG_connected_USD": [Capex_Boiler_BG_USD],
+        "Capex_total_BaseBoiler_NG_connected_USD": [Capex_Boiler_NG_USD],
+        "Capex_total_PeakBoiler_BG_connected_USD": [Capex_Boiler_peak_NG_USD],
+        "Capex_total_PeakBoiler_NG_connected_USD": [Capex_Boiler_peak_BG_USD],
+        "Capex_total_BackupBoiler_BG_connected_USD": [Capex_Boiler_backup_BG_USD],
+        "Capex_total_BackupBoiler_NG_connected_USD": [Capex_Boiler_backup_NG_USD],
+        "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD + Capex_storage_HP],
 
         #opex fixed costs
-        "Opex_fixed_HP_Lake_USD": [Opex_fixed_Lake_USD],
-        "Opex_fixed_HP_Sewage_USD": [Opex_fixed_Sewage_USD],
-        "Opex_fixed_SC_USD": [Opex_fixed_SC],
-        "Opex_fixed_PVT_USD": [Opex_fixed_PVT_USD],
-        "Opex_fixed_PV_USD": [Opex_fixed_PV_USD],
-        "Opex_fixed_Furnace_USD": [Opex_fixed_furnace_USD],
-        "Opex_fixed_BaseBoiler_USD": [Opex_fixed_Boiler_USD],
-        "Opex_fixed_BackupBoiler_USD": [Opex_fixed_Boiler_backup_USD],
-        "Opex_fixed_PeakBoiler_USD": [Opex_fixed_Boiler_peak_USD],
-        "Opex_fixed_Storage_USD": [Opex_fixed_HP_storage_USD],
-        "Opex_fixed_Lake_USD": [Opex_fixed_Lake_USD],
-        "Opex_fixed_CHP_USD": [Opex_fixed_CHP_USD],
-
-        #opex variable costs
-
-
-        # totals of connected to network
-        "Capex_total_connected_USD": [Capex_total_connected_USD],
-        "Capex_a_connected_USD": [Capex_a_connected_USD],
-        "Opex_a_connected_USD": [Opex_a_connected_USD],
-        "TAC_connected_USD": [TAC_connected_USD],
-
-
-
-        "NetworkCost": [NetworkCost_a_USD],
-        "SubstHEXCost": [SubstHEXCost_capex],
-
-        "GasConnectionInvCa_USD": [GasConnectionInvCost],
-        "CO2_PV_disconnected_USD": [CO2_PV_disconnected],
-        "cost_PV_disconnected_USD": [cost_PV_disconnected],
-        "Eprim_PV_disconnected_USD": [Eprim_PV_disconnected],
-
+        "Opex_fixed_HP_Sewage_connected_USD": [Opex_fixed_Sewage_USD],
+        "Opex_fixed_HP_Lake_connected_USD": [Opex_fixed_Lake_USD],
+        "Opex_fixed_SC_ET_connected_USD": [Opex_fixed_SC_ET_USD],
+        "Opex_fixed_SC_FP_connected_USD": [Opex_fixed_SC_FP_USD],
+        "Opex_fixed_PVT_connected_USD": [Opex_fixed_PVT_USD],
+        "Opex_fixed_PV_connected_USD": [Opex_fixed_PV_USD],
+        "Opex_fixed_GHP_connected_USD": [Opex_fixed_GHP_USD],
+        "Opex_fixed_CHP_BG_connected_USD": [Opex_fixed_CHP_BG_USD],
+        "Opex_fixed_CHP_NG_connected_USD": [Opex_fixed_CHP_NG_USD],
+        "Opex_fixed_Furnace_wet_connected_USD": [Opex_fixed_furnace_wet_USD],
+        "Opex_fixed_Furnace_dry_connected_USD": [Opex_fixed_furnace_dry_USD],
+        "Opex_fixed_BaseBoiler_BG_connected_USD": [Opex_fixed_Boiler_BG_USD],
+        "Opex_fixed_BaseBoiler_NG_connected_USD": [Opex_fixed_Boiler_NG_USD],
+        "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_Boiler_peak_BG_USD],
+        "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_Boiler_peak_NG_USD],
+        "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_Boiler_backup_BG_USD],
+        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_Boiler_backup_NG_USD],
+        "Opex_fixed_Storage_connected_USD": [Opex_fixed_HP_storage_USD]}
 
     return performance_costs
 
