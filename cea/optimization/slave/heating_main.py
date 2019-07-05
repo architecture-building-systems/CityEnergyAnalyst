@@ -172,8 +172,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_output, E_output, Gas_output, \
         Wood_output, coldsource_output, \
         Q_excess_W[hour] = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
-                                             mdot_DH_kgpers[hour], tdhsup_K[hour], tdhret_K[hour], TretsewArray_K[hour],
-                                             prices, lca, ground_temp[hour])
+                                                    mdot_DH_kgpers[hour], tdhsup_K[hour], tdhret_K[hour],
+                                                    TretsewArray_K[hour],
+                                                    prices, lca, ground_temp[hour])
 
         Opex_var_HP_Sewage_USD[hour] = opex_output['Opex_var_HP_Sewage_USD']
         Opex_var_HP_Lake_USD[hour] = opex_output['Opex_var_HP_Lake_USD']
@@ -304,7 +305,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     # saving pattern activation to disk
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
-                            "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
                             "Opex_var_HP_Sewage_USD": Opex_var_HP_Sewage_USD,
                             "Opex_var_HP_Lake_USD": Opex_var_HP_Lake_USD,
                             "Opex_var_GHP_USD": Opex_var_GHP_USD,
@@ -317,7 +317,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                             "Opex_var_PeakBoiler_BG_USD": Opex_var_PeakBoiler_BG_USD,
                             "Opex_var_PeakBoiler_NG_USD": Opex_var_PeakBoiler_NG_USD,
                             "Opex_var_BackupBoiler_BG_USD": Opex_var_BackupBoiler_BG_USD,
-                            "Opex_var_BackupBoiler_NG_USD": Opex_var_BackupBoiler_NG_USD,
+                            "Opex_var_BackupBoiler_NG_USD": Opex_var_BackupBoiler_NG_USD})
+
+    results.to_csv(locator.get_optimization_slave_heating_opex_var_pattern(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
+                   index=False)
+
+    results = pd.DataFrame({"DATE": date,
+                            "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
                             "HPSew_Status": source_HP_Sewage,
                             "HPLake_Status": source_HP_Lake,
                             "GHP_Status": source_GHP,
@@ -376,7 +383,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     results.to_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                                              master_to_slave_vars.generation_number),
                    index=False)
-
 
     if master_to_slave_vars.gt_fuel == "NG":
 
@@ -556,20 +562,19 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     ######### COMPUTE THE GHG emissions
 
-    GHG_Sewage_tonCO2 = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_CO2_STD * WH_TO_J / 1.0E6
-
-    GHG_GHP_tonCO2 = np.sum(Q_GHP_gen_W) / COP_GHP_avg * lca.GHP_TO_CO2_STD * WH_TO_J / 1.0E6
-    GHG_HPLake_tonCO2 = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * lca.LAKEHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    GHG_Sewage_tonCO2 = (np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * WH_TO_J / 1.0E6) * (lca.SEWAGEHP_TO_CO2_STD / 1E3)
+    GHG_GHP_tonCO2 = (np.sum(Q_GHP_gen_W) / COP_GHP_avg * WH_TO_J / 1.0E6) * (lca.GHP_TO_CO2_STD / 1E3)
+    GHG_HPLake_tonCO2 = (np.sum(Q_HPLake_gen_W) / COP_HPLake_avg / 1.0E6) * (lca.LAKEHP_TO_CO2_STD / 1.0E3)
     GHG_HP_tonCO2 = GHG_Sewage_tonCO2 + GHG_GHP_tonCO2 + GHG_HPLake_tonCO2
     GHG_CC_tonCO2 = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * WH_TO_J / 1.0E6
-    GHG_BaseBoiler_tonCO2 = 1 / eta_Boiler_avg * np.sum(Q_BaseBoiler_gen_W) *\
-                            gas_to_co2_BoilerBase_std * WH_TO_J / 1.0E6
-    GHG_PeakBoiler_tonCO2 = 1 / eta_PeakBoiler_avg * np.sum(
-        Q_PeakBoiler_gen_W) * gas_to_co2_BoilerPeak_std * WH_TO_J / 1.0E6
-    GHG_AddBoiler_tonCO2 = 1 / eta_AddBackup_avg * np.sum(
-        Q_uncovered_W) * gas_to_co2_BoilerBackup_std * WH_TO_J / 1.0E6
+    GHG_BaseBoiler_tonCO2 = (1 / eta_Boiler_avg * np.sum(Q_BaseBoiler_gen_W) * WH_TO_J / 1.0E6) * (
+            gas_to_co2_BoilerBase_std / 1E3)
+    GHG_PeakBoiler_tonCO2 = (1 / eta_PeakBoiler_avg * np.sum(
+        Q_PeakBoiler_gen_W) * WH_TO_J / 1.0E6) * (gas_to_co2_BoilerPeak_std / 1E3)
+    GHG_AddBoiler_tonCO2 = (1 / eta_AddBackup_avg * np.sum(Q_uncovered_W) * WH_TO_J / 1.0E6) * (
+                gas_to_co2_BoilerBackup_std / 1.0E3)
     GHG_gas_tonCO2 = GHG_CC_tonCO2 + GHG_BaseBoiler_tonCO2 + GHG_PeakBoiler_tonCO2 + GHG_AddBoiler_tonCO2
-    GHG_wood_tonCO2 = np.sum(Q_Furnace_gen_W) * lca.FURNACE_TO_CO2_STD / eta_furnace_avg * WH_TO_J / 1.0E6
+    GHG_wood_tonCO2 = ( 1/ eta_furnace_avg * np.sum(Q_Furnace_gen_W) * WH_TO_J / 1.0E6) * (lca.FURNACE_TO_CO2_STD / 1E3)
 
     ################## Primary energy needs
 
