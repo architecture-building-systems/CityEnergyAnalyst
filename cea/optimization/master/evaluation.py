@@ -155,8 +155,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                          district_cooling_network)
 
     # ENERGY GENERATION UNITS, PUMPS, HEX, SUBSTATIONS, CONNECTION TO GAS NETWORK
-    print(
-        "CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
+    print("CALCULATING ECOLOGICAL COSTS OF HEATING EQUIPEMENT, SOLAR EQUIPMENT, PUMPS, HEX, SUBSTATIONS, DECENTRALIZED_GENERATION, CONNECTION TO GAS NETWORK")
     (costs_additional_USD, GHG_additional_tonCO2_decentralized,
      PEN_additional_MJoil_decentralized) = cost_model.addCosts(building_names, locator,
                                                                master_to_slave_vars,
@@ -166,7 +165,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                network_features,
                                                                config, prices, lca)
 
-    costs_USD += costs_additional_USD
+    costs_USD += costs_additional_USD #TODO:This is missing variable costs
     GHG_tonCO2 += GHG_additional_tonCO2_decentralized  # beacause we already calculated heating and electricity for the connected buildings
     PEN_MJoil += PEN_additional_MJoil_decentralized  # beacause we already calculated heating and electricity for the connected buildings
 
