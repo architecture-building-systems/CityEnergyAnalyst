@@ -1,8 +1,11 @@
 """
 Provides the list of scripts known to the CEA - to be used by interfaces built on top of the CEA.
 """
+from __future__ import print_function
+
 import os
 import cea
+import cea.inputlocator
 
 
 class CeaScript(object):
@@ -14,6 +17,7 @@ class CeaScript(object):
         self.label = script_dict.get('label', self.name)
         self.category = category
         self.parameters = script_dict.get('parameters', [])
+        self.input_files = script_dict.get('input-files', [])
 
     def __repr__(self):
         return '<cea %s>' % self.name
@@ -35,6 +39,49 @@ class CeaScript(object):
             print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
             print("  (default: %s)" % default_config.get(parameter.fqname))
 
+    def print_missing_input_files(self, config):
+        schema_data = schemas()
+        print()
+        print("---------------------------")
+        print("ERROR: Missing input files:")
+        for method_name, path in self.missing_input_files(config):
+            script_suggestions = (schema_data[method_name]['created_by']
+                                  if 'created_by' in schema_data[method_name]
+                                  else None)
+            print('- {path}'.format(path=path))
+            if script_suggestions:
+                print('  (HINT: try running {scripts})'.format(path=path, scripts=', '.join(script_suggestions)))
+
+    def missing_input_files(self, config):
+        """
+        Return a list of bound :py:class:`cea.inputlocator.InputLocator` method names, one for each file required as
+        input for this script that is not present yet as well as the applied path searched for.
+        :return: Sequence[str]
+        """
+        # get a locator without triggering the restricted to
+        restricted_to = config.restricted_to
+        config.restricted_to = None
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        config.restricted_to = restricted_to
+
+        for locator_spec in self.input_files:
+            method_name, args = locator_spec[0], locator_spec[1:]
+            method = getattr(locator, method_name)
+            path = method(*self._lookup_args(config, locator, args))
+            if not os.path.exists(path):
+                yield [method_name, path]
+
+    def _lookup_args(self, config, locator, args):
+        """returns a list of arguments to a locator method"""
+        result = []
+        for arg in args:
+            if arg == 'building_name':
+                result.append(locator.get_zone_building_names()[0])
+            else:
+                # expect an fqname for the config object
+                result.append(config.get(arg))
+        return result
+
 
 def _get_categories_dict():
     """Load the categories -> [script] mapping either from the YAML file or, in the case of arcgis / grasshopper,
@@ -48,6 +95,7 @@ def _get_categories_dict():
         import pickle
         categories = pickle.load(open(scripts_pickle))
     return categories
+
 
 def list_scripts():
     """List all scripts"""

@@ -17,6 +17,10 @@ Cost analysis:
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.costs.operation_costs
   parameters: ['general:scenario']
+  input-files:
+    - [get_total_demand]
+    - [get_building_supply]
+    - [get_life_cycle_inventory_supply_systems]
 
 
 Data Management:
@@ -62,6 +66,11 @@ Data Management:
   interfaces: [cli, arcgis, dashboard]
   module: cea.datamanagement.data_helper
   parameters: ['general:scenario', data-helper]
+  input-files:
+    - [get_building_age]
+    - [get_building_occupancy]
+    - [get_archetypes_schedules]
+    - [get_archetypes_properties]
 
 
 Demand forecasting:
@@ -73,6 +82,23 @@ Demand forecasting:
   module: cea.demand.demand_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', demand, 'general:debug']
+  input-files:
+    - [get_envelope_systems]
+    - [get_building_comfort]
+    - [get_archetypes_system_controls]
+    - [get_building_internal]
+    - [get_building_age]
+    - [get_radiation_metadata, building_name]
+    - [get_building_architecture]
+    - [get_building_occupancy]
+    - [get_archetypes_schedules]
+    - [get_zone_geometry]
+    - [get_radiation_building, building_name]
+    - [get_archetypes_properties]
+    - [get_building_hvac]
+    - [get_technical_emission_systems]
+    - [get_building_supply]
+    - [get_life_cycle_inventory_supply_systems]
 
 
 Energy potentials:
@@ -94,6 +120,11 @@ Energy potentials:
                'solar:type-scpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                'solar:solar-window-solstice', 'solar:t-in-pvt']
+  input-files:
+    - [get_radiation_metadata, building_name]
+    - [get_zone_geometry]
+    - [get_radiation_building, building_name]
+    - [get_supply_systems]
 
 - name: photovoltaic
   label: Photovoltaic panels
@@ -103,6 +134,11 @@ Energy potentials:
   parameters: ['general:scenario', 'general:weather', 'solar:type-pvpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                'solar:solar-window-solstice']
+  input-files:
+    - [get_radiation_metadata, building_name]
+    - [get_zone_geometry]
+    - [get_radiation_building, building_name]
+    - [get_supply_systems]
 
 - name: sewage-potential
   label: Sewage potential
@@ -110,6 +146,9 @@ Energy potentials:
   interfaces: [cli, arcgis, dashboard]
   module: cea.resources.sewage_heat_exchanger
   parameters: ['general:scenario', sewage]
+  input-files:
+    - [get_total_demand]
+    - [get_demand_results_file, building_name]
 
 - name: solar-collector
   label: Solar collectors
@@ -120,6 +159,11 @@ Energy potentials:
                'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
                'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings']
+  input-files:
+    - [get_radiation_metadata, building_name]
+    - [get_zone_geometry]
+    - [get_radiation_building, building_name]
+    - [get_supply_systems]
 
 - name: radiation-daysim
   label: Solar radiation (Daysim engine)
@@ -128,6 +172,12 @@ Energy potentials:
   module: cea.resources.radiation_daysim.radiation_main
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:debug',
                radiation-daysim]
+  input-files:
+    - [get_envelope_systems]
+    - [get_district_geometry]
+    - [get_building_architecture]
+    - [get_zone_geometry]
+    - [get_terrain]
 
 Life cycle analysis:
 
@@ -137,6 +187,16 @@ Life cycle analysis:
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.lca.main
   parameters: ['general:scenario', emissions]
+  input-files:
+    - [get_total_demand]
+    - [get_building_age]
+    - [get_building_architecture]
+    - [get_building_occupancy]
+    - [get_zone_geometry]
+    - [get_data_benchmark]
+    - [get_building_supply]
+    - [get_life_cycle_inventory_building_systems]
+    - [get_life_cycle_inventory_supply_systems]
 
 
 Optimization:
@@ -221,6 +281,10 @@ Thermal networks:
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.network_layout.main
   parameters: ['general:scenario', network-layout]
+  input-files:
+    - [get_street_network]
+    - [get_total_demand]
+    - [get_zone_geometry]
 
 - name: thermal-network
   label: Thermo-hydraulic network (branched)
@@ -230,6 +294,11 @@ Thermal networks:
   parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                'general:number-of-cpus-to-keep-free', 'thermal-network',
                'thermal-network-optimization:use-representative-week-per-month']
+  input-files:
+    - [get_network_layout_nodes_shapefile, network_type, network_name]
+    - [get_demand_results_file, building_name]
+    - [get_thermal_networks]
+    - [get_supply_systems]
 
 - name: thermal-network-optimization
   label: Thermo network optimization
