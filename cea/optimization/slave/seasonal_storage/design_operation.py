@@ -291,7 +291,6 @@ def get_heating_provided_by_onsite_energy_sources(HOUR, HPCompAirDesignArray_kWh
     Q_SC_ET_gen_W = Q_SC_ET_gen_Wh[HOUR]
     Q_SC_FP_gen_W = Q_SC_FP_gen_Wh[HOUR]
     Q_PVT_gen_W = Q_PVT_gen_Wh[HOUR]
-    # FIXME: extract methods
     # Check if each source needs a heat-pump, calculate the final energy required
     # server
     if T_DH_sup_K > T_EL_TO_HEAT_SUP - DT_HEAT:  # and checkpoint_ElToHeat == 1:
