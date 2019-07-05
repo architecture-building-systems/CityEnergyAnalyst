@@ -314,7 +314,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         dico["Opex_a_USD"] = Opex_a_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_USD[:, 0]
         dico["Opex_a_var_USD"] = Opex_a_var_USD[:, 4]
-        dico["GHG_kgCO2"] = GHG_kgCO2[:, 5]
+        dico["GHG_tonCO2"] = GHG_kgCO2[:, 5]/1E3 #kg to ton
         dico["PEN_MJoil"] = PEN_MJoil[:, 6]
         dico["Best configuration"] = Best[:, 0]
         dico["Nominal Power"] = Qnom_array
@@ -339,7 +339,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         BestComb["Opex_a_USD"] = Opex_a_USD[indexBest, 1]
         BestComb["Opex_a_fixed_USD"] = Opex_a_fixed_USD[indexBest, 0]
         BestComb["Opex_a_var_USD"] = Opex_a_var_USD[indexBest, 4]
-        BestComb["GHG_kgCO2"] = GHG_kgCO2[indexBest, 5]
+        BestComb["GHG_tonCO2"] = GHG_kgCO2[indexBest, 5]/1E3 #kg to ton
         BestComb["PEN_MJoil"] = PEN_MJoil[indexBest, 6]
         BestComb["Best configuration"] = Best[indexBest, 0]
         BestComb["Nominal Power"] = Qnom

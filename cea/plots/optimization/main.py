@@ -406,7 +406,7 @@ class Plots(object):
                       data_processed.loc[index]['Electricity_Costs'] + data_processed.loc[index][
                           'Process_Heat_Costs']
 
-                data_processed.loc[index]['Capex_Centralized_USD'] = data_processed.loc[index]['Capex_SC'] +\
+                data_processed.loc[index]['Capex_Centralized_USD'] = (data_processed.loc[index]['Capex_SC'] +\
                                                                      data_processed.loc[index]['Capex_PVT'] + \
                                                                      data_processed.loc[index]['Capex_Boiler_backup'] + \
                                                                      data_processed.loc[index]['Capex_storage_HEX'] + \
@@ -415,14 +415,14 @@ class Plots(object):
                                                                      data_processed.loc[index]['Capex_Boiler_peak'] + \
                                                                      data_processed.loc[index]['Capex_Lake'] + \
                                                                      data_processed.loc[index]['Capex_Sewage'] + \
-                                                                     data_processed.loc[index]['Capex_pump']
+                                                                     data_processed.loc[index]['Capex_pump'])
 
-                data_processed.loc[index]['Capex_Total_USD'] = data_processed.loc[index]['Capex_Centralized_USD'] + \
-                                                               data_processed.loc[index]['Capex_Decentralized_USD']
-                data_processed.loc[index]['Opex_Total_USD'] = data_processed.loc[index][
+                data_processed.loc[index]['Capex_Total_USD'] = (data_processed.loc[index]['Capex_Centralized_USD'] + \
+                                                               data_processed.loc[index]['Capex_Decentralized_USD'])
+                data_processed.loc[index]['Opex_Total_USD'] = (data_processed.loc[index][
                                                                         'Opex_Centralized_USD'] + \
                                                                     data_processed.loc[index][
-                                                                        'Opex_Decentralized_USD']
+                                                                        'Opex_Decentralized_USD'])
 
             elif config.plots_optimization.network_type == 'DC':
                 data_mcda_ind = data_mcda[data_mcda['individual'] == ind_name_list[index]]
