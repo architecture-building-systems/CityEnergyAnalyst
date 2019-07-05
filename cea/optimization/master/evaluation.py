@@ -87,23 +87,24 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_tonCO2 = 0
     PEN_MJoil = 0
 
-    # THERMAL STORAGE
-    print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-    costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator,
-                                                                                                 master_to_slave_vars,
-                                                                                                 lca, prices, config)
-
-    costs_USD += costs_storage_USD
-    GHG_tonCO2 += GHG_storage_tonCO2
-    PEN_MJoil += PEN_storage_MJoil
 
     # DISTRICT HEATING NETWORK
     costs_heating_USD = 0.0
     PEN_heating_MJoil = 0.0
     GHG_heating_tonCO2 = 0.0
     if district_heating_network:
-        print("CALCULATING PERFROMANCE OF HEATING NETWORK - CONNECTED BUILDINGS")
         if DHN_barcode.count("1") > 0:
+            # THERMAL STORAGE
+            print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
+            costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator,
+                                                                                                         master_to_slave_vars,
+                                                                                                         lca, prices,
+                                                                                                         config)
+            costs_USD += costs_storage_USD
+            GHG_tonCO2 += GHG_storage_tonCO2
+            PEN_MJoil += PEN_storage_MJoil
+
+            print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
             (costs_heating_USD, GHG_tonCO2, PEN_heating_MJoil, Q_heating_uncovered_design_W,
              Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
@@ -119,7 +120,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     GHG_cooling_tonCO2 = 0.0
     PEN_cooling_MJoil = 0.0
     if district_cooling_network:
-        print("CALCULATING PERFORMANCE OF COOLING NETWORK - CONNECTED BUILDINGS")
+        print("CALCULATING PERFORMANCE OF COOLING NETWORK AND SOLAR - CONNECTED BUILDINGS")
         if DCN_barcode.count("1") > 0:
             reduced_timesteps_flag = False
             (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) \
@@ -162,6 +163,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     costs_USD += costs_additional_USD
     GHG_tonCO2 += GHG_additional_tonCO2
     PEN_MJoil += PEN_additional_MJoil
+
+
+
+
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)

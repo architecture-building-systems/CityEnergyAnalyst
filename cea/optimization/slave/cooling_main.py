@@ -8,7 +8,7 @@ If Lake exhausted, then use other supply technologies
 from __future__ import division
 
 import time
-from math import ceil
+from math import ceil, log
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,6 @@ import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
-from math import ceil, log
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
     T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME, PUMP_ETA
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
@@ -462,8 +461,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     # COOLING SUBSTATIONS
     Capex_Substations_USD, \
     Capex_a_Substations_USD, \
-    Opex_fixed_Substations_USD,\
-    Opex_var_Substations_USD = calc_substations_costs_cooling(building_names, df_current_individual, DCN_barcode, locator)
+    Opex_fixed_Substations_USD, \
+    Opex_var_Substations_USD = calc_substations_costs_cooling(building_names, df_current_individual, DCN_barcode,
+                                                              locator)
 
     # TODO: Create this file based on the configuration Line 361 master_main.py
 
@@ -499,85 +499,85 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     PEN_MJoil = np.float64(prim_MJoil)
 
     date = network_data.DATE.values
-    results = pd.DataFrame({"DATE": date,
-                            # annualized capex
-                            "Capex_a_Lake_connected_USD": [Capex_a_Lake_USD],
-                            "Capex_a_VCC_connected_USD": [Capex_a_VCC_USD],
-                            "Capex_a_VCC_backup_connected_USD": [Capex_a_VCC_backup_USD],
-                            "Capex_a_ACH_connected_USD": [Capex_a_ACH_USD],
-                            "Capex_a_CCGT_connected_USD": [Capex_a_CCGT_USD],
-                            "Capex_a_Tank_connected_USD": [Capex_a_Tank_USD],
-                            "Capex_a_CT_connected_USD": [Capex_a_CT_USD],
-                            "Capex_a_DCN_connected_USD": [Capex_a_DCN_USD],
-                            "Capex_a_Substations_connected_USD": [Capex_a_Substations_USD],
+    results = pd.DataFrame(
+        {"DATE": date,
+         # annualized capex
+         "Capex_a_Lake_connected_USD": [Capex_a_Lake_USD],
+         "Capex_a_VCC_connected_USD": [Capex_a_VCC_USD],
+         "Capex_a_VCC_backup_connected_USD": [Capex_a_VCC_backup_USD],
+         "Capex_a_ACH_connected_USD": [Capex_a_ACH_USD],
+         "Capex_a_CCGT_connected_USD": [Capex_a_CCGT_USD],
+         "Capex_a_Tank_connected_USD": [Capex_a_Tank_USD],
+         "Capex_a_CT_connected_USD": [Capex_a_CT_USD],
+         "Capex_a_DCN_connected_USD": [Capex_a_DCN_USD],
+         "Capex_a_SubstationsCooling_connected_USD": [Capex_a_Substations_USD],
 
-                            # total capex
-                            "Capex_total_Lake_connected_USD": [Capex_Lake_USD],
-                            "Capex_total_VCC_connected_USD": [Capex_VCC_USD],
-                            "Capex_total_VCC_backup_connected_USD": [Capex_VCC_backup_USD],
-                            "Capex_total_ACH_connected_USD": [Capex_ACH_USD],
-                            "Capex_total_CCGT_connected_USD": [Capex_CCGT_USD],
-                            "Capex_total_Tank_connected_USD": [Capex_Tank_USD],
-                            "Capex_total_CT_connected_USD": [Capex_CT_USD],
-                            "Capex_total_DCN_connected_USD": [Capex_DCN_USD],
-                            "Capex_total_SubstationCooling_connected_USD": [Capex_Substations_USD],
+         # total capex
+         "Capex_total_Lake_connected_USD": [Capex_Lake_USD],
+         "Capex_total_VCC_connected_USD": [Capex_VCC_USD],
+         "Capex_total_VCC_backup_connected_USD": [Capex_VCC_backup_USD],
+         "Capex_total_ACH_connected_USD": [Capex_ACH_USD],
+         "Capex_total_CCGT_connected_USD": [Capex_CCGT_USD],
+         "Capex_total_Tank_connected_USD": [Capex_Tank_USD],
+         "Capex_total_CT_connected_USD": [Capex_CT_USD],
+         "Capex_total_DCN_connected_USD": [Capex_DCN_USD],
+         "Capex_total_SubstationsCooling_connected_USD": [Capex_Substations_USD],
 
-                            # opex fixed
-                            "Opex_fixed_Lake_connected_USD": [Opex_fixed_Lake_USD],
-                            "Opex_fixed_VCC_connected_USD": [Opex_fixed_VCC_USD],
-                            "Opex_fixed_ACH_connected_USD": [Opex_fixed_ACH_USD],
-                            "Opex_fixed_VCC_backup_connected_USD": [Opex_fixed_VCC_backup_USD],
-                            "Opex_fixed_CCGT_connected_USD": [Opex_fixed_CCGT_USD],
-                            "Opex_fixed_Tank_connected_USD": [Opex_fixed_Tank_USD],
-                            "Opex_fixed_CT_connected_USD": [Opex_fixed_CT_USD],
-                            "Opex_fixed_DCN_connected_USD": [Opex_fixed_DCN_USD],
-                            "Opex_fixed_SubstationCooling_connected_USD":[Opex_fixed_Substations_USD],
+         # opex fixed
+         "Opex_fixed_Lake_connected_USD": [Opex_fixed_Lake_USD],
+         "Opex_fixed_VCC_connected_USD": [Opex_fixed_VCC_USD],
+         "Opex_fixed_ACH_connected_USD": [Opex_fixed_ACH_USD],
+         "Opex_fixed_VCC_backup_connected_USD": [Opex_fixed_VCC_backup_USD],
+         "Opex_fixed_CCGT_connected_USD": [Opex_fixed_CCGT_USD],
+         "Opex_fixed_Tank_connected_USD": [Opex_fixed_Tank_USD],
+         "Opex_fixed_CT_connected_USD": [Opex_fixed_CT_USD],
+         "Opex_fixed_DCN_connected_USD": [Opex_fixed_DCN_USD],
+         "Opex_fixed_SubstationsCooling_connected_USD": [Opex_fixed_Substations_USD],
 
-                            # opex variable
-                            "Opex_var_Lake_connected_USD": [Opex_var_Lake_connected_USD],
-                            "Opex_var_VCC_connected_USD": [Opex_var_VCC_connected_USD],
-                            "Opex_var_ACH_connected_USD": [Opex_var_ACH_connected_USD],
-                            "Opex_var_VCC_backup_connected_USD": [Opex_var_VCC_backup_connected_USD],
-                            "Opex_var_CT_connected_USD": [Opex_var_CT_connected_USD],
-                            "Opex_var_Tank_connected_USD": [0.0], #no variable costs
-                            "Opex_var_CCGT_connected_USD": [Opex_var_CCGT_connected_USD],
-                            "Opex_var_DCN_connected_USD": [Opex_var_DCN_USD],
-                            "Opex_var_SubstationCooling_connected_USD": [Opex_var_Substations_USD],
+         # opex variable
+         "Opex_var_Lake_connected_USD": [Opex_var_Lake_connected_USD],
+         "Opex_var_VCC_connected_USD": [Opex_var_VCC_connected_USD],
+         "Opex_var_ACH_connected_USD": [Opex_var_ACH_connected_USD],
+         "Opex_var_VCC_backup_connected_USD": [Opex_var_VCC_backup_connected_USD],
+         "Opex_var_CT_connected_USD": [Opex_var_CT_connected_USD],
+         "Opex_var_Tank_connected_USD": [0.0],  # no variable costs
+         "Opex_var_CCGT_connected_USD": [Opex_var_CCGT_connected_USD],
+         "Opex_var_DCN_connected_USD": [Opex_var_DCN_USD],
+         "Opex_var_SubstationsCooling_connected_USD": [Opex_var_Substations_USD],
 
-                            # opex annual
-                            "Opex_a_Lake_connected_USD": [Opex_var_Lake_connected_USD + Opex_fixed_Lake_USD],
-                            "Opex_a_VCC_connected_USD": [Opex_var_VCC_connected_USD + Opex_fixed_VCC_USD],
-                            "Opex_a_ACH_connected_USD": [Opex_var_ACH_connected_USD + Opex_fixed_ACH_USD],
-                            "Opex_a_VCC_backup_connected_USD": [
-                                Opex_var_VCC_backup_connected_USD + Opex_fixed_VCC_backup_USD],
-                            "Opex_a_CCGT_connected_USD": [Opex_var_CCGT_connected_USD + Opex_fixed_CCGT_USD],
-                            "Opex_a_Tank_connected_USD": [0.0 + Opex_fixed_Tank_USD],
-                            "Opex_a_CT_connected_USD": [Opex_var_CT_connected_USD + Opex_fixed_CT_USD],
-                            "Opex_a_DCN_connected_USD": [Opex_var_DCN_USD + Opex_fixed_DCN_USD],
-                            "Opex_a_SubstationCooling_connected_USD": [Opex_fixed_Substations_USD + Opex_var_Substations_USD],
+         # opex annual
+         "Opex_a_Lake_connected_USD": [Opex_var_Lake_connected_USD + Opex_fixed_Lake_USD],
+         "Opex_a_VCC_connected_USD": [Opex_var_VCC_connected_USD + Opex_fixed_VCC_USD],
+         "Opex_a_ACH_connected_USD": [Opex_var_ACH_connected_USD + Opex_fixed_ACH_USD],
+         "Opex_a_VCC_backup_connected_USD": [Opex_var_VCC_backup_connected_USD + Opex_fixed_VCC_backup_USD],
+         "Opex_a_CCGT_connected_USD": [Opex_var_CCGT_connected_USD + Opex_fixed_CCGT_USD],
+         "Opex_a_Tank_connected_USD": [0.0 + Opex_fixed_Tank_USD],
+         "Opex_a_CT_connected_USD": [Opex_var_CT_connected_USD + Opex_fixed_CT_USD],
+         "Opex_a_DCN_connected_USD": [Opex_var_DCN_USD + Opex_fixed_DCN_USD],
+         "Opex_a_SubstationsCooling_connected_USD": [Opex_fixed_Substations_USD + Opex_var_Substations_USD],
 
-                            # totals of connected to network
-                            "Capex_total_connected_USD": [Capex_total_connected_USD],
-                            "Capex_a_connected_USD": [Capex_a_connected_USD],
-                            "Opex_a_connected_USD": [Opex_a_connected_USD],
-                            "TAC_connected_USD": [TAC_connected_USD],
+         # totals of connected to network
+         "Capex_total_connected_USD": [Capex_total_connected_USD],
+         "Capex_a_connected_USD": [Capex_a_connected_USD],
+         "Opex_a_connected_USD": [Opex_a_connected_USD],
+         "TAC_connected_USD": [TAC_connected_USD],
 
-                            # emissions
-                            "GHG_Lake_connected_tonCO2": GHG_Lake_tonCO2,
-                            "GHG_VCC_connected_tonCO2": GHG_VCC_tonCO2,
-                            "GHG_ACH_connected_tonCO2": GHG_ACH_tonCO2,
-                            "GHG_VCC_backup_connected_tonCO2": GHG_VCC_backup_tonCO2,
-                            "GHG_CT_connected_tonCO2": GHG_CT_tonCO2,
-                            "GHG_CCGT_connected_tonCO2": GHG_CCGT_tonCO2,
+         # emissions
+         "GHG_Lake_connected_tonCO2": GHG_Lake_tonCO2,
+         "GHG_VCC_connected_tonCO2": GHG_VCC_tonCO2,
+         "GHG_ACH_connected_tonCO2": GHG_ACH_tonCO2,
+         "GHG_VCC_backup_connected_tonCO2": GHG_VCC_backup_tonCO2,
+         "GHG_CT_connected_tonCO2": GHG_CT_tonCO2,
+         "GHG_CCGT_connected_tonCO2": GHG_CCGT_tonCO2,
 
-                            # primary energy
-                            "PEN_Lake_connected_tonCO2": prim_energy_Lake_MJoil,
-                            "PEN_VCC_connected_tonCO2": prim_energy_VCC_MJoil,
-                            "PEN_ACH_connected_tonCO2": prim_energy_ACH_MJoil,
-                            "PEN_VCC_backup_connected_tonCO2": prim_energy_VCC_backup_MJoil,
-                            "PEN_CT_connected_tonCO2": prim_energy_CT_MJoil,
-                            "PEN_CCGT_connected_tonCO2": prim_energy_CCGT_MJoil,
-                            })
+         # primary energy
+         "PEN_Lake_connected_tonCO2": prim_energy_Lake_MJoil,
+         "PEN_VCC_connected_tonCO2": prim_energy_VCC_MJoil,
+         "PEN_ACH_connected_tonCO2": prim_energy_ACH_MJoil,
+         "PEN_VCC_backup_connected_tonCO2": prim_energy_VCC_backup_MJoil,
+         "PEN_CT_connected_tonCO2": prim_energy_CT_MJoil,
+         "PEN_CCGT_connected_tonCO2": prim_energy_CCGT_MJoil,
+         })
 
     results.to_csv(locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
                                                                       master_to_slave_vars.generation_number),
@@ -610,7 +610,6 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
 def calc_network_costs_cooling(config, district_network_barcode, locator, master_to_slave_vars,
                                ntwFeat, lca):
-
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(
         master_to_slave_vars, ntwFeat, locator, lca, "DC")
@@ -637,11 +636,12 @@ def calc_network_costs_cooling(config, district_network_barcode, locator, master
 
     return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD
 
+
 def calc_substations_costs_cooling(building_names, df_current_individual, district_network_barcode, locator):
     Capex_Substations_USD = 0.0
     Capex_a_Substations_USD = 0.0
     Opex_fixed_Substations_USD = 0.0
-    Opex_var_Substations_USD = 0.0 # it is asssumed as 0 in substations
+    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
             if df_current_individual['Data Centre'][0] == 1:
