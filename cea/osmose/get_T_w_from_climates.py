@@ -38,10 +38,10 @@ if __name__ == '__main__':
     #cases = ['WTP_CBD_m_WP1_OFF', 'ABU_CBD_m_WP1_OFF','HKG_CBD_m_WP1_OFF', 'MDL_CBD_m_WP1_OFF']
     cases = ['HKG_CBD_m_WP1_OFF']
     #START_t_dict = {'ABU_Winter': 120, 'ABU_Autumn':7008, 'ABU_Spring': 2424, 'ABU_Summer': 4464}
-    START_t_dict = {'HKG_Spring': 2328, 'HKG_Summer': 4680, 'HKG_Autumn': 7728, 'HKG_Wet': 6864}
+    START_t_dict = {'HKG_Spring': 2328, 'HKG_Summer': 4680, 'HKG_Autumn': 7728, 'HKG_Winter': 193}
     #START_t_dict = {'MDL_Dry': 8016, 'MDL_Wet': 5016}
     #START_t_dict = {'HKG_Summer': 4680}
-    #START_t_dict = {'WTP_Summer': 5040}
+    # START_t_dict = {'WTP_Summer': 5040}
     timesteps = 168
     for case in cases:
         main(case, timesteps)
