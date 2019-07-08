@@ -18,7 +18,7 @@ import cea.technologies.heatpumps as hp
 import cea.technologies.solar.photovoltaic as pv
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
-import cea.technologies.thermal_storage as storage
+
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY
 from cea.optimization.constants import N_PVT, PIPELIFETIME, PIPEINTERESTRATE
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
@@ -81,7 +81,7 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
     return TAC_disconnected_USD, GHG_disconnected_tonCO2, PEN_disconnected_MJoil
 
 
-def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, solar_features, network_features,
+def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W, solar_features,
              config, prices, lca):
     """
     Computes costs / GHG emisions / primary energy needs
@@ -150,7 +150,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
                                                                                                        Q_annual_W,
                                                                                                        config, locator,
                                                                                                        'FU1')
-
             if master_to_slave_vars.Furn_Moist_type == "wet":
                 Capex_furnace_wet_USD = Capex_furnace_USD
                 Capex_a_furnace_wet_USD = Capex_a_furnace_USD
@@ -323,32 +322,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config,
                                                                                    'HP2')
 
-        # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
-        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                                               master_to_slave_vars.generation_number),
-                         usecols=["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"])
-        array = np.array(df)
-        Q_HP_max_storage_W = 0
-        for i in range(DAYS_IN_YEAR * HOURS_IN_DAY):
-            if array[i][0] > 0:
-                Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][3] + array[i][0])
-            elif array[i][1] > 0:
-                Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
-
-        Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W,
-                                                                                                  locator, config,
-                                                                                                  'HP2')
-
-        # SEASONAL STORAGE
-        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                                               master_to_slave_vars.generation_number),
-                         usecols=["Storage_Size_m3"], nrows=1)
-        StorageVol_m3 = np.array(df)[0][0]
-        Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
-                                                                                                   locator, config,
-                                                                                                   'TES2')
-
-
         # HEAT EXCHANGER FOR SOLAR COLLECTORS
         roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
         areaAvail = 0
@@ -398,7 +371,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_a_PeakBoiler_NG_connected_USD": [Capex_a_PeakBoiler_NG_USD],
         "Capex_a_BackupBoiler_BG_connected_USD": [Capex_a_BackupBoiler_BG_USD],
         "Capex_a_BackupBoiler_NG_connected_USD": [Capex_a_BackupBoiler_NG_USD],
-        "Capex_a_Storage_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
+
 
         # total_capex
         "Capex_total_HP_Sewage_connected_USD": [Capex_Sewage_USD],
@@ -418,7 +391,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_total_PeakBoiler_NG_connected_USD": [Capex_PeakBoiler_NG_USD],
         "Capex_total_BackupBoiler_BG_connected_USD": [Capex_BackupBoiler_BG_USD],
         "Capex_total_BackupBoiler_NG_connected_USD": [Capex_BackupBoiler_NG_USD],
-        "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
+
 
         # opex fixed costs
         "Opex_fixed_HP_Sewage_connected_USD": [Opex_fixed_Sewage_USD],
@@ -437,8 +410,7 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_PeakBoiler_BG_USD],
         "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_PeakBoiler_NG_USD],
         "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_BackupBoiler_BG_USD],
-        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_BackupBoiler_NG_USD],
-        "Opex_fixed_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD]}
+        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_BackupBoiler_NG_USD],}
 
     return performance_costs
 

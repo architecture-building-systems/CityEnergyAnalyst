@@ -419,11 +419,25 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     Opex_var_CT_connected_USD = sum(opex_var_CT_USDhr),
     Opex_var_CCGT_connected_USD = sum(opex_var_CCGT_USDhr),
 
-    Capex_total_connected_USD = Capex_Lake_USD + Capex_VCC_USD + Capex_VCC_backup_USD + Capex_ACH_USD + Capex_CCGT_USD + \
-                                Capex_Tank_USD + Capex_CT_USD + Capex_DCN_USD + Capex_Substations_USD
+    Capex_total_connected_USD = Capex_Lake_USD + \
+                                Capex_VCC_USD + \
+                                Capex_VCC_backup_USD + \
+                                Capex_ACH_USD + \
+                                Capex_CCGT_USD + \
+                                Capex_Tank_USD + \
+                                Capex_CT_USD + \
+                                Capex_DCN_USD + \
+                                Capex_Substations_USD
 
-    Capex_a_connected_USD = Capex_a_Lake_USD + Capex_a_VCC_USD + Capex_a_VCC_backup_USD + Capex_a_ACH_USD + \
-                            Capex_a_CCGT_USD + Capex_a_Tank_USD + Capex_a_CT_USD + Capex_a_DCN_USD + Capex_a_Substations_USD
+    Capex_a_connected_USD = Capex_a_Lake_USD +\
+                            Capex_a_VCC_USD + \
+                            Capex_a_VCC_backup_USD +\
+                            Capex_a_ACH_USD + \
+                            Capex_a_CCGT_USD +\
+                            Capex_a_Tank_USD + \
+                            Capex_a_CT_USD +\
+                            Capex_a_DCN_USD +\
+                            Capex_a_Substations_USD
 
     Opex_a_connected_USD = Opex_var_Lake_connected_USD + Opex_fixed_Lake_USD + \
                            Opex_var_VCC_connected_USD + Opex_fixed_VCC_backup_USD + \
@@ -437,18 +451,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
     TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
 
-    # Converting costs into float64 to avoid longer values
-    TAC_USD = np.float64(TAC_connected_USD)
-    GHG_tonCO2 = np.float64(GHG_tonCO2)
-    PEN_MJoil = np.float64(prim_MJoil)
-
-
     #PLOT RESULTS
-    network_data = pd.read_csv(locator.get_optimization_network_results_summary('DC',
-                                                                                master_to_slave_vars.network_data_file_cooling))
-    date = network_data.DATE.values
-    results = pd.DataFrame(
-        {"DATE": date,
+    performance = {
          # annualized capex
          "Capex_a_Lake_connected_USD": [Capex_a_Lake_USD],
          "Capex_a_VCC_connected_USD": [Capex_a_VCC_USD],
@@ -505,10 +509,10 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
          "Opex_a_SubstationsCooling_connected_USD": [Opex_fixed_Substations_USD + Opex_var_Substations_USD],
 
          # totals of connected to network
-         "Capex_total_connected_USD": [Capex_total_connected_USD],
-         "Capex_a_connected_USD": [Capex_a_connected_USD],
-         "Opex_a_connected_USD": [Opex_a_connected_USD],
-         "TAC_connected_USD": [TAC_connected_USD],
+         "Capex_total_Cooling_sys_connected_USD": [Capex_total_connected_USD],
+         "Capex_a_Cooling_sys_connected_USD": [Capex_a_connected_USD],
+         "Opex_a_Cooling_sys_connected_USD": [Opex_a_connected_USD],
+         "TAC_Cooling_sys_connected_USD": [TAC_connected_USD],
 
          # emissions
          "GHG_Lake_connected_tonCO2": GHG_Lake_tonCO2,
@@ -525,12 +529,16 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
          "PEN_VCC_backup_connected_tonCO2": prim_energy_VCC_backup_MJoil,
          "PEN_CT_connected_tonCO2": prim_energy_CT_MJoil,
          "PEN_CCGT_connected_tonCO2": prim_energy_CCGT_MJoil,
-         })
+         }
 
-    results.to_csv(locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
+    pd.DataFrame(performance).to_csv(locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
                                                                       master_to_slave_vars.generation_number),
                    index=False)
 
+    #PLOT ACTIVATION COURVE
+    network_data = pd.read_csv(locator.get_optimization_network_results_summary('DC',
+                                                                                master_to_slave_vars.network_data_file_cooling))
+    date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
                             "E_used_Lake_W": E_used_Lake_W,
@@ -553,7 +561,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                                                              master_to_slave_vars.generation_number),
                    index=False)
 
-    return (TAC_USD, GHG_tonCO2, PEN_MJoil)
+    return performance
 
 
 def calc_network_costs_cooling(config, district_network_barcode, locator, master_to_slave_vars,
