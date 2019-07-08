@@ -17,10 +17,12 @@ from cea.optimization.master import cost_model
 from cea.optimization.master import generation
 from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.optimization.master.performance_aggregation import summarize_results_individual
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
 from cea.optimization.slave import natural_gas_main
+from cea.optimization.slave import solar_main
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies import substation
@@ -92,8 +94,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
-            performance_DHN, Q_heating_uncovered_design_W,
-            Q_heating_uncovered_annual_W, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
+            performance_DHN, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
                                                                                                config, prices, lca,
                                                                                                solar_features,
@@ -133,22 +134,24 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
     performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
+    # SOLAR TECHNOLOGIES
+    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
+    performance_solar = solar_main.solar_evaluation()
 
-
-
+    print("AGGREGATING RESULTS")
+    TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
+                                                                              performance_DHN,
+                                                                              performance_DCN,
+                                                                              performance_electricity,
+                                                                              performance_solar,
+                                                                              performance_disconnected)
 
     # Converting costs into float64 to avoid longer values
-    costs_USD = np.float64(costs_USD)
-    GHG_tonCO2 = np.float64(GHG_tonCO2)
-    PEN_MJoil = np.float64(PEN_MJoil)
+    print ('Total TAC in USD = ' + str(TAC_sys_USD))
+    print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
+    print ('Total PEN emissions in MJoil ' + str(PEN_sys_MJoil) + "\n")
 
-    print ('Total TAC in USD = ' + str(costs_USD))
-    print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_tonCO2))
-    print ('Total PEN emissions in MJoil ' + str(PEN_MJoil) + "\n")
-
-    # TODO:CALCULATE CAPEX TOTAL, OPEX TOTAL and RENEWABLE ERNGY SHARE (to be used in multicriteria.
-
-    return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
+    return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, master_to_slave_vars, individual
 
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,

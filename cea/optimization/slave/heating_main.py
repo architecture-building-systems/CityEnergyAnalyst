@@ -323,7 +323,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # CAPEX AND FIXED OPEX GENERATION UNITS (INCLUDING SOLAR)
     performance_costs = cost_model.addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                            solar_features,
                                             config, prices, lca)
 
     # THIS CALCULATES EMISSIONS
@@ -386,138 +385,146 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_BackupBoiler_BG_USD = sum(Opex_var_BackupBoiler_BG_USDhr)
     Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
 
+    # SUMMARIZE TOTALS OF THIS SYSTEM
+    Capex_total_sys_connected_USD = Capex_DHN_USD + Capex_SubstationsHeating_USD
+    Capex_a_sys_connected_USD = Capex_a_DHN_USD + Capex_a_SubstationsHeating_USD
+    Opex_fixed_sys_connected_USD = Opex_fixed_DHN_USD + Opex_fixed_SubstationsHeating_USD
+    for column in performance_costs.columns:
+        if "Capex_total_" in column and "connected_USD" in column:
+            Capex_total_sys_connected_USD += performance_costs[column]
+        elif "Capex_a_" in column and "connected_USD" in column:
+            Capex_a_sys_connected_USD += performance_costs[column]
+        elif "Opex_fixed_" in column and "connected_USD" in column:
+            Opex_fixed_sys_connected_USD += performance_costs[column]
+    Opex_var_sys_connected_USD = Opex_var_HP_Sewage_USD + Opex_var_HP_Lake_USD + Opex_var_GHP_USD + Opex_var_CHP_BG_USD + \
+                                 Opex_var_CHP_NG_USD + Opex_var_Furnace_wet_USD + Opex_var_Furnace_dry_USD + \
+                                 Opex_var_BaseBoiler_BG_USD + Opex_var_BaseBoiler_NG_USD + Opex_var_PeakBoiler_BG_USD + \
+                                 Opex_var_PeakBoiler_NG_USD + Opex_var_BackupBoiler_BG_USD + Opex_var_BackupBoiler_NG_USD + \
+                                 Opex_var_DHN_USD + Opex_var_SubstationsHeating_USD
 
-    # "Capex_total_connected_USD": [Capex_total_connected_USD],
-    # "Capex_a_connected_USD": [Capex_a_connected_USD],
-    # "Opex_a_connected_USD": [Opex_a_connected_USD],
-    # "TAC_connected_USD": [TAC_connected_USD],
+    TAC_sys_connected_USD = Capex_a_sys_connected_USD + Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD
 
-    #SAVE PERFORMANCE METRICS TO DISK
+    GHG_sys_connected_USD = 0.0
+    PEN_sys_connected_USD = 0.0
+    for column in performance_costs.columns:
+        if "GHG_" in column and "connected_tonCO2" in column:
+            GHG_sys_connected_USD += performance_costs[column]
+        elif "PEN_" in column and "connected_MJoil" in column:
+            PEN_sys_connected_USD += performance_costs[column]
+
+    # SAVE PERFORMANCE METRICS TO DISK
     performance = {
-         # annualized capex
-         "Capex_a_HP_Sewage_connected_USD": performance_costs['Capex_a_HP_Sewage_connected_USD'],
-         "Capex_a_HP_Lake_connected_USD": performance_costs['Capex_a_HP_Lake_connected_USD'],
-         "Capex_a_SC_ET_connected_USD": performance_costs['Capex_a_SC_ET_connected_USD'],
-         "Capex_a_SC_FP_connected_USD": performance_costs['Capex_a_SC_FP_connected_USD'],
-         "Capex_a_PVT_connected_USD": performance_costs['Capex_a_PVT_connected_USD'],
-         "Capex_a_PV_connected_USD": performance_costs['Capex_a_PV_connected_USD'],
-         "Capex_a_GHP_connected_USD": performance_costs['Capex_a_GHP_connected_USD'],
-         "Capex_a_CHP_BG_connected_USD": performance_costs['Capex_a_CHP_BG_connected_USD'],
-         "Capex_a_CHP_NG_connected_USD": performance_costs['Capex_a_CHP_NG_connected_USD'],
-         "Capex_a_Furnace_wet_connected_USD": performance_costs['Capex_a_Furnace_wet_connected_USD'],
-         "Capex_a_Furnace_dry_connected_USD": performance_costs['Capex_a_Furnace_dry_connected_USD'],
-         "Capex_a_BaseBoiler_BG_connected_USD": performance_costs['Capex_a_BaseBoiler_BG_connected_USD'],
-         "Capex_a_BaseBoiler_NG_connected_USD": performance_costs['Capex_a_BaseBoiler_NG_connected_USD'],
-         "Capex_a_PeakBoiler_BG_connected_USD": performance_costs['Capex_a_PeakBoiler_BG_connected_USD'],
-         "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
-         "Capex_a_BackupBoiler_BG_connected_USD": performance_costs['Capex_a_BackupBoiler_BG_connected_USD'],
-         "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
-         "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
-         "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
+        # annualized capex
+        "Capex_a_HP_Sewage_connected_USD": performance_costs['Capex_a_HP_Sewage_connected_USD'],
+        "Capex_a_HP_Lake_connected_USD": performance_costs['Capex_a_HP_Lake_connected_USD'],
+        "Capex_a_GHP_connected_USD": performance_costs['Capex_a_GHP_connected_USD'],
+        "Capex_a_CHP_BG_connected_USD": performance_costs['Capex_a_CHP_BG_connected_USD'],
+        "Capex_a_CHP_NG_connected_USD": performance_costs['Capex_a_CHP_NG_connected_USD'],
+        "Capex_a_Furnace_wet_connected_USD": performance_costs['Capex_a_Furnace_wet_connected_USD'],
+        "Capex_a_Furnace_dry_connected_USD": performance_costs['Capex_a_Furnace_dry_connected_USD'],
+        "Capex_a_BaseBoiler_BG_connected_USD": performance_costs['Capex_a_BaseBoiler_BG_connected_USD'],
+        "Capex_a_BaseBoiler_NG_connected_USD": performance_costs['Capex_a_BaseBoiler_NG_connected_USD'],
+        "Capex_a_PeakBoiler_BG_connected_USD": performance_costs['Capex_a_PeakBoiler_BG_connected_USD'],
+        "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
+        "Capex_a_BackupBoiler_BG_connected_USD": performance_costs['Capex_a_BackupBoiler_BG_connected_USD'],
+        "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
+        "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
+        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
 
-         # total capex
-         "Capex_total_HP_Sewage_connected_USD": performance_costs['Capex_total_HP_Sewage_connected_USD'],
-         "Capex_total_HP_Lake_connected_USD": performance_costs['Capex_total_HP_Lake_connected_USD'],
-         "Capex_total_SC_ET_connected_USD": performance_costs['Capex_total_SC_ET_connected_USD'],
-         "Capex_total_SC_FP_connected_USD": performance_costs['Capex_total_SC_FP_connected_USD'],
-         "Capex_total_PVT_connected_USD": performance_costs['Capex_total_PVT_connected_USD'],
-         "Capex_total_PV_connected_USD": performance_costs['Capex_total_PV_connected_USD'],
-         "Capex_total_GHP_connected_USD": performance_costs['Capex_total_GHP_connected_USD'],
-         "Capex_total_CHP_BG_connected_USD": performance_costs['Capex_total_CHP_BG_connected_USD'],
-         "Capex_total_CHP_NG_connected_USD": performance_costs['Capex_total_CHP_NG_connected_USD'],
-         "Capex_total_Furnace_wet_connected_USD": performance_costs['Capex_total_Furnace_wet_connected_USD'],
-         "Capex_total_Furnace_dry_connected_USD": performance_costs['Capex_total_Furnace_dry_connected_USD'],
-         "Capex_total_BaseBoiler_BG_connected_USD": performance_costs['Capex_total_BaseBoiler_BG_connected_USD'],
-         "Capex_total_BaseBoiler_NG_connected_USD": performance_costs['Capex_total_BaseBoiler_NG_connected_USD'],
-         "Capex_total_PeakBoiler_BG_connected_USD": performance_costs['Capex_total_PeakBoiler_BG_connected_USD'],
-         "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
-         "Capex_total_BackupBoiler_BG_connected_USD": performance_costs['Capex_total_BackupBoiler_BG_connected_USD'],
-         "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
-         "Capex_total_DHN_connected_USD": Capex_DHN_USD,
-         "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
+        # total capex
+        "Capex_total_HP_Sewage_connected_USD": performance_costs['Capex_total_HP_Sewage_connected_USD'],
+        "Capex_total_HP_Lake_connected_USD": performance_costs['Capex_total_HP_Lake_connected_USD'],
+        "Capex_total_GHP_connected_USD": performance_costs['Capex_total_GHP_connected_USD'],
+        "Capex_total_CHP_BG_connected_USD": performance_costs['Capex_total_CHP_BG_connected_USD'],
+        "Capex_total_CHP_NG_connected_USD": performance_costs['Capex_total_CHP_NG_connected_USD'],
+        "Capex_total_Furnace_wet_connected_USD": performance_costs['Capex_total_Furnace_wet_connected_USD'],
+        "Capex_total_Furnace_dry_connected_USD": performance_costs['Capex_total_Furnace_dry_connected_USD'],
+        "Capex_total_BaseBoiler_BG_connected_USD": performance_costs['Capex_total_BaseBoiler_BG_connected_USD'],
+        "Capex_total_BaseBoiler_NG_connected_USD": performance_costs['Capex_total_BaseBoiler_NG_connected_USD'],
+        "Capex_total_PeakBoiler_BG_connected_USD": performance_costs['Capex_total_PeakBoiler_BG_connected_USD'],
+        "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
+        "Capex_total_BackupBoiler_BG_connected_USD": performance_costs['Capex_total_BackupBoiler_BG_connected_USD'],
+        "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
+        "Capex_total_DHN_connected_USD": Capex_DHN_USD,
+        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
 
-         # opex fixed
-         "Opex_fixed_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
-         "Opex_fixed_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
-         "Opex_fixed_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
-         "Opex_fixed_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
-         "Opex_fixed_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-         "Opex_fixed_PV_connected_USD": performance_costs['Opex_fixed_PV_connected_USD'],
-         "Opex_fixed_GHP_connected_USD": performance_costs['Opex_fixed_GHP_connected_USD'],
-         "Opex_fixed_CHP_BG_connected_USD": performance_costs['Opex_fixed_CHP_BG_connected_USD'],
-         "Opex_fixed_CHP_NG_connected_USD": performance_costs['Opex_fixed_CHP_NG_connected_USD'],
-         "Opex_fixed_Furnace_wet_connected_USD": performance_costs['Opex_fixed_Furnace_wet_connected_USD'],
-         "Opex_fixed_Furnace_dry_connected_USD": performance_costs['Opex_fixed_Furnace_dry_connected_USD'],
-         "Opex_fixed_BaseBoiler_BG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_BG_connected_USD'],
-         "Opex_fixed_BaseBoiler_NG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_NG_connected_USD'],
-         "Opex_fixed_PeakBoiler_BG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_BG_connected_USD'],
-         "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
-         "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
-         "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-         "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
-         "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
+        # opex fixed
+        "Opex_fixed_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
+        "Opex_fixed_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
+        "Opex_fixed_GHP_connected_USD": performance_costs['Opex_fixed_GHP_connected_USD'],
+        "Opex_fixed_CHP_BG_connected_USD": performance_costs['Opex_fixed_CHP_BG_connected_USD'],
+        "Opex_fixed_CHP_NG_connected_USD": performance_costs['Opex_fixed_CHP_NG_connected_USD'],
+        "Opex_fixed_Furnace_wet_connected_USD": performance_costs['Opex_fixed_Furnace_wet_connected_USD'],
+        "Opex_fixed_Furnace_dry_connected_USD": performance_costs['Opex_fixed_Furnace_dry_connected_USD'],
+        "Opex_fixed_BaseBoiler_BG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_BG_connected_USD'],
+        "Opex_fixed_BaseBoiler_NG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_NG_connected_USD'],
+        "Opex_fixed_PeakBoiler_BG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_BG_connected_USD'],
+        "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
+        "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
+        "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
+        "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
+        "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
-         # opex variable
-         "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
-         "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
-         "Opex_var_SC_ET_connected_USD": [0.0],
-         "Opex_var_SC_FP_connected_USD": [0.0],
-         "Opex_var_PVT_connected_USD": [0.0],
-         "Opex_var_PV_connected_USD": [0.0],
-         "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
-         "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
-         "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
-         "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
-         "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
-         "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
-         "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
-         "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
-         "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
-         "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
-         "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-         "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
-         "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
+        # opex variable
+        "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
+        "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
+        "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
+        "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
+        "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
+        "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
+        "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
+        "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
+        "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
+        "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
+        "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
+        "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
+        "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
+        "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
+        "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
-         # totals of connected to network
-         "Capex_total_Heating_sys_connected_USD": [Capex_total_connected_USD],
-         "Capex_a_Heating_sys_connected_USD": [Capex_a_connected_USD],
-         "Opex_a_Heating_sys_connected_USD": [Opex_a_connected_USD],
-         "TAC_Heating_sys_connected_USD": [TAC_connected_USD],
+        # emissions
+        "GHG_HP_Sewage_connected_tonCO2": performance_emissions_pen['GHG_HP_Sewage_tonCO2'],
+        "GHG_HP_Lake_connected_tonCO2": performance_emissions_pen['GHG_HP_Lake_tonCO2'],
+        "GHG_GHP_connected_tonCO2": performance_emissions_pen['GHG_GHP_tonCO2'],
+        "GHG_CHP_BG_connected_tonCO2": performance_emissions_pen['GHG_CHP_BG_tonCO2'],
+        "GHG_CHP_NG_connected_tonCO2": performance_emissions_pen['GHG_CHP_NG_tonCO2'],
+        "GHG_Furnace_wet_connected_tonCO2": performance_emissions_pen['GHG_Furnace_wet_tonCO2'],
+        "GHG_Furnace_dry_connected_tonCO2": performance_emissions_pen['GHG_Furnace_dry_tonCO2'],
+        "GHG_BaseBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_BG_tonCO2'],
+        "GHG_BaseBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_NG_tonCO2'],
+        "GHG_PeakBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_BG_tonCO2'],
+        "GHG_PeakBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_NG_tonCO2'],
+        "GHG_BackupBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_BG_tonCO2'],
+        "GHG_BackupBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_NG_tonCO2'],
 
-         # emissions
-         "GHG_HP_Sewage_connected_tonCO2": performance_emissions_pen['GHG_HP_Sewage_tonCO2'],
-         "GHG_HP_Lake_connected_tonCO2": performance_emissions_pen['GHG_HP_Lake_tonCO2'],
-         "GHG_GHP_connected_tonCO2": performance_emissions_pen['GHG_GHP_tonCO2'],
-         "GHG_CHP_BG_connected_tonCO2": performance_emissions_pen['GHG_CHP_BG_tonCO2'],
-         "GHG_CHP_NG_connected_tonCO2": performance_emissions_pen['GHG_CHP_NG_tonCO2'],
-         "GHG_Furnace_wet_connected_tonCO2": performance_emissions_pen['GHG_Furnace_wet_tonCO2'],
-         "GHG_Furnace_dry_connected_tonCO2": performance_emissions_pen['GHG_Furnace_dry_tonCO2'],
-         "GHG_BaseBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_BG_tonCO2'],
-         "GHG_BaseBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_NG_tonCO2'],
-         "GHG_PeakBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_BG_tonCO2'],
-         "GHG_PeakBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_NG_tonCO2'],
-         "GHG_BackupBoiler_BG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_BG_tonCO2'],
-         "GHG_BackupBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_NG_tonCO2'],
+        # primary energy
+        "PEN_HP_Sewage_connected_MJoil": performance_emissions_pen['PEN_HP_Sewage_MJoil'],
+        "PEN_HP_Lake_connected_MJoil": performance_emissions_pen['PEN_HP_Lake_MJoil'],
+        "PEN_GHP_connected_MJoil": performance_emissions_pen['PEN_GHP_MJoil'],
+        "PEN_CHP_BG_connected_MJoil": performance_emissions_pen['PEN_CHP_BG_MJoil'],
+        "PEN_CHP_NG_connected_MJoil": performance_emissions_pen['PEN_CHP_NG_MJoil'],
+        "PEN_Furnace_wet_connected_MJoil": performance_emissions_pen['PEN_Furnace_wet_MJoil'],
+        "PEN_Furnace_dry_connected_MJoil": performance_emissions_pen['PEN_Furnace_dry_MJoil'],
+        "PEN_BaseBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_BG_MJoil'],
+        "PEN_BaseBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_NG_MJoil'],
+        "PEN_PeakBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_BG_MJoil'],
+        "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'],
+        "PEN_BackupBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_BG_MJoil'],
+        "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_MJoil'],
 
-         # primary energy
-         "PEN_HP_Sewage_connected_MJoil": performance_emissions_pen['PEN_HP_Sewage_MJoil'],
-         "PEN_HP_Lake_connected_MJoil": performance_emissions_pen['PEN_HP_Lake_MJoil'],
-         "PEN_GHP_connected_MJoil": performance_emissions_pen['PEN_GHP_MJoil'],
-         "PEN_CHP_BG_connected_MJoil": performance_emissions_pen['PEN_CHP_BG_MJoil'],
-         "PEN_CHP_NG_connected_MJoil": performance_emissions_pen['PEN_CHP_NG_MJoil'],
-         "PEN_Furnace_wet_connected_MJoil": performance_emissions_pen['PEN_Furnace_wet_MJoil'],
-         "PEN_Furnace_dry_connected_MJoil": performance_emissions_pen['PEN_Furnace_dry_MJoil'],
-         "PEN_BaseBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_BG_MJoil'],
-         "PEN_BaseBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_NG_MJoil'],
-         "PEN_PeakBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_BG_MJoil'],
-         "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'],
-         "PEN_BackupBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_BG_MJoil'],
-         "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_MJoil']
-         }
+        # totals of connected to network
+        "Capex_total_Heating_sys_connected_USD": [Capex_total_sys_connected_USD],
+        "Capex_a_Heating_sys_connected_USD": [Capex_a_sys_connected_USD],
+        "Opex_a_Heating_sys_connected_USD": [Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD],
+        "TAC_Heating_sys_connected_USD": [TAC_sys_connected_USD],
+        "GHG_Heating_sys_connected_tonCO2": [GHG_sys_connected_USD],
+        "PEN_Heating_sys_connected_MJoil": [PEN_sys_connected_USD],
+    }
 
-    pd.DataFrame(performance).to_csv(locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
-                                                                      master_to_slave_vars.generation_number),
-                   index=False)
+    pd.DataFrame(performance).to_csv(
+        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
 
     # saving pattern activation to disk
     date = network_data.DATE.values
