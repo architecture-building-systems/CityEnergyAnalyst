@@ -94,6 +94,12 @@ class LcaCalculations(object):
             self.LAKEHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                          'PEN'] / self.ETA_FINAL_TO_USEFUL / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
+            #server
+            self.SERVERHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                         'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
+            self.SERVERHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                         'PEN'] / self.ETA_FINAL_TO_USEFUL / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+
             # HP Sewage
             self.SEWAGEHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Solid Waste'].iloc[0][
                                            'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
