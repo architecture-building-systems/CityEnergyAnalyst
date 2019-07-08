@@ -69,8 +69,6 @@ Data Management:
   input-files:
     - [get_building_age]
     - [get_building_occupancy]
-    - [get_archetypes_schedules]
-    - [get_archetypes_properties]
 
 
 Demand forecasting:
