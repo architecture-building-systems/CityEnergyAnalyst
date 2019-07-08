@@ -232,6 +232,22 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
             Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(
                 Q_design_W, locator, config, 'BO1')
 
+            if master_to_slave_vars.gt_fuel == "BG":
+                Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
+                Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
+                Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
+                Capex_a_PeakBoiler_NG_USD = 0.0
+                Opex_fixed_PeakBoiler_NG_USD = 0.0
+                Capex_PeakBoiler_NG_USD = 0.0
+            elif master_to_slave_vars.gt_fuel == "NG":
+                Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
+                Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
+                Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
+                Capex_a_PeakBoiler_NG_USD = Capex_a_Boiler_peak_USD
+                Opex_fixed_PeakBoiler_NG_USD = Opex_fixed_Boiler_peak_USD
+                Capex_PeakBoiler_NG_USD = Capex_Boiler_peak_USD
+
+
         # HEATPUMP LAKE
         if master_to_slave_vars.HP_Lake_on == 1:
             HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
@@ -380,9 +396,9 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_a_Furnace_dry_connected_USD": [Capex_a_furnace_dry_USD],
         "Capex_a_BaseBoiler_BG_connected_USD": [Capex_a_BaseBoiler_BG_USD],
         "Capex_a_BaseBoiler_NG_connected_USD": [Capex_a_BaseBoiler_NG_USD],
-        "Capex_a_BaseBoiler_USD": [Capex_a_Boiler_USD],
+        "Capex_a_PeakBoiler_BG_connected_USD": [Capex_a_PeakBoiler_BG_USD],
+        "Capex_a_PeakBoiler_NG_connected_USD": [Capex_a_PeakBoiler_NG_USD],
         "Capex_a_BackupBoiler_USD": [Capex_a_Boiler_backup_USD],
-        "Capex_a_PeakBoiler_USD": [Capex_a_Boiler_peak_USD],
         "Capex_a_Storage_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
 
         # total_capex
@@ -399,8 +415,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_total_Furnace_dry_connected_USD": [Capex_furnace_dry_USD],
         "Capex_total_BaseBoiler_BG_connected_USD": [Capex_BaseBoiler_BG_USD],
         "Capex_total_BaseBoiler_NG_connected_USD": [Capex_BaseBoiler_NG_USD],
-        "Capex_total_PeakBoiler_BG_connected_USD": [Capex_Boiler_peak_NG_USD],
-        "Capex_total_PeakBoiler_NG_connected_USD": [Capex_Boiler_peak_BG_USD],
+        "Capex_total_PeakBoiler_BG_connected_USD": [Capex_PeakBoiler_BG_USD],
+        "Capex_total_PeakBoiler_NG_connected_USD": [Capex_PeakBoiler_NG_USD],
         "Capex_total_BackupBoiler_BG_connected_USD": [Capex_Boiler_backup_BG_USD],
         "Capex_total_BackupBoiler_NG_connected_USD": [Capex_Boiler_backup_NG_USD],
         "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
@@ -419,8 +435,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Opex_fixed_Furnace_dry_connected_USD": [Opex_fixed_furnace_dry_USD],
         "Opex_fixed_BaseBoiler_BG_connected_USD": [Opex_fixed_BaseBoiler_BG_USD],
         "Opex_fixed_BaseBoiler_NG_connected_USD": [Opex_fixed_BaseBoiler_NG_USD],
-        "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_Boiler_peak_BG_USD],
-        "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_Boiler_peak_NG_USD],
+        "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_PeakBoiler_BG_USD],
+        "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_PeakBoiler_NG_USD],
         "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_Boiler_backup_BG_USD],
         "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_Boiler_backup_NG_USD],
         "Opex_fixed_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD]}
