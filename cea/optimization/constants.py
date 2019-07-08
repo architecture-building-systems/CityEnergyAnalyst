@@ -142,6 +142,7 @@ ST_GEN_ETA = 0.9  # generator efficiency after steam turbine
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
+DATACENTER_HEAT_RECOVERY_ALLOWED = True
 GHP_ALLOWED = True
 CC_ALLOWED = True
 FURNACE_ALLOWED = False

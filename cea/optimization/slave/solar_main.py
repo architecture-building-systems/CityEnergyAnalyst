@@ -9,6 +9,8 @@ import pandas as pd
 import cea.technologies.solar.photovoltaic as pv
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
+import cea.technologies.heat_exchangers as hex
+import cea.technologies.heatpumps as hp
 from cea.optimization.constants import N_PVT
 
 __author__ = "Jimeno A. Fonseca"
