@@ -276,6 +276,21 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
 
         master_to_slave_vars.BoilerBackup_Q_max_W = Q_uncovered_design_W
 
+        if master_to_slave_vars.gt_fuel == "BG":
+            Capex_a_BackupBoiler_BG_USD = Capex_a_Boiler_backup_USD
+            Opex_fixed_BackupBoiler_BG_USD = Opex_fixed_Boiler_backup_USD
+            Capex_BackupBoiler_BG_USD = Capex_Boiler_backup_USD
+            Capex_a_BackupBoiler_NG_USD = 0.0
+            Opex_fixed_BackupBoiler_NG_USD = 0.0
+            Capex_BackupBoiler_NG_USD = 0.0
+        elif master_to_slave_vars.gt_fuel == "NG":
+            Capex_a_BackupBoiler_BG_USD = 0.0
+            Opex_fixed_BackupBoiler_BG_USD = 0.0
+            Capex_BackupBoiler_BG_USD = 0.0
+            Capex_a_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
+            Opex_fixed_BackupBoiler_NG_USD = Opex_fixed_Boiler_backup_USD
+            Capex_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
+
         # HEATPUMP AND HEX FOR HEAR RECOVERY (DATA CENTRE)
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             df = pd.read_csv(
@@ -333,23 +348,6 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
                                                                                                    locator, config,
                                                                                                    'TES2')
 
-        # NETWORK COSTS
-        nBuildinNtw = DHN_barcode.count('1')
-        NetworkCost_USD = network_features.pipesCosts_DHN_USD
-        NetworkCost_USD = NetworkCost_USD * nBuildinNtw / len(buildList)
-        NetworkCost_a_USD = NetworkCost_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
-                (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
-
-        # SUBSTATION IN EACH BUILDING (1 per building in ntw)
-        for (index, building_name) in zip(DHN_barcode, buildList):
-            if index == "1":
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
-                                 usecols=["Q_dhw_W", "Q_heating_W"])
-                subsArray = np.array(df)
-
-                Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-                Capex_a_HEX_building_USD, Opex_fixed_HEX_building_USD, Capex_HEX_building_USD = hex.calc_Cinv_HEX(
-                    Q_max_W, locator, config, 'HEX1')
 
         # HEAT EXCHANGER FOR SOLAR COLLECTORS
         roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
@@ -398,7 +396,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_a_BaseBoiler_NG_connected_USD": [Capex_a_BaseBoiler_NG_USD],
         "Capex_a_PeakBoiler_BG_connected_USD": [Capex_a_PeakBoiler_BG_USD],
         "Capex_a_PeakBoiler_NG_connected_USD": [Capex_a_PeakBoiler_NG_USD],
-        "Capex_a_BackupBoiler_USD": [Capex_a_Boiler_backup_USD],
+        "Capex_a_BackupBoiler_BG_connected_USD": [Capex_a_BackupBoiler_BG_USD],
+        "Capex_a_BackupBoiler_NG_connected_USD": [Capex_a_BackupBoiler_NG_USD],
         "Capex_a_Storage_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
 
         # total_capex
@@ -417,8 +416,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Capex_total_BaseBoiler_NG_connected_USD": [Capex_BaseBoiler_NG_USD],
         "Capex_total_PeakBoiler_BG_connected_USD": [Capex_PeakBoiler_BG_USD],
         "Capex_total_PeakBoiler_NG_connected_USD": [Capex_PeakBoiler_NG_USD],
-        "Capex_total_BackupBoiler_BG_connected_USD": [Capex_Boiler_backup_BG_USD],
-        "Capex_total_BackupBoiler_NG_connected_USD": [Capex_Boiler_backup_NG_USD],
+        "Capex_total_BackupBoiler_BG_connected_USD": [Capex_BackupBoiler_BG_USD],
+        "Capex_total_BackupBoiler_NG_connected_USD": [Capex_BackupBoiler_NG_USD],
         "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
 
         # opex fixed costs
@@ -437,8 +436,8 @@ def addCosts(buildList, locator, master_to_slave_vars, Q_uncovered_design_W, sol
         "Opex_fixed_BaseBoiler_NG_connected_USD": [Opex_fixed_BaseBoiler_NG_USD],
         "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_PeakBoiler_BG_USD],
         "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_PeakBoiler_NG_USD],
-        "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_Boiler_backup_BG_USD],
-        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_Boiler_backup_NG_USD],
+        "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_BackupBoiler_BG_USD],
+        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_BackupBoiler_NG_USD],
         "Opex_fixed_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD]}
 
     return performance_costs
