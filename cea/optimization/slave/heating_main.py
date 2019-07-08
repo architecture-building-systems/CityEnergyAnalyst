@@ -252,11 +252,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_coldsource_PeakBoiler_W[hour] = coldsource_output['Q_coldsource_PeakBoiler_W']
 
     # save data
-
     elapsed = time.time() - t
     # sum up the uncovered demand, get average and peak load
     Q_uncovered_design_W = np.amax(Q_uncovered_W)
-    Q_uncovered_annual_W = np.sum(Q_uncovered_W)
     Opex_var_BackupBoiler_USDhr = np.zeros(HOURS_IN_YEAR)
     Q_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
     E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
@@ -271,10 +269,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_PeakBoiler_BG_USDhr = np.zeros(HOURS_IN_YEAR)
     Opex_var_BackupBoiler_NG_USDhr = np.zeros(HOURS_IN_YEAR)
     Opex_var_BackupBoiler_BG_USDhr = np.zeros(HOURS_IN_YEAR)
-
-    Opex_var_PV_USD = np.zeros(HOURS_IN_YEAR)
-    Opex_var_PVT_USD = np.zeros(HOURS_IN_YEAR)
-    Opex_var_SC_USD = np.zeros(HOURS_IN_YEAR)
 
     if Q_uncovered_design_W != 0:
         for hour in range(HOURS_IN_YEAR):
@@ -306,6 +300,21 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Opex_var_BaseBoiler_BG_USDhr = Opex_var_BaseBoiler_USDhr
         Opex_var_PeakBoiler_BG_USDhr = Opex_var_PeakBoiler_USDhr
         Opex_var_BackupBoiler_BG_USDhr = Opex_var_BackupBoiler_USDhr
+
+    # SUMMARIZE ALL VARIABLE COSTS DATA
+    Opex_var_HP_Sewage_USD = sum(Opex_var_HP_Sewage_USDhr)
+    Opex_var_HP_Lake_USD = sum(Opex_var_HP_Lake_USDhr)
+    Opex_var_GHP_USD = sum(Opex_var_GHP_USDhr)
+    Opex_var_CHP_BG_USD = sum(Opex_var_CHP_BG_USDhr)
+    Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
+    Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
+    Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
+    Opex_var_BaseBoiler_BG_USD = sum(Opex_var_BaseBoiler_BG_USDhr)
+    Opex_var_BaseBoiler_NG_USD = sum(Opex_var_BaseBoiler_NG_USDhr)
+    Opex_var_PeakBoiler_BG_USD = sum(Opex_var_PeakBoiler_BG_USDhr)
+    Opex_var_PeakBoiler_NG_USD = sum(Opex_var_PeakBoiler_NG_USDhr)
+    Opex_var_BackupBoiler_BG_USD = sum(Opex_var_BackupBoiler_BG_USDhr)
+    Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
 
     # HEATING NETWORK
     Capex_DHN_USD, \
@@ -370,21 +379,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'] = 0.0
         performance_emissions_pen['PEN_BackupBoiler_NG_MJoil'] = 0.0
 
-    # SUMMARIZE ALL DATA
-    Opex_var_HP_Sewage_USD = sum(Opex_var_HP_Sewage_USDhr)
-    Opex_var_HP_Lake_USD = sum(Opex_var_HP_Lake_USDhr)
-    Opex_var_GHP_USD = sum(Opex_var_GHP_USDhr)
-    Opex_var_CHP_BG_USD = sum(Opex_var_CHP_BG_USDhr)
-    Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
-    Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
-    Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
-    Opex_var_BaseBoiler_BG_USD = sum(Opex_var_BaseBoiler_BG_USDhr)
-    Opex_var_BaseBoiler_NG_USD = sum(Opex_var_BaseBoiler_NG_USDhr)
-    Opex_var_PeakBoiler_BG_USD = sum(Opex_var_PeakBoiler_BG_USDhr)
-    Opex_var_PeakBoiler_NG_USD = sum(Opex_var_PeakBoiler_NG_USDhr)
-    Opex_var_BackupBoiler_BG_USD = sum(Opex_var_BackupBoiler_BG_USDhr)
-    Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
-
     # SUMMARIZE TOTALS OF THIS SYSTEM
     Capex_total_sys_connected_USD = Capex_DHN_USD + Capex_SubstationsHeating_USD
     Capex_a_sys_connected_USD = Capex_a_DHN_USD + Capex_a_SubstationsHeating_USD
@@ -402,7 +396,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                  Opex_var_PeakBoiler_NG_USD + Opex_var_BackupBoiler_BG_USD + Opex_var_BackupBoiler_NG_USD + \
                                  Opex_var_DHN_USD + Opex_var_SubstationsHeating_USD
 
-    TAC_sys_connected_USD = Capex_a_sys_connected_USD + Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD
+    Opex_a_sys_connected_USD = Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD
+    TAC_sys_connected_USD = Capex_a_sys_connected_USD + Opex_a_sys_connected_USD
 
     GHG_sys_connected_USD = 0.0
     PEN_sys_connected_USD = 0.0
@@ -515,7 +510,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         # totals of connected to network
         "Capex_total_Heating_sys_connected_USD": [Capex_total_sys_connected_USD],
         "Capex_a_Heating_sys_connected_USD": [Capex_a_sys_connected_USD],
-        "Opex_a_Heating_sys_connected_USD": [Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD],
+        "Opex_a_Heating_sys_connected_USD": [Opex_a_sys_connected_USD],
         "TAC_Heating_sys_connected_USD": [TAC_sys_connected_USD],
         "GHG_Heating_sys_connected_tonCO2": [GHG_sys_connected_USD],
         "PEN_Heating_sys_connected_MJoil": [PEN_sys_connected_USD],
