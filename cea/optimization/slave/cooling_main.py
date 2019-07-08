@@ -542,12 +542,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         "GHG_CCGT_connected_tonCO2": GHG_CCGT_tonCO2,
 
         # primary energy
-        "PEN_Lake_connected_tonCO2": prim_energy_Lake_MJoil,
-        "PEN_VCC_connected_tonCO2": prim_energy_VCC_MJoil,
-        "PEN_ACH_connected_tonCO2": prim_energy_ACH_MJoil,
-        "PEN_VCC_backup_connected_tonCO2": prim_energy_VCC_backup_MJoil,
-        "PEN_CT_connected_tonCO2": prim_energy_CT_MJoil,
-        "PEN_CCGT_connected_tonCO2": prim_energy_CCGT_MJoil,
+        "PEN_Lake_connected_MJoil": prim_energy_Lake_MJoil,
+        "PEN_VCC_connected_MJoil": prim_energy_VCC_MJoil,
+        "PEN_ACH_connected_MJoil": prim_energy_ACH_MJoil,
+        "PEN_VCC_backup_connected_MJoil": prim_energy_VCC_backup_MJoil,
+        "PEN_CT_connected_MJoil": prim_energy_CT_MJoil,
+        "PEN_CCGT_connected_MJoil": prim_energy_CCGT_MJoil,
 
         # Totals for this system
         "Capex_total_Cooling_sys_connected_USD": [Capex_total_sys_connected_USD],

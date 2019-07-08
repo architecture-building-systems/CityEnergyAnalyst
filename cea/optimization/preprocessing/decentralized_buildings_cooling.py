@@ -1448,9 +1448,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                           hour] / burner_eff if burner_eff > 0 else 0
 
                 result_AHU_ARU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_burner_Wh  # CHF
-                result_AHU_ARU_SCU[3][8] += (lca.NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_burner_Wh) * 3600E-6  # kgCO2
-                result_AHU_ARU_SCU[3][9] += (
-                                                    lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
+                result_AHU_ARU_SCU[3][8] += (lca.NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_burner_Wh) * 3600E-6 # kgCO2
+                result_AHU_ARU_SCU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6# MJ-oil-eq
 
                 # VCC to AHU + ARU and single effect ACH to SCU
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W[hour],
