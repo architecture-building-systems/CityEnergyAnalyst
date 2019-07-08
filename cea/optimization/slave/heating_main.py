@@ -327,7 +327,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                             solar_features, network_features,
                                             config, prices, lca)
 
-    # THIS CALCUALTES EMISSIONS
+    # THIS CALCULATES EMISSIONS
     if master_to_slave_vars.gt_fuel == "NG":
         performance_emissions_pen = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
                                                                 Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W,
@@ -408,6 +408,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Capex_a_SC_FP_connected_USD": performance_costs['Capex_a_SC_FP_connected_USD'],
          "Capex_a_PVT_connected_USD": performance_costs['Capex_a_PVT_connected_USD'],
          "Capex_a_PV_connected_USD": performance_costs['Capex_a_PV_connected_USD'],
+         "Capex_a_GHP_connected_USD": performance_costs['Capex_a_GHP_connected_USD'],
+         "Capex_a_CHP_BG_connected_USD": performance_costs['Capex_a_CHP_BG_connected_USD'],
+         "Capex_a_CHP_NG_connected_USD": performance_costs['Capex_a_CHP_NG_connected_USD'],
          "Capex_a_Furnace_wet_connected_USD": performance_costs['Capex_a_Furnace_wet_connected_USD'],
          "Capex_a_Furnace_dry_connected_USD": performance_costs['Capex_a_Furnace_dry_connected_USD'],
          "Capex_a_BaseBoiler_BG_connected_USD": performance_costs['Capex_a_BaseBoiler_BG_connected_USD'],
@@ -427,6 +430,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Capex_total_SC_FP_connected_USD": performance_costs['Capex_total_SC_FP_connected_USD'],
          "Capex_total_PVT_connected_USD": performance_costs['Capex_total_PVT_connected_USD'],
          "Capex_total_PV_connected_USD": performance_costs['Capex_total_PV_connected_USD'],
+         "Capex_total_GHP_connected_USD": performance_costs['Capex_total_GHP_connected_USD'],
+         "Capex_total_CHP_BG_connected_USD": performance_costs['Capex_total_CHP_BG_connected_USD'],
+         "Capex_total_CHP_NG_connected_USD": performance_costs['Capex_total_CHP_NG_connected_USD'],
          "Capex_total_Furnace_wet_connected_USD": performance_costs['Capex_total_Furnace_wet_connected_USD'],
          "Capex_total_Furnace_dry_connected_USD": performance_costs['Capex_total_Furnace_dry_connected_USD'],
          "Capex_total_BaseBoiler_BG_connected_USD": performance_costs['Capex_total_BaseBoiler_BG_connected_USD'],
@@ -484,7 +490,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
          # opex annual
-
          # totals of connected to network
          "Capex_total_connected_USD": [Capex_total_connected_USD],
          "Capex_a_connected_USD": [Capex_a_connected_USD],
