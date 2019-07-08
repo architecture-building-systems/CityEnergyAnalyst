@@ -137,7 +137,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
             if storageDeviation3 > 0.0001:
                 # fourth Round optimization - reduce end temperature by rejecting earlier (minimize volume)
                 Q_stored_max_needed_4_W = Q_stored_max_needed_3_W - (
-                            Q_storage_content_fin_op3_W[-1] - Q_storage_content_fin_op3_W[0])
+                        Q_storage_content_fin_op3_W[-1] - Q_storage_content_fin_op3_W[0])
                 V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_4_W, T_ST_MAX,
                                                                                       T_ST_MIN)
                 V4 = V_storage_possible_needed
@@ -157,7 +157,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                     # fifth Round optimization - minimize volume more so the temperature reaches a T_min + dT_margin
                     Q_stored_max_needed_5 = Q_stored_max_needed_4_W - (
-                                Q_storage_content_fin_op4_W[-1] - Q_storage_content_fin_op4_W[0])
+                            Q_storage_content_fin_op4_W[-1] - Q_storage_content_fin_op4_W[0])
                     V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_5,
                                                                                           T_ST_MAX, T_ST_MIN)
                     V5 = V_storage_possible_needed
@@ -314,7 +314,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                                                                                                locator, config,
                                                                                                'TES2')
 
-    #EMISSIONS AND PRIMARY ENERGY
+    # EMISSIONS AND PRIMARY ENERGY
     GHG_storage_tonCO2 = ((np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_CO2) / 1E3
     PEN_storage_MJoil = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
 
@@ -333,15 +333,17 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     GHG_storage_tonCO2 += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_CO2_STD / 1E3
     PEN_storage_MJoil += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
 
-
     # FIXME: repeating line 291-309?
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
 
     if Q_Storage_SeasonEndReheat_W > 0:
-        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE / 1E3  # efficiency is assumed to be 0.8
-        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = ((float(Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * (lca.NG_BOILER_TO_CO2_STD / 1E3)
-        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = ((float(Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
+        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(
+            Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE / 1E3  # efficiency is assumed to be 0.8
+        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = ((float(
+            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * (lca.NG_BOILER_TO_CO2_STD / 1E3)
+        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = ((float(
+            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
     else:
         cost_Boiler_for_Storage_reHeat_at_seasonend_USD = 0
         GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = 0
@@ -366,16 +368,16 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     # SUMMARY OF COSTS AND EMISSIONS
     performance = {
-        #annual costs
+        # annual costs
         "Capex_a_Storage_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
 
-        #total costs
+        # total costs
         "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
 
-        #opex fixed costs
+        # opex fixed costs
         "Opex_fixed_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD],
 
-        #opex var costs
+        # opex var costs
         "Opex_var_Storage_connected_USD": [Opex_var_storage_USD],
 
         # opex annual costs
@@ -384,15 +386,20 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
         # totals of connected to network
         "Capex_total_Storage_sys_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
         "Capex_a_Storage_sys_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
-        "Opex_a_Storage_sys_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD],
-        "TAC_Storage_sys_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD +
-                              Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD],
+        "Opex_a_Storage_sys_connected_USD": [Opex_fixed_storage_USD +
+                                             Opex_fixed_HP_storage_USD +
+                                             Opex_var_storage_USD],
+        "TAC_Storage_sys_connected_USD": [Capex_a_storage_USD +
+                                          Capex_a_HP_storage_USD +
+                                          Opex_fixed_storage_USD +
+                                          Opex_fixed_HP_storage_USD +
+                                          Opex_var_storage_USD],
         # emissions
         "GHG_Storage_connected_tonCO2": [GHG_storage_tonCO2],
 
-        #primary energy
-        "PEN_BackupBoiler_NG_connected_MJoil": [PEN_storage_MJoil],
-        }
+        # primary energy
+        "PEN_Storage_connected_MJoil": [PEN_storage_MJoil],
+    }
 
     return performance
 
