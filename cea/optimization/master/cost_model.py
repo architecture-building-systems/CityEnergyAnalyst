@@ -53,26 +53,27 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
     GHG_disconnected_tonCO2 = (GHG_heating_disconnected_tonCO2 + GHG_cooling_disconnected_tonCO2)
     PEN_disconnected_MJoil = PEN_heating_disconnected_MJoil + PEN_cooling_disconnected_MJoil
 
-    results = pd.DataFrame({"Capex_a_heating_disconnected_USD": [Capex_a_heating_disconnected_USD],
-                            "Capex_total_heating_disconnected_USD": [Capex_total_heating_disconnected_USD],
-                            "Opex_a_heating_disconnected_USD": [Opex_a_heating_disconnected_USD],
-                            "TAC_heating_disconnected_USD": [TAC_heating_disconnected_USD],
-                            "GHG_heating_disconnected_tonCO2": [GHG_heating_disconnected_tonCO2],
-                            "PEN_heating_disconnected_MJoil": [PEN_heating_disconnected_MJoil],
-                            "Capex_a_cooling_disconnected_USD": [Capex_a_cooling_disconnected_USD],
-                            "Capex_total_cooling_disconnected_USD": [Capex_total_cooling_disconnected_USD],
-                            "Opex_a_cooling_disconnected_USD": [Opex_a_cooling_disconnected_USD],
-                            "TAC_cooling_disconnected_USD": [TAC_cooling_disconnected_USD],
-                            "GHG_cooling_disconnected_tonCO2": [GHG_cooling_disconnected_tonCO2],
-                            "PEN_cooling_disconnected_MJoil": [PEN_cooling_disconnected_MJoil],
-                            "Capex_a_disconnected_USD": [Capex_a_disconnected_USD],
-                            "Capex_total_disconnected_USD": [Capex_total_disconnected_USD],
-                            "Opex_a_disconnected_USD": [Opex_a_disconnected_USD],
-                            "TAC_disconnected_USD": [TAC_disconnected_USD],
-                            "GHG_disconnected_tonCO2": [GHG_disconnected_tonCO2],
-                            "PEN_disconnected_MJoil": [PEN_disconnected_MJoil]})
+    performance = {
+        "Capex_a_heating_disconnected_USD": [Capex_a_heating_disconnected_USD],
+        "Capex_total_heating_disconnected_USD": [Capex_total_heating_disconnected_USD],
+        "Opex_a_heating_disconnected_USD": [Opex_a_heating_disconnected_USD],
+        "TAC_heating_disconnected_USD": [TAC_heating_disconnected_USD],
+        "GHG_heating_disconnected_tonCO2": [GHG_heating_disconnected_tonCO2],
+        "PEN_heating_disconnected_MJoil": [PEN_heating_disconnected_MJoil],
+        "Capex_a_cooling_disconnected_USD": [Capex_a_cooling_disconnected_USD],
+        "Capex_total_cooling_disconnected_USD": [Capex_total_cooling_disconnected_USD],
+        "Opex_a_cooling_disconnected_USD": [Opex_a_cooling_disconnected_USD],
+        "TAC_cooling_disconnected_USD": [TAC_cooling_disconnected_USD],
+        "GHG_cooling_disconnected_tonCO2": [GHG_cooling_disconnected_tonCO2],
+        "PEN_cooling_disconnected_MJoil": [PEN_cooling_disconnected_MJoil],
+        "Capex_a_disconnected_USD": [Capex_a_disconnected_USD],
+        "Capex_total_disconnected_USD": [Capex_total_disconnected_USD],
+        "Opex_a_disconnected_USD": [Opex_a_disconnected_USD],
+        "TAC_disconnected_USD": [TAC_disconnected_USD],
+        "GHG_disconnected_tonCO2": [GHG_disconnected_tonCO2],
+        "PEN_disconnected_MJoil": [PEN_disconnected_MJoil]}
 
-    return TAC_disconnected_USD, GHG_disconnected_tonCO2, PEN_disconnected_MJoil
+    return performance
 
 
 def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
@@ -274,7 +275,7 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             df = pd.read_csv(locator.get_optimization_network_results_folder(),
                              master_to_slave_vars.network_data_file_heating,
-                usecols=["Qcdata_netw_total_kWh"])
+                             usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
             Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
@@ -337,7 +338,8 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         "Opex_fixed_PeakBoiler_BG_connected_USD": [Opex_fixed_PeakBoiler_BG_USD],
         "Opex_fixed_PeakBoiler_NG_connected_USD": [Opex_fixed_PeakBoiler_NG_USD],
         "Opex_fixed_BackupBoiler_BG_connected_USD": [Opex_fixed_BackupBoiler_BG_USD],
-        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_BackupBoiler_NG_USD], }
+        "Opex_fixed_BackupBoiler_NG_connected_USD": [Opex_fixed_BackupBoiler_NG_USD]
+    }
 
     return performance_costs
 

@@ -120,15 +120,6 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
     performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
-    # SOLAR TECHNOLOGIES
-    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
-    performance_solar = solar_main.solar_evaluation(locator, config, solar_features, master_to_slave_vars)
-
-    # NATURAL GAS
-    print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
-    performance_fuels = natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
-                                         district_cooling_network)
-
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
     performance_electricity = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
@@ -138,6 +129,15 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                                          lca,
                                                                                          district_heating_network,
                                                                                          district_cooling_network)
+    # SOLAR TECHNOLOGIES
+    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
+    performance_solar = solar_main.solar_evaluation(locator, config, solar_features, master_to_slave_vars, lca)
+
+    # NATURAL GAS
+    print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
+    performance_fuels = natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
+                                         district_cooling_network)
+
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
