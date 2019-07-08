@@ -270,11 +270,10 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
             Opex_fixed_BackupBoiler_NG_USD = Opex_fixed_Boiler_backup_USD
             Capex_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
 
-        # HEATPUMP AND HEX FOR HEAR RECOVERY (DATA CENTRE)
+        # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(),
-                             master_to_slave_vars.network_data_file_heating),
+            df = pd.read_csv(locator.get_optimization_network_results_folder(),
+                             master_to_slave_vars.network_data_file_heating,
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
@@ -293,6 +292,7 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
     # Save data
     performance_costs = {
         # annualized capex
+        "Capex_a_HP_DataCenter_connected_USD": [Capex_a_wasteserver_HP_USD + Capex_a_wasteserver_HEX_USD],
         "Capex_a_HP_Sewage_connected_USD": [Capex_a_Sewage_USD],
         "Capex_a_HP_Lake_connected_USD": [Capex_a_Lake_USD],
         "Capex_a_GHP_connected_USD": [Capex_a_GHP_USD],
@@ -308,6 +308,7 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_a_BackupBoiler_NG_connected_USD": [Capex_a_BackupBoiler_NG_USD],
 
         # total_capex
+        "Capex_total_HP_DataCenter_connected_USD": [Capex_wasteserver_HP_USD + Capex_wasteserver_HEX_USD],
         "Capex_total_HP_Sewage_connected_USD": [Capex_Sewage_USD],
         "Capex_total_HP_Lake_connected_USD": [Capex_Lake_USD],
         "Capex_total_GHP_connected_USD": [Capex_GHP_USD],
@@ -323,6 +324,7 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_total_BackupBoiler_NG_connected_USD": [Capex_BackupBoiler_NG_USD],
 
         # opex fixed costs
+        "Opex_fixed_HP_DataCenter_connected_USD": [Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD],
         "Opex_fixed_HP_Sewage_connected_USD": [Opex_fixed_Sewage_USD],
         "Opex_fixed_HP_Lake_connected_USD": [Opex_fixed_Lake_USD],
         "Opex_fixed_GHP_connected_USD": [Opex_fixed_GHP_USD],

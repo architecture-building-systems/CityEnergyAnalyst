@@ -114,6 +114,21 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     reduced_timesteps_flag,
                                                                     district_heating_network)
 
+
+
+    # DISCONNECTED BUILDINGS
+    print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
+    performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
+
+    # SOLAR TECHNOLOGIES
+    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
+    performance_solar = solar_main.solar_evaluation(locator, config, solar_features, master_to_slave_vars)
+
+    # NATURAL GAS
+    print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
+    performance_fuels = natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
+                                         district_cooling_network)
+
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
     performance_electricity = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
@@ -124,27 +139,14 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                                          district_heating_network,
                                                                                          district_cooling_network)
 
-
-    # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
-    # This is to save the files for further processing and plots
-    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
-                                         district_cooling_network)
-
-    # DISCONNECTED BUILDINGS
-    print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
-    performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
-
-    # SOLAR TECHNOLOGIES
-    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
-    performance_solar = solar_main.solar_evaluation()
-
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
                                                                               performance_DHN,
                                                                               performance_DCN,
-                                                                              performance_electricity,
                                                                               performance_solar,
-                                                                              performance_disconnected)
+                                                                              performance_disconnected,
+                                                                              performance_fuels,
+                                                                              performance_electricity)
 
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
@@ -465,10 +467,10 @@ def calc_master_to_slave_variables(gen,
         GHP_Qmax = max(individual[11] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
 
-    # heat recovery servers and compresor
-    irank = N_HEAT * 2
-    master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
-    master_to_slave_vars.WasteCompressorHeatRecovery = 0
+    #server storage
+    if individual[12] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
+        master_to_slave_vars.WasteServersHeatRecovery = 1
+        master_to_slave_vars.HPServer_maxSize_W = max(individual[13] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # SOLAR SYSTEMS
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential

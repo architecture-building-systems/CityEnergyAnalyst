@@ -395,10 +395,10 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                                           Opex_fixed_HP_storage_USD +
                                           Opex_var_storage_USD],
         # emissions
-        "GHG_Storage_connected_tonCO2": [GHG_storage_tonCO2],
+        "GHG_Storage_sys_connected_tonCO2": [GHG_storage_tonCO2],
 
         # primary energy
-        "PEN_Storage_connected_MJoil": [PEN_storage_MJoil],
+        "PEN_Storage_sys_connected_MJoil": [PEN_storage_MJoil],
     }
 
     return performance
