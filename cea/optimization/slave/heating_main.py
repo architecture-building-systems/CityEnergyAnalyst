@@ -364,7 +364,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 NG_used_PeakBoiler_W,
                                                                 Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
                                                                 np.sum(E_BackupBoiler_req_W),
-                                                                master_to_slave_vars, locator, lca, fuel='NG')
+                                                                master_to_slave_vars, lca, Q_HPServer_gen_W, E_HPServer_req_W,  fuel='NG')
         performance_emissions_pen['GHG_BaseBoiler_BG_tonCO2'] = 0.0
         performance_emissions_pen['GHG_PeakBoiler_BG_tonCO2'] = 0.0
         performance_emissions_pen['GHG_BackupBoiler_BG_tonCO2'] = 0.0
@@ -386,7 +386,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 BG_used_PeakBoiler_W,
                                                                 Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
                                                                 np.sum(E_BackupBoiler_req_W),
-                                                                master_to_slave_vars, locator, lca, fuel='BG')
+                                                                master_to_slave_vars, lca, Q_HPServer_gen_W,  fuel='BG')
         performance_emissions_pen['GHG_BaseBoiler_NG_tonCO2'] = 0.0
         performance_emissions_pen['GHG_PeakBoiler_NG_tonCO2'] = 0.0
         performance_emissions_pen['GHG_BackupBoiler_NG_tonCO2'] = 0.0
@@ -642,7 +642,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
                                 E_gas_CHP_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W,
                                 E_wood_Furnace_W,
                                 Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
-                                master_to_slave_vars, locator, lca, fuel):
+                                master_to_slave_vars, lca, Q_HPServer_gen_W, E_coldsource_HPServer_W,  fuel):
     """
     This function calculates the emissions and primary energy consumption
 
@@ -763,6 +763,11 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     else:
         COP_HPSew_avg = 100.0
 
+    if np.sum(Q_HPServer_gen_W) != 0:
+        COP_HPServer_avg = np.sum(Q_HPServer_gen_W) / (-np.sum(E_coldsource_HPServer_W) + np.sum(Q_HPServer_gen_W))
+    else:
+        COP_HPServer_avg = 100.0
+
     if np.sum(Q_GHP_gen_W) != 0:
         COP_GHP_avg = np.sum(Q_GHP_gen_W) / (-np.sum(E_coldsource_GHP_W) + np.sum(Q_GHP_gen_W))
     else:
@@ -775,6 +780,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         COP_HPLake_avg = 100
 
     ######### COMPUTE THE GHG emissions
+    GHG_DataCenter_tonCO2 = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6) * (lca.SERVERHP_TO_CO2_STD / 1E3)
     GHG_Sewage_tonCO2 = (np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * WH_TO_J / 1.0E6) * (lca.SEWAGEHP_TO_CO2_STD / 1E3)
     GHG_GHP_tonCO2 = (np.sum(Q_GHP_gen_W) / COP_GHP_avg * WH_TO_J / 1.0E6) * (lca.GHP_TO_CO2_STD / 1E3)
     GHG_HPLake_tonCO2 = (np.sum(Q_HPLake_gen_W) / COP_HPLake_avg / 1.0E6) * (lca.LAKEHP_TO_CO2_STD / 1.0E3)
@@ -789,6 +795,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
             lca.FURNACE_TO_CO2_STD / 1E3)
 
     ################## Primary energy needs
+    PEN_DataCenter_MJoil = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6)* lca.SERVERHP_TO_OIL_STD
     PEN_Sewage_MJoil = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
     PEN_GHP_MJoil = np.sum(Q_GHP_gen_W) / COP_GHP_avg * lca.GHP_TO_OIL_STD * WH_TO_J / 1.0E6
     PEN_HPLake_MJoil = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * lca.LAKEHP_TO_OIL_STD * WH_TO_J / 1.0E6
@@ -812,7 +819,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "GHG_PeakBoiler_" + fuel + "_tonCO2": [GHG_PeakBoiler_tonCO2],
         "GHG_BackupBoiler_" + fuel + "_tonCO2": [GHG_AddBoiler_tonCO2],
         "GHG_Furnace_tonCO2": [GHG_Furnace_tonCO2],
-        'GHG_HP_DataCenter_tonCO2': [PEN_DataCenter_MJoil],
+        'PEN_HP_DataCenter_tonCO2': [PEN_DataCenter_MJoil],
         "PEN_HP_Sewage_MJoil": [PEN_Sewage_MJoil],
         "PEN_GHP_MJoil": [PEN_GHP_MJoil],
         "PEN_HP_Lake_MJoil": [PEN_HPLake_MJoil],
