@@ -86,14 +86,14 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         if DHN_barcode.count("1") > 0:
             # THERMAL STORAGE
             print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-            performance_storage = storage_main.storage_optimization(locator,
+            performance_storage, master_to_slave_vars = storage_main.storage_optimization(locator,
                                                                     master_to_slave_vars,
                                                                     lca, prices,
                                                                     config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
             performance_DHN, Q_heating_uncovered_design_W,
-            Q_heating_uncovered_annual_W = heating_main.heating_calculations_of_DH_buildings(locator,
+            Q_heating_uncovered_annual_W, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
                                                                                                config, prices, lca,
                                                                                                solar_features,

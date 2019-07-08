@@ -83,7 +83,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
 
     E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
-
     Q_missing_copy_W = Q_missing_W.copy()
 
     # Import Temperatures from Network Summary:
@@ -322,9 +321,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
                                                                      locator)
 
-    # CAPEX AND FIXED OPEX GENERATION UNITS (INCLUDING SEASONAL STORAGE AND SOLAR)
-    performance_costs = cost_model.addCosts(building_names, locator, master_to_slave_vars, Q_uncovered_design_W,
-                                            solar_features, network_features,
+    # CAPEX AND FIXED OPEX GENERATION UNITS (INCLUDING SOLAR)
+    performance_costs = cost_model.addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
+                                            solar_features,
                                             config, prices, lca)
 
     # THIS CALCULATES EMISSIONS
@@ -387,20 +386,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_BackupBoiler_BG_USD = sum(Opex_var_BackupBoiler_BG_USDhr)
     Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
 
-    # Costs
-    Capex_a_connected_USD = addcosts_Capex_a_USD
-    Capex_total_connected_USD = addcosts_Capex_USD
-    Opex_a_connected_USD = addcosts_Opex_fixed_USD
-    TAC_connected_USD = Capex_a_connected_USD + Opex_a_connected_USD
 
-    TAC_USD = np.float64(TAC_connected_USD)
-    GHG_tonCO2 = np.float64(CO2_emitted)
-    PEN_MJoil = np.float64(PEN_used)
+    # "Capex_total_connected_USD": [Capex_total_connected_USD],
+    # "Capex_a_connected_USD": [Capex_a_connected_USD],
+    # "Opex_a_connected_USD": [Opex_a_connected_USD],
+    # "TAC_connected_USD": [TAC_connected_USD],
 
-    # saving pattern activation to disk
-    date = network_data.DATE.values
-    results = pd.DataFrame(
-        {"DATE": date,
+    #SAVE PERFORMANCE METRICS TO DISK
+    performance = {
          # annualized capex
          "Capex_a_HP_Sewage_connected_USD": performance_costs['Capex_a_HP_Sewage_connected_USD'],
          "Capex_a_HP_Lake_connected_USD": performance_costs['Capex_a_HP_Lake_connected_USD'],
@@ -419,7 +412,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
          "Capex_a_BackupBoiler_BG_connected_USD": performance_costs['Capex_a_BackupBoiler_BG_connected_USD'],
          "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
-         "Capex_a_Storage_connected_USD": performance_costs['Capex_a_Storage_connected_USD'],
          "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
          "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
 
@@ -441,7 +433,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
          "Capex_total_BackupBoiler_BG_connected_USD": performance_costs['Capex_total_BackupBoiler_BG_connected_USD'],
          "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
-         "Capex_total_Storage_connected_USD": performance_costs['Capex_total_Storage_connected_USD'],
          "Capex_total_DHN_connected_USD": Capex_DHN_USD,
          "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
 
@@ -463,7 +454,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
          "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
          "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-         "Opex_fixed_Storage_connected_USD": performance_costs['Opex_fixed_Storage_connected_USD'],
          "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
          "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
@@ -485,16 +475,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
          "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
          "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-         "Opex_var_Storage_connected_USD": Opex_var_Storage_USD,
          "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
          "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
-         # opex annual
          # totals of connected to network
-         "Capex_total_connected_USD": [Capex_total_connected_USD],
-         "Capex_a_connected_USD": [Capex_a_connected_USD],
-         "Opex_a_connected_USD": [Opex_a_connected_USD],
-         "TAC_connected_USD": [TAC_connected_USD],
+         "Capex_total_Heating_sys_connected_USD": [Capex_total_connected_USD],
+         "Capex_a_Heating_sys_connected_USD": [Capex_a_connected_USD],
+         "Opex_a_Heating_sys_connected_USD": [Opex_a_connected_USD],
+         "TAC_Heating_sys_connected_USD": [TAC_connected_USD],
 
          # emissions
          "GHG_HP_Sewage_connected_tonCO2": performance_emissions_pen['GHG_HP_Sewage_tonCO2'],
@@ -525,12 +513,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
          "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_MJoil'],
          "PEN_BackupBoiler_BG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_BG_MJoil'],
          "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_MJoil']
-         })
+         }
 
-    results.to_csv(locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
+    pd.DataFrame(performance).to_csv(locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
                                                                       master_to_slave_vars.generation_number),
                    index=False)
 
+    # saving pattern activation to disk
+    date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
                             "HPSew_Status": source_HP_Sewage,
@@ -592,7 +582,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                              master_to_slave_vars.generation_number),
                    index=False)
 
-    return TAC_USD, GHG_tonCO2, PEN_MJoil
+    return performance, master_to_slave_vars
 
 
 def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W,
