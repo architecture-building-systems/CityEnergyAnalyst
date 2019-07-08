@@ -42,7 +42,7 @@ __status__ = "Production"
 # technical model
 
 def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, prices, lca, config,
-                                         reduced_timesteps_flag, district_heating_network, district_cooling_network):
+                                         reduced_timesteps_flag, district_heating_network):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -302,28 +302,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         Qc_req_from_CT_W[hour] = Qc_CT_W
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
-    if reduced_timesteps_flag:
-        reduced_costs_USD = np.sum(opex_var_Lake_USDhr) + np.sum(opex_var_VCC_USDhr) + \
-                            np.sum(opex_var_ACH_USDhr) + np.sum(opex_var_VCC_backup_USDhr)
-        reduced_GHG_tonCO2 = np.sum(GHG_Lake_tonCO2) + np.sum(GHG_Lake_tonCO2) + \
-                             np.sum(GHG_ACH_tonCO2) + np.sum(GHG_VCC_backup_tonCO2)
-        reduced_prim_MJoil = np.sum(prim_energy_Lake_MJoil) + np.sum(prim_energy_VCC_MJoil) + \
-                             np.sum(prim_energy_ACH_MJoil) + np.sum(prim_energy_VCC_backup_MJoil)
-
-        costs_a_USD += reduced_costs_USD * (HOURS_IN_YEAR / (stop_t - start_t))
-        GHG_tonCO2 += reduced_GHG_tonCO2 * (HOURS_IN_YEAR / (stop_t - start_t))
-        prim_MJoil += reduced_prim_MJoil * (HOURS_IN_YEAR / (stop_t - start_t))
-    else:
-        costs_a_USD += np.sum(opex_var_Lake_USDhr) + np.sum(opex_var_VCC_USDhr) + \
-                       np.sum(opex_var_ACH_USDhr) + np.sum(opex_var_VCC_backup_USDhr)
-        GHG_tonCO2 += np.sum(GHG_Lake_tonCO2) + np.sum(GHG_Lake_tonCO2) + \
-                      np.sum(GHG_ACH_tonCO2) + np.sum(GHG_VCC_backup_tonCO2)
-        prim_MJoil += np.sum(prim_energy_Lake_MJoil) + np.sum(prim_energy_VCC_MJoil) + \
-                      np.sum(prim_energy_ACH_MJoil) + np.sum(prim_energy_VCC_backup_MJoil)
-
     calfactor_total += np.sum(calfactor_buildings)
-    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(
-        Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
+    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
     Q_VCC_nom_W = limits['Qnom_VCC_W']
     Q_ACH_nom_W = limits['Qnom_ACH_W']
     Q_VCC_backup_nom_W = limits['Qnom_VCC_backup_W']
@@ -340,19 +320,6 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
             GHG_CT_tonCO2[hour] = (wdot_CT * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
             prim_energy_CT_MJoil[hour] = (wdot_CT * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
             E_used_CT_W[hour] = wdot_CT
-
-        if reduced_timesteps_flag:
-            reduced_costs_USD = np.sum(opex_var_CT_USDhr)
-            reduced_GHG_tonCO2 = np.sum(GHG_CT_tonCO2)
-            reduced_prim_MJoil = np.sum(prim_energy_CT_MJoil)
-
-            costs_a_USD += reduced_costs_USD * (HOURS_IN_YEAR / (stop_t - start_t))
-            GHG_tonCO2 += reduced_GHG_tonCO2 * (HOURS_IN_YEAR / (stop_t - start_t))
-            prim_MJoil += reduced_prim_MJoil * (HOURS_IN_YEAR / (stop_t - start_t))
-        else:
-            costs_a_USD += np.sum(opex_var_CT_USDhr)
-            GHG_tonCO2 += np.sum(GHG_CT_tonCO2)
-            prim_MJoil += np.sum(prim_energy_CT_MJoil)
 
     ########## Operation of the CCGT
     if Qh_req_from_CCGT_max_W > 0:
@@ -401,48 +368,25 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                            ((E_gen_CCGT_W[hour] * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ)
             NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
 
-        if reduced_timesteps_flag:
-            reduced_costs_USD = np.sum(opex_var_CCGT_USDhr)
-            reduced_GHG_tonCO2 = np.sum(GHG_CCGT_tonCO2)
-            reduced_prim_MJoil = np.sum(prim_energy_CCGT_MJoil)
-
-            costs_a_USD += reduced_costs_USD * (HOURS_IN_YEAR / (stop_t - start_t))
-            GHG_tonCO2 += reduced_GHG_tonCO2 * (HOURS_IN_YEAR / (stop_t - start_t))
-            prim_MJoil += reduced_prim_MJoil * (HOURS_IN_YEAR / (stop_t - start_t))
-        else:
-            costs_a_USD += np.sum(opex_var_CCGT_USDhr)
-            GHG_tonCO2 += np.sum(GHG_CCGT_tonCO2)
-            prim_MJoil += np.sum(prim_energy_CCGT_MJoil)
-
     ########## Add investment costs
     for i in range(limits['number_of_VCC_chillers']):
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
-        costs_a_USD += Capex_a_VCC_USD + Opex_fixed_VCC_USD
 
     for i in range(limits['number_of_VCC_backup_chillers']):
         Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD, Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(
             Q_VCC_backup_nom_W, locator, config, 'CH3')
-        costs_a_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
     master_to_slave_vars.VCC_backup_cooling_size_W = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Q_ACH_nom_W, locator,
                                                                                               ACH_TYPE_DOUBLE, config)
-        costs_a_USD += Capex_a_ACH_USD + Opex_fixed_ACH_USD
-
     Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    costs_a_USD += Capex_a_CCGT_USD + Opex_fixed_CCGT_USD
 
     Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
                                                                                               config, 'TES2')
-    costs_a_USD += Capex_a_Tank_USD + Opex_fixed_Tank_USD
-
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
 
-    costs_a_USD += Capex_a_CT_USD + Opex_fixed_CT_USD
 
-    network_data = pd.read_csv(
-        locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling))
 
     # LAKE
     if sum(E_used_Lake_W) > 0:  # there is lake cooling
@@ -498,6 +442,10 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     GHG_tonCO2 = np.float64(GHG_tonCO2)
     PEN_MJoil = np.float64(prim_MJoil)
 
+
+    #PLOT RESULTS
+    network_data = pd.read_csv(locator.get_optimization_network_results_summary('DC',
+                                                                                master_to_slave_vars.network_data_file_cooling))
     date = network_data.DATE.values
     results = pd.DataFrame(
         {"DATE": date,

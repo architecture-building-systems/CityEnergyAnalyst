@@ -79,76 +79,50 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                 DHN_barcode, DCN_barcode, DHN_configuration,
                                                                 DCN_configuration, config)
 
-    # INTITIALIZE OBJECTIVE FUNCTIONS =  costs, CO2 and primary energy
-    total_costs_df = {}
-    total_emissions_df = {}
-    total_energy_df = {}
-    costs_USD = 0
-    GHG_tonCO2 = 0
-    PEN_MJoil = 0
 
 
     # DISTRICT HEATING NETWORK
-    costs_heating_USD = 0.0
-    PEN_heating_MJoil = 0.0
-    GHG_heating_tonCO2 = 0.0
     if district_heating_network:
         if DHN_barcode.count("1") > 0:
             # THERMAL STORAGE
             print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-            costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator,
-                                                                                                         master_to_slave_vars,
-                                                                                                         lca, prices,
-                                                                                                         config)
-            costs_USD += costs_storage_USD
-            GHG_tonCO2 += GHG_storage_tonCO2
-            PEN_MJoil += PEN_storage_MJoil
+            performance_storage = storage_main.storage_optimization(locator,
+                                                                    master_to_slave_vars,
+                                                                    lca, prices,
+                                                                    config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
-            (costs_heating_USD, GHG_tonCO2, PEN_heating_MJoil, Q_heating_uncovered_design_W,
-             Q_heating_uncovered_annual_W) = heating_main.heating_calculations_of_DH_buildings(locator,
+            performance_DHN, Q_heating_uncovered_design_W,
+            Q_heating_uncovered_annual_W = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
                                                                                                config, prices, lca,
                                                                                                solar_features,
                                                                                                network_features)
-        costs_USD += costs_heating_USD
-        GHG_tonCO2 += GHG_heating_tonCO2
-        PEN_MJoil += PEN_heating_MJoil
 
-    # DISTRICT COOLING NETWORK
-    costs_cooling_USD = 0.0
-    GHG_cooling_tonCO2 = 0.0
-    PEN_cooling_MJoil = 0.0
+    # DISTRICT COOLING NETWORK:
     if district_cooling_network:
-        print("CALCULATING PERFORMANCE OF COOLING NETWORK AND SOLAR - CONNECTED BUILDINGS")
         if DCN_barcode.count("1") > 0:
+            print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
             reduced_timesteps_flag = False
-            (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) \
-                = cooling_main.cooling_calculations_of_DC_buildings(locator,
+            performance_DCN = cooling_main.cooling_calculations_of_DC_buildings(locator,
                                                                     master_to_slave_vars,
                                                                     network_features,
                                                                     prices,
                                                                     lca,
                                                                     config,
-                                                                    reduced_timesteps_flag, district_cooling_network,
-                                                                    district_cooling_network)
-        costs_USD += costs_cooling_USD
-        GHG_tonCO2 += GHG_cooling_tonCO2
-        PEN_MJoil += PEN_cooling_MJoil
+                                                                    reduced_timesteps_flag,
+                                                                    district_heating_network)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
-    (costs_electricity_USD, GHG_electricity_tonCO2,
-     PEN_electricity_MJoil) = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
+    performance_electricity = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
                                                                                          DCN_barcode,
                                                                                          locator,
                                                                                          master_to_slave_vars,
                                                                                          lca,
                                                                                          district_heating_network,
                                                                                          district_cooling_network)
-    costs_USD += costs_electricity_USD
-    GHG_tonCO2 += GHG_electricity_tonCO2
-    PEN_MJoil += PEN_electricity_MJoil
+
 
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
@@ -157,12 +131,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
-    (costs_additional_USD, GHG_additional_tonCO2,
-     PEN_additional_MJoil) = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
-
-    costs_USD += costs_additional_USD
-    GHG_tonCO2 += GHG_additional_tonCO2
-    PEN_MJoil += PEN_additional_MJoil
+    performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
 
 

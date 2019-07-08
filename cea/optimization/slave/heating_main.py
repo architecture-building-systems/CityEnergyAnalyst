@@ -308,21 +308,21 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Opex_var_PeakBoiler_BG_USDhr = Opex_var_PeakBoiler_USDhr
         Opex_var_BackupBoiler_BG_USDhr = Opex_var_BackupBoiler_USDhr
 
-    # COSTS HEATING NETWORK
+    # HEATING NETWORK
     Capex_DHN_USD, \
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
     Opex_var_DHN_USD = calc_network_costs_heating(config, DHN_barcode, locator, master_to_slave_vars,
                                                   network_features, lca)
 
-    # COSTS HEATING SUBSTATIONS
+    # HEATING SUBSTATIONS
     Capex_SubstationsHeating_USD, \
     Capex_a_SubstationsHeating_USD, \
     Opex_fixed_SubstationsHeating_USD, \
     Opex_var_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
                                                                      locator)
 
-    # COSTS GENERATION UNITS (INCLUDING SEASONAL STORAGE AND SOLAR)
+    # CAPEX AND FIXED OPEX GENERATION UNITS (INCLUDING SEASONAL STORAGE AND SOLAR)
     performance_costs = cost_model.addCosts(building_names, locator, master_to_slave_vars, Q_uncovered_design_W,
                                             solar_features, network_features,
                                             config, prices, lca)
