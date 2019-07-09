@@ -92,7 +92,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     lca, prices,
                                                                     config)
 
-            print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
+            print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
             performance_heating = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                     master_to_slave_vars,
                                                                                     config, prices, lca,

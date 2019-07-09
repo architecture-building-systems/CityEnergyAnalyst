@@ -917,29 +917,30 @@ def calc_Cinv_SC(Area_m2, locator, config, technology):
     """
     Lifetime 35 years
     """
+    if Area_m2 > 0.0:
+        SC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="SC")
+        SC_cost_data = SC_cost_data[SC_cost_data['type'] == technology]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if Area_m2 < SC_cost_data['cap_min'][0]:
+            Area_m2 = SC_cost_data['cap_min'][0]
+        SC_cost_data = SC_cost_data[(SC_cost_data['cap_min'] <= Area_m2) & (SC_cost_data['cap_max'] > Area_m2)]
+        Inv_a = SC_cost_data.iloc[0]['a']
+        Inv_b = SC_cost_data.iloc[0]['b']
+        Inv_c = SC_cost_data.iloc[0]['c']
+        Inv_d = SC_cost_data.iloc[0]['d']
+        Inv_e = SC_cost_data.iloc[0]['e']
+        Inv_IR = (SC_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = SC_cost_data.iloc[0]['LT_yr']
+        Inv_OM = SC_cost_data.iloc[0]['O&M_%'] / 100
 
-    SC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="SC")
-    SC_cost_data[SC_cost_data['type'] == technology]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if Area_m2 < SC_cost_data['cap_min'][0]:
-        Area_m2 = SC_cost_data['cap_min'][0]
-    SC_cost_data = SC_cost_data[
-        (SC_cost_data['cap_min'] <= Area_m2) & (SC_cost_data['cap_max'] > Area_m2)]
-    Inv_a = SC_cost_data.iloc[0]['a']
-    Inv_b = SC_cost_data.iloc[0]['b']
-    Inv_c = SC_cost_data.iloc[0]['c']
-    Inv_d = SC_cost_data.iloc[0]['d']
-    Inv_e = SC_cost_data.iloc[0]['e']
-    Inv_IR = (SC_cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = SC_cost_data.iloc[0]['LT_yr']
-    Inv_OM = SC_cost_data.iloc[0]['O&M_%'] / 100
+        InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
 
-    InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
-
-    Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_SC_USD = InvC * Inv_OM
-    Capex_SC_USD = InvC
+        Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed_SC_USD = InvC * Inv_OM
+        Capex_SC_USD = InvC
+    else:
+        Capex_a_SC_USD = Opex_fixed_SC_USD = Capex_SC_USD = 0.0
 
     return Capex_a_SC_USD, Opex_fixed_SC_USD, Capex_SC_USD
 

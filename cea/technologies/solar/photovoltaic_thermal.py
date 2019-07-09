@@ -647,30 +647,32 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     technology = 0 represents the first technology when there are multiple technologies.
     FIXME: handle multiple technologies when cost calculations are done
     """
-    PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
-    PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
-    technology_code = list(set(PVT_cost_data['code']))
-    PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if PVT_peak_W < PVT_cost_data['cap_min'][0]:
-        PVT_peak_W = PVT_cost_data['cap_min'][0]
-    PVT_cost_data = PVT_cost_data[
-        (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
-    Inv_a = PVT_cost_data.iloc[0]['a']
-    Inv_b = PVT_cost_data.iloc[0]['b']
-    Inv_c = PVT_cost_data.iloc[0]['c']
-    Inv_d = PVT_cost_data.iloc[0]['d']
-    Inv_e = PVT_cost_data.iloc[0]['e']
-    Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
-    Inv_OM = PVT_cost_data.iloc[0]['O&M_%'] / 100
+    if PVT_peak_kW > 0.0:
+        PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
+        PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
+        technology_code = list(set(PVT_cost_data['code']))
+        PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if PVT_peak_W < PVT_cost_data['cap_min'][0]:
+            PVT_peak_W = PVT_cost_data['cap_min'][0]
+        PVT_cost_data = PVT_cost_data[(PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
+        Inv_a = PVT_cost_data.iloc[0]['a']
+        Inv_b = PVT_cost_data.iloc[0]['b']
+        Inv_c = PVT_cost_data.iloc[0]['c']
+        Inv_d = PVT_cost_data.iloc[0]['d']
+        Inv_e = PVT_cost_data.iloc[0]['e']
+        Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
+        Inv_OM = PVT_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
+        InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = InvC * Inv_OM
-    Capex = InvC
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = InvC * Inv_OM
+        Capex = InvC
+    else:
+        Capex_a = Opex_fixed = Capex = 0.0
 
     return Capex_a, Opex_fixed, Capex
 

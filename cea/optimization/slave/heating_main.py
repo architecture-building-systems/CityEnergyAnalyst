@@ -431,7 +431,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Capex_a_sys_connected_USD = Capex_a_DHN_USD + Capex_a_SubstationsHeating_USD
     Opex_fixed_sys_connected_USD = Opex_fixed_DHN_USD + Opex_fixed_SubstationsHeating_USD
 
-    for column in performance_costs.columns:
+    for column in performance_costs.keys():
         if "Capex_total_" in column and "connected_USD" in column:
             Capex_total_sys_connected_USD += performance_costs[column]
         elif "Capex_a_" in column and "connected_USD" in column:
@@ -450,7 +450,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     GHG_sys_connected_USD = 0.0
     PEN_sys_connected_USD = 0.0
-    for column in performance_costs.columns:
+    for column in performance_costs.keys():
         if "GHG_" in column and "connected_tonCO2" in column:
             GHG_sys_connected_USD += performance_costs[column]
         elif "PEN_" in column and "connected_MJoil" in column:
