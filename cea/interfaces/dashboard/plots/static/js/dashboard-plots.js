@@ -23,14 +23,23 @@ $(document).ready(function() {
         let dashboard_index = e.relatedTarget.dataset.dashboardIndex;
         let url = "plot-parameters/" + dashboard_index + "/" + plot_index;
         $.get(url, function (data) {
-            $("#cea-dashboard-edit-plot-form").html(data);
-            $("#cea-dashboard-edit-plot-form").attr("action", url);
-            $("#cea-dashboard-edit-plot-form").attr("method", "POST");
+            $("#cea-dashboard-edit-plot-form").html(data)
+                .attr("action", url)
+                .attr("method", "POST");
             $(".selectpicker").selectpicker({"actionsBox": true});
         }).fail(function (data) {
             console.log("something went terribly wrong?!");
             console.log(data);
         });
+    });
+
+    $("#cea-dashboard-replace-plot").on("show.bs.modal", function (e) {
+        let plot_index = e.relatedTarget.dataset.plotIndex;
+        let dashboard_index = e.relatedTarget.dataset.dashboardIndex;
+        console.log(plot_index, dashboard_index);
+        let url = "replace-plot/" + dashboard_index + "/" + plot_index;
+        $("#cea-dashboard-replace-plot-form").attr("action", url)
+            .attr("method", "POST");
     });
 
     $("#dashboard-selector").change(function () {
@@ -40,12 +49,6 @@ $(document).ready(function() {
             window.location.href = "./" + $(this).val();
         }
     });
-});
-
-
-$(document).resize(function() {
-    console.log("resizing!");
-    load_all_plots();
 });
 
 function load_all_plots() {
@@ -79,3 +82,10 @@ function add_new_dashboard() {
         $("#cea-prompt").modal({"show": true, "backdrop": "static"});
     });
 }
+
+window.addEventListener('resize', function () {
+    console.log('resizing');
+    $.each($('.plotly-graph-div.js-plotly-plot'), function (index) {
+        Plotly.Plots.resize($(this).attr('id'));
+    });
+});

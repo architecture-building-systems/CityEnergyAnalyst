@@ -109,6 +109,14 @@ class Dashboard(object):
         plot = plot_class(self.config.project, parameters, self.cache)
         self.plots.append(plot)
 
+    def replace_plot(self, category, plot_id, plot_index):
+        """Replace plot at index"""
+        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
+        parameters = plot_class.get_default_parameters(self.config)
+
+        plot = plot_class(self.config.project, parameters, self.cache)
+        self.plots[plot_index] = plot
+
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
         self.plots.pop(plot_index)
