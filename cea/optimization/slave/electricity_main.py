@@ -55,21 +55,20 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     E_PV_gen_W, \
     E_PVT_gen_W, \
     E_sys_gen_W = calc_district_system_electricity_generated(cooling_activation_data,
-                                                                         heating_activation_data,
-                                                                         storage_activation_data)
+                                                             heating_activation_data,
+                                                             storage_activation_data)
 
     # GET ENERGY REQUIREMENTS
     E_sys_req_W = calc_district_system_electricity_requirements(DCN_barcode, DHN_barcode,
-                                                                                    building_names,
-                                                                                    cooling_activation_data,
-                                                                                    heating_activation_data, locator,
-                                                                                    storage_activation_data)
+                                                                building_names,
+                                                                cooling_activation_data,
+                                                                heating_activation_data, locator,
+                                                                storage_activation_data)
 
-
-
-    #GET ACTIVATION CURVE
+    # GET ACTIVATION CURVE
     activation_curve_variables = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
-                                                       E_PV_gen_W, E_sys_req_W, master_to_slave_vars, locator, date)
+                                                              E_PV_gen_W, E_sys_req_W, master_to_slave_vars, locator,
+                                                              date)
 
     E_CHP_gen_directload_W = activation_curve_variables['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = activation_curve_variables['E_CHP_gen_export_W']
@@ -80,13 +79,37 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     E_GRID_directload_W = activation_curve_variables['E_GRID_directload_W']
 
 
-    #PARAMETERS TO CHANGE COSTS AND EMISSIONS (NET)
+    GHG_CHP_gen_export_tonCO2 = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    GHG_CHP_gen_directload_tonCO2 = (sum(E_CHP_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    GHG_CCGT_gen_export_tonCO2 = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    GHG_CCGT_gen_directload_tonCO2 = (sum(E_CCGT_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    GHG_Furnace_gen_export_tonCO2 = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    GHG_Furnace_gen_directload_tonCO2 = (sum(E_Furnace_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+
+
+    Opex_var_CHP_export_USD = [energy*cost for energy,cost in zip(E_CHP_gen_export_W , lca.ELEC_PRICE)]
+    Opex_var_CHP_directload_USD = (E_CHP_gen_directload_W) * (lca.EL_TO_OIL_EQ)
+    Opex_var_CCGT_export_USD = (E_CCGT_gen_export_W) * (lca.EL_TO_OIL_EQ)
+    Opex_var_CCGT_directload_USD= (E_CCGT_gen_directload_W) * (lca.EL_TO_OIL_EQ)
+    Opex_var_Furnace_export_USD = (E_Furnace_gen_export_W) * (lca.EL_TO_OIL_EQ)
+    Opex_var_Furnace_directload_USD = (E_Furnace_gen_directload_W) * (lca.EL_TO_OIL_EQ)
+
+    PEN_CHP_gen_export_MJoil = (E_CHP_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CHP_gen_directload_MJoil = (E_CHP_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CCGT_gen_export_MJoil = (E_CCGT_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CCGT_gen_directload_MJoil= (E_CCGT_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_gen_export_MJoil = (E_Furnace_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_gen_directload_MJoil = (E_Furnace_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+
+
+
+    # UPDATE PARAMETERS (NET)
     # CCGT for cooling
     cooling_performance['Opex_var_CCGT_connected_USD']
     cooling_performance['Opex_a_CCGT_connected_USD']
 
-    cooling_performance['GHG_CCGT_connected_tonCO2']
-    cooling_performance['PEN_CCGT_connected_MJoil']
+    cooling_performance['GHG_CCGT_connected_tonCO2'] = cooling_performance['GHG_CCGT_connected_tonCO2'] + GHG_CCGT_gen_directload_tonCO2 - GHG_CCGT_gen_export_tonCO2
+    cooling_performance['PEN_CCGT_connected_MJoil'] = cooling_performance['PEN_CCGT_connected_MJoil'] +PEN_CCGT_gen_directload_MJoil - PEN_CCGT_gen_export_MJoil
 
     # System totals
     cooling_performance['GHG_Cooling_sys_connected_tonCO2']
@@ -95,24 +118,21 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     # CHP for heating
     fuel = master_to_slave_vars.gt_fuel
     type = master_to_slave_vars.Furn_Moist_type
-    heating_performance['Opex_var_CHP_'+fuel+'_connected_USD']
-    heating_performance['Opex_a_CHP_'+fuel+'_connected_USD']
-    heating_performance['GHG_CHP_'+fuel+'_connected_tonCO2']
-    heating_performance['PEN_CHP_'+fuel+'_connected_MJoil']
+    heating_performance['Opex_var_CHP_' + fuel + '_connected_USD']
+    heating_performance['Opex_a_CHP_' + fuel + '_connected_USD']
+    heating_performance['GHG_CHP_' + fuel + '_connected_tonCO2'] = heating_performance['GHG_CHP_' + fuel + '_connected_tonCO2'] + GHG_CHP_gen_directload_tonCO2 - GHG_CHP_gen_export_tonCO2
+    heating_performance['PEN_CHP_' + fuel + '_connected_MJoil'] = heating_performance['PEN_CHP_' + fuel + '_connected_MJoil'] + PEN_CHP_gen_directload_MJoil - PEN_CHP_gen_export_MJoil
 
-    heating_performance['Opex_var_Furnace_'+type+'_connected_USD']
-    heating_performance['Opex_a_Furnace_'+type+'_connected_USD']
-    heating_performance['GHG_Furnace_'+type+'_connected_tonCO2']
-    heating_performance['PEN_Furnace_'+type+'_connected_MJoil']
-
+    heating_performance['Opex_var_Furnace_' + type + '_connected_USD']
+    heating_performance['Opex_a_Furnace_' + type + '_connected_USD']
+    heating_performance['GHG_Furnace_' + type + '_connected_tonCO2'] = heating_performance['GHG_Furnace_' + type + '_connected_tonCO2']  + GHG_Furnace_gen_directload_tonCO2 - GHG_Furnace_gen_export_tonCO2
+    heating_performance['PEN_Furnace_' + type + '_connected_MJoil'] = heating_performance['PEN_Furnace_' + type + '_connected_MJoil'] + PEN_Furnace_gen_directload_MJoil - PEN_Furnace_gen_export_MJoil
     heating_performance['GHG_Cooling_sys_connected_tonCO2']
     heating_performance['PEN_Cooling_sys_connected_MJoil']
 
 
 
-    #calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
-
-
+    # calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
 
     PEN_from_heat_used_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
     PEN_saved_from_electricity_sold_CHP_MJoil = E_from_CHP_W * (- lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
@@ -135,7 +155,6 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     GHG_VCC_backup_MJoil = E_used_VCC_backup_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
     GHG_ACH_MJoil = E_used_ACH_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
     GHG_CT_MJoil = E_used_CT_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
-
 
     results = pd.DataFrame({"DATE": date,
                             "E_total_req_W": total_electricity_demand_W,
@@ -306,22 +325,23 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
     # TOTAL EXPORTS:
     activation_curve = {
         "DATE": date,
-        'E_CHP_gen_directload_W':E_CHP_gen_directload_W,
-        'E_CHP_gen_export_W':E_CHP_gen_export_W,
+        'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
+        'E_CHP_gen_export_W': E_CHP_gen_export_W,
         'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
         'E_CCGT_gen_export_W': E_CHP_gen_export_W,
-        'E_Furnace_gen_directload_W':E_Furnace_gen_directload_W,
+        'E_Furnace_gen_directload_W': E_Furnace_gen_directload_W,
         'E_Furnace_gen_export_W': E_Furnace_gen_export_W,
-        'E_PV_gen_directload_W':E_PV_gen_directload_W,
-        'E_PV_gen_export_W':E_PV_gen_export_W,
+        'E_PV_gen_directload_W': E_PV_gen_directload_W,
+        'E_PV_gen_export_W': E_PV_gen_export_W,
         'E_PVT_gen_directload_W': E_PVT_gen_directload_W,
         'E_PVT_gen_export_W': E_PVT_gen_export_W,
-        'E_GRID_directload_W':E_GRID_directload_W
+        'E_GRID_directload_W': E_GRID_directload_W
     }
     pd.DataFrame(activation_curve).to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(
-                master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
     return activation_curve
+
 
 def calc_district_system_electricity_generated(cooling_activation_data, heating_activation_data,
                                                storage_activation_data):
@@ -370,17 +390,17 @@ def extract_requirements_generation_units(cooling_activation_data, heating_activ
     E_used_ACH_W = cooling_activation_data['E_used_ACH_W']
     E_used_CT_W = cooling_activation_data['E_used_CT_W']
 
-    E_generation_req_W = E_HPServer_req_W +\
+    E_generation_req_W = E_HPServer_req_W + \
                          E_HPSew_req_W + \
-                         E_HPLake_req_W +\
-                         E_GHP_req_W +\
-                         E_BaseBoiler_req_W +\
-                         E_PeakBoiler_req_W +\
+                         E_HPLake_req_W + \
+                         E_GHP_req_W + \
+                         E_BaseBoiler_req_W + \
+                         E_PeakBoiler_req_W + \
                          E_BackupBoiler_req_W + \
-                         E_used_Lake_W +\
+                         E_used_Lake_W + \
                          E_used_VCC_W + \
                          E_used_VCC_backup_W + \
-                         E_used_ACH_W +\
+                         E_used_ACH_W + \
                          E_used_CT_W
 
     return E_generation_req_W

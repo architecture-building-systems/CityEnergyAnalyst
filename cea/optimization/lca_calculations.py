@@ -148,10 +148,15 @@ class LcaCalculations(object):
 
         if detailed_electricity_pricing:
             self.ELEC_PRICE = electricity_costs['cost_kWh'].values/1000 # in USD_2015 per W
+            self.ELEC_PRICE_EXPORT = electricity_costs['cost_sell_kWh'].values/1000 # in USD_2015 per W #
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                             'costs_kWh'] / 1000
+
+            average_electricity_selling_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                            'costs_sell_kWh'] / 1000
             self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price # in USD_2015 per W
+            self.ELEC_PRICE_EXPORT = np.ones(HOURS_IN_YEAR) * average_electricity_selling_price # in USD_2015 per W
 
         self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
             'PEN']  # MJ_oil / MJ_final
