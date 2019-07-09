@@ -35,10 +35,10 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
     """
 
     # Initializing resulting values (necessairy as not all of them are over-written):
-    Q_uncovered_W = 0
-    cost_HPSew_USD, cost_HPLake_USD, cost_GHP_USD, cost_CHP_USD, cost_Furnace_USD, cost_BaseBoiler_USD, cost_PeakBoiler_USD = 0, 0, 0, 0, 0, 0, 0
+
 
     # initialize all sources to be off = 0 (turn to "on" with setting to 1)
+    #integer variables
     source_HP_Sewage = 0
     source_HP_Lake = 0
     source_GHP = 0
@@ -47,14 +47,17 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
     source_BaseBoiler = 0
     source_PeakBoiler = 0
     source_HP_DataCenter = 0
-    Q_excess_W = 0
-    cost_Server_USD = 0
-    Q_HPServer_gen_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0, 0, 0, 0, 0, 0, 0
-    E_HPServer_req_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
-    Gas_used_HPServer_W = Gas_used_HPSew_W, Gas_used_HPLake_W, Gas_used_GHP_W, Gas_used_CHP_W, Gas_used_Furnace_W, Gas_used_BaseBoiler_W, Gas_used_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
-    Wood_used_HPServer_W = Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Wood_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
-    Q_coldsource_HPSew_W, Q_coldsource_HPLake_W, Q_coldsource_GHP_W, Q_coldsource_CHP_W, \
-    Q_coldsource_Furnace_W, Q_coldsource_BaseBoiler_W, Q_coldsource_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+
+    #double variables
+    Q_excess_W = 0.0
+    Q_uncovered_W = 0.0
+    cost_Server_USD, cost_HPSew_USD, cost_HPLake_USD, cost_GHP_USD, cost_CHP_USD, cost_Furnace_USD, cost_BaseBoiler_USD, cost_PeakBoiler_USD = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    Q_HPServer_gen_W, Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    E_HPServer_req_W, E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    Gas_used_HPServer_W, Gas_used_HPSew_W, Gas_used_HPLake_W, Gas_used_GHP_W, Gas_used_CHP_W, Gas_used_Furnace_W, Gas_used_BaseBoiler_W, Gas_used_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    Wood_used_HPServer_W, Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Wood_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    Q_coldsource_HPServer_W, Q_coldsource_HPSew_W, Q_coldsource_HPLake_W, Q_coldsource_GHP_W, Q_coldsource_CHP_W, \
+    Q_coldsource_Furnace_W, Q_coldsource_BaseBoiler_W, Q_coldsource_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
@@ -131,7 +134,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             mdot_DH_to_Server_kgpers = float(mdot_DH_req_kgpers)
 
         cost_Server_USD, C_HPServer_per_kWh_th_pure, \
-        Q_coldsource_Server_W, Q_HPServer_gen_W, \
+        Q_coldsource_HPServer_W, Q_HPServer_gen_W, \
         E_HPServer_req_W = HPSew_op_cost(mdot_DH_to_Server_kgpers,
                                       tdhsup_K, tdhret_req_K,
                                       TretsewArray_K, lca, Q_therm_Data_W, hour)
@@ -240,14 +243,14 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
     if Q_heat_unmet_W > 0:  # TODO: get back-up boiler
         Q_uncovered_W = Q_heat_unmet_W
 
-    opex_output = {'Opex_var_HP_DataCenter_USD': cost_Server_USD,
-                   'Opex_var_HP_Sewage_USD': cost_HPSew_USD,
-                   'Opex_var_HP_Lake_USD': cost_HPLake_USD,
-                   'Opex_var_GHP_USD': cost_GHP_USD,
-                   'Opex_var_CHP_USD': cost_CHP_USD,
-                   'Opex_var_Furnace_USD': cost_Furnace_USD,
-                   'Opex_var_BaseBoiler_USD': cost_BaseBoiler_USD,
-                   'Opex_var_PeakBoiler_USD': cost_PeakBoiler_USD}
+    opex_output = {'Opex_var_HP_DataCenter_USDhr': cost_Server_USD,
+                   'Opex_var_HP_Sewage_USDhr': cost_HPSew_USD,
+                   'Opex_var_HP_Lake_USDhr': cost_HPLake_USD,
+                   'Opex_var_GHP_USDhr': cost_GHP_USD,
+                   'Opex_var_CHP_USDhr': cost_CHP_USD,
+                   'Opex_var_Furnace_USDhr': cost_Furnace_USD,
+                   'Opex_var_BaseBoiler_USDhr': cost_BaseBoiler_USD,
+                   'Opex_var_PeakBoiler_USDhr': cost_PeakBoiler_USD}
 
     source_output = {'HP_DataCenter': source_HP_DataCenter,
                      'HP_Sewage': source_HP_Sewage,
@@ -295,7 +298,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                    'Wood_used_BaseBoiler_W': Wood_used_BaseBoiler_W,
                    'Wood_used_PeakBoiler_W': Wood_used_PeakBoiler_W}
 
-    coldsource_output = {'Q_coldsource_HPServer_W': Q_coldsource_Server_W,
+    coldsource_output = {'Q_coldsource_HPServer_W': Q_coldsource_HPServer_W,
                          'Q_coldsource_HPSew_W': Q_coldsource_HPSew_W,
                          'Q_coldsource_HPLake_W': Q_coldsource_HPLake_W,
                          'Q_coldsource_GHP_W': Q_coldsource_GHP_W,

@@ -167,7 +167,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             Q_in_storage_new_W = min(Q_in_storage_old_W, Storage_Data[0])
             Q_to_storage_fin_W = max(Q_in_storage_new_W - Q_in_storage_old_W, 0)
             Q_rejected_final_W[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W \
-                                       - Q_to_storage_final_W
+                                       - Q_to_storage_fin_W
             T_storage_new_K = min(T_storage_old_K, T_storage_new_K)
             E_aux_ch_W = 0
 
