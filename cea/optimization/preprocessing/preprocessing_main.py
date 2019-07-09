@@ -14,7 +14,7 @@ import numpy as np
 
 from cea.optimization.master import summarize_network
 from cea.technologies import substation
-from cea.constants import HOURS_IN_YEAR
+
 from cea.resources.geothermal import calc_ground_temperature
 from cea.optimization.constants import Z0
 from cea.utilities import epwreader
@@ -31,7 +31,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, config, prices, lca):
+def preproccessing(locator, total_demand, weather_file, config):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -68,10 +68,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, config, 
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
 
-    print("PRE-PROCESSING 2/3: solar features")
-    solar_features = SolarFeatures(locator, building_names)
-
-    print("PRE-PROCESSING 3/3: thermal networks")  # at first estimate a distribution with all the buildings connected
+    print("PRE-PROCESSING 2/2: thermal networks")  # at first estimate a distribution with all the buildings connected
     if district_heating_network:
         buildings_names_connected = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         if len(buildings_names_connected) <= 1:
@@ -93,7 +90,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, config, 
                                        ground_temp, num_tot_buildings, "DC", "all")  # "_all" key for all buildings
 
 
-    return solar_features, ground_temp
+    return
 
 
 def get_building_names_with_load(total_demand, load_name):
@@ -105,44 +102,7 @@ def get_building_names_with_load(total_demand, load_name):
             buildings_names_connected.append(building)
     return buildings_names_connected
 
-class SolarFeatures(object):
-    def __init__(self, locator, building_names, ):
-        E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_SC_FP_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_SC_ET_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        A_PV_m2 = np.zeros(HOURS_IN_YEAR)
-        A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
-        A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
-        A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
 
-        #import and sum all the area available
-        for name in building_names:
-            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-            building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-            building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
-            building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
-
-            E_PV_gen_kWh += E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-            E_PVT_gen_kWh += E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
-            Q_PVT_gen_kWh += Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-            Q_SC_FP_gen_kWh += Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
-            Q_SC_ET_gen_kWh += Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
-            A_PV_m2 += building_PV['Area_PV_m2']
-            A_PVT_m2 += building_PVT['Area_PVT_m2']
-            A_SC_FP_m2 += building_SC_FP['Area_SC_m2']
-            A_SC_ET_m2 += building_SC_ET['Area_SC_m2']
-
-        self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1E3
-        self.A_PV_m2 = A_PV_m2.values.max()
-        self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1E3
-        self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1E3
-        self.A_PVT_m2 = A_PVT_m2.values.max()
-        self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1E3
-        self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
-        self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1E3
-        self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
 
 
 # ============================

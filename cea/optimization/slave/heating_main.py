@@ -901,13 +901,12 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
 
 
 def calc_network_costs_heating(config, district_network_barcode, locator, master_to_slave_vars,
-                               ntwFeat, lca):
+                               network_features, lca):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, ntwFeat, locator, lca, "DC")
+        master_to_slave_vars, network_features, locator, lca, "DH")
 
     # Intitialize class
-    network_features = network_opt.NetworkOptimizationFeatures(config, locator)
     num_buildings_connected = district_network_barcode.count("1")
     num_all_buildings = len(district_network_barcode)
     ratio_connected = num_buildings_connected / num_all_buildings
@@ -916,7 +915,7 @@ def calc_network_costs_heating(config, district_network_barcode, locator, master
     Inv_IR = 0.05
     Inv_LT = 20
     Inv_OM = 0.10
-    Capex_Network_USD = network_features.pipesCosts_DCN_USD * ratio_connected
+    Capex_Network_USD = network_features.pipesCosts_DHN_USD * ratio_connected
     Capex_a_Network_USD = (Capex_Network_USD * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 

@@ -324,33 +324,20 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
                                                                                'HP2')
 
     # HEAT EXCHANGER FOR SOLAR COLLECTORS
-    roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
-    areaAvail = 0
-    for i in range(len(DHN_barcode)):
-        index = DHN_barcode[i]
-        if index == "1":
-            areaAvail += roof_area_m2[i][0]
+    Q_max_SC_ET_Wh = solar_features.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET
+    Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh,
+                                                                                             locator,
+                                                                                             config, 'HEX1')
 
-    for i in range(len(DHN_barcode)):
-        index = DHN_barcode[i]
-        if index == "1":
-            share = roof_area_m2[i][0] / areaAvail
-            # print share, "solar area share", buildList[i]
+    Q_max_SC_FP_Wh = solar_features.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP
+    Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,
+                                                                                             locator,
+                                                                                             config, 'HEX1')
 
-            Q_max_SC_ET_Wh = solar_features.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
-            Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh,
-                                                                                                     locator,
-                                                                                                     config, 'HEX1')
-
-            Q_max_SC_FP_Wh = solar_features.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
-            Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,
-                                                                                                     locator,
-                                                                                                     config, 'HEX1')
-
-            Q_max_PVT_Wh = solar_features.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
-            Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh,
-                                                                                               locator, config,
-                                                                                               'HEX1')
+    Q_max_PVT_Wh = solar_features.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT
+    Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh,
+                                                                                       locator, config,
+                                                                                       'HEX1')
 
 
     performance_costs = {
@@ -363,7 +350,7 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
         "Capex_a_HP_Lake_connected_USD": [Capex_a_Lake_USD],
         "Capex_a_GHP_connected_USD": [Capex_a_GHP_USD],
         "Capex_a_CHP_BG_connected_USD": [Capex_a_CHP_BG_USD],
-        "Capex_a_CHP_NG__connected_USD": [Capex_a_CHP_NG_USD],
+        "Capex_a_CHP_NG_connected_USD": [Capex_a_CHP_NG_USD],
         "Capex_a_Furnace_wet_connected_USD": [Capex_a_furnace_wet_USD],
         "Capex_a_Furnace_dry_connected_USD": [Capex_a_furnace_dry_USD],
         "Capex_a_BaseBoiler_BG_connected_USD": [Capex_a_BaseBoiler_BG_USD],
