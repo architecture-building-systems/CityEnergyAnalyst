@@ -420,7 +420,7 @@ def calc_temperature_convergence(Q_storage_content_final_W):
     return storageDeviation
 
 
-def calc_storage_volume_from_heat_requirement(Q_loss0_W, Q_stored_max0_W, T_ST_MAX, T_ST_MIN):
-    V_storage_possible_needed = (Q_stored_max0_W + Q_loss0_W) * WH_TO_J / (
+def calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX, T_ST_MIN):
+    V_storage_possible_needed = (Q_required_in_storage_W) * WH_TO_J / (
             DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
     return V_storage_possible_needed

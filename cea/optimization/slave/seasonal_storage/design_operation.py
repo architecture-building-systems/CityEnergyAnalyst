@@ -140,7 +140,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]
-        Q_to_storage_final_W = Storage_Data[3]
+        Q_to_storage_fin_W = Storage_Data[3]
         Q_from_storage_req_final_W = Storage_Data[2]
         E_aux_ch_W = Storage_Data[4]
         E_aux_dech_W = Storage_Data[5]
@@ -165,7 +165,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         # if storage temperature too high, no more charging possible - reject energy
         if T_storage_new_K >= master_to_slave_vars.T_ST_MAX-0.001:
             Q_in_storage_new_W = min(Q_in_storage_old_W, Storage_Data[0])
-            Q_to_storage_final_W = max(Q_in_storage_new_W - Q_in_storage_old_W, 0)
+            Q_to_storage_fin_W = max(Q_in_storage_new_W - Q_in_storage_old_W, 0)
             Q_rejected_final_W[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W \
                                        - Q_to_storage_final_W
             T_storage_new_K = min(T_storage_old_K, T_storage_new_K)
@@ -184,7 +184,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_storage_content_final_W[HOUR] = Q_in_storage_new_W
         T_storage_final_K[HOUR] = T_storage_new_K
         Q_from_storage_final_W[HOUR] = Q_from_storage_req_final_W
-        Q_to_storage_final_W[HOUR] = Q_to_storage_final_W
+        Q_to_storage_final_W[HOUR] = Q_to_storage_fin_W
         E_aux_ch_final_W[HOUR] = E_aux_ch_W
         E_aux_dech_final_W[HOUR] = E_aux_dech_W
         E_aux_solar_W[HOUR] = Solar_E_aux_Wh[HOUR]
