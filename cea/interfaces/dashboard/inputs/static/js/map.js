@@ -125,6 +125,11 @@ $(document).ready(function() {
                 console.log(`Get ${key} failed.`);
             });
         });
+
+        $(".visibility-toggle").change(function () {
+            redrawAll();
+        })
+
     } else {
         deckgl = new DeckGL({
             container: 'mapid',
@@ -266,15 +271,6 @@ function toggleDark(dark) {
     }
 }
 
-function toggleLayer(obj) {
-    if (obj.checked) {
-        createLayer(obj.value, { visible: true });
-    } else {
-        createLayer(obj.value, { visible: false });
-    }
-    deckgl.setProps({ layers: [...layers] });
-}
-
 function createLayer(name, options={}) {
     switch(name) {
         case 'zone':
@@ -296,15 +292,17 @@ function createLayer(name, options={}) {
 }
 
 function createDistrictLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='district');
+    var id = 'district';
+    layers = layers.filter(layer => layer.id!==id);
 
     layers.splice(4, 0, new GeoJsonLayer({
-        id: 'district',
-        data: inputstore.getGeojson('district'),
+        id: id,
+        data: inputstore.getGeojson(id),
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
         filled: true,
+        visible: $(`#${id}-toggle`).prop('checked'),
 
         getElevation: f => f.properties['height_ag'],
         getFillColor: f => buildingColor([255, 0, 0], f),
@@ -324,15 +322,17 @@ function createDistrictLayer(options={}) {
 }
 
 function createZoneLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='zone');
+    var id = 'zone';
+    layers = layers.filter(layer => layer.id!==id);
 
     layers.splice(3, 0, new GeoJsonLayer({
-        id: 'zone',
-        data: inputstore.getGeojson('zone'),
+        id: id,
+        data: inputstore.getGeojson(id),
         opacity: 0.5,
         extruded: extruded,
         wireframe: true,
         filled: true,
+        visible: $(`#${id}-toggle`).prop('checked'),
 
         getElevation: f => f.properties['height_ag'],
         getFillColor: f => buildingColor([0, 0, 255], f),
@@ -353,10 +353,12 @@ function createZoneLayer(options={}) {
 }
 
 function createStreetsLayer(options={}) {
+    var id = 'streets';
     layers = layers.filter(layer => layer.id!=='streets');
     layers.splice(0, 0, new GeoJsonLayer({
         id: 'streets',
         data: jsonStore['streets'],
+        visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: [255, 0, 0],
         getLineWidth: 3,
@@ -371,12 +373,14 @@ function createStreetsLayer(options={}) {
 }
 
 function createDHNetworksLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='dh_networks');
+    var id = 'dh_networks';
+    layers = layers.filter(layer => layer.id!==id);
     layers.splice(1, 0, new GeoJsonLayer({
-        id: 'dh_networks',
-        data: jsonStore['dh_networks'],
+        id: id,
+        data: jsonStore[id],
         stroked: false,
         filled: true,
+        visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: [0, 255, 0],
         getFillColor: f => nodeFillColor(f.properties['Type']),
@@ -393,12 +397,14 @@ function createDHNetworksLayer(options={}) {
 }
 
 function createDCNetworksLayer(options={}) {
-    layers = layers.filter(layer => layer.id!=='dc_networks');
+    var id = 'dc_networks';
+    layers = layers.filter(layer => layer.id!==id);
     layers.splice(2, 0, new GeoJsonLayer({
-        id: 'dc_networks',
-        data: jsonStore['dc_networks'],
+        id: id,
+        data: jsonStore[id],
         stroked: false,
         filled: true,
+        visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: [0, 255, 244],
         getFillColor: f => nodeFillColor(f.properties['Type']),
@@ -422,22 +428,27 @@ function updateTooltip({x, y, object, layer}) {
         tooltip.style.left = `${x}px`;
         var innerHTML = '';
 
-        if (layer.id == 'zone' || layer.id == 'district') {
+        if (layer.id === 'zone' || layer.id === 'district') {
             $.each(inputstore.getColumns(layer.id), function (index, column)  {
-                innerHTML += `<div><b>${column}</b>: ${object.properties[column]}</div>`;
+                var property = object.properties[column];
+                var unit = '';
+                if (column==='height_ag'){unit = 'm'; property = property.toFixed(2);}
+                if (column==='REFERENCE' && !property) return;
+                innerHTML += `<div><b>${column}</b>: ${property}${unit}</div>`;
             });
             var area = turf.area(object);
-            innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>
-            <div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+            innerHTML += `<br><div><b>area</b>: ${area.toFixed(2)}m<sup>2</sup></div>` +
+            `<div><b>volume</b>: ${(area * object.properties['height_ag']).toFixed(2)}m<sup>3</sup></div>`;
         } else {
             for (let prop in object.properties) {
                 innerHTML += `<div><b>${prop}</b>: ${object.properties[prop]}</div>`;
             }
         }
-        if (layer.id == 'dc_networks' || layer.id == 'dh_networks') {
+        if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
             if (!object.properties.hasOwnProperty("Building")) {
-                var length = turf.length(object) * 1000;
-                innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                object.properties.weight = parseFloat(object.properties.weight).toFixed(2);
+                var length = (turf.length(object) * 1000).toFixed(2);
+                innerHTML += `<br><div><b>length</b>: ${length}m</div>`;
             }
         }
         tooltip.innerHTML = innerHTML;
@@ -506,4 +517,11 @@ function redrawBuildings() {
     createLayer('zone');
     createLayer('district');
     deckgl.setProps({ layers: [...layers] });
+}
+
+function redrawAll() {
+    createLayer('streets');
+    createLayer('dh_networks');
+    createLayer('dc_networks');
+    redrawBuildings()
 }
