@@ -16,8 +16,8 @@ from cea.optimization.constants import *
 from cea.optimization.master import cost_model
 from cea.optimization.master import generation
 from cea.optimization.master import summarize_network
-from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.master.performance_aggregation import summarize_results_individual
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
@@ -87,17 +87,17 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         if DHN_barcode.count("1") > 0:
             # THERMAL STORAGE
             print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-            performance_storage, master_to_slave_vars = storage_main.storage_optimization(locator,
+            performance_storage = storage_main.storage_optimization(locator,
                                                                     master_to_slave_vars,
                                                                     lca, prices,
                                                                     config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
-            performance_heating, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
-                                                                                               master_to_slave_vars,
-                                                                                               config, prices, lca,
-                                                                                               solar_features,
-                                                                                               network_features)
+            performance_heating = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                    master_to_slave_vars,
+                                                                                    config, prices, lca,
+                                                                                    solar_features,
+                                                                                    network_features)
 
     # DISTRICT COOLING NETWORK:
     if district_cooling_network:

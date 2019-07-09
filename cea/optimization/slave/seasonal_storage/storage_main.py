@@ -44,23 +44,22 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     :rtype: Nonetype
     """
     print "Storage Optimization Ready"
-    MS_Var = master_to_slave_vars
 
-    CSV_NAME = MS_Var.network_data_file_heating
+    CSV_NAME = master_to_slave_vars.network_data_file_heating
 
     # Initiating
 
-    # SOLCOL_TYPE = MS_Var.SOLCOL_TYPE
+    # SOLCOL_TYPE = master_to_slave_vars.SOLCOL_TYPE
     SOLCOL_TYPE = "NONE"
-    T_storage_old_K = MS_Var.T_storage_zero
-    Q_in_storage_old = MS_Var.Q_in_storage_zero
+    T_storage_old_K = master_to_slave_vars.T_storage_zero
+    Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 
     # start with initial size:
-    T_ST_MAX = MS_Var.T_ST_MAX
-    T_ST_MIN = MS_Var.T_ST_MIN
+    T_ST_MAX = master_to_slave_vars.T_ST_MAX
+    T_ST_MIN = master_to_slave_vars.T_ST_MIN
 
     ## initial storage size
-    V_storage_initial_m3 = MS_Var.STORAGE_SIZE
+    V_storage_initial_m3 = master_to_slave_vars.STORAGE_SIZE
     V0 = V_storage_initial_m3
     STORE_DATA = "yes"
     Q_stored_max0_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, \
@@ -165,10 +164,10 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                     if Q_initial_W != 0:
                         Q_initial_min = Q_disc_seasonstart_opt4_W - min(
                             Q_storage_content_fin_op4_W)  # assuming the minimum at the end of the season
-                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * MS_Var.dT_buffer / WH_TO_J
+                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * master_to_slave_vars.dT_buffer / WH_TO_J
                         Q_initial_W = Q_initial_min + Q_buffer
                         T_initial_real = calc_T_initial_from_Q_and_V(Q_initial_min, T_ST_MIN, V_storage_possible_needed)
-                        T_initial_K = MS_Var.dT_buffer + T_initial_real
+                        T_initial_K = master_to_slave_vars.dT_buffer + T_initial_real
                     else:
                         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
@@ -298,24 +297,23 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     # Get results from storage operation
     storage_operation_data = pd.read_csv(
-        locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number, MS_Var.generation_number))
-    E_aux_ch_W = np.array(storage_operation_data['E_aux_ch_W'])
-    E_aux_dech_W = np.array(storage_operation_data['E_aux_dech_W'])
-    E_thermalstorage_W = np.add(E_aux_ch_W, E_aux_dech_W)
+        locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
+    E_aux_ch_W = storage_operation_data['E_aux_ch_W'].values
+    E_aux_dech_W = storage_operation_data['E_aux_dech_W'].values
+    E_thermalstorage_W = E_aux_ch_W + E_aux_dech_W
 
     # VARIABLE COSTS
-    for hour in range(len(E_thermalstorage_W)):
-        Opex_var_storage_USDhr = E_thermalstorage_W[hour] * lca.ELEC_PRICE[hour]
+    Opex_var_storage_USDhr = [load*price for load, price in zip(E_thermalstorage_W, lca.ELEC_PRICE)]
     Opex_var_storage_USD = sum(Opex_var_storage_USDhr)
 
     # CAPEX AND FIXED COSTS
-    StorageVol_m3 = np.array(storage_operation_data["Storage_Size_m3"][0])[0][0]
+    StorageVol_m3 = storage_operation_data.loc[0,"Storage_Size_m3"]#take the first line
     Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
                                                                                                locator, config,
                                                                                                'TES2')
 
     # EMISSIONS AND PRIMARY ENERGY
-    GHG_storage_tonCO2 = ((np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_CO2) / 1E3
+    GHG_storage_tonCO2 = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_CO2 / 1E3
     PEN_storage_MJoil = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
 
     # calculate electricity required to bring the temperature to convergence

@@ -192,14 +192,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                     TretsewArray_K[hour],
                                                     prices, lca, ground_temp[hour])
 
-        Opex_var_HP_DataCenter_USDhr[hour] = opex_output['Opex_var_HP_DataCenter_USD']
+        Opex_var_HP_DataCenter_USDhr[hour] = opex_output['Opex_var_HP_DataCenter_USDhr']
         Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
-        Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USD']
-        Opex_var_GHP_USDhr[hour] = opex_output['Opex_var_GHP_USD']
-        Opex_var_CHP_USD[hour] = opex_output['Opex_var_CHP_USD']
-        Opex_var_Furnace_USDhr[hour] = opex_output['Opex_var_Furnace_USD']
-        Opex_var_BaseBoiler_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USD']
-        Opex_var_PeakBoiler_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USD']
+        Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
+        Opex_var_GHP_USDhr[hour] = opex_output['Opex_var_GHP_USDhr']
+        Opex_var_CHP_USD[hour] = opex_output['Opex_var_CHP_USDhr']
+        Opex_var_Furnace_USDhr[hour] = opex_output['Opex_var_Furnace_USDhr']
+        Opex_var_BaseBoiler_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USDhr']
+        Opex_var_PeakBoiler_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USDhr']
 
         source_HP_DataCenter[hour] = source_output['HP_DataCenter']
         source_HP_Sewage[hour] = source_output['HP_Sewage']
@@ -274,7 +274,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_BackupBoiler_USDhr = np.zeros(HOURS_IN_YEAR)
     Q_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
     E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
-
     Opex_var_Furnace_wet_USDhr = np.zeros(HOURS_IN_YEAR)
     Opex_var_Furnace_dry_USDhr = np.zeros(HOURS_IN_YEAR)
     Opex_var_CHP_NG_USDhr = np.zeros(HOURS_IN_YEAR)
