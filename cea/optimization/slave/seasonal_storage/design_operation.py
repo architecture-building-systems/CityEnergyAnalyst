@@ -409,6 +409,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
     Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP
     Q_PVT_gen_Wh = Solar_Q_th_PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT
     Q_SCandPVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
+
     return PVT_kWh, PV_kWh, Q_PVT_gen_Wh, Q_SC_ET_gen_Wh, Q_SC_FP_gen_Wh, Q_SCandPVT_gen_Wh, \
            Solar_E_aux_Wh, Solar_Tscr_th_PVT_K, Solar_Tscr_th_SC_ET_K, Solar_Tscr_th_SC_FP_K
 

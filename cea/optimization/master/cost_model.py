@@ -315,7 +315,12 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
     Q_HP_max_SC_Wh = storage_activation_data["HPScDesignArray_Wh"].max()
     Capex_a_HP_PVT_USD, Opex_fixed_HP_PVT_USD, Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config,
                                                                                   'HP2')
-    Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config,
+    #hack split into two technologies
+    Q_HP_max_SC_ET_Wh = SC_ET_area_m2* Q_HP_max_SC_Wh /(SC_ET_area_m2+SC_FP_area_m2)
+    Q_HP_max_SC_FP_Wh = SC_FP_area_m2* Q_HP_max_SC_Wh /(SC_ET_area_m2+SC_FP_area_m2)
+    Capex_a_HP_SC_ET_USD, Opex_fixed_HP_SC_ET_USD, Capex_HP_SC_ET_USD = hp.calc_Cinv_HP(Q_HP_max_SC_ET_Wh, locator, config,
+                                                                               'HP2')
+    Capex_a_HP_SC_FP_USD, Opex_fixed_HP_SC_FP_USD, Capex_HP_SC_FP_USD = hp.calc_Cinv_HP(Q_HP_max_SC_FP_Wh, locator, config,
                                                                                'HP2')
 
     # HEAT EXCHANGER FOR SOLAR COLLECTORS
@@ -350,8 +355,8 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
 
     performance_costs = {
         # annualized capex
-        "Capex_a_SC_ET_connected_USD": [Capex_a_SC_ET_USD + Capex_a_HP_SC_USD + Capex_a_HEX_SC_ET_USD],
-        "Capex_a_SC_FP_connected_USD": [Capex_a_SC_FP_USD + Capex_a_HP_SC_USD + Capex_a_HEX_SC_FP_USD],
+        "Capex_a_SC_ET_connected_USD": [Capex_a_SC_ET_USD + Capex_a_HP_SC_ET_USD + Capex_a_HEX_SC_ET_USD],
+        "Capex_a_SC_FP_connected_USD": [Capex_a_SC_FP_USD + Capex_a_HP_SC_FP_USD + Capex_a_HEX_SC_FP_USD],
         "Capex_a_PVT_connected_USD": [Capex_a_PVT_USD + Capex_a_HP_PVT_USD + Capex_a_HEX_PVT_USD],
         "Capex_a_HP_DataCenter_connected_USD": [Capex_a_wasteserver_HP_USD + Capex_a_wasteserver_HEX_USD],
         "Capex_a_HP_Sewage_connected_USD": [Capex_a_Sewage_USD],
@@ -369,8 +374,8 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
         "Capex_a_BackupBoiler_NG_connected_USD": [Capex_a_BackupBoiler_NG_USD],
 
         # total_capex
-        "Capex_total_SC_ET_connected_USD": [Capex_SC_ET_USD + Capex_HP_SC_USD + Capex_HEX_SC_ET_USD],
-        "Capex_total_SC_FP_connected_USD": [Capex_SC_FP_USD + Capex_HP_SC_USD + Capex_HEX_SC_FP_USD],
+        "Capex_total_SC_ET_connected_USD": [Capex_SC_ET_USD + Capex_HP_SC_ET_USD + Capex_HEX_SC_ET_USD],
+        "Capex_total_SC_FP_connected_USD": [Capex_SC_FP_USD + Capex_HP_SC_FP_USD + Capex_HEX_SC_FP_USD],
         "Capex_total_PVT_connected_USD": [Capex_PVT_USD + Capex_HP_PVT_USD + Capex_HEX_PVT_USD],
         "Capex_total_HP_DataCenter_connected_USD": [Capex_wasteserver_HP_USD + Capex_wasteserver_HEX_USD],
         "Capex_total_HP_Sewage_connected_USD": [Capex_Sewage_USD],
