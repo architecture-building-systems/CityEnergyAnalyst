@@ -35,7 +35,7 @@ random.seed(config.optimization.random_seed)
 np.random.seed(config.optimization.random_seed)
 
 
-def objective_function(individual, individual_number, generation, building_names, locator, solar_features,
+def objective_function(individual, individual_number, generation, building_names, locator,
                        network_features, config, prices, lca):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
@@ -47,7 +47,7 @@ def objective_function(individual, individual_number, generation, building_names
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs_USD, CO2_ton, prim_MJ, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
-                                                                                          locator, solar_features,
+                                                                                          locator,
                                                                                           network_features, config,
                                                                                           prices, lca,
                                                                                           individual_number, generation)
@@ -61,7 +61,7 @@ def objective_function_wrapper(args):
     return objective_function(*args)
 
 
-def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_features,
+def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                             network_features, config, prices, lca):
     t0 = time.clock()
 
@@ -125,7 +125,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
                                      repeat(building_names, len(invalid_ind)),
-                                     repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)),
                                      repeat(network_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
@@ -184,7 +184,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
             fitnesses = toolbox.map(toolbox.evaluate,
                                     izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
                                          repeat(building_names, len(invalid_ind)),
-                                         repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                         repeat(locator, len(invalid_ind)),
                                          repeat(network_features, len(invalid_ind)),
                                          repeat(config, len(invalid_ind)),
                                          repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
@@ -246,7 +246,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names, solar_featu
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(g, len(invalid_ind)),
                                      repeat(building_names, len(invalid_ind)),
-                                     repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)),
                                      repeat(network_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))

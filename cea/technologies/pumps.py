@@ -49,11 +49,11 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, network_type):
+def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network_type):
     """
     Computes the total pump investment cost
-    :type dicoSupply : class context
-    :type ntwFeat : class ntwFeatures
+    :type master_to_slave_vars : class context
+    :type network_features : class ntwFeatures
     :rtype pumpCosts : float
     :returns pumpCosts: pumping cost
     """
@@ -64,7 +64,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, network_type):
     Opex_var_pumps = 0
     if network_type == "DH":
 
-        df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
+        df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
         mdotA_kgpers = np.array(df)
         mdotnMax_kgpers = np.amax(mdotA_kgpers)
 
@@ -74,17 +74,17 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, network_type):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
 
-        deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.num_total_buildings)
+        deltaPmax = np.max((network_features.DeltaP_DHN) * master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings)
 
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
 
     if network_type == "DC":
 
-        if dicoSupply.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating),
+        if master_to_slave_vars.WasteServersHeatRecovery == 1:
+            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating),
                              usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         else:
-            df = pd.read_csv(locator.get_thermal_network_data_folder(dicoSupply.network_data_file_heating),
+            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating),
                              usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
 
         mdotA_kgpers = np.array(df)
@@ -96,7 +96,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, locator, lca, network_type):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE[i] / PUMP_ETA
 
-        deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.num_total_buildings)
+        deltaPmax = np.max((network_features.DeltaP_DCN) * master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings)
 
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                              locator, 'PU1')  # investment of Machinery

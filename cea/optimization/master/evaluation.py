@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import check
+from cea.constants import HOURS_IN_YEAR
 from cea.optimization import slave_data
 from cea.optimization import supportFn
 from cea.optimization.constants import *
@@ -32,7 +33,7 @@ from cea.utilities import epwreader
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, solar_features, network_features, config, prices, lca,
+def evaluation_main(individual, building_names, locator, network_features, config, prices, lca,
                     ind_num, gen):
     """
     This function evaluates an individual
@@ -64,6 +65,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
     num_total_buildings = len(building_names)
+    solar_features = SolarFeatures()
+
 
     # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
     individual = evaluate_constrains(individual, num_total_buildings, config, district_heating_network,
@@ -85,6 +88,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     # DISTRICT HEATING NETWORK
     if district_heating_network:
         if DHN_barcode.count("1") > 0:
+            print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
+            solar_features = calc_solar_features_individual(locator, building_names, DHN_barcode,
+                                                            master_to_slave_vars, solar_features)
+
             # THERMAL STORAGE
             print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
             performance_storage = storage_main.storage_optimization(locator,
@@ -153,6 +160,72 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print ('Total PEN emissions in MJoil ' + str(PEN_sys_MJoil) + "\n")
 
     return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, master_to_slave_vars, individual
+
+
+class SolarFeatures(object):
+    def __init__(self):
+        #import and sum all the area available
+
+        self.Peak_PV_Wh = 0.0
+        self.A_PV_m2 = 0.0
+        self.Peak_PVT_Wh = 0.0
+        self.Q_nom_PVT_Wh = 0.0
+        self.A_PVT_m2 = 0.0
+        self.Q_nom_SC_FP_Wh = 0.0
+        self.A_SC_FP_m2 = 0.0
+        self.Q_nom_SC_ET_Wh = 0.0
+        self.A_SC_ET_m2 = 0.0
+
+def calc_solar_features_individual(locator, building_names, DHN_barcode, master_to_slave_vars,
+                                   solar_features):
+
+    E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    Q_SC_FP_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    Q_SC_ET_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    A_PV_m2 = np.zeros(HOURS_IN_YEAR)
+    A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
+    A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
+    A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
+
+    for index, name in zip(DHN_barcode, building_names):
+        if index == "1":  # building is connected, then it has solar collectors
+            if master_to_slave_vars.SOLAR_PART_PVT > 0.0E-3: #if PVT
+                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
+                E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
+                Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
+                A_PVT_m2 += building_PVT['Area_PVT_m2']
+            if master_to_slave_vars.SOLAR_PART_SC_ET > 0.0E-3:  # if PVT
+                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
+                Q_SC_ET_gen_kWh += building_SC_ET['Q_SC_gen_kWh']
+                A_SC_ET_m2 += building_SC_ET['Area_SC_m2']
+            if master_to_slave_vars.SOLAR_PART_SC_FP > 0.0E-3:  # if PVT
+                building_SC_FP = pd.read_csv(
+                    os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
+                Q_SC_FP_gen_kWh += building_SC_FP['Q_SC_gen_kWh']
+                A_SC_FP_m2 += building_SC_FP['Area_SC_m2']
+
+        #if PV accepted then get all the potential (all buildings can be ocnnected to the electrical grid
+        if master_to_slave_vars.SOLAR_PART_PV > 0.0E-3:
+            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+            A_PV_m2 += building_PV['Area_PV_m2']
+            E_PV_gen_kWh += E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+
+    solar_features.Peak_PV_Wh = E_PV_gen_kWh.max() * 1E3
+    solar_features.A_PV_m2 = A_PV_m2.max()
+    solar_features.Peak_PVT_Wh = E_PVT_gen_kWh.max() * 1E3
+    solar_features.Q_nom_PVT_Wh = Q_PVT_gen_kWh.max() * 1E3
+    solar_features.A_PVT_m2 = A_PVT_m2.max()
+    solar_features.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.max() * 1E3
+    solar_features.A_SC_FP_m2 = A_SC_FP_m2.max()
+    solar_features.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.max() * 1E3
+    solar_features.A_SC_ET_m2 = A_SC_ET_m2.max()
+
+    return solar_features
+
+
+
 
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,

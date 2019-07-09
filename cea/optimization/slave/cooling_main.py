@@ -593,13 +593,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 
 
 def calc_network_costs_cooling(config, district_network_barcode, locator, master_to_slave_vars,
-                               ntwFeat, lca):
+                               network_features, lca):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, ntwFeat, locator, lca, "DC")
+        master_to_slave_vars, network_features, locator, lca, "DC")
 
     # Intitialize class
-    network_features = network_opt.NetworkOptimizationFeatures(config, locator)
     num_buildings_connected = district_network_barcode.count("1")
     num_all_buildings = len(district_network_barcode)
     ratio_connected = num_buildings_connected / num_all_buildings

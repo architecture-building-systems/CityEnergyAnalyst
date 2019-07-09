@@ -78,8 +78,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
         iteration = 0
         for building_name in buildings_in_this_network:
             buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
-            substations.append(
-                pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type)))
+            substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type)))
             mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
             Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
 
