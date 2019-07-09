@@ -91,6 +91,22 @@ def demand_calculation(locator, config):
     building_properties, schedules_dict, date = properties_and_schedule(locator, year,
                                                                         override_variables)
 
+    # add a message i2065 of warning. This needs a more elegant solution
+    def calc_buildings_less_100m2(building_properties):
+        footprint = building_properties._prop_geometry.footprint
+        floors = building_properties._prop_geometry.floors_ag
+        names = building_properties._prop_geometry.index
+        GFA_m2 = [x*y for x,y in zip(footprint, floors)]
+        list_buildings_less_100m2 = []
+        for name, gfa in zip(names, GFA_m2):
+            if gfa < 100.0:
+                list_buildings_less_100m2.append(name)
+        return list_buildings_less_100m2
+    list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
+    if list_buildings_less_100m2 != []:
+        print('!!!Warning!!!, the next list of buildings have less than 100m2 of net area, CEA does not handle well thses'
+              'buildings, it might be that CEA fails: These are the buildings%s' % list_buildings_less_100m2)
+
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
         list_building_names = building_properties.list_building_names()

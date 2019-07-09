@@ -76,16 +76,37 @@ def locating_individuals_in_generation_script(generation, locator):
 
     return results
 
+def create_data_address_file(locator, generation):
+    data_generation = preprocessing_generations_data(locator, generation)
+
+    individual_list = data_generation['final_generation']['individual_barcode'].axes[0]
+
+    generation_number_address = []
+    individual_number_address = []
+
+    for i in range(len(individual_list)):
+        generation_number, individual_number = generation, i
+        generation_number_address.append(generation_number)
+        individual_number_address.append(individual_number)
+
+    results = pd.DataFrame({"individual_list": individual_list,
+                            "generation_number_address": generation_number_address,
+                            "individual_number_address": individual_number_address
+                            })
+
+    results.to_csv(locator.get_address_of_individuals_of_a_generation(generation), index=False)
+    return results
+
 def preprocessing_individual_data(locator, data_raw, individual):
 
     # get netwoork name
-    string_network = data_raw['network'].loc[individual].values[0]
+    # string_network = data_raw['network'].loc[individual].values[0]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
 
     # get data about hourly demands in these buildings
-    building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
-        "DATE")
+    # building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
+    #     "DATE")
 
     # get data about the activation patterns of these buildings
     individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
@@ -164,14 +185,14 @@ def preprocessing_generations_data(locator, generations):
                                   'emissions_ton': emissions_ton_HOF,
                                   'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
-    dict_network = data['DCN_list_All']
+    #dict_network = data['DCN_list_All']
 
-    df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
+    #df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
 
 
 
     data_processed.append(
-        {'population': df_population,  'network': df_network,
+        {'population': df_population,
          'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
          'individual_barcode': def_individual_barcode})
 

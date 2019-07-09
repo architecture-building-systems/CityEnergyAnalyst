@@ -9,6 +9,14 @@ cea.tests package
 Submodules
 ----------
 
+cea.tests.cooling\_case\_workflow module
+----------------------------------------
+
+.. automodule:: cea.tests.cooling_case_workflow
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.create\_unittest\_data module
 ---------------------------------------
 

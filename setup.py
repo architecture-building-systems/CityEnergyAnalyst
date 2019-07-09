@@ -18,7 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
-				    'ephem',
+                    'ephem',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',
@@ -27,7 +27,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'numba',
                     'plotly',
                     'py4design==0.27',
-                    'pymc3==3.6',
+                    'pymc3==3.6',  # last version known to work with python2
                     'pysal',
                     'pyyaml',
                     'requests',
@@ -60,6 +60,8 @@ setup(name='cityenergyanalyst',
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
-          'console_scripts': ['cea=cea.interfaces.cli.cli:main', 'cea-config=cea.interfaces.cli.cea_config:main'],
+          'console_scripts': ['cea=cea.interfaces.cli.cli:main',
+                              'cea-config=cea.interfaces.cli.cea_config:main',
+                              'cea-doc=cea.interfaces.cli.cea_doc:main'],
       },
       )
