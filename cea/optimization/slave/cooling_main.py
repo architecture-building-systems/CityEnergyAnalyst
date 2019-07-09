@@ -398,7 +398,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     Capex_DCN_USD, \
     Capex_a_DCN_USD, \
     Opex_fixed_DCN_USD, \
-    Opex_var_DCN_USD = calc_network_costs_cooling(config, DCN_barcode, locator, master_to_slave_vars,
+    Opex_var_DCN_USD,\
+    E_DCN_W= calc_network_costs_cooling(config, DCN_barcode, locator, master_to_slave_vars,
                                                   ntwFeat, lca)
 
     # COOLING SUBSTATIONS
@@ -595,7 +596,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
 def calc_network_costs_cooling(config, district_network_barcode, locator, master_to_slave_vars,
                                network_features, lca):
     # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD = PumpModel.calc_Ctot_pump(
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
         master_to_slave_vars, network_features, locator, lca, "DC")
 
     # Intitialize class
@@ -608,7 +609,7 @@ def calc_network_costs_cooling(config, district_network_barcode, locator, master
     Inv_LT = 20
     Inv_OM = 0.10
     Capex_Network_USD = network_features.pipesCosts_DCN_USD * ratio_connected
-    Capex_a_Network_USD = (Capex_Network_USD * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # summarize
@@ -617,7 +618,7 @@ def calc_network_costs_cooling(config, district_network_barcode, locator, master
     Opex_fixed_Network_USD += Opex_fixed_pump_USD
     Opex_var_Network_USD = Opex_var_pump_USD
 
-    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD
+    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD, P_motor_tot_W
 
 
 def calc_substations_costs_cooling(building_names, df_current_individual, district_network_barcode, locator):

@@ -62,6 +62,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
     # ntot = len(buildList)
 
     Opex_var_pumps = 0
+    P_motor_tot_W = np.zeros(8760)
     if network_type == "DH":
 
         df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
@@ -72,7 +73,8 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
+            P_motor_tot_W[i] = deltaP * mdotA_kgpers[i][0] / 1000 / PUMP_ETA
+            Opex_var_pumps += P_motor_tot_W[i] * lca.ELEC_PRICE[i]
 
         deltaPmax = np.max((network_features.DeltaP_DHN) * master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings)
 
@@ -94,7 +96,8 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE[i] / PUMP_ETA
+            P_motor_tot_W[i] = deltaP * mdotA_kgpers[i][0] / 1000 / PUMP_ETA
+            Opex_var_pumps += P_motor_tot_W[i] * lca.ELEC_PRICE[i]
 
         deltaPmax = np.max((network_features.DeltaP_DCN) * master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings)
 
@@ -102,7 +105,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
                                              locator, 'PU1')  # investment of Machinery
 
 
-    return Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pumps, Capex_pump_USD
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pumps, Capex_pump_USD, P_motor_tot_W
 
 
 # investment and maintenance costs
