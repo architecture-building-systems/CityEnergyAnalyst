@@ -331,11 +331,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    Capex_a_HP_USD = 0
-    Opex_fixed_HP_USD = 0
-    Capex_HP_USD = 0
+    Capex_a_HP_USD = 0.0
+    Opex_fixed_HP_USD = 0.0
+    Capex_HP_USD = 0.0
 
-    if HP_Size > 0:
+    if HP_Size > 0.0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HP")
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -343,9 +343,9 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
         if HP_Size < HP_cost_data.iloc[0]['cap_min']:
             HP_Size = HP_cost_data.iloc[0]['cap_min']
 
-        max_chiller_size = max(HP_cost_data['cap_max'].values)
+        max_HP_size = max(HP_cost_data['cap_max'].values)
 
-        if HP_Size <= max_chiller_size:
+        if HP_Size <= max_HP_size:
 
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
@@ -366,7 +366,7 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
             Capex_HP_USD = InvC
 
         else:
-            number_of_chillers = int(ceil(HP_Size / max_chiller_size))
+            number_of_chillers = int(ceil(HP_Size / max_HP_size))
             Q_nom_each_chiller = HP_Size / number_of_chillers
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= Q_nom_each_chiller) & (HP_cost_data['cap_max'] > Q_nom_each_chiller)]
@@ -384,9 +384,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
 
-                Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Opex_fixed_HP_USD = Opex_fixed_HP_USD + InvC * Inv_OM
-                Capex_HP_USD = InvC
+                Capex_a_HP_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed_HP_USD += InvC * Inv_OM
+                Capex_HP_USD += InvC
+    else:
+        Capex_a_HP_USD = Opex_fixed_HP_USD = Capex_HP_USD = 0.0
 
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
