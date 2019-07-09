@@ -221,9 +221,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
-    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.addCosts(building_names, locator, master_to_slave_vars,
-                                              Q_uncovered_design_W, Q_uncovered_annual_W, solar_features, network_features, gv,
-                                              config, prices, lca)
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = cost_model.calc_generation_costs_heating(building_names, locator, master_to_slave_vars,
+                                                                                                                   Q_uncovered_design_W, Q_uncovered_annual_W, solar_features, network_features, gv,
+                                                                                                                   config, prices, lca)
 
     costs_USD += costs_additional_USD
     GHG_tonCO2 += GHG_additional_tonCO2

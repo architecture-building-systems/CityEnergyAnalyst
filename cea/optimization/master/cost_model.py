@@ -5,7 +5,6 @@ Extra costs to an individual
 """
 from __future__ import division
 
-import os
 
 import numpy as np
 import pandas as pd
@@ -13,8 +12,11 @@ import pandas as pd
 import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
+import cea.technologies.solar.photovoltaic_thermal as pvt
+import cea.technologies.solar.solar_collector as stc
 import cea.technologies.heat_exchangers as hex
 import cea.technologies.heatpumps as hp
+from cea.optimization.constants import N_PVT
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 __author__ = "Tim Vollrath"
@@ -76,8 +78,8 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
     return performance
 
 
-def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
-             config, prices, lca):
+def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
+                                  config, storage_activation_data, solar_features, Q_GHP_gen_W):
     """
     Computes costs / GHG emisions / primary energy needs
     for the individual
@@ -107,192 +109,236 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
     :rtype: tuple
     """
     # local variables
-    district_heating_network = config.optimization.district_heating_network
-    DHN_barcode = master_to_slave_vars.DHN_barcode
-
     # ADD COSTS DUE OTHER TECHNOLOGIES FOR HEATING NETWORK
-    if DHN_barcode.count("1") > 0 and district_heating_network:
-        os.chdir(locator.get_optimization_slave_results_folder(master_to_slave_vars.generation_number))
-        # Add the investment costs of the energy systems
-        # FURNACE
-        if master_to_slave_vars.Furnace_on == 1:
-            P_design_W = master_to_slave_vars.Furnace_Q_max_W
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern_heating(
-                master_to_slave_vars.configKey,
-                master_to_slave_vars.individual_number,
-                master_to_slave_vars.generation_number)
-            dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
-            arrayFurnace_W = np.array(dfFurnace)
 
-            Q_annual_W = 0
-            for i in range(int(np.shape(arrayFurnace_W)[0])):
-                Q_annual_W += arrayFurnace_W[i][0]
+    # FURNACE
+    if master_to_slave_vars.Furnace_on == 1:
+        P_design_W = master_to_slave_vars.Furnace_Q_max_W
+        fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern_heating(
+            master_to_slave_vars.configKey,
+            master_to_slave_vars.individual_number,
+            master_to_slave_vars.generation_number)
+        dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
+        arrayFurnace_W = np.array(dfFurnace)
 
-            Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W,
-                                                                                                       Q_annual_W,
-                                                                                                       config, locator,
-                                                                                                       'FU1')
-            if master_to_slave_vars.Furn_Moist_type == "wet":
-                Capex_furnace_wet_USD = Capex_furnace_USD
-                Capex_a_furnace_wet_USD = Capex_a_furnace_USD
-                Opex_fixed_furnace_wet_USD = Opex_fixed_furnace_USD
-                Capex_furnace_dry_USD = 0.0
-                Capex_a_furnace_dry_USD = 0.0
-                Opex_fixed_furnace_dry_USD = 0.0
-            elif master_to_slave_vars.Furn_Moist_type == "dry":
-                Capex_furnace_dry_USD = Capex_furnace_USD
-                Capex_a_furnace_dry_USD = Capex_a_furnace_USD
-                Opex_fixed_furnace_dry_USD = Opex_fixed_furnace_USD
-                Capex_furnace_wet_USD = 0.0
-                Capex_a_furnace_wet_USD = 0.0
-                Opex_fixed_furnace_wet_USD = 0.0
+        Q_annual_W = 0
+        for i in range(int(np.shape(arrayFurnace_W)[0])):
+            Q_annual_W += arrayFurnace_W[i][0]
 
-        # CCGT
-        if master_to_slave_vars.CC_on == 1:
-            CC_size_W = master_to_slave_vars.CC_GT_SIZE_W
-            Capex_a_CHP_USD, Opex_fixed_CHP_USD, Capex_CHP_USD = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
-            if master_to_slave_vars.gt_fuel == "BG":
-                Capex_a_CHP_BG_USD = Capex_a_CHP_USD
-                Opex_fixed_CHP_BG_USD = Opex_fixed_CHP_USD
-                Capex_CHP_BG_USD = Capex_CHP_USD
-                Capex_a_CHP_NG_USD = 0.0
-                Opex_fixed_CHP_NG_USD = 0.0
-                Capex_CHP_NG_USD = 0.0
-            elif master_to_slave_vars.gt_fuel == "NG":
-                Capex_a_CHP_BG_USD = 0.0
-                Opex_fixed_CHP_BG_USD = 0.0
-                Capex_CHP_BG_USD = 0.0
-                Capex_a_CHP_NG_USD = Capex_a_CHP_USD
-                Opex_fixed_CHP_NG_USD = Opex_fixed_CHP_USD
-                Capex_CHP_NG_USD = Capex_CHP_USD
+        Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W,
+                                                                                                   Q_annual_W,
+                                                                                                   config, locator,
+                                                                                                   'FU1')
+        if master_to_slave_vars.Furn_Moist_type == "wet":
+            Capex_furnace_wet_USD = Capex_furnace_USD
+            Capex_a_furnace_wet_USD = Capex_a_furnace_USD
+            Opex_fixed_furnace_wet_USD = Opex_fixed_furnace_USD
+            Capex_furnace_dry_USD = 0.0
+            Capex_a_furnace_dry_USD = 0.0
+            Opex_fixed_furnace_dry_USD = 0.0
+        elif master_to_slave_vars.Furn_Moist_type == "dry":
+            Capex_furnace_dry_USD = Capex_furnace_USD
+            Capex_a_furnace_dry_USD = Capex_a_furnace_USD
+            Opex_fixed_furnace_dry_USD = Opex_fixed_furnace_USD
+            Capex_furnace_wet_USD = 0.0
+            Capex_a_furnace_wet_USD = 0.0
+            Opex_fixed_furnace_wet_USD = 0.0
 
-            # BOILER BASE LOAD
-        if master_to_slave_vars.Boiler_on == 1:
-            Q_design_W = master_to_slave_vars.Boiler_Q_max_W
+    # CCGT
+    if master_to_slave_vars.CC_on == 1:
+        CC_size_W = master_to_slave_vars.CC_GT_SIZE_W
+        Capex_a_CHP_USD, Opex_fixed_CHP_USD, Capex_CHP_USD = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
+        if master_to_slave_vars.gt_fuel == "BG":
+            Capex_a_CHP_BG_USD = Capex_a_CHP_USD
+            Opex_fixed_CHP_BG_USD = Opex_fixed_CHP_USD
+            Capex_CHP_BG_USD = Capex_CHP_USD
+            Capex_a_CHP_NG_USD = 0.0
+            Opex_fixed_CHP_NG_USD = 0.0
+            Capex_CHP_NG_USD = 0.0
+        elif master_to_slave_vars.gt_fuel == "NG":
+            Capex_a_CHP_BG_USD = 0.0
+            Opex_fixed_CHP_BG_USD = 0.0
+            Capex_CHP_BG_USD = 0.0
+            Capex_a_CHP_NG_USD = Capex_a_CHP_USD
+            Opex_fixed_CHP_NG_USD = Opex_fixed_CHP_USD
+            Capex_CHP_NG_USD = Capex_CHP_USD
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(
-                master_to_slave_vars.individual_number,
-                master_to_slave_vars.generation_number)
-            dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BaseBoiler_W"])
-            arrayBoilerBase_W = np.array(dfBoilerBase)
+        # BOILER BASE LOAD
+    if master_to_slave_vars.Boiler_on == 1:
+        Q_design_W = master_to_slave_vars.Boiler_Q_max_W
 
-            Q_annual_W = 0
-            for i in range(int(np.shape(arrayBoilerBase_W)[0])):
-                Q_annual_W += arrayBoilerBase_W[i][0]
+        fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(
+            master_to_slave_vars.individual_number,
+            master_to_slave_vars.generation_number)
+        dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BaseBoiler_W"])
+        arrayBoilerBase_W = np.array(dfBoilerBase)
 
-            Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = boiler.calc_Cinv_boiler(Q_design_W, locator,
-                                                                                                  config, 'BO1')
-            if master_to_slave_vars.gt_fuel == "BG":
-                Capex_a_BaseBoiler_BG_USD = Capex_a_Boiler_USD
-                Opex_fixed_BaseBoiler_BG_USD = Opex_fixed_Boiler_USD
-                Capex_BaseBoiler_BG_USD = Capex_Boiler_USD
-                Capex_a_BaseBoiler_NG_USD = 0.0
-                Opex_fixed_BaseBoiler_NG_USD = 0.0
-                Capex_BaseBoiler_NG_USD = 0.0
-            elif master_to_slave_vars.gt_fuel == "NG":
-                Capex_a_BaseBoiler_BG_USD = 0.0
-                Opex_fixed_BaseBoiler_BG_USD = 0.0
-                Capex_BaseBoiler_BG_USD = 00.0
-                Capex_a_BaseBoiler_NG_USD = Capex_a_Boiler_USD
-                Opex_fixed_BaseBoiler_NG_USD = Opex_fixed_Boiler_USD
-                Capex_BaseBoiler_NG_USD = Capex_a_Boiler_USD
+        Q_annual_W = 0
+        for i in range(int(np.shape(arrayBoilerBase_W)[0])):
+            Q_annual_W += arrayBoilerBase_W[i][0]
 
-        # BOILER PEAK LOAD
-        if master_to_slave_vars.BoilerPeak_on == 1:
-            Q_design_W = master_to_slave_vars.BoilerPeak_Q_max_W
+        Capex_a_Boiler_USD, Opex_fixed_Boiler_USD, Capex_Boiler_USD = boiler.calc_Cinv_boiler(Q_design_W, locator,
+                                                                                              config, 'BO1')
+        if master_to_slave_vars.gt_fuel == "BG":
+            Capex_a_BaseBoiler_BG_USD = Capex_a_Boiler_USD
+            Opex_fixed_BaseBoiler_BG_USD = Opex_fixed_Boiler_USD
+            Capex_BaseBoiler_BG_USD = Capex_Boiler_USD
+            Capex_a_BaseBoiler_NG_USD = 0.0
+            Opex_fixed_BaseBoiler_NG_USD = 0.0
+            Capex_BaseBoiler_NG_USD = 0.0
+        elif master_to_slave_vars.gt_fuel == "NG":
+            Capex_a_BaseBoiler_BG_USD = 0.0
+            Opex_fixed_BaseBoiler_BG_USD = 0.0
+            Capex_BaseBoiler_BG_USD = 00.0
+            Capex_a_BaseBoiler_NG_USD = Capex_a_Boiler_USD
+            Opex_fixed_BaseBoiler_NG_USD = Opex_fixed_Boiler_USD
+            Capex_BaseBoiler_NG_USD = Capex_a_Boiler_USD
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(
-                master_to_slave_vars.individual_number,
-                master_to_slave_vars.generation_number)
-            dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_PeakBoiler_W"])
-            arrayBoilerPeak_W = np.array(dfBoilerPeak)
+    # BOILER PEAK LOAD
+    if master_to_slave_vars.BoilerPeak_on == 1:
+        Q_design_W = master_to_slave_vars.BoilerPeak_Q_max_W
 
-            Q_annual_W = 0
-            for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
-                Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(
-                Q_design_W, locator, config, 'BO1')
+        fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(
+            master_to_slave_vars.individual_number,
+            master_to_slave_vars.generation_number)
+        dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_PeakBoiler_W"])
+        arrayBoilerPeak_W = np.array(dfBoilerPeak)
 
-            if master_to_slave_vars.gt_fuel == "BG":
-                Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
-                Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
-                Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
-                Capex_a_PeakBoiler_NG_USD = 0.0
-                Opex_fixed_PeakBoiler_NG_USD = 0.0
-                Capex_PeakBoiler_NG_USD = 0.0
-            elif master_to_slave_vars.gt_fuel == "NG":
-                Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
-                Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
-                Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
-                Capex_a_PeakBoiler_NG_USD = Capex_a_Boiler_peak_USD
-                Opex_fixed_PeakBoiler_NG_USD = Opex_fixed_Boiler_peak_USD
-                Capex_PeakBoiler_NG_USD = Capex_Boiler_peak_USD
-
-        # HEATPUMP LAKE
-        if master_to_slave_vars.HP_Lake_on == 1:
-            HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
-            Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
-
-        # HEATPUMP_SEWAGE
-        if master_to_slave_vars.HP_Sew_on == 1:
-            HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
-            Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
-                                                                                          'HP2')
-
-        # GROUND HEAT PUMP
-        if master_to_slave_vars.GHP_on == 1:
-            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern_heating(
-                master_to_slave_vars.individual_number,
-                master_to_slave_vars.generation_number)
-            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_used_GHP_W"])
-            arrayGHP_W = np.array(dfGHP)
-
-            GHP_Enom_W = np.amax(arrayGHP_W)
-            Capex_a_GHP_USD, Opex_fixed_GHP_USD, Capex_GHP_USD = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
-
-        # BACK-UP BOILER
-        Capex_a_Boiler_backup_USD, Opex_fixed_Boiler_backup_USD, Capex_Boiler_backup_USD = boiler.calc_Cinv_boiler(
-            Q_uncovered_design_W, locator, config, 'BO1')
-
-        master_to_slave_vars.BoilerBackup_Q_max_W = Q_uncovered_design_W
+        Q_annual_W = 0
+        for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
+            Q_annual_W += arrayBoilerPeak_W[i][0]
+        Capex_a_Boiler_peak_USD, Opex_fixed_Boiler_peak_USD, Capex_Boiler_peak_USD = boiler.calc_Cinv_boiler(
+            Q_design_W, locator, config, 'BO1')
 
         if master_to_slave_vars.gt_fuel == "BG":
-            Capex_a_BackupBoiler_BG_USD = Capex_a_Boiler_backup_USD
-            Opex_fixed_BackupBoiler_BG_USD = Opex_fixed_Boiler_backup_USD
-            Capex_BackupBoiler_BG_USD = Capex_Boiler_backup_USD
-            Capex_a_BackupBoiler_NG_USD = 0.0
-            Opex_fixed_BackupBoiler_NG_USD = 0.0
-            Capex_BackupBoiler_NG_USD = 0.0
+            Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
+            Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
+            Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
+            Capex_a_PeakBoiler_NG_USD = 0.0
+            Opex_fixed_PeakBoiler_NG_USD = 0.0
+            Capex_PeakBoiler_NG_USD = 0.0
         elif master_to_slave_vars.gt_fuel == "NG":
-            Capex_a_BackupBoiler_BG_USD = 0.0
-            Opex_fixed_BackupBoiler_BG_USD = 0.0
-            Capex_BackupBoiler_BG_USD = 0.0
-            Capex_a_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
-            Opex_fixed_BackupBoiler_NG_USD = Opex_fixed_Boiler_backup_USD
-            Capex_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
+            Capex_a_PeakBoiler_BG_USD = Capex_a_Boiler_peak_USD
+            Opex_fixed_PeakBoiler_BG_USD = Opex_fixed_Boiler_peak_USD
+            Capex_PeakBoiler_BG_USD = Capex_Boiler_peak_USD
+            Capex_a_PeakBoiler_NG_USD = Capex_a_Boiler_peak_USD
+            Opex_fixed_PeakBoiler_NG_USD = Opex_fixed_Boiler_peak_USD
+            Capex_PeakBoiler_NG_USD = Capex_Boiler_peak_USD
 
-        # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
-        if master_to_slave_vars.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.get_optimization_network_results_folder(),
-                             master_to_slave_vars.network_data_file_heating,
-                             usecols=["Qcdata_netw_total_kWh"])
-            array = np.array(df)
-            Q_HEX_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
-                Q_HEX_max_kWh, locator, config, 'HEX1')
+    # HEATPUMP LAKE
+    if master_to_slave_vars.HP_Lake_on == 1:
+        HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
+        Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
 
-            df = pd.read_csv(
-                locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                                      master_to_slave_vars.generation_number),
-                usecols=["HPServerHeatDesignArray_kWh"])
-            array = np.array(df)
-            Q_HP_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HP_USD, Opex_fixed_wasteserver_HP_USD, Capex_wasteserver_HP_USD = hp.calc_Cinv_HP(
-                Q_HP_max_kWh, locator, config, 'HP2')
+    # HEATPUMP_SEWAGE
+    if master_to_slave_vars.HP_Sew_on == 1:
+        HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
+        Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
+                                                                                      'HP2')
+
+    # GROUND HEAT PUMP
+    if master_to_slave_vars.GHP_on == 1:
+        arrayGHP_W = np.array(Q_GHP_gen_W)
+        GHP_Enom_W = np.amax(arrayGHP_W)
+        Capex_a_GHP_USD, Opex_fixed_GHP_USD, Capex_GHP_USD = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
+
+    # BACK-UP BOILER
+    Capex_a_Boiler_backup_USD, Opex_fixed_Boiler_backup_USD, Capex_Boiler_backup_USD = boiler.calc_Cinv_boiler(
+        Q_uncovered_design_W, locator, config, 'BO1')
+
+    master_to_slave_vars.BoilerBackup_Q_max_W = Q_uncovered_design_W
+
+    if master_to_slave_vars.gt_fuel == "BG":
+        Capex_a_BackupBoiler_BG_USD = Capex_a_Boiler_backup_USD
+        Opex_fixed_BackupBoiler_BG_USD = Opex_fixed_Boiler_backup_USD
+        Capex_BackupBoiler_BG_USD = Capex_Boiler_backup_USD
+        Capex_a_BackupBoiler_NG_USD = 0.0
+        Opex_fixed_BackupBoiler_NG_USD = 0.0
+        Capex_BackupBoiler_NG_USD = 0.0
+    elif master_to_slave_vars.gt_fuel == "NG":
+        Capex_a_BackupBoiler_BG_USD = 0.0
+        Opex_fixed_BackupBoiler_BG_USD = 0.0
+        Capex_BackupBoiler_BG_USD = 0.0
+        Capex_a_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
+        Opex_fixed_BackupBoiler_NG_USD = Opex_fixed_Boiler_backup_USD
+        Capex_BackupBoiler_NG_USD = Capex_a_Boiler_backup_USD
+
+    # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
+    if master_to_slave_vars.WasteServersHeatRecovery == 1:
+        df = pd.read_csv(locator.get_optimization_network_results_folder(),
+                         master_to_slave_vars.network_data_file_heating,
+                         usecols=["Qcdata_netw_total_kWh"])
+        array = np.array(df)
+        Q_HEX_max_kWh = np.amax(array)
+        Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
+            Q_HEX_max_kWh, locator, config, 'HEX1')
+
+        df = storage_activation_data["HPServerHeatDesignArray_kWh"]
+        array = np.array(df)
+        Q_HP_max_kWh = np.amax(array)
+        Capex_a_wasteserver_HP_USD, Opex_fixed_wasteserver_HP_USD, Capex_wasteserver_HP_USD = hp.calc_Cinv_HP(
+            Q_HP_max_kWh, locator, config, 'HP2')
+
+    # SOLAR TECHNOLOGIES
+    # local variables
+    DHN_barcode = master_to_slave_vars.DHN_barcode
+
+    # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
+    SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
+    Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config,
+                                                                                'ET')
+
+    SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2
+    Capex_a_SC_FP_USD, Opex_fixed_SC_FP_USD, Capex_SC_FP_USD = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config,
+                                                                                'FP')
+
+    PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT  # kW
+    Capex_a_PVT_USD, Opex_fixed_PVT_USD, Capex_PVT_USD = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
+
+    # HEATPUMP FOR SOLAR UPGRADE TO DISTRICT HEATING
+    array = np.array(storage_activation_data["HPScDesignArray_Wh", "HPpvt_designArray_Wh"])
+    Q_HP_max_PVT_wh = np.amax(array[:, 1])
+    Q_HP_max_SC_Wh = np.amax(array[:, 0])
+    Capex_a_HP_PVT_USD, Opex_fixed_HP_PVT_USD, Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config,
+                                                                                  'HP2')
+    Capex_a_HP_SC_USD, Opex_fixed_HP_SC_USD, Capex_HP_SC_USD = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config,
+                                                                               'HP2')
+
+    # HEAT EXCHANGER FOR SOLAR COLLECTORS
+    roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
+    areaAvail = 0
+    for i in range(len(DHN_barcode)):
+        index = DHN_barcode[i]
+        if index == "1":
+            areaAvail += roof_area_m2[i][0]
+
+    for i in range(len(DHN_barcode)):
+        index = DHN_barcode[i]
+        if index == "1":
+            share = roof_area_m2[i][0] / areaAvail
+            # print share, "solar area share", buildList[i]
+
+            Q_max_SC_ET_Wh = solar_features.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
+            Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh,
+                                                                                                     locator,
+                                                                                                     config, 'HEX1')
+
+            Q_max_SC_FP_Wh = solar_features.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
+            Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,
+                                                                                                     locator,
+                                                                                                     config, 'HEX1')
+
+            Q_max_PVT_Wh = solar_features.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
+            Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh,
+                                                                                               locator, config,
+                                                                                               'HEX1')
 
     # Save data
     performance_costs = {
         # annualized capex
+        "Capex_a_SC_ET_connected_USD": [Capex_a_SC_ET_USD + Capex_a_HP_SC_USD + Capex_a_HEX_SC_ET_USD],
+        "Capex_a_SC_FP_connected_USD": [Capex_a_SC_FP_USD + Capex_a_HP_SC_USD + Capex_a_HEX_SC_FP_USD],
+        "Capex_a_PVT_connected_USD": [Capex_a_PVT_USD + Capex_a_HP_PVT_USD + Capex_a_HEX_PVT_USD],
         "Capex_a_HP_DataCenter_connected_USD": [Capex_a_wasteserver_HP_USD + Capex_a_wasteserver_HEX_USD],
         "Capex_a_HP_Sewage_connected_USD": [Capex_a_Sewage_USD],
         "Capex_a_HP_Lake_connected_USD": [Capex_a_Lake_USD],
@@ -309,6 +355,9 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_a_BackupBoiler_NG_connected_USD": [Capex_a_BackupBoiler_NG_USD],
 
         # total_capex
+        "Capex_total_SC_ET_connected_USD": [Capex_SC_ET_USD + Capex_HP_SC_USD + Capex_HEX_SC_ET_USD],
+        "Capex_total_SC_FP_connected_USD": [Capex_SC_FP_USD + Capex_HP_SC_USD + Capex_HEX_SC_FP_USD],
+        "Capex_total_PVT_connected_USD": [Capex_PVT_USD + Capex_HP_PVT_USD + Capex_HEX_PVT_USD],
         "Capex_total_HP_DataCenter_connected_USD": [Capex_wasteserver_HP_USD + Capex_wasteserver_HEX_USD],
         "Capex_total_HP_Sewage_connected_USD": [Capex_Sewage_USD],
         "Capex_total_HP_Lake_connected_USD": [Capex_Lake_USD],
@@ -325,6 +374,9 @@ def addCosts(locator, master_to_slave_vars, Q_uncovered_design_W,
         "Capex_total_BackupBoiler_NG_connected_USD": [Capex_BackupBoiler_NG_USD],
 
         # opex fixed costs
+        "Opex_fixed_SC_ET_connected_USD": [Opex_fixed_SC_ET_USD],
+        "Opex_fixed_SC_FP_connected_USD": [Opex_fixed_SC_FP_USD],
+        "Opex_fixed_PVT_connected_USD": [Opex_fixed_PVT_USD],
         "Opex_fixed_HP_DataCenter_connected_USD": [Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD],
         "Opex_fixed_HP_Sewage_connected_USD": [Opex_fixed_Sewage_USD],
         "Opex_fixed_HP_Lake_connected_USD": [Opex_fixed_Lake_USD],

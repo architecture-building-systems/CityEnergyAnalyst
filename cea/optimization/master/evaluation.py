@@ -22,7 +22,6 @@ from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
 from cea.optimization.slave import natural_gas_main
-from cea.optimization.slave import solar_main
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies import substation
@@ -94,7 +93,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK AND PV- CONNECTED BUILDINGS")
-            performance_DHN, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
+            performance_heating, master_to_slave_vars = heating_main.heating_calculations_of_DH_buildings(locator,
                                                                                                master_to_slave_vars,
                                                                                                config, prices, lca,
                                                                                                solar_features,
@@ -105,7 +104,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         if DCN_barcode.count("1") > 0:
             print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
             reduced_timesteps_flag = False
-            performance_DCN = cooling_main.cooling_calculations_of_DC_buildings(locator,
+            performance_cooling = cooling_main.cooling_calculations_of_DC_buildings(locator,
                                                                     master_to_slave_vars,
                                                                     network_features,
                                                                     prices,
@@ -115,23 +114,24 @@ def evaluation_main(individual, building_names, locator, solar_features, network
                                                                     district_heating_network)
 
 
-
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
     performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
+
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
-    performance_electricity = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
+    performance_electricity,\
+    performance_heating,\
+    performance_cooling, = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
                                                                                          DCN_barcode,
                                                                                          locator,
                                                                                          master_to_slave_vars,
                                                                                          lca,
-                                                                                         district_heating_network,
-                                                                                         district_cooling_network)
-    # SOLAR TECHNOLOGIES
-    print("CALCULATING PERFORMANCE OF SOLAR TECHNOLOGIES")
-    performance_solar = solar_main.solar_evaluation(locator, config, solar_features, master_to_slave_vars, lca)
+                                                                                         solar_features,
+                                                                                         performance_heating,
+                                                                                         performance_cooling)
+
 
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
@@ -141,9 +141,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
-                                                                              performance_DHN,
-                                                                              performance_DCN,
-                                                                              performance_solar,
+                                                                              performance_heating,
+                                                                              performance_cooling,
                                                                               performance_disconnected,
                                                                               performance_fuels,
                                                                               performance_electricity)

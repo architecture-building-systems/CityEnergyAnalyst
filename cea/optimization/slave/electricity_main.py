@@ -10,7 +10,7 @@ from __future__ import print_function
 
 import numpy as np
 import pandas as pd
-
+import cea.technologies.solar.photovoltaic as pv
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
@@ -26,7 +26,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca):
+def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca,
+                                              solar_features,
+                                              performance_heating,
+                                              performance_cooling
+                                              ):
     # local variables
     building_names = master_to_slave_vars.building_names
     storage_activation_data = pd.read_csv(
@@ -39,13 +43,6 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number))
 
-    cooling_performance = pd.read_csv(
-        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number))
-
-    heating_performance = pd.read_csv(
-        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number))
     date = storage_activation_data.DATE.values
 
     # GET ENERGY GENERATION
@@ -69,7 +66,6 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     activation_curve_variables = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
                                                               E_PV_gen_W, E_sys_req_W, master_to_slave_vars, locator,
                                                               date)
-
     E_CHP_gen_directload_W = activation_curve_variables['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = activation_curve_variables['E_CHP_gen_export_W']
     E_CCGT_gen_directload_W = activation_curve_variables['E_CCGT_gen_directload_W']
@@ -77,148 +73,335 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     E_Furnace_gen_directload_W = activation_curve_variables['E_Furnace_gen_directload_W']
     E_Furnace_gen_export_W = activation_curve_variables['E_Furnace_gen_export_W']
     E_GRID_directload_W = activation_curve_variables['E_GRID_directload_W']
+    E_PV_gen_directload_W = activation_curve_variables['E_PV_gen_directload_W']
+    E_PV_gen_export_W = activation_curve_variables['E_PV_gen_export_W']
+    E_PVT_gen_directload_W = activation_curve_variables['E_PVT_gen_directload_W']
+    E_PVT_gen_export_W = activation_curve_variables['E_PVT_gen_export_W']
+
+    # UPDATE VARIABLE COSTS ACCORDING TO ACTIVATION CURVE FOR HEATING< COOLING AND SOLAR TECHNOLOGIES
+    performance_heating, performance_cooling = update_performance_costs(performance_heating,
+                                                                        performance_cooling,
+                                                                        master_to_slave_vars,
+                                                                        E_CHP_gen_export_W,
+                                                                        E_CCGT_gen_export_W,
+                                                                        E_Furnace_gen_export_W,
+                                                                        E_PVT_gen_export_W,
+                                                                        lca)
+
+    # UPDATE EMISSIONS AND PRIMARY ENERGY ACCORDING TO ACTIVATION CURVE
+    performance_heating, performance_cooling = update_performance_emisisons_pen(performance_heating,
+                                                                                performance_cooling,
+                                                                                master_to_slave_vars,
+                                                                                E_CHP_gen_export_W,
+                                                                                E_CCGT_gen_export_W,
+                                                                                E_Furnace_gen_export_W,
+                                                                                E_PVT_gen_export_W,
+                                                                                lca)
+
+    # FINALLY CLACULATE THE EMISSIONS, COSTS AND PRIMARY ENERGY OF ELECTRICITY FROM THE GRID AND SOLAR TECHNOLOGIES
+    performance_electricity_costs = calc_electricity_performance_costs(solar_features, master_to_slave_vars,
+                                                                       E_PV_gen_export_W, E_GRID_directload_W)
 
 
-    GHG_CHP_gen_export_tonCO2 = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
-    GHG_CHP_gen_directload_tonCO2 = (sum(E_CHP_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
-    GHG_CCGT_gen_export_tonCO2 = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
-    GHG_CCGT_gen_directload_tonCO2 = (sum(E_CCGT_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
-    GHG_Furnace_gen_export_tonCO2 = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
-    GHG_Furnace_gen_directload_tonCO2 = (sum(E_Furnace_gen_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2)  / 1E3
+    Capex_a_PV_connected_USD = performance_electricity_costs["Capex_a_PV_connected_USD"]
+    Capex_total_PV_connected_USD = performance_electricity_costs["Capex_total_PV_connected_USD"]
+    Opex_fixed_PV_connected_USD =performance_electricity_costs["Opex_fixed_PV_connected_USD"]
+    Opex_a_PV_connected_export_USD =performance_electricity_costs['Opex_a_PV_connected_export_USD']
+    Opex_var_PV_connected_USD=performance_electricity_costs["Opex_var_PV_connected_USD"]
+    Opex_var_GRID_connected_USD=performance_electricity_costs["Opex_var_GRID_connected_USD"]
+    Opex_a_GRID_connected_USD=performance_electricity_costs["Opex_a_GRID_connected_USD"]
+    Opex_a_PV_connected_USD =performance_electricity_costs["Opex_a_PV_connected_USD"]
 
 
-    Opex_var_CHP_export_USD = [energy*cost for energy,cost in zip(E_CHP_gen_export_W , lca.ELEC_PRICE)]
-    Opex_var_CHP_directload_USD = (E_CHP_gen_directload_W) * (lca.EL_TO_OIL_EQ)
-    Opex_var_CCGT_export_USD = (E_CCGT_gen_export_W) * (lca.EL_TO_OIL_EQ)
-    Opex_var_CCGT_directload_USD= (E_CCGT_gen_directload_W) * (lca.EL_TO_OIL_EQ)
-    Opex_var_Furnace_export_USD = (E_Furnace_gen_export_W) * (lca.EL_TO_OIL_EQ)
-    Opex_var_Furnace_directload_USD = (E_Furnace_gen_directload_W) * (lca.EL_TO_OIL_EQ)
+    performance_electricity_emissions = calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_directload_W)
 
-    PEN_CHP_gen_export_MJoil = (E_CHP_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_CHP_gen_directload_MJoil = (E_CHP_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_CCGT_gen_export_MJoil = (E_CCGT_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_CCGT_gen_directload_MJoil= (E_CCGT_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_Furnace_gen_export_MJoil = (E_Furnace_gen_export_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_Furnace_gen_directload_MJoil = (E_Furnace_gen_directload_W * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    GHG_PV_connected_tonCO2 = performance_electricity_emissions['GHG_PV_connected_tonCO2']
+    PEN_PV_connected_MJoil = performance_electricity_emissions['PEN_PV_connected_MJoil']
+    GHG_GRID_connected_tonCO2 = performance_electricity_emissions['GHG_GRID_connected_tonCO2']
+    PEN_GRID_connected_MJoil = performance_electricity_emissions['PEN_GRID_connected_MJoil']
+
+    performance_electricity = {
+        # annualized capex
+        "Capex_a_PV_connected_USD": [Capex_a_PV_connected_USD],
+
+        # total_capex
+        "Capex_total_PV_connected_USD": [Capex_total_PV_connected_USD],
+
+        # opex fixed costs
+        "Opex_fixed_PV_connected_USD": [Opex_fixed_PV_connected_USD],
+
+        # opex variable costs (These costs will be updated according to the activation pattern of electricity
+        "Opex_var_PV_connected_export_USD": [Opex_a_PV_connected_export_USD],
+        "Opex_var_PV_connected_USD": [Opex_var_PV_connected_USD],
+        "Opex_var_GRID_connected_USD": [Opex_var_GRID_connected_USD],
+
+        # opex annual costs
+        "Opex_a_PV_connected_USD": [Opex_a_PV_connected_USD],
+        "Opex_a_GRID_connected_USD": [Opex_a_GRID_connected_USD],
+
+        # emissions
+        "GHG_PV_connected_tonCO2": [GHG_PV_connected_tonCO2],
+        "GHG_GRID_connected_tonCO2": [GHG_GRID_connected_tonCO2],
+
+        # primary energy
+        "PEN_PV_connected_MJoil": [PEN_PV_connected_MJoil],
+        "PEN_GRID_connected_MJoil":[PEN_GRID_connected_MJoil]
+    }
+
+    #export all including perfroamcne heating and performance cooling since we changed them
+    pd.DataFrame(performance_cooling).to_csv(
+        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(performance_heating).to_csv(
+        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(performance_electricity).to_csv(
+        locator.get_optimization_slave_electricity_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
+
+    return performance_electricity, performance_heating, performance_cooling
 
 
+def calc_electricity_performance_emisisons(lca,E_PV_gen_export_W, E_GRID_directload_W):
+    # SOlar technologies
+    GHG_PV_gen_export_tonCO2 = (sum(E_PV_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_PV_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
 
-    # UPDATE PARAMETERS (NET)
+    PEN_PV_gen_export_MJoil = (sum(E_PV_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_PV_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+
+    GHG_PV_connected_tonCO2 = GHG_PV_gen_directload_tonCO2 - GHG_PV_gen_export_tonCO2
+    PEN_PV_connected_MJoil = PEN_PV_gen_directload_MJoil - PEN_PV_gen_export_MJoil
+
+    # GRid
+    GHG_GRID_directload_tonCO2 = (sum(E_GRID_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    PEN_GRID_directload_MJoil = (sum(E_GRID_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+
+    # calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
+    # PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
+    # GHG_HPSolarandHeatRecovery_tonCO2 = E_aux_solar_and_heat_recovery_W * lca.EL_TO_CO2 * WH_TO_J / 1E6
+
+    performance_electricity = {
+        # emissions
+        "GHG_PV_connected_tonCO2": [GHG_PV_connected_tonCO2],
+        "GHG_GRID_connected_tonCO2": [GHG_GRID_directload_tonCO2],
+
+        # primary energy
+        "PEN_PV_connected_MJoil": [PEN_PV_connected_MJoil],
+        "PEN_GRID_connected_MJoil": [PEN_GRID_directload_MJoil]
+    }
+
+    return performance_electricity
+
+def calc_electricity_performance_costs(locator, solar_features, master_to_slave_vars,
+                                       E_PV_gen_export_W, E_GRID_directload_W,
+                                       lca):
+
+    #PV COSTS
+    PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
+    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
+    Opex_var_PV_gen_export_USD = sum([energy * cost for energy, cost in zip(E_PV_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_PV_gen_directload_US = 0.0
+    Opex_var_PV_connected_USD = Opex_var_PV_gen_directload_US - Opex_var_PV_gen_export_USD
+
+    #GRID COSTS
+    Opex_var_GRID_directload_USD = sum([energy * cost for energy, cost in zip(E_GRID_directload_W, lca.ELEC_PRICE)])
+    Opex_fixed_GRID_directload_USD = 0.0 #we do not have info about the connection
+
+    performance_electricity_costs = {
+        # annualized capex
+        "Capex_a_PV_connected_USD": [Capex_a_PV_USD],
+
+        # total_capex
+        "Capex_total_PV_connected_USD": [Capex_PV_USD],
+
+        # opex fixed costs
+        "Opex_fixed_PV_connected_USD": [Opex_fixed_PV_USD],
+        "Opex_fixed_GRID_connected_USD": [Opex_fixed_GRID_directload_USD],
+
+        # opex variable costs
+        'Opex_var_PV_connected_export_USD': [Opex_var_PV_gen_export_USD],
+        "Opex_var_PV_connected_USD": [Opex_var_PV_connected_USD],
+        "Opex_var_GRID_connected_USD": [Opex_var_GRID_directload_USD],
+
+        # opex annual costs
+        "Opex_a_PV_connected_USD": [Opex_fixed_PV_USD + Opex_var_PV_connected_USD],
+        "Opex_a_GRID_connected_USD":[Opex_fixed_GRID_directload_USD + Opex_var_GRID_directload_USD]
+    }
+    return performance_electricity_costs
+
+def update_performance_emisisons_pen(performance_heating,
+                                     performance_cooling,
+                                     master_to_slave_vars, E_CHP_gen_export_W,
+                                     E_CCGT_gen_export_W, E_Furnace_gen_export_W,
+                                     E_PVT_gen_export_W,
+                                     lca):
+    GHG_PVT_gen_export_tonCO2 = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_PVT_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+
+    GHG_CHP_gen_export_tonCO2 = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_CHP_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+    GHG_CCGT_gen_export_tonCO2 = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_CCGT_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+    GHG_Furnace_gen_export_tonCO2 = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_Furnace_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+
+    PEN_PVT_gen_export_MJoil = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_PVT_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+
+    PEN_CHP_gen_export_MJoil = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CHP_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+    PEN_CCGT_gen_export_MJoil = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CCGT_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+    PEN_Furnace_gen_export_MJoil = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+
+    # UPDATE PARAMETERS (NET ERERGY COSTS)
     # CCGT for cooling
-    cooling_performance['Opex_var_CCGT_connected_USD']
-    cooling_performance['Opex_a_CCGT_connected_USD']
-
-    cooling_performance['GHG_CCGT_connected_tonCO2'] = cooling_performance['GHG_CCGT_connected_tonCO2'] + GHG_CCGT_gen_directload_tonCO2 - GHG_CCGT_gen_export_tonCO2
-    cooling_performance['PEN_CCGT_connected_MJoil'] = cooling_performance['PEN_CCGT_connected_MJoil'] +PEN_CCGT_gen_directload_MJoil - PEN_CCGT_gen_export_MJoil
-
+    performance_cooling['GHG_CCGT_connected_tonCO2'] = performance_cooling['GHG_CCGT_connected_tonCO2'] + \
+                                                       GHG_CCGT_gen_directload_tonCO2 - \
+                                                       GHG_CCGT_gen_export_tonCO2
+    performance_cooling['PEN_CCGT_connected_MJoil'] = performance_cooling['PEN_CCGT_connected_MJoil'] + \
+                                                      PEN_CCGT_gen_directload_MJoil - \
+                                                      PEN_CCGT_gen_export_MJoil
     # System totals
-    cooling_performance['GHG_Cooling_sys_connected_tonCO2']
-    cooling_performance['PEN_Cooling_sys_connected_MJoil']
+    performance_cooling['GHG_Cooling_sys_connected_tonCO2'] = performance_cooling['GHG_Cooling_sys_connected_tonCO2'] + \
+                                                              GHG_CCGT_gen_directload_tonCO2 - \
+                                                              GHG_CCGT_gen_export_tonCO2
+    performance_cooling['PEN_Cooling_sys_connected_MJoil'] = performance_cooling['PEN_Cooling_sys_connected_MJoil'] + \
+                                                             PEN_CCGT_gen_directload_MJoil - \
+                                                             PEN_CCGT_gen_export_MJoil
 
     # CHP for heating
     fuel = master_to_slave_vars.gt_fuel
     type = master_to_slave_vars.Furn_Moist_type
-    heating_performance['Opex_var_CHP_' + fuel + '_connected_USD']
-    heating_performance['Opex_a_CHP_' + fuel + '_connected_USD']
-    heating_performance['GHG_CHP_' + fuel + '_connected_tonCO2'] = heating_performance['GHG_CHP_' + fuel + '_connected_tonCO2'] + GHG_CHP_gen_directload_tonCO2 - GHG_CHP_gen_export_tonCO2
-    heating_performance['PEN_CHP_' + fuel + '_connected_MJoil'] = heating_performance['PEN_CHP_' + fuel + '_connected_MJoil'] + PEN_CHP_gen_directload_MJoil - PEN_CHP_gen_export_MJoil
+    performance_heating['GHG_CHP_' + fuel + '_connected_tonCO2'] = performance_heating[
+                                                                       'GHG_CHP_' + fuel + '_connected_tonCO2'] + \
+                                                                   GHG_CHP_gen_directload_tonCO2 - \
+                                                                   GHG_CHP_gen_export_tonCO2
+    performance_heating['PEN_CHP_' + fuel + '_connected_MJoil'] = performance_heating[
+                                                                      'PEN_CHP_' + fuel + '_connected_MJoil'] + \
+                                                                  PEN_CHP_gen_directload_MJoil - \
+                                                                  PEN_CHP_gen_export_MJoil
+    performance_heating['GHG_Furnace_' + type + '_connected_tonCO2'] = performance_heating[
+                                                                           'GHG_Furnace_' + type + '_connected_tonCO2'] + \
+                                                                       GHG_Furnace_gen_directload_tonCO2 - \
+                                                                       GHG_Furnace_gen_export_tonCO2
+    performance_heating['PEN_Furnace_' + type + '_connected_MJoil'] = performance_heating[
+                                                                          'PEN_Furnace_' + type + '_connected_MJoil'] + \
+                                                                      PEN_Furnace_gen_directload_MJoil - \
+                                                                      PEN_Furnace_gen_export_MJoil
 
-    heating_performance['Opex_var_Furnace_' + type + '_connected_USD']
-    heating_performance['Opex_a_Furnace_' + type + '_connected_USD']
-    heating_performance['GHG_Furnace_' + type + '_connected_tonCO2'] = heating_performance['GHG_Furnace_' + type + '_connected_tonCO2']  + GHG_Furnace_gen_directload_tonCO2 - GHG_Furnace_gen_export_tonCO2
-    heating_performance['PEN_Furnace_' + type + '_connected_MJoil'] = heating_performance['PEN_Furnace_' + type + '_connected_MJoil'] + PEN_Furnace_gen_directload_MJoil - PEN_Furnace_gen_export_MJoil
-    heating_performance['GHG_Cooling_sys_connected_tonCO2']
-    heating_performance['PEN_Cooling_sys_connected_MJoil']
+    # PV and PVT
+    performance_heating['GHG_PVT_connected_tonCO2'] = performance_heating['GHG_PVT_connected_tonCO2'] + \
+                                                      GHG_PVT_gen_directload_tonCO2 - \
+                                                      GHG_PVT_gen_export_tonCO2
+    performance_heating['PEN_PVT_connected_MJoil'] = performance_heating['PEN_PVT_connected_MJoil'] + \
+                                                     PEN_PVT_gen_directload_MJoil - \
+                                                     PEN_PVT_gen_export_MJoil
+
+    performance_heating['GHG_Heating_sys_connected_tonCO2'] = performance_heating['GHG_Heating_sys_connected_tonCO2'] + \
+                                                              GHG_Furnace_gen_directload_tonCO2 - \
+                                                              GHG_Furnace_gen_export_tonCO2 + \
+                                                              GHG_CHP_gen_directload_tonCO2 - \
+                                                              GHG_CHP_gen_export_tonCO2 + \
+                                                              GHG_PVT_gen_directload_tonCO2 - \
+                                                              GHG_PVT_gen_export_tonCO2
+    performance_heating['PEN_Heating_sys_connected_MJoil'] = performance_heating['PEN_Heating_sys_connected_MJoil'] + \
+                                                             PEN_CHP_gen_directload_MJoil - \
+                                                             PEN_CHP_gen_export_MJoil + \
+                                                             PEN_Furnace_gen_directload_MJoil - \
+                                                             PEN_Furnace_gen_export_MJoil + \
+                                                             PEN_PVT_gen_directload_MJoil - \
+                                                             PEN_PVT_gen_export_MJoil
+
+    return performance_heating, performance_cooling
 
 
+def update_performance_costs(performance_heating, performance_cooling,
+                             master_to_slave_vars,
+                             E_CHP_gen_export_W, E_CCGT_gen_export_W, E_Furnace_gen_export_W,
+                             E_PVT_gen_export_W,
+                             lca):
+    # CALCULATE VARIABLES COSTS FOR UNITS WHICH SELLE ENERGY (EXCEPT SOLAR - THAT IS WORKED OUT IN ANOTHER SCRIPT)
+    Opex_var_CHP_export_USD = sum([energy * cost for energy, cost in zip(E_CHP_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_CHP_directload_USD = 0.0  # because the price of fuel is already included
+    Opex_var_CCGT_export_USD = sum([energy * cost for energy, cost in zip(E_CCGT_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_CCGT_directload_USD = 0.0  # because the price of fuel is already included
+    Opex_var_Furnace_export_USD = sum(
+        [energy * cost for energy, cost in zip(E_Furnace_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_Furnace_directload_USD = 0.0  # because the price of fuel is already included
+    Opex_var_PVT_export_USD = sum([energy * cost for energy, cost in zip(E_PVT_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_PVT_directload_USD = 0.0  # because the price of fuel is already included
 
-    # calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
+    # UPDATE PARAMETERS (NET ERERGY COSTS & EMISSIONS)
+    # CCGT for cooling
+    current_opex_a_CCGT_unit = performance_cooling['Opex_a_CCGT_connected_USD']
+    performance_cooling['Opex_var_CCGT_connected_USD'] = performance_cooling['Opex_var_CCGT_connected_USD'] + \
+                                                         Opex_var_CCGT_directload_USD - \
+                                                         Opex_var_CCGT_export_USD
+    performance_cooling['Opex_a_CCGT_connected_USD'] = performance_cooling['Opex_fixed_CCGT_connected_USD'] + \
+                                                       performance_cooling['Opex_var_CCGT_connected_USD']
 
-    PEN_from_heat_used_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
-    PEN_saved_from_electricity_sold_CHP_MJoil = E_from_CHP_W * (- lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
-    PEN_saved_from_electricity_sold_Solar_MJoil = (np.add(E_PV_gen_W, E_PVT_gen_W)) * (
-            lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
-    PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
-    PEN_Lake_MJoil = E_used_Lake_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
-    PEN_VCC_MJoil = E_used_VCC_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
-    PEN_VCC_backup_MJoil = E_used_VCC_backup_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
-    PEN_ACH_MJoil = E_used_ACH_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
-    PEN_CT_MJoil = E_used_CT_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
+    # System totals
+    performance_cooling['TAC_Cooling_sys_connected_USD'] = performance_cooling['TAC_Cooling_sys_connected_USD'] - \
+                                                           current_opex_a_CCGT_unit + \
+                                                           performance_cooling['Opex_a_CCGT_connected_USD']
+    performance_cooling['Opex_a_Cooling_sys_connected_USD'] = performance_heating['Opex_a_Cooling_sys_connected_USD'] - \
+                                                              current_opex_a_CCGT_unit + \
+                                                              performance_cooling['Opex_a_CCGT_connected_USD']
 
-    GHG_from_heat_used_SC_and_PVT_tonCO2 = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
-    GHG_saved_from_electricity_sold_CHP_tonCO2 = E_from_CHP_W * (- lca.EL_TO_CO2) * WH_TO_J / 1.0E6
-    GHG_saved_from_electricity_sold_Solar_tonCO2 = (np.add(E_PV_gen_W, E_PVT_gen_W)) * (
-            lca.EL_PV_TO_CO2 - lca.EL_TO_CO2) * WH_TO_J / 1.0E6
-    GHG_HPSolarandHeatRecovery_tonCO2 = E_aux_solar_and_heat_recovery_W * lca.EL_TO_CO2 * WH_TO_J / 1E6
-    GHG_Lake_MJoil = E_used_Lake_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
-    GHG_VCC_MJoil = E_used_VCC_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
-    GHG_VCC_backup_MJoil = E_used_VCC_backup_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
-    GHG_ACH_MJoil = E_used_ACH_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
-    GHG_CT_MJoil = E_used_CT_W * lca.EL_TO_CO2 * WH_TO_J / 1.0E6
+    # CHP for heating
+    fuel = master_to_slave_vars.gt_fuel
+    type = master_to_slave_vars.Furn_Moist_type
+    current_opex_a_CHP_units = performance_heating['Opex_a_Furnace_' + type + '_connected_USD'] + \
+                               performance_heating['Opex_a_CHP_' + fuel + '_connected_USD'] + \
+                               performance_heating['Opex_a_PVT_' + fuel + '_connected_USD']
+    performance_heating['Opex_var_CHP_' + fuel + '_connected_USD'] = performance_heating[
+                                                                         'Opex_var_CHP_' + fuel + '_connected_USD'] + \
+                                                                     Opex_var_CHP_directload_USD - \
+                                                                     Opex_var_CHP_export_USD
+    performance_heating['Opex_a_CHP_' + fuel + '_connected_USD'] = performance_heating[
+                                                                       'Opex_fixed_CHP_' + fuel + '_connected_USD'] + \
+                                                                   performance_heating[
+                                                                       'Opex_var_CHP_' + fuel + '_connected_USD']
+    performance_heating['Opex_var_Furnace_' + type + '_connected_USD'] = performance_heating[
+                                                                             'Opex_var_Furnace_' + type + '_connected_USD'] + \
+                                                                         Opex_var_Furnace_directload_USD - \
+                                                                         Opex_var_Furnace_export_USD
+    performance_heating['Opex_a_Furnace_' + type + '_connected_USD'] = performance_heating[
+                                                                           'Opex_opex_Furnace_' + type + '_connected_USD'] + \
+                                                                       performance_heating[
+                                                                           'Opex_var_Furnace_' + type + '_connected_USD']
 
-    results = pd.DataFrame({"DATE": date,
-                            "E_total_req_W": total_electricity_demand_W,
-                            "E_used_Lake_W": E_used_Lake_W,
-                            "E_used_VCC_W": E_used_VCC_W,
-                            "E_used_VCC_backup_W": E_used_VCC_backup_W,
-                            "E_used_ACH_W": E_used_ACH_W,
-                            "E_used_CT_W": E_used_CT_W,
-                            "E_from_CHP_W": E_from_CHP_W,
-                            "E_from_PV_W": E_from_PV_W,
-                            "E_from_PVT_W": E_from_PVT_W,
-                            "E_CHP_directload_W": E_CHP_directload_W,
-                            "E_CHP_grid_W": E_CHP_grid_W,
-                            "E_PV_directload_W": E_PV_directload_W,
-                            "E_PV_grid_W": E_PV_grid_W,
-                            "E_PVT_directload_W": E_PVT_directload_W,
-                            "E_PVT_grid_W": E_PVT_grid_W,
-                            "E_GRID_directload_W": E_GRID_directload_W,
-                            "E_appliances_total_W": E_appliances_total_W,
-                            "E_data_center_total_W": E_data_center_total_W,
-                            "E_industrial_processes_total_W": E_industrial_processes_total_W,
-                            "E_auxiliary_units_total_W": E_auxiliary_units_total_W,
-                            "E_hotwater_total_W": E_hotwater_total_W,
-                            "E_space_heating_total_W": E_space_heating_total_W,
-                            "E_space_cooling_total_W": E_space_cooling_total_W,
-                            "E_total_to_grid_W_negative": - E_PV_grid_W - E_CHP_grid_W - E_PVT_grid_W,
-                            "PEN_from_heat_used_SC_and_PVT_MJoil": PEN_from_heat_used_SC_and_PVT_MJoil,
-                            "PEN_saved_from_electricity_sold_CHP_MJoil": PEN_saved_from_electricity_sold_CHP_MJoil,
-                            "PEN_saved_from_electricity_sold_Solar_MJoil": PEN_saved_from_electricity_sold_Solar_MJoil,
-                            "PEN_HPSolarandHeatRecovery_MJoil": PEN_HPSolarandHeatRecovery_MJoil,
-                            "PEN_Lake_MJoil": PEN_Lake_MJoil,
-                            "PEN_VCC_MJoil": PEN_VCC_MJoil,
-                            "PEN_VCC_backup_MJoil": PEN_VCC_backup_MJoil,
-                            "PEN_ACH_MJoil": PEN_ACH_MJoil,
-                            "PEN_CT_MJoil": PEN_CT_MJoil,
-                            "GHG_from_heat_used_SC_and_PVT_tonCO2": GHG_from_heat_used_SC_and_PVT_tonCO2,
-                            "GHG_saved_from_electricity_sold_CHP_tonCO2": GHG_saved_from_electricity_sold_CHP_tonCO2,
-                            "GHG_saved_from_electricity_sold_Solar_tonCO2": GHG_saved_from_electricity_sold_Solar_tonCO2,
-                            "GHG_HPSolarandHeatRecovery_tonCO2": GHG_HPSolarandHeatRecovery_tonCO2,
-                            "GHG_Lake_MJoil": GHG_Lake_MJoil,
-                            "GHG_VCC_backup_MJoil": GHG_VCC_backup_MJoil,
-                            "GHG_ACH_MJoil": GHG_ACH_MJoil,
-                            "GHG_CT_MJoil": GHG_CT_MJoil
-                            })  # let's keep this negative so it is something exported, we can use it in the graphs of likelihood
+    performance_heating['Opex_var_PVT_connected_USD'] = performance_heating['Opex_var_PVT_connected_USD'] + \
+                                                        Opex_var_PVT_directload_USD - \
+                                                        Opex_var_PVT_export_USD
+    performance_heating['Opex_a_PVT_connected_USD'] = performance_heating['Opex_fixed_PVT_connected_USD'] + \
+                                                      performance_heating['Opex_var_PVT_connected_USD']
 
-    results.to_csv(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(
-            master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+    # COMPUTE CHANGES IN SYSTEM TOTALS
+    performance_heating['TAC_Heating_sys_connected_USD'] = performance_heating['TAC_Heating_sys_connected_USD'] - \
+                                                           current_opex_a_CHP_units + \
+                                                           performance_heating[
+                                                               'Opex_a_Furnace_' + type + '_connected_USD'] + \
+                                                           performance_heating[
+                                                               'Opex_a_CHP_' + fuel + '_connected_USD'] + \
+                                                           performance_heating['Opex_a_PVT_connected_USD']
+    performance_heating['Opex_a_Heating_sys_connected_USD'] = performance_heating['Opex_a_sys_connected_USD'] - \
+                                                              current_opex_a_CHP_units + \
+                                                              performance_heating[
+                                                                  'Opex_a_Furnace_' + type + '_connected_USD'] + \
+                                                              performance_heating[
+                                                                  'Opex_a_CHP_' + fuel + '_connected_USD'] + \
+                                                              performance_heating['Opex_a_PVT_connected_USD']
 
-    GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
-        GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
-        GHG_HPSolarandHeatRecovery_tonCO2) + np.sum(GHG_Lake_MJoil) + np.sum(GHG_VCC_MJoil) + np.sum(
-        GHG_VCC_backup_MJoil) + np.sum(GHG_ACH_MJoil) + np.sum(GHG_CT_MJoil)
-
-    PEN_electricity_MJoil += np.sum(PEN_from_heat_used_SC_and_PVT_MJoil) + np.sum(
-        PEN_saved_from_electricity_sold_CHP_MJoil) + np.sum(PEN_saved_from_electricity_sold_Solar_MJoil) + np.sum(
-        PEN_HPSolarandHeatRecovery_MJoil) + np.sum(PEN_Lake_MJoil) + np.sum(PEN_VCC_MJoil) + np.sum(
-        PEN_VCC_backup_MJoil) + np.sum(PEN_ACH_MJoil) + np.sum(PEN_CT_MJoil)
-
-    for hour in range(len(total_electricity_demand_W)):
-        costs_electricity_USD += total_electricity_demand_W[hour] * lca.ELEC_PRICE[hour] - (
-                E_from_CHP_W[hour] + E_from_PV_W[hour] + E_from_PVT_W[hour]) * lca.ELEC_PRICE[hour]
-
-    return
+    return performance_heating, performance_cooling
 
 
 def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W, E_PV_gen_W, E_sys_req_W,
