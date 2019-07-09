@@ -111,6 +111,17 @@ def route_add_plot_to_dashboard(dashboard_index):
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
+@blueprint.route('/dashboard/replace-plot/<int:dashboard_index>/<int:plot_index>', methods=['POST'])
+def route_replace_plot(dashboard_index, plot_index):
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
+    dashboard = dashboards[dashboard_index]
+    category = request.form.get('category', next(iter(categories)))
+    plot_id = request.form.get('plot-id', next(iter(categories[category]['plots']))['id'])
+    dashboard.replace_plot(category, plot_id, plot_index)
+    cea.plots.write_dashboards(current_app.cea_config, dashboards)
+    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+
+
 @blueprint.route('/dashboard/remove-plot/<int:dashboard_index>/<int:plot_index>')
 def route_remove_plot_from_dashboard(dashboard_index, plot_index):
     """Remove a plot from a dashboard by index."""
@@ -122,6 +133,7 @@ def route_remove_plot_from_dashboard(dashboard_index, plot_index):
         return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+
 
 @blueprint.route('/dashboard/move_plot_up/<int:dashboard_index>/<int:plot_index>')
 def route_move_plot_up(dashboard_index, plot_index):
@@ -138,6 +150,7 @@ def route_move_plot_up(dashboard_index, plot_index):
 def swap(lst, i, j):
     """Swap positions of elements in a list as given by their indexes i and j"""
     lst[i], lst[j] = lst[j], lst[i]
+
 
 @blueprint.route('/dashboard/move_plot_down/<int:dashboard_index>/<int:plot_index>')
 def route_move_plot_down(dashboard_index, plot_index):
@@ -257,3 +270,13 @@ def route_plot(dashboard_index, plot_index):
         return abort(500, ex)
 
     return render_template('plot.html', dashboard_index=dashboard_index, plot_index=plot_index, plot=plot)
+
+
+@blueprint.route('/dashboard/test')
+def route_layout():
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
+    dashboard = dashboards[0]
+    return render_template('map_layout.html', dashboard_index=0, dashboards=dashboards,
+                           dashboard=dashboard, categories=categories)
