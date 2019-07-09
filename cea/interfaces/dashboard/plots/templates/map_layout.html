@@ -6,6 +6,13 @@
 
 {% block stylesheets %}
   {{ super() }}
+  <style>
+    @media (min-width: 1200px) {
+      #map-container {
+        min-width: 1000px;
+      }
+    }
+  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 {% endblock stylesheets %}
 
@@ -15,21 +22,14 @@
       <div class="clearfix"></div>
 
       <div class="row">
-        <div class="col-lg-8 col-md-12">
+        <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12" id="map-container">
           <div class="x_panel">
             <div class="x_content">
-              <div style="height: 400px;background: blue;"></div>
+              <div id="map-div" style="height: 400px;background: blue;"></div>
             </div>
           </div>
         </div>
-        {% if dashboard.plots[0] is defined%}
-          {{ plot_widget_macros.plot_widget(dashboard_index, 0, dashboard.plots[0]) }}
-        {% else %}
-          {{ plot_widget_macros.plot_empty_widget() }}
-        {% endif %}
-      </div>
-      <div class="row">
-        {% for i in range(1,4) %}
+        {% for i in range(4) %}
           {% if dashboard.plots[i] is defined%}
             {{ plot_widget_macros.plot_widget(dashboard_index, i, dashboard.plots[i]) }}
           {% else %}
