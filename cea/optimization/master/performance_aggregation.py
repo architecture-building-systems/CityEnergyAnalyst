@@ -1,11 +1,9 @@
 def summarize_results_individual(performance_storage,
-                                 performance_DHN,
-                                 performance_DCN,
-                                 performance_solar,
+                                 performance_heating,
+                                 performance_cooling,
                                  performance_disconnected,
                                  performance_fuels,
                                  performance_electricity):
-
     # TODO:CALCULATE CAPEX TOTAL, OPEX TOTAL and RENEWABLE ERNGY SHARE (to be used in multicriteria.
 
     TAC_sys_USD = np.float64(TAC_sys_USD)
