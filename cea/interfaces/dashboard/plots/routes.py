@@ -41,7 +41,13 @@ def route_dashboard(dashboard_index):
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
-    return render_template('dashboard.html', dashboard_index=dashboard_index, dashboards=dashboards,
+    layout = dashboard.layout
+    html = 'dashboard.html'
+    if layout == 'map':
+        html = 'map_layout.html'
+    else:
+        print('No such layout: %s' % layout)
+    return render_template(html, dashboard_index=dashboard_index, dashboards=dashboards,
                            dashboard=dashboard, categories=categories)
 
 
@@ -65,7 +71,7 @@ def route_new_dashboard():
     """
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
-    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'))
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'), request.form.get('layout'))
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
