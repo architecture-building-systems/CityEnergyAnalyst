@@ -42,12 +42,12 @@ def route_dashboard(dashboard_index):
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
     layout = dashboard.layout
-    html = 'dashboard.html'
+    html = 'default.html'
     if layout == 'map':
-        html = 'map_layout.html'
+        html = 'map.html'
     else:
         print('No such layout: %s' % layout)
-    return render_template(html, dashboard_index=dashboard_index, dashboards=dashboards,
+    return render_template('layout/'+html, dashboard_index=dashboard_index, dashboards=dashboards,
                            dashboard=dashboard, categories=categories)
 
 
@@ -276,13 +276,3 @@ def route_plot(dashboard_index, plot_index):
         return abort(500, ex)
 
     return render_template('plot.html', dashboard_index=dashboard_index, plot_index=plot_index, plot=plot)
-
-
-@blueprint.route('/dashboard/test')
-def route_layout():
-    cea_config = current_app.cea_config
-    plot_cache = current_app.plot_cache
-    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
-    dashboard = dashboards[0]
-    return render_template('map_layout.html', dashboard_index=0, dashboards=dashboards,
-                           dashboard=dashboard, categories=categories)
