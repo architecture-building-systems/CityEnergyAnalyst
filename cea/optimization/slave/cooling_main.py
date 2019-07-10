@@ -13,7 +13,6 @@ from math import ceil, log
 import numpy as np
 import pandas as pd
 
-import cea.optimization.distribution.network_optimization_features as network_opt
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cogeneration as cogeneration
@@ -41,16 +40,16 @@ __status__ = "Production"
 
 # technical model
 
-def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat, prices, lca, config,
+def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, prices, lca, config,
                                          reduced_timesteps_flag, district_heating_network):
     """
     Computes the parameters for the cooling of the complete DCN
 
     :param locator: path to res folder
-    :param ntwFeat: network features
+    :param network_features: network features
     :param prices: Prices imported from the database
     :type locator: string
-    :type ntwFeat: class
+    :type network_features: class
     :type prices: class
     :return: costs, co2, prim
     :rtype: tuple
@@ -211,7 +210,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    network_costs_USD = ntwFeat.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.num_total_buildings
+    network_costs_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.num_total_buildings
     network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
             (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
     costs_a_USD = network_costs_a_USD
@@ -398,9 +397,9 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     Capex_DCN_USD, \
     Capex_a_DCN_USD, \
     Opex_fixed_DCN_USD, \
-    Opex_var_DCN_USD,\
-    E_DCN_W= calc_network_costs_cooling(config, DCN_barcode, locator, master_to_slave_vars,
-                                                  ntwFeat, lca)
+    Opex_var_DCN_USD, \
+    E_DCN_W = calc_network_costs_cooling(DCN_barcode, locator, master_to_slave_vars,
+                                         network_features, lca)
 
     # COOLING SUBSTATIONS
     Capex_Substations_USD, \
@@ -418,64 +417,6 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
     Opex_var_VCC_backup_connected_USD = sum(opex_var_VCC_backup_USDhr),
     Opex_var_CT_connected_USD = sum(opex_var_CT_USDhr),
     Opex_var_CCGT_connected_USD = sum(opex_var_CCGT_USDhr),
-
-    Capex_total_sys_connected_USD = Capex_Lake_USD + \
-                                    Capex_VCC_USD + \
-                                    Capex_VCC_backup_USD + \
-                                    Capex_ACH_USD + \
-                                    Capex_CCGT_USD + \
-                                    Capex_Tank_USD + \
-                                    Capex_CT_USD + \
-                                    Capex_DCN_USD + \
-                                    Capex_Substations_USD
-
-    Capex_a_sys_connected_USD = Capex_a_Lake_USD + \
-                                Capex_a_VCC_USD + \
-                                Capex_a_VCC_backup_USD + \
-                                Capex_a_ACH_USD + \
-                                Capex_a_CCGT_USD + \
-                                Capex_a_Tank_USD + \
-                                Capex_a_CT_USD + \
-                                Capex_a_DCN_USD + \
-                                Capex_a_Substations_USD
-
-    Opex_fixed_sys_connected_USD = Opex_fixed_Lake_USD + \
-                                   Opex_fixed_VCC_backup_USD + \
-                                   Opex_fixed_ACH_USD + \
-                                   Opex_fixed_VCC_backup_USD + \
-                                   Opex_fixed_CCGT_USD + \
-                                   Opex_fixed_Tank_USD + \
-                                   Opex_fixed_CT_USD + \
-                                   Opex_fixed_DCN_USD + \
-                                   Opex_fixed_Substations_USD
-
-    Opex_var_sys_connected_USD = Opex_var_Lake_connected_USD + \
-                                 Opex_var_VCC_connected_USD + \
-                                 Opex_var_ACH_connected_USD + \
-                                 Opex_var_VCC_backup_connected_USD + \
-                                 Opex_var_CCGT_connected_USD + \
-                                 Opex_var_CT_connected_USD + \
-                                 Opex_var_DCN_USD + \
-                                 Opex_var_Substations_USD
-
-    Opex_a_sys_connected_USD = Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD
-    TAC_sys_connected_USD = Capex_a_sys_connected_USD + Opex_a_sys_connected_USD
-
-    # emissions
-    GHG_sys_connected_USD = GHG_Lake_tonCO2 + \
-                            GHG_VCC_tonCO2 + \
-                            GHG_ACH_tonCO2 + \
-                            GHG_VCC_backup_tonCO2 + \
-                            GHG_CT_tonCO2 + \
-                            GHG_CCGT_tonCO2
-
-    # primary energy
-    PEN_sys_connected_USD = prim_energy_Lake_MJoil + \
-                            prim_energy_VCC_MJoil + \
-                            prim_energy_ACH_MJoil + \
-                            prim_energy_VCC_backup_MJoil + \
-                            prim_energy_CT_MJoil + \
-                            prim_energy_CCGT_MJoil
 
     # PLOT RESULTS
     performance = {
@@ -535,65 +476,44 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, ntwFeat,
         "Opex_a_SubstationsCooling_connected_USD": [Opex_fixed_Substations_USD + Opex_var_Substations_USD],
 
         # emissions
-        "GHG_Lake_connected_tonCO2": GHG_Lake_tonCO2,
-        "GHG_VCC_connected_tonCO2": GHG_VCC_tonCO2,
-        "GHG_ACH_connected_tonCO2": GHG_ACH_tonCO2,
-        "GHG_VCC_backup_connected_tonCO2": GHG_VCC_backup_tonCO2,
-        "GHG_CT_connected_tonCO2": GHG_CT_tonCO2,
-        "GHG_CCGT_connected_tonCO2": GHG_CCGT_tonCO2,
+        "GHG_Lake_connected_tonCO2": [GHG_Lake_tonCO2],
+        "GHG_VCC_connected_tonCO2": [GHG_VCC_tonCO2],
+        "GHG_ACH_connected_tonCO2": [GHG_ACH_tonCO2],
+        "GHG_VCC_backup_connected_tonCO2": [GHG_VCC_backup_tonCO2],
+        "GHG_CT_connected_tonCO2": [GHG_CT_tonCO2],
+        "GHG_CCGT_connected_tonCO2": [GHG_CCGT_tonCO2],
 
         # primary energy
-        "PEN_Lake_connected_MJoil": prim_energy_Lake_MJoil,
-        "PEN_VCC_connected_MJoil": prim_energy_VCC_MJoil,
-        "PEN_ACH_connected_MJoil": prim_energy_ACH_MJoil,
-        "PEN_VCC_backup_connected_MJoil": prim_energy_VCC_backup_MJoil,
-        "PEN_CT_connected_MJoil": prim_energy_CT_MJoil,
-        "PEN_CCGT_connected_MJoil": prim_energy_CCGT_MJoil,
-
-        # Totals for this system
-        "Capex_total_Cooling_sys_connected_USD": [Capex_total_sys_connected_USD],
-        "Capex_a_Cooling_sys_connected_USD": [Capex_a_sys_connected_USD],
-        "Opex_a_Cooling_sys_connected_USD": [Opex_a_sys_connected_USD],
-        "TAC_Cooling_sys_connected_USD": [TAC_sys_connected_USD],
-        "GHG_Cooling_sys_connected_tonCO2": [GHG_sys_connected_USD],
-        "PEN_Cooling_sys_connected_MJoil": [PEN_sys_connected_USD],
+        "PEN_Lake_connected_MJoil": [prim_energy_Lake_MJoil],
+        "PEN_VCC_connected_MJoil": [prim_energy_VCC_MJoil],
+        "PEN_ACH_connected_MJoil": [prim_energy_ACH_MJoil],
+        "PEN_VCC_backup_connected_MJoil": [prim_energy_VCC_backup_MJoil],
+        "PEN_CT_connected_MJoil": [prim_energy_CT_MJoil],
+        "PEN_CCGT_connected_MJoil": [prim_energy_CCGT_MJoil],
     }
 
-    pd.DataFrame(performance).to_csv(
-        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
-
     # PLOT ACTIVATION COURVE
-    network_data = pd.read_csv(locator.get_optimization_network_results_summary('DC',
-                                                                                master_to_slave_vars.network_data_file_cooling))
-    date = network_data.DATE.values
-    results = pd.DataFrame({"DATE": date,
-                            "Q_total_cooling_W": Q_cooling_req_W,
-                            "E_used_Lake_W": E_used_Lake_W,
-                            "E_used_VCC_W": E_used_VCC_W,
-                            "E_used_VCC_backup_W": E_used_VCC_backup_W,
-                            "E_used_ACH_W": E_used_ACH_W,
-                            "E_used_CT_W": E_used_CT_W,
-                            "NG_used_CCGT_W": NG_used_CCGT_W,
-                            "Q_from_Lake_W": Qc_from_Lake_W,
-                            "Q_from_VCC_W": Qc_from_VCC_W,
-                            "Q_from_ACH_W": Qc_from_ACH_W,
-                            "Q_from_VCC_backup_W": Qc_from_VCC_backup_W,
-                            "Q_from_storage_tank_W": Qc_from_storage_tank_W,
-                            "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
-                            "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
-                            "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W
-                            })
-
-    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
-                                                                             master_to_slave_vars.generation_number),
-                   index=False)
-
-    return performance
+    cooling_dispatch = {
+        "Q_total_cooling_W": Q_cooling_req_W,
+        "E_used_Lake_W": E_used_Lake_W,
+        "E_used_VCC_W": E_used_VCC_W,
+        "E_used_VCC_backup_W": E_used_VCC_backup_W,
+        "E_used_ACH_W": E_used_ACH_W,
+        "E_used_CT_W": E_used_CT_W,
+        "NG_used_CCGT_W": NG_used_CCGT_W,
+        "Q_from_Lake_W": Qc_from_Lake_W,
+        "Q_from_VCC_W": Qc_from_VCC_W,
+        "Q_from_ACH_W": Qc_from_ACH_W,
+        "Q_from_VCC_backup_W": Qc_from_VCC_backup_W,
+        "Q_from_storage_tank_W": Qc_from_storage_tank_W,
+        "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
+        "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
+        "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W
+    }
+    return performance, cooling_dispatch
 
 
-def calc_network_costs_cooling(config, district_network_barcode, locator, master_to_slave_vars,
+def calc_network_costs_cooling(district_network_barcode, locator, master_to_slave_vars,
                                network_features, lca):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
