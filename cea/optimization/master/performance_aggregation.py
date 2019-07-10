@@ -23,13 +23,6 @@ def summarize_results_individual(master_to_slave_vars,
     GHG_sys_disconnected_tonCO2 = 0.0
     PEN_sys_disconnected_MJoil = 0.0
 
-    Opex_a_sys_USD = 0.0
-    Capex_total_sys_USD = 0.0
-    TAC_sys_USD = 0.0
-    GHG_sys_tonCO2 = 0.0
-    PEN_sys_MJoil = 0.0
-
-
     # FOR HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         for column in performance_heating.keys():
@@ -96,7 +89,7 @@ def summarize_results_individual(master_to_slave_vars,
             TAC_sys_disconnected_USD += performance_disconnected[column]
         if "Opex_a_" in column and "disconnected_USD" in column:
             TAC_sys_disconnected_USD += performance_disconnected[column]
-            Opex_a_sys_disconnected_USD += performance_storage[column]
+            Opex_a_sys_disconnected_USD += performance_disconnected[column]
         if "GHG_" in column and "disconnected_tonCO2" in column:
             GHG_sys_disconnected_tonCO2 += performance_disconnected[column]
         if "PEN_" in column and "disconnected_MJoil" in column:

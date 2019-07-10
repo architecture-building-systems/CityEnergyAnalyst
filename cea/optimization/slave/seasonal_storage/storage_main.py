@@ -369,19 +369,19 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     # SUMMARY OF COSTS AND EMISSIONS
     performance = {
         # annual costs
-        "Capex_a_Storage_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
+        "Capex_a_Storage_connected_USD": Capex_a_storage_USD + Capex_a_HP_storage_USD,
 
         # total costs
-        "Capex_total_Storage_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
+        "Capex_total_Storage_connected_USD": Capex_storage_USD + Capex_HP_storage_USD,
 
         # opex fixed costs
-        "Opex_fixed_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD],
+        "Opex_fixed_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
 
         # opex var costs
-        "Opex_var_Storage_connected_USD": [Opex_var_storage_USD],
+        "Opex_var_Storage_connected_USD": Opex_var_storage_USD,
 
         # opex annual costs
-        "Opex_a_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD],
+        "Opex_a_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD,
     }
 
     return performance, storage_dispatch
