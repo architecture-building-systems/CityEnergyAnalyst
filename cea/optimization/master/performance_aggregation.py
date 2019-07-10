@@ -2,7 +2,6 @@ def summarize_results_individual(performance_storage,
                                  performance_heating,
                                  performance_cooling,
                                  performance_disconnected,
-                                 performance_fuels,
                                  performance_electricity):
     # TODO:CALCULATE CAPEX TOTAL, OPEX TOTAL and RENEWABLE ERNGY SHARE (to be used in multicriteria.
     # SUMMARIZE TOTALS OF THIS SYSTEM
