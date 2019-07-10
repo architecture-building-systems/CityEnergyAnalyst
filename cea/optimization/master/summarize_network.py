@@ -13,6 +13,8 @@ import pandas as pd
 from cea.optimization.constants import K_DH, ZERO_DEGREES_CELSIUS_IN_KELVIN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR
+import warnings
+warnings.filterwarnings("ignore")
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

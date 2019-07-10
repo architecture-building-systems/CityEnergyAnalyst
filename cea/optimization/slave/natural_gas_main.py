@@ -9,12 +9,8 @@ respective folder
 from __future__ import division
 from __future__ import print_function
 
-import os
-import pandas as pd
-import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -25,46 +21,44 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def natural_gas_imports(master_to_slave_vars,
-                        locator,
-                        district_heating_network,
-                        district_cooling_network,
-                        heating_dispatch,
+
+def natural_gas_imports(heating_dispatch,
                         cooling_dispatch):
+    NG_used_HPSew_W = heating_dispatch["NG_used_HPSew_W"]
+    NG_used_HPLake_W = heating_dispatch["NG_used_HPLake_W"]
+    NG_used_GHP_W = heating_dispatch["NG_used_GHP_W"]
+    NG_used_CHP_W = heating_dispatch["NG_used_CHP_W"]
+    NG_used_Furnace_W = heating_dispatch["NG_used_Furnace_W"]
+    NG_used_BaseBoiler_W = heating_dispatch["NG_used_BaseBoiler_W"]
+    NG_used_PeakBoiler_W = heating_dispatch["NG_used_PeakBoiler_W"]
+    NG_used_BackupBoiler_W = heating_dispatch["NG_used_BackupBoiler_W"]
+    NG_used_CCGT_W = cooling_dispatch["NG_used_CCGT_W"]
 
-    NG_total_heating_W = np.zeros(HOURS_IN_YEAR)
-    NG_total_cooling_W = np.zeros(HOURS_IN_YEAR)
-    NG_total_W = np.zeros(HOURS_IN_YEAR)
-    date = master_to_slave_vars.date
+    NG_total_heating_W = [a + b + c + d + e + f + g + h for a, b, c, d, e, f, g, h in
+                          zip(NG_used_HPSew_W, NG_used_HPLake_W, NG_used_GHP_W, NG_used_CHP_W, NG_used_Furnace_W, \
+                              NG_used_BaseBoiler_W, NG_used_PeakBoiler_W, NG_used_BackupBoiler_W)]
 
-    if district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
-        NG_used_HPSew_W = heating_dispatch["NG_used_HPSew_W"]
-        NG_used_HPLake_W = heating_dispatch["NG_used_HPLake_W"]
-        NG_used_GHP_W = heating_dispatch["NG_used_GHP_W"]
-        NG_used_CHP_W = heating_dispatch["NG_used_CHP_W"]
-        NG_used_Furnace_W = heating_dispatch["NG_used_Furnace_W"]
-        NG_used_BaseBoiler_W = heating_dispatch["NG_used_BaseBoiler_W"]
-        NG_used_PeakBoiler_W = heating_dispatch["NG_used_PeakBoiler_W"]
-        NG_used_BackupBoiler_W = heating_dispatch["NG_used_BackupBoiler_W"]
+    NG_total_cooling_W = NG_used_CCGT_W
 
-        for hour in range(HOURS_IN_YEAR):
-            NG_total_heating_W[hour] = NG_used_HPSew_W[hour] + NG_used_HPLake_W[hour] + NG_used_GHP_W[hour] + \
-                                       NG_used_CHP_W[hour] + NG_used_Furnace_W[hour] + NG_used_BaseBoiler_W[hour] + \
-                                       NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
+    NG_total_W = NG_total_heating_W + NG_total_cooling_W
 
-
-    if district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
-        # Natural Gas supply for the CCGT plant
-        NG_used_CCGT_W = cooling_dispatch['NG_used_CCGT_W']
-        for hour in range(HOURS_IN_YEAR):
-            NG_total_cooling_W[hour] = NG_used_CCGT_W[hour]
-
-    for hour in range(HOURS_IN_YEAR):
-        NG_total_W[hour] = NG_total_heating_W[hour] + NG_total_cooling_W[hour]
-
-    naturalgas_dispatch = {"NG_GRID_W": NG_total_W}
+    naturalgas_dispatch = {
+        "NG_GRID_connected_W": NG_total_W,
+        "NG_GRID_heating_connected_W": NG_total_heating_W,
+        "NG_GRID_cooling_connected_W": NG_total_cooling_W,
+        "NG_used_HPSew_W": NG_used_HPSew_W,
+        "NG_used_HPLake_W": NG_used_HPLake_W,
+        "NG_used_GHP_W": NG_used_GHP_W,
+        "NG_used_CHP_W": NG_used_CHP_W,
+        "NG_used_Furnace_W": NG_used_Furnace_W,
+        "NG_used_BaseBoiler_W": NG_used_BaseBoiler_W,
+        "NG_used_PeakBoiler_W": NG_used_PeakBoiler_W,
+        "NG_used_BackupBoiler_W": NG_used_BackupBoiler_W,
+        "NG_used_CCGT_W": NG_used_CCGT_W
+    }
 
     return naturalgas_dispatch
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

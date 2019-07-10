@@ -4,7 +4,6 @@ multi-objective optimization of supply systems for the CEA
 
 from __future__ import print_function
 from __future__ import division
-
 import os
 import pandas as pd
 import cea.config
@@ -15,6 +14,8 @@ from cea.optimization.distribution.network_optimization_features import NetworkO
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
+import warnings
+warnings.filterwarnings("ignore")
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

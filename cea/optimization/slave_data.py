@@ -32,6 +32,8 @@ class SlaveData(object):
         self.generation_number = ""
         self.num_total_buildings = 0
         self.date = 0
+        self.DHN_exists = False
+        self.DCN_exists = False
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
