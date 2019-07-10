@@ -7,12 +7,12 @@ $(document).ready(function() {
     console.log("assigned categories!");
     console.log(categories);
 
-    $("#cea-plot-category").on("change", function(e){
+    $("[id|=cea-plot-category]").on("change", function(e){
         let category_name = this.value;
-        $("#cea-plot-name").empty();
+        $("[id|=cea-plot-name]").empty();
         $.each(categories[category_name]["plots"], function(i, p){
             console.log(p);
-            $("#cea-plot-name").append($("<option></option>").attr("value", p.id).text(p.name));
+            $("[id|=cea-plot-name]").append($("<option></option>").attr("value", p.id).text(p.name));
         });
 
         console.log(categories[category_name]["plots"]);
@@ -62,7 +62,7 @@ function load_all_plots() {
                 $(x_content_id).children().replaceWith(data);
         }).fail(function(data) {
             $(x_content_id).children().replaceWith("ERROR: " + $(data.responseText).filter("p").text());
-            console.log("error creating plot:");
+            console.log("error creating plot: "+x_content_id);
             console.log(data);
         });
 
