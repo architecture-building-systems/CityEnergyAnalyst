@@ -161,12 +161,12 @@ def calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_direct
 
     performance_electricity = {
         # emissions
-        "GHG_PV_connected_tonCO2": [GHG_PV_connected_tonCO2],
-        "GHG_GRID_connected_tonCO2": [GHG_GRID_directload_tonCO2],
+        "GHG_PV_connected_tonCO2": GHG_PV_connected_tonCO2,
+        "GHG_GRID_connected_tonCO2": GHG_GRID_directload_tonCO2,
 
         # primary energy
-        "PEN_PV_connected_MJoil": [PEN_PV_connected_MJoil],
-        "PEN_GRID_connected_MJoil": [PEN_GRID_directload_MJoil]
+        "PEN_PV_connected_MJoil": PEN_PV_connected_MJoil,
+        "PEN_GRID_connected_MJoil": PEN_GRID_directload_MJoil
     }
 
     return performance_electricity
