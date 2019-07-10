@@ -47,6 +47,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :rtype:
     """
 
+
     # Get network summary
     Network_Data, \
     Q_DH_networkload_W, Q_wasteheatServer_kWh, \
@@ -219,9 +220,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
 
     if STORE_DATA == "yes":
-        date = Network_Data.DATE.values
-        results = pd.DataFrame(
-            {"DATE": date,
+        storage_dispatch = {
              "Q_storage_content_W":Q_storage_content_final_W,
              "Q_DH_networkload_W":Q_DH_networkload_W,
              "Q_uncontrollable_hot_W":Q_uncontrollable_final_W,
@@ -256,17 +255,14 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "HPScDesignArray_Wh":HPScDesignArray_Wh,
              "Q_rejected_fin_W":Q_rejected_final_W,
              "P_HPCharge_max_W":P_HP_max_W
-            })
-        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                                                            master_to_slave_vars.generation_number)
-        results.to_csv(storage_operation_data_path, index=False)
+            }
 
     Q_stored_max_W = np.amax(Q_storage_content_final_W)
     T_st_max_K = np.amax(T_storage_final_K)
     T_st_min_K = np.amin(T_storage_final_K)
 
-    return Q_stored_max_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, Q_storage_content_final_W, \
-           T_storage_final_K, Q_loss_tot_W, mdot_DH_final_kgpers, Q_uncontrollable_final_W
+    return (Q_stored_max_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, Q_storage_content_final_W, \
+           T_storage_final_K, Q_loss_tot_W, mdot_DH_final_kgpers, Q_uncontrollable_final_W), storage_dispatch
 
 
 def get_heating_provided_by_onsite_energy_sources(HOUR, HPCompAirDesignArray_kWh, HPScDesignArray_Wh,

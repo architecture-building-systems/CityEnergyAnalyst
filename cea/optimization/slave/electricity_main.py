@@ -29,21 +29,11 @@ __status__ = "Production"
 def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, lca,
                                               solar_features,
                                               performance_heating,
-                                              performance_cooling
+                                              performance_cooling,
+                                              storage_dispatch, heating_dispatch, cooling_dispatch,
                                               ):
     # local variables
     building_names = master_to_slave_vars.building_names
-    storage_activation_data = pd.read_csv(
-        locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                              master_to_slave_vars.generation_number))
-    heating_activation_data = pd.read_csv(
-        locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                  master_to_slave_vars.generation_number))
-    cooling_activation_data = pd.read_csv(
-        locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
-                                                                  master_to_slave_vars.generation_number))
-
-    date = storage_activation_data.DATE.values
 
     # GET ENERGY GENERATION
     E_CHP_gen_W, \
@@ -51,32 +41,31 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     E_CCGT_gen_W, \
     E_PV_gen_W, \
     E_PVT_gen_W, \
-    E_sys_gen_W = calc_district_system_electricity_generated(cooling_activation_data,
-                                                             heating_activation_data,
-                                                             storage_activation_data)
+    E_sys_gen_W = calc_district_system_electricity_generated(cooling_dispatch,
+                                                             heating_dispatch,
+                                                             storage_dispatch)
 
     # GET ENERGY REQUIREMENTS
     E_sys_req_W = calc_district_system_electricity_requirements(DCN_barcode, DHN_barcode,
                                                                 building_names,
-                                                                cooling_activation_data,
-                                                                heating_activation_data, locator,
-                                                                storage_activation_data)
+                                                                cooling_dispatch,
+                                                                heating_dispatch, locator,
+                                                                storage_dispatch)
 
     # GET ACTIVATION CURVE
-    activation_curve_variables = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
-                                                              E_PV_gen_W, E_sys_req_W, master_to_slave_vars, locator,
-                                                              date)
-    E_CHP_gen_directload_W = activation_curve_variables['E_CHP_gen_directload_W']
-    E_CHP_gen_export_W = activation_curve_variables['E_CHP_gen_export_W']
-    E_CCGT_gen_directload_W = activation_curve_variables['E_CCGT_gen_directload_W']
-    E_CCGT_gen_export_W = activation_curve_variables['E_CCGT_gen_export_W']
-    E_Furnace_gen_directload_W = activation_curve_variables['E_Furnace_gen_directload_W']
-    E_Furnace_gen_export_W = activation_curve_variables['E_Furnace_gen_export_W']
-    E_GRID_directload_W = activation_curve_variables['E_GRID_directload_W']
-    E_PV_gen_directload_W = activation_curve_variables['E_PV_gen_directload_W']
-    E_PV_gen_export_W = activation_curve_variables['E_PV_gen_export_W']
-    E_PVT_gen_directload_W = activation_curve_variables['E_PVT_gen_directload_W']
-    E_PVT_gen_export_W = activation_curve_variables['E_PVT_gen_export_W']
+    electricity_dispatch = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
+                                                              E_PV_gen_W, E_sys_req_W)
+    E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
+    E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
+    E_CCGT_gen_directload_W = electricity_dispatch['E_CCGT_gen_directload_W']
+    E_CCGT_gen_export_W = electricity_dispatch['E_CCGT_gen_export_W']
+    E_Furnace_gen_directload_W = electricity_dispatch['E_Furnace_gen_directload_W']
+    E_Furnace_gen_export_W = electricity_dispatch['E_Furnace_gen_export_W']
+    E_GRID_directload_W = electricity_dispatch['E_GRID_directload_W']
+    E_PV_gen_directload_W = electricity_dispatch['E_PV_gen_directload_W']
+    E_PV_gen_export_W = electricity_dispatch['E_PV_gen_export_W']
+    E_PVT_gen_directload_W = electricity_dispatch['E_PVT_gen_directload_W']
+    E_PVT_gen_export_W = electricity_dispatch['E_PVT_gen_export_W']
 
     # UPDATE VARIABLE COSTS ACCORDING TO ACTIVATION CURVE FOR HEATING< COOLING AND SOLAR TECHNOLOGIES
     performance_heating, performance_cooling = update_performance_costs(performance_heating,
@@ -147,24 +136,7 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
         "PEN_PV_connected_MJoil": [PEN_PV_connected_MJoil],
         "PEN_GRID_connected_MJoil":[PEN_GRID_connected_MJoil]
     }
-
-    #export all including perfroamcne heating and performance cooling since we changed them
-    pd.DataFrame(performance_cooling).to_csv(
-        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
-
-    pd.DataFrame(performance_heating).to_csv(
-        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
-
-    pd.DataFrame(performance_electricity).to_csv(
-        locator.get_optimization_slave_electricity_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
-
-    return performance_electricity, performance_heating, performance_cooling
+    return performance_electricity, electricity_dispatch, performance_heating, performance_cooling,
 
 
 def calc_electricity_performance_emisisons(lca,E_PV_gen_export_W, E_GRID_directload_W):
@@ -404,8 +376,7 @@ def update_performance_costs(performance_heating, performance_cooling,
     return performance_heating, performance_cooling
 
 
-def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W, E_PV_gen_W, E_sys_req_W,
-                                 master_to_slave_vars, locator, date):
+def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
     # ACTIVATION PATTERN OF ELECTRICITY
     E_CHP_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_CHP_gen_export_W = np.zeros(HOURS_IN_YEAR)
@@ -506,8 +477,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
             E_GRID_directload_W[hour] = E_req_hour_W
 
     # TOTAL EXPORTS:
-    activation_curve = {
-        "DATE": date,
+    electricity_dispatch = {
         'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
         'E_CHP_gen_export_W': E_CHP_gen_export_W,
         'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
@@ -520,10 +490,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
         'E_PVT_gen_export_W': E_PVT_gen_export_W,
         'E_GRID_directload_W': E_GRID_directload_W
     }
-    pd.DataFrame(activation_curve).to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(
-        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
-
-    return activation_curve
+    return electricity_dispatch
 
 
 def calc_district_system_electricity_generated(cooling_activation_data, heating_activation_data,

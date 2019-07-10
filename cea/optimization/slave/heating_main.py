@@ -12,7 +12,6 @@ from math import log
 import numpy as np
 import pandas as pd
 
-import cea.optimization.distribution.network_optimization_features as network_opt
 import cea.technologies.pumps as PumpModel
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
@@ -38,7 +37,7 @@ __status__ = "Production"
 # ==============================
 
 def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, prices, lca, solar_features,
-                                         network_features):
+                                         network_features, storage_dispatch):
     """
     Computes the parameters for the heating of the complete DHN
 
@@ -67,22 +66,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     building_names = master_to_slave_vars.building_names
 
     # Import data from storage optimization
-    storage_activation_data = pd.read_csv(
-        locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                              master_to_slave_vars.generation_number))
-    E_aux_ch_W = np.array(storage_activation_data['E_aux_ch_W'])
-    E_aux_dech_W = np.array(storage_activation_data['E_aux_dech_W'])
-    Q_missing_W = np.array(storage_activation_data['Q_missing_W'])
-    E_aux_solar_and_heat_recovery_W = np.array(storage_activation_data['E_aux_solar_and_heat_recovery_Wh'])
-    Q_SC_ET_gen_Wh = np.array(storage_activation_data['Q_SC_ET_gen_Wh'])
-    Q_SC_FP_gen_Wh = np.array(storage_activation_data['Q_SC_FP_gen_Wh'])
-    Q_PVT_gen_Wh = np.array(storage_activation_data['Q_PVT_gen_Wh'])
-    Q_SCandPVT_gen_Wh = Q_SC_ET_gen_Wh + Q_SC_FP_gen_Wh + Q_PVT_gen_Wh
-    E_PV_gen_W = np.array(storage_activation_data['E_PV_Wh'])
-    E_PVT_gen_W = np.array(storage_activation_data['E_PVT_Wh'])
-    E_produced_solar_W = np.array(storage_activation_data['E_produced_from_solar_W'])
-
-    E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
+    Q_missing_W = np.array(storage_dispatch['Q_missing_W'])
     Q_missing_copy_W = Q_missing_W.copy()
 
     # Import Temperatures from Network Summary:
@@ -220,7 +204,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_PeakBoiler_gen_W[hour] = Q_output['Q_PeakBoiler_gen_W']
         Q_uncovered_W[hour] = Q_output['Q_uncovered_W']
 
-        E_HPServer_req_W = E_output['E_HPServer_req_W']
+        E_HPServer_req_W[hour] = E_output['E_HPServer_req_W']
         E_HPSew_req_W[hour] = E_output['E_HPSew_req_W']
         E_HPLake_req_W[hour] = E_output['E_HPLake_req_W']
         E_GHP_req_W[hour] = E_output['E_GHP_req_W']
@@ -336,9 +320,10 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Capex_DHN_USD, \
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
-    Opex_var_DHN_USD,\
+    Opex_var_DHN_USD, \
     E_DHN_W = calc_network_costs_heating(config, DHN_barcode, locator, master_to_slave_vars,
-                                                  network_features, lca)
+                                         network_features, lca)
+    Opex_a_DHN_connected_USD = Opex_var_DHN_USD + Opex_fixed_DHN_USD
 
     # HEATING SUBSTATIONS
     Capex_SubstationsHeating_USD, \
@@ -349,12 +334,12 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
     performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                                                 config, storage_activation_data, solar_features,
+                                                                 config, storage_dispatch, solar_features,
                                                                  Q_GHP_gen_W)
 
     # THIS CALCULATES EMISSIONS
     if master_to_slave_vars.gt_fuel == "NG":
-        performance_emissions_pen = calc_primary_energy_and_CO2(storage_activation_data,
+        performance_emissions_pen = calc_primary_energy_and_CO2(storage_dispatch,
                                                                 Q_HPSew_gen_W,
                                                                 Q_HPLake_gen_W,
                                                                 Q_GHP_gen_W,
@@ -382,17 +367,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 E_HPServer_req_W,
                                                                 E_DHN_W,
                                                                 fuel='NG')
-        performance_emissions_pen['GHG_BaseBoiler_BG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_PeakBoiler_BG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_BackupBoiler_BG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_CHP_BG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['PEN_CHP_BG_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_BaseBoiler_BG_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_PeakBoiler_BG_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_BackupBoiler_BG_connected_MJoil'] = [0.0]
-
     if master_to_slave_vars.gt_fuel == "BG":
-        performance_emissions_pen = calc_primary_energy_and_CO2(storage_activation_data,
+        performance_emissions_pen = calc_primary_energy_and_CO2(storage_dispatch,
                                                                 Q_HPSew_gen_W,
                                                                 Q_HPLake_gen_W,
                                                                 Q_GHP_gen_W,
@@ -420,44 +396,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 E_HPServer_req_W,
                                                                 E_DHN_W,
                                                                 fuel='BG')
-        performance_emissions_pen['GHG_BaseBoiler_NG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_PeakBoiler_NG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_BackupBoiler_NG_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['GHG_CHP_NG_connected_connected_tonCO2'] = [0.0]
-        performance_emissions_pen['PEN_CHP_NG_connected_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_BaseBoiler_NG_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_PeakBoiler_NG_connected_MJoil'] = [0.0]
-        performance_emissions_pen['PEN_BackupBoiler_NG_connected_MJoil'] = [0.0]
-
-    # SUMMARIZE TOTALS OF THIS SYSTEM
-    Capex_total_sys_connected_USD = Capex_DHN_USD + Capex_SubstationsHeating_USD
-    Capex_a_sys_connected_USD = Capex_a_DHN_USD + Capex_a_SubstationsHeating_USD
-    Opex_fixed_sys_connected_USD = Opex_fixed_DHN_USD + Opex_fixed_SubstationsHeating_USD
-
-    for column in performance_costs.keys():
-        if "Capex_total_" in column and "connected_USD" in column:
-            Capex_total_sys_connected_USD += performance_costs[column]
-        elif "Capex_a_" in column and "connected_USD" in column:
-            Capex_a_sys_connected_USD += performance_costs[column]
-        elif "Opex_fixed_" in column and "connected_USD" in column:
-            Opex_fixed_sys_connected_USD += performance_costs[column]
-
-    Opex_var_sys_connected_USD = Opex_var_HP_Sewage_USD + Opex_var_HP_Lake_USD + Opex_var_GHP_USD + Opex_var_CHP_BG_USD + \
-                                 Opex_var_CHP_NG_USD + Opex_var_Furnace_wet_USD + Opex_var_Furnace_dry_USD + \
-                                 Opex_var_BaseBoiler_BG_USD + Opex_var_BaseBoiler_NG_USD + Opex_var_PeakBoiler_BG_USD + \
-                                 Opex_var_PeakBoiler_NG_USD + Opex_var_BackupBoiler_BG_USD + Opex_var_BackupBoiler_NG_USD + \
-                                 Opex_var_DHN_USD + Opex_var_SubstationsHeating_USD
-
-    Opex_a_sys_connected_USD = Opex_fixed_sys_connected_USD + Opex_var_sys_connected_USD
-    TAC_sys_connected_USD = Capex_a_sys_connected_USD + Opex_a_sys_connected_USD
-
-    GHG_sys_connected_USD = 0.0
-    PEN_sys_connected_USD = 0.0
-    for column in performance_emissions_pen.keys():
-        if "GHG_" in column and "connected_tonCO2" in column:
-            GHG_sys_connected_USD += performance_emissions_pen[column]
-        elif "PEN_" in column and "connected_MJoil" in column:
-            PEN_sys_connected_USD += performance_emissions_pen[column]
 
     # SAVE PERFORMANCE METRICS TO DISK
     performance = {
@@ -479,8 +417,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
         "Capex_a_BackupBoiler_BG_connected_USD": performance_costs['Capex_a_BackupBoiler_BG_connected_USD'],
         "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
-        "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
-        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
+        "Capex_a_DHN_connected_USD": [Capex_a_DHN_USD],
+        "Capex_a_SubstationsHeating_connected_USD": [Capex_a_SubstationsHeating_USD],
 
         # total capex
         "Capex_total_SC_ET_connected_USD": performance_costs['Capex_total_SC_ET_connected_USD'],
@@ -500,8 +438,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
         "Capex_total_BackupBoiler_BG_connected_USD": performance_costs['Capex_total_BackupBoiler_BG_connected_USD'],
         "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
-        "Capex_total_DHN_connected_USD": Capex_DHN_USD,
-        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
+        "Capex_total_DHN_connected_USD": [Capex_DHN_USD],
+        "Capex_total_SubstationsHeating_connected_USD": [Capex_SubstationsHeating_USD],
 
         # opex fixed
         "Opex_fixed_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
@@ -521,51 +459,61 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
         "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
         "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
-        "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
+        "Opex_fixed_DHN_connected_USD": [Opex_fixed_DHN_USD],
+        "Opex_fixed_SubstationsHeating_USD": [Opex_fixed_SubstationsHeating_USD],
 
         # opex variable
         # opex var  9# opex of electricity gen unites will be updated in electricity_main
         "Opex_var_SC_ET_connected_USD": [0.0],
         "Opex_var_SC_FP_connected_USD": [0.0],
         "Opex_var_PVT_connected_USD": [0.0],
-        "Opex_var_HP_DataCenter_connected_USD": Opex_var_HP_DataCenter_USD,
-        "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
-        "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
-        "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
-        "Opex_var_CHP_BG_connected_USD": Opex_var_CHP_BG_USD,
-        "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
-        "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
-        "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
-        "Opex_var_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD,
-        "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
-        "Opex_var_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD,
-        "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
-        "Opex_var_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD,
-        "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-        "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
-        "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
+        "Opex_var_HP_DataCenter_connected_USD": [Opex_var_HP_DataCenter_USD],
+        "Opex_var_HP_Sewage_connected_USD": [Opex_var_HP_Sewage_USD],
+        "Opex_var_HP_Lake_connected_USD": [Opex_var_HP_Lake_USD],
+        "Opex_var_GHP_connected_USD": [Opex_var_GHP_USD],
+        "Opex_var_CHP_BG_connected_USD": [Opex_var_CHP_BG_USD],
+        "Opex_var_CHP_NG_connected_USD": [Opex_var_CHP_NG_USD],
+        "Opex_var_Furnace_wet_connected_USD": [Opex_var_Furnace_wet_USD],
+        "Opex_var_Furnace_dry_connected_USD": [Opex_var_Furnace_dry_USD],
+        "Opex_var_BaseBoiler_BG_connected_USD": [Opex_var_BaseBoiler_BG_USD],
+        "Opex_var_BaseBoiler_NG_connected_USD": [Opex_var_BaseBoiler_NG_USD],
+        "Opex_var_PeakBoiler_BG_connected_USD": [Opex_var_PeakBoiler_BG_USD],
+        "Opex_var_PeakBoiler_NG_connected_USD": [Opex_var_PeakBoiler_NG_USD],
+        "Opex_var_BackupBoiler_BG_connected_USD": [Opex_var_BackupBoiler_BG_USD],
+        "Opex_var_BackupBoiler_NG_connected_USD": [Opex_var_BackupBoiler_NG_USD],
+        "Opex_var_DHN_connected_USD": [Opex_var_DHN_USD],
+        "Opex_var_SubstationsHeating_USD": [Opex_var_SubstationsHeating_USD],
 
         # opex annual
         "Opex_a_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
         "Opex_a_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
         "Opex_a_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-        "Opex_a_HP_DataCenter_connected_USD": Opex_var_HP_DataCenter_USD + performance_costs['Opex_fixed_HP_DataCenter_connected_USD'],
-        "Opex_a_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD + performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
+        "Opex_a_HP_DataCenter_connected_USD": Opex_var_HP_DataCenter_USD + performance_costs[
+            'Opex_fixed_HP_DataCenter_connected_USD'],
+        "Opex_a_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD + performance_costs[
+            'Opex_fixed_HP_Sewage_connected_USD'],
         "Opex_a_HP_Lake_connected_USD": Opex_var_HP_Lake_USD + performance_costs['Opex_fixed_HP_Lake_connected_USD'],
         "Opex_a_GHP_connected_USD": Opex_var_GHP_USD + performance_costs['Opex_fixed_GHP_connected_USD'],
         "Opex_a_CHP_BG_connected_USD": Opex_var_CHP_BG_USD + performance_costs['Opex_fixed_CHP_BG_connected_USD'],
         "Opex_a_CHP_NG_connected_USD": Opex_var_CHP_NG_USD + performance_costs['Opex_fixed_CHP_NG_connected_USD'],
-        "Opex_a_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD + performance_costs['Opex_fixed_Furnace_wet_connected_USD'],
-        "Opex_a_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD + performance_costs['Opex_fixed_Furnace_dry_connected_USD'],
-        "Opex_a_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD + performance_costs['Opex_fixed_BaseBoiler_BG_connected_USD'],
-        "Opex_a_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD + performance_costs['Opex_fixed_BaseBoiler_NG_connected_USD'],
-        "Opex_a_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD + performance_costs['Opex_fixed_PeakBoiler_BG_connected_USD'],
-        "Opex_a_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD + performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
-        "Opex_a_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD + performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
-        "Opex_a_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD + performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_a_DHN_connected_USD": Opex_var_DHN_USD + Opex_fixed_DHN_USD,
-        "Opex_a_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD + Opex_fixed_SubstationsHeating_USD,
+        "Opex_a_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD + performance_costs[
+            'Opex_fixed_Furnace_wet_connected_USD'],
+        "Opex_a_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD + performance_costs[
+            'Opex_fixed_Furnace_dry_connected_USD'],
+        "Opex_a_BaseBoiler_BG_connected_USD": Opex_var_BaseBoiler_BG_USD + performance_costs[
+            'Opex_fixed_BaseBoiler_BG_connected_USD'],
+        "Opex_a_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD + performance_costs[
+            'Opex_fixed_BaseBoiler_NG_connected_USD'],
+        "Opex_a_PeakBoiler_BG_connected_USD": Opex_var_PeakBoiler_BG_USD + performance_costs[
+            'Opex_fixed_PeakBoiler_BG_connected_USD'],
+        "Opex_a_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD + performance_costs[
+            'Opex_fixed_PeakBoiler_NG_connected_USD'],
+        "Opex_a_BackupBoiler_BG_connected_USD": Opex_var_BackupBoiler_BG_USD + performance_costs[
+            'Opex_fixed_BackupBoiler_BG_connected_USD'],
+        "Opex_a_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD + performance_costs[
+            'Opex_fixed_BackupBoiler_NG_connected_USD'],
+        "Opex_a_DHN_connected_USD": [Opex_a_DHN_connected_USD],
+        "Opex_a_SubstationsHeating_USD": [Opex_var_SubstationsHeating_USD + Opex_fixed_SubstationsHeating_USD],
 
         # emissions
         "GHG_SC_ET_connected_tonCO2": performance_emissions_pen['GHG_SC_ET_connected_tonCO2'],
@@ -608,14 +556,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_connected_MJoil'],
         "PEN_DHN_connected_MJoil": performance_emissions_pen['PEN_DHN_connected_MJoil'],
         "PEN_SubstationsHeating_MJoil": performance_emissions_pen['PEN_SubstationsHeating_MJoil'],
-
-        # totals for this system
-        "Capex_total_Heating_sys_connected_USD": [Capex_total_sys_connected_USD],
-        "Capex_a_Heating_sys_connected_USD": [Capex_a_sys_connected_USD],
-        "Opex_a_Heating_sys_connected_USD": [Opex_a_sys_connected_USD],
-        "TAC_Heating_sys_connected_USD": [TAC_sys_connected_USD],
-        "GHG_Heating_sys_connected_tonCO2": [GHG_sys_connected_USD],
-        "PEN_Heating_sys_connected_MJoil": [PEN_sys_connected_USD],
     }
 
     pd.DataFrame(performance).to_csv(
@@ -624,86 +564,101 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         index=False)
 
     # saving pattern activation to disk
-    date = network_data.DATE.values
-    results = pd.DataFrame({"DATE": date,
-                            "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
-                            "HPServer_Status": source_HP_DataCenter,
-                            "HPSew_Status": source_HP_Sewage,
-                            "HPLake_Status": source_HP_Lake,
-                            "GHP_Status": source_GHP,
-                            "CHP_Status": source_CHP,
-                            "Furnace_Status": source_Furnace,
-                            "BoilerBase_Status": source_BaseBoiler,
-                            "BoilerPeak_Status": source_PeakBoiler,
-                            "Q_HPServer_W": Q_HPServer_gen_W,
-                            "Q_HPSew_W": Q_HPSew_gen_W,
-                            "Q_HPLake_W": Q_HPLake_gen_W,
-                            "Q_GHP_W": Q_GHP_gen_W,
-                            "Q_CHP_W": Q_CHP_gen_W,
-                            "Q_Furnace_W": Q_Furnace_gen_W,
-                            "Q_BaseBoiler_W": Q_BaseBoiler_gen_W,
-                            "Q_PeakBoiler_W": Q_PeakBoiler_gen_W,
-                            "Q_AddBoiler_W": Q_uncovered_W,
-                            "Q_coldsource_HPServer_W": Q_coldsource_HPServer_W,
-                            "Q_coldsource_HPLake_W": Q_coldsource_HPLake_W,
-                            "Q_coldsource_HPSew_W": Q_coldsource_HPSew_W,
-                            "Q_coldsource_GHP_W": Q_coldsource_GHP_W,
-                            "Q_coldsource_CHP_W": Q_coldsource_CHP_W,
-                            "Q_coldsource_Furnace_W": Q_coldsource_Furnace_W,
-                            "Q_coldsource_BaseBoiler_W": Q_coldsource_BaseBoiler_W,
-                            "Q_coldsource_PeakBoiler_W": Q_coldsource_PeakBoiler_W,
-                            "Q_excess_W": Q_excess_W,
-                            "E_HPServer_req_W": E_HPServer_req_W,
-                            "E_HPSew_req_W": E_HPSew_req_W,
-                            "E_HPLake_req_W": E_HPLake_req_W,
-                            "E_GHP_req_W": E_GHP_req_W,
-                            "E_CHP_gen_W": E_CHP_gen_W,
-                            "E_Furnace_gen_W": E_Furnace_gen_W,
-                            "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
-                            "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
-                            "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
-                            "NG_used_HPServer_W": NG_used_HPServer_W,
-                            "NG_used_HPSew_W": NG_used_HPSew_W,
-                            "NG_used_HPLake_W": NG_used_HPLake_W,
-                            "NG_used_GHP_W": NG_used_GHP_W,
-                            "NG_used_CHP_W": NG_used_CHP_W,
-                            "NG_used_Furnace_W": NG_used_Furnace_W,
-                            "NG_used_BaseBoiler_W": NG_used_BaseBoiler_W,
-                            "NG_used_PeakBoiler_W": NG_used_PeakBoiler_W,
-                            "NG_used_BackupBoiler_W": NG_used_BackupBoiler_W,
-                            "BG_used_HPServer_W": BG_used_HPServer_W,
-                            "BG_used_HPSew_W": BG_used_HPSew_W,
-                            "BG_used_HPLake_W": BG_used_HPLake_W,
-                            "BG_used_GHP_W": BG_used_GHP_W,
-                            "BG_used_CHP_W": BG_used_CHP_W,
-                            "BG_used_Furnace_W": BG_used_Furnace_W,
-                            "BG_used_BaseBoiler_W": BG_used_BaseBoiler_W,
-                            "BG_used_PeakBoiler_W": BG_used_PeakBoiler_W,
-                            "Wood_used_HPServer_W": Wood_used_HPServer_W,
-                            "Wood_used_HPSew_W": Wood_used_HPSew_W,
-                            "Wood_used_HPLake_W": Wood_used_HPLake_W,
-                            "Wood_used_GHP_W": Wood_used_GHP_W,
-                            "Wood_used_CHP_": Wood_used_CHP_W,
-                            "Wood_used_Furnace_W": Wood_used_Furnace_W,
-                            "Wood_used_BaseBoiler_W": Wood_used_BaseBoiler_W,
-                            "Wood_used_PeakBoiler_W": Wood_used_PeakBoiler_W
-                            })
+    heating_dispatch = {
+        "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
+        "HPServer_Status": source_HP_DataCenter,
+        "HPSew_Status": source_HP_Sewage,
+        "HPLake_Status": source_HP_Lake,
+        "GHP_Status": source_GHP,
+        "CHP_Status": source_CHP,
+        "Furnace_Status": source_Furnace,
+        "BoilerBase_Status": source_BaseBoiler,
+        "BoilerPeak_Status": source_PeakBoiler,
+        "Q_HPServer_W": Q_HPServer_gen_W,
+        "Q_HPSew_W": Q_HPSew_gen_W,
+        "Q_HPLake_W": Q_HPLake_gen_W,
+        "Q_GHP_W": Q_GHP_gen_W,
+        "Q_CHP_W": Q_CHP_gen_W,
+        "Q_Furnace_W": Q_Furnace_gen_W,
+        "Q_BaseBoiler_W": Q_BaseBoiler_gen_W,
+        "Q_PeakBoiler_W": Q_PeakBoiler_gen_W,
+        "Q_AddBoiler_W": Q_uncovered_W,
+        "Q_coldsource_HPServer_W": Q_coldsource_HPServer_W,
+        "Q_coldsource_HPLake_W": Q_coldsource_HPLake_W,
+        "Q_coldsource_HPSew_W": Q_coldsource_HPSew_W,
+        "Q_coldsource_GHP_W": Q_coldsource_GHP_W,
+        "Q_coldsource_CHP_W": Q_coldsource_CHP_W,
+        "Q_coldsource_Furnace_W": Q_coldsource_Furnace_W,
+        "Q_coldsource_BaseBoiler_W": Q_coldsource_BaseBoiler_W,
+        "Q_coldsource_PeakBoiler_W": Q_coldsource_PeakBoiler_W,
+        "Q_excess_W": Q_excess_W,
+        "E_HPServer_req_W": E_HPServer_req_W,
+        "E_HPSew_req_W": E_HPSew_req_W,
+        "E_HPLake_req_W": E_HPLake_req_W,
+        "E_GHP_req_W": E_GHP_req_W,
+        "E_CHP_gen_W": E_CHP_gen_W,
+        "E_Furnace_gen_W": E_Furnace_gen_W,
+        "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
+        "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
+        "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
+        "NG_used_HPServer_W": NG_used_HPServer_W,
+        "NG_used_HPSew_W": NG_used_HPSew_W,
+        "NG_used_HPLake_W": NG_used_HPLake_W,
+        "NG_used_GHP_W": NG_used_GHP_W,
+        "NG_used_CHP_W": NG_used_CHP_W,
+        "NG_used_Furnace_W": NG_used_Furnace_W,
+        "NG_used_BaseBoiler_W": NG_used_BaseBoiler_W,
+        "NG_used_PeakBoiler_W": NG_used_PeakBoiler_W,
+        "NG_used_BackupBoiler_W": NG_used_BackupBoiler_W,
+        "BG_used_HPServer_W": BG_used_HPServer_W,
+        "BG_used_HPSew_W": BG_used_HPSew_W,
+        "BG_used_HPLake_W": BG_used_HPLake_W,
+        "BG_used_GHP_W": BG_used_GHP_W,
+        "BG_used_CHP_W": BG_used_CHP_W,
+        "BG_used_Furnace_W": BG_used_Furnace_W,
+        "BG_used_BaseBoiler_W": BG_used_BaseBoiler_W,
+        "BG_used_PeakBoiler_W": BG_used_PeakBoiler_W,
+        "Wood_used_HPServer_W": Wood_used_HPServer_W,
+        "Wood_used_HPSew_W": Wood_used_HPSew_W,
+        "Wood_used_HPLake_W": Wood_used_HPLake_W,
+        "Wood_used_GHP_W": Wood_used_GHP_W,
+        "Wood_used_CHP_": Wood_used_CHP_W,
+        "Wood_used_Furnace_W": Wood_used_Furnace_W,
+        "Wood_used_BaseBoiler_W": Wood_used_BaseBoiler_W,
+        "Wood_used_PeakBoiler_W": Wood_used_PeakBoiler_W
+    }
 
-    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                             master_to_slave_vars.generation_number),
-                   index=False)
-
-    return performance, master_to_slave_vars
+    return performance, heating_dispatch
 
 
-def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W,
-                                Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W, Q_uncovered_W,
-                                E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W,
-                                E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W,
-                                E_gas_CHP_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W,
+def calc_primary_energy_and_CO2(storage_dispatch,
+                                Q_HPSew_gen_W,
+                                Q_HPLake_gen_W,
+                                Q_GHP_gen_W,
+                                Q_CHP_gen_W,
+                                Q_Furnace_gen_W,
+                                Q_BaseBoiler_gen_W,
+                                Q_PeakBoiler_gen_W,
+                                Q_uncovered_W,
+                                E_coldsource_HPSew_W,
+                                E_coldsource_HPLake_W,
+                                E_coldsource_GHP_W,
+                                E_CHP_gen_W,
+                                E_Furnace_gen_W,
+                                E_BaseBoiler_req_W,
+                                E_PeakBoiler_req_W,
+                                E_gas_CHP_W,
+                                E_gas_BaseBoiler_W,
+                                E_gas_PeakBoiler_W,
                                 E_wood_Furnace_W,
-                                Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
-                                master_to_slave_vars, lca, Q_HPServer_gen_W, E_coldsource_HPServer_W, E_DHN_W, fuel):
+                                Q_gas_AdduncoveredBoilerSum_W,
+                                E_aux_AddBoilerSum_W,
+                                master_to_slave_vars,
+                                lca,
+                                Q_HPServer_gen_W,
+                                E_coldsource_HPServer_W,
+                                E_DHN_W,
+                                fuel):
     """
     This function calculates the emissions and primary energy consumption
 
@@ -747,8 +702,31 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
     # Electricity is accounted for already, no double accounting --> leave it out.
     # only CO2 / Eprim is not included in the installation part, neglected as its very small compared to operational values
     # QHPServerHeatSum, QHPpvtSum, QHPCompAirSum, QHPScSum = HP_operation_Data_sum_array
+    # Initialize variables
+    GHG_Furnace_wet_connected_tonCO2 = 0.0
+    PEN_Furnace_wet_connected_MJoil = 0.0
+    GHG_Furnace_dry_connected_tonCO2 = 0.0
+    PEN_Furnace_dry_connected_MJoil = 0.0
 
-    # ask for type of fuel, then either us BG or NG 
+    GHG_BaseBoiler_NG_connected_tonCO2 = 0.0
+    GHG_PeakBoiler_NG_connected_tonCO2 = 0.0
+    GHG_BackupBoiler_NG_connected_tonCO2 = 0.0
+    GHG_CHP_NG_connected_tonCO2 = 0.0
+    PEN_CHP_NG_connected_MJoil = 0.0
+    PEN_BaseBoiler_NG_connected_MJoil = 0.0
+    PEN_PeakBoiler_NG_connected_MJoil = 0.0
+    PEN_BackupBoiler_NG_connected_MJoil = 0.0
+
+    GHG_BaseBoiler_BG_connected_tonCO2 = 0.0
+    GHG_PeakBoiler_BG_connected_tonCO2 = 0.0
+    GHG_BackupBoiler_BG_connected_tonCO2 = 0.0
+    GHG_CHP_BG_connected_tonCO2 = 0.0
+    PEN_CHP_BG_connected_MJoil = 0.0
+    PEN_BaseBoiler_BG_connected_MJoil = 0.0
+    PEN_PeakBoiler_BG_connected_MJoil = 0.0
+    PEN_BackupBoiler_BG_connected_MJoil = 0.0
+
+    # ask for type of fuel, then either us BG or NG
     if master_to_slave_vars.BoilerBackupType == 'BG':
         gas_to_oil_BoilerBackup_std = lca.BG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerBackup_std = lca.BG_BOILER_TO_CO2_STD
@@ -841,8 +819,9 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
         COP_HPLake_avg = 100
 
     ######### COMPUTE THE GHG emissions
-    GHG_DHN_tonCO2  = (np.sum(E_DHN_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2 / 1E3)
-    GHG_DataCenter_tonCO2 = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6) * (lca.SERVERHP_TO_CO2_STD / 1E3)
+    GHG_DHN_tonCO2 = (np.sum(E_DHN_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2 / 1E3)
+    GHG_DataCenter_tonCO2 = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6) * (
+            lca.SERVERHP_TO_CO2_STD / 1E3)
     GHG_Sewage_tonCO2 = (np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * WH_TO_J / 1.0E6) * (lca.SEWAGEHP_TO_CO2_STD / 1E3)
     GHG_GHP_tonCO2 = (np.sum(Q_GHP_gen_W) / COP_GHP_avg * WH_TO_J / 1.0E6) * (lca.GHP_TO_CO2_STD / 1E3)
     GHG_HPLake_tonCO2 = (np.sum(Q_HPLake_gen_W) / COP_HPLake_avg / 1.0E6) * (lca.LAKEHP_TO_CO2_STD / 1.0E3)
@@ -857,8 +836,8 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
             lca.FURNACE_TO_CO2_STD / 1E3)
 
     ################## Primary energy needs
-    PEN_DHN_MJoil  = (np.sum(E_DHN_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
-    PEN_DataCenter_MJoil = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6)* lca.SERVERHP_TO_OIL_STD
+    PEN_DHN_MJoil = (np.sum(E_DHN_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
+    PEN_DataCenter_MJoil = (np.sum(Q_HPServer_gen_W) / COP_HPServer_avg * WH_TO_J / 1.0E6) * lca.SERVERHP_TO_OIL_STD
     PEN_Sewage_MJoil = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
     PEN_GHP_MJoil = np.sum(Q_GHP_gen_W) / COP_GHP_avg * lca.GHP_TO_OIL_STD * WH_TO_J / 1.0E6
     PEN_HPLake_MJoil = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * lca.LAKEHP_TO_OIL_STD * WH_TO_J / 1.0E6
@@ -871,9 +850,36 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
         Q_uncovered_W) * gas_to_oil_BoilerBackup_std * WH_TO_J / 1.0E6
     PEN_Furnace_MJoil = 1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * lca.FURNACE_TO_OIL_STD * WH_TO_J / 1.0E6
 
+    # check type of furnace
+    if master_to_slave_vars.Furn_Moist_type == "wet":
+        GHG_Furnace_wet_connected_tonCO2 = GHG_Furnace_tonCO2
+        PEN_Furnace_wet_connected_MJoil = PEN_Furnace_MJoil
+    else:
+        GHG_Furnace_dry_connected_tonCO2 = GHG_Furnace_tonCO2
+        PEN_Furnace_dry_connected_MJoil = PEN_Furnace_MJoil
+
+    # check fuel type
+    if master_to_slave_vars.gt_fuel == "NG":
+        GHG_BaseBoiler_NG_connected_tonCO2 = GHG_BaseBoiler_tonCO2
+        GHG_PeakBoiler_NG_connected_tonCO2 = GHG_PeakBoiler_tonCO2
+        GHG_BackupBoiler_NG_connected_tonCO2 = GHG_AddBoiler_tonCO2
+        GHG_CHP_NG_connected_tonCO2 = GHG_CHP_tonCO2
+        PEN_CHP_NG_connected_MJoil = PEN_CC_MJoil
+        PEN_BaseBoiler_NG_connected_MJoil = PEN_BaseBoiler_MJoil
+        PEN_PeakBoiler_NG_connected_MJoil = PEN_PeakBoiler_MJoil
+        PEN_BackupBoiler_NG_connected_MJoil = PEN_AddBoiler_MJoil
+    else:
+        GHG_BaseBoiler_BG_connected_tonCO2 = GHG_BaseBoiler_tonCO2
+        GHG_PeakBoiler_BG_connected_tonCO2 = GHG_PeakBoiler_tonCO2
+        GHG_BackupBoiler_BG_connected_tonCO2 = GHG_AddBoiler_tonCO2
+        GHG_CHP_BG_connected_tonCO2 = GHG_CHP_tonCO2
+        PEN_CHP_BG_connected_MJoil = PEN_CC_MJoil
+        PEN_BaseBoiler_BG_connected_MJoil = PEN_BaseBoiler_MJoil
+        PEN_PeakBoiler_BG_connected_MJoil = PEN_PeakBoiler_MJoil
+        PEN_BackupBoiler_BG_connected_MJoil = PEN_AddBoiler_MJoil
 
     # FOR SOLAR THERMAL TECHNOLOGIES
-    emissions_solarthermal = performance_solarthermal_technologies(storage_activation_data, lca)
+    emissions_solarthermal = performance_solarthermal_technologies(storage_dispatch, lca)
 
     performance_parameters = {
         "GHG_SC_ET_connected_tonCO2": emissions_solarthermal['GHG_SC_ET_connected_tonCO2'],
@@ -883,26 +889,36 @@ def calc_primary_energy_and_CO2(storage_activation_data, Q_HPSew_gen_W, Q_HPLake
         "GHG_HP_Sewage_connected_tonCO2": [GHG_Sewage_tonCO2],
         "GHG_GHP_connected_tonCO2": [GHG_GHP_tonCO2],
         "GHG_HP_Lake_connected_tonCO2": [GHG_HPLake_tonCO2],
-        "GHG_CHP_" + fuel + "_connected_tonCO2": [GHG_CHP_tonCO2],
-        "GHG_BaseBoiler_" + fuel + "_connected_tonCO2": [GHG_BaseBoiler_tonCO2],
-        "GHG_PeakBoiler_" + fuel + "_connected_tonCO2": [GHG_PeakBoiler_tonCO2],
-        "GHG_BackupBoiler_" + fuel + "_connected_tonCO2": [GHG_AddBoiler_tonCO2],
-        "GHG_Furnace_connected_tonCO2": [GHG_Furnace_tonCO2],
+        "GHG_BaseBoiler_NG_connected_tonCO2": [GHG_BaseBoiler_NG_connected_tonCO2],
+        "GHG_PeakBoiler_NG_connected_tonCO2": [GHG_PeakBoiler_NG_connected_tonCO2],
+        "GHG_BackupBoiler_NG_connected_tonCO2": [GHG_BackupBoiler_NG_connected_tonCO2],
+        "GHG_CHP_NG_connected_tonCO2": [GHG_CHP_NG_connected_tonCO2],
+        "GHG_BaseBoiler_BG_connected_tonCO2": [GHG_BaseBoiler_BG_connected_tonCO2],
+        "GHG_PeakBoiler_BG_connected_tonCO2": [GHG_PeakBoiler_BG_connected_tonCO2],
+        "GHG_BackupBoiler_BG_connected_tonCO2": [GHG_BackupBoiler_BG_connected_tonCO2],
+        "GHG_CHP_BG_connected_tonCO2": [GHG_CHP_BG_connected_tonCO2],
+        "GHG_Furnace_wet_connected_tonCO2": [GHG_Furnace_wet_connected_tonCO2],
+        "GHG_Furnace_dry_connected_tonCO2": [GHG_Furnace_dry_connected_tonCO2],
         "GHG_DHN_connected_tonCO2": [GHG_DHN_tonCO2],
         "GHG_SubstationsHeating_tonCO2": [0.0],  # we neglect them
         "PEN_SC_ET_connected_MJoil": emissions_solarthermal['PEN_SC_ET_connected_MJoil'],
         "PEN_SC_FP_connected_MJoil": emissions_solarthermal['PEN_SC_FP_connected_MJoil'],
         "PEN_PVT_connected_MJoil": emissions_solarthermal['PEN_PVT_connected_MJoil'],
-        'PEN_HP_DataCenter_tonCO2': [PEN_DataCenter_MJoil],
+        'PEN_HP_DataCenter_connected_MJoil': [PEN_DataCenter_MJoil],
         "PEN_HP_Sewage_connected_MJoil": [PEN_Sewage_MJoil],
         "PEN_GHP_connected_MJoil": [PEN_GHP_MJoil],
         "PEN_HP_Lake_connected_MJoil": [PEN_HPLake_MJoil],
-        "PEN_CHP_" + fuel + "_connected_MJoil": [PEN_CC_MJoil],
-        "PEN_BaseBoiler_" + fuel + "_connected_MJoil": [PEN_BaseBoiler_MJoil],
-        "PEN_PeakBoiler_" + fuel + "_connected_MJoil": [PEN_PeakBoiler_MJoil],
-        "PEN_BackupBoiler_" + fuel + "_connected_MJoil": [PEN_AddBoiler_MJoil],
-        "PEN_Furnace_connected_MJoil": [PEN_Furnace_MJoil],
-        "PEN_DHN_connected_MJoil":[PEN_DHN_MJoil],
+        "PEN_CHP_BG_connected_MJoil": [PEN_CHP_BG_connected_MJoil],
+        "PEN_CHP_NG_connected_MJoil": [PEN_CHP_NG_connected_MJoil],
+        "PEN_BaseBoiler_NG_connected_MJoil": [PEN_BaseBoiler_NG_connected_MJoil],
+        "PEN_PeakBoiler_NG_connected_MJoil": [PEN_PeakBoiler_NG_connected_MJoil],
+        "PEN_BackupBoiler_NG_connected_MJoil": [PEN_BackupBoiler_NG_connected_MJoil],
+        "PEN_BaseBoiler_BG_connected_MJoil": [PEN_BaseBoiler_BG_connected_MJoil],
+        "PEN_PeakBoiler_BG_connected_MJoil": [PEN_PeakBoiler_BG_connected_MJoil],
+        "PEN_BackupBoiler_BG_connected_MJoil": [PEN_BackupBoiler_BG_connected_MJoil],
+        "PEN_Furnace_wet_connected_MJoil": [PEN_Furnace_wet_connected_MJoil],
+        "PEN_Furnace_dry_connected_MJoil": [PEN_Furnace_dry_connected_MJoil],
+        "PEN_DHN_connected_MJoil": [PEN_DHN_MJoil],
         "PEN_SubstationsHeating_MJoil": [0.0],  # we neglect them
     }
 
@@ -977,22 +993,21 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
 
     return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
 
-def performance_solarthermal_technologies(storage_activation_data, lca):
 
-    #Claculate emissions and primary energy
-    Q_SC_ET_gen_Wh = storage_activation_data['Q_SC_ET_gen_Wh'].values
-    Q_SC_FP_gen_Wh = storage_activation_data['Q_SC_FP_gen_Wh'].values
-    Q_PVT_gen_Wh = storage_activation_data['Q_PVT_gen_Wh'].values
+def performance_solarthermal_technologies(storage_dispatch, lca):
+    # Claculate emissions and primary energy
+    Q_SC_ET_gen_Wh = storage_dispatch['Q_SC_ET_gen_Wh']
+    Q_SC_FP_gen_Wh = storage_dispatch['Q_SC_FP_gen_Wh']
+    Q_PVT_gen_Wh = storage_dispatch['Q_PVT_gen_Wh']
 
-    #calculate emissions hourly (to discount for exports and imports
-    GHG_SC_ET_connected_tonCO2hr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_CO2 / 1E3
-    GHG_SC_FP_connected_tonCO2hr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_CO2 / 1E3
-    PEN_SC_ET_connected_MJoilhr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_OIL
-    PEN_SC_FP_connected_MJoilhr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_OIL
+    # calculate emissions hourly (to discount for exports and imports
+    GHG_SC_ET_connected_tonCO2hr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3
+    GHG_SC_FP_connected_tonCO2hr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3
+    PEN_SC_ET_connected_MJoilhr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL
+    PEN_SC_FP_connected_MJoilhr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL
 
-
-    GHG_PVT_connected_tonCO2hr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_CO2 / 1E3)
-    PEN_PVT_connected_MJoilhr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) *lca.SOLARCOLLECTORS_TO_OIL)
+    GHG_PVT_connected_tonCO2hr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3)
+    PEN_PVT_connected_MJoilhr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL)
 
     # get yearly totals
     GHG_SC_ET_connected_tonCO2 = sum(GHG_SC_ET_connected_tonCO2hr)

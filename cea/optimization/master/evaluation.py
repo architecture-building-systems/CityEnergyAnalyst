@@ -67,7 +67,6 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     num_total_buildings = len(building_names)
     solar_features = SolarFeatures()
 
-
     # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
     individual = evaluate_constrains(individual, num_total_buildings, config, district_heating_network,
                                      district_cooling_network)
@@ -83,7 +82,12 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                 DHN_barcode, DCN_barcode, DHN_configuration,
                                                                 DCN_configuration, config)
 
-
+    # INITIALIZE DICTS STORING PERFORMANCE DATA
+    performance_heating = {}
+    performance_cooling = {}
+    storage_dispatch = {}
+    heating_dispatch = {}
+    cooling_dispatch = {}
 
     # DISTRICT HEATING NETWORK
     if district_heating_network:
@@ -94,65 +98,74 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 
             # THERMAL STORAGE
             print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-            performance_storage = storage_main.storage_optimization(locator,
-                                                                    master_to_slave_vars,
-                                                                    lca, prices,
-                                                                    config)
+            performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
+                                                                                      master_to_slave_vars,
+                                                                                      lca, prices,
+                                                                                      config)
 
             print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
-            performance_heating = heating_main.heating_calculations_of_DH_buildings(locator,
-                                                                                    master_to_slave_vars,
-                                                                                    config, prices, lca,
-                                                                                    solar_features,
-                                                                                    network_features)
+            performance_heating, heating_dispatch = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                                      master_to_slave_vars,
+                                                                                                      config, prices,
+                                                                                                      lca,
+                                                                                                      solar_features,
+                                                                                                      network_features,
+                                                                                                      storage_dispatch)
 
     # DISTRICT COOLING NETWORK:
     if district_cooling_network:
         if DCN_barcode.count("1") > 0:
             print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
             reduced_timesteps_flag = False
-            performance_cooling = cooling_main.cooling_calculations_of_DC_buildings(locator,
-                                                                    master_to_slave_vars,
-                                                                    network_features,
-                                                                    prices,
-                                                                    lca,
-                                                                    config,
-                                                                    reduced_timesteps_flag,
-                                                                    district_heating_network)
-
+            performance_cooling, cooling_dispatch = cooling_main.cooling_calculations_of_DC_buildings(locator,
+                                                                                                      master_to_slave_vars,
+                                                                                                      network_features,
+                                                                                                      prices,
+                                                                                                      lca,
+                                                                                                      config,
+                                                                                                      reduced_timesteps_flag,
+                                                                                                      district_heating_network)
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
     performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
 
-
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
-    performance_electricity,\
-    performance_heating,\
+    performance_electricity, \
+    electricity_dispatch, \
+    performance_heating, \
     performance_cooling, = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
-                                                                                         DCN_barcode,
-                                                                                         locator,
-                                                                                         master_to_slave_vars,
-                                                                                         lca,
-                                                                                         solar_features,
-                                                                                         performance_heating,
-                                                                                         performance_cooling)
-
+                                                                                      DCN_barcode,
+                                                                                      locator,
+                                                                                      master_to_slave_vars,
+                                                                                      lca,
+                                                                                      solar_features,
+                                                                                      performance_heating,
+                                                                                      performance_cooling,
+                                                                                      storage_dispatch,
+                                                                                      heating_dispatch,
+                                                                                      cooling_dispatch)
 
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
-    performance_fuels = natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_cooling_network,
-                                         district_cooling_network)
-
+    performance_naturalgas, naturalgas_dispatch = natural_gas_main.natural_gas_imports(master_to_slave_vars,
+                                                                                       locator,
+                                                                                       district_heating_network,
+                                                                                       district_cooling_network)
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
                                                                               performance_heating,
                                                                               performance_cooling,
                                                                               performance_disconnected,
-                                                                              performance_fuels,
+                                                                              performance_naturalgas,
                                                                               performance_electricity)
+
+    print("SAVING RESULTS TO DISK")
+    save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
+                 performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
+                 naturalgas_dispatch)
 
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
@@ -162,9 +175,63 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, master_to_slave_vars, individual
 
 
+def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
+                 performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
+                 naturalgas_dispatch):
+
+    # export all including performance heating and performance cooling since we changed them
+    pd.DataFrame(performance_disconnected).to_csv(
+        locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,
+                                                                master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(performance_cooling).to_csv(
+        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(performance_heating).to_csv(
+        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(performance_electricity).to_csv(
+        locator.get_optimization_slave_electricity_performance(master_to_slave_vars.individual_number,
+                                                               master_to_slave_vars.generation_number),
+        index=False)
+
+    # add date and plot
+    DATE = master_to_slave_vars.date
+    storage_dispatch['DATE'] = DATE
+    electricity_dispatch['DATE'] = DATE
+    cooling_dispatch['DATE'] = DATE
+    heating_dispatch['DATE'] = DATE
+    naturalgas_dispatch['DATE'] = DATE
+    pd.DataFrame(storage_dispatch).to_csv(locator.get_optimization_slave_storage_operation_data(
+        master_to_slave_vars.individual_number,
+        master_to_slave_vars.generation_number), index=False)
+
+    pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(
+        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+
+    pd.DataFrame(cooling_dispatch).to_csv(
+        locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
+                                                                  master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(heating_dispatch).to_csv(
+        locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                  master_to_slave_vars.generation_number),
+        index=False)
+
+    pd.DataFrame(naturalgas_dispatch).to_csv(
+        locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
+                                                           master_to_slave_vars.generation_number), index=False)
+
+
 class SolarFeatures(object):
     def __init__(self):
-        #import and sum all the area available
+        # import and sum all the area available
 
         self.Peak_PV_Wh = 0.0
         self.A_PV_m2 = 0.0
@@ -176,9 +243,9 @@ class SolarFeatures(object):
         self.Q_nom_SC_ET_Wh = 0.0
         self.A_SC_ET_m2 = 0.0
 
+
 def calc_solar_features_individual(locator, building_names, DHN_barcode, master_to_slave_vars,
                                    solar_features):
-
     E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
     E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
     Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
@@ -191,7 +258,7 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
 
     for index, name in zip(DHN_barcode, building_names):
         if index == "1":  # building is connected, then it has solar collectors
-            if master_to_slave_vars.SOLAR_PART_PVT > 0.0E-3: #if PVT
+            if master_to_slave_vars.SOLAR_PART_PVT > 0.0E-3:  # if PVT
                 building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
                 E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
                 Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
@@ -206,7 +273,7 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
                 Q_SC_FP_gen_kWh += building_SC_FP['Q_SC_gen_kWh']
                 A_SC_FP_m2 += building_SC_FP['Area_SC_m2']
 
-        #if PV accepted then get all the potential (all buildings can be ocnnected to the electrical grid
+        # if PV accepted then get all the potential (all buildings can be ocnnected to the electrical grid
         if master_to_slave_vars.SOLAR_PART_PV > 0.0E-3:
             building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
             A_PV_m2 += building_PV['Area_PV_m2']
@@ -223,9 +290,6 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
     solar_features.A_SC_ET_m2 = A_SC_ET_m2.max()
 
     return solar_features
-
-
-
 
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,
@@ -247,7 +311,7 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
         print "No GHP constraint check possible \n"
 
     # CREATE MASTER TO SLAVE AND FILL-IN
-    master_to_slave_vars = calc_master_to_slave_variables(gen,
+    master_to_slave_vars = calc_master_to_slave_variables(locator, gen,
                                                           ind_num,
                                                           individual,
                                                           building_names,
@@ -426,7 +490,7 @@ def evaluate_constrains(individual, nBuildings, config, district_heating_network
     return individual
 
 
-def calc_master_to_slave_variables(gen,
+def calc_master_to_slave_variables(locator, gen,
                                    ind_num,
                                    individual,
                                    building_names,
@@ -471,6 +535,9 @@ def calc_master_to_slave_variables(gen,
     master_to_slave_vars.DCN_barcode = DCN_barcode
     master_to_slave_vars.DHN_supplyunits = DHN_configuration
     master_to_slave_vars.DCN_supplyunits = DCN_configuration
+
+    # date, it will be used thorough the entire code
+    master_to_slave_vars.date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
 
     # Heating systems
     # CHP units with NG & furnace with biomass wet
@@ -539,7 +606,7 @@ def calc_master_to_slave_variables(gen,
         GHP_Qmax = max(individual[11] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
 
-    #server storage
+    # server storage
     if individual[12] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
         master_to_slave_vars.HPServer_maxSize_W = max(individual[13] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
