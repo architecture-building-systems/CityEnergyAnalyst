@@ -88,6 +88,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     performance_heating = {}
     performance_cooling = {}
+    performance_storage = {}
     storage_dispatch = {}
     heating_dispatch = {}
     cooling_dispatch = {}
@@ -147,11 +148,12 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
-    naturalgas_dispatch = natural_gas_main.natural_gas_imports(master_to_slave_vars,
-                                                               locator)
+    fuels_dispatch = natural_gas_main.fuel_imports(master_to_slave_vars, heating_dispatch,
+                                                        cooling_dispatch)
 
     print("AGGREGATING RESULTS")
-    TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
+    TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
+                                                                              performance_storage,
                                                                               performance_heating,
                                                                               performance_cooling,
                                                                               performance_disconnected,
@@ -160,19 +162,32 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
-                 naturalgas_dispatch)
+                 fuels_dispatch, performance_totals)
 
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
     print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
-    print ('Total PEN emissions in MJoil ' + str(PEN_sys_MJoil) + "\n")
+    print ('Total PEN non-renewable in MJoil ' + str(PEN_sys_MJoil) + "\n")
 
     return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, master_to_slave_vars, individual
 
 
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
-                 naturalgas_dispatch):
+                 fuels_dispatch, performance_totals):
+
+    #put data inside a list, otherwise pandas cannot save it
+    for column in performance_disconnected.keys():
+        performance_disconnected[column] =[performance_disconnected[column]]
+    for column in performance_cooling.keys():
+        performance_cooling[column] =[performance_cooling[column]]
+    for column in performance_heating.keys():
+        performance_heating[column] =[performance_heating[column]]
+    for column in performance_electricity.keys():
+        performance_electricity[column] =[performance_electricity[column]]
+    for column in performance_totals.keys():
+        performance_totals[column] =[performance_totals[column]]
+
     # export all including performance heating and performance cooling since we changed them
     pd.DataFrame(performance_disconnected).to_csv(
         locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,
@@ -194,18 +209,23 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
                                                                master_to_slave_vars.generation_number),
         index=False)
 
+    pd.DataFrame(performance_totals).to_csv(
+        locator.get_optimization_slave_total_performance(master_to_slave_vars.individual_number,
+                                                               master_to_slave_vars.generation_number),
+        index=False)
+
     # add date and plot
     DATE = master_to_slave_vars.date
     storage_dispatch['DATE'] = DATE
     electricity_dispatch['DATE'] = DATE
     cooling_dispatch['DATE'] = DATE
     heating_dispatch['DATE'] = DATE
-    naturalgas_dispatch['DATE'] = DATE
+    fuels_dispatch['DATE'] = DATE
     pd.DataFrame(storage_dispatch).to_csv(locator.get_optimization_slave_storage_operation_data(
         master_to_slave_vars.individual_number,
         master_to_slave_vars.generation_number), index=False)
 
-    pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(
+    pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern(
         master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
     pd.DataFrame(cooling_dispatch).to_csv(
@@ -218,7 +238,7 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
                                                                   master_to_slave_vars.generation_number),
         index=False)
 
-    pd.DataFrame(naturalgas_dispatch).to_csv(
+    pd.DataFrame(fuels_dispatch).to_csv(
         locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
                                                            master_to_slave_vars.generation_number), index=False)
 

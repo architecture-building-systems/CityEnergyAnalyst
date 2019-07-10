@@ -230,9 +230,9 @@ The encoding of the ``<CONFIGURATION>`` represents the following:
 |               +--------+-----------------------------------------+
 |               |      1 | Heat Recovery Data Centre ON            |
 +---------------+--------+-----------------------------------------+
-|            13 |      0 | Heat Recovery Compressed Air OFF        |
-|               +--------+-----------------------------------------+
-|               |      1 | Heat Recovery Compressed Air ON         |
+|            13 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '12', truncated to two         |                                        |
+|               |        | decimals. '0' meaning OFF               |
 +---------------+--------+-----------------------------------------+
 |            14 |      0 | PV OFF                                  |
 |               +--------+-----------------------------------------+

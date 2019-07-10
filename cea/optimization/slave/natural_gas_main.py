@@ -11,6 +11,7 @@ from __future__ import print_function
 
 import cea.config
 import cea.inputlocator
+import numpy as np
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -22,17 +23,33 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def natural_gas_imports(heating_dispatch,
-                        cooling_dispatch):
-    NG_used_HPSew_W = heating_dispatch["NG_used_HPSew_W"]
-    NG_used_HPLake_W = heating_dispatch["NG_used_HPLake_W"]
-    NG_used_GHP_W = heating_dispatch["NG_used_GHP_W"]
-    NG_used_CHP_W = heating_dispatch["NG_used_CHP_W"]
-    NG_used_Furnace_W = heating_dispatch["NG_used_Furnace_W"]
-    NG_used_BaseBoiler_W = heating_dispatch["NG_used_BaseBoiler_W"]
-    NG_used_PeakBoiler_W = heating_dispatch["NG_used_PeakBoiler_W"]
-    NG_used_BackupBoiler_W = heating_dispatch["NG_used_BackupBoiler_W"]
-    NG_used_CCGT_W = cooling_dispatch["NG_used_CCGT_W"]
+def fuel_imports(master_to_slave_vars, heating_dispatch,
+                 cooling_dispatch):
+
+    if master_to_slave_vars.DHN_exists:
+        NG_used_HPSew_W = heating_dispatch["NG_used_HPSew_W"]
+        NG_used_HPLake_W = heating_dispatch["NG_used_HPLake_W"]
+        NG_used_GHP_W = heating_dispatch["NG_used_GHP_W"]
+        NG_used_CHP_W = heating_dispatch["NG_used_CHP_W"]
+        NG_used_Furnace_W = heating_dispatch["NG_used_Furnace_W"]
+        NG_used_BaseBoiler_W = heating_dispatch["NG_used_BaseBoiler_W"]
+        NG_used_PeakBoiler_W = heating_dispatch["NG_used_PeakBoiler_W"]
+        NG_used_BackupBoiler_W = heating_dispatch["NG_used_BackupBoiler_W"]
+    else:
+        NG_used_HPSew_W = np.zeros(8760)
+        NG_used_HPLake_W =np.zeros(8760)
+        NG_used_GHP_W = np.zeros(8760)
+        NG_used_CHP_W = np.zeros(8760)
+        NG_used_Furnace_W = np.zeros(8760)
+        NG_used_BaseBoiler_W = np.zeros(8760)
+        NG_used_PeakBoiler_W = np.zeros(8760)
+        NG_used_BackupBoiler_W = np.zeros(8760)
+
+
+    if master_to_slave_vars.DCN_exists:
+        NG_used_CCGT_W = cooling_dispatch["NG_used_CCGT_W"]
+    else:
+        NG_used_CCGT_W = np.zeros(8760)
 
     NG_total_heating_W = [a + b + c + d + e + f + g + h for a, b, c, d, e, f, g, h in
                           zip(NG_used_HPSew_W, NG_used_HPLake_W, NG_used_GHP_W, NG_used_CHP_W, NG_used_Furnace_W, \
@@ -56,7 +73,6 @@ def natural_gas_imports(heating_dispatch,
         "NG_used_BackupBoiler_W": NG_used_BackupBoiler_W,
         "NG_used_CCGT_W": NG_used_CCGT_W
     }
-
     return naturalgas_dispatch
 
 
@@ -68,7 +84,7 @@ def main(config):
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    natural_gas_imports(generation, individual, locator, district_heating_network, district_cooling_network)
+    fuel_imports(generation, individual, locator, district_heating_network, district_cooling_network)
 
 
 if __name__ == '__main__':
