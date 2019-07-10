@@ -18,7 +18,7 @@ from cea.optimization.slave.electricity_main import electricity_calculations_of_
 from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 
-from cea.optimization.slave.natural_gas_main import natural_gas_imports
+from cea.optimization.slave.natural_gas_main import fuel_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
 from cea.optimization.lca_calculations import LcaCalculations
@@ -436,7 +436,7 @@ class Plots(object):
                                                                                        district_heating_network, district_cooling_network)
         district_heating_network = config.optimization.district_heating_network
         district_cooling_network = config.optimization.district_cooling_network
-        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, district_heating_network, district_cooling_network)
+        data_imports_natural_gas_W = fuel_imports(generation_pointer, individual_pointer, locator, district_heating_network, district_cooling_network)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
                  "NG_hourly_Wh": data_imports_natural_gas_W,

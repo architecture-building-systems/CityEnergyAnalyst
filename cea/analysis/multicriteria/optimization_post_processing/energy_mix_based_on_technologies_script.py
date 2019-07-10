@@ -12,7 +12,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.optimization.slave.electricity_main import electricity_calculations_of_all_buildings
-from cea.optimization.slave.natural_gas_main import natural_gas_imports
+from cea.optimization.slave.natural_gas_main import fuel_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +64,7 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
                                         E_CT_total_W - E_ACH_total_W
 
         if not os.path.exists(locator.get_optimization_slave_natural_gas_imports(individual, generation)):
-            data_natural_gas = natural_gas_imports(generation, individual, locator, district_heating_network, district_cooling_network)
+            data_natural_gas = fuel_imports(generation, individual, locator, district_heating_network, district_cooling_network)
         else:
             data_natural_gas = pd.read_csv(
                 locator.get_optimization_slave_natural_gas_imports(individual, generation))

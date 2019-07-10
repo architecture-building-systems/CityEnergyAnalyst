@@ -217,7 +217,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     GHG_tonCO2 += GHG_electricity_tonCO2
     PEN_MJoil += PEN_electricity_MJoil
 
-    natural_gas_main.natural_gas_imports(master_to_slave_vars, locator, district_heating_network, district_cooling_network)
+    natural_gas_main.fuel_imports(master_to_slave_vars, locator, district_heating_network, district_cooling_network)
 
     # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)

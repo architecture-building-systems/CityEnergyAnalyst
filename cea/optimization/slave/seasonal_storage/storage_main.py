@@ -382,23 +382,6 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
         # opex annual costs
         "Opex_a_Storage_connected_USD": [Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD],
-
-        # totals of connected to network
-        "Capex_total_Storage_sys_connected_USD": [Capex_storage_USD + Capex_HP_storage_USD],
-        "Capex_a_Storage_sys_connected_USD": [Capex_a_storage_USD + Capex_a_HP_storage_USD],
-        "Opex_a_Storage_sys_connected_USD": [Opex_fixed_storage_USD +
-                                             Opex_fixed_HP_storage_USD +
-                                             Opex_var_storage_USD],
-        "TAC_Storage_sys_connected_USD": [Capex_a_storage_USD +
-                                          Capex_a_HP_storage_USD +
-                                          Opex_fixed_storage_USD +
-                                          Opex_fixed_HP_storage_USD +
-                                          Opex_var_storage_USD],
-        # emissions
-        "GHG_Storage_sys_connected_tonCO2": [GHG_storage_tonCO2],
-
-        # primary energy
-        "PEN_Storage_sys_connected_MJoil": [PEN_storage_MJoil],
     }
 
     return performance, storage_dispatch
