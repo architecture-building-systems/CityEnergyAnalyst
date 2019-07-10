@@ -10,6 +10,8 @@ import pandas as pd
 
 from cea.optimization.constants import *
 from cea.constants import HOURS_IN_YEAR
+import warnings
+warnings.filterwarnings("ignore")
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

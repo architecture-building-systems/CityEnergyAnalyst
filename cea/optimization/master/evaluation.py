@@ -80,7 +80,10 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names,
                                                                 num_total_buildings,
                                                                 DHN_barcode, DCN_barcode, DHN_configuration,
-                                                                DCN_configuration, config)
+                                                                DCN_configuration, config,
+                                                                district_heating_network,
+                                                                district_cooling_network
+                                                                )
 
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     performance_heating = {}
@@ -90,7 +93,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     cooling_dispatch = {}
 
     # DISTRICT HEATING NETWORK
-    if district_heating_network and DHN_barcode.count("1") > 0:
+    if master_to_slave_vars.DHN_exists:
         print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
         solar_features = calc_solar_features_individual(locator, building_names, DHN_barcode,
                                                         master_to_slave_vars, solar_features)
@@ -112,7 +115,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                                                   storage_dispatch)
 
     # DISTRICT COOLING NETWORK:
-    if district_cooling_network and DCN_barcode.count("1") > 0:
+    if master_to_slave_vars.DCN_exists:
         print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
         reduced_timesteps_flag = False
         performance_cooling, cooling_dispatch = cooling_main.cooling_calculations_of_DC_buildings(locator,
@@ -133,32 +136,25 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     performance_electricity, \
     electricity_dispatch, \
     performance_heating, \
-    performance_cooling, = electricity_main.electricity_calculations_of_all_buildings(DHN_barcode,
-                                                                                      DCN_barcode,
-                                                                                      locator,
+    performance_cooling, = electricity_main.electricity_calculations_of_all_buildings(locator,
                                                                                       master_to_slave_vars,
                                                                                       lca,
                                                                                       solar_features,
                                                                                       performance_heating,
                                                                                       performance_cooling,
                                                                                       heating_dispatch,
-                                                                                      cooling_dispatch,
-                                                                                      district_heating_network,
-                                                                                      district_cooling_network)
+                                                                                      cooling_dispatch)
 
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
-    performance_naturalgas, naturalgas_dispatch = natural_gas_main.natural_gas_imports(master_to_slave_vars,
-                                                                                       locator,
-                                                                                       district_heating_network,
-                                                                                       district_cooling_network)
+    naturalgas_dispatch = natural_gas_main.natural_gas_imports(master_to_slave_vars,
+                                                               locator)
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil = summarize_results_individual(performance_storage,
                                                                               performance_heating,
                                                                               performance_cooling,
                                                                               performance_disconnected,
-                                                                              performance_naturalgas,
                                                                               performance_electricity)
 
     print("SAVING RESULTS TO DISK")
@@ -291,7 +287,10 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
 
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,
-                                         DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration, config):
+                                         DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration, config,
+                                         district_heating_network,
+                                         district_cooling_network
+                                         ):
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     Q_cooling_nom_W, Q_heating_nom_W, \
     network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(locator, individual,
@@ -321,7 +320,10 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
                                                           network_file_name_heating,
                                                           network_file_name_cooling,
                                                           Q_heating_nom_W,
-                                                          Q_cooling_nom_W)
+                                                          Q_cooling_nom_W,
+                                                          district_heating_network,
+                                                          district_cooling_network
+                                                          )
 
     return master_to_slave_vars
 
@@ -500,7 +502,10 @@ def calc_master_to_slave_variables(locator, gen,
                                    network_file_name_heating,
                                    network_file_name_cooling,
                                    Q_heating_nom_W,
-                                   Q_cooling_nom_W):
+                                   Q_cooling_nom_W,
+                                   district_heating_network,
+                                   district_cooling_network
+                                   ):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
@@ -534,6 +539,16 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DHN_supplyunits = DHN_configuration
     master_to_slave_vars.DCN_supplyunits = DCN_configuration
 
+    #useful to know if there are these type s of networks
+    if district_heating_network and DHN_barcode.count("1") > 0:
+        master_to_slave_vars.DHN_exists = True
+    else:
+        master_to_slave_vars.DHN_exists = False
+
+    if district_cooling_network and DCN_barcode.count("1") > 0:
+        master_to_slave_vars.DCN_exists = True
+    else:
+        master_to_slave_vars.DCN_exists = False
     # date, it will be used thorough the entire code
     master_to_slave_vars.date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
 

@@ -333,7 +333,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
     Opex_var_DHN_USD, \
-    E_DHN_W = calc_network_costs_heating(config, DHN_barcode, locator, master_to_slave_vars,
+    E_DHN_W = calc_network_costs_heating(DHN_barcode, locator, master_to_slave_vars,
                                          network_features, lca)
     Opex_a_DHN_connected_USD = Opex_var_DHN_USD + Opex_fixed_DHN_USD
 
@@ -429,8 +429,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
         "Capex_a_BackupBoiler_BG_connected_USD": performance_costs['Capex_a_BackupBoiler_BG_connected_USD'],
         "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
-        "Capex_a_DHN_connected_USD": [Capex_a_DHN_USD],
-        "Capex_a_SubstationsHeating_connected_USD": [Capex_a_SubstationsHeating_USD],
+        "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
+        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
 
         # total capex
         "Capex_total_SC_ET_connected_USD": performance_costs['Capex_total_SC_ET_connected_USD'],
@@ -450,8 +450,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
         "Capex_total_BackupBoiler_BG_connected_USD": performance_costs['Capex_total_BackupBoiler_BG_connected_USD'],
         "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
-        "Capex_total_DHN_connected_USD": [Capex_DHN_USD],
-        "Capex_total_SubstationsHeating_connected_USD": [Capex_SubstationsHeating_USD],
+        "Capex_total_DHN_connected_USD": Capex_DHN_USD,
+        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
 
         # opex fixed
         "Opex_fixed_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
@@ -471,14 +471,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
         "Opex_fixed_BackupBoiler_BG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_BG_connected_USD'],
         "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_fixed_DHN_connected_USD": [Opex_fixed_DHN_USD],
-        "Opex_fixed_SubstationsHeating_USD": [Opex_fixed_SubstationsHeating_USD],
+        "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
+        "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
         # opex variable
         # opex var  9# opex of electricity gen unites will be updated in electricity_main
-        "Opex_var_SC_ET_connected_USD": [0.0],
-        "Opex_var_SC_FP_connected_USD": [0.0],
-        "Opex_var_PVT_connected_USD": [0.0],
+        "Opex_var_SC_ET_connected_USD": 0.0,
+        "Opex_var_SC_FP_connected_USD": 0.0,
+        "Opex_var_PVT_connected_USD": 0.0,
         "Opex_var_HP_DataCenter_connected_USD": [Opex_var_HP_DataCenter_USD],
         "Opex_var_HP_Sewage_connected_USD": [Opex_var_HP_Sewage_USD],
         "Opex_var_HP_Lake_connected_USD": [Opex_var_HP_Lake_USD],
@@ -493,8 +493,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Opex_var_PeakBoiler_NG_connected_USD": [Opex_var_PeakBoiler_NG_USD],
         "Opex_var_BackupBoiler_BG_connected_USD": [Opex_var_BackupBoiler_BG_USD],
         "Opex_var_BackupBoiler_NG_connected_USD": [Opex_var_BackupBoiler_NG_USD],
-        "Opex_var_DHN_connected_USD": [Opex_var_DHN_USD],
-        "Opex_var_SubstationsHeating_USD": [Opex_var_SubstationsHeating_USD],
+        "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
+        "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
         # opex annual
         "Opex_a_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
@@ -524,8 +524,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
             'Opex_fixed_BackupBoiler_BG_connected_USD'],
         "Opex_a_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD + performance_costs[
             'Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_a_DHN_connected_USD": [Opex_a_DHN_connected_USD],
-        "Opex_a_SubstationsHeating_USD": [Opex_var_SubstationsHeating_USD + Opex_fixed_SubstationsHeating_USD],
+        "Opex_a_DHN_connected_USD": Opex_a_DHN_connected_USD,
+        "Opex_a_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD + Opex_fixed_SubstationsHeating_USD,
 
         # emissions
         "GHG_SC_ET_connected_tonCO2": performance_emissions_pen['GHG_SC_ET_connected_tonCO2'],
@@ -569,11 +569,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "PEN_DHN_connected_MJoil": performance_emissions_pen['PEN_DHN_connected_MJoil'],
         "PEN_SubstationsHeating_MJoil": performance_emissions_pen['PEN_SubstationsHeating_MJoil'],
     }
-
-    pd.DataFrame(performance).to_csv(
-        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
 
     # saving pattern activation to disk
     heating_dispatch = {
@@ -910,47 +905,47 @@ def calc_primary_energy_and_CO2(storage_dispatch,
         "GHG_SC_ET_connected_tonCO2": emissions_solarthermal['GHG_SC_ET_connected_tonCO2'],
         "GHG_SC_FP_connected_tonCO2": emissions_solarthermal['GHG_SC_FP_connected_tonCO2'],
         "GHG_PVT_connected_tonCO2": emissions_solarthermal['GHG_PVT_connected_tonCO2'],
-        'GHG_HP_DataCenter_connected_tonCO2': [GHG_DataCenter_tonCO2],
-        "GHG_HP_Sewage_connected_tonCO2": [GHG_Sewage_tonCO2],
-        "GHG_GHP_connected_tonCO2": [GHG_GHP_tonCO2],
-        "GHG_HP_Lake_connected_tonCO2": [GHG_HPLake_tonCO2],
-        "GHG_BaseBoiler_NG_connected_tonCO2": [GHG_BaseBoiler_NG_connected_tonCO2],
-        "GHG_PeakBoiler_NG_connected_tonCO2": [GHG_PeakBoiler_NG_connected_tonCO2],
-        "GHG_BackupBoiler_NG_connected_tonCO2": [GHG_BackupBoiler_NG_connected_tonCO2],
-        "GHG_CHP_NG_connected_tonCO2": [GHG_CHP_NG_connected_tonCO2],
-        "GHG_BaseBoiler_BG_connected_tonCO2": [GHG_BaseBoiler_BG_connected_tonCO2],
-        "GHG_PeakBoiler_BG_connected_tonCO2": [GHG_PeakBoiler_BG_connected_tonCO2],
-        "GHG_BackupBoiler_BG_connected_tonCO2": [GHG_BackupBoiler_BG_connected_tonCO2],
-        "GHG_CHP_BG_connected_tonCO2": [GHG_CHP_BG_connected_tonCO2],
-        "GHG_Furnace_wet_connected_tonCO2": [GHG_Furnace_wet_connected_tonCO2],
-        "GHG_Furnace_dry_connected_tonCO2": [GHG_Furnace_dry_connected_tonCO2],
-        "GHG_DHN_connected_tonCO2": [GHG_DHN_tonCO2],
-        "GHG_SubstationsHeating_tonCO2": [0.0],  # we neglect them
+        'GHG_HP_DataCenter_connected_tonCO2': GHG_DataCenter_tonCO2,
+        "GHG_HP_Sewage_connected_tonCO2": GHG_Sewage_tonCO2,
+        "GHG_GHP_connected_tonCO2": GHG_GHP_tonCO2,
+        "GHG_HP_Lake_connected_tonCO2": GHG_HPLake_tonCO2,
+        "GHG_BaseBoiler_NG_connected_tonCO2": GHG_BaseBoiler_NG_connected_tonCO2,
+        "GHG_PeakBoiler_NG_connected_tonCO2": GHG_PeakBoiler_NG_connected_tonCO2,
+        "GHG_BackupBoiler_NG_connected_tonCO2": GHG_BackupBoiler_NG_connected_tonCO2,
+        "GHG_CHP_NG_connected_tonCO2": GHG_CHP_NG_connected_tonCO2,
+        "GHG_BaseBoiler_BG_connected_tonCO2": GHG_BaseBoiler_BG_connected_tonCO2,
+        "GHG_PeakBoiler_BG_connected_tonCO2": GHG_PeakBoiler_BG_connected_tonCO2,
+        "GHG_BackupBoiler_BG_connected_tonCO2": GHG_BackupBoiler_BG_connected_tonCO2,
+        "GHG_CHP_BG_connected_tonCO2": GHG_CHP_BG_connected_tonCO2,
+        "GHG_Furnace_wet_connected_tonCO2": GHG_Furnace_wet_connected_tonCO2,
+        "GHG_Furnace_dry_connected_tonCO2": GHG_Furnace_dry_connected_tonCO2,
+        "GHG_DHN_connected_tonCO2": GHG_DHN_tonCO2,
+        "GHG_SubstationsHeating_tonCO2": 0.0,  # we neglect them
         "PEN_SC_ET_connected_MJoil": emissions_solarthermal['PEN_SC_ET_connected_MJoil'],
         "PEN_SC_FP_connected_MJoil": emissions_solarthermal['PEN_SC_FP_connected_MJoil'],
         "PEN_PVT_connected_MJoil": emissions_solarthermal['PEN_PVT_connected_MJoil'],
-        'PEN_HP_DataCenter_connected_MJoil': [PEN_DataCenter_MJoil],
-        "PEN_HP_Sewage_connected_MJoil": [PEN_Sewage_MJoil],
-        "PEN_GHP_connected_MJoil": [PEN_GHP_MJoil],
-        "PEN_HP_Lake_connected_MJoil": [PEN_HPLake_MJoil],
-        "PEN_CHP_BG_connected_MJoil": [PEN_CHP_BG_connected_MJoil],
-        "PEN_CHP_NG_connected_MJoil": [PEN_CHP_NG_connected_MJoil],
-        "PEN_BaseBoiler_NG_connected_MJoil": [PEN_BaseBoiler_NG_connected_MJoil],
-        "PEN_PeakBoiler_NG_connected_MJoil": [PEN_PeakBoiler_NG_connected_MJoil],
-        "PEN_BackupBoiler_NG_connected_MJoil": [PEN_BackupBoiler_NG_connected_MJoil],
-        "PEN_BaseBoiler_BG_connected_MJoil": [PEN_BaseBoiler_BG_connected_MJoil],
-        "PEN_PeakBoiler_BG_connected_MJoil": [PEN_PeakBoiler_BG_connected_MJoil],
-        "PEN_BackupBoiler_BG_connected_MJoil": [PEN_BackupBoiler_BG_connected_MJoil],
-        "PEN_Furnace_wet_connected_MJoil": [PEN_Furnace_wet_connected_MJoil],
-        "PEN_Furnace_dry_connected_MJoil": [PEN_Furnace_dry_connected_MJoil],
-        "PEN_DHN_connected_MJoil": [PEN_DHN_MJoil],
-        "PEN_SubstationsHeating_MJoil": [0.0],  # we neglect them
+        'PEN_HP_DataCenter_connected_MJoil': PEN_DataCenter_MJoil,
+        "PEN_HP_Sewage_connected_MJoil": PEN_Sewage_MJoil,
+        "PEN_GHP_connected_MJoil": PEN_GHP_MJoil,
+        "PEN_HP_Lake_connected_MJoil": PEN_HPLake_MJoil,
+        "PEN_CHP_BG_connected_MJoil": PEN_CHP_BG_connected_MJoil,
+        "PEN_CHP_NG_connected_MJoil": PEN_CHP_NG_connected_MJoil,
+        "PEN_BaseBoiler_NG_connected_MJoil": PEN_BaseBoiler_NG_connected_MJoil,
+        "PEN_PeakBoiler_NG_connected_MJoil": PEN_PeakBoiler_NG_connected_MJoil,
+        "PEN_BackupBoiler_NG_connected_MJoil": PEN_BackupBoiler_NG_connected_MJoil,
+        "PEN_BaseBoiler_BG_connected_MJoil": PEN_BaseBoiler_BG_connected_MJoil,
+        "PEN_PeakBoiler_BG_connected_MJoil": PEN_PeakBoiler_BG_connected_MJoil,
+        "PEN_BackupBoiler_BG_connected_MJoil": PEN_BackupBoiler_BG_connected_MJoil,
+        "PEN_Furnace_wet_connected_MJoil": PEN_Furnace_wet_connected_MJoil,
+        "PEN_Furnace_dry_connected_MJoil": PEN_Furnace_dry_connected_MJoil,
+        "PEN_DHN_connected_MJoil": PEN_DHN_MJoil,
+        "PEN_SubstationsHeating_MJoil": 0.0,  # we neglect them
     }
 
     return performance_parameters
 
 
-def calc_network_costs_heating(config, district_network_barcode, locator, master_to_slave_vars,
+def calc_network_costs_heating(district_network_barcode, locator, master_to_slave_vars,
                                network_features, lca):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
@@ -1045,14 +1040,14 @@ def performance_solarthermal_technologies(storage_dispatch, lca):
 
     performance_emissions = {
         # emissions
-        "GHG_SC_ET_connected_tonCO2": [GHG_SC_ET_connected_tonCO2],
-        "GHG_SC_FP_connected_tonCO2": [GHG_SC_FP_connected_tonCO2],
-        "GHG_PVT_connected_tonCO2": [GHG_PVT_connected_tonCO2],
+        "GHG_SC_ET_connected_tonCO2": GHG_SC_ET_connected_tonCO2,
+        "GHG_SC_FP_connected_tonCO2": GHG_SC_FP_connected_tonCO2,
+        "GHG_PVT_connected_tonCO2": GHG_PVT_connected_tonCO2,
 
         # primary energy
-        "PEN_SC_ET_connected_MJoil": [PEN_SC_ET_connected_MJoil],
-        "PEN_SC_FP_connected_MJoil": [PEN_SC_FP_connected_MJoil],
-        "PEN_PVT_connected_MJoil": [PEN_PVT_connected_MJoil],
+        "PEN_SC_ET_connected_MJoil": PEN_SC_ET_connected_MJoil,
+        "PEN_SC_FP_connected_MJoil": PEN_SC_FP_connected_MJoil,
+        "PEN_PVT_connected_MJoil": PEN_PVT_connected_MJoil,
     }
 
     return performance_emissions

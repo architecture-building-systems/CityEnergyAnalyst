@@ -1,5 +1,7 @@
 from __future__ import division
 
+import warnings
+
 from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
 import random
 from cea.optimization.master import crossover
@@ -28,6 +30,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+warnings.filterwarnings("ignore")
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 config = cea.config.Configuration()
@@ -46,11 +49,14 @@ def objective_function(individual, individual_number, generation, building_names
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
-    costs_USD, CO2_ton, prim_MJ, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
-                                                                                          locator,
-                                                                                          network_features, config,
-                                                                                          prices, lca,
-                                                                                          individual_number, generation)
+    costs_USD, CO2_ton, prim_MJ, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual,
+                                                                                                     building_names,
+                                                                                                     locator,
+                                                                                                     network_features,
+                                                                                                     config,
+                                                                                                     prices, lca,
+                                                                                                     individual_number,
+                                                                                                     generation)
 
     return costs_USD, CO2_ton, prim_MJ
 
