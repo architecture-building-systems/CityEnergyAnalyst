@@ -19,7 +19,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def import_solar_data(fName):
+def import_solar_thermal_data(fName):
     """
     importing and preparing raw data for analysis of the district distribution
 
@@ -31,20 +31,7 @@ def import_solar_data(fName):
     :rtype: list
     """
 
-    if fName == "PV_total.csv":
-        solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
-        PV_import_kWh = np.array(solar_data['E_PV_gen_kWh'])
-        PV_kWh = PV_import_kWh
-        PVT_kWh = np.zeros(HOURS_IN_YEAR)
-        Solar_Area_m2 = np.zeros(HOURS_IN_YEAR)
-        Solar_E_aux_kWh = np.zeros(HOURS_IN_YEAR)
-        Solar_Q_th_kWh = np.zeros(HOURS_IN_YEAR)
-        Solar_Tscs_th = np.zeros(HOURS_IN_YEAR)
-        Solar_Tscr_th_K = np.zeros(HOURS_IN_YEAR)
-        Solar_mcp_kWperC = np.zeros(HOURS_IN_YEAR)
-        #print "PV"
-    
-    elif fName == "PVT_total.csv":
+    if fName == "PVT_total.csv":
         solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
         PV_kWh = np.zeros(HOURS_IN_YEAR)
         PV_PVT_import_kWh = np.array(solar_data['E_PVT_gen_kWh'])

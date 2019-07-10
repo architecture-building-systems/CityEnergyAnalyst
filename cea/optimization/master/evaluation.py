@@ -90,41 +90,39 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     cooling_dispatch = {}
 
     # DISTRICT HEATING NETWORK
-    if district_heating_network:
-        if DHN_barcode.count("1") > 0:
-            print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
-            solar_features = calc_solar_features_individual(locator, building_names, DHN_barcode,
-                                                            master_to_slave_vars, solar_features)
+    if district_heating_network and DHN_barcode.count("1") > 0:
+        print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
+        solar_features = calc_solar_features_individual(locator, building_names, DHN_barcode,
+                                                        master_to_slave_vars, solar_features)
 
-            # THERMAL STORAGE
-            print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-            performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
-                                                                                      master_to_slave_vars,
-                                                                                      lca, prices,
-                                                                                      config)
+        # THERMAL STORAGE
+        print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
+        performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
+                                                                                  master_to_slave_vars,
+                                                                                  lca, prices,
+                                                                                  config)
 
-            print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
-            performance_heating, heating_dispatch = heating_main.heating_calculations_of_DH_buildings(locator,
-                                                                                                      master_to_slave_vars,
-                                                                                                      config, prices,
-                                                                                                      lca,
-                                                                                                      solar_features,
-                                                                                                      network_features,
-                                                                                                      storage_dispatch)
+        print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
+        performance_heating, heating_dispatch = heating_main.heating_calculations_of_DH_buildings(locator,
+                                                                                                  master_to_slave_vars,
+                                                                                                  config, prices,
+                                                                                                  lca,
+                                                                                                  solar_features,
+                                                                                                  network_features,
+                                                                                                  storage_dispatch)
 
     # DISTRICT COOLING NETWORK:
-    if district_cooling_network:
-        if DCN_barcode.count("1") > 0:
-            print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
-            reduced_timesteps_flag = False
-            performance_cooling, cooling_dispatch = cooling_main.cooling_calculations_of_DC_buildings(locator,
-                                                                                                      master_to_slave_vars,
-                                                                                                      network_features,
-                                                                                                      prices,
-                                                                                                      lca,
-                                                                                                      config,
-                                                                                                      reduced_timesteps_flag,
-                                                                                                      district_heating_network)
+    if district_cooling_network and DCN_barcode.count("1") > 0:
+        print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
+        reduced_timesteps_flag = False
+        performance_cooling, cooling_dispatch = cooling_main.cooling_calculations_of_DC_buildings(locator,
+                                                                                                  master_to_slave_vars,
+                                                                                                  network_features,
+                                                                                                  prices,
+                                                                                                  lca,
+                                                                                                  config,
+                                                                                                  reduced_timesteps_flag,
+                                                                                                  district_heating_network)
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
@@ -143,9 +141,10 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                                       solar_features,
                                                                                       performance_heating,
                                                                                       performance_cooling,
-                                                                                      storage_dispatch,
                                                                                       heating_dispatch,
-                                                                                      cooling_dispatch)
+                                                                                      cooling_dispatch,
+                                                                                      district_heating_network,
+                                                                                      district_cooling_network)
 
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
@@ -178,7 +177,6 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
                  naturalgas_dispatch):
-
     # export all including performance heating and performance cooling since we changed them
     pd.DataFrame(performance_disconnected).to_csv(
         locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,

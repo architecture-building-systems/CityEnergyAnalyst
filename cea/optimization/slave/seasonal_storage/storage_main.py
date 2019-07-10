@@ -299,8 +299,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_final_W = Optimized_Data10
 
     # Get results from storage operation
-    E_aux_ch_W = storage_dispatch['E_aux_ch_W']
-    E_aux_dech_W = storage_dispatch['E_aux_dech_W']
+    E_aux_ch_W = storage_dispatch['E_used_Storage_charging_W']
+    E_aux_dech_W = storage_dispatch['E_used_Storage_discharging_W']
     E_thermalstorage_W = E_aux_ch_W + E_aux_dech_W
 
     # VARIABLE COSTS
@@ -354,7 +354,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_dispatch)
-    array = np.array(storage_dispatch_df[["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"]])
+    array = np.array(storage_dispatch_df[["E_used_Storage_charging_W", "E_used_Storage_discharging_W", "Q_from_storage_used_W", "Q_to_storage_W"]])
     Q_HP_max_storage_W = 0
     for i in range(8760):
         if array[i][0] > 0:
