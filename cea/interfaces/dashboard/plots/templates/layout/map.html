@@ -12,6 +12,17 @@
         min-width: 1000px;
       }
     }
+    .plot-widget {
+      min-width: 500px;
+    }
+    .cea-plot {
+      height: 500px;
+    }
+
+    #map-container {
+      height: 500px;
+    }
+
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 {% endblock stylesheets %}
@@ -19,13 +30,26 @@
 {% block content %}
   <div class="right_col" role="main">
     <div class="">
+      <div class="page-title">
+        <div class="title_left" style="width:100%;">
+          <select class="selectpicker" id="dashboard-selector" data-size="5">
+            {% for dashboard in dashboards %}
+            <option value="{{ loop.index0 }}">{{ dashboard.name }}</option>
+            {% endfor %}
+            <option data-divider="true"></option>
+            <option value="manage">Manage Dashboards</option>
+          </select>
+          <a href="#" onclick="add_new_dashboard()"><i class="fa fa-plus-circle"></i> New Dashboard</a>
+        </div>
+      </div>
+
       <div class="clearfix"></div>
 
       <div class="row">
         <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12" id="map-container">
           <div class="x_panel">
             <div class="x_content">
-              <div id="map-div" style="height: 400px;background: blue;"></div>
+              <div id="map-div" style="height: 450px;background: blue;"></div>
             </div>
           </div>
         </div>
@@ -169,4 +193,9 @@
   <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+  <script>
+    $(document).ready(function() {
+        $('#dashboard-selector').val("{{ dashboard_index }}");
+    });
+  </script>
 {% endblock javascripts %}
