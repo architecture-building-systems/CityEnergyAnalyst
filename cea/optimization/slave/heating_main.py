@@ -67,6 +67,18 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # Import data from storage optimization
     Q_missing_W = np.array(storage_dispatch['Q_missing_W'])
+    E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
+    Q_PVT_to_directload_W = storage_dispatch["Q_PVT_to_directload_W"]
+    Q_PVT_to_storage_W = storage_dispatch["Q_PVT_to_storage_W"]
+    Q_SC_ET_to_directload_W =storage_dispatch["Q_SC_ET_to_directload_W"]
+    Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_to_storage_W"]
+    Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_to_directload_W"]
+    Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_to_storage_W"]
+    Q_server_to_directload_W = storage_dispatch["Q_server_to_directload_W"]
+    Q_server_to_storage_W = storage_dispatch["Q_server_to_storage_W"]
+    E_aux_solar_and_heat_recovery_W = storage_dispatch["E_aux_solar_and_heat_recovery_W"]
+    E_used_Storage_charging_W = storage_dispatch["E_used_Storage_charging_W"]
+    E_used_Storage_discharging_W = storage_dispatch["E_used_Storage_discharging_W"]
     Q_missing_copy_W = Q_missing_W.copy()
 
     # Import Temperatures from Network Summary:
@@ -591,7 +603,20 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Q_coldsource_Furnace_W": Q_coldsource_Furnace_W,
         "Q_coldsource_BaseBoiler_W": Q_coldsource_BaseBoiler_W,
         "Q_coldsource_PeakBoiler_W": Q_coldsource_PeakBoiler_W,
+        "Q_PVT_to_directload_W": Q_PVT_to_directload_W,
+        "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
+        "Q_SC_ET_to_directload_W": Q_SC_ET_to_directload_W,
+        "Q_SC_ET_to_storage_W": Q_SC_ET_to_storage_W,
+        "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
+        "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
+        "Q_server_to_directload_W": Q_server_to_directload_W,
+        "Q_server_to_storage_W": Q_server_to_storage_W,
         "Q_excess_W": Q_excess_W,
+        "E_DH_req_W": E_DHN_W,
+        "E_aux_solar_and_heat_recovery_W":E_aux_solar_and_heat_recovery_W,
+        "E_used_Storage_charging_W": E_used_Storage_charging_W,
+        "E_used_Storage_discharging_W": E_used_Storage_discharging_W,
+        "E_PVT_gen_W":E_PVT_gen_W,
         "E_HPServer_req_W": E_HPServer_req_W,
         "E_HPSew_req_W": E_HPSew_req_W,
         "E_HPLake_req_W": E_HPLake_req_W,

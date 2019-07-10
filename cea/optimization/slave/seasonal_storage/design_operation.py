@@ -55,13 +55,13 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     mdot_heat_netw_total_kgpers = read_data_from_Network_summary(CSV_NAME, locator)
 
     # Get installation and production data of all types of solar technologies
-    PVT_kWh, PV_kWh, \
+    PVT_kWh, \
     Q_PVT_gen_Wh, Q_SC_ET_gen_Wh, Q_SC_FP_gen_Wh, Q_SCandPVT_gen_Wh, \
     Solar_E_aux_Wh, \
     Solar_Tscr_th_PVT_K, \
     Solar_Tscr_th_SC_ET_K, \
     Solar_Tscr_th_SC_FP_K = read_solar_technologies_data(locator, master_to_slave_vars)
-
+    E_PVT_Wh = PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT
     # Get ground temperatures
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
                                                               'windspd_ms', 'skytemp_C']]
@@ -70,9 +70,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     # Calculate total solar thermal production
     for hour in range(len(Q_SCandPVT_gen_Wh)):
         Q_SCandPVT_gen_Wh[hour] = Q_SC_ET_gen_Wh[hour] + Q_SC_FP_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
-    # Calculate total solar electricity production
-    E_PV_Wh = PV_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PV
-    E_PVT_Wh = PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT
 
     # Calculate DH operation with on-site energy sources and storage
     HOUR = 0
@@ -209,53 +206,45 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         HOUR += 1
 
 
-        """ STORE DATA """
     # Calculate imported and exported Electricity Arrays:
-    E_produced_total_W = np.zeros(HOURS_IN_YEAR)
     E_consumed_for_storage_solar_and_heat_recovery_W = np.zeros(HOURS_IN_YEAR)
     for hour in range(HOURS_IN_YEAR):
-        E_produced_total_W[hour] = E_PV_Wh[hour] + E_PVT_Wh[hour]
         E_consumed_for_storage_solar_and_heat_recovery_W[hour] = E_aux_ch_final_W[hour] + E_aux_dech_final_W[hour] + \
                                                                  E_aux_solar_and_heat_recovery_Wh[hour]
-
-
-    if STORE_DATA == "yes":
-        storage_dispatch = {
-             "Q_storage_content_W":Q_storage_content_final_W,
-             "Q_DH_networkload_W":Q_DH_networkload_W,
-             "Q_uncontrollable_hot_W":Q_uncontrollable_final_W,
-             "Q_to_storage_W":Q_to_storage_final_W,
-             "Q_from_storage_used_W":Q_from_storage_used_final_W,
-             "Q_server_to_directload_W":Q_server_to_directload_W,
-             "Q_server_to_storage_W":Q_server_to_storage_W,
-             "Q_compair_to_directload_W":Q_compair_to_directload_W,
-             "Q_compair_to_storage_W":Q_compair_to_storage_W,
-             "Q_PVT_to_directload_W":Q_PVT_to_directload_W,
-             "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
-             "Q_SC_ET_to_directload_W":Q_SC_ET_to_directload_W,
-             "Q_SC_ET_to_storage_W":Q_SC_ET_to_storage_W,
-             "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
-             "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
-             "E_aux_ch_W":E_aux_ch_final_W,
-             "E_aux_dech_W":E_aux_dech_final_W,
-             "Q_missing_W":Q_missing_final_W,
-             "mdot_DH_fin_kgpers":mdot_DH_final_kgpers,
-             "E_aux_solar_and_heat_recovery_Wh": E_aux_solar_and_heat_recovery_Wh,
-             "E_consumed_for_storage_solar_and_heat_recovery_W": E_consumed_for_storage_solar_and_heat_recovery_W,
-             "E_PV_Wh":E_PV_Wh,
-             "E_PVT_Wh":E_PVT_Wh,
-             "E_produced_from_solar_W": E_produced_total_W,
-             "Storage_Size_m3":STORAGE_SIZE_m3,
-             "Q_SC_ET_gen_Wh":Q_SC_ET_gen_Wh,
-             "Q_SC_FP_gen_Wh": Q_SC_FP_gen_Wh,
-             "Q_PVT_gen_Wh": Q_PVT_gen_Wh,
-             "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
-             "HPpvt_designArray_Wh":HPpvt_designArray_Wh,
-             "HPCompAirDesignArray_kWh":HPCompAirDesignArray_kWh,
-             "HPScDesignArray_Wh":HPScDesignArray_Wh,
-             "Q_rejected_fin_W":Q_rejected_final_W,
-             "P_HPCharge_max_W":P_HP_max_W
-            }
+    storage_dispatch = {
+         "Q_storage_content_W":Q_storage_content_final_W,
+         "Q_DH_networkload_W":Q_DH_networkload_W,
+         "Q_uncontrollable_hot_W":Q_uncontrollable_final_W,
+         "Q_to_storage_W":Q_to_storage_final_W,
+         "Q_from_storage_used_W":Q_from_storage_used_final_W,
+         "Q_server_to_directload_W":Q_server_to_directload_W,
+         "Q_server_to_storage_W":Q_server_to_storage_W,
+         "Q_compair_to_directload_W":Q_compair_to_directload_W,
+         "Q_compair_to_storage_W":Q_compair_to_storage_W,
+         "Q_PVT_to_directload_W":Q_PVT_to_directload_W,
+         "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
+         "Q_SC_ET_to_directload_W":Q_SC_ET_to_directload_W,
+         "Q_SC_ET_to_storage_W":Q_SC_ET_to_storage_W,
+         "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
+         "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
+         "E_PVT_gen_W": E_PVT_Wh,
+         "E_used_Storage_charging_W":E_aux_ch_final_W,
+         "E_used_Storage_discharging_W":E_aux_dech_final_W,
+         "Q_missing_W":Q_missing_final_W,
+         "mdot_DH_fin_kgpers":mdot_DH_final_kgpers,
+         "E_aux_solar_and_heat_recovery_W": E_aux_solar_and_heat_recovery_Wh,
+         "E_consumed_for_storage_solar_and_heat_recovery_W": E_consumed_for_storage_solar_and_heat_recovery_W,
+         "Storage_Size_m3":STORAGE_SIZE_m3,
+         "Q_SC_ET_gen_Wh":Q_SC_ET_gen_Wh,
+         "Q_SC_FP_gen_Wh": Q_SC_FP_gen_Wh,
+         "Q_PVT_gen_Wh": Q_PVT_gen_Wh,
+         "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
+         "HPpvt_designArray_Wh":HPpvt_designArray_Wh,
+         "HPCompAirDesignArray_kWh":HPCompAirDesignArray_kWh,
+         "HPScDesignArray_Wh":HPScDesignArray_Wh,
+         "Q_rejected_fin_W":Q_rejected_final_W,
+         "P_HPCharge_max_W":P_HP_max_W
+        }
 
     Q_stored_max_W = np.amax(Q_storage_content_final_W)
     T_st_max_K = np.amax(T_storage_final_K)
@@ -369,7 +358,6 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
     Solar_Q_th_SC_kWh = Solar_Data_PVT[:, 2]
     PVT_kWh = Solar_Data_PVT[:, 5]
     Solar_E_aux_PV_kWh = Solar_Data_PV[:, 1]
-    PV_kWh = Solar_Data_PV[:, 5]
     # Import Solar Data
     os.chdir(locator.get_potentials_solar_folder())
     fNameArray = [master_to_slave_vars.SOLCOL_TYPE_PVT, master_to_slave_vars.SOLCOL_TYPE_SC_ET,
@@ -380,22 +368,18 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
         if master_to_slave_vars.SOLCOL_TYPE_SC_ET != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_ET:
             Solar_Area_SC_ET_m2, Solar_E_aux_SC_ET_req_kWh, Solar_Q_th_SC_ET_kWh, Solar_Tscs_th_SC_ET, \
             Solar_mcp_SC_ET_kWperC, SC_ET_kWh, Solar_Tscr_th_SC_ET_K \
-                = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_SC_ET)
+                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_SC_ET)
         # SC_FP
         if master_to_slave_vars.SOLCOL_TYPE_SC_FP != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_FP:
             Solar_Area_SC_FP_m2, Solar_E_aux_SC_FP_req_kWh, Solar_Q_th_SC_FP_kWh, Solar_Tscs_th_SC_FP, \
             Solar_mcp_SC_FP_kWperC, SC_FP_kWh, Solar_Tscr_th_SC_FP_K \
-                = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_SC_FP)
+                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_SC_FP)
         # PVT
         if master_to_slave_vars.SOLCOL_TYPE_PVT != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_PVT:
             Solar_Area_PVT_m2, Solar_E_aux_PVT_kWh, Solar_Q_th_PVT_kWh, Solar_Tscs_th_PVT, \
             Solar_mcp_PVT_kWperC, PVT_kWh, Solar_Tscr_th_PVT_K \
-                = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_PVT)
-        # PV
-        if master_to_slave_vars.SOLCOL_TYPE_PV != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_PV:
-            Solar_Area_PV_m2, Solar_E_aux_PV_kWh, Solar_Q_th_PV_kW, Solar_Tscs_th_PV, \
-            Solar_mcp_PV_kWperC, PV_kWh, Solar_Tscr_th_PV_K \
-                = fn.import_solar_data(master_to_slave_vars.SOLCOL_TYPE_PV)
+                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_PVT)
+
     # Recover Solar Data
     Solar_E_aux_Wh = np.ravel(Solar_E_aux_SC_ET_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_ET) + \
                      np.ravel(Solar_E_aux_SC_FP_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP) + \
@@ -406,7 +390,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
     Q_PVT_gen_Wh = Solar_Q_th_PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT
     Q_SCandPVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
 
-    return PVT_kWh, PV_kWh, Q_PVT_gen_Wh, Q_SC_ET_gen_Wh, Q_SC_FP_gen_Wh, Q_SCandPVT_gen_Wh, \
+    return PVT_kWh, Q_PVT_gen_Wh, Q_SC_ET_gen_Wh, Q_SC_FP_gen_Wh, Q_SCandPVT_gen_Wh, \
            Solar_E_aux_Wh, Solar_Tscr_th_PVT_K, Solar_Tscr_th_SC_ET_K, Solar_Tscr_th_SC_FP_K
 
 

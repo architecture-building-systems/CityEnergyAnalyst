@@ -8,11 +8,14 @@ and recalculates the imports from grid and exports to the grid
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 import numpy as np
 import pandas as pd
-import cea.technologies.solar.photovoltaic as pv
+
 import cea.config
 import cea.inputlocator
+import cea.technologies.solar.photovoltaic as pv
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 
@@ -30,7 +33,8 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
                                               solar_features,
                                               performance_heating,
                                               performance_cooling,
-                                              storage_dispatch, heating_dispatch, cooling_dispatch,
+                                              heating_dispatch, cooling_dispatch,
+                                              district_heating_network, district_cooling_network
                                               ):
     # local variables
     building_names = master_to_slave_vars.building_names
@@ -40,21 +44,20 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     E_Furnace_gen_W, \
     E_CCGT_gen_W, \
     E_PV_gen_W, \
-    E_PVT_gen_W, \
-    E_sys_gen_W = calc_district_system_electricity_generated(cooling_dispatch,
-                                                             heating_dispatch,
-                                                             storage_dispatch)
+    E_PVT_gen_W = calc_district_system_electricity_generated(locator, cooling_dispatch, heating_dispatch,
+                                                             master_to_slave_vars, district_heating_network,
+                                                             district_cooling_network, DHN_barcode, DCN_barcode)
 
     # GET ENERGY REQUIREMENTS
     E_sys_req_W = calc_district_system_electricity_requirements(DCN_barcode, DHN_barcode,
                                                                 building_names,
                                                                 cooling_dispatch,
                                                                 heating_dispatch, locator,
-                                                                storage_dispatch)
+                                                                )
 
     # GET ACTIVATION CURVE
     electricity_dispatch = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
-                                                              E_PV_gen_W, E_sys_req_W)
+                                                        E_PV_gen_W, E_sys_req_W)
     E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
     E_CCGT_gen_directload_W = electricity_dispatch['E_CCGT_gen_directload_W']
@@ -91,18 +94,17 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
     performance_electricity_costs = calc_electricity_performance_costs(solar_features, master_to_slave_vars,
                                                                        E_PV_gen_export_W, E_GRID_directload_W)
 
-
     Capex_a_PV_connected_USD = performance_electricity_costs["Capex_a_PV_connected_USD"]
     Capex_total_PV_connected_USD = performance_electricity_costs["Capex_total_PV_connected_USD"]
-    Opex_fixed_PV_connected_USD =performance_electricity_costs["Opex_fixed_PV_connected_USD"]
-    Opex_a_PV_connected_export_USD =performance_electricity_costs['Opex_a_PV_connected_export_USD']
-    Opex_var_PV_connected_USD=performance_electricity_costs["Opex_var_PV_connected_USD"]
-    Opex_var_GRID_connected_USD=performance_electricity_costs["Opex_var_GRID_connected_USD"]
-    Opex_a_GRID_connected_USD=performance_electricity_costs["Opex_a_GRID_connected_USD"]
-    Opex_a_PV_connected_USD =performance_electricity_costs["Opex_a_PV_connected_USD"]
+    Opex_fixed_PV_connected_USD = performance_electricity_costs["Opex_fixed_PV_connected_USD"]
+    Opex_a_PV_connected_export_USD = performance_electricity_costs['Opex_a_PV_connected_export_USD']
+    Opex_var_PV_connected_USD = performance_electricity_costs["Opex_var_PV_connected_USD"]
+    Opex_var_GRID_connected_USD = performance_electricity_costs["Opex_var_GRID_connected_USD"]
+    Opex_a_GRID_connected_USD = performance_electricity_costs["Opex_a_GRID_connected_USD"]
+    Opex_a_PV_connected_USD = performance_electricity_costs["Opex_a_PV_connected_USD"]
 
-
-    performance_electricity_emissions = calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_directload_W)
+    performance_electricity_emissions = calc_electricity_performance_emisisons(lca, E_PV_gen_export_W,
+                                                                               E_GRID_directload_W)
 
     GHG_PV_connected_tonCO2 = performance_electricity_emissions['GHG_PV_connected_tonCO2']
     PEN_PV_connected_MJoil = performance_electricity_emissions['PEN_PV_connected_MJoil']
@@ -134,12 +136,12 @@ def electricity_calculations_of_all_buildings(DHN_barcode, DCN_barcode, locator,
 
         # primary energy
         "PEN_PV_connected_MJoil": [PEN_PV_connected_MJoil],
-        "PEN_GRID_connected_MJoil":[PEN_GRID_connected_MJoil]
+        "PEN_GRID_connected_MJoil": [PEN_GRID_connected_MJoil]
     }
     return performance_electricity, electricity_dispatch, performance_heating, performance_cooling,
 
 
-def calc_electricity_performance_emisisons(lca,E_PV_gen_export_W, E_GRID_directload_W):
+def calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_directload_W):
     # SOlar technologies
     GHG_PV_gen_export_tonCO2 = (sum(E_PV_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
     GHG_PV_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
@@ -170,20 +172,20 @@ def calc_electricity_performance_emisisons(lca,E_PV_gen_export_W, E_GRID_directl
 
     return performance_electricity
 
+
 def calc_electricity_performance_costs(locator, solar_features, master_to_slave_vars,
                                        E_PV_gen_export_W, E_GRID_directload_W,
                                        lca):
-
-    #PV COSTS
+    # PV COSTS
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
     Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
     Opex_var_PV_gen_export_USD = sum([energy * cost for energy, cost in zip(E_PV_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_PV_gen_directload_US = 0.0
     Opex_var_PV_connected_USD = Opex_var_PV_gen_directload_US - Opex_var_PV_gen_export_USD
 
-    #GRID COSTS
+    # GRID COSTS
     Opex_var_GRID_directload_USD = sum([energy * cost for energy, cost in zip(E_GRID_directload_W, lca.ELEC_PRICE)])
-    Opex_fixed_GRID_directload_USD = 0.0 #we do not have info about the connection
+    Opex_fixed_GRID_directload_USD = 0.0  # we do not have info about the connection
 
     performance_electricity_costs = {
         # annualized capex
@@ -203,9 +205,10 @@ def calc_electricity_performance_costs(locator, solar_features, master_to_slave_
 
         # opex annual costs
         "Opex_a_PV_connected_USD": [Opex_fixed_PV_USD + Opex_var_PV_connected_USD],
-        "Opex_a_GRID_connected_USD":[Opex_fixed_GRID_directload_USD + Opex_var_GRID_directload_USD]
+        "Opex_a_GRID_connected_USD": [Opex_fixed_GRID_directload_USD + Opex_var_GRID_directload_USD]
     }
     return performance_electricity_costs
+
 
 def update_performance_emisisons_pen(performance_heating,
                                      performance_cooling,
@@ -493,23 +496,34 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
     return electricity_dispatch
 
 
-def calc_district_system_electricity_generated(cooling_activation_data, heating_activation_data,
-                                               storage_activation_data):
-    E_CHP_gen_W = heating_activation_data['E_CHP_gen_W'].values
-    E_Furnace_gen_W = heating_activation_data['E_Furnace_gen_W'].values
-    E_CCGT_gen_W = cooling_activation_data["E_gen_CCGT_associated_with_absorption_chillers_W"].values
-    E_PV_gen_W = storage_activation_data['E_PV_Wh'].values
-    E_PVT_gen_W = storage_activation_data['E_PVT_Wh'].values
-    E_sys_gen_W = E_CHP_gen_W + \
-                  E_Furnace_gen_W + \
-                  E_CCGT_gen_W + \
-                  E_PV_gen_W + \
-                  E_PVT_gen_W
-    return E_CHP_gen_W, E_Furnace_gen_W, E_CCGT_gen_W, E_PV_gen_W, E_PVT_gen_W, E_sys_gen_W
+def calc_district_system_electricity_generated(locator, cooling_dispatch, heating_dispatch,
+                                               master_to_slave_vars, district_heating_network,
+                                               district_cooling_network, DHN_barcode, DCN_barcode):
+    # Technologies that are only used if District heating network
+    if district_heating_network and DHN_barcode.count("1") > 0:
+        E_PVT_gen_W = heating_dispatch['E_PVT_gen_W']
+        E_CHP_gen_W = heating_dispatch['E_CHP_gen_W']
+        E_Furnace_gen_W = heating_dispatch['E_Furnace_gen_W']
+    else:
+        E_PVT_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_gen_W = np.zeros(HOURS_IN_YEAR)
+
+    # Technologies that are only used if District cooling network
+    if district_cooling_network and DCN_barcode.count("1") > 0:
+        E_CCGT_gen_W = cooling_dispatch["E_gen_CCGT_associated_with_absorption_chillers_W"]
+    else:
+        E_CCGT_gen_W = np.zeros(HOURS_IN_YEAR)
+
+    # TECHNOLOGEIS THAT ONLY GENERATE ELECTRICITY
+    PV_data = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PV_total.csv"))
+    E_PV_gen_W = np.array(PV_data['E_PV_gen_kWh']) * 1000 * master_to_slave_vars.SOLAR_PART_PV
+
+    return E_CHP_gen_W, E_Furnace_gen_W, E_CCGT_gen_W, E_PV_gen_W, E_PVT_gen_W
 
 
 def calc_district_system_electricity_requirements(DCN_barcode, DHN_barcode, building_names, cooling_activation_data,
-                                                  heating_activation_data, locator, storage_activation_data):
+                                                  heating_activation_data, locator):
     # by buildings
     E_building_req_W = extract_demand_buildings(DCN_barcode, DHN_barcode, building_names, locator)
 
@@ -517,23 +531,40 @@ def calc_district_system_electricity_requirements(DCN_barcode, DHN_barcode, buil
     E_generation_req_W = extract_requirements_generation_units(cooling_activation_data, heating_activation_data)
 
     # by storage system
-    E_Storage_req_W = storage_activation_data['E_aux_ch_W'].values + storage_activation_data['E_aux_dech_W'].values
-    E_aux_solar_and_heat_recovery_W = storage_activation_data['E_aux_solar_and_heat_recovery_Wh'].values
+    E_Storage_req_W = heating_activation_data['E_used_Storage_charging_W'] + heating_activation_data[
+        'E_used_Storage_discharging_W']
+
+    # by auxiliary and heat recovery
+    E_aux_solar_and_heat_recovery_W = heating_activation_data['E_aux_solar_and_heat_recovery_Wh']
+
+    # by networks
+    E_Networks_req_W = extract_requirements_networks(cooling_activation_data, heating_activation_data)
+
+    # total system
     E_sys_req_W = E_building_req_W + \
                   E_generation_req_W + \
                   E_Storage_req_W + \
-                  E_aux_solar_and_heat_recovery_W
+                  E_aux_solar_and_heat_recovery_W + \
+                  E_Networks_req_W
+
     return E_sys_req_W
 
 
+def extract_requirements_networks(cooling_activation_data, heating_activation_data):
+    E_DH_req_W = heating_activation_data['E_DH_req_W']
+    E_DC_req_W = cooling_activation_data['E_DC_req_W']
+    E_Networks_req_W = np.ones(8760) * E_DH_req_W + E_DC_req_W
+    return E_Networks_req_W
+
+
 def extract_requirements_generation_units(cooling_activation_data, heating_activation_data):
-    E_HPServer_req_W = heating_activation_data["E_HPServer_req_W"].values
-    E_HPSew_req_W = heating_activation_data["E_HPSew_req_W"].values
-    E_HPLake_req_W = heating_activation_data["E_HPLake_req_W"].values
-    E_GHP_req_W = heating_activation_data["E_GHP_req_W"].values
-    E_BaseBoiler_req_W = heating_activation_data["E_BaseBoiler_req_W"].values
-    E_PeakBoiler_req_W = heating_activation_data["E_PeakBoiler_req_W"].values
-    E_BackupBoiler_req_W = heating_activation_data["E_BackupBoiler_req_W"].values
+    E_HPServer_req_W = heating_activation_data["E_HPServer_req_W"]
+    E_HPSew_req_W = heating_activation_data["E_HPSew_req_W"]
+    E_HPLake_req_W = heating_activation_data["E_HPLake_req_W"]
+    E_GHP_req_W = heating_activation_data["E_GHP_req_W"]
+    E_BaseBoiler_req_W = heating_activation_data["E_BaseBoiler_req_W"]
+    E_PeakBoiler_req_W = heating_activation_data["E_PeakBoiler_req_W"]
+    E_BackupBoiler_req_W = heating_activation_data["E_BackupBoiler_req_W"]
     E_used_Lake_W = cooling_activation_data['E_used_Lake_W']
     E_used_VCC_W = cooling_activation_data['E_used_VCC_W']
     E_used_VCC_backup_W = cooling_activation_data['E_used_VCC_backup_W']
@@ -557,14 +588,18 @@ def extract_requirements_generation_units(cooling_activation_data, heating_activ
 
 
 def extract_demand_buildings(DCN_barcode, DHN_barcode, building_names, locator):
+
+
     # by buildings'electrical system
     E_building_req_W = np.zeros(8760)
     for name in building_names:  # adding the electricity demand of
         building_demand = pd.read_csv(locator.get_demand_results_file(name))
         E_building_req_W = E_building_req_W + building_demand['E_sys_kWh'].values * 1000
+
+
     # by buildings' individual heating system and cooling system
     for i, name in zip(DCN_barcode, building_names):
-        if i is '1':
+        if i == '1':
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
             E_building_req_W = E_building_req_W + (
                     building_demand['E_cdata_kWh'] + building_demand['E_cs_kWh'] + building_demand[
@@ -572,20 +607,21 @@ def extract_demand_buildings(DCN_barcode, DHN_barcode, building_names, locator):
         else:
             # TODO: read files from decentralized results (THIS IS WRONG!!!!!)
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
-            E_building_req_W = E_building_req_W + (
-                    building_demand['E_cdata_kWh'] + building_demand['E_cs_kWh'] + building_demand[
-                'E_cre_kWh']) * 1000
+            E_building_req_W = E_building_req_W + (building_demand['E_cdata_kWh'] + building_demand['E_cs_kWh'] + building_demand['E_cre_kWh']) * 1000
+
+
     for i, name in zip(DHN_barcode, building_names):
-        if i is '1':
+        if i == '1':
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
             E_building_req_W = E_building_req_W + (
-                    building_demand['E_ww_kWh'] + building_demand['E_hs_kWh'] + building_demand['E_pro_kWh']) * 1000
+                    building_demand['E_ww_kWh'] + building_demand['E_hs_kWh']) * 1000
         else:
             # TODO: read files from decentralized results (THIS IS WRONG!!!!!)
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
             E_building_req_W = E_building_req_W + (
-                    building_demand['E_cdata_kWh'] + building_demand['E_cs_kWh'] + building_demand[
-                'E_cre_kWh']) * 1000
+                    building_demand['E_ww_kWh'] + building_demand['E_hs_kWh']) * 1000
+
+
     return E_building_req_W
 
 
@@ -593,10 +629,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     generation = 25
     individual = 10
-    print("Calculating imports and exports of individual" + str(individual) + " of generation " + str(generation))
-
-    electricity_calculations_of_all_buildings(generation, individual, locator, district_heating_network,
-                                              district_cooling_network)
 
 
 if __name__ == '__main__':
