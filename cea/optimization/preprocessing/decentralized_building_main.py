@@ -13,10 +13,10 @@ from cea.optimization.preprocessing import decentralized_buildings_heating
 from cea.optimization.preprocessing import decentralized_buildings_cooling
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-import cea.technologies.substation as substation
 
 
-def disconnected_building_main(locator, building_names, total_demand, config, prices, lca):
+
+def disconnected_building_main(locator, total_demand, config, prices, lca):
     """
     This functions optimizes disconnected buildings individually
 
@@ -35,20 +35,11 @@ def disconnected_building_main(locator, building_names, total_demand, config, pr
     # calculate substations
 
     if buildings_name_with_heating != []:
-        substation.substation_main_heating(locator,
-                                           total_demand,
-                                           buildings_name_with_heating,
-                                           heating_configuration=7,
-                                           Flag=False)
-        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, building_names,
+        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand, buildings_name_with_heating,
                                                                             config, prices, lca)
 
     if buildings_name_with_cooling != []:
-        substation.substation_main_cooling(locator, total_demand,
-                                           buildings_name_with_heating,
-                                           cooling_configuration=1,
-                                           Flag=False)
-        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names,
+        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, total_demand, buildings_name_with_cooling,
                                                                             config, prices, lca)
     print "Run decentralized model for buildings"
 
@@ -62,7 +53,7 @@ def main(config):
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
     lca = LcaCalculations(locator, detailed_electricity_pricing)
 
-    disconnected_building_main(locator=locator, building_names=building_names, total_demand=total_demand,
+    disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
 
 
