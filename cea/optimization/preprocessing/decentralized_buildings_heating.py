@@ -48,12 +48,12 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     BestData = {}
 
     #This will calculate the substantion state if all buildings where connected(this is how we study this)
-    substation.substation_main_heating(locator, total_demand, building_names, heating_configuration=7)
+    substation.substation_main_heating(locator, total_demand, building_names)
 
     for building_name in building_names:
         print building_name
         #run substation model to derive temperatures of the building
-        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"))
+        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode))
         Qload = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"], substation_results["T_supply_DH_result_K"],
                                             substation_results["T_return_DH_result_K"])
         Qannual = Qload.sum()

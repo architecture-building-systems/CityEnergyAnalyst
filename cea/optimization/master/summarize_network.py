@@ -26,7 +26,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildings, network_type, key):
+def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildings, network_type, key, network_barcode=""):
     """
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
@@ -80,7 +80,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
         iteration = 0
         for building_name in buildings_in_this_network:
             buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
-            substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type)))
+            substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, network_barcode)))
             mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
             Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
 
@@ -145,7 +145,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
         for building_name in buildings_in_this_network:
             buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
             substations.append(
-                pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type)))
+                pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, network_barcode)))
 
             Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
             mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values

@@ -550,10 +550,10 @@ def calc_substations_costs_cooling(building_names, df_current_individual, distri
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
             if df_current_individual['Data Centre'][0] == 1:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC"),
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
                                  usecols=["Q_space_cooling_and_refrigeration_W"])
             else:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC"),
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
                                  usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
 
             subsArray = np.array(df)
