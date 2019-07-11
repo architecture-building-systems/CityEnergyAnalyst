@@ -374,7 +374,7 @@ def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_con
             substation.substation_main_heating(locator, total_demand, buildings_in_heating_network, DHN_configuration,
                                                Flag=True)
             summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
-                                           "DH", DHN_barcode)
+                                           "DH", DHN_barcode, DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
@@ -402,9 +402,9 @@ def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_con
 
             # Run the substation and distribution routines
             substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network, DCN_configuration,
-                                               Flag=True)
+                                               DCN_barcode)
             summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
-                                           'DC', DCN_barcode)
+                                           'DC', DCN_barcode, DCN_barcode)
 
         if individual[
             N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -721,12 +721,11 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, bu
         # Run the substation and distribution routines
         substation.substation_main_heating(locator, demand_this_network, buildings_in_heating_network,
                                            DHN_configuration,
-                                           DHN_barcode,
-                                           Flag=True)
+                                           DHN_barcode)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr'))
         summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_tot_buildings, "DH",
-                                       DHN_barcode)
+                                       DHN_barcode, DHN_barcode)
 
     if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
         DCN_barcode_list.append(DCN_barcode)
@@ -736,13 +735,13 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, bu
         # Run the substation and distribution routines
         substation.substation_main_cooling(locator, demand_this_network, buildings_in_cooling_network,
                                            DCN_configuration,
-                                           Flag=True)
+                                           DCN_barcode)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr'))
         summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_tot_buildings, "DC",
-                                       DCN_barcode)
+                                       DCN_barcode, DCN_barcode)
 
-    return np.nan
+    return DHN_barcode_list, DCN_barcode_list
 
 
 def epsIndicator(frontOld, frontNew):

@@ -980,7 +980,7 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
     Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
-            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
+            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode),
                              usecols=["Q_dhw_W", "Q_heating_W"])
 
             subsArray = np.array(df)

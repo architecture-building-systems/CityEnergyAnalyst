@@ -1,25 +1,26 @@
 from __future__ import division
 
-import warnings
-
-from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
-import random
-from cea.optimization.master import crossover
-from cea.optimization.master import mutations
-import cea.config
 import json
-import cea
-import pandas as pd
 import multiprocessing
+import random
 import time
+import warnings
+from itertools import repeat, izip
+
 import numpy as np
+import pandas as pd
 from deap import base
 from deap import creator
 from deap import tools
-from cea.optimization.master.generation import generate_main
-from cea.optimization.master import evaluation
-from itertools import repeat, izip
+
+import cea
+import cea.config
 from cea.optimization import supportFn
+from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
+from cea.optimization.master import crossover
+from cea.optimization.master import evaluation
+from cea.optimization.master import mutations
+from cea.optimization.master.generation import generate_main
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -77,6 +78,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     function_evals = 0
     euclidean_distance = 0
     spread = 0
+    proba, sigmap = PROBA, SIGMAP
 
     # get number of buildings
     nBuildings = len(building_names)
@@ -97,8 +99,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         toolbox.register("map", pool.map)
 
     # Initialization of variables
-    DHN_network_list = ["1" * nBuildings]
-    DCN_network_list = ["1" * nBuildings]
+    DHN_network_list = []
+    DCN_network_list = []
     halloffame = []
     halloffame_fitness = []
     epsInd = []
@@ -117,17 +119,14 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         pop = toolbox.population(n=config.optimization.initialind)
 
         for ind in pop:
-            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
+            DHN_network_list, DCN_network_list = evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator,
+                                                                     config, building_names)
 
         # Evaluate the initial population
         print "Evaluate initial population"
-        DHN_network_list = DHN_network_list[1:]
-        # done this to remove the first individual in the ntwList as it is an initial value
-        DCN_network_list = DCN_network_list[1:]
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
                                      repeat(building_names, len(invalid_ind)),
@@ -178,11 +177,12 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
             for i in xrange(len(pop)):
                 for j in xrange(len(pop[i])):
                     pop[i][j] = cp['nsga_selected_population'][i][j]
-            DHN_network_list = DHN_network_list
-            DCN_network_list = DCN_network_list
+            DHN_network_list = cp['DHN_network_list']
+            DCN_network_list = cp['DCN_network_list']
 
             for ind in pop:
-                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
+                DHN_network_list, DCN_network_list = evaluation.checkNtw(ind, DHN_network_list, DCN_network_list,
+                                                                         locator, config, building_names)
 
             # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -203,10 +203,10 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
 
             pop = toolbox.select(pop, len(pop))  # assigning crowding distance
 
-    proba, sigmap = PROBA, SIGMAP
+    # Evolution starts !
 
-    # variables used for generating graphs
-    # graphs are being generated for every generation, it is shown in 2D plot with colorscheme for the 3rd objective
+    g = genCP
+    stopCrit = False  # Threshold for the Epsilon indicator, Not used
     xs = [((objectives[0])) for objectives in fitnesses]  # Costs
     ys = [((objectives[1])) for objectives in fitnesses]  # GHG emissions
     zs = [((objectives[2])) for objectives in fitnesses]  # MJ
@@ -215,21 +215,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     # to have a consistent value for normalization, the values of the objectives of the initial generation are taken
     normalization = [max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs)]
 
-    xs = [a / 10 ** 6 for a in xs]
-    ys = [a / 10 ** 6 for a in ys]
-    zs = [a / 10 ** 6 for a in zs]
-
-    # Evolution starts !
-
-    g = genCP
-    stopCrit = False  # Threshold for the Epsilon indicator, Not used
-
+    # Initialization of variables
     while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
-
-        # Initialization of variables
-        DHN_network_list = []
-        DCN_network_list = []
-
         g += 1
         print "Generation", g
         offspring = list(pop)
@@ -246,7 +233,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, config, building_names)
+            DHN_network_list, DCN_network_list, evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator,
+                                                                    config, building_names)
 
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate,
