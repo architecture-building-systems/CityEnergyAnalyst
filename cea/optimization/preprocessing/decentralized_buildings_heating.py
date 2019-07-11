@@ -16,9 +16,10 @@ from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
 from cea.constants import HOURS_IN_YEAR
+import cea.technologies.substation as substation
 
 
-def disconnected_buildings_heating_main(locator, building_names, config, prices, lca):
+def disconnected_buildings_heating_main(locator, total_demand, building_names, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -45,30 +46,16 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
     ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
-    def calc_new_load(mdot, TsupDH, Tret):
-        """
-        This function calculates the load distribution side of the district heating distribution.
-        :param mdot: mass flow
-        :param TsupDH: supply temeperature
-        :param Tret: return temperature
-        :type mdot: float
-        :type TsupDH: float
-        :type Tret: float
-        :return: Qload: load of the distribution
-        :rtype: float
-        """
-        Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
-        if Qload < 0:
-            Qload = 0
 
-        return Qload
+    #This will calculate the substantion state if all buildings where connected(this is how we study this)
+    substation.substation_main_heating(locator, total_demand, building_names, heating_configuration=7)
 
     for building_name in building_names:
         print building_name
-        loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"),
-                            usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
-        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
-                                            loads["T_return_DH_result_K"])
+        #run substation model to derive temperatures of the building
+        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH"))
+        Qload = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"], substation_results["T_supply_DH_result_K"],
+                                            substation_results["T_return_DH_result_K"])
         Qannual = Qload.sum()
         Qnom = Qload.max() * (1 + SIZING_MARGIN)  # 1% reliability margin on installed capacity
 
@@ -90,9 +77,9 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         Wel_GHP = np.zeros((10, 1))  # For the investment costs of the GHP
 
         # Supply with the Boiler / FC / GHP
-        Tret = loads["T_return_DH_result_K"].values
-        TsupDH = loads["T_supply_DH_result_K"].values
-        mdot = loads["mdot_DH_result_kgpers"].values
+        Tret = substation_results["T_return_DH_result_K"].values
+        TsupDH = substation_results["T_supply_DH_result_K"].values
+        mdot = substation_results["mdot_DH_result_kgpers"].values
 
         for hour in range(HOURS_IN_YEAR):
             if Tret[hour] == 0:
@@ -328,27 +315,45 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
-        BestComb = {}
-        BestComb["BoilerNG Share"] = Opex_a_var_USD[indexBest, 0]
-        BestComb["BoilerBG Share"] = Opex_a_var_USD[indexBest, 1]
-        BestComb["FC Share"] = Opex_a_var_USD[indexBest, 2]
-        BestComb["GHP Share"] = Opex_a_var_USD[indexBest, 3]
-        BestComb["TAC_USD"] = TAC_USD[indexBest, 1]
-        BestComb["Capex_a_USD"] = Capex_a_USD[indexBest, 0]
-        BestComb["Capex_total_USD"] = Capex_total_USD[indexBest, 0]
-        BestComb["Opex_a_USD"] = Opex_a_USD[indexBest, 1]
-        BestComb["Opex_a_fixed_USD"] = Opex_a_fixed_USD[indexBest, 0]
-        BestComb["Opex_a_var_USD"] = Opex_a_var_USD[indexBest, 4]
-        BestComb["GHG_tonCO2"] = GHG_kgCO2[indexBest, 5]/1E3 #kg to ton
-        BestComb["PEN_MJoil"] = PEN_MJoil[indexBest, 6]
-        BestComb["Best configuration"] = Best[indexBest, 0]
-        BestComb["Nominal Power"] = Qnom
+        # BestComb = {}
+        # BestComb["BoilerNG Share"] = Opex_a_var_USD[indexBest, 0]
+        # BestComb["BoilerBG Share"] = Opex_a_var_USD[indexBest, 1]
+        # BestComb["FC Share"] = Opex_a_var_USD[indexBest, 2]
+        # BestComb["GHP Share"] = Opex_a_var_USD[indexBest, 3]
+        # BestComb["TAC_USD"] = TAC_USD[indexBest, 1]
+        # BestComb["Capex_a_USD"] = Capex_a_USD[indexBest, 0]
+        # BestComb["Capex_total_USD"] = Capex_total_USD[indexBest, 0]
+        # BestComb["Opex_a_USD"] = Opex_a_USD[indexBest, 1]
+        # BestComb["Opex_a_fixed_USD"] = Opex_a_fixed_USD[indexBest, 0]
+        # BestComb["Opex_a_var_USD"] = Opex_a_var_USD[indexBest, 4]
+        # BestComb["GHG_tonCO2"] = GHG_kgCO2[indexBest, 5]/1E3 #kg to ton
+        # BestComb["PEN_MJoil"] = PEN_MJoil[indexBest, 6]
+        # BestComb["Best configuration"] = Best[indexBest, 0]
+        # BestComb["Nominal Power"] = Qnom
+        #
+        # BestData[building_name] = BestComb
 
-        BestData[building_name] = BestComb
-
-    if 0:
-        fName = locator.get_optimization_decentralized_folder_disc_op_summary_heating()
-        results_to_csv = pd.DataFrame(BestData)
-        results_to_csv.to_csv(fName, sep=',')
+    # fName = locator.get_optimization_decentralized_folder_disc_op_summary_heating()
+    # results_to_csv = pd.DataFrame(BestData)
+    # results_to_csv.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
+
+
+def calc_new_load(mdot, TsupDH, Tret):
+    """
+    This function calculates the load distribution side of the district heating distribution.
+    :param mdot: mass flow
+    :param TsupDH: supply temeperature
+    :param Tret: return temperature
+    :type mdot: float
+    :type TsupDH: float
+    :type Tret: float
+    :return: Qload: load of the distribution
+    :rtype: float
+    """
+    Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
+    if Qload < 0:
+        Qload = 0
+
+    return Qload

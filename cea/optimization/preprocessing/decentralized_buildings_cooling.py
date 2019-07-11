@@ -61,6 +61,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
+    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=1)
+
     for building_name in building_names:
 
         ## Calculate cooling loads for different combinations

@@ -721,6 +721,7 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, bu
         # Run the substation and distribution routines
         substation.substation_main_heating(locator, demand_this_network, buildings_in_heating_network,
                                            DHN_configuration,
+                                           DHN_barcode,
                                            Flag=True)
         # Run thermal network simulation
         num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr'))
