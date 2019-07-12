@@ -368,9 +368,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
         buildings
     """
-
-    indexed_DB = properties_DB.set_index('Code')
-
+    properties_DB = properties_DB.set_index('Code')
     for column in properties_df.columns:
         if column in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
             # some properties are imported from the Excel files as int instead of float
@@ -380,7 +378,9 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                 people_total = 0
                 for use in list_uses:
                     if use in properties_df.columns:
-                        column_total += properties_df[use][building] * occupant_densities[use] * indexed_DB[column][use]
+                        column_total += (properties_df[use][building]
+                                         * occupant_densities[use]
+                                         * properties_DB[column][use])
                         people_total += properties_df[use][building] * occupant_densities[use]
                 if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
@@ -400,7 +400,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
-                    average += properties_df[use][building] * indexed_DB[column][use]
+                    average += properties_df[use][building] * properties_DB[column][use]
                 properties_df.loc[building, column] = average
 
     return properties_df
