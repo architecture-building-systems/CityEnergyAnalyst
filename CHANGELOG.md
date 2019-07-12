@@ -1,3 +1,13 @@
+2019-07-09 - 2.17.1 - #2137 Bugfix for input editor
+2019-07-08 - 2.17.1 - #2145 remove faulty input requests
+2019-07-05 - 2.17.1 - #2085 1971 check input files
+2019-07-03 - 2.17.1 - #2134 Bugfix: Allow decimal values for number inputs
+2019-07-03 - 2.17.1 - #2129 Fix to known issues
+2019-07-03 - 2.17.1 - #2133 FEATURE: New 500 status error page
+2019-07-03 - 2.17.1 - #2128 Minor bugfix for glossary frontend
+2019-07-02 - 2.17.1 - #2071 I2015 constant supply temperature at plants
+2019-07-02 - 2.17.1 - #2125 FEATURE: Add Glossary Search to Dashboard
+2019-07-01 - 2.17 - #2124 Release 2.17
 2019-07-01 - 2.17a1 - #2121 Bugfix: Maintain original coordinate system when saving new input files
 2019-07-01 - 2.17a1 - #2093 1978 create an uninstaller for the cea sure! @daren-thomas
 2019-07-01 - 2.17a0 - #2119 creating warning
