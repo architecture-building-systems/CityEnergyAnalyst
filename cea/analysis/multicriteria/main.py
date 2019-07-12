@@ -27,25 +27,9 @@ def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generation
 
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
-        data_address = locating_individuals_in_generation_script(generation, locator)
-    else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
-    # This calculates the exact path of the individual
-    # It might be that this individual was repeated already some generations back
-    # so we make sure that a pointer to the right address exists first
-    individual_list = preprocessing_generations_data(locator, generation)
-    compiled_data_df = pd.DataFrame()
-    for i, individual in enumerate(individual_list):
-        new_data_address = data_address[data_address['individual_list'] == individual]
-        generation_number = new_data_address['generation_number_address'].values[0]
-        individual_number = new_data_address['individual_number_address'].values[0]
-        df_current_individual = pd.read_csv(
-            locator.get_optimization_slave_total_performance(individual_number, generation_number))
-        compiled_data_df = compiled_data_df.append(df_current_individual, ignore_index=True)
-
-    compiled_data_df = compiled_data_df.assign(individual=individual_list)
+    compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance(generation))
+    compiled_data_df['individual'] = ['ind'+str(x) for x in compiled_data_df['individual']]
 
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
@@ -118,22 +102,6 @@ def normalize_compiled_data(compiled_data_df):
     compiled_data_df = compiled_data_df.assign(normalized_Capex_total=normalized_Capex_total)
     compiled_data_df = compiled_data_df.assign(normalized_Opex=normalized_Opex)
     return compiled_data_df
-
-
-def preprocessing_generations_data(locator, generation_number):
-    """
-    compile data from all individuals in this generation
-    :param locator:
-    :param generation_number:
-    :return:
-    """
-
-    # load data of generation
-    with open(locator.get_optimization_checkpoint(generation_number), "rb") as fp:
-        data = json.load(fp)
-    individual_names = ['ind' + str(i) for i in range(len(data['tested_population_fitness']))]
-    return individual_names
-
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

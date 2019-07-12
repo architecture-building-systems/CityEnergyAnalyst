@@ -79,7 +79,7 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
 
 
 def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                  config, storage_activation_data, solar_features, Q_GHP_gen_W):
+                                  config, storage_activation_data, solar_features, heating_dispatch, Q_GHP_gen_W):
     """
     Computes costs / GHG emisions / primary energy needs
     for the individual
@@ -109,9 +109,7 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
     :rtype: tuple
     """
     # local variables
-    DHN_barcode = master_to_slave_vars.DHN_barcode
     thermal_network = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
-    heating_activation = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,master_to_slave_vars.generation_number))
 
     # START VVALUES
     Capex_a_HEX_SC_ET_USD = 0.0
@@ -169,7 +167,7 @@ def calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_des
     # FURNACE
     if master_to_slave_vars.Furnace_on == 1:
         P_design_W = master_to_slave_vars.Furnace_Q_max_W
-        Q_annual_W = heating_activation["Q_Furnace_W"].sum()
+        Q_annual_W = heating_dispatch["Q_Furnace_W"].sum()
         Capex_a_furnace_USD, Opex_fixed_furnace_USD, Capex_furnace_USD = furnace.calc_Cinv_furnace(P_design_W,
                                                                                                    Q_annual_W,
                                                                                                    config, locator,
