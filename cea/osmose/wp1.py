@@ -140,7 +140,7 @@ def exec_osmose(tech, osmose_project_path):
 
 if __name__ == '__main__':
     # cases= ['WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET']
+    cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT']
     # cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
     # cases = ['ABU_CBD_m_WP1_OFF']
     # cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
