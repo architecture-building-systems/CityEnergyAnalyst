@@ -19,6 +19,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.optimization.constants import NAMES_TECHNOLOGY_OF_INDIVIDUAL
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -114,15 +115,7 @@ def preprocessing_individual_data(locator, data_raw, individual):
 
     # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
     # correspondingly these columns_of_saved_files needs to be changed
-    columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
-                              'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-                              'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
-                              'GHP Share',
-                              'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
-                              'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration',
-                              'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-                              'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
-                              'DCN Temperature', 'DCN unit configuration']
+    columns_of_saved_files = NAMES_TECHNOLOGY_OF_INDIVIDUAL
     for i in building_names:  # DHN
         columns_of_saved_files.append(str(i) + ' DHN')
 

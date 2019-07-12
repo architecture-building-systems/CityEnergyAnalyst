@@ -5,18 +5,13 @@ from __future__ import division
 from __future__ import print_function
 
 import json
-import os
 
 import pandas as pd
-import numpy as np
+
 import cea.config
+from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
+import os
 import cea.inputlocator
-from cea.optimization.lca_calculations import LcaCalculations
-from cea.technologies.heat_exchangers import calc_Cinv_HEX
-import cea.optimization.distribution.network_optimization_features as network_opt
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
-    locating_individuals_in_generation_script, create_data_address_file
-from math import ceil, log
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -32,21 +27,22 @@ def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generation
 
-    # This calculates the exact path of the individual
-    # It might be that this individual was repeated already some generations back
-    # so we make sure that a pointer to the right address exists first
     if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
         data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
+    # This calculates the exact path of the individual
+    # It might be that this individual was repeated already some generations back
+    # so we make sure that a pointer to the right address exists first
     individual_list = preprocessing_generations_data(locator, generation)
     compiled_data_df = pd.DataFrame()
     for i, individual in enumerate(individual_list):
         new_data_address = data_address[data_address['individual_list'] == individual]
         generation_number = new_data_address['generation_number_address'].values[0]
         individual_number = new_data_address['individual_number_address'].values[0]
-        df_current_individual = pd.read_csv(locator.get_optimization_slave_total_performance(individual_number, generation_number))
+        df_current_individual = pd.read_csv(
+            locator.get_optimization_slave_total_performance(individual_number, generation_number))
         compiled_data_df = compiled_data_df.append(df_current_individual, ignore_index=True)
 
     compiled_data_df = compiled_data_df.assign(individual=individual_list)
@@ -58,6 +54,7 @@ def multi_criteria_main(locator, config):
 
     compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
     return
+
 
 def rank_normalized_data(compiled_data_df, config):
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
@@ -102,8 +99,10 @@ def normalize_compiled_data(compiled_data_df):
         normalized_prim = [1] * len(compiled_data_df['PEN_sys_MJoil'])
     # capex
     if (max(compiled_data_df['Capex_total_sys_USD']) - min(compiled_data_df['Capex_total_sys_USD'])) > 1E-8:
-        normalized_Capex_total = (compiled_data_df['Capex_total_sys_USD'] - min(compiled_data_df['Capex_total_sys_USD'])) / (
-                max(compiled_data_df['Capex_total_sys_USD']) - min(compiled_data_df['Capex_total_sys_USD']))
+        normalized_Capex_total = (compiled_data_df['Capex_total_sys_USD'] - min(
+            compiled_data_df['Capex_total_sys_USD'])) / (
+                                         max(compiled_data_df['Capex_total_sys_USD']) - min(
+                                     compiled_data_df['Capex_total_sys_USD']))
     else:
         normalized_Capex_total = [1] * len(compiled_data_df['Capex_total_sys_USD'])
     # opex
@@ -132,10 +131,9 @@ def preprocessing_generations_data(locator, generation_number):
     # load data of generation
     with open(locator.get_optimization_checkpoint(generation_number), "rb") as fp:
         data = json.load(fp)
-
     individual_names = ['ind' + str(i) for i in range(len(data['tested_population_fitness']))]
-
     return individual_names
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
