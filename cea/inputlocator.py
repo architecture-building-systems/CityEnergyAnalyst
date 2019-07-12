@@ -222,17 +222,17 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_cooling_performance.csv' % locals())
 
-    def get_optimization_slave_disconnected_performance(self, gen_num):
+    def get_optimization_slave_disconnected_performance(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'gen_%(gen_num)s_disconnected_performance.csv' % locals())
+                            'ind_%(ind_num)s_disconnected_performance.csv' % locals())
 
-    def get_optimization_slave_total_performance(self,gen_num):
+    def get_optimization_slave_total_performance(self,ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'gen_%(gen_num)s_total_performance.csv' % locals())
+                            'ind_%(ind_num)s_total_performance.csv' % locals())
 
-    def get_optimization_generation_electricity_performance(self,  gen_num):
+    def get_optimization_generation_electricity_performance(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_electricity_performance.csv' % locals())
