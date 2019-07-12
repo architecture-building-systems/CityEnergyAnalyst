@@ -1,10 +1,9 @@
 const docsUrl = "https://city-energy-analyst.readthedocs.io/en/latest/";
 
-$("#glossary").autocomplete({
+$("#glossary-search").autocomplete({
     serviceUrl: "/glossary_search",
     dataType: "json",
     groupBy: "category",
-    width: "flex",
     forceFixPosition: true,
 
     transformResult: function(response) {
@@ -13,14 +12,23 @@ $("#glossary").autocomplete({
                 if (dataItem.SCRIPT === '-') {
                     dataItem.SCRIPT = 'input'
                 }
-                return { value: dataItem.VARIABLE, data: { category: dataItem.SCRIPT,
-                        description: dataItem.DESCRIPTION, unit: dataItem.UNIT, locator: dataItem.LOCATOR_METHOD} };
+                return {
+                    value: dataItem.VARIABLE,
+                    data: {
+                        category: dataItem.SCRIPT,
+                        description: dataItem.DESCRIPTION,
+                        unit: dataItem.UNIT,
+                        locator: dataItem.LOCATOR_METHOD,
+                        filename: dataItem.FILE_NAME
+                    }
+                };
             })
         };
     },
 
     formatResult: function (suggestion, currentValue) {
-      return '<div>'+suggestion.value+'</div><small>'+suggestion.data.description+'</small>';
+      return `<div style="font-weight: bold">${suggestion.value}</div><div>${suggestion.data.description}</div>`+
+          `<div style="font-size: 10px; font-style: italic">${suggestion.data.filename}</div>`;
     },
 
     onSelect: function (suggestion) {
