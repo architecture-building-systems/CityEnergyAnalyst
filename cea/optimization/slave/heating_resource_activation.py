@@ -61,8 +61,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
-    if (master_to_slave_vars.CC_on) == 1 and Q_heat_unmet_W > 0 and CC_ALLOWED == 1:
-        source_CHP = 1
+    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0 and CC_ALLOWED == 1:
+
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
                                         prices, lca.ELEC_PRICE[hour])  # create cost information
         Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
@@ -71,7 +71,9 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
         Q_output_CC_max_W = CC_op_cost_data['q_output_max_W']
         eta_elec_interpol = CC_op_cost_data['eta_el_fn_q_input']
 
-        if Q_heat_unmet_W >= q_output_CC_min_W:  # operation Possible if above minimal load
+        if Q_heat_unmet_W >= q_output_CC_min_W:
+            source_CHP = 1
+            # operation Possible if above minimal load
             if Q_heat_unmet_W < Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = Q_heat_unmet_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
@@ -93,7 +95,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_CHP_gen_W
 
-    if (master_to_slave_vars.Furnace_on) == 1 and Q_heat_unmet_W > 0:  # Activate Furnace if its there.
+    if master_to_slave_vars.Furnace_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
         source_Furnace = 1
         # Operate only if its above minimal load
         if Q_heat_unmet_W > (FURNACE_MIN_LOAD * master_to_slave_vars.Furnace_Q_max_W):
@@ -124,7 +126,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_gen_W
 
-    if (master_to_slave_vars.WasteServersHeatRecovery) == 1 and Q_heat_unmet_W > 0:
+    if master_to_slave_vars.WasteServersHeatRecovery == 1 and Q_heat_unmet_W > 0:
         source_HP_DataCenter = 1
         if Q_heat_unmet_W >= master_to_slave_vars.HPServer_maxSize_W:
             Q_therm_Data_W = master_to_slave_vars.HPServer_maxSize_W
@@ -252,14 +254,14 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                    'Opex_var_BaseBoiler_USDhr': cost_BaseBoiler_USD,
                    'Opex_var_PeakBoiler_USDhr': cost_PeakBoiler_USD}
 
-    source_output = {'HP_DataCenter': source_HP_DataCenter,
-                     'HP_Sewage': source_HP_Sewage,
-                     'HP_Lake': source_HP_Lake,
-                     'GHP': source_GHP,
-                     'CHP': source_CHP,
-                     'Furnace': source_Furnace,
-                     'BaseBoiler': source_BaseBoiler,
-                     'PeakBoiler': source_PeakBoiler}
+    source_output = {'Source_HP_DataCenter': source_HP_DataCenter,
+                     'Source_HP_Sewage': source_HP_Sewage,
+                     'Source_HP_Lake': source_HP_Lake,
+                     'Source_GHP': source_GHP,
+                     'Source_CHP': source_CHP,
+                     'Source_Furnace': source_Furnace,
+                     'Source_BaseBoiler': source_BaseBoiler,
+                     'Source_PeakBoiler': source_PeakBoiler}
 
     Q_output = {'Q_HPServer_gen_W': Q_HPServer_gen_W,
                 'Q_HPSew_gen_W': Q_HPSew_gen_W,

@@ -54,7 +54,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                                 )
 
     # GET ACTIVATION CURVE
-    electricity_dispatch = electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W,
+    electricity_dispatch = electricity_activation_curve(heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W,
+                                                        E_Furnace_gen_W, E_PVT_gen_W,
                                                         E_PV_gen_W, E_sys_req_W)
     E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
@@ -361,7 +362,8 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
     return performance_heating
 
 
-def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
+def electricity_activation_curve(heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W,
+                                 E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
     # ACTIVATION PATTERN OF ELECTRICITY
     E_CHP_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_CHP_gen_export_W = np.zeros(HOURS_IN_YEAR)
@@ -374,11 +376,17 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
     E_PVT_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_PVT_gen_export_W = np.zeros(HOURS_IN_YEAR)
     E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
+
+    CHP_activation_flag = heating_dispatch['CHP_Status']
+    Furnace_activation_flag = heating_dispatch['Furnace_Status']
+    CCGT_activation_flag = cooling_dispatch[
+        'ACH_Status']  # TODO: when absorption chiller then CCGT is activated. this is bananas
+
     for hour in range(HOURS_IN_YEAR):
         E_req_hour_W = E_sys_req_W[hour]
 
         # CHP
-        if E_req_hour_W > 0.0:
+        if CHP_activation_flag[hour] >= 1 and E_CHP_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
             delta_E = E_CHP_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
                 E_CHP_gen_export_W[hour] = delta_E
@@ -394,7 +402,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
             E_CHP_gen_directload_W[hour] = 0.0
 
         # FURNACE
-        if E_req_hour_W > 0.0:
+        if Furnace_activation_flag[hour] >= 1 and E_Furnace_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
             delta_E = E_Furnace_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
                 E_Furnace_gen_export_W[hour] = delta_E
@@ -410,7 +418,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
             E_Furnace_gen_directload_W[hour] = 0.0
 
         # CCGT_cooling
-        if E_req_hour_W > 0.0:
+        if CCGT_activation_flag[hour] >= 1 and E_CCGT_gen_W[hour] and E_req_hour_W > 0.0:
             delta_E = E_CCGT_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
                 E_CCGT_gen_export_W[hour] = delta_E
@@ -426,7 +434,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
             E_CCGT_gen_directload_W[hour] = 0.0
 
         # PV
-        if E_req_hour_W > 0.0:
+        if E_PV_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
             delta_E = E_PV_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
                 E_PV_gen_export_W[hour] = delta_E
@@ -442,7 +450,7 @@ def electricity_activation_curve(E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W, E_P
             E_PV_gen_directload_W[hour] = 0.0
 
         # PVT
-        if E_req_hour_W > 0.0:
+        if E_PVT_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
             delta_E = E_PVT_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
                 E_PVT_gen_export_W[hour] = delta_E
