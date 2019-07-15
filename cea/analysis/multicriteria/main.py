@@ -29,7 +29,6 @@ def multi_criteria_main(locator, config):
 
 
     compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance(generation))
-    compiled_data_df['individual'] = ['ind'+str(x) for x in compiled_data_df['individual']]
 
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)

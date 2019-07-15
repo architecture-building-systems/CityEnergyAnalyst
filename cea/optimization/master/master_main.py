@@ -389,6 +389,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
 def save_generation_dataframes(generation, slected_individuals, locator, DCN_network_list_selected, DHN_network_list_selected):
 
     individual_list = range(len(slected_individuals))
+    individual_name_list = ["Option "+str(x)for x in individual_list]
     performance_distributed = pd.DataFrame()
     performance_cooling = pd.DataFrame()
     performance_heating = pd.DataFrame()
@@ -419,6 +420,11 @@ def save_generation_dataframes(generation, slected_individuals, locator, DCN_net
     performance_heating['individual'] = individual_list
     performance_electricity['individual'] = individual_list
     performance_totals['individual'] = individual_list
+    performance_distributed['individual_name'] = individual_name_list
+    performance_cooling['individual_name'] = individual_name_list
+    performance_heating['individual_name'] = individual_name_list
+    performance_electricity['individual_name'] = individual_name_list
+    performance_totals['individual_name'] = individual_name_list
     performance_distributed['generation'] = generation
     performance_cooling['generation'] = generation
     performance_heating['generation'] = generation

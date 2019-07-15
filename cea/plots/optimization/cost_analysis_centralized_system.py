@@ -1,9 +1,9 @@
 from __future__ import division
 from __future__ import print_function
 
-import cea.plots.optimization
 import plotly.graph_objs as go
-import pandas as pd
+
+import cea.plots.optimization
 from cea.plots.variable_naming import NAMING, COLOR
 
 __author__ = "Daren Thomas"
@@ -32,7 +32,7 @@ class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase
 
     @property
     def title(self):
-        return "Annualized costs for {generation}".format(
+        return "Annualized costs for system options # {generation}".format(
             generation=self.parameters['generation'])
 
     @property
@@ -44,8 +44,7 @@ class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase
     @property
     def layout(self):
         return go.Layout(title=self.title, barmode='relative',
-                                yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
-
+                         yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     def calc_graph(self):
         data = self.process_generation_total_performance()
@@ -54,10 +53,12 @@ class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase
             y = data[field].values
             flag_for_unused_technologies = all(v == 0 for v in y)
             if not flag_for_unused_technologies:
-                trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=data['individual_name'], y=y, name=NAMING[field], text=data['individual_name'],
+                               marker=dict(color=COLOR[field]))
                 graph.append(trace)
 
         return graph
+
 
 def main():
     """Test this plot"""
@@ -68,11 +69,11 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     CostAnalysisSystemPlot(config.project,
-                            {'buildings': None,
-                             'scenario-name': config.scenario_name,
-                             'generation': config.plots_optimization.generation,
-                             'multicriteria': config.plots_optimization.multicriteria},
-                              cache).plot(auto_open=True)
+                           {'buildings': None,
+                            'scenario-name': config.scenario_name,
+                            'generation': config.plots_optimization.generation,
+                            'multicriteria': config.plots_optimization.multicriteria},
+                           cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
