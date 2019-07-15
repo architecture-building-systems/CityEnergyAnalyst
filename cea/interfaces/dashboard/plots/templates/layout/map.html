@@ -6,6 +6,7 @@
 
 {% block stylesheets %}
   {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
   <style>
     @media (min-width: 1200px) {
       #map-container {
@@ -49,7 +50,7 @@
         <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12" id="map-container">
           <div class="x_panel">
             <div class="x_content">
-              <div id="map-div" style="height: 450px;background: blue;"></div>
+              <div id="map-div" style="height: 450px;"></div>
             </div>
           </div>
         </div>
@@ -198,4 +199,11 @@
         $('#dashboard-selector').val("{{ dashboard_index }}");
     });
   </script>
+
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
+  <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/mapclass.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('plots_blueprint.static', filename='js/map.js') }}?u={{ last_updated }}"></script>
 {% endblock javascripts %}

@@ -10,7 +10,7 @@ import plotly.offline
 import json
 import yaml
 import re
-
+import os
 
 blueprint = Blueprint(
     'plots_blueprint',
@@ -48,7 +48,7 @@ def route_dashboard(dashboard_index):
     else:
         print('No such layout: %s' % layout)
     return render_template('layout/'+html, dashboard_index=dashboard_index, dashboards=dashboards,
-                           dashboard=dashboard, categories=categories)
+                           dashboard=dashboard, categories=categories, last_updated=dir_last_updated())
 
 
 @blueprint.route('/dashboard/manage')
@@ -276,3 +276,9 @@ def route_plot(dashboard_index, plot_index):
         return abort(500, ex)
 
     return render_template('plot.html', dashboard_index=dashboard_index, plot_index=plot_index, plot=plot)
+
+
+def dir_last_updated():
+    return str(max(os.path.getmtime(os.path.join(root_path, f))
+                   for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+                   for f in files))
