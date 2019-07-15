@@ -1,12 +1,5 @@
 Data Management:
 
-- name: create-new-project
-  label: Create a New Project
-  description: Create a new project and scenario based on a zone Shapefile and terrain DEM
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.datamanagement.create_new_project
-  parameters: [create-new-project]
-
 - name: terrain-helper
   label: Terrain helper
   description: Creates a fixed elevation terrain file (good for most applications)
