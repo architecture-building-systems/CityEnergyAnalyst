@@ -80,7 +80,8 @@ class MapClass {
             controller: {dragRotate: false}
         });
 
-        $(`#${container}`).append('<div id="map-tooltip"></div>')
+        $(`#${container}`).attr('oncontextmenu', 'return false;')
+            .append('<div id="map-tooltip"></div>')
             .append('<div id="layers-group">');
     }
 
