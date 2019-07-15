@@ -54,9 +54,7 @@ const jsonURLs = {
 class MapClass {
     constructor(container = 'map') {
         this.data = {};
-        this.layerProps = {
-            zone: {}
-        };
+        this.layerProps = {};
 
         this.cameraOptions = {};
         this.currentViewState = {
@@ -130,7 +128,7 @@ class MapClass {
         if (this.data.hasOwnProperty(layer)) {
             this.layerProps[layer] = {
                 ...this.layerProps[layer],
-                ...props
+                ...props,
             };
             this.renderLayer(layer);
         } else {
@@ -157,17 +155,21 @@ class MapClass {
         this.deckgl.setProps({ layers: [...this.layers] });
     }
 
-    redrawBuildings() {
+    redrawBuildings(data={}) {
+        this.data = {
+            ...this.data,
+            ...data
+        };
         this.renderLayer('zone');
         this.renderLayer('district');
     }
 
-    redrawAll() {
-        this.redrawBuildings();
-        this.renderLayer('streets');
-        this.renderLayer('dc_networks');
-        this.renderLayer('dh_networks');
-    }
+    // redrawAll() {
+    //     this.redrawBuildings();
+    //     this.renderLayer('streets');
+    //     this.renderLayer('dc_networks');
+    //     this.renderLayer('dh_networks');
+    // }
 }
 
 function createLayer(name, layers, data, props={}) {
