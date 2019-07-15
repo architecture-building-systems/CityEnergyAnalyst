@@ -48,6 +48,19 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
         self.multi_criteria = self.parameters['multicriteria']
 
+    @cea.plots.cache.cached
+    def process_generation_total_performance(self):
+        # Import multi-criteria data
+        if self.multi_criteria:
+            try:
+                data_processed = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
+            except IOError:
+                raise IOError("Please run the multi-criteria analysis tool first or set multi-criteria = False")
+        else:
+            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance(self.generation))
+        return data_processed
+
+
 
 if __name__ == '__main__':
     # run all the plots in this category

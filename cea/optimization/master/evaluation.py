@@ -540,6 +540,8 @@ def calc_master_to_slave_variables(locator, gen,
     :return: master_to_slave_vars : class MasterSlaveVariables
     :rtype: class
     """
+
+
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
@@ -630,8 +632,11 @@ def calc_master_to_slave_variables(locator, gen,
 
     # sewage - heatpump    
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
+        # get sewage potential
+        sewage_potential = pd.read_csv(locator.get_sewage_heat_potential())
+        Q_max_sewage = (sewage_potential['Qsw_kW']*1000).max()
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_max_sewage, Q_MIN_SHARE * Q_heating_nom_W)
 
     # Gwound source- heatpump
     if individual[10] == 1 and GHP_ALLOWED == True:

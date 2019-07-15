@@ -12,12 +12,14 @@ def summarize_results_individual(master_to_slave_vars,
 
     #initialize values
     Capex_total_sys_connected_USD = 0.0
+    Capex_a_sys_connected_USD = 0.0
     Opex_a_sys_connected_USD = 0.0
     TAC_sys_connected_USD = 0.0
     GHG_sys_connected_tonCO2 = 0.0
     PEN_sys_connected_MJoil = 0.0
 
     Opex_a_sys_disconnected_USD = 0.0
+    Capex_a_sys_disconnected_USD = 0.0
     Capex_total_sys_disconnected_USD = 0.0
     TAC_sys_disconnected_USD = 0.0
     GHG_sys_disconnected_tonCO2 = 0.0
@@ -29,6 +31,7 @@ def summarize_results_individual(master_to_slave_vars,
             if "Capex_total_" in column and "connected_USD" in column:
                 Capex_total_sys_connected_USD += performance_heating[column]
             if "Capex_a_" in column and "connected_USD" in column:
+                Capex_a_sys_connected_USD += performance_heating[column]
                 TAC_sys_connected_USD += performance_heating[column]
             if "Opex_a_" in column and "connected_USD" in column:
                 TAC_sys_connected_USD += performance_heating[column]
@@ -44,6 +47,7 @@ def summarize_results_individual(master_to_slave_vars,
             if "Capex_total_" in column and "connected_USD" in column:
                 Capex_total_sys_connected_USD += performance_cooling[column]
             if "Capex_a_" in column and "connected_USD" in column:
+                Capex_a_sys_connected_USD += performance_cooling[column]
                 TAC_sys_connected_USD += performance_cooling[column]
             if "Opex_a_" in column and "connected_USD" in column:
                 TAC_sys_connected_USD += performance_cooling[column]
@@ -58,6 +62,7 @@ def summarize_results_individual(master_to_slave_vars,
         if "Capex_total_" in column and "connected_USD" in column:
             Capex_total_sys_connected_USD += performance_electricity[column]
         if "Capex_a_" in column and "connected_USD" in column:
+            Capex_a_sys_connected_USD += performance_electricity[column]
             TAC_sys_connected_USD += performance_electricity[column]
         if "Opex_a_" in column and "connected_USD" in column:
             TAC_sys_connected_USD += performance_electricity[column]
@@ -72,6 +77,7 @@ def summarize_results_individual(master_to_slave_vars,
         if "Capex_total_" in column and "connected_USD" in column:
             Capex_total_sys_connected_USD += performance_storage[column]
         if "Capex_a_" in column and "connected_USD" in column:
+            Capex_a_sys_connected_USD += performance_storage[column]
             TAC_sys_connected_USD += performance_storage[column]
         if "Opex_a_" in column and "connected_USD" in column:
             TAC_sys_connected_USD += performance_storage[column]
@@ -86,6 +92,7 @@ def summarize_results_individual(master_to_slave_vars,
         if "Capex_total_" in column and "disconnected_USD" in column:
             Capex_total_sys_disconnected_USD += performance_disconnected[column]
         if "Capex_a_" in column and "disconnected_USD" in column:
+            Capex_a_sys_disconnected_USD += performance_disconnected[column]
             TAC_sys_disconnected_USD += performance_disconnected[column]
         if "Opex_a_" in column and "disconnected_USD" in column:
             TAC_sys_disconnected_USD += performance_disconnected[column]
@@ -96,6 +103,7 @@ def summarize_results_individual(master_to_slave_vars,
             PEN_sys_disconnected_MJoil += performance_disconnected[column]
 
     Opex_a_sys_USD = Opex_a_sys_connected_USD + Opex_a_sys_disconnected_USD
+    Capex_a_sys_USD = Capex_a_sys_connected_USD + Capex_a_sys_disconnected_USD
     Capex_total_sys_USD = Capex_total_sys_connected_USD + Capex_total_sys_disconnected_USD
     TAC_sys_USD = TAC_sys_connected_USD + TAC_sys_disconnected_USD
     GHG_sys_tonCO2 = GHG_sys_connected_tonCO2 + GHG_sys_disconnected_tonCO2
@@ -108,6 +116,10 @@ def summarize_results_individual(master_to_slave_vars,
         "Capex_total_sys_USD":Capex_total_sys_USD,
         "Capex_total_sys_connected_USD":Capex_total_sys_connected_USD,
         "Capex_total_sys_disconnected_USD":Capex_total_sys_disconnected_USD,
+
+        "Capex_a_sys_USD": Capex_a_sys_USD,
+        "Capex_a_sys_connected_USD": Capex_a_sys_connected_USD,
+        "Capex_a_sys_disconnected_USD": Capex_a_sys_disconnected_USD,
 
         "Opex_a_sys_USD":Opex_a_sys_USD,
         "Opex_a_sys_connected_USD":Opex_a_sys_connected_USD,
@@ -125,7 +137,6 @@ def summarize_results_individual(master_to_slave_vars,
         "PEN_sys_connected_MJoil":PEN_sys_connected_MJoil,
         "PEN_sys_disconnected_MJoil":PEN_sys_disconnected_MJoil,
     }
-
 
     #return objectives and perfromance totals dict
     TAC_sys_USD = np.float64(TAC_sys_USD)

@@ -452,7 +452,7 @@ class InputLocator(object):
 
     # optimization
     def get_sewage_heat_potential(self):
-        return os.path.join(self.get_potentials_folder(), "SWP.csv")
+        return os.path.join(self.get_potentials_folder(), "Sewage_heat_potential.csv")
 
     def get_lake_potential(self):
         return os.path.join(self.get_potentials_folder(), "Lake_potential.csv")

@@ -6,7 +6,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import scipy
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_MPERS, T_MIN, AT_MIN_K
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K
 import cea.config
 import cea.globalvar
 import cea.inputlocator
