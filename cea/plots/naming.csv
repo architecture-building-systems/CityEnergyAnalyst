@@ -281,9 +281,9 @@ Cost Analysis,Opex_Furnace_Total_USD,$USD(2015),OPEX of furnace,orange_light
 Cost Analysis,Opex_Boiler_Total_USD,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
 Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
 
-Cost Analysis,Capex_a_sys_disconnected_USD,$USD(2015)/yr,Annual CAPEX of decentralized energy systems,red_light
+Cost Analysis,Capex_a_sys_disconnected_USD,$USD(2015)/yr,Annual CAPEX of decentralized energy systems,yellow_light
 Cost Analysis,Opex_a_sys_disconnected_USD,$USD(2015)/yr,Annual OPEX of decentralized energy systems,blue_light
-Cost Analysis,Capex_a_sys_connected_USD,$USD(2015)/yr,Annual CAPEX of central energy system,red
+Cost Analysis,Capex_a_sys_connected_USD,$USD(2015)/yr,Annual CAPEX of central energy system,yellow
 Cost Analysis,Opex_a_sys_connected_USD,$USD(2015)/yr,Annual OPEX of central energy system,blue
 Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
@@ -325,6 +325,10 @@ Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,
 Cost Analysis,Network_costs_USD,$USD(2015),Annualized CAPEX of installing the district network,red_light
 Cost Analysis,Substation_costs_USD,$USD(2015),Annualized CAPEX of substations in the district network,blue
 
+Emissions and Primary Energy,GHG_sys_disconnected_tonCO2,ton CO2-eq/yr,Annual emissions of decentralized energy systems,grey
+Emissions and Primary Energy,GHG_sys_connected_tonCO2,ton CO2-eq/yr,Annual emissions of central energy system,black
+Emissions and Primary Energy,PEN_sys_disconnected_MJoil,MJ oil-eq/yr,Annual primary energy of decentralized energy systems,red_light
+Emissions and Primary Energy,PEN_sys_connected_MJoil,MJ oil-eq/yr,Annual primary energy of central energy system,red
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
@@ -338,6 +342,7 @@ Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Energy system operation,
 Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Building construction and decomissioning,red
 Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Commuting,red_lighter
 Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Energy system operation,red_light
+
 Thermal Network,P_loss_%,-,Pumping energy,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange
 Thermal Network,T_sup_C,C,Plant supply temperature,red

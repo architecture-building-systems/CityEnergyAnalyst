@@ -20,9 +20,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Pareto curve for a generation"
+    name = "Scatter-plot of costs, emissions and primary energy"
 
     def __init__(self, project, parameters, cache):
         super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters, cache)
@@ -37,7 +37,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
 
     @property
     def title(self):
-        return 'Pareto curve of system options # {generation}'.format(generation=self.parameters['generation'])
+        return "Costs, emissions, and primary energy"
 
     @property
     def output_path(self):
@@ -58,7 +58,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         zmax = max(zs)
         ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
                                       [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
-        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7),
                          xaxis=dict(title='Total annualized costs [USD$(2015)/yr]', domain=[0, 1],
                                     range=ranges_some_room_for_graph[0]),
                          yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
