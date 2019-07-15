@@ -233,7 +233,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     stopCrit = False  # Threshold for the Epsilon indicator, Not used
     xs = [((objectives[0])) for objectives in fitnesses]  # Costs
     ys = [((objectives[1])) for objectives in fitnesses]  # GHG emissions
-    zs = [((objectives[2])) for objectives in fitnesses]  # MJ
+    zs = [((objectives[2])) for objectives in fitnesses]  # primary energy MJ
 
     # normalization is used for optimization metrics as the objectives are all present in different scales
     # to have a consistent value for normalization, the values of the objectives of the initial generation are taken

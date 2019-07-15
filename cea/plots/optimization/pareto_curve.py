@@ -60,9 +60,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
                                       [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
         return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
-                         xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]', domain=[0, 1],
+                         xaxis=dict(title='Total annualized costs [USD$(2015)/yr]', domain=[0, 1],
                                     range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title='GHG emissions [kton CO2-eq]', domain=[0.3, 1.0],
+                         yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
                                     range=ranges_some_room_for_graph[1]))
 
     @cea.plots.cache.cached
@@ -92,16 +92,17 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                        colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
 
-        # Insert scatter points of MCDA assessment.
-        final_dataframe = calc_final_dataframe(data)
-        xs = final_dataframe[self.objectives[0]].values
-        ys = final_dataframe[self.objectives[1]].values
-        name = final_dataframe["Attribute"].values
-        trace = go.Scatter(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
-                           marker=dict(size='20', color='white', line=dict(
-                               color='black',
-                               width=2)))
-        graph.append(trace)
+        if self.multi_criteria:
+            #Insert scatter points of MCDA assessment.
+            final_dataframe = calc_final_dataframe(data)
+            xs = final_dataframe[self.objectives[0]].values
+            ys = final_dataframe[self.objectives[1]].values
+            name = final_dataframe["Attribute"].values
+            trace = go.Scatter(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
+                               marker=dict(size='20', color='white', line=dict(
+                                   color='black',
+                                   width=2)))
+            graph.append(trace)
         return graph
 
     def calc_table(self):
