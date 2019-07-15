@@ -85,23 +85,27 @@ class MapClass {
             .append('<div id="layers-group">');
     }
 
-    init({data = {}, urls = {}} = {}) {
+    init({data = {}, urls = {}, extrude = {}} = {}) {
         let _this = this;
         if (data.hasOwnProperty('zone') || this.data.hasOwnProperty('zone')) {
-            let zone = data.zone || this.data.zone;
-            this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(
-                [[zone.bbox[0], zone.bbox[1]], [zone.bbox[2], zone.bbox[3]]],
-                {padding: 50}
-            );
-            this.currentViewState = {
-                ...this.currentViewState,
-                zoom: this.cameraOptions.zoom,
-                latitude: this.cameraOptions.center.lat,
-                longitude: this.cameraOptions.center.lng,
-                transitionDuration: 300
-            };
+            this.data.zone = data.zone || this.data.zone;
+            this.calculateCamera();
+
             setupButtons(this);
-            this.deckgl.setProps({viewState: this.currentViewState});
+
+            this.deckgl.setProps({
+                viewState: {
+                    ...this.currentViewState,
+                    zoom: this.cameraOptions.zoom,
+                    latitude: this.cameraOptions.center.lat,
+                    longitude: this.cameraOptions.center.lng,
+                    transitionDuration: 300,
+                    onTransitionEnd: () => {
+                        extrude && $('#3d-button').trigger('click')
+                    }
+                }
+            });
+
 
             $.each(data, function (layer) {
                 console.log(layer, data[layer]);
@@ -120,6 +124,7 @@ class MapClass {
                     console.log(`Get ${key} failed.`);
                 });
             });
+
         } else {
             console.error('Please enter a zone geojson file')
         }
@@ -164,6 +169,35 @@ class MapClass {
         this.renderLayer('zone');
         this.renderLayer('district');
     }
+
+    calculateCamera() {
+        let points = [];
+        if (this.data.hasOwnProperty('zone')) {
+            let bbox = this.data.zone.bbox;
+            points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+        }
+        if (this.data.hasOwnProperty('district')) {
+            let bbox = this.data.district.bbox;
+            points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+        }
+        let bbox = turf.bbox(turf.multiPoint(points));
+        this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(
+            [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+            {padding: 50, maxZoom: 18}
+        );
+
+        return bbox
+    }
+
+    setCamera(options={}) {
+        this.deckgl.setProps({
+            viewState: {
+                ...this.currentViewState,
+                ...options
+            }
+        });
+    }
+
 
     // redrawAll() {
     //     this.redrawBuildings();
