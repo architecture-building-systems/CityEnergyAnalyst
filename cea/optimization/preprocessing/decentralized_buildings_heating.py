@@ -3,20 +3,24 @@ Operation for decentralized buildings
 
 """
 from __future__ import division
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+
 import time
+
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, GHP_A, GHP_HMAX_SIZE, DISC_BIOGAS_FLAG
+from geopandas import GeoDataFrame as Gdf
+
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
+import cea.technologies.substation as substation
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HOURS_IN_YEAR
+from cea.constants import WH_TO_J
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, GHP_A, GHP_HMAX_SIZE, DISC_BIOGAS_FLAG
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
-from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
-from cea.constants import HOURS_IN_YEAR
-import cea.technologies.substation as substation
 
 
 def disconnected_buildings_heating_main(locator, total_demand, building_names, config, prices, lca):
@@ -47,18 +51,18 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
     BestData = {}
 
-    #This will calculate the substantion state if all buildings where connected(this is how we study this)
+    # This will calculate the substantion state if all buildings where connected(this is how we study this)
     substation.substation_main_heating(locator, total_demand, building_names)
 
     for building_name in building_names:
         print building_name
-        #run substation model to derive temperatures of the building
-        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode))
-        Qload = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"], substation_results["T_supply_DH_result_K"],
+        # run substation model to derive temperatures of the building
+        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", ""))
+        Qload = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"],
+                                            substation_results["T_supply_DH_result_K"],
                                             substation_results["T_return_DH_result_K"])
         Qannual = Qload.sum()
         Qnom = Qload.max() * (1 + SIZING_MARGIN)  # 1% reliability margin on installed capacity
-
 
         # Create empty matrices
         Opex_a_var_USD = np.zeros((13, 7))
@@ -67,7 +71,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         Opex_a_fixed_USD = np.zeros((13, 7))
         Capex_opex_a_fixed_only_USD = np.zeros((13, 7))
         Opex_a_USD = np.zeros((13, 7))
-        GHG_kgCO2 = np.zeros((13, 7))
+        GHG_tonCO2 = np.zeros((13, 7))
         PEN_MJoil = np.zeros((13, 7))
         Opex_a_var_USD[0][0] = 1
         Opex_a_var_USD[1][1] = 1
@@ -91,20 +95,20 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             Qgas = Qload[hour] / BoilerEff
 
             Opex_a_var_USD[0][4] += prices.NG_PRICE * Qgas  # CHF
-            GHG_kgCO2[0][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-            PEN_MJoil[0][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+            GHG_tonCO2[0][5] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+            PEN_MJoil[0][6] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
             resourcesRes[0][0] += Qload[hour]
 
             if DISC_BIOGAS_FLAG == 1:
                 Opex_a_var_USD[0][4] += prices.BG_PRICE * Qgas  # CHF
-                GHG_kgCO2[0][5] += lca.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                PEN_MJoil[0][6] += lca.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                GHG_tonCO2[0][5] += Qgas * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+                PEN_MJoil[0][6] += Qgas * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
 
             # Boiler BG
             # variable costs, emissions and primary energy
             Opex_a_var_USD[1][4] += prices.BG_PRICE * Qgas  # CHF
-            GHG_kgCO2[1][5] += lca.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-            PEN_MJoil[1][6] += lca.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+            GHG_tonCO2[1][5] += Qgas * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+            PEN_MJoil[1][6] += Qgas * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
             resourcesRes[1][1] += Qload[hour]
 
             # FC
@@ -113,8 +117,10 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             Qelec = Qgas * FC_Effel
 
             # variable costs, emissions and primary energy
-            Opex_a_var_USD[2][4] += prices.NG_PRICE * Qgas - lca.ELEC_PRICE[hour] * Qelec  # CHF, extra electricity sold to grid
-            GHG_kgCO2[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - lca.EL_TO_CO2 * Qelec * 3600E-6  # kgCO2
+            Opex_a_var_USD[2][4] += prices.NG_PRICE * Qgas - lca.ELEC_PRICE[
+                hour] * Qelec  # CHF, extra electricity sold to grid
+            GHG_tonCO2[2][5] += (
+                                        0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - lca.EL_TO_CO2 * Qelec * 3600E-6) / 1E3  # tonCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
             PEN_MJoil[2][6] += 1.51 * Qgas * 3600E-6 - lca.EL_TO_OIL_EQ * Qelec * 3600E-6  # MJ-oil-eq
@@ -129,15 +135,16 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                 QnomGHP = Qnom - QnomBoiler
 
                 if Qload[hour] <= QnomGHP:
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour], TsupDH[hour], Tret[hour])
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour],
+                                                                                  TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
                     # variable costs, emissions and primary energy
                     Opex_a_var_USD[3 + i][4] += lca.ELEC_PRICE[hour] * wdot_el  # CHF
-                    GHG_kgCO2[3 + i][5] += lca.SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
-                    PEN_MJoil[3 + i][6] += lca.SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
+                    GHG_tonCO2[3 + i][5] += wdot_el * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_CO2_STD / 1E3  # ton CO2
+                    PEN_MJoil[3 + i][6] += wdot_el * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_OIL_STD  # MJ-oil-eq
 
                     resourcesRes[3 + i][2] -= wdot_el
                     resourcesRes[3 + i][3] += Qload[hour] - qhotdot_missing
@@ -149,8 +156,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
                         # variable costs, emissions and primary energy
                         Opex_a_var_USD[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                        GHG_kgCO2[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                        PEN_MJoil[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                        GHG_tonCO2[3 + i][5] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+                        PEN_MJoil[3 + i][6] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3 + i][0] += qhotdot_missing
@@ -163,15 +170,16 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
                     TexitGHP = QnomGHP / (mdot[hour] * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour], TexitGHP, Tret[hour])
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour],
+                                                                                  TexitGHP, Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
-                    #variable costs, emissions and primary energy
+                    # variable costs, emissions and primary energy
                     Opex_a_var_USD[3 + i][4] += lca.ELEC_PRICE[hour] * wdot_el  # CHF
-                    GHG_kgCO2[3 + i][5] += lca.SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
-                    GHG_kgCO2[3 + i][6] += lca.SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
+                    GHG_tonCO2[3 + i][5] += wdot_el * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_CO2_STD / 1E3  # ton CO2
+                    GHG_tonCO2[3 + i][6] += wdot_el * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_OIL_STD  # MJ-oil-eq
 
                     resourcesRes[3 + i][2] -= wdot_el
                     resourcesRes[3 + i][3] += QnomGHP - qhotdot_missing
@@ -182,8 +190,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                         Qgas = qhotdot_missing / BoilerEff
 
                         Opex_a_var_USD[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                        GHG_kgCO2[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                        PEN_MJoil[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                        GHG_tonCO2[3 + i][5] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+                        PEN_MJoil[3 + i][6] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3 + i][0] += qhotdot_missing
@@ -194,44 +202,46 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                     BoilerEff = Boiler.calc_Cop_boiler(QtoBoiler, QnomBoiler, TexitGHP)
                     Qgas = QtoBoiler / BoilerEff
 
-                    #variable costs, emissions and primary energy
+                    # variable costs, emissions and primary energy
                     Opex_a_var_USD[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                    GHG_kgCO2[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                    PEN_MJoil[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                    GHG_tonCO2[3 + i][5] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3  # ton CO2
+                    PEN_MJoil[3 + i][6] += Qgas * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD  # MJ-oil-eq
                     resourcesRes[3 + i][0] += QtoBoiler
 
-        #BOILER
-        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
+        # BOILER
+        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom, locator, config,
+                                                                                                'BO1')
         Capex_total_USD[0][0] = Capex_Boiler_USD
         Capex_total_USD[1][0] = Capex_Boiler_USD
         Capex_a_USD[0][0] = Capex_a_Boiler_USD
         Capex_a_USD[1][0] = Capex_a_Boiler_USD
         Opex_a_fixed_USD[0][0] = Opex_a_fixed_Boiler_USD
         Opex_a_fixed_USD[1][0] = Opex_a_fixed_Boiler_USD
-        Capex_opex_a_fixed_only_USD[0][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD #TODO:variable price?
-        Capex_opex_a_fixed_only_USD[1][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD #TODO:variable price?
+        Capex_opex_a_fixed_only_USD[0][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
+        Capex_opex_a_fixed_only_USD[1][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
 
-        #FUELC CELL
+        # FUELC CELL
         Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom, locator, config)
         Capex_total_USD[2][0] = Capex_FC_USD
         Capex_a_USD[2][0] = Capex_a_FC_USD
         Opex_a_fixed_USD[2][0] = Opex_fixed_FC_USD
-        Capex_opex_a_fixed_only_USD[2][0] = Capex_a_FC_USD + Opex_fixed_FC_USD #TODO:variable price?
+        Capex_opex_a_fixed_only_USD[2][0] = Capex_a_FC_USD + Opex_fixed_FC_USD  # TODO:variable price?
 
         # BOILER + HEATPUMP
         for i in range(10):
             Opex_a_var_USD[3 + i][0] = i / 10
             Opex_a_var_USD[3 + i][3] = 1 - i / 10
 
-            #Get boiler cossts
+            # Get boiler cossts
             QnomBoiler = i / 10 * Qnom
-            Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
+            Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler, locator,
+                                                                                                    config, 'BO1')
             Capex_total_USD[3 + i][0] = Capex_Boiler_USD
             Capex_a_USD[3 + i][0] = Capex_a_Boiler_USD
             Opex_a_fixed_USD[3 + i][0] = Opex_a_fixed_Boiler_USD
             Capex_opex_a_fixed_only_USD[3 + i][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
 
-            #Get heat pump costs
+            # Get heat pump costs
             Capex_a_GHP_USD, Opex_a_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
             Capex_total_USD[3 + i][0] += Capex_GHP_USD
             Capex_a_USD[3 + i][0] += Capex_a_GHP_USD
@@ -248,7 +258,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             TAC_USD[i][0] = TotalCO2[i][0] = TotalPrim[i][0] = i
             Opex_a_USD[i][1] = Opex_a_fixed_USD[i][0] + + Opex_a_var_USD[i][4]
             TAC_USD[i][1] = Capex_opex_a_fixed_only_USD[i][0] + Opex_a_var_USD[i][4]
-            TotalCO2[i][1] = GHG_kgCO2[i][5]
+            TotalCO2[i][1] = GHG_tonCO2[i][5]
             TotalPrim[i][1] = PEN_MJoil[i][6]
 
         CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
@@ -301,7 +311,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         dico["Opex_a_USD"] = Opex_a_USD[:, 1]
         dico["Opex_a_fixed_USD"] = Opex_a_fixed_USD[:, 0]
         dico["Opex_a_var_USD"] = Opex_a_var_USD[:, 4]
-        dico["GHG_tonCO2"] = GHG_kgCO2[:, 5]/1E3 #kg to ton
+        dico["GHG_tonCO2"] = GHG_tonCO2[:, 5]
         dico["PEN_MJoil"] = PEN_MJoil[:, 6]
         dico["Best configuration"] = Best[:, 0]
         dico["Nominal Power"] = Qnom_array
@@ -326,7 +336,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         # BestComb["Opex_a_USD"] = Opex_a_USD[indexBest, 1]
         # BestComb["Opex_a_fixed_USD"] = Opex_a_fixed_USD[indexBest, 0]
         # BestComb["Opex_a_var_USD"] = Opex_a_var_USD[indexBest, 4]
-        # BestComb["GHG_tonCO2"] = GHG_kgCO2[indexBest, 5]/1E3 #kg to ton
+        # BestComb["GHG_tonCO2"] = GHG_tonCO2[indexBest, 5]
         # BestComb["PEN_MJoil"] = PEN_MJoil[indexBest, 6]
         # BestComb["Best configuration"] = Best[indexBest, 0]
         # BestComb["Nominal Power"] = Qnom
