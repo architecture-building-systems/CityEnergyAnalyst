@@ -156,7 +156,7 @@ class LcaCalculations(object):
                                             'costs_kWh'] / 1000
 
             average_electricity_selling_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                                            'costs_sell_kWh'] / 1000
+                                            'costs_kWh'] / 1000
             self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price # in USD_2015 per W
             self.ELEC_PRICE_EXPORT = np.ones(HOURS_IN_YEAR) * average_electricity_selling_price # in USD_2015 per W
 

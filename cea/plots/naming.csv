@@ -281,8 +281,10 @@ Cost Analysis,Opex_Furnace_Total_USD,$USD(2015),OPEX of furnace,orange_light
 Cost Analysis,Opex_Boiler_Total_USD,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
 Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
 
-Cost Analysis,Capex_Decentralized_MioUSD,Mio $USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
-Cost Analysis,Opex_Decentralized_MioUSD,Mio $USD(2015),OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_a_sys_disconnected_USD,$USD(2015)/yr,Annual CAPEX of decentralized energy systems,red_light
+Cost Analysis,Opex_a_sys_disconnected_USD,$USD(2015)/yr,Annual OPEX of decentralized energy systems,blue_light
+Cost Analysis,Capex_a_sys_connected_USD,$USD(2015)/yr,Annual CAPEX of central energy system,red
+Cost Analysis,Opex_a_sys_connected_USD,$USD(2015)/yr,Annual OPEX of central energy system,blue
 Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized_MioUSD,Mio $USD(2015),Annualized CAPEX of district energy system,green
@@ -456,7 +458,7 @@ Urban,SERVERROOM,m2,Data center,blue
 Urban,SWIMMING,m2,Swimming halls,purple
 
 
-potential_duplicate,individual,-,Individual ID,red
+potential_duplicate,individual_name,-,System Option,red
 potential_duplicate,TAC_sys_USD,$USD(2015)/yr,Total annualized costs of energy system ($USD(2015)/yr),red
 potential_duplicate,GHG_sys_tonCO2,ton CO2-eq/yr,Green house gas emissions of energy system (ton CO2-eq/yr),red
 potential_duplicate,PEN_sys_MJoil,MJ oil-eq/yr,Primary energy of energy system (MJ oil-eq/yr),red

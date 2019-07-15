@@ -26,7 +26,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
 
     def __init__(self, project, parameters, cache):
         super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ['individual',
+        self.analysis_fields = ['individual_name',
                                 'TAC_sys_USD',
                                 'GHG_sys_tonCO2',
                                 'PEN_sys_MJoil',
@@ -34,11 +34,10 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                 'Opex_a_sys_USD']
         self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'PEN_sys_MJoil']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
-        # NOTE: self.layout is set during the call to calc_graph
 
     @property
     def title(self):
-        return 'Pareto curve for generation {generation}'.format(generation=self.parameters['generation'])
+        return 'Pareto curve of system options # {generation}'.format(generation=self.parameters['generation'])
 
     @property
     def output_path(self):
@@ -71,7 +70,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
-        individual_names = data['individual'].values
+        individual_names = data['individual_name'].values
 
         graph = []
         trace = go.Scatter(x=xs, y=ys, mode='markers', name='data', text=individual_names,
@@ -105,7 +104,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         columns = ["Attribute"] + self.analysis_fields
         values = []
         for field in columns:
-            if field in ["Attribute", "individual"]:
+            if field in ["Attribute", "individual_name"]:
                 values.append(final_dataframe[field].values)
             else:
                 values.append(final_dataframe[field].values)
@@ -123,25 +122,25 @@ def calc_final_dataframe(individual_data):
     user_defined_mcda = individual_data.loc[individual_data["user_MCDA_rank"] < 2]
     # do a check in the case more individuals had the same ranking.
     if least_annualized_cost.shape[0] > 1:
-        individual = str(least_annualized_cost["individual"].values)
+        individual = str(least_annualized_cost["individual_name"].values)
         least_annualized_cost = least_annualized_cost.reset_index(drop=True)
         least_annualized_cost = least_annualized_cost[0]
-        least_annualized_cost["individual"] = individual
+        least_annualized_cost["System option"] = individual
     if least_emissions.shape[0] > 1:
-        individual = str(least_emissions["individual"].values)
+        individual = str(least_emissions["individual_name"].values)
         least_emissions = least_emissions.reset_index(drop=True)
         least_emissions = least_emissions.loc[0]
-        least_emissions["individual"] = individual
+        least_emissions["System option"] = individual
     if least_primaryenergy.shape[0] > 1:
-        individual = str(least_primaryenergy["individual"].values)
+        individual = str(least_primaryenergy["individual_name"].values)
         least_primaryenergy = least_primaryenergy.reset_index(drop=True)
         least_primaryenergy = least_primaryenergy.loc[0]
-        least_primaryenergy["individual"] = individual
+        least_primaryenergy["System option"] = individual
     if user_defined_mcda.shape[0] > 1:
-        individual = str(user_defined_mcda["individual"].values)
+        individual = str(user_defined_mcda["individual_name"].values)
         user_defined_mcda = user_defined_mcda.reset_index(drop=True)
         user_defined_mcda = user_defined_mcda.loc[0]
-        user_defined_mcda["individual"] = individual
+        user_defined_mcda["System option"] = individual
     # Now extend all dataframes
     final_dataframe = least_annualized_cost.append(least_emissions).append(least_primaryenergy).append(
         user_defined_mcda)
