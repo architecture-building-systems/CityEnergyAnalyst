@@ -588,11 +588,11 @@ def calc_master_to_slave_variables(locator, gen,
 
     # CHP units with BG& furnace with biomass dry
     if individual[0] == 2 or individual[0] == 4:
-        if FURNACE_ALLOWED == True:
+        if FURNACE_ALLOWED:
             master_to_slave_vars.Furnace_on = 1
             master_to_slave_vars.Furnace_Q_max_W = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "dry"
-        elif CC_ALLOWED == True:
+        elif CC_ALLOWED:
             master_to_slave_vars.CC_on = 1
             master_to_slave_vars.CC_GT_SIZE_W = max(individual[1] * Q_heating_nom_W * 1.5,
                                                     Q_MIN_SHARE * Q_heating_nom_W * 1.5)
@@ -639,7 +639,7 @@ def calc_master_to_slave_variables(locator, gen,
         GHP_Qmax = max(individual[11] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
 
-    # server storage
+    # server waste heat
     if individual[12] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
         master_to_slave_vars.HPServer_maxSize_W = max(individual[13] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)

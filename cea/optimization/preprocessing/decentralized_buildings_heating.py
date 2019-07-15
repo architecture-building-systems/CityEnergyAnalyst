@@ -325,28 +325,6 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
-        # BestComb = {}
-        # BestComb["BoilerNG Share"] = Opex_a_var_USD[indexBest, 0]
-        # BestComb["BoilerBG Share"] = Opex_a_var_USD[indexBest, 1]
-        # BestComb["FC Share"] = Opex_a_var_USD[indexBest, 2]
-        # BestComb["GHP Share"] = Opex_a_var_USD[indexBest, 3]
-        # BestComb["TAC_USD"] = TAC_USD[indexBest, 1]
-        # BestComb["Capex_a_USD"] = Capex_a_USD[indexBest, 0]
-        # BestComb["Capex_total_USD"] = Capex_total_USD[indexBest, 0]
-        # BestComb["Opex_a_USD"] = Opex_a_USD[indexBest, 1]
-        # BestComb["Opex_a_fixed_USD"] = Opex_a_fixed_USD[indexBest, 0]
-        # BestComb["Opex_a_var_USD"] = Opex_a_var_USD[indexBest, 4]
-        # BestComb["GHG_tonCO2"] = GHG_tonCO2[indexBest, 5]
-        # BestComb["PEN_MJoil"] = PEN_MJoil[indexBest, 6]
-        # BestComb["Best configuration"] = Best[indexBest, 0]
-        # BestComb["Nominal Power"] = Qnom
-        #
-        # BestData[building_name] = BestComb
-
-    # fName = locator.get_optimization_decentralized_folder_disc_op_summary_heating()
-    # results_to_csv = pd.DataFrame(BestData)
-    # results_to_csv.to_csv(fName, sep=',')
-
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
 
 

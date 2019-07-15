@@ -264,13 +264,18 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     prim_energy_CCGT_MJoil = np.zeros(HOURS_IN_YEAR)
     prim_energy_CT_MJoil = np.zeros(HOURS_IN_YEAR)
     NG_used_CCGT_W = np.zeros(HOURS_IN_YEAR)
+    Lake_Status= np.zeros(HOURS_IN_YEAR)
+    ACH_Status= np.zeros(HOURS_IN_YEAR)
+    VCC_Status= np.zeros(HOURS_IN_YEAR)
+    VCC_Backup_Status= np.zeros(HOURS_IN_YEAR)
     calfactor_total = 0
 
     for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
         performance_indicators_output, \
         Qc_supply_to_DCN, \
         Qc_CT_W, Qh_CHP_ACH_W, \
-        cooling_resource_potentials = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
+        cooling_resource_potentials,\
+            source_output= cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, lca, master_to_slave_vars,
                                                                  config, Q_cooling_req_W[hour], hour)
@@ -298,6 +303,12 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
         Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
         Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
         Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
+        Lake_Status[hour] = source_output["Lake_Status"]
+        ACH_Status[hour] = source_output["ACH_Status"]
+        VCC_Status[hour] = source_output["VCC_Status"]
+        VCC_Backup_Status[hour] = source_output["VCC_Backup_Status"]
+
+
         Qc_req_from_CT_W[hour] = Qc_CT_W
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
@@ -509,8 +520,11 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
         "Q_from_storage_tank_W": Qc_from_storage_tank_W,
         "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
         "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
-        "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W
-    }
+        "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W,
+        "Lake_Status":Lake_Status,
+        "ACH_Status":ACH_Status,
+        "VCC_Status":VCC_Status,
+        "VCC_Backup_Status":VCC_Backup_Status}
     return performance, cooling_dispatch
 
 
