@@ -88,19 +88,15 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
                                                                  T_ground_K, ACH_type, limits['Qnom_ACH_W'], locator,
                                                                  config)
             if type(ACH_operation['wdot_W']) is int:
-                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE[hour]
-                GHG_ACH_tonCO2perhr = GHG_ACH_tonCO2perhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6) * (
-                            lca.EL_TO_CO2 / 1E3)
-                prim_energy_ACH_MJoilperhr = prim_energy_ACH_MJoilperhr + (
-                            ACH_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
+                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W'] * lca.ELEC_PRICE[hour])
+                GHG_ACH_tonCO2perhr = GHG_ACH_tonCO2perhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)
+                prim_energy_ACH_MJoilperhr = prim_energy_ACH_MJoilperhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
             else:
-                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE[hour]
-                GHG_ACH_tonCO2perhr = GHG_ACH_tonCO2perhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6) * (
-                            lca.EL_TO_CO2 / 1E3)
-                prim_energy_ACH_MJoilperhr = prim_energy_ACH_MJoilperhr + (
-                            ACH_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
+                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W'] * lca.ELEC_PRICE[hour])
+                GHG_ACH_tonCO2perhr = GHG_ACH_tonCO2perhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)
+                prim_energy_ACH_MJoilperhr = prim_energy_ACH_MJoilperhr + (ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
 
