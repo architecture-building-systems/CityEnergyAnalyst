@@ -191,9 +191,6 @@
 
 {% block javascripts %}
   {{ super() }}
-  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
   <script>
     $(document).ready(function() {
         $('#dashboard-selector').val("{{ dashboard_index }}");
@@ -206,4 +203,8 @@
   <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
   <script src="{{ url_for('inputs_blueprint.static', filename='js/mapclass.js') }}?u={{ last_updated }}"></script>
   <script src="{{ url_for('plots_blueprint.static', filename='js/map.js') }}?u={{ last_updated }}"></script>
+
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
 {% endblock javascripts %}

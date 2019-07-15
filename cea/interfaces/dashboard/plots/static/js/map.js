@@ -1,9 +1,18 @@
-var map = new MapClass('map-div');
+$(document).ready(function () {
+    let map = new MapClass('map-div');
 
-$.get('/inputs/geojson/zone', function (data) {
-    map.init({data:{zone: data}});
-}).then(function () {
-    $.get('/inputs/geojson/district', function (data) {
-        map.addLayer('district', data)
+    let getZone = $.get('/inputs/geojson/zone', function (data) {
+        map.addLayer('zone', data);
+    });
+
+    let getDistrict = $.get('/inputs/geojson/district', function (data) {
+        map.addLayer('district', data);
+    });
+
+    $.when(getZone, getDistrict).done(function () {
+        map.init({extrude: true});
     });
 });
+
+
+
