@@ -324,6 +324,12 @@ Utilities:
   module: cea.tests.dodo
   parameters: [test]
 
+- name: rename-building
+  label: Rename building
+  description: Renames a building in the input files
+  interfaces: [cli, dashboard]
+  module: cea.utilities.rename_building
+  parameters: ['general:scenario', rename-building]
 
 Visualization:
 
