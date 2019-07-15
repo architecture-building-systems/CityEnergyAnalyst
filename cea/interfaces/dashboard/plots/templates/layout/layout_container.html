@@ -1,0 +1,129 @@
+{% extends "base_site.html" %}
+
+{% block title %} {{ dashboard.name  }} {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+      <div class="">
+        <div class="page-title">
+          <div class="title_left" style="width:100%;">
+            <select class="selectpicker" id="dashboard-selector" data-size="5">
+              {% for dashboard in dashboards %}
+                <option value="{{ loop.index0 }}">{{ dashboard.name }}</option>
+              {% endfor %}
+              <option data-divider="true"></option>
+              <option value="manage">Manage Dashboards</option>
+            </select>
+            <a href="#" onclick="add_new_dashboard()"><i class="fa fa-plus-circle"></i> New Dashboard</a>
+          </div>
+
+        </div>
+
+        <div class="clearfix"></div>
+
+        {% block layout %}
+        {% endblock layout %}
+
+      </div>
+    </div>
+
+
+  <!-- modal dialogs for editing the dashboard -->
+
+  <!-- add plot -->
+  <div class="modal fade" id="cea-dashboard-add-plot" tabindex="-1" role="dialog" aria-hidden="true"
+       data-cea-categories='{{ categories | tojson }}'>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+          </button>
+          <h4 class="modal-title">Add plot</h4>
+        </div>
+        <div class="modal-body">
+          <form id="cea-dashboard-add-plot-form" class="form-horizontal form-label-left" method="post"
+                action="add-plot/{{ dashboard_index }}">
+            <div class="form-group">
+              <label class="control-label" for="cea-plot-category">Category</label>
+              <select class="form-control" id="cea-plot-category" name="category">
+                {% for category in categories %}
+                  <option value="{{ category }}" {% if category == "demand" %}selected{% endif %}>
+                    {{ categories[category]['label'] }}
+                  </option>
+                {% endfor %}
+              </select>
+              <label class="control-label" for="cea-plot-name">Plot</label>
+              <select class="form-control" id="cea-plot-name" name="plot-id">
+                {% for plot in categories['demand']['plots'] %}
+                  <option value="{{ plot['id'] }}">{{ plot['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
+                  onclick="$('#cea-dashboard-add-plot-form').submit()">Add plot
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- edit plot parameters-->
+  <div class="modal fade" id="cea-dashboard-edit-plot" tabindex="-1" role="dialog" aria-hidden="true"
+       data-cea-categories='{{ categories | tojson }}'>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+          </button>
+          <h4 class="modal-title">Edit plot parameters</h4>
+        </div>
+        <div class="modal-body">
+          <form id="cea-dashboard-edit-plot-form" class="form-horizontal form-label-left" method="post"
+                action="plot-parameters/{{ dashboard_index }}" enctype='application/json'>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default cea-modal-cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default cea-modal-ok" data-dismiss="modal"
+                  onclick="$('#cea-dashboard-edit-plot-form').submit()">Save
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+    <!-- show the open prompt dialog -->
+  <div class="modal fade" id="cea-prompt" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super() }}
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+  <script>
+    $(document).ready(function() {
+        $('#dashboard-selector').val("{{ dashboard_index }}");
+    });
+  </script>
+{% endblock javascripts %}
+
