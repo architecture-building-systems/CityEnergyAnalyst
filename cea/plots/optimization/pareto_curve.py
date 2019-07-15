@@ -33,7 +33,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                 'Capex_total_sys_USD',
                                 'Opex_a_sys_USD']
         self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'PEN_sys_MJoil']
-        self.input_files = [(self.locator.get_multi_criteria_analysis, [self.generation])]
+        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         # NOTE: self.layout is set during the call to calc_graph
 
     @property
@@ -47,7 +47,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
 
     @property
     def layout(self):
-        data = self.process_individual_data()
+        data = self.process_generation_total_performance()
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -65,21 +65,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                          yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
                                     range=ranges_some_room_for_graph[1]))
 
-    @cea.plots.cache.cached
-    def process_individual_data(self):
-        # Import multi-criteria data
-        if self.multi_criteria:
-            try:
-                data_processed = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
-            except IOError:
-                raise IOError("Please run the multi-criteria analysis tool first or set multi-criteria = False")
-        else:
-
-            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance(self.generation))
-        return data_processed
 
     def calc_graph(self):
-        data = self.process_individual_data()
+        data = self.process_generation_total_performance()
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -92,6 +80,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
                                        colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
 
+        #This includes the points of the multicriteria assessment in here
         if self.multi_criteria:
             #Insert scatter points of MCDA assessment.
             final_dataframe = calc_final_dataframe(data)
@@ -106,7 +95,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.OptimizationOvervie
         return graph
 
     def calc_table(self):
-        final_dataframe = calc_final_dataframe(self.process_individual_data())
+        final_dataframe = calc_final_dataframe(self.process_generation_total_performance())
 
         # transform data into currency
         for column in final_dataframe.columns:

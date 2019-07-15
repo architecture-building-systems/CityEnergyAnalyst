@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import cea.plots.optimization
 import plotly.graph_objs as go
-
+import pandas as pd
 from cea.plots.variable_naming import NAMING, COLOR
 
 __author__ = "Daren Thomas"
@@ -16,35 +16,39 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
     name = "Cost analysis of centralized system"
 
     def __init__(self, project, parameters, cache):
-        super(CostAnalysisCentralizedSystemPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Capex_Centralized_USD",
-                                "Capex_Decentralized_USD",
-                                "Opex_Centralized_USD",
-                                "Opex_Decentralized_USD"]
-        self.layout = go.Layout(title=self.title, barmode='relative',
-                                yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
-        self.input_files = [(self.locator.get_total_demand, []),
-                            (self.locator.get_preprocessing_costs, []),
-                            (self.locator.get_optimization_checkpoint, [self.generation])]
+        super(CostAnalysisSystemPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ["Capex_a_sys_connected_USD",
+                                "Capex_a_sys_disconnected_USD",
+                                "Opex_a_sys_connected_USD",
+                                "Opex_a_sys_disconnected_USD"
+                                ]
+
+        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
 
     @property
     def title(self):
-        return "CAPEX vs. OPEX of centralized system in generation {generation}".format(
+        return "Annualized costs for {generation}".format(
             generation=self.parameters['generation'])
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_centralized_and_decentralized_costs_total'.format(generation=self.generation),
+            'gen{generation}_annualized_costs'.format(generation=self.generation),
             self.category_name)
 
+    @property
+    def layout(self):
+        return go.Layout(title=self.title, barmode='relative',
+                                yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
+
+
     def calc_graph(self):
-        data = self.preprocessing_final_generation_data_cost_centralized()
+        data = self.process_generation_total_performance()
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -54,3 +58,22 @@ class CostAnalysisCentralizedSystemPlot(cea.plots.optimization.OptimizationOverv
                 graph.append(trace)
 
         return graph
+
+def main():
+    """Test this plot"""
+    import cea.config
+    import cea.plots.cache
+    config = cea.config.Configuration()
+    cache = cea.plots.cache.NullPlotCache()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    CostAnalysisSystemPlot(config.project,
+                            {'buildings': None,
+                             'scenario-name': config.scenario_name,
+                             'generation': config.plots_optimization.generation,
+                             'multicriteria': config.plots_optimization.multicriteria},
+                              cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()

@@ -20,8 +20,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K,
-                             TretsewArray_K,
+def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers,Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
                              prices, lca, T_ground):
     """
     :param Q_therm_req_W:
@@ -61,7 +60,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
-    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0 and CC_ALLOWED == 1:
+    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0:
 
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
                                         prices, lca.ELEC_PRICE[hour])  # create cost information
@@ -127,6 +126,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_gen_W
 
     if master_to_slave_vars.WasteServersHeatRecovery == 1 and Q_heat_unmet_W > 0:
+        T_supply_server = 55 + 273 #55C according to demonstrator at ETH Zurich
         source_HP_DataCenter = 1
         if Q_heat_unmet_W >= master_to_slave_vars.HPServer_maxSize_W:
             Q_therm_Data_W = master_to_slave_vars.HPServer_maxSize_W
@@ -139,25 +139,25 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
         Q_coldsource_HPServer_W, Q_HPServer_gen_W, \
         E_HPServer_req_W = HPSew_op_cost(mdot_DH_to_Server_kgpers,
                                       tdhsup_K, tdhret_req_K,
-                                      TretsewArray_K, lca, Q_therm_Data_W, hour)
+                                      T_supply_server, lca, Q_therm_Data_W, hour)
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPServer_gen_W
 
     if (master_to_slave_vars.HP_Sew_on) == 1 and Q_heat_unmet_W > 0:  # activate if its available
 
         source_HP_Sewage = 1
-        if Q_heat_unmet_W >= master_to_slave_vars.HPSew_maxSize_W:
-            Q_therm_Sew_W = master_to_slave_vars.HPSew_maxSize_W
+        if Q_heat_unmet_W >= Q_therm_Sew_W:
             mdot_DH_to_Sew_kgpers = mdot_DH_req_kgpers * Q_therm_Sew_W / Q_heat_unmet_W
+            Q_therm_Sew_gen_W = Q_therm_Sew_W
         else:
-            Q_therm_Sew_W = float(Q_heat_unmet_W)
+            Q_therm_Sew_gen_W = float(Q_heat_unmet_W)
             mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers)
 
         cost_HPSew_USD, C_HPSew_per_kWh_th_pure, \
         Q_coldsource_HPSew_W, Q_HPSew_gen_W, \
         E_HPSew_req_W = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
                                       tdhsup_K, tdhret_req_K,
-                                      TretsewArray_K, lca, Q_therm_Sew_W, hour)
+                                      TretsewArray_K, lca, Q_therm_Sew_gen_W, hour)
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPSew_gen_W
 
@@ -242,8 +242,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_PeakBoiler_gen_W
 
-    if Q_heat_unmet_W > 0:  # TODO: get back-up boiler
-        Q_uncovered_W = Q_heat_unmet_W
+    if Q_heat_unmet_W > 0:
+        Q_uncovered_W = Q_heat_unmet_W # this will become the back-up boiler
 
     opex_output = {'Opex_var_HP_DataCenter_USDhr': cost_Server_USD,
                    'Opex_var_HP_Sewage_USDhr': cost_HPSew_USD,

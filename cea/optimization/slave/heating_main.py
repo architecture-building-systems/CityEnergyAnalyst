@@ -15,7 +15,6 @@ import pandas as pd
 import cea.technologies.pumps as PumpModel
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
-from cea.optimization.constants import HP_SEW_ALLOWED
 from cea.optimization.master import cost_model
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.resources.geothermal import calc_ground_temperature
@@ -70,7 +69,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
     Q_PVT_to_directload_W = storage_dispatch["Q_PVT_to_directload_W"]
     Q_PVT_to_storage_W = storage_dispatch["Q_PVT_to_storage_W"]
-    Q_SC_ET_to_directload_W =storage_dispatch["Q_SC_ET_to_directload_W"]
+    Q_SC_ET_to_directload_W = storage_dispatch["Q_SC_ET_to_directload_W"]
     Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_to_storage_W"]
     Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_to_directload_W"]
     Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_to_storage_W"]
@@ -92,10 +91,13 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage
-    if HP_SEW_ALLOWED == 1:
+    if master_to_slave_vars.HP_Sew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
-        QcoldsewArray = np.array(HPSew_Data['Qsw_kW']) * 1E3
+        Q_therm_Sew_W = np.array(HPSew_Data['Qsw_kW']) * 1E3
         TretsewArray_K = np.array(HPSew_Data['ts_C']) + 273
+    else:
+        Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
+        TretsewArray_K = np.zeros(HOURS_IN_YEAR)
 
     # Initiation of the variables
     Opex_var_HP_Sewage_USDhr = np.zeros(HOURS_IN_YEAR)
@@ -184,8 +186,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_output, E_output, Gas_output, \
         Wood_output, coldsource_output, \
         Q_excess_W[hour] = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
-                                                    mdot_DH_kgpers[hour], tdhsup_K[hour], tdhret_K[hour],
-                                                    TretsewArray_K[hour],
+                                                    mdot_DH_kgpers[hour],
+                                                    Q_therm_Sew_W[hour], TretsewArray_K[hour],
+                                                    tdhsup_K[hour], tdhret_K[hour],
                                                     prices, lca, ground_temp[hour])
 
         Opex_var_HP_DataCenter_USDhr[hour] = opex_output['Opex_var_HP_DataCenter_USDhr']
@@ -423,7 +426,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
     performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                                                 config, storage_dispatch, solar_features, heating_dispatch,
+                                                                 config, storage_dispatch, solar_features,
+                                                                 heating_dispatch,
                                                                  Q_GHP_gen_W)
 
     # THIS CALCULATES EMISSIONS
@@ -979,8 +983,9 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
     Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
-            df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode),
-                             usecols=["Q_dhw_W", "Q_heating_W"])
+            df = pd.read_csv(
+                locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode),
+                usecols=["Q_dhw_W", "Q_heating_W"])
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
