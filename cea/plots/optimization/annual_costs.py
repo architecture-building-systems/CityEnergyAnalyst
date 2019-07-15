@@ -16,12 +16,12 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Cost analysis of centralized system"
+    name = "Bar-chart of costs"
 
     def __init__(self, project, parameters, cache):
-        super(CostAnalysisSystemPlot, self).__init__(project, parameters, cache)
+        super(AnnualCostsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Capex_a_sys_connected_USD",
                                 "Capex_a_sys_disconnected_USD",
                                 "Opex_a_sys_connected_USD",
@@ -32,8 +32,7 @@ class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase
 
     @property
     def title(self):
-        return "Annualized costs for system options # {generation}".format(
-            generation=self.parameters['generation'])
+        return "Annual Costs"
 
     @property
     def output_path(self):
@@ -43,7 +42,7 @@ class CostAnalysisSystemPlot(cea.plots.optimization.OptimizationOverviewPlotBase
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='relative',
+        return go.Layout(barmode='relative',
                          yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     def calc_graph(self):
@@ -68,12 +67,12 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
-    CostAnalysisSystemPlot(config.project,
-                           {'buildings': None,
+    AnnualCostsPlot(config.project,
+                    {'buildings': None,
                             'scenario-name': config.scenario_name,
                             'generation': config.plots_optimization.generation,
                             'multicriteria': config.plots_optimization.multicriteria},
-                           cache).plot(auto_open=True)
+                    cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':

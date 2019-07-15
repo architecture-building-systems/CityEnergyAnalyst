@@ -27,13 +27,15 @@ __status__ = "Production"
 label = 'Optimization overview'
 
 
-class OptimizationOverviewPlotBase(cea.plots.PlotBase):
+class GenerationPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "optimization"
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
         'multicriteria': 'plots-optimization:multicriteria',
+        'generation': 'plots-optimization:generation',
+        'scenario-name': 'general:scenario-name',
     }
 
     def __init__(self, project, parameters, cache):
@@ -43,7 +45,7 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         :param parameters: The plot parameters as, e.g., per the dashboard.yml file
         :param cea.plots.PlotCache cache: a PlotCache instance for speeding up plotting
         """
-        super(OptimizationOverviewPlotBase, self).__init__(project, parameters, cache)
+        super(GenerationPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
         self.multi_criteria = self.parameters['multicriteria']

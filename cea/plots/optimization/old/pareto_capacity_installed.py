@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class ParetoCapacityInstalledPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+class ParetoCapacityInstalledPlot(cea.plots.optimization.GenerationPlotBase):
     """Show a pareto curve installed capacity for a generation"""
     name = "Capacity installed in a generation"
 
