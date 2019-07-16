@@ -5,6 +5,7 @@
 .row.display-flex > [class*='col-'] {
   display: flex;
   flex-direction: column;
+  padding: 0px 5px;
 }
 
 @media (min-width: 1200px) {
