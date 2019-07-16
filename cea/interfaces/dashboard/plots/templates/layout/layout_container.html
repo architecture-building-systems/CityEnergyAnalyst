@@ -123,6 +123,10 @@
 
 {% block javascripts %}
   {{ super() }}
+
+  {% block layout_javascripts %}
+  {% endblock layout_javascripts %}
+
   <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/dashboard-plots.js') }}?u={{ last_updated }}"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
