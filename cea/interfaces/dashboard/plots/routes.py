@@ -42,9 +42,9 @@ def route_dashboard(dashboard_index):
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
     layout = dashboard.layout
-    html = 'default.html'
+    html = 'default_layout.html'
     if layout == 'map':
-        html = 'map.html'
+        html = 'map_layout.html'
     else:
         print('No such layout: %s' % layout)
     return render_template('layout/'+html, dashboard_index=dashboard_index, dashboards=dashboards,
