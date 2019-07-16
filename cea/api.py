@@ -5,6 +5,7 @@ Provide access to the scripts exported by the City Energy Analyst.
 from __future__ import print_function
 import datetime
 
+
 def register_scripts():
     import cea.config
     import cea.scripts
@@ -22,9 +23,12 @@ def register_scripts():
             for section, parameter in config.matching_parameters(option_list):
                 if parameter.py_name in kwargs:
                     parameter.set(kwargs[parameter.py_name])
-            # run the script
             cea_script.print_script_configuration(config)
+            if list(cea_script.missing_input_files(config)):
+                cea_script.print_missing_input_files(config)
+                return
             t0 = datetime.datetime.now()
+            # run the script
             script_module.main(config)
 
             # print success message

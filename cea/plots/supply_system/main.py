@@ -127,7 +127,11 @@ def preprocessing_run_thermal_network(config, locator, output_name_network, outp
 
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
-    thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
+    # set control strategies for network temperature
+    temperature_control = config.thermal_network.temperature_control
+
+    thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems, temperature_control)
+    return np.nan
 
 class Plots(object):
 

@@ -113,3 +113,7 @@ cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/th
 cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shp
 cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shx
 cea/concept_project/data/reference-case-WTP/MIX_high_density/inputs/networks/nodes_buildings.dbf
+
+
+# Ignore ipython notebook checkpoints
+**/*.ipynb_checkpoints/
