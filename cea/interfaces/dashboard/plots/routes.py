@@ -75,6 +75,14 @@ def route_new_dashboard():
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
+@blueprint.route('/dashboard/duplicate/<int:dashboard_index>', methods=['POST'])
+def route_duplicate_dashboard(dashboard_index):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    duplicate_index = cea.plots.duplicate_dashboard(cea_config, plot_cache, dashboard_index)
+    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=duplicate_index))
+
+
 @blueprint.route('/dashboard/<int:dashboard_index>/<func>')
 def route_manage_dashboards_function(dashboard_index, func):
     cea_config = current_app.cea_config
@@ -201,7 +209,6 @@ def route_post_plot_parameters(dashboard_index, plot_index):
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
-
 @blueprint.route('/category/<category>')
 def route_category(category):
     """FIXME: this will be removed soon..."""
@@ -237,6 +244,7 @@ def route_div(dashboard_index, plot_index):
         return render_template('missing_input_files.html',
                                missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
                                script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
+
 
 @blueprint.route('/table/<int:dashboard_index>/<int:plot_index>')
 def route_table(dashboard_index, plot_index):

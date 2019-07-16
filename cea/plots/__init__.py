@@ -82,6 +82,19 @@ def new_dashboard(config, cache, name, description, layout):
     return len(dashboards) - 1
 
 
+def duplicate_dashboard(config, cache, dashboard_index):
+    dashboards = read_dashboards(config, cache)
+    dashboard = dashboards[dashboard_index].to_dict()
+    dashboards.append(Dashboard(config, {
+        'name': dashboard['name'] + '(Copy)',
+        'description': 'Copy of ' + dashboard['name'],
+        'layout': dashboard['layout'],
+        'plots': dashboard['plots']
+    }, cache))
+    write_dashboards(config, dashboards)
+    return len(dashboards) - 1
+
+
 def delete_dashboard(config, dashboard_index):
     """Remove the dashboard with that index from the dashboard configuration file"""
     import cea.plots.cache
