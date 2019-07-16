@@ -649,6 +649,14 @@ class PlantNodeParameter(ChoiceParameter):
         network_name = self.config.get(self.network_name_fqn)
         return locator.get_plant_nodes(network_type, network_name)
 
+    def decode(self, value):
+        if str(value) in self._choices:
+            return str(value)
+        elif self._choices:
+            return self._choices[0]
+        else:
+            return None
+
 
 class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
