@@ -42,7 +42,7 @@ $(document).ready(function() {
             .attr("method", "POST");
     });
 
-    $("#dashboard-selector").val(window.location.href.split('/').pop())
+    $("#dashboard-selector").val(window.location.href.split('/').pop().replace(/[^0-9]/g, ''))
         .change(function () {
         if($(this).val() === "manage") {
             window.location.href = "./" + "manage";
