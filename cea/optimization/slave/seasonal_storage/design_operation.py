@@ -121,7 +121,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_SC_ET_gen_W, \
         Q_SC_FP_gen_W, \
         Q_compair_gen_W, \
-        Q_server_gen_W = get_heating_provided_by_onsite_energy_sources(
+        Q_server_gen_W, \
+        E_aux_Server_W = get_heating_provided_by_onsite_energy_sources(
             HOUR, HPCompAirDesignArray_kWh, HPScDesignArray_Wh,
             HPServerHeatDesignArray_kWh, HPpvt_designArray_Wh, Q_PVT_gen_Wh,
             Q_SC_ET_gen_Wh, Q_SC_FP_gen_Wh, Q_wasteheatServer_kWh, Solar_Tscr_th_PVT_K, Solar_Tscr_th_SC_ET_K,
@@ -212,38 +213,58 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         E_consumed_for_storage_solar_and_heat_recovery_W[hour] = E_aux_ch_final_W[hour] + E_aux_dech_final_W[hour] + \
                                                                  E_aux_solar_and_heat_recovery_Wh[hour]
     storage_dispatch = {
-         "Q_storage_content_W":Q_storage_content_final_W,
-         "Q_DH_networkload_W":Q_DH_networkload_W,
-         "Q_uncontrollable_hot_W":Q_uncontrollable_final_W,
-         "Q_to_storage_W":Q_to_storage_final_W,
-         "Q_from_storage_used_W":Q_from_storage_used_final_W,
-         "Q_server_to_directload_W":Q_server_to_directload_W,
-         "Q_server_to_storage_W":Q_server_to_storage_W,
-         "Q_compair_to_directload_W":Q_compair_to_directload_W,
-         "Q_compair_to_storage_W":Q_compair_to_storage_W,
-         "Q_PVT_to_directload_W":Q_PVT_to_directload_W,
-         "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
-         "Q_SC_ET_to_directload_W":Q_SC_ET_to_directload_W,
-         "Q_SC_ET_to_storage_W":Q_SC_ET_to_storage_W,
-         "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
-         "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
-         "E_PVT_gen_W": E_PVT_Wh,
+
+
+         #loads going directly to the customers
+         "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
+         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
+         "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_W,
+         "Q_HPServer_gen_directload_W": Q_server_to_directload_W,
+
+         # Load coming from the saesonal storage to customers
+         "Q_Storage_gen_W": Q_from_storage_used_final_W,
+
+         #Loads going to the seasonal storage
+         # total
+         "Q_Storage_req_W": Q_to_storage_final_W,
+
+         #per technology
+         "Q_PVT_gen_storage_W": Q_PVT_to_storage_W,
+         "Q_SC_ET_gen_storage_W":Q_SC_ET_to_storage_W,
+         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
+         "Q_HPServer_gen_storage_W": Q_server_to_storage_W,
+
+         #Auxiliary loads due to chargin and discharging the storage
          "E_used_Storage_charging_W":E_aux_ch_final_W,
          "E_used_Storage_discharging_W":E_aux_dech_final_W,
-         "Q_missing_W":Q_missing_final_W,
+         "E_aux_Server_W" = E_aux_Server_W,
+
+         #The load that needs to be supplied by other generation units (NEXT STEP)
+         "Q_req_after_storage_W":Q_missing_final_W,
+
+         #total loads produced
+        "Q_SC_ET_gen_Wh": Q_SC_ET_gen_Wh,
+        "Q_SC_FP_gen_Wh": Q_SC_FP_gen_Wh,
+        "Q_PVT_gen_Wh": Q_PVT_gen_Wh,
+        "Q_HPServer_gen_W": Q_server_to_storage_W+Q_server_to_directload_W,
+
+         #otehr stuff
          "mdot_DH_fin_kgpers":mdot_DH_final_kgpers,
+         "E_PVT_gen_W": E_PVT_Wh, #useful later on for the electricity dispatch curve
          "E_aux_solar_and_heat_recovery_W": E_aux_solar_and_heat_recovery_Wh,
+         "E_HPServer_req_W":E_HPServer_req_W,
          "E_consumed_for_storage_solar_and_heat_recovery_W": E_consumed_for_storage_solar_and_heat_recovery_W,
          "Storage_Size_m3":STORAGE_SIZE_m3,
-         "Q_SC_ET_gen_Wh":Q_SC_ET_gen_Wh,
-         "Q_SC_FP_gen_Wh": Q_SC_FP_gen_Wh,
-         "Q_PVT_gen_Wh": Q_PVT_gen_Wh,
+
          "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
          "HPpvt_designArray_Wh":HPpvt_designArray_Wh,
          "HPCompAirDesignArray_kWh":HPCompAirDesignArray_kWh,
          "HPScDesignArray_Wh":HPScDesignArray_Wh,
          "Q_rejected_fin_W":Q_rejected_final_W,
          "P_HPCharge_max_W":P_HP_max_W
+         "Q_storage_content_W": Q_storage_content_final_W,
+         "Q_DH_networkload_W": Q_DH_networkload_W,
+         "Q_uncontrollable_hot_W": Q_uncontrollable_final_W,
         }
 
     Q_stored_max_W = np.amax(Q_storage_content_final_W)
@@ -337,12 +358,12 @@ def get_heating_provided_by_onsite_energy_sources(HOUR, HPCompAirDesignArray_kWh
     HPCompAirDesignArray_kWh[HOUR] = HPCompAirDesign_kWh
     HPScDesignArray_Wh[HOUR] = HPScDesign_Wh
     E_aux_HP_for_temperature_boosting_Wh = float(
-        E_aux_SC_FP_Wh + E_aux_SC_ET_Wh + E_aux_PVT_Wh + E_aux_CAH_kWh + E_aux_Server_kWh)
+        E_aux_SC_FP_Wh + E_aux_SC_ET_Wh + E_aux_PVT_Wh + E_aux_CAH_kWh + E_aux_Server_kWh*1000)
     # Heat Recovery has some losses, these are taken into account as "overall Losses", i.e.: from Source to DH Pipe
     # GET VALUES
     Q_server_gen_W = Q_server_gen_kW * ETA_SERVER_TO_HEAT * 1000  # converting to W
     Q_compair_gen_W = Q_compair_gen_kW * ETA_EL_TO_HEAT * 1000
-    return E_aux_HP_for_temperature_boosting_Wh, Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_compair_gen_W, Q_server_gen_W
+    return E_aux_HP_for_temperature_boosting_Wh, Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_compair_gen_W, Q_server_gen_W, E_aux_Server_kWh *1000
 
 
 def read_solar_technologies_data(locator, master_to_slave_vars):

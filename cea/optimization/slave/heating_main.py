@@ -65,20 +65,28 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     building_names = master_to_slave_vars.building_names
 
     # Import data from storage optimization
-    Q_missing_W = np.array(storage_dispatch['Q_missing_W'])
+    Q_req_after_storage_W = np.array(storage_dispatch['Q_req_after_storage_W'])
+
     E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
-    Q_PVT_to_directload_W = storage_dispatch["Q_PVT_to_directload_W"]
-    Q_PVT_to_storage_W = storage_dispatch["Q_PVT_to_storage_W"]
-    Q_SC_ET_to_directload_W = storage_dispatch["Q_SC_ET_to_directload_W"]
-    Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_to_storage_W"]
-    Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_to_directload_W"]
-    Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_to_storage_W"]
-    Q_server_to_directload_W = storage_dispatch["Q_server_to_directload_W"]
-    Q_server_to_storage_W = storage_dispatch["Q_server_to_storage_W"]
+
+    Q_PVT_to_directload_W = storage_dispatch["Q_PVT_gen_directload_W"]
+    Q_PVT_to_storage_W = storage_dispatch["Q_PVT_gen_storage_W"]
+
+    Q_SC_ET_to_directload_W = storage_dispatch["Q_SC_ET_gen_directload_W"]
+    Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_gen_storage_W"]
+
+    Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_gen_directload_W"]
+    Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_gen_storage_W"]
+
+    Q_HPServer_to_directload_W = storage_dispatch["Q_HPServer_gen_directload_W"]
+    Q_HPServer_to_storage_W = storage_dispatch["Q_HPServer_gen_storage_W"]
+    Q_HPServer_gen_W = storage_dispatch["Q_HPServer_gen_W"]
+
     E_aux_solar_and_heat_recovery_W = storage_dispatch["E_aux_solar_and_heat_recovery_W"]
+
     E_used_Storage_charging_W = storage_dispatch["E_used_Storage_charging_W"]
     E_used_Storage_discharging_W = storage_dispatch["E_used_Storage_discharging_W"]
-    Q_missing_copy_W = Q_missing_W.copy()
+    E_HPServer_req_W = storage_dispatch["E_aux_Server_W"]
 
     # Import Temperatures from Network Summary:
     network_data = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
@@ -109,7 +117,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Opex_var_BaseBoiler_USDhr = np.zeros(HOURS_IN_YEAR)
     Opex_var_PeakBoiler_USDhr = np.zeros(HOURS_IN_YEAR)
 
-    source_HP_DataCenter = np.zeros(HOURS_IN_YEAR)
     source_HP_Sewage = np.zeros(HOURS_IN_YEAR)
     source_HP_Lake = np.zeros(HOURS_IN_YEAR)
     source_GHP = np.zeros(HOURS_IN_YEAR)
@@ -118,7 +125,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     source_BaseBoiler = np.zeros(HOURS_IN_YEAR)
     source_PeakBoiler = np.zeros(HOURS_IN_YEAR)
 
-    Q_HPServer_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_HPSew_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_HPLake_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_GHP_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -126,9 +132,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Q_Furnace_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_uncovered_W = np.zeros(HOURS_IN_YEAR)
+    Q_AddBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
 
-    E_HPServer_req_W = np.zeros(HOURS_IN_YEAR)
     E_HPSew_req_W = np.zeros(HOURS_IN_YEAR)
     E_HPLake_req_W = np.zeros(HOURS_IN_YEAR)
     E_GHP_req_W = np.zeros(HOURS_IN_YEAR)
@@ -137,7 +142,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     E_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    NG_used_HPServer_W = np.zeros(HOURS_IN_YEAR)
     NG_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
     NG_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
     NG_used_GHP_W = np.zeros(HOURS_IN_YEAR)
@@ -147,7 +151,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     NG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
     NG_used_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    BG_used_HPServer_W = np.zeros(HOURS_IN_YEAR)
     BG_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
     BG_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
     BG_used_GHP_W = np.zeros(HOURS_IN_YEAR)
@@ -156,7 +159,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     BG_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
     BG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    Wood_used_HPServer_W = np.zeros(HOURS_IN_YEAR)
     Wood_used_HPSew_W = np.zeros(HOURS_IN_YEAR)
     Wood_used_HPLake_W = np.zeros(HOURS_IN_YEAR)
     Wood_used_GHP_W = np.zeros(HOURS_IN_YEAR)
@@ -165,7 +167,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Wood_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
     Wood_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
 
-    Q_coldsource_HPServer_W = np.zeros(HOURS_IN_YEAR)
     Q_coldsource_HPSew_W = np.zeros(HOURS_IN_YEAR)
     Q_coldsource_HPLake_W = np.zeros(HOURS_IN_YEAR)
     Q_coldsource_GHP_W = np.zeros(HOURS_IN_YEAR)
@@ -180,7 +181,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(HOURS_IN_YEAR):
-        Q_therm_req_W = Q_missing_W[hour]
+        Q_therm_req_W = Q_req_after_storage_W[hour]
 
         opex_output, source_output, \
         Q_output, E_output, Gas_output, \
@@ -200,7 +201,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Opex_var_BaseBoiler_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USDhr']
         Opex_var_PeakBoiler_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USDhr']
 
-        source_HP_DataCenter[hour] = source_output['Source_HP_DataCenter']
         source_HP_Sewage[hour] = source_output['Source_HP_Sewage']
         source_HP_Lake[hour] = source_output['Source_HP_Lake']
         source_GHP[hour] = source_output['Source_GHP']
@@ -209,7 +209,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         source_BaseBoiler[hour] = source_output['Source_BaseBoiler']
         source_PeakBoiler[hour] = source_output['Source_PeakBoiler']
 
-        Q_HPServer_gen_W[hour] = Q_output['Q_HPServer_gen_W']
         Q_HPSew_gen_W[hour] = Q_output['Q_HPSew_gen_W']
         Q_HPLake_gen_W[hour] = Q_output['Q_HPLake_gen_W']
         Q_GHP_gen_W[hour] = Q_output['Q_GHP_gen_W']
@@ -217,9 +216,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_Furnace_gen_W[hour] = Q_output['Q_Furnace_gen_W']
         Q_BaseBoiler_gen_W[hour] = Q_output['Q_BaseBoiler_gen_W']
         Q_PeakBoiler_gen_W[hour] = Q_output['Q_PeakBoiler_gen_W']
-        Q_uncovered_W[hour] = Q_output['Q_uncovered_W']
+        Q_AddBoiler_gen_W[hour] = Q_output['Q_AddBoiler_gen_W']
 
-        E_HPServer_req_W[hour] = E_output['E_HPServer_req_W']
         E_HPSew_req_W[hour] = E_output['E_HPSew_req_W']
         E_HPLake_req_W[hour] = E_output['E_HPLake_req_W']
         E_GHP_req_W[hour] = E_output['E_GHP_req_W']
@@ -229,7 +227,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         E_PeakBoiler_req_W[hour] = E_output['E_PeakBoiler_req_W']
 
         if master_to_slave_vars.gt_fuel == "NG":
-            NG_used_HPServer_W[hour] = Gas_output['Gas_used_HPServer_W']
             NG_used_HPSew_W[hour] = Gas_output['Gas_used_HPSew_W']
             NG_used_HPLake_W[hour] = Gas_output['Gas_used_HPLake_W']
             NG_used_GHP_W[hour] = Gas_output['Gas_used_GHP_W']
@@ -239,7 +236,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
             NG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
         elif master_to_slave_vars.gt_fuel == "BG":
-            BG_used_HPServer_W[hour] = Gas_output['Gas_used_HPServer_W']
             BG_used_HPSew_W[hour] = Gas_output['Gas_used_HPSew_W']
             BG_used_HPLake_W[hour] = Gas_output['Gas_used_HPLake_W']
             BG_used_GHP_W[hour] = Gas_output['Gas_used_GHP_W']
@@ -248,7 +244,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
             BG_used_BaseBoiler_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
             BG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
-        Wood_used_HPServer_W[hour] = Wood_output['Wood_used_HPServer_W']
         Wood_used_HPSew_W[hour] = Wood_output['Wood_used_HPSew_W']
         Wood_used_HPLake_W[hour] = Wood_output['Wood_used_HPLake_W']
         Wood_used_GHP_W[hour] = Wood_output['Wood_used_GHP_W']
@@ -257,7 +252,6 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Wood_used_BaseBoiler_W[hour] = Wood_output['Wood_used_BaseBoiler_W']
         Wood_used_PeakBoiler_W[hour] = Wood_output['Wood_used_PeakBoiler_W']
 
-        Q_coldsource_HPServer_W[hour] = coldsource_output['Q_coldsource_HPServer_W']
         Q_coldsource_HPSew_W[hour] = coldsource_output['Q_coldsource_HPSew_W']
         Q_coldsource_HPLake_W[hour] = coldsource_output['Q_coldsource_HPLake_W']
         Q_coldsource_GHP_W[hour] = coldsource_output['Q_coldsource_GHP_W']
@@ -269,7 +263,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     # save data
     elapsed = time.time() - t
     # sum up the uncovered demand, get average and peak load
-    Q_uncovered_design_W = np.amax(Q_uncovered_W)
+    Q_uncovered_design_W = np.amax(Q_AddBoiler_gen_W)
     Opex_var_BackupBoiler_USDhr = np.zeros(HOURS_IN_YEAR)
     Q_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
     E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
@@ -287,7 +281,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     if Q_uncovered_design_W != 0:
         for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
-            BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
+            BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
                                                          master_to_slave_vars.EL_TYPE, prices, lca, hour)
             Opex_var_BackupBoiler_USDhr[hour], Opex_var_BackupBoiler_per_Wh_USD, Q_BackupBoiler_W[
@@ -348,8 +342,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                      locator)
 
     heating_dispatch = {
-        "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
-        "HPServer_Status": source_HP_DataCenter,
+        #Status of each technology 1 = on, 0 = off in every hour
         "HPSew_Status": source_HP_Sewage,
         "HPLake_Status": source_HP_Lake,
         "GHP_Status": source_GHP,
@@ -357,16 +350,25 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Furnace_Status": source_Furnace,
         "BoilerBase_Status": source_BaseBoiler,
         "BoilerPeak_Status": source_PeakBoiler,
-        "Q_HPServer_W": Q_HPServer_gen_W,
-        "Q_HPSew_W": Q_HPSew_gen_W,
-        "Q_HPLake_W": Q_HPLake_gen_W,
-        "Q_GHP_W": Q_GHP_gen_W,
-        "Q_CHP_W": Q_CHP_gen_W,
-        "Q_Furnace_W": Q_Furnace_gen_W,
-        "Q_BaseBoiler_W": Q_BaseBoiler_gen_W,
-        "Q_PeakBoiler_W": Q_PeakBoiler_gen_W,
-        "Q_AddBoiler_W": Q_uncovered_W,
-        "Q_coldsource_HPServer_W": Q_coldsource_HPServer_W,
+
+        "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
+        "Q_PVT_gen_storage_W": Q_PVT_to_storage_W,
+        "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
+        "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_W,
+        "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_W,
+        "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
+        "Q_HPServer_to_directload_W": Q_HPServer_to_directload_W,
+        "Q_HPServer_to_storage_W": Q_HPServer_to_storage_W,
+
+        "Q_HPSew_gen_directload_W": Q_HPSew_gen_W,
+        "Q_HPLake_gen_directload_W": Q_HPLake_gen_W,
+        "Q_GHP_gen_directload_W": Q_GHP_gen_W,
+        "Q_CHP_gen_directload_W": Q_CHP_gen_W,
+        "Q_Furnace_gen_directload_W": Q_Furnace_gen_W,
+        "Q_BaseBoiler_gen_directload_W": Q_BaseBoiler_gen_W,
+        "Q_PeakBoiler_gen_directload_W": Q_PeakBoiler_gen_W,
+        "Q_AddBoiler_gen_directload_W": Q_AddBoiler_gen_W,
+
         "Q_coldsource_HPLake_W": Q_coldsource_HPLake_W,
         "Q_coldsource_HPSew_W": Q_coldsource_HPSew_W,
         "Q_coldsource_GHP_W": Q_coldsource_GHP_W,
@@ -374,29 +376,26 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "Q_coldsource_Furnace_W": Q_coldsource_Furnace_W,
         "Q_coldsource_BaseBoiler_W": Q_coldsource_BaseBoiler_W,
         "Q_coldsource_PeakBoiler_W": Q_coldsource_PeakBoiler_W,
-        "Q_PVT_to_directload_W": Q_PVT_to_directload_W,
-        "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
-        "Q_SC_ET_to_directload_W": Q_SC_ET_to_directload_W,
-        "Q_SC_ET_to_storage_W": Q_SC_ET_to_storage_W,
-        "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
-        "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
-        "Q_server_to_directload_W": Q_server_to_directload_W,
-        "Q_server_to_storage_W": Q_server_to_storage_W,
+
         "Q_excess_W": Q_excess_W,
         "E_DH_req_W": E_DHN_W,
         "E_aux_solar_and_heat_recovery_W": E_aux_solar_and_heat_recovery_W,
         "E_used_Storage_charging_W": E_used_Storage_charging_W,
         "E_used_Storage_discharging_W": E_used_Storage_discharging_W,
-        "E_PVT_gen_W": E_PVT_gen_W,
+
+
         "E_HPServer_req_W": E_HPServer_req_W,
         "E_HPSew_req_W": E_HPSew_req_W,
         "E_HPLake_req_W": E_HPLake_req_W,
         "E_GHP_req_W": E_GHP_req_W,
         "E_CHP_gen_W": E_CHP_gen_W,
-        "E_Furnace_gen_W": E_Furnace_gen_W,
         "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
         "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
         "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
+
+        "E_PVT_gen_W": E_PVT_gen_W,
+        "E_Furnace_gen_W": E_Furnace_gen_W,
+
         "NG_used_HPServer_W": NG_used_HPServer_W,
         "NG_used_HPSew_W": NG_used_HPSew_W,
         "NG_used_HPLake_W": NG_used_HPLake_W,
@@ -440,7 +439,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 Q_Furnace_gen_W,
                                                                 Q_BaseBoiler_gen_W,
                                                                 Q_PeakBoiler_gen_W,
-                                                                Q_uncovered_W,
+                                                                Q_AddBoiler_gen_W,
                                                                 Q_coldsource_HPSew_W,
                                                                 Q_coldsource_HPLake_W,
                                                                 Q_coldsource_GHP_W,
@@ -469,7 +468,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                 Q_Furnace_gen_W,
                                                                 Q_BaseBoiler_gen_W,
                                                                 Q_PeakBoiler_gen_W,
-                                                                Q_uncovered_W,
+                                                                Q_AddBoiler_gen_W,
                                                                 Q_coldsource_HPSew_W,
                                                                 Q_coldsource_HPLake_W,
                                                                 Q_coldsource_GHP_W,

@@ -125,24 +125,6 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_gen_W
 
-    if master_to_slave_vars.WasteServersHeatRecovery == 1 and Q_heat_unmet_W > 0:
-        T_supply_server = 55 + 273 #55C according to demonstrator at ETH Zurich
-        source_HP_DataCenter = 1
-        if Q_heat_unmet_W >= master_to_slave_vars.HPServer_maxSize_W:
-            Q_therm_Data_W = master_to_slave_vars.HPServer_maxSize_W
-            mdot_DH_to_Server_kgpers = mdot_DH_req_kgpers * Q_therm_Data_W / Q_heat_unmet_W
-        else:
-            Q_therm_Data_W = float(Q_heat_unmet_W)
-            mdot_DH_to_Server_kgpers = float(mdot_DH_req_kgpers)
-
-        cost_Server_USD, C_HPServer_per_kWh_th_pure, \
-        Q_coldsource_HPServer_W, Q_HPServer_gen_W, \
-        E_HPServer_req_W = HPSew_op_cost(mdot_DH_to_Server_kgpers,
-                                      tdhsup_K, tdhret_req_K,
-                                      T_supply_server, lca, Q_therm_Data_W, hour)
-
-        Q_heat_unmet_W = Q_heat_unmet_W - Q_HPServer_gen_W
-
     if (master_to_slave_vars.HP_Sew_on) == 1 and Q_heat_unmet_W > 0:  # activate if its available
 
         source_HP_Sewage = 1
@@ -263,15 +245,14 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                      'Source_BaseBoiler': source_BaseBoiler,
                      'Source_PeakBoiler': source_PeakBoiler}
 
-    Q_output = {'Q_HPServer_gen_W': Q_HPServer_gen_W,
-                'Q_HPSew_gen_W': Q_HPSew_gen_W,
+    Q_output = {'Q_HPSew_gen_W': Q_HPSew_gen_W,
                 'Q_HPLake_gen_W': Q_HPLake_gen_W,
                 'Q_GHP_gen_W': Q_GHP_gen_W,
                 'Q_CHP_gen_W': Q_CHP_gen_W,
                 'Q_Furnace_gen_W': Q_Furnace_gen_W,
                 'Q_BaseBoiler_gen_W': Q_BaseBoiler_gen_W,
                 'Q_PeakBoiler_gen_W': Q_PeakBoiler_gen_W,
-                'Q_uncovered_W': Q_uncovered_W}
+                'Q_AddBoiler_W': Q_uncovered_W}
 
     E_output = {'E_HPServer_req_W': E_HPServer_req_W,
                 'E_HPSew_req_W': E_HPSew_req_W,

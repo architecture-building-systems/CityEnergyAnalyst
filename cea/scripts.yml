@@ -110,7 +110,7 @@ Data Management:
 Demand forecasting:
 
   - name: demand
-    label: Demand
+    label: Building Energy demand
     description: Calculate the Demand
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.demand_main
