@@ -85,31 +85,31 @@ class MapClass {
             .append('<div id="layers-group">');
     }
 
-    init({data = {}, urls = {}, extrude = {}} = {}) {
+    init({data = {}, urls = {}, extrude = false} = {}) {
         let _this = this;
         if (data.hasOwnProperty('zone') || this.data.hasOwnProperty('zone')) {
-            this.data.zone = data.zone || this.data.zone;
+            this.data.zone = data.zone;
+            $.each(data, function (layer) {
+                console.log(layer, data[layer]);
+                _this.addLayer(layer, data[layer]);
+            });
+
             this.calculateCamera();
 
             setupButtons(this);
 
-            this.deckgl.setProps({
-                viewState: {
-                    ...this.currentViewState,
-                    zoom: this.cameraOptions.zoom,
-                    latitude: this.cameraOptions.center.lat,
-                    longitude: this.cameraOptions.center.lng,
-                    transitionDuration: 300,
-                    onTransitionEnd: () => {
-                        extrude && $('#3d-button').trigger('click')
-                    }
+            this.currentViewState = {
+                ...this.currentViewState,
+                zoom: this.cameraOptions.zoom,
+                latitude: this.cameraOptions.center.lat,
+                longitude: this.cameraOptions.center.lng
+            };
+
+            this.setCamera({
+                transitionDuration: 300,
+                onTransitionEnd: () => {
+                    extrude && $('#3d-button').trigger('click')
                 }
-            });
-
-
-            $.each(data, function (layer) {
-                console.log(layer, data[layer]);
-                _this.addLayer(layer, data[layer]);
             });
 
             let _jsonURLs = jsonURLs;
@@ -183,7 +183,7 @@ class MapClass {
         let bbox = turf.bbox(turf.multiPoint(points));
         this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(
             [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-            {padding: 50, maxZoom: 18}
+            {padding: 30, maxZoom: 18}
         );
 
         return bbox

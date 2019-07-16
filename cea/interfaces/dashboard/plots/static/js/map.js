@@ -1,16 +1,24 @@
 $(document).ready(function () {
+    let zone;
+    let district;
     let map = new MapClass('map-div');
 
     let getZone = $.get('/inputs/geojson/zone', function (data) {
-        map.addLayer('zone', data);
+        zone = data;
     });
 
     let getDistrict = $.get('/inputs/geojson/district', function (data) {
-        map.addLayer('district', data);
+        district = data;
     });
 
     $.when(getZone, getDistrict).done(function () {
-        map.init({extrude: true});
+        map.init({
+            data:{
+                zone: zone,
+                district: district
+            },
+            extrude: true
+        });
     });
 });
 
