@@ -55,6 +55,9 @@ def main(config=None):
     config.save(cea.config.CEA_CONFIG)
 
     cea_script.print_script_configuration(config)
+    if list(cea_script.missing_input_files(config)):
+        cea_script.print_missing_input_files(config)
+        return
 
     script_module = importlib.import_module(cea_script.module)
     try:

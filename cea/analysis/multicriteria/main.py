@@ -4,13 +4,9 @@ Multi criteria decision analysis
 from __future__ import division
 from __future__ import print_function
 
-import json
-
 import pandas as pd
 
 import cea.config
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
-import os
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -26,7 +22,6 @@ __status__ = "Production"
 def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generation
-
 
     compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance(generation))
 
@@ -101,6 +96,7 @@ def normalize_compiled_data(compiled_data_df):
     compiled_data_df = compiled_data_df.assign(normalized_Capex_total=normalized_Capex_total)
     compiled_data_df = compiled_data_df.assign(normalized_Opex=normalized_Opex)
     return compiled_data_df
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
