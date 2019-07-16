@@ -1,13 +1,12 @@
 from __future__ import division
 from __future__ import print_function
 
-import pandas as pd
 import os
+
+import pandas as pd
+
 import cea.config
 import cea.plots.cache
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
-    locating_individuals_in_generation_script
-
 
 """
 Implements py:class:`cea.plots.OptimizationOverviewPlotBase` as a base class for all plots in the category "optimization-overview" and also
@@ -63,13 +62,13 @@ class GenerationPlotBase(cea.plots.PlotBase):
         return data_processed
 
 
-
 if __name__ == '__main__':
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
     from cea.plots.cache import NullPlotCache, PlotCache
     import time
+
 
     def plot_category(cache):
         for category in list_categories():

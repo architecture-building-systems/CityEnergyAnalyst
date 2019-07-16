@@ -4,9 +4,9 @@ Show a Pareto curve plot for individuals in a given generation.
 from __future__ import division
 from __future__ import print_function
 
-import plotly.graph_objs as go
 import pandas as pd
-import numpy as np
+import plotly.graph_objs as go
+
 import cea.plots.optimization
 from cea.plots.variable_naming import NAMING
 
@@ -64,7 +64,6 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                          yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
                                     range=ranges_some_room_for_graph[1]))
 
-
     def calc_graph(self):
         data = self.process_generation_total_performance()
         xs = data[self.objectives[0]].values
@@ -79,9 +78,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                        colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
 
-        #This includes the points of the multicriteria assessment in here
+        # This includes the points of the multicriteria assessment in here
         if self.multi_criteria:
-            #Insert scatter points of MCDA assessment.
+            # Insert scatter points of MCDA assessment.
             final_dataframe = calc_final_dataframe(data)
             xs = final_dataframe[self.objectives[0]].values
             ys = final_dataframe[self.objectives[1]].values
@@ -116,7 +115,8 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
 def calc_final_dataframe(individual_data):
     least_annualized_cost = individual_data.loc[
-        individual_data["TAC_rank"] < 2]  # less than two because in the case there are two individuals MCDA calculates 1.5
+        individual_data[
+            "TAC_rank"] < 2]  # less than two because in the case there are two individuals MCDA calculates 1.5
     least_emissions = individual_data.loc[individual_data["GHG_rank"] < 2]
     least_primaryenergy = individual_data.loc[individual_data["PEN_rank"] < 2]
     user_defined_mcda = individual_data.loc[individual_data["user_MCDA_rank"] < 2]
@@ -124,22 +124,22 @@ def calc_final_dataframe(individual_data):
     if least_annualized_cost.shape[0] > 1:
         individual = str(least_annualized_cost["individual_name"].values)
         least_annualized_cost = least_annualized_cost.reset_index(drop=True)
-        least_annualized_cost = least_annualized_cost[0]
+        least_annualized_cost = least_annualized_cost[:1]
         least_annualized_cost["System option"] = individual
     if least_emissions.shape[0] > 1:
         individual = str(least_emissions["individual_name"].values)
         least_emissions = least_emissions.reset_index(drop=True)
-        least_emissions = least_emissions.loc[0]
+        least_emissions = least_emissions.iloc[0].T
         least_emissions["System option"] = individual
     if least_primaryenergy.shape[0] > 1:
         individual = str(least_primaryenergy["individual_name"].values)
         least_primaryenergy = least_primaryenergy.reset_index(drop=True)
-        least_primaryenergy = least_primaryenergy.loc[0]
+        least_primaryenergy = least_primaryenergy.iloc[0].T
         least_primaryenergy["System option"] = individual
     if user_defined_mcda.shape[0] > 1:
         individual = str(user_defined_mcda["individual_name"].values)
         user_defined_mcda = user_defined_mcda.reset_index(drop=True)
-        user_defined_mcda = user_defined_mcda.loc[0]
+        user_defined_mcda = user_defined_mcda.iloc[0].T
         user_defined_mcda["System option"] = individual
     # Now extend all dataframes
     final_dataframe = least_annualized_cost.append(least_emissions).append(least_primaryenergy).append(
