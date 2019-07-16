@@ -38,6 +38,10 @@ class InputLocator(object):
             os.makedirs(folder)
         return folder
 
+    def ensure_parent_folder_exists(self, file_path):
+        """Use os.makedirs to ensure the folders exist"""
+        self._ensure_folder(os.path.dirname(file_path))
+
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
@@ -550,14 +554,14 @@ class InputLocator(object):
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-geometry')
+        return os.path.join(self.scenario, 'inputs', 'building-geometry')
 
     def get_building_properties_folder(self):
         """scenario/inputs/building-properties/"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-properties')
+        return os.path.join(self.scenario, 'inputs', 'building-properties')
 
     def get_terrain_folder(self):
-        return self._ensure_folder(self.scenario, 'inputs', 'topography')
+        return os.path.join(self.scenario, 'inputs', 'topography')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
