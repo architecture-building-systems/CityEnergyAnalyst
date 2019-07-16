@@ -649,6 +649,13 @@ class PlantNodeParameter(ChoiceParameter):
         network_name = self.config.get(self.network_name_fqn)
         return locator.get_plant_nodes(network_type, network_name)
 
+    def encode(self, value):
+        """Allow encoding None, because not all scenarios have a thermal network"""
+        if value is None:
+            return ""
+        else:
+            return super(PlantNodeParameter, self).encode(value)
+
     def decode(self, value):
         if str(value) in self._choices:
             return str(value)
