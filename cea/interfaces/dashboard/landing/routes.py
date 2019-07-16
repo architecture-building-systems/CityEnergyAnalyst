@@ -185,6 +185,7 @@ def route_create_scenario_save():
                     site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
                                                   geometry=[shape(data['geometry'])])
                     site_path = locator.get_site_polygon()
+                    locator.ensure_parent_folder_exists(site_path)
                     site.to_file(site_path)
                     print('site.shp file created at %s' % site_path)
                     cea.api.zone_helper(cea_config)
