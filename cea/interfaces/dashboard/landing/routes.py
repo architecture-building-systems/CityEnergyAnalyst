@@ -142,11 +142,19 @@ def route_create_scenario_save():
         age = request.form.get('age')
         occupancy = request.form.get('occupancy')
 
+        # since we're creating a new scenario, go ahead and and make sure we have
+        # the folders _before_ we try copying to them
+        locator.ensure_parent_folder_exists(locator.get_zone_geometry())
+        locator.ensure_parent_folder_exists(locator.get_terrain())
+        locator.ensure_parent_folder_exists(locator.get_building_age())
+        locator.ensure_parent_folder_exists(locator.get_building_occupancy())
+        locator.ensure_parent_folder_exists(locator.get_street_network())
+
         if zone:
-            for filename in glob.glob(zone.split('.')[:-1][0]+'.*'):
+            for filename in glob_shapefile_auxilaries(zone):
                 shutil.copy(filename, locator.get_building_geometry_folder())
         if district:
-            for filename in glob.glob(district.split('.')[:-1][0]+'.*'):
+            for filename in glob_shapefile_auxilaries(district):
                 shutil.copy(filename, locator.get_building_geometry_folder())
         if terrain:
             shutil.copyfile(terrain, locator.get_terrain())
@@ -171,8 +179,8 @@ def route_create_scenario_save():
                 calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
-        scenario = os.path.join(cea_config.project, request.form.get('scenario'))
-        shutil.copytree(cea.inputlocator.InputLocator(scenario).get_input_folder(),
+        source_scenario = os.path.join(cea_config.project, request.form.get('scenario'))
+        shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                         locator.get_input_folder())
 
     elif request.form.get('input-files') == 'generate':
@@ -197,6 +205,12 @@ def route_create_scenario_save():
                     cea.api.terrain_helper(cea_config)
 
     return redirect(url_for('inputs_blueprint.route_get_building_properties'))
+
+
+def glob_shapefile_auxilaries(shapefile_path):
+    """Returns a list of files in the same folder as ``shapefile_path``, but allows for varying extensions.
+    This gets the .dbf, .shx, .prj, .shp and .cpg files"""
+    return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
 @blueprint.route('/open-project')
