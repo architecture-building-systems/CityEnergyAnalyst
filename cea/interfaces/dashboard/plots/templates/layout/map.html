@@ -5,31 +5,15 @@
 {% block stylesheets %}
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
-  <style>
-    @media (min-width: 1200px) {
-      #map-container {
-        min-width: 1000px;
-      }
-    }
-    .plot-widget {
-      min-width: 500px;
-    }
-    .cea-plot {
-      height: 500px;
-    }
-
-    #map-container {
-      height: 500px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('plots_blueprint.static', filename='css/map_layout.css') }}">
 {% endblock stylesheets %}
 
 {% block layout %}
-  <div class="row">
-    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12" id="map-container">
+  <div class="row display-flex">
+    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12 plot-widget" id="map-container">
       <div class="x_panel">
         <div class="x_content">
-          <div id="map-div" style="height: 450px;"></div>
+          <div id="map-div"></div>
         </div>
       </div>
     </div>
