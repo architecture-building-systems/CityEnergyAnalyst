@@ -33,6 +33,7 @@
                 <tr>
                   <th>Dashboard</th>
                   <th>Description</th>
+                  <th>Layout</th>
                   <th>Actions</th>
                 </tr>
                 </thead>
@@ -46,6 +47,9 @@
                       {% else %}
                         {{ dashboard.description }}
                       {% endif %}
+                    </td>
+                    <td>
+                      {{ dashboard.layout }}
                     </td>
                     <td>
                       <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=loop.index0) }}">Open</a>
