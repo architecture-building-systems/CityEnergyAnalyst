@@ -38,10 +38,13 @@ class ParetoCapacityInstalledPlot(cea.plots.optimization.GenerationPlotBase):
                                                    'Storage_thermal_kW']
         self.analysis_fields = (self.analysis_fields_individual_heating if self.network_type == 'DH'
                                 else self.analysis_fields_individual_cooling)
-        self.layout = go.Layout(title=self.title, barmode='stack',
-                                yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
-                                xaxis=dict(title='Point in the Pareto Curve'))
         self.input_files = [(self.locator.get_optimization_all_individuals, [])]
+
+    @property
+    def layout(self):
+        return go.Layout(title=self.title, barmode='stack',
+                         yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
+                         xaxis=dict(title='Point in the Pareto Curve'))
 
     @property
     def title(self):
