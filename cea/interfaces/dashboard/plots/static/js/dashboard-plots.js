@@ -67,13 +67,13 @@ function load_all_plots() {
             console.log(data);
         });
 
-        $.get("../table/" + dashboard_index + "/" + plot_index, function(data){
-                $(x_table_id).children().replaceWith(data);
-        }).fail(function(data) {
-            $(x_table_id).children().replaceWith("");
-            console.log("error creating plot:");
-            console.log(data);
-        });
+        // $.get("../table/" + dashboard_index + "/" + plot_index, function(data){
+        //         $(x_table_id).children().replaceWith(data);
+        // }).fail(function(data) {
+        //     $(x_table_id).children().replaceWith("");
+        //     console.log("error creating plot:");
+        //     console.log(data);
+        // });
     });
 }
 
@@ -88,6 +88,19 @@ function duplicate_dashboard(dashboard_index) {
     $.post('./duplicate/'+dashboard_index, function (response) {
         console.log(response);
     });
+}
+
+function open_table(element) {
+    let style = document.styleSheets[0].ownerNode.cloneNode();
+    let height = 500;
+    let width = 900;
+    let table = window.open("../table/" + element.dataset.dashboardIndex + "/" + element.dataset.plotIndex,
+        'popUpWindow', 'height='+height+',width='+width+',location=no,menubar=no,status=no,titlebar=no,resizable');
+    table.onload = function() {
+        table.document.title = 'City Energy Analyst | ' + element.dataset.plotTitle + ' Table';
+        table.document.body.innerHTML = '<h1>'+element.dataset.plotTitle+'</h1><br>' + table.document.body.innerHTML;
+        table.document.head.append(style);
+    }
 }
 
 window.addEventListener('resize', function () {
