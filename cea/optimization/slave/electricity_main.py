@@ -481,6 +481,7 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
 
     # TOTAL EXPORTS:
     electricity_dispatch = {
+        'E_electricalnetwork_sys_req_W':E_sys_req_W,
         'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
         'E_CHP_gen_export_W': E_CHP_gen_export_W,
         'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
@@ -531,7 +532,7 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
 
     if master_to_slave_vars.DHN_exists:
         # by storage system
-        E_Storage_req_W = heating_activation_data['E_Storage_req_charging_W'] + heating_activation_data['E_used_Storage_discharging_W']
+        E_Storage_req_W = heating_activation_data['E_Storage_req_charging_W'] + heating_activation_data['E_Storage_req_discharging_W']
         # by auxiliary and heat recovery
         E_aux_solar_and_heat_recovery_W = heating_activation_data['E_HP_SC_FP_req_W'] + heating_activation_data['E_HP_SC_ET_req_W'] + \
                                           heating_activation_data['E_HP_Server_req_W'] + heating_activation_data['E_HP_PVT_req_W']
@@ -555,12 +556,12 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
 
 def extract_requirements_networks(master_to_slave_vars, cooling_activation_data, heating_activation_data):
     if master_to_slave_vars.DHN_exists:
-        E_DH_req_W = heating_activation_data['E_DH_req_W']
+        E_DH_req_W = heating_activation_data['E_Pump_DHN_req_W']
     else:
         E_DH_req_W = np.zeros(HOURS_IN_YEAR)
 
     if master_to_slave_vars.DCN_exists:
-        E_DC_req_W = cooling_activation_data['E_DC_req_W']
+        E_DC_req_W = cooling_activation_data['E_Pump_DHN_req_W']
     else:
         E_DC_req_W = np.zeros(HOURS_IN_YEAR)
 
@@ -571,8 +572,8 @@ def extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
 
 def extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data, heating_activation_data):
     if master_to_slave_vars.DHN_exists:
-        E_HPSew_req_W = heating_activation_data["E_HPSew_req_W"]
-        E_HPLake_req_W = heating_activation_data["E_HPLake_req_W"]
+        E_HPSew_req_W = heating_activation_data["E_HP_Sew_req_W"]
+        E_HPLake_req_W = heating_activation_data["E_HP_Lake_req_W"]
         E_GHP_req_W = heating_activation_data["E_GHP_req_W"]
         E_BaseBoiler_req_W = heating_activation_data["E_BaseBoiler_req_W"]
         E_PeakBoiler_req_W = heating_activation_data["E_PeakBoiler_req_W"]

@@ -505,8 +505,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
 
     # PLOT ACTIVATION COURVE
     cooling_dispatch = {
-        "Q_total_cooling_W": Q_cooling_req_W,
-        "E_DC_req_W": E_DCN_W,
+        "Q_districtcooling_sys_req_W": Q_cooling_req_W,
+        "E_Pump_DCN_req_W": E_DCN_W,
         "E_used_Lake_W": E_used_Lake_W,
         "E_used_VCC_W": E_used_VCC_W,
         "E_used_VCC_backup_W": E_used_VCC_backup_W,

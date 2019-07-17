@@ -78,7 +78,6 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
 
 
 def calc_generation_costs_heating(locator,
-                                  network_features,
                                   master_to_slave_vars,
                                   Q_uncovered_design_W,
                                   config,
@@ -99,7 +98,7 @@ def calc_generation_costs_heating(locator,
     :param Q_uncovered_design_W: hourly max of the heating uncovered demand
     :param Q_uncovered_annual_W: total heating uncovered
     :param solar_features: solar features
-    :param network_features: network features
+    :param thermal_network: network features
     :param gv: global variables
     :type indCombi: string
     :type buildList: list
@@ -108,12 +107,16 @@ def calc_generation_costs_heating(locator,
     :type Q_uncovered_design_W: float
     :type Q_uncovered_annual_W: float
     :type solar_features: class
-    :type network_features: class
+    :type thermal_network: class
     :type gv: class
 
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
+
+    thermal_network = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
+
+
     # START VVALUES
     Capex_a_HEX_SC_ET_USD = 0.0
     Capex_a_HEX_SC_FP_USD = 0.0
@@ -252,12 +255,12 @@ def calc_generation_costs_heating(locator,
 
     # HEATPUMP LAKE
     if master_to_slave_vars.HP_Lake_on == 1:
-        HP_Size_W = heating_dispatch['Q_HPLake_gen_directload_W'].max()
+        HP_Size_W = heating_dispatch['Q_HP_Lake_gen_directload_W'].max()
         Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
 
     # HEATPUMP_SEWAGE
     if master_to_slave_vars.HP_Sew_on == 1:
-        HP_Size_W = heating_dispatch['Q_HPSew_gen_directload_W'].max()
+        HP_Size_W = heating_dispatch['Q_HP_Sew_gen_directload_W'].max()
         Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
                                                                                       'HP2')
 
@@ -289,7 +292,7 @@ def calc_generation_costs_heating(locator,
 
     # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        Q_HEX_max_Wh = network_features["Qcdata_netw_total_kWh"].max() *1000 #convert to Wh
+        Q_HEX_max_Wh = thermal_network["Qcdata_netw_total_kWh"].max() * 1000 #convert to Wh
         Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
             Q_HEX_max_Wh, locator, config, 'HEX1')
 

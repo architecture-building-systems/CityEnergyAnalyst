@@ -48,7 +48,6 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
     source_HP_DataCenter = 0
 
     #double variables
-    Q_excess_W = 0.0
     Q_uncovered_W = 0.0
     cost_HPSew_USD, cost_HPLake_USD, cost_GHP_USD, cost_CHP_USD, cost_Furnace_USD, cost_BaseBoiler_USD, cost_PeakBoiler_USD = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
@@ -284,4 +283,4 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                          'Q_coldsource_BaseBoiler_W': Q_coldsource_BaseBoiler_W,
                          'Q_coldsource_PeakBoiler_W': Q_coldsource_PeakBoiler_W}
 
-    return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W
+    return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output
