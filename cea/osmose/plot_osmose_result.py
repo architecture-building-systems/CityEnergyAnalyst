@@ -22,22 +22,15 @@ def main(building, TECHS, building_result_path):
         osmose_result_file = path_to_osmose_results(building_result_path, tech)
         if os.path.isfile(osmose_result_file):
             ## read results (outputs)
-            results = pd.read_csv(osmose_result_file, header=None).T.reset_index()
-            results = results.rename(columns=results.iloc[0])[1:]
-            results = results.fillna(0)
+            results = read_osmose_csv(osmose_result_file)
             el_use_sum[tech] = results['SU_elec'].sum()
 
             # check balance
             print 'checking balance for: ', tech
             check_balance(results, building, building_result_path, tech)
 
-            if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
-                chiller_count = 1  # do nothing
-            elif tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
-                chiller_count = analyse_chilled_water_usage(results, tech)
-                chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller'))
-                chiller_Qc = analyse_Qc_from_chilled_water(results, tech)
-                chiller_Qc.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller_Qc'))
+            # calculate oau chiller operation
+            output_chiller_count_and_Qc(building, building_result_path, results, tech)
 
             ## plot air flows
             air_flow_df = set_up_air_flow_df(results)
@@ -80,38 +73,20 @@ def main(building, TECHS, building_result_path):
             plot_electricity_usage(building, building_result_path, results, tech)
             electricity_df = set_up_electricity_df(tech, results)
             output_el_usage_by_units(tech, electricity_df, results, building, building_result_path)
-            # output_df
             if 'electricity_usages' in PLOTS:
-                plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
-                if results.shape[0] > 24:
-                    result_WED = results.iloc[72:96]
-                    electricity_df_WED = electricity_df.iloc[72:96]
-                    plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
-                    electricity_df_SAT = electricity_df.iloc[144:168]
-                    result_SAT = results.iloc[144:168]
-                    plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
+                plot_electricity_usages_by_units(building, building_result_path, electricity_df, results, tech)
 
             # plot exergy loads
             osmose_composite_file = path_to_osmose_composite(building_result_path, tech)
             if os.path.isfile(osmose_composite_file):
-                composite_df = pd.read_csv(osmose_composite_file, header=None).T.reset_index()
-                composite_df = composite_df.rename(columns=composite_df.iloc[0])[1:]
-                composite_df = composite_df.fillna(0)
+                composite_df = read_osmose_csv(osmose_composite_file)
             else:
                 composite_df = pd.DataFrame()
             results = get_hourly_chilled_water_temperatures(tech, results, composite_df)
             results = get_reheating_energy(tech, results)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             if 'exergy_usages' in PLOTS:
-                plot_exergy_loads(building, building_result_path, ex_df, results, tech)
-                plot_exergy_usages(building, building_result_path, ex_df, results, tech, '')
-                if results.shape[0] > 24:
-                    result_WED = results.iloc[72:96]
-                    ex_df_WED = ex_df.iloc[72:96]
-                    plot_exergy_usages(building, building_result_path, ex_df_WED, result_WED, tech, 'WED')
-                    ex_df_SAT = ex_df.iloc[144:168]
-                    result_SAT = results.iloc[144:168]
-                    plot_exergy_usages(building, building_result_path, ex_df_SAT, result_SAT, tech, 'SAT')
+                plot_exergy_usages_by_units(building, building_result_path, ex_df, results, tech)
 
             ## write output_df
             calc_el_stats(building, building_result_path, electricity_df, operation_df, ex_df, results, tech)
@@ -121,6 +96,46 @@ def main(building, TECHS, building_result_path):
 
     print el_use_sum
     return
+
+
+def output_chiller_count_and_Qc(building, building_result_path, results, tech):
+    if building_result_path.split('\\')[len(building_result_path.split('\\')) - 1] == 'status_quo':
+        chiller_count = 1  # do nothing
+    elif tech in ['HCS_coil', 'HCS_3for2', 'HCS_ER0', 'HCS_IEHX']:
+        chiller_count = analyse_chilled_water_usage(results, tech)
+        chiller_count.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller'))
+        chiller_Qc = analyse_Qc_from_chilled_water(results, tech)
+        chiller_Qc.to_csv(path_to_chiller_csv(building, building_result_path, tech, 'chiller_Qc'))
+
+
+def plot_exergy_usages_by_units(building, building_result_path, ex_df, results, tech):
+    plot_exergy_loads(building, building_result_path, ex_df, results, tech)
+    plot_exergy_usages(building, building_result_path, ex_df, results, tech, '')
+    if results.shape[0] > 24:
+        result_WED = results.iloc[72:96]
+        ex_df_WED = ex_df.iloc[72:96]
+        plot_exergy_usages(building, building_result_path, ex_df_WED, result_WED, tech, 'WED')
+        ex_df_SAT = ex_df.iloc[144:168]
+        result_SAT = results.iloc[144:168]
+        plot_exergy_usages(building, building_result_path, ex_df_SAT, result_SAT, tech, 'SAT')
+
+
+def plot_electricity_usages_by_units(building, building_result_path, electricity_df, results, tech):
+    plot_electricity_usages(building, building_result_path, electricity_df, results, tech, '')
+    if results.shape[0] > 24:
+        result_WED = results.iloc[72:96]
+        electricity_df_WED = electricity_df.iloc[72:96]
+        plot_electricity_usages(building, building_result_path, electricity_df_WED, result_WED, tech, 'WED')
+        electricity_df_SAT = electricity_df.iloc[144:168]
+        result_SAT = results.iloc[144:168]
+        plot_electricity_usages(building, building_result_path, electricity_df_SAT, result_SAT, tech, 'SAT')
+
+
+def read_osmose_csv(osmose_result_file):
+    results = pd.read_csv(osmose_result_file, header=None).T.reset_index()
+    results = results.rename(columns=results.iloc[0])[1:]
+    results = results.fillna(0)
+    return results
 
 
 def check_balance(results, building, building_result_path, tech):
@@ -638,7 +653,7 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['eff_exergy'] = output_df['Ex_min'] / output_df['el_total']
     output_df['eff_process_exergy'] = output_df['Ex_process'] / output_df['el_total']
     output_df['eff_utility_exergy'] = output_df['Ex_utility'] / output_df['el_total']
-    output_df['eff_process_utility'] = output_df['Ex_process']/ output_df['Ex_utility']
+    output_df['eff_process_utility'] = output_df['Ex_process'] / output_df['Ex_utility']
 
     # calculate the percentage used by each component
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
@@ -652,8 +667,6 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
         output_df['oau'] = output_df['el_chi_oau'] / output_df['el_total'] * 100
         output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
     output_df['ct'] = output_df['el_ct'] / output_df['el_total'] * 100
-
-
 
     ## export results
     output_df.to_csv(path_to_elec_csv(building, building_result_path, tech))
@@ -966,7 +979,7 @@ def plot_water_balance(building, building_result_path, humidity_df, results, tec
 
 
 def plot_air_flow(air_flow_df, results, tech, building, building_result_path):
-    specific_air_flow_df = (air_flow_df*1000)/results['Af_m2'].max()
+    specific_air_flow_df = (air_flow_df * 1000) / results['Af_m2'].max()
     # extract parameters
     time_steps = results.shape[0]
     x_ticks = results.index.values
@@ -1122,7 +1135,9 @@ def get_hourly_chilled_water_temperatures(tech, results, composite_df):
     T_high_C = 14.1
     T_interval = 0.65  # 0.5
     T_OAU_offcoil = np.arange(T_low_C, T_high_C, T_interval)
-    hourly_chilled_water_temperature, hourly_evap_temperature, hourly_water_cond = [], [], []
+    hourly_chilled_water_temperature, hourly_evap_temperature, hourly_water_coil_cond = [], [], []
+    hourly_water_removed = {}
+    hourly_T_EA, hourly_w_EA, hourly_m_w_add = [], [], []
     for i in range(results.shape[0]):
         t = i + 1
         chiller_timestep = hourly_chiller_usage.loc[i + 1]
@@ -1130,33 +1145,63 @@ def get_hourly_chilled_water_temperatures(tech, results, composite_df):
             chiller_used = str(chiller_timestep[chiller_timestep > 0].index).split('chi')[1].split('_')[0]
             chiller_number = int(chiller_used) - 1
             hourly_chilled_water_temperature.append(T_OAU_offcoil[chiller_number])
-            hourly_evap_temperature.append(T_OAU_offcoil[chiller_number]-2.0)
+            hourly_evap_temperature.append(T_OAU_offcoil[chiller_number] - 2.0)
             if tech == 'HCS_ER0':
                 m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_h_', 'w_OA1_c_', chiller_used, i, results)
+                if t == 1:
+                    # save the amount of water removed in the recovery
+                    # hourly_water_removed['m_w_OA_OA1'] = np.zeros(results.shape[0])
+                    # hourly_water_removed['T_OA1'] = np.zeros(results.shape[0])
+                    results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
+                    results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
+                results['m_w_removed_1'][t] = results['m_oau_in_' + chiller_used][t] * (composite_df['w_OA'][t] - composite_df['w_OA1'][t])
+                results['T_w_removed_1'][t] = results['T_OA1_' + chiller_used][t]
+                hourly_T_EA.append(results['T_EA_' + chiller_used][t])
+                hourly_w_EA.append(results['w_EA_' + chiller_used][t])
+                hourly_m_w_add.append((results['w_RA1_' + chiller_used][t] - 10.29 / 1000)*results['m_oau_out'][t])
             elif tech == 'HCS_coil':
                 m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_', 'w_OA2_', chiller_used, i, results) / 1000
             elif tech == 'HCS_3for2':
                 m_w_cond_kgpers = calc_m_w_cond_composite('w_OA1_', 'w_OA2_', chiller_used, i, results, composite_df)
+                if t == 1:
+                    hourly_water_removed['m_w_OA_OA1'], hourly_water_removed['T_OA1'] = np.zeros(
+                        results.shape[0]), np.zeros(results.shape[0])
+                    hourly_water_removed['m_w_OA2_OA3'], hourly_water_removed['T_OA3'] = np.zeros(
+                        results.shape[0]), np.zeros(results.shape[0])
+                hourly_water_removed['m_w_OA_OA1'][i] = results['m_oau_in_' + chiller_used][t] * (
+                            composite_df['w_OA'][t] - composite_df['w_OA1_' + chiller_used][t])
+                hourly_water_removed['T_OA1'][i] = composite_df['T_OA1_' + chiller_used][t]
+                hourly_water_removed['m_w_OA2_OA3'][i] = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i,
+                                                                                 results, composite_df)
+                hourly_water_removed['T_OA3'][i] = composite_df['T_OA3_' + chiller_used][t]
+                hourly_T_EA.append(results['OAU_T_EA_' + chiller_used][t])
+
             elif tech == 'HCS_IEHX':
                 m_w_cond_kgpers = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i, results, composite_df)
             else:
                 m_w_cond_kgpers = 0
-            hourly_water_cond.append(m_w_cond_kgpers)
+            hourly_water_coil_cond.append(m_w_cond_kgpers)
 
         else:
             if tech == 'HCS_LD':
                 m_w_cond_kgpers = results['m_oau_in'][t] * (results['w_OA1'][t] / 1000 - results['w_SA'][t])
                 hourly_chilled_water_temperature.append(results['OAU_T_SA'][t])  # TODO: change to desiccant temperature
-                hourly_water_cond.append(m_w_cond_kgpers)
+                hourly_water_coil_cond.append(m_w_cond_kgpers)
                 hourly_evap_temperature.append(results['T_s_i_de'][t])
             else:
                 hourly_chilled_water_temperature.append(np.nan)
-                hourly_water_cond.append(np.nan)
+                hourly_water_coil_cond.append(np.nan)
                 hourly_evap_temperature.append(np.nan)
+                hourly_T_EA.append(np.nan)
+                hourly_w_EA.append(np.nan)
+                hourly_m_w_add.append(np.nan)
 
     results['T_chw'] = hourly_chilled_water_temperature
     results['T_evap'] = hourly_evap_temperature
-    results['m_w_coil_cond'] = hourly_water_cond
+    results['m_w_coil_cond'] = hourly_water_coil_cond
+    results['OAU_T_EA'] = hourly_T_EA
+    results['OAU_w_EA'] = hourly_w_EA
+    results['m_w_add'] = hourly_m_w_add
     return results
 
 
@@ -1166,6 +1211,7 @@ def get_reheating_energy(tech, results):
     else:
         results['q_reheat'] = np.zeros(results.shape[0])
     return results
+
 
 def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     Af_m2 = results['Af_m2'].mean()
@@ -1211,13 +1257,15 @@ def plot_exergy_loads(building, building_result_path, exergy_df, results, tech):
     fig.savefig(path_to_save_fig(building, building_result_path, tech, 'exergy'))
     return np.nan
 
+
 def format_func(value, tick_number):
-    return value%24
+    return value % 24
+
 
 def plot_exergy_usages(building, building_result_path, exergy_df, results, tech, day):
     timesteps = results.shape[0]
-    results.set_index(np.arange(1,timesteps+1,1),inplace=True)
-    exergy_df.set_index(np.arange(1,timesteps+1,1),inplace=True)
+    results.set_index(np.arange(1, timesteps + 1, 1), inplace=True)
+    exergy_df.set_index(np.arange(1, timesteps + 1, 1), inplace=True)
     t_0 = results.index.min()
     t_end = results.index.max()
     # reset index
@@ -1242,8 +1290,9 @@ def plot_exergy_usages(building, building_result_path, exergy_df, results, tech,
     total_el_float = pd.to_numeric(results['SU_elec'] * 1000 / Af_m2)
     ax.bar(x_ticks, total_el_float, bar_width, alpha=opacity, color=COLOR_TABLE['el_Wh_total_per_Af'],
            label=KEY_TABLE['el_Wh_total_per_Af'])
-    for column in ['Ex_utility_total','Ex_process_total']:
-        ax.bar(x_ticks, exergy_per_area_df[column], bar_width, alpha=opacity, color=COLOR_TABLE[column], label=KEY_TABLE[column])
+    for column in ['Ex_utility_total', 'Ex_process_total']:
+        ax.bar(x_ticks, exergy_per_area_df[column], bar_width, alpha=opacity, color=COLOR_TABLE[column],
+               label=KEY_TABLE[column])
 
     ax.set(xlabel='Time [hr]', ylabel='Energy [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 20))
     ax.xaxis.label.set_size(14)
@@ -1260,6 +1309,7 @@ def plot_exergy_usages(building, building_result_path, exergy_df, results, tech,
     filename = 'exergy_usages_' + day
     fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
     return np.nan
+
 
 def plot_supply_temperature_humidity(building, building_result_path, operation_df, tech):
     # extract parameters
@@ -1362,7 +1412,7 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B005","B006"]
+    buildings = ["B005"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     tech = ["HCS_ER0"]
     # tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
@@ -1375,7 +1425,7 @@ if __name__ == '__main__':
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
     # cases = ["WTP_CBD_m_WP1_HOT"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0704"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
