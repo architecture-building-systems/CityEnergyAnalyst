@@ -60,11 +60,19 @@ function load_all_plots() {
         let x_table_id = "#x_table-" + dashboard_index + "-" + plot_index;
 
         $.get("../div/" + dashboard_index + "/" + plot_index, function(data){
-                $(x_content_id).children().replaceWith(data);
+            $(x_content_id).children().replaceWith(data);
+            $('#table-btn-'+plot_index).show();
         }).fail(function(data) {
-            $(x_content_id).children().replaceWith("ERROR: " + $(data.responseText).filter("p").text());
-            console.log("error creating plot: "+x_content_id);
-            console.log(data);
+            // Server error
+            if (data.status === 500) {
+                $(x_content_id).children().replaceWith("ERROR: " + $(data.responseText).filter("p").text());
+                console.log("error creating plot: "+x_content_id);
+                console.log(data);
+            }
+            // Missing files
+            if (data.status === 404) {
+                $(x_content_id).children().replaceWith(data.responseText);
+            }
         });
 
         // $.get("../table/" + dashboard_index + "/" + plot_index, function(data){
