@@ -309,7 +309,7 @@ function createDCNetworksLayer(_layers, data, props={}) {
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: [0, 255, 255],
-        // getFillColor: f => nodeFillColor(f.properties['Type']),
+        getFillColor: f => nodeFillColor(f.properties['Type']),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -335,7 +335,7 @@ function createDHNetworksLayer(_layers, data, props={}) {
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: [0, 255, 0],
-        // getFillColor: f => nodeFillColor(f.properties['Type']),
+        getFillColor: f => nodeFillColor(f.properties['Type']),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -516,5 +516,15 @@ function updateTooltip({x, y, object, layer}) {
         tooltip.innerHTML = innerHTML;
     } else {
         tooltip.innerHTML = '';
+    }
+}
+
+function nodeFillColor(type) {
+    if (type === 'NONE') {
+        return [100, 100, 100]
+    } else if (type === 'CONSUMER') {
+        return [255, 255, 255]
+    } else if (type === 'PLANT') {
+        return [0, 0, 0]
     }
 }
