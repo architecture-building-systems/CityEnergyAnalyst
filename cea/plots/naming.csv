@@ -194,32 +194,46 @@ Activation curve,Q_from_VCC_backup_W,W,Cooling load supplied by backup vapor com
 Activation curve,Q_from_storage_tank_W,W,Cooling load supplied by thermal storage,orange
 Activation curve,Q_total_cooling_W,W,Total cooling demand,red_light
 
-Activation curve,Q_PVT_to_directload_W,W,PVT generation (thermal) to direct load,purple
-Activation curve,Q_SC_ET_to_directload_W,W,Solar collector (ET) generation to direct load,brown
-Activation curve,Q_SC_FP_to_directload_W,W,Solar collector (FP) generation to direct load,orange
-Activation curve,Q_compair_to_directload_W,W,Heat recovery from compressed-air to direct load,yellow
-Activation curve,Q_server_to_directload_W,W,Heat recovery from data center to direct load,red
-Activation curve,Q_SOLARandPVT_gen_Wh,W,Combined generation (thermaL) PVT and Solar collector ,yellow
-Activation curve,Q_from_storage_used_W,W,Thermal storage to direct load,red_light
-Activation curve,Q_AddBoiler_W,W,Back-up boiler generation,grey
-Activation curve,Q_BaseBoiler_W,W,Base boiler generation,red
-Activation curve,Q_PeakBoiler_W,W,Peak boiler generation,black
-Activation curve,Q_CHP_W,W,CHP generation (thermal) to direct load,brown
-Activation curve,Q_Furnace_W,W,Heating load provided by CHP-furnace,green
-Activation curve,Q_GHP_W,W,Heating load provided by geothermal heat pump,purple
-Activation curve,Q_HPLake_W,W,Heating load provided by heat pump associated with lake,blue
-Activation curve,Q_HPSew_W,W,Heating load provided by heat pump associated with sewage,blue_light
-Activation curve,Q_DHNf_W,W,Final heating load of the district heating network,grey_light
+
+Activation curve,Q_PVT_gen_directload_W,W,PVT generation (thermal) to direct load,purple
+Activation curve,Q_SC_ET_gen_directload_W,W,Solar collector (ET) generation to direct load,brown
+Activation curve,Q_SC_FP_gen_directload_W,W,Solar collector (FP) generation to direct load,orange
+Activation curve,Q_HP_Server_gen_directload_W,W,Heat recovery from data center to direct load,red
+Activation curve,Q_HP_Sew_gen_directload_W,W,Heating load provided by heat pump associated with sewage,blue_light
+Activation curve,Q_HP_Lake_gen_directload_W,W,Heating load provided by heat pump associated with lake,green
+Activation curve,Q_GHP_gen_directload_W,W,Heating load provided by geothermal heat pump,purple
+Activation curve,Q_CHP_gen_directload_W,W,CHP generation (thermal) to direct load,brown
+Activation curve,Q_Furnace_gen_directload_W,W,Heating load provided by CHP-furnace,green
+Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
+Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
+Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
+Activation curve,Q_Storage_gen_W,W,Thermal storage to direct load,red_light
+Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
+
+Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
+Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red
+Activation curve,E_CHP_gen_directload_W,W,CHP district heating generation to direct load,purple
+Activation curve,E_Furnace_gen_directload_W,W,CHP-furnace generation to direct load,blue_light
+Activation curve,E_CCGT_gen_directload_W,W,CCGT district cooling generation to direct load,blue_light
+Activation curve,E_GRID_directload_W,W,Electricity imports,red
+Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand of buildings connected to district,blue_light
+Activation curve,E_PV_gen_export_W,W,PV generation exported,green_light
+Activation curve,E_PVT_gen_export_W,W,PVT generation exported,brown
+Activation curve,E_CHP_gen_export_W,W,CHP district heating generation exported,brown_light
+Activation curve,E_CCGT_gen_export_W,W,CCGT district cooling generation exported,brown_light
+Activation curve,E_Furnace_gen_export_W,W,CHP-furnace generation exported,black
+
 Activation curve,Q_PVT_to_storage_W,W,Heating load provided from photovoltaic-thermal to storage tank,grey_light
 Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tube collector to storage tank,blue_light
 Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
 Activation curve,Q_VCC_total_W,W,Yearly cooling load by VCC,red
-Activation curve,Q_Lake_total_W,W,Yearly cooling load by Lake,green
+
 Activation curve,Q_ACH_total_W,W,Yearly cooling load by ACH,blue
 Activation curve,Q_VCC_backup_total_W,W,Yearly cooling load by backup VCC,grey
 Activation curve,Q_thermal_storage_total_W,W,Yearly cooling load by thermal storage,purple
+Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
 
 Activation curve,E_ACH_total_W,W,Yearly electricity requirement of ACH,blue_light
 Activation curve,E_VCC_total_W,W,Yearly electricity requirement of VCC,red_light
@@ -227,17 +241,9 @@ Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup
 Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
-Activation curve,E_PV_to_directload_W,W,PV generation to direct load,yellow
-Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
-Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
-Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
-Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,PV generation exported,green_light
-Activation curve,E_PVT_to_grid_W,W,PVT generation exported,brown
-Activation curve,E_CHP_to_grid_W,W,CHP-CCGT generation exported,brown_light
-Activation curve,E_Furnace_to_grid_W,W,CHP-furnace generation exported,black
-Activation curve,E_from_grid_W,W,Electricity imports,red
-Activation curve,Electr_netw_total_W,W,Total electricity demand of buildings connected to district,blue_light
+
+
+
 Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
 Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
 Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange

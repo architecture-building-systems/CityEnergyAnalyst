@@ -65,6 +65,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     building_names = master_to_slave_vars.building_names
 
     # Import data from storage optimization
+    Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
     Q_req_after_storage_W = np.array(storage_dispatch['Q_req_after_storage_W'])
 
     E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
@@ -89,6 +90,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     E_HP_SC_ET_req_W = storage_dispatch["E_HP_SC_ET_req_W"]
     E_HP_PVT_req_W = storage_dispatch["E_HP_PVT_req_W"]
     E_HP_Server_req_W = storage_dispatch["E_HP_Server_req_W"]
+    Q_Storage_gen_W = storage_dispatch["E_HP_Server_req_W"]
 
     #claculate vairable costs
 
@@ -189,8 +191,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         Q_therm_req_W = Q_req_after_storage_W[hour]
         opex_output, source_output, \
         Q_output, E_output, Gas_output, \
-        Wood_output, coldsource_output, \
-        Q_excess_W[hour] = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
+        Wood_output, coldsource_output = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
                                                     mdot_DH_kgpers[hour],
                                                     Q_therm_Sew_W[hour], TretsewArray_K[hour],
                                                     tdhsup_K[hour], tdhret_K[hour],
@@ -345,6 +346,10 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                                      locator)
 
     heating_dispatch = {
+
+        #demand of the network:
+        "Q_districtheating_sys_req_W" : Q_DH_networkload_W,
+
         # Status of each technology 1 = on, 0 = off in every hour
         "HPSew_Status": source_HP_Sewage,
         "HPLake_Status": source_HP_Lake,
@@ -354,23 +359,24 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "BoilerBase_Status": source_BaseBoiler,
         "BoilerPeak_Status": source_PeakBoiler,
 
-        "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
         "Q_PVT_gen_storage_W": Q_PVT_to_storage_W,
-        "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
         "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_W,
-        "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_W,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
-        "Q_HP_Server_to_directload_W": Q_HP_Server_to_directload_W,
-        "Q_HP_Server_to_storage_W": Q_HP_Server_to_storage_W,
+        "Q_HP_Server_storage_W": Q_HP_Server_to_storage_W,
 
-        "Q_HPSew_gen_directload_W": Q_HPSew_gen_W,
-        "Q_HPLake_gen_directload_W": Q_HPLake_gen_W,
+        "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
+        "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
+        "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_W,
+        "Q_HP_Server_gen_directload_W": Q_HP_Server_to_directload_W,
+        "Q_HP_Sew_gen_directload_W": Q_HPSew_gen_W,
+        "Q_HP_Lake_gen_directload_W": Q_HPLake_gen_W,
         "Q_GHP_gen_directload_W": Q_GHP_gen_W,
         "Q_CHP_gen_directload_W": Q_CHP_gen_W,
         "Q_Furnace_gen_directload_W": Q_Furnace_gen_W,
         "Q_BaseBoiler_gen_directload_W": Q_BaseBoiler_gen_W,
         "Q_PeakBoiler_gen_directload_W": Q_PeakBoiler_gen_W,
         "Q_AddBoiler_gen_directload_W": Q_AddBoiler_gen_W,
+        "Q_Storage_gen_W":Q_Storage_gen_W,
 
         "Q_coldsource_HPLake_W": Q_coldsource_HPLake_W,
         "Q_coldsource_HPSew_W": Q_coldsource_HPSew_W,
@@ -425,7 +431,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     }
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
-    performance_costs = cost_model.calc_generation_costs_heating(locator, network_features, master_to_slave_vars, Q_uncovered_design_W,
+    performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
                                                                  config, storage_dispatch, solar_features,
                                                                  heating_dispatch,
                                                                  )

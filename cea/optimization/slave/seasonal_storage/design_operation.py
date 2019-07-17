@@ -107,7 +107,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_HP_SC_ET_Whr = np.zeros(HOURS_IN_YEAR)
     Q_HP_SC_FP_Whr = np.zeros(HOURS_IN_YEAR)
     Q_loss_Whr = np.zeros(HOURS_IN_YEAR)
-    for HOUR in range(HOURS_IN_YEAR):
+
+    for HOUR in range(HOURS_IN_YEAR): #no idea why, but if we try a for loop it does not work
         # Get network temperatures and capacity flow rates
         T_DH_sup_K = T_DH_supply_array_K[HOUR]
         T_DH_return_K = T_DH_return_array_K[HOUR]
@@ -190,9 +191,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         T_storage_old_K = T_storage_new_K
 
         # catch an error if the storage temperature is too low
-        if T_storage_old_K < T_amb_K[HOUR] - 1:
-            print "Storage temperature is too lower than ambient, please check the calculation"
-            break
+        # if T_storage_old_K < T_amb_K[HOUR] - 1:
+        #     # print "Storage temperature is too lower than ambient, please check the calculation"
 
         ## Save values for the current timestep
         Q_storage_content_final_Whr[HOUR] = Q_in_storage_new_W
@@ -201,10 +201,13 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_to_storage_final_Whr[HOUR] = Q_to_storage_W
         E_aux_ch_final_Whr[HOUR] = E_aux_ch_W
         E_aux_dech_final_Whr[HOUR] = E_aux_dech_W
+
+        # scale to the fraction taht goes directly to the grid. the rest is considered in the storage charging and discharging
         E_HPSC_FP_final_req_Whr[HOUR] = E_HPSC_FP_req_W
         E_HPSC_ET_final_req_Whr[HOUR] = E_HPSC_ET_req_W
         E_HPPVT_final_req_Whr[HOUR] = E_HPPVT_reg_W
         E_HPServer_final_req_Whr[HOUR] = E_HPServer_reg_W
+
         Q_PVT_to_directload_Whr[HOUR] = Q_PVT_to_directload_W
         Q_SC_ET_to_directload_Whr[HOUR] = Q_SC_ET_to_directload_W
         Q_SC_FP_to_directload_Whr[HOUR] = Q_SC_FP_to_directload_W
@@ -225,8 +228,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
                                            Q_server_to_directload_W
 
         # heating demand required from heating plant
-        Q_missing_final_Whr[HOUR] = Q_network_demand_W - Q_uncontrollable_final_Whr[HOUR] - Q_from_storage_final_Whr[
-            HOUR]
+        Q_missing_final_Whr[HOUR] = Q_network_demand_W - Q_uncontrollable_final_Whr[HOUR] - Q_from_storage_final_Whr[HOUR]
 
         # amount of heat required from heating plants
         mdot_DH_final_kgpers[HOUR] = mdot_DH_missing_kgpers
@@ -235,28 +237,34 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             T_storage_min_K = T_storage_new_K
             Q_disc_seasonstart_W[0] += Q_from_storage_req_W
 
+
     storage_dispatch = {
 
-        # loads going directly to the customers
+        # TOTAL ENERGY GENERATED
+        "Q_SC_ET_gen_W": Q_SC_ET_gen_Whr,
+        "Q_SC_FP_gen_W": Q_SC_FP_gen_Whr,
+        "Q_PVT_gen_W": Q_PVT_gen_Whr,
+        "Q_HP_Server_gen_W": Q_server_to_storage_Whr + Q_server_to_directload_Whr,
+
+        # ENERGY GOING DIRECTLY TO CUSTOMERS
         "Q_PVT_gen_directload_W": Q_PVT_to_directload_Whr,
         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_Whr,
         "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_Whr,
         "Q_HP_Server_gen_directload_W": Q_server_to_directload_Whr,
 
-        # Load coming from the saasonal storage to customers
-        "Q_Storage_gen_W": Q_from_storage_final_Whr,
-
-        # Loads going to the seasonal storage
+        # ENERGY GOING INTO THE STORAGE
         # total
         "Q_Storage_req_W": Q_to_storage_final_Whr,
-
         # per technology
         "Q_PVT_gen_storage_W": Q_PVT_to_storage_Whr,
         "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_Whr,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_Whr,
         "Q_HP_Server_gen_storage_W": Q_server_to_storage_Whr,
 
-        # Auxiliary loads due to chargin and discharging the storage
+         # ENERGY COMMING FROM THE STORAGE
+        "Q_Storage_gen_W": Q_from_storage_final_Whr,
+
+        # AUXILIARY LOADS NEEDED TO CHARGE/DISCHARGE THE STORAGE
         "E_Storage_req_charging_W": E_aux_ch_final_Whr,
         "E_Storage_req_discharging_W": E_aux_dech_final_Whr,
         "E_HP_SC_FP_req_W": E_HPSC_FP_final_req_Whr, #this is included in charging the storage
@@ -264,20 +272,15 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         "E_HP_PVT_req_W": E_HPPVT_final_req_Whr, #this is included in charging the storage
         "E_HP_Server_req_W": E_HPServer_final_req_Whr, #this is included in charging the storage
 
-        # The load that needs to be supplied by other generation units (NEXT STEP)
+        # ENERGY THAT NEEDS TO BE SUPPLIED (NEXT)
         "Q_req_after_storage_W": Q_missing_final_Whr,
-
-        # total loads produced
-        "Q_SC_ET_gen_W": Q_SC_ET_gen_Whr,
-        "Q_SC_FP_gen_W": Q_SC_FP_gen_Whr,
-        "Q_PVT_gen_W": Q_PVT_gen_Whr,
-        "Q_HP_Server_gen_W": Q_server_to_storage_Whr + Q_server_to_directload_Whr,
 
         # mass flow rate of the network, size and energy generated
         "mdot_DH_fin_kgpers": mdot_DH_final_kgpers,
         "E_PVT_gen_W": E_PVT_gen_Whr,  # useful later on for the electricity dispatch curve
         "Storage_Size_m3": STORAGE_SIZE_m3,
         "Q_storage_content_W": Q_storage_content_final_Whr,
+        "Q_DH_networkload_W":Q_DH_networkload_Wh,
 
         # this helps to know the peak (thermal) of the heatpumps
         "Q_HP_Server_W": Q_HP_PVT_Whr,

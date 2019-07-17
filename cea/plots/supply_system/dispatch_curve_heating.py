@@ -20,33 +20,33 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class DispatchCurveOneOptionPlot(cea.plots.supply_system.SupplySystemPlotBase):
+class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Timeseries of energy dispatch for heating network"
+    name = "Dispatch curve heating"
 
     def __init__(self, project, parameters, cache):
-        super(DispatchCurveOneOptionPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Q_PVT_to_directload_W",
-                                "Q_SC_ET_to_directload_W",
-                                "Q_SC_FP_to_directload_W",
-                                "Q_HPServer_to_directload_W",
-                                "Q_from_storage_used_W",
-
-                                "Q_HPLake_gen_W",
-                                "Q_HPSew_gen_W",
-                                "Q_GHP_gen_W",
-                                "Q_CHP_gen_W",
-                                "Q_Furnace_gen_W",
-                                "Q_BaseBoiler_gen_W",
-                                "Q_PeakBoiler_gen_W",
-                                "Q_AddBoiler_gen_W"]
-        self.analysis_field_demand = ['Q_DHNf_W']
+        super(DispatchCurveDistrictHeatingPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ["Q_PVT_gen_directload_W",
+                                "Q_SC_ET_gen_directload_W",
+                                "Q_SC_FP_gen_directload_W",
+                                "Q_HP_Server_gen_directload_W",
+                                "Q_HP_Sew_gen_directload_W",
+                                "Q_HP_Lake_gen_directload_W",
+                                "Q_GHP_gen_directload_W",
+                                "Q_CHP_gen_directload_W",
+                                "Q_Furnace_gen_directload_W",
+                                "Q_BaseBoiler_gen_directload_W",
+                                "Q_PeakBoiler_gen_directload_W",
+                                "Q_AddBoiler_gen_directload_W",
+                                "Q_Storage_gen_W",
+                                ]
+        self.analysis_field_demand = ['Q_districtheating_sys_req_W']
         self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
                              [self.individual, self.generation])]
 
     @property
     def title(self):
-        return "Dispatch curve for heating network"
+        return "Dispatch curve for heating network Option {individual}".format(individual=self.individual)
 
     @property
     def output_path(self):
@@ -57,21 +57,14 @@ class DispatchCurveOneOptionPlot(cea.plots.supply_system.SupplySystemPlotBase):
     def layout(self):
         data_frame = self.process_individual_dispatch_curves()['heating_network']
         return dict(barmode='relative', yaxis=dict(title='Energy Generation [kW]'),
-             xaxis=dict(rangeselector=dict(buttons=list([
-                 dict(count=1, label='1d', step='day', stepmode='backward'),
-                 dict(count=1, label='1w', step='week', stepmode='backward'),
-                 dict(count=1, label='1m', step='month', stepmode='backward'),
-                 dict(count=6, label='6m', step='month', stepmode='backward'),
-                 dict(count=1, label='1y', step='year', stepmode='backward'),
-                 dict(step='all')])), rangeslider=dict(), type='date', range=[data_frame.index[0],
-                                                                              data_frame.index[168]],
-                 fixedrange=False))
+             xaxis=dict( type='date', range=[data_frame.index[0],data_frame.index[168]],fixedrange=False))
 
     def calc_graph(self):
         # main data about technologies
         data = self.process_individual_dispatch_curves()['heating_network']
         graph = []
-        for field in self.analysis_fields:
+        analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
+        for field in analysis_fields:
             y = (data[field].values) / 1000  # into kW
             trace = go.Bar(x=data.index, y=y, name=NAMING[field],
                            marker=dict(color=COLOR[field]))
@@ -93,11 +86,11 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    DispatchCurveOneOptionPlot(config.project,
-                                    {'scenario-name': config.scenario_name,
-                                     'generation': config.plots_optimization.generation,
-                                     'individual': config.plots_optimization.generation},
-                                      cache).plot(auto_open=True)
+    DispatchCurveDistrictHeatingPlot(config.project,
+                                     {'scenario-name': config.scenario_name,
+                                     'generation': config.plots_supply_system.generation,
+                                     'individual': config.plots_supply_system.individual},
+                                     cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
