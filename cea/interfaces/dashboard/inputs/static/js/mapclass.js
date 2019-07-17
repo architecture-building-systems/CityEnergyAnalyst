@@ -105,11 +105,13 @@ class MapClass {
                 longitude: this.cameraOptions.center.lng
             };
 
-            this.setCamera({
-                transitionDuration: 300,
-                onTransitionEnd: () => {
-                    extrude && $('#3d-button').trigger('click')
-                }
+            this.deckgl.getMapboxMap().once('styledata', function () {
+                _this.setCamera({
+                    transitionDuration: 300,
+                    onTransitionEnd: () => {
+                        extrude && $('#3d-button').trigger('click')
+                    }
+                });
             });
 
             let _jsonURLs = jsonURLs;

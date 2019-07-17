@@ -1,7 +1,6 @@
 $(document).ready(function () {
     let zone;
     let district;
-    let map = new MapClass('map-div');
 
     let getZone = $.get('/inputs/geojson/zone', function (data) {
         zone = data;
@@ -12,6 +11,7 @@ $(document).ready(function () {
     });
 
     $.when(getZone, getDistrict).done(function () {
+        let map = new MapClass('map-div');
         map.init({
             data:{
                 zone: zone,
