@@ -27,10 +27,24 @@ $(document).ready(function() {
             $("#cea-dashboard-edit-plot-form").attr("action", url);
             $("#cea-dashboard-edit-plot-form").attr("method", "POST");
             $(".selectpicker").selectpicker({"actionsBox": true});
+            $(".js-switch").each(function(_, checkbox){
+                console.log("setting up Switchery");
+                console.log(checkbox);
+                switcher = new Switchery(checkbox);
+            });
         }).fail(function (data) {
             console.log("something went terribly wrong?!");
             console.log(data);
         });
+    });
+
+    $("#cea-dashboard-edit-plot-form").submit(function (e) {
+        e.preventDefault();
+        $.post($("#cea-dashboard-edit-plot-form").attr("action"), get_parameter_values(), function(data){
+            console.log(data);
+            location.reload();
+        }, "json");
+        return false;
     });
 
     $("#dashboard-selector").change(function () {

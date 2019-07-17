@@ -7,6 +7,7 @@ import os
 import json
 import cea.config
 import cea.plots
+import cea.plots.cache
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
@@ -77,11 +78,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         data_processed = {'individual_barcode': def_individual_barcode}
         return data_processed
 
+    @cea.plots.cache.cached
     def preprocessing_final_generation_data_cost_centralized(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_final_generation_data_cost_centralized'),
-                                 plot=self, producer=self._preprocessing_final_generation_data_cost_centralized)
-
-    def _preprocessing_final_generation_data_cost_centralized(self):
         data_raw = self.preprocessing_generations_data()
         total_demand = pd.read_csv(self.locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -442,11 +440,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
         data_processed.set_index('indiv', inplace=True)
         return data_processed
 
+    @cea.plots.cache.cached
     def preprocessing_multi_criteria_data(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_multi_criteria_data'),
-                                 plot=self, producer=self._preprocessing_multi_criteria_data)
-
-    def _preprocessing_multi_criteria_data(self):
         try:
             data_multi_criteria = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
         except IOError:
@@ -454,11 +449,8 @@ class OptimizationOverviewPlotBase(cea.plots.PlotBase):
                 self.generation))
         return data_multi_criteria
 
+    @cea.plots.cache.cached
     def preprocessing_capacities_data(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'preprocessing_capacities_data'),
-                                 plot=self, producer=self._preprocessing_capacities_data)
-
-    def _preprocessing_capacities_data(self):
         data_generation = self.preprocessing_generations_data()
         column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
                         'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
