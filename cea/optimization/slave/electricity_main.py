@@ -531,10 +531,10 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
 
     if master_to_slave_vars.DHN_exists:
         # by storage system
-        E_Storage_req_W = heating_activation_data['E_used_Storage_charging_W'] + heating_activation_data[
-            'E_used_Storage_discharging_W']
+        E_Storage_req_W = heating_activation_data['E_Storage_req_charging_W'] + heating_activation_data['E_used_Storage_discharging_W']
         # by auxiliary and heat recovery
-        E_aux_solar_and_heat_recovery_W = heating_activation_data['E_aux_solar_and_heat_recovery_W']
+        E_aux_solar_and_heat_recovery_W = heating_activation_data['E_HP_SC_FP_req_W'] + heating_activation_data['E_HP_SC_ET_req_W'] + \
+                                          heating_activation_data['E_HP_Server_req_W'] + heating_activation_data['E_HP_PVT_req_W']
     else:
         E_Storage_req_W = np.zeros(HOURS_IN_YEAR)
         E_aux_solar_and_heat_recovery_W = np.zeros(HOURS_IN_YEAR)
@@ -571,7 +571,6 @@ def extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
 
 def extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data, heating_activation_data):
     if master_to_slave_vars.DHN_exists:
-        E_HPServer_req_W = heating_activation_data["E_HPServer_req_W"]
         E_HPSew_req_W = heating_activation_data["E_HPSew_req_W"]
         E_HPLake_req_W = heating_activation_data["E_HPLake_req_W"]
         E_GHP_req_W = heating_activation_data["E_GHP_req_W"]
@@ -579,7 +578,6 @@ def extract_requirements_generation_units(master_to_slave_vars, cooling_activati
         E_PeakBoiler_req_W = heating_activation_data["E_PeakBoiler_req_W"]
         E_BackupBoiler_req_W = heating_activation_data["E_BackupBoiler_req_W"]
     else:
-        E_HPServer_req_W = np.zeros(HOURS_IN_YEAR)
         E_HPSew_req_W = np.zeros(HOURS_IN_YEAR)
         E_HPLake_req_W = np.zeros(HOURS_IN_YEAR)
         E_GHP_req_W = np.zeros(HOURS_IN_YEAR)
@@ -600,8 +598,7 @@ def extract_requirements_generation_units(master_to_slave_vars, cooling_activati
         E_used_ACH_W = np.zeros(HOURS_IN_YEAR)
         E_used_CT_W = np.zeros(HOURS_IN_YEAR)
 
-    E_generation_req_W = E_HPServer_req_W + \
-                         E_HPSew_req_W + \
+    E_generation_req_W = E_HPSew_req_W + \
                          E_HPLake_req_W + \
                          E_GHP_req_W + \
                          E_BaseBoiler_req_W + \
