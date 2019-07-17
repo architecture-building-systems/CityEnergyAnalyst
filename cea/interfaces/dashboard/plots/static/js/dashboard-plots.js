@@ -121,6 +121,7 @@ function open_table(element) {
         'popUpWindow', 'height='+height+',width='+width+',location=no,menubar=no,status=no,titlebar=no,resizable');
     table.onload = function() {
         table.document.title = 'City Energy Analyst | ' + element.dataset.plotTitle + ' Table';
+        table.document.body.innerHTML = table.document.body.innerHTML || '<p>Table does not exist.</p>';
         table.document.body.innerHTML = '<h1>'+element.dataset.plotTitle+'</h1><br>' + table.document.body.innerHTML;
         table.document.head.append(style);
     }
