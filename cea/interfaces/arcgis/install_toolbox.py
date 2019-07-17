@@ -72,7 +72,6 @@ def copy_config(toolbox_folder):
 
     cea_dst_folder = get_cea_dst_folder(toolbox_folder)
     cea_src_folder = os.path.dirname(cea.config.__file__)
-    shutil.copy(os.path.join(cea_src_folder, 'concept_parameters.py'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
 
