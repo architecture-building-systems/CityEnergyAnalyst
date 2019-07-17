@@ -243,7 +243,7 @@ def route_div(dashboard_index, plot_index):
     else:
         return render_template('missing_input_files.html',
                                missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
-                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
+                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files())), 404
 
 
 @blueprint.route('/table/<int:dashboard_index>/<int:plot_index>')
