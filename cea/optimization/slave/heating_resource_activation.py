@@ -142,8 +142,27 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPSew_gen_W
 
-    if (
-    master_to_slave_vars.GHP_on) == 1 and hour >= master_to_slave_vars.GHP_SEASON_ON and hour <= master_to_slave_vars.GHP_SEASON_OFF and Q_heat_unmet_W > 0 and not np.isclose(
+    if (master_to_slave_vars.HP_Lake_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
+        source_HP_Lake = 1
+        if Q_heat_unmet_W > master_to_slave_vars.HPLake_maxSize_W:  # Scale down Load, 100% load achieved
+            Q_HPLake_gen_W = master_to_slave_vars.HPLake_maxSize_W
+            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
+                    HEAT_CAPACITY_OF_WATER_JPERKGK * (
+                    tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
+        else:  # regular operation possible
+            Q_HPLake_gen_W = Q_heat_unmet_W
+            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
+
+        cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers,
+                                                                                               tdhsup_K, tdhret_req_K,
+                                                                                               T_LAKE, lca, hour)
+
+        Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
+
+    if (master_to_slave_vars.GHP_on) == 1 and \
+            hour >= master_to_slave_vars.GHP_SEASON_ON and\
+            hour <= master_to_slave_vars.GHP_SEASON_OFF and \
+            Q_heat_unmet_W > 0 and not np.isclose(
             tdhsup_K, tdhret_req_K):
 
         source_GHP = 1
@@ -162,22 +181,6 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_GHP_gen_W
 
-    if (master_to_slave_vars.HP_Lake_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
-        source_HP_Lake = 1
-        if Q_heat_unmet_W > master_to_slave_vars.HPLake_maxSize_W:  # Scale down Load, 100% load achieved
-            Q_HPLake_gen_W = master_to_slave_vars.HPLake_maxSize_W
-            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
-                    HEAT_CAPACITY_OF_WATER_JPERKGK * (
-                    tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
-        else:  # regular operation possible
-            Q_HPLake_gen_W = Q_heat_unmet_W
-            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
-
-        cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers,
-                                                                                               tdhsup_K, tdhret_req_K,
-                                                                                               T_LAKE, lca, hour)
-
-        Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
     if (master_to_slave_vars.Boiler_on) == 1 and Q_heat_unmet_W > 0:
         source_BaseBoiler = 1
