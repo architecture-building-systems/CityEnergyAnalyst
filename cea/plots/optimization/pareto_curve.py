@@ -36,6 +36,28 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
 
     @property
+    def layout(self):
+        data = self.preprocessing_multi_criteria_data()
+        xs = data[self.objectives[0]].values
+        ys = data[self.objectives[1]].values
+        zs = data[self.objectives[2]].values
+        xmin = min(xs)
+        ymin = min(ys)
+        zmin = min(zs)
+        xmax = max(xs)
+        ymax = max(ys)
+        zmax = max(zs)
+        ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
+                                      [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
+
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
+                         xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]', domain=[0, 1],
+                                    range=ranges_some_room_for_graph[0]),
+                         yaxis=dict(title='GHG emissions [kton CO2-eq]', domain=[0.3, 1.0],
+                                    range=ranges_some_room_for_graph[1]))
+
+
+    @property
     def title(self):
         return "Costs, emissions, and primary energy"
 
@@ -71,6 +93,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         zs = data[self.objectives[2]].values
         individual_names = data['individual_name'].values
 
+
         graph = []
         trace = go.Scatter(x=xs, y=ys, mode='markers', name='data', text=individual_names,
                            marker=dict(size='12', color=zs,
@@ -90,6 +113,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                    color='black',
                                    width=2)))
             graph.append(trace)
+
         return graph
 
     def calc_table(self):

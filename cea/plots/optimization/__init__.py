@@ -57,6 +57,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 data_processed = pd.read_csv(self.locator.get_multi_criteria_analysis(self.generation))
             except IOError:
                 raise IOError("Please run the multi-criteria analysis tool first or set multi-criteria = False")
+
         else:
             data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance(self.generation))
         return data_processed
