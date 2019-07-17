@@ -71,30 +71,28 @@ def route_new_dashboard():
     """
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
-    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'), request.form.get('layout'))
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'),
+                                              request.form.get('description'), request.form.get('layout'))
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
-@blueprint.route('/dashboard/duplicate/<int:dashboard_index>', methods=['POST'])
-def route_duplicate_dashboard(dashboard_index):
-    cea_config = current_app.cea_config
-    plot_cache = current_app.plot_cache
-    duplicate_index = cea.plots.duplicate_dashboard(cea_config, plot_cache, dashboard_index)
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=duplicate_index))
-
-
-@blueprint.route('/dashboard/<int:dashboard_index>/<func>')
+@blueprint.route('/dashboard/<func>/<int:dashboard_index>')
 def route_manage_dashboards_function(dashboard_index, func):
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard_name = dashboards[dashboard_index].name
     if func == 'delete':
-        return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name)
+        return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index,
+                               dashboard_name=dashboard_name)
     if func == 'rename':
         dashboard_description = dashboards[dashboard_index].description
-        return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name,
+        return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index,
+                               dashboard_name=dashboard_name,
                                dashboard_description=dashboard_description)
+    if func == 'duplicate':
+        return render_template('modal/duplicate_dashboard.html', dashboard_index=dashboard_index,
+                               dashboard_name=dashboard_name)
 
 
 @blueprint.route('/dashboard/delete/<int:dashboard_index>', methods=['POST'])
@@ -112,6 +110,15 @@ def route_rename_dashboard(dashboard_index):
     dashboard.description = request.form.get('new-description', dashboard.description)
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
     return redirect(url_for('plots_blueprint.route_manage_dashboards'))
+
+
+@blueprint.route('/dashboard/duplicate/<int:dashboard_index>', methods=['POST'])
+def route_duplicate_dashboard(dashboard_index):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    duplicate_index = cea.plots.duplicate_dashboard(cea_config, plot_cache, request.form.get('name'),
+                                                    request.form.get('description'), dashboard_index)
+    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=duplicate_index))
 
 
 @blueprint.route('/dashboard/add-plot/<int:dashboard_index>', methods=['POST'])

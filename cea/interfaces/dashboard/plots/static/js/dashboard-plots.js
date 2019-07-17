@@ -99,16 +99,17 @@ function load_all_plots() {
     });
 }
 
+function openSettings(dashboard_index, func) {
+    $.get('./' + func + '/' + dashboard_index, {}, function(html) {
+        $('#cea-prompt .modal-content').html(html);
+        $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+    });
+}
+
 function add_new_dashboard() {
     $.get("new", function (html) {
         $("#cea-prompt .modal-content").html(html);
         $("#cea-prompt").modal({"show": true, "backdrop": "static"});
-    });
-}
-
-function duplicate_dashboard(dashboard_index) {
-    $.post('./duplicate/'+dashboard_index, function (response) {
-        console.log(response);
     });
 }
 

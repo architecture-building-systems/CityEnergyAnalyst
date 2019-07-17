@@ -82,12 +82,12 @@ def new_dashboard(config, cache, name, description, layout):
     return len(dashboards) - 1
 
 
-def duplicate_dashboard(config, cache, dashboard_index):
+def duplicate_dashboard(config, cache, name, description, dashboard_index):
     dashboards = read_dashboards(config, cache)
     dashboard = dashboards[dashboard_index].to_dict()
     dashboards.append(Dashboard(config, {
-        'name': dashboard['name'] + '(Copy)',
-        'description': 'Copy of ' + dashboard['name'],
+        'name': name,
+        'description': description,
         'layout': dashboard['layout'],
         'plots': dashboard['plots']
     }, cache))
