@@ -89,17 +89,20 @@ def calc_exergy_liquid_water(T_water_C, T_ref_C, RH):
 
     ..[Bejan,A.2016] Exergy Analysis. In Advanced Engineering Thermodynamics (pp.195-212).
     """
-    T_ref_K = T_ref_C + 273.15
-    T_water_K = T_water_C + 273.15
-    # w_ref_kgperkg = w_ref_gperkg / 1000
-    # w_sat_kgperkg = calc_w_sat(T_ref_C)
-    # RH = w_ref_kgperkg / w_sat_kgperkg
-    Rv = 0.4615  # kJ/kgK
-    cp_water_kJperkgK = 4.187
-    dT_water = T_water_K - T_ref_K
-    ex_liquid_water_kJperkg = cp_water_kJperkgK * (dT_water) - T_ref_K * cp_water_kJperkgK * math.log(
-        T_water_K / T_ref_K) - Rv * T_ref_K * math.log(RH)  # eq.(5.59) _[Bejan,A.2016]
-    # print 'exergy_water at T_ref_C:', T_ref_C,'RH:',RH*100, ':', -Rv * T_ref_K * math.log(RH)
+    if math.isnan(T_water_C):
+        ex_liquid_water_kJperkg = float('nan')
+    else:
+        T_ref_K = T_ref_C + 273.15
+        T_water_K = T_water_C + 273.15
+        # w_ref_kgperkg = w_ref_gperkg / 1000
+        # w_sat_kgperkg = calc_w_sat(T_ref_C)
+        # RH = w_ref_kgperkg / w_sat_kgperkg
+        Rv = 0.4615  # kJ/kgK
+        cp_water_kJperkgK = 4.187
+        dT_water = T_water_K - T_ref_K
+        ex_liquid_water_kJperkg = cp_water_kJperkgK * (dT_water) - T_ref_K * cp_water_kJperkgK * math.log(
+            T_water_K / T_ref_K) - Rv * T_ref_K * math.log(RH)  # eq.(5.59) _[Bejan,A.2016]
+        # print 'exergy_water at T_ref_C:', T_ref_C,'RH:',RH*100, ':', -Rv * T_ref_K * math.log(RH)
     return ex_liquid_water_kJperkg
 
 def water_exergy_pyromat(T_water_C, T_ref_C):
