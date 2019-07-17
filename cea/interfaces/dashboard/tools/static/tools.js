@@ -20,8 +20,6 @@ function cea_save_config(script) {
 
 /**
  * Read the values of all the parameters.
- *
- * NOTE: Depends on the variable $PARAMETERS being set in the tool.html template.
  */
 function get_parameter_values() {
     var result = {};

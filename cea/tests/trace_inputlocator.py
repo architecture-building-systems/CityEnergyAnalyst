@@ -100,13 +100,17 @@ def meta_to_yaml(trace_data, meta_output_file):
         'json': get_json_schema,
         'epw': get_epw_schema,
         'dbf': get_dbf_schema,
-        'shp': get_shp_schema
+        'shp': get_shp_schema,
+        'html': get_html_schema,
+        '': get_html_schema,
     }
 
     for direction, script, locator_method, path, files in trace_data:
         filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
-        file_type = os.path.basename(files).split('.')[1]
-
+        try:
+            file_type = os.path.basename(files).split('.')[1]
+        except IndexError:
+            file_type = ''
 
 
         if os.path.isfile(filename):
@@ -297,6 +301,12 @@ def get_shp_schema(filename):
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema[attr.encode('ascii', 'ignore')] = meta
     return schema
+
+
+def get_html_schema(_):
+    """We don't need to keep a schema of html files - these are outputs anyway"""
+    return None
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
