@@ -109,7 +109,8 @@ function open_table(element) {
     let height = 500;
     let width = 900;
     let table = window.open(`../table/${element.dataset.dashboardIndex}/${element.dataset.plotIndex}`,
-        'popUpWindow', `height=${height},width=${width},location=no,menubar=no,status=no,titlebar=no,resizable`);
+        `table-${element.dataset.dashboardIndex}-${element.dataset.plotIndex}`,
+        `height=${height},width=${width},location=no,menubar=no,status=no,titlebar=no,resizable`);
     table.onload = function() {
         table.document.title = `City Energy Analyst | ${element.dataset.plotTitle} Table`;
         table.document.body.innerHTML = table.document.body.innerHTML || '<p>Table does not exist.</p>';
