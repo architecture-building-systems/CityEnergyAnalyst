@@ -311,19 +311,19 @@ default:
     module: cea.plots.comparisons.main
     parameters: [plots-scenario-comparisons]
 
-  - name: plots-supply-system
-    label: Plots optimization detailed
-    description: Create plots for a supply system (default or optimal) of an urban scenario
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.plots.supply_system.main
-    parameters: ['general:scenario', plots-supply-system]
-
-  - name: plots-optimization
-    label: Plots optimization overview
-    description: Create plots for the results of the optimzation of an urban scenario
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.plots.optimization.main
-    parameters: ['general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
+#  - name: plots-supply-system
+#    label: Plots optimization detailed
+#    description: Create plots for a supply system (default or optimal) of an urban scenario
+#    interfaces: [cli, arcgis, dashboard]
+#    module: cea.plots.supply_system.main
+#    parameters: ['general:scenario', plots-supply-system]
+#
+#  - name: plots-optimization
+#    label: Plots optimization overview
+#    description: Create plots for the results of the optimzation of an urban scenario
+#    interfaces: [cli, arcgis, dashboard]
+#    module: cea.plots.optimization.main
+#    parameters: ['general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
 
 
   - name: benchmark-graphs
