@@ -756,6 +756,7 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
                 logging.info('Invalid optimization individual: %s' % individual)
                 return
 
+
 class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(BuildingsParameterInfoBuilder, self).get_parameter_info()
@@ -776,6 +777,10 @@ class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
             return ''
         else:
             return cea_parameter.encode(parameter.valueAsText.split(';'))
+
+
+class SingleBuildingParameterInfoBuilder(ChoiceParameterInfoBuilder):
+    pass
 
 
 def list_buildings(scenario):
@@ -804,6 +809,7 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.FileParameter: FileParameterInfoBuilder,
     cea.config.ListParameter: ListParameterInfoBuilder,
     cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
+    cea.config.SingleBuildingParameter: SingleBuildingParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
     cea.config.OptimizationIndividualParameter: OptimizationIndividualParameterInfoBuilder,
     cea.config.OptimizationIndividualListParameter: OptimizationIndividualListParameterInfoBuilder,
