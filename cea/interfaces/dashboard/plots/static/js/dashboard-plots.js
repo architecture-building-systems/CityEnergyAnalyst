@@ -90,8 +90,8 @@ function load_all_plots() {
     });
 }
 
-function openSettings(dashboard_index, func) {
-    $.get('./' + func + '/' + dashboard_index, {}, function(html) {
+function duplicate_dashboard(dashboard_index) {
+    $.get(`./duplicate/${dashboard_index}`, {}, function(html) {
         $('#cea-prompt .modal-content').html(html);
         $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
     });
