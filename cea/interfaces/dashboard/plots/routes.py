@@ -37,6 +37,10 @@ def route_dashboard(dashboard_index):
     dashboard = dashboards[dashboard_index]
     layout = dashboard.layout
 
+    # add new layouts here
+    if layout not in {"map", "row"}:
+        layout = "row"  # this is the default layout for Dashboards
+
     return render_template('layout/{}_layout.html'.format(layout), dashboard_index=dashboard_index, dashboards=dashboards,
                            dashboard=dashboard, categories=categories, last_updated=dir_last_updated())
 
