@@ -56,16 +56,16 @@
           <form id="cea-dashboard-add-plot-form" class="form-horizontal form-label-left" method="post"
                 action="add-plot/{{ dashboard_index }}">
             <div class="form-group">
-              <label class="control-label" for="cea-plot-category">Category</label>
-              <select class="form-control" id="cea-plot-category" name="category">
+              <label class="control-label" for="cea-plot-category-add">Category</label>
+              <select class="form-control" id="cea-plot-category-add" name="category">
                 {% for category in categories %}
                   <option value="{{ category }}" {% if category == "demand" %}selected{% endif %}>
                     {{ categories[category]['label'] }}
                   </option>
                 {% endfor %}
               </select>
-              <label class="control-label" for="cea-plot-name">Plot</label>
-              <select class="form-control" id="cea-plot-name" name="plot-id">
+              <label class="control-label" for="cea-plot-name-add">Plot</label>
+              <select class="form-control" id="cea-plot-name-add" name="plot-id">
                 {% for plot in categories['demand']['plots'] %}
                   <option value="{{ plot['id'] }}">{{ plot['name'] }}</option>
                 {% endfor %}
