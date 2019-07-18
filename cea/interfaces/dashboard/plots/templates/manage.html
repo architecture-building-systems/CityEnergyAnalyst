@@ -53,8 +53,8 @@
                     </td>
                     <td>
                       <a href="{{ url_for('plots_blueprint.route_dashboard', dashboard_index=loop.index0) }}">Open</a>
-                      <a href="#" onclick="openSettings({{ loop.index0 }}, 'rename')">Rename</a>
-                      <a href="#" onclick="openSettings({{ loop.index0 }}, 'delete')">Delete</a>
+                      <a href="#" onclick="rename_dashboard({{ loop.index0 }})">Rename</a>
+                      <a href="#" onclick="delete_dashboard({{ loop.index0 }})">Delete</a>
                     </td>
                   </tr>
                 {% endfor %}
@@ -72,8 +72,14 @@
 {% block javascripts %}
   {{ super() }}
   <script>
-    function openSettings(dashboard_index, func) {
-        $.get('./' + func + '/' + dashboard_index, {}, function(html) {
+    function rename_dashboard(dashboard_index) {
+        $.get(`./rename/${dashboard_index}`, {}, function(html) {
+            $('#cea-prompt .modal-content').html(html);
+            $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
+        });
+    }
+    function delete_dashboard(dashboard_index) {
+        $.get(`./delete/${dashboard_index}`, {}, function(html) {
             $('#cea-prompt .modal-content').html(html);
             $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
         });
