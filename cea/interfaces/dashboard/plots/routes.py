@@ -5,12 +5,8 @@ from cea.config import MultiChoiceParameter
 import cea.plots
 import cea.plots.categories
 
-import importlib
-import plotly.offline
-import json
-import yaml
 import re
-
+import os
 
 blueprint = Blueprint(
     'plots_blueprint',
@@ -26,8 +22,6 @@ categories = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name
 
 @blueprint.route('/index')
 def index():
-    # TODO: Make this the entry point for showing dashboard
-
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
 
 
@@ -41,8 +35,14 @@ def route_dashboard(dashboard_index):
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard = dashboards[dashboard_index]
-    return render_template('dashboard.html', dashboard_index=dashboard_index, dashboards=dashboards,
-                           dashboard=dashboard, categories=categories)
+    layout = dashboard.layout
+
+    # add new layouts here
+    if layout not in {"map", "row"}:
+        layout = "row"  # this is the default layout for Dashboards
+
+    return render_template('layout/{}_layout.html'.format(layout), dashboard_index=dashboard_index, dashboards=dashboards,
+                           dashboard=dashboard, categories=categories, last_updated=dir_last_updated())
 
 
 @blueprint.route('/dashboard/manage')
@@ -54,7 +54,7 @@ def route_manage_dashboards():
 
 
 @blueprint.route('/dashboard/new')
-def route_new_dashboard_view():
+def route_new_dashboard_modal():
     return render_template('modal/new_dashboard.html')
 
 
@@ -65,22 +65,44 @@ def route_new_dashboard():
     """
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
-    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'), request.form.get('description'))
+    dashboard_index = cea.plots.new_dashboard(cea_config, plot_cache, request.form.get('name'),
+                                              request.form.get('description'), request.form.get('layout'))
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
-@blueprint.route('/dashboard/<int:dashboard_index>/<func>')
-def route_manage_dashboards_function(dashboard_index, func):
+@blueprint.route('/dashboard/delete/<int:dashboard_index>')
+def route_delete_dashboard_modal(dashboard_index):
     cea_config = current_app.cea_config
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard_name = dashboards[dashboard_index].name
-    if func == 'delete':
-        return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name)
-    if func == 'rename':
-        dashboard_description = dashboards[dashboard_index].description
-        return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index, dashboard_name=dashboard_name,
-                               dashboard_description=dashboard_description)
+
+    return render_template('modal/delete_dashboard.html', dashboard_index=dashboard_index,
+                           dashboard_name=dashboard_name)
+
+
+@blueprint.route('/dashboard/rename/<int:dashboard_index>')
+def route_rename_dashboard_modal(dashboard_index):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
+    dashboard_name = dashboards[dashboard_index].name
+    dashboard_description = dashboards[dashboard_index].description
+
+    return render_template('modal/rename_dashboard.html', dashboard_index=dashboard_index,
+                           dashboard_name=dashboard_name, dashboard_description=dashboard_description)
+
+
+@blueprint.route('/dashboard/duplicate/<int:dashboard_index>')
+def route_duplicate_dashboard_modal(dashboard_index):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
+    dashboard_name = dashboards[dashboard_index].name
+    dashboard_description = dashboards[dashboard_index].description
+
+    return render_template('modal/duplicate_dashboard.html', dashboard_index=dashboard_index,
+                           dashboard_name=dashboard_name, dashboard_description=dashboard_description)
 
 
 @blueprint.route('/dashboard/delete/<int:dashboard_index>', methods=['POST'])
@@ -100,6 +122,15 @@ def route_rename_dashboard(dashboard_index):
     return redirect(url_for('plots_blueprint.route_manage_dashboards'))
 
 
+@blueprint.route('/dashboard/duplicate/<int:dashboard_index>', methods=['POST'])
+def route_duplicate_dashboard(dashboard_index):
+    cea_config = current_app.cea_config
+    plot_cache = current_app.plot_cache
+    duplicate_index = cea.plots.duplicate_dashboard(cea_config, plot_cache, request.form.get('name'),
+                                                    request.form.get('description'), dashboard_index)
+    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=duplicate_index))
+
+
 @blueprint.route('/dashboard/add-plot/<int:dashboard_index>', methods=['POST'])
 def route_add_plot_to_dashboard(dashboard_index):
     dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
@@ -111,17 +142,26 @@ def route_add_plot_to_dashboard(dashboard_index):
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
 
 
+@blueprint.route('/dashboard/replace-plot/<int:dashboard_index>/<int:plot_index>', methods=['POST'])
+def route_replace_plot(dashboard_index, plot_index):
+    dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
+    dashboard = dashboards[dashboard_index]
+    category = request.form.get('category', next(iter(categories)))
+    plot_id = request.form.get('plot-id', next(iter(categories[category]['plots']))['id'])
+    dashboard.replace_plot(category, plot_id, plot_index)
+    cea.plots.write_dashboards(current_app.cea_config, dashboards)
+    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+
+
 @blueprint.route('/dashboard/remove-plot/<int:dashboard_index>/<int:plot_index>')
 def route_remove_plot_from_dashboard(dashboard_index, plot_index):
     """Remove a plot from a dashboard by index."""
     dashboards = cea.plots.read_dashboards(current_app.cea_config, current_app.plot_cache)
     dashboard = dashboards[dashboard_index]
     dashboard.remove_plot(plot_index)
-    if len(dashboard.plots) == 0:
-        cea.plots.delete_dashboard(current_app.cea_config, dashboard_index)
-        return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
     cea.plots.write_dashboards(current_app.cea_config, dashboards)
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=dashboard_index))
+
 
 @blueprint.route('/dashboard/move_plot_up/<int:dashboard_index>/<int:plot_index>')
 def route_move_plot_up(dashboard_index, plot_index):
@@ -138,6 +178,7 @@ def route_move_plot_up(dashboard_index, plot_index):
 def swap(lst, i, j):
     """Swap positions of elements in a list as given by their indexes i and j"""
     lst[i], lst[j] = lst[j], lst[i]
+
 
 @blueprint.route('/dashboard/move_plot_down/<int:dashboard_index>/<int:plot_index>')
 def route_move_plot_down(dashboard_index, plot_index):
@@ -182,7 +223,6 @@ def route_post_plot_parameters(dashboard_index, plot_index):
     return jsonify(plot.parameters)
 
 
-
 @blueprint.route('/category/<category>')
 def route_category(category):
     """FIXME: this will be removed soon..."""
@@ -217,7 +257,8 @@ def route_div(dashboard_index, plot_index):
     else:
         return render_template('missing_input_files.html',
                                missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
-                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files()))
+                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files())), 404
+
 
 @blueprint.route('/table/<int:dashboard_index>/<int:plot_index>')
 def route_table(dashboard_index, plot_index):
@@ -257,3 +298,9 @@ def route_plot(dashboard_index, plot_index):
         return abort(500, ex)
 
     return render_template('plot.html', dashboard_index=dashboard_index, plot_index=plot_index, plot=plot)
+
+
+def dir_last_updated():
+    return str(max(os.path.getmtime(os.path.join(root_path, f))
+                   for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+                   for f in files))

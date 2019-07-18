@@ -123,7 +123,7 @@ function updateData(data) {
         }
         if (column === 'height_ag') {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
     }
 
@@ -164,7 +164,7 @@ function addToSelection(data, row) {
         $('.tabulator-tableHolder').scrollTop(scroll);
     }
 
-    redrawBuildings();
+   redrawBuildings();
 }
 
 function filterSelection(selection) {
@@ -299,7 +299,7 @@ $(window).load(function () {
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
-                    redrawBuildings();
+                   redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
                     setTimeout(function(){
@@ -357,7 +357,7 @@ $(window).load(function () {
 
         if (props['height_ag']) {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
 
         currentTable.updateData(data);
