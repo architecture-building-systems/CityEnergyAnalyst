@@ -117,7 +117,7 @@ class Dashboard(object):
         try:
             self.layout = dashboard_dict['layout']
         except KeyError:
-            self.layout = 'default'
+            self.layout = 'row'
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
