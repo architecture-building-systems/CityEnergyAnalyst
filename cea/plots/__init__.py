@@ -63,7 +63,7 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache, name='Default Dashboard', description='', layout='default'):
+def default_dashboard(config, cache, name='Default Dashboard', description='', layout='row'):
     """Return a default Dashboard"""
     return Dashboard(config, {'name': name,
                               'description': description,
