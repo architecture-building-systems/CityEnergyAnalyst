@@ -41,11 +41,17 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
         self.individual = self.parameters['individual']
 
-
     @cea.plots.cache.cached
     def process_individual_dispatch_curves(self):
-        data_heating = pd.read_csv(self.locator.get_optimization_slave_heating_activation_pattern(self.individual, self.generation)).set_index('DATE')
-        data_cooling = pd.read_csv(self.locator.get_optimization_slave_cooling_activation_pattern(self.individual, self.generation)).set_index('DATE')
-        data_electricity = pd.read_csv(self.locator.get_optimization_slave_electricity_activation_pattern(self.individual, self.generation)).set_index('DATE')
-        data_processed = {'heating_network':data_heating, 'cooling_network':data_cooling, 'electricity_network':data_electricity}
+        data_heating = pd.read_csv(
+            self.locator.get_optimization_slave_heating_activation_pattern(self.individual, self.generation)).set_index(
+            'DATE')
+        data_cooling = pd.read_csv(
+            self.locator.get_optimization_slave_cooling_activation_pattern(self.individual, self.generation)).set_index(
+            'DATE')
+        data_electricity = pd.read_csv(
+            self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
+                                                                               self.generation)).set_index('DATE')
+        data_processed = {'heating_network': data_heating, 'cooling_network': data_cooling,
+                          'electricity_network': data_electricity}
         return data_processed
