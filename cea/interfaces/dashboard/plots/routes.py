@@ -95,9 +95,10 @@ def route_duplicate_dashboard_modal(dashboard_index):
     plot_cache = current_app.plot_cache
     dashboards = cea.plots.read_dashboards(cea_config, plot_cache)
     dashboard_name = dashboards[dashboard_index].name
+    dashboard_description = dashboards[dashboard_index].description
 
     return render_template('modal/duplicate_dashboard.html', dashboard_index=dashboard_index,
-                           dashboard_name=dashboard_name)
+                           dashboard_name=dashboard_name, dashboard_description=dashboard_description)
 
 
 @blueprint.route('/dashboard/delete/<int:dashboard_index>', methods=['POST'])
