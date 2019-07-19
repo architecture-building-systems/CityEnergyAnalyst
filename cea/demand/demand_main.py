@@ -98,10 +98,10 @@ def demand_calculation(locator, config):
             if gfa < 100.0:
                 list_buildings_less_100m2.append(name)
         return list_buildings_less_100m2
-    list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
-    if list_buildings_less_100m2 != []:
-        print('!!!Warning!!!, the next list of buildings have less than 100m2 of net area, CEA does not handle well thses'
-              'buildings, it might be that CEA fails: These are the buildings%s' % list_buildings_less_100m2)
+#    list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
+#    if list_buildings_less_100m2 != []:
+#        print('!!!Warning!!!, the next list of buildings have less than 100m2 of net area, CEA does not handle well thses'
+#              'buildings, it might be that CEA fails: These are the buildings%s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
