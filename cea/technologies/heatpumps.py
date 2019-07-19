@@ -76,7 +76,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     return E_req_W
 
 
-def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
+def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -111,7 +111,7 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
         tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = ground_temp - HP_DELTA_T_EVAP
+    tevap_K = ground_temp_K - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
