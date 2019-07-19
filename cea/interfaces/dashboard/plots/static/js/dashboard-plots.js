@@ -1,6 +1,20 @@
 /* get list of plots to work on... */
 
 $(document).ready(function() {
+    $( ".table-dialog" ).dialog({
+        autoOpen: false, height: "auto", width: "auto",
+
+        open: function (event, ui) {
+            $(`#${event.target.id}`).dialog( "option", "minWidth", event.target.offsetParent.offsetWidth)
+        },
+        resize: function( event, ui ) {
+            event.target.style.width = '100%';
+        },
+        resizeStop: function( event, ui ) {
+            event.target.style.width = '100%';
+        }
+
+    });
     load_all_plots();
 
     var categories = JSON.parse($('#cea-dashboard-add-plot').attr('data-cea-categories'));
@@ -71,10 +85,10 @@ function load_all_plots() {
         let dashboard_index = this.dataset.ceaDashboardIndex;
         let plot_index = this.dataset.ceaPlotIndex;
         let content_div = $(`#x_content-${dashboard_index}-${plot_index}`);
+        let table_div = $(`#x_table-${dashboard_index}-${plot_index}`);
 
         $.get(`../div/${dashboard_index}/${plot_index}`, function(data){
             content_div.children().replaceWith(data);
-            $('#table-btn-'+plot_index).show();
         }).fail(function(data) {
             // Server error
             if (data.status === 500) {
@@ -86,6 +100,18 @@ function load_all_plots() {
             if (data.status === 404) {
                 content_div.children().replaceWith(data.responseText);
             }
+        });
+
+        $.get(`../table/${dashboard_index}/${plot_index}`, function(data){
+            // When data is not empty
+            if(data.length) {
+                table_div.empty().append(data);
+                $('#table-btn-'+plot_index).show();
+            }
+        }).fail(function(data) {
+            table_div.children().replaceWith("");
+            console.log("error creating plot:", `table-${dashboard_index}-${plot_index}`);
+            console.log(data);
         });
     });
 }
@@ -105,18 +131,7 @@ function add_new_dashboard() {
 }
 
 function open_table(element) {
-    let style = document.styleSheets[0].ownerNode.cloneNode();
-    let height = 500;
-    let width = 900;
-    let table = window.open(`../table/${element.dataset.dashboardIndex}/${element.dataset.plotIndex}`,
-        `table-${element.dataset.dashboardIndex}-${element.dataset.plotIndex}`,
-        `height=${height},width=${width},location=no,menubar=no,status=no,titlebar=no,resizable`);
-    table.onload = function() {
-        table.document.title = `City Energy Analyst | ${element.dataset.plotTitle} Table`;
-        table.document.body.innerHTML = table.document.body.innerHTML || '<p>Table does not exist.</p>';
-        table.document.body.innerHTML = `<h1>${element.dataset.plotTitle}</h1><br>${table.document.body.innerHTML}`;
-        table.document.head.append(style);
-    }
+    $( `#x_table-${element.dataset.dashboardIndex}-${element.dataset.plotIndex}`).dialog( "open" );
 }
 
 window.addEventListener('resize', function () {
