@@ -229,9 +229,8 @@ Optimization:
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'general:weather', 'general:district-heating-network',
-                 'general:district-cooling-network', 'thermal-network:network-type', 'thermal-network:network-names',
-                 'optimization', 'decentralized', 'general:detailed-electricity-pricing', 'general:multiprocessing']
+    parameters: ['general:scenario', 'general:weather', 'thermal-network:network-type', 'thermal-network:network-names',
+                 'optimization', 'decentralized', 'general:multiprocessing']
 
   - name: decentralized
     label: Decentralized supply system
@@ -311,19 +310,19 @@ default:
     module: cea.plots.comparisons.main
     parameters: [plots-scenario-comparisons]
 
-  - name: plots-supply-system
-    label: Plots optimization detailed
-    description: Create plots for a supply system (default or optimal) of an urban scenario
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.plots.supply_system.main
-    parameters: ['general:scenario', plots-supply-system]
-
-  - name: plots-optimization
-    label: Plots optimization overview
-    description: Create plots for the results of the optimzation of an urban scenario
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.plots.optimization.main
-    parameters: ['general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
+#  - name: plots-supply-system
+#    label: Plots optimization detailed
+#    description: Create plots for a supply system (default or optimal) of an urban scenario
+#    interfaces: [cli, arcgis, dashboard]
+#    module: cea.plots.supply_system.main
+#    parameters: ['general:scenario', plots-supply-system]
+#
+#  - name: plots-optimization
+#    label: Plots optimization overview
+#    description: Create plots for the results of the optimzation of an urban scenario
+#    interfaces: [cli, arcgis, dashboard]
+#    module: cea.plots.optimization.main
+#    parameters: ['general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
 
 
   - name: benchmark-graphs
