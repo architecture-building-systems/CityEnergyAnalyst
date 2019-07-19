@@ -854,7 +854,7 @@ def calc_primary_energy_and_CO2(storage_dispatch,
     GHG_Sewage_tonCO2 = (np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * WH_TO_J / 1.0E6) * (lca.SEWAGEHP_TO_CO2_STD / 1E3)
     GHG_GHP_tonCO2 = (np.sum(Q_GHP_gen_W) / COP_GHP_avg * WH_TO_J / 1.0E6) * (lca.GHP_TO_CO2_STD / 1E3)
     GHG_HPLake_tonCO2 = (np.sum(Q_HPLake_gen_W) / COP_HPLake_avg / 1.0E6) * (lca.LAKEHP_TO_CO2_STD / 1.0E3)
-    GHG_CHP_tonCO2 = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * WH_TO_J / 1.0E6
+    GHG_CHP_tonCO2 = (1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * WH_TO_J / 1.0E6) * (gas_to_co2_CC_std / 1.0E3)
     GHG_BaseBoiler_tonCO2 = (1 / eta_Boiler_avg * np.sum(Q_BaseBoiler_gen_W) * WH_TO_J / 1.0E6) * (
             gas_to_co2_BoilerBase_std / 1E3)
     GHG_PeakBoiler_tonCO2 = (1 / eta_PeakBoiler_avg * np.sum(
