@@ -52,7 +52,7 @@ class LcaCalculations(object):
         self.SOLARCOLLECTORS_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'CO2']  # kg_CO2 / MJ_useful
         self.SOLARCOLLECTORS_TO_OIL = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'CO2']  # MJ_oil / MJ_useful
+            'PEN']  # MJ_oil / MJ_useful
 
         if pd.read_excel(locator.get_archetypes_system_controls())['has-heating-season'].item():
             # HEATING
