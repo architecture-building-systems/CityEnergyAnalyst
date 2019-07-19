@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Bar-chart of emissions"
+    name = "Annual emissions"
 
     def __init__(self, project, parameters, cache):
         super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)

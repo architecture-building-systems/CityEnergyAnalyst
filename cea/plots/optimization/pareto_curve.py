@@ -22,7 +22,7 @@ __status__ = "Production"
 
 class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Scatter-plot of costs, emissions and primary energy"
+    name = "Costs, emissions and primary energy"
 
     def __init__(self, project, parameters, cache):
         super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters, cache)
