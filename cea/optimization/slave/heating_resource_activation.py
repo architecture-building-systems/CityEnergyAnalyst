@@ -191,11 +191,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                 Q_BaseBoiler_gen_W = Q_heat_unmet_W
 
             cost_BaseBoiler_USD, C_boil_per_Wh, Gas_used_BaseBoiler_W, E_BaseBoiler_req_W = cond_boiler_op_cost(
-                Q_BaseBoiler_gen_W,
-                master_to_slave_vars.Boiler_Q_max_W,
-                tdhret_req_K, \
-                master_to_slave_vars.BoilerType,
-                master_to_slave_vars.EL_TYPE,
+                Q_BaseBoiler_gen_W, master_to_slave_vars.Boiler_Q_max_W, tdhret_req_K, master_to_slave_vars.BoilerType,
                 prices, lca, hour)
         else:
             source_BaseBoiler = 0
@@ -215,8 +211,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                 Q_PeakBoiler_gen_W = Q_heat_unmet_W
 
             cost_PeakBoiler_USD, C_boil_per_WhP, Gas_used_PeakBoiler_W, E_PeakBoiler_req_W = cond_boiler_op_cost(
-                Q_PeakBoiler_gen_W, master_to_slave_vars.BoilerPeak_Q_max_W, tdhret_req_K, \
-                master_to_slave_vars.BoilerPeakType, master_to_slave_vars.EL_TYPE, prices, lca, hour)
+                Q_PeakBoiler_gen_W, master_to_slave_vars.BoilerPeak_Q_max_W, tdhret_req_K,
+                master_to_slave_vars.BoilerPeakType, prices, lca, hour)
         else:
             source_PeakBoiler = 0
             cost_PeakBoiler_USD = 0.0
