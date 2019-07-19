@@ -285,9 +285,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     if Q_uncovered_design_W != 0:
         for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
-            BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour], Q_uncovered_design_W, tdhret_req_K, \
-                                                         master_to_slave_vars.BoilerBackupType,
-                                                         master_to_slave_vars.EL_TYPE, prices, lca, hour)
+            BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour], Q_uncovered_design_W, tdhret_req_K,
+                                                         master_to_slave_vars.BoilerBackupType, prices, lca, hour)
             Opex_var_BackupBoiler_USDhr[hour], Opex_var_BackupBoiler_per_Wh_USD, Q_BackupBoiler_W[
                 hour], E_BackupBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_BackupBoiler_req_W[hour] = E_BackupBoiler_req_W_hour
@@ -787,13 +786,6 @@ def calc_primary_energy_and_CO2(storage_dispatch,
     else:
         gas_to_oil_BoilerPeak_std = lca.NG_BOILER_TO_OIL_STD
         gas_to_co2_BoilerPeak_std = lca.NG_BOILER_TO_CO2_STD
-
-    if master_to_slave_vars.EL_TYPE == 'green':
-        el_to_co2 = lca.EL_TO_CO2_GREEN
-        el_to_oil_eq = lca.EL_TO_OIL_EQ_GREEN
-    else:
-        el_to_co2 = lca.EL_TO_CO2
-        el_to_oil_eq = lca.EL_TO_OIL_EQ
 
     # evaluate average efficiency, recover normalized data with this efficiency, if-else is there to avoid nan's
     if np.sum(Q_Furnace_gen_W) != 0:
