@@ -37,7 +37,7 @@ class SlaveData(object):
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
-        self.EL_TYPE = 'normal'  # type normal or green (=green power)
+        # self.EL_TYPE = 'normal'  # type normal or green (=green power)
 
         # Heating Technologies
         # Geothermal Heat Pump,
