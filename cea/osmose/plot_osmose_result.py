@@ -82,7 +82,7 @@ def main(building, TECHS, building_result_path):
                 composite_df = read_osmose_csv(osmose_composite_file)
             else:
                 composite_df = pd.DataFrame()
-            results = get_hourly_chilled_water_temperatures(tech, results, composite_df)
+            results = get_hourly_oau_operations(tech, results, composite_df)
             results = get_reheating_energy(tech, results)
             ex_df = set_up_ex_df(results, operation_df, electricity_df, air_flow_df)
             if 'exergy_usages' in PLOTS:
@@ -1129,7 +1129,8 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
     return np.nan
 
 
-def get_hourly_chilled_water_temperatures(tech, results, composite_df):
+def get_hourly_oau_operations(tech, results, composite_df):
+    # initialization
     hourly_chiller_usage = results.filter(like='el_oau_chi').fillna(0)
     T_low_C = 8.1
     T_high_C = 14.1
@@ -1138,20 +1139,21 @@ def get_hourly_chilled_water_temperatures(tech, results, composite_df):
     hourly_chilled_water_temperature, hourly_evap_temperature, hourly_water_coil_cond = [], [], []
     hourly_water_removed = {}
     hourly_T_EA, hourly_w_EA, hourly_m_w_add = [], [], []
+    # hourly calculation
     for i in range(results.shape[0]):
         t = i + 1
         chiller_timestep = hourly_chiller_usage.loc[i + 1]
         if chiller_timestep[chiller_timestep > 0].values.size > 0:
+            # oau chiller operation
             chiller_used = str(chiller_timestep[chiller_timestep > 0].index).split('chi')[1].split('_')[0]
             chiller_number = int(chiller_used) - 1
             hourly_chilled_water_temperature.append(T_OAU_offcoil[chiller_number])
             hourly_evap_temperature.append(T_OAU_offcoil[chiller_number] - 2.0)
+            # oau states
             if tech == 'HCS_ER0':
                 m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_h_', 'w_OA1_c_', chiller_used, i, results)
                 if t == 1:
                     # save the amount of water removed in the recovery
-                    # hourly_water_removed['m_w_OA_OA1'] = np.zeros(results.shape[0])
-                    # hourly_water_removed['T_OA1'] = np.zeros(results.shape[0])
                     results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
                     results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
                 results['m_w_removed_1'][t] = results['m_oau_in_' + chiller_used][t] * (composite_df['w_OA'][t] - composite_df['w_OA1'][t])
@@ -1161,33 +1163,59 @@ def get_hourly_chilled_water_temperatures(tech, results, composite_df):
                 hourly_m_w_add.append((results['w_RA1_' + chiller_used][t] - 10.29 / 1000)*results['m_oau_out'][t])
             elif tech == 'HCS_coil':
                 m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_', 'w_OA2_', chiller_used, i, results) / 1000
+                hourly_T_EA.append(results['T_RA'][t])
+                hourly_w_EA.append(10.29)
+                hourly_m_w_add.append(np.nan)
             elif tech == 'HCS_3for2':
                 m_w_cond_kgpers = calc_m_w_cond_composite('w_OA1_', 'w_OA2_', chiller_used, i, results, composite_df)
-                if t == 1:
-                    hourly_water_removed['m_w_OA_OA1'], hourly_water_removed['T_OA1'] = np.zeros(
-                        results.shape[0]), np.zeros(results.shape[0])
-                    hourly_water_removed['m_w_OA2_OA3'], hourly_water_removed['T_OA3'] = np.zeros(
-                        results.shape[0]), np.zeros(results.shape[0])
-                hourly_water_removed['m_w_OA_OA1'][i] = results['m_oau_in_' + chiller_used][t] * (
-                            composite_df['w_OA'][t] - composite_df['w_OA1_' + chiller_used][t])
-                hourly_water_removed['T_OA1'][i] = composite_df['T_OA1_' + chiller_used][t]
-                hourly_water_removed['m_w_OA2_OA3'][i] = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i,
-                                                                                 results, composite_df)
-                hourly_water_removed['T_OA3'][i] = composite_df['T_OA3_' + chiller_used][t]
-                hourly_T_EA.append(results['OAU_T_EA_' + chiller_used][t])
-
+                # if t == 1:
+                #     results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
+                #     results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
+                #     results['m_w_removed_2'] = np.full(results.shape[0], np.nan)
+                #     results['T_w_removed_2'] = np.full(results.shape[0], np.nan)
+                # results['m_w_removed_1'][t] = results['m_oau_in_' + chiller_used][t] * (
+                #             composite_df['w_OA'][t] - composite_df['w_OA1_' + chiller_used][t])
+                # results['T_w_removed_1'][t] = composite_df['T_OA1_' + chiller_used][t]
+                # results['m_w_removed_2'][t] = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i,
+                #                                                                  results, composite_df)
+                # results['m_w_removed_2'][t] = composite_df['T_OA3_' + chiller_used][t]
+                hourly_T_EA.append(composite_df['OAU_T_EA_' + chiller_used][t])
+                hourly_w_EA.append(composite_df['OAU_w_EA_' + chiller_used][t]*1000)
+                hourly_m_w_add.append(np.nan)
             elif tech == 'HCS_IEHX':
+                # water condensed on coil
                 m_w_cond_kgpers = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i, results, composite_df)
+                if t == 1:
+                    # save the amount of water removed in the recovery
+                    results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
+                    results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
+                w_OA_OA1 = composite_df['w_ext'][t]/1000 - composite_df['w_OA1'][t] if composite_df['w_ext'][t]/1000 - composite_df['w_OA1'][t] > 0.0 else 0
+                results['m_w_removed_1'][t] = results['m_oau_in_' + chiller_used][t] * (w_OA_OA1)
+                results['T_w_removed_1'][t] = composite_df['T_OA1'][t]
+                hourly_T_EA.append(composite_df['T_EA'][t])
+                hourly_w_EA.append(composite_df['w_EA'][t]*1000)
+                hourly_m_w_add.append((composite_df['w_EA'][t] - 10.29 / 1000)*results['m_oau_out'][t])
             else:
                 m_w_cond_kgpers = 0
             hourly_water_coil_cond.append(m_w_cond_kgpers)
 
         else:
             if tech == 'HCS_LD':
-                m_w_cond_kgpers = results['m_oau_in'][t] * (results['w_OA1'][t] / 1000 - results['w_SA'][t])
-                hourly_chilled_water_temperature.append(results['OAU_T_SA'][t])  # TODO: change to desiccant temperature
-                hourly_water_coil_cond.append(m_w_cond_kgpers)
-                hourly_evap_temperature.append(results['T_s_i_de'][t])
+                # m_w_cond_kgpers = results['m_oau_in'][t] * (results['w_OA1'][t] / 1000 - results['w_SA'][t])
+                # hourly_chilled_water_temperature.append(results['OAU_T_SA'][t])  # TODO: change to desiccant temperature
+                # hourly_water_coil_cond.append(m_w_cond_kgpers)
+                # hourly_evap_temperature.append(results['T_s_i_de'][t]-273.15)
+                hourly_chilled_water_temperature.append(np.nan)
+                hourly_water_coil_cond.append(np.nan)
+                hourly_evap_temperature.append(np.nan)
+                # water removed
+                # results['m_w_removed_1'] = results['m_oau_in']*(results['w_ext']/1000 - results['w_OA1']/1000)
+                # results['T_w_removed_1'] = results['T_OA1']
+                # results['m_w_removed_2'] = results['m_oau_in'] * (results['w_ext'] / 1000 - results['w_OA1'] / 1000)
+                # results['T_w_removed_2'] = results['T_OA1']
+                hourly_T_EA = results['T_EA_K']
+                hourly_w_EA = results['w_EA']*1000
+                hourly_m_w_add.append(np.nan)
             else:
                 hourly_chilled_water_temperature.append(np.nan)
                 hourly_water_coil_cond.append(np.nan)
@@ -1412,20 +1440,20 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B005"]
+    buildings = ["B006"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_ER0"]
-    # tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
+    # tech = ["HCS_3for2"]
+    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
     #  tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
-    cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
     #          "ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT",
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    # cases = ["WTP_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_OFF"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0704"
+    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0717"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
