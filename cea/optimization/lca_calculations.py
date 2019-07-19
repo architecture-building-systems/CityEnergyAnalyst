@@ -165,14 +165,6 @@ class LcaCalculations(object):
         self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
             'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
 
-        average_green_electricity_cost = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'costs_kWh'] / 1000
-        self.ELEC_PRICE_GREEN = np.ones(HOURS_IN_YEAR) * average_green_electricity_cost # in USD_2015 per Wh
-        self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'PEN']  # MJ_oil / MJ_final
-        self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'CO2']  # kg_CO2 / MJ_final
-
         self.EL_NGCC_TO_OIL_EQ_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
                                          'PEN'] * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final
         self.EL_NGCC_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
