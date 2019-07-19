@@ -29,7 +29,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -89,7 +89,7 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
 
         range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
         range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * lca_hour) / range_q_output_CC_W[i]
+            i] * electricity_price_perWh) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
