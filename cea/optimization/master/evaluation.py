@@ -638,7 +638,7 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_max_sewage, Q_MIN_SHARE * Q_heating_nom_W)
 
-    # Gwound source- heatpump
+    # Ground source- heatpump
     if individual[10] == 1 and GHP_ALLOWED == True:
         master_to_slave_vars.GHP_on = 1
         GHP_Qmax = max(individual[11] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
