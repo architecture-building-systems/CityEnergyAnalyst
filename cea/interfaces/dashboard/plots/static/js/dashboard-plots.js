@@ -71,10 +71,10 @@ function load_all_plots() {
         let dashboard_index = this.dataset.ceaDashboardIndex;
         let plot_index = this.dataset.ceaPlotIndex;
         let content_div = $(`#x_content-${dashboard_index}-${plot_index}`);
+        let table_div = $(`#x_table-${dashboard_index}-${plot_index}`);
 
         $.get(`../div/${dashboard_index}/${plot_index}`, function(data){
             content_div.children().replaceWith(data);
-            $('#table-btn-'+plot_index).show();
         }).fail(function(data) {
             // Server error
             if (data.status === 500) {
@@ -86,6 +86,18 @@ function load_all_plots() {
             if (data.status === 404) {
                 content_div.children().replaceWith(data.responseText);
             }
+        });
+
+        $.get(`../table/${dashboard_index}/${plot_index}`, function(data){
+            // When data is not empty
+            if(data.length) {
+                table_div.empty().append(data);
+                $('#table-btn-'+plot_index).show();
+            }
+        }).fail(function(data) {
+            table_div.children().replaceWith("");
+            console.log("error creating plot:", `table-${dashboard_index}-${plot_index}`);
+            console.log(data);
         });
     });
 }
