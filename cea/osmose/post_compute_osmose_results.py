@@ -131,7 +131,10 @@ def calc_OAU_process_Ex(T_ref_C, air_flow_df, ex_air_ext, operation_df, results,
         oau_Ex_w_removed_kWh_dict['Ex_w_removed_'+str(i+1)] = np.nan_to_num(results['m_w_removed_'+str(i+1)].values * oau_ex_w_removed)
     # Ex of water
     oau_Ex_w_kWh = np.nan_to_num(results['m_w_coil_cond'].values * oau_ex_w_cond_kJperkg)
-    oau_Ex_w_removed_kWh = sum(oau_Ex_w_removed_kWh_dict.values())
+    if len(oau_Ex_w_removed_kWh_dict.keys()) > 0:
+        oau_Ex_w_removed_kWh = sum(oau_Ex_w_removed_kWh_dict.values())
+    else:
+        oau_Ex_w_removed_kWh = np.zeros(results.shape[0])
     oau_Ex_w_add_kWh = np.nan_to_num(results['m_w_add'].values * oau_ex_w_RA_kJperkg)
     # total balance
     oau_Ex_total_kWh = oau_Ex_air_kWh + oau_Ex_air_exhaust_kWh + oau_Ex_w_kWh + oau_Ex_w_removed_kWh - oau_Ex_w_add_kWh
