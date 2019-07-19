@@ -11,7 +11,7 @@ import pandas as pd
 from cea.technologies import boiler
 from cea.technologies.constants import BOILER_ETA_HP
 from cea.optimization.constants import SIZING_MARGIN
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, WH_TO_J
 
 
 def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
@@ -38,25 +38,25 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
 
         for name in df.Name :
             # Extract process heat needs
-            Qhpro_sys = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
+            Qhpro_sys_kWh = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
 
-            Qnom = 0
-            Qannual = 0
+            Qnom_Wh = 0
+            Qannual_Wh = 0
             # Operation costs / CO2 / Prim
             for i in range(HOURS_IN_YEAR):
-                Qgas = Qhpro_sys[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
+                Qgas_Wh = Qhpro_sys_kWh[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
-                if Qgas < Qnom:
-                    Qnom = Qgas * (1 + SIZING_MARGIN)
+                if Qgas_Wh < Qnom_Wh:
+                    Qnom_Wh = Qgas_Wh * (1 + SIZING_MARGIN)
 
-                Qannual += Qgas
-                hpCosts += Qgas * prices.NG_PRICE # [CHF]
-                hpCO2 += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
-                hpPrim += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+                Qannual_Wh += Qgas_Wh
+                hpCosts += Qgas_Wh * prices.NG_PRICE # [CHF]
+                hpCO2 += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3 # [ton CO2]
+                hpPrim += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
 
-            Capex_a_hp_USD, Opex_fixed_hp_USD, Capex_hp_USD = boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
+            Capex_a_hp_USD, Opex_fixed_hp_USD, Capex_hp_USD = boiler.calc_Cinv_boiler(Qnom_Wh, locator, config, 'BO1')
             hpCosts += (Capex_a_hp_USD + Opex_fixed_hp_USD)
     else:
         hpCosts = hpCO2 = hpPrim = 0
