@@ -75,7 +75,7 @@ def route_get_building_properties():
     import cea.glossary
 
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
+    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems', 'indoor-comfort', 'district','restrictions']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}
