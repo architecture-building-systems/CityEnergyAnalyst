@@ -61,7 +61,7 @@ def cxUniform(ind1, ind2, proba, nBuildings, config):
             swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
 
     # Swap DHN and DCN, connected buildings
-    if district_cooling_network:
+    if district_heating_network:
         for i in range(nBuildings):
             if random.random() < proba:
                 swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
