@@ -25,23 +25,24 @@ def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
                                                                                           ex_air_int, results,
                                                                                           w_RA_gperkg)
     ## exergy destruction at building interface
-    oau_Ex_air_kWh, oau_Ex_w_kWh, rau_EX_air_kWh, rau_Ex_w_kWh, scu_Ex_kWh = calc_process_Ex_requirement(T_ref_C,
-                                                                                                         air_flow_df,
-                                                                                                         ex_air_ext,
-                                                                                                         ex_air_int,
-                                                                                                         operation_df,
-                                                                                                         results,
-                                                                                                         rh_ref,
-                                                                                                         w_RA_gperkg,
-                                                                                                         w_ref_sat_gperkg)
+    oau_Ex_total_kWh, rau_EX_air_kWh, rau_Ex_w_kWh, scu_Ex_kWh = calc_process_Ex_requirement(T_ref_C,
+                                                                                             air_flow_df,
+                                                                                             ex_air_ext,
+                                                                                             ex_air_int,
+                                                                                             operation_df,
+                                                                                             results,
+                                                                                             rh_ref,
+                                                                                             w_RA_gperkg,
+                                                                                             w_ref_sat_gperkg)
     ## Exergy of cooling/heating utilities
     if results.filter(like='q_oau_chi').size == 0:
         oau_Ex_c_kWh = np.nan_to_num(np.vectorize(calc_Ex.calc_Ex_Qc)(results['Qc_de'], results['T_s_i_de']-273.15, T_ref_C))
+        oau_Ex_h_kWh = np.nan_to_num(np.vectorize(calc_Ex.calc_Ex_Qh)(results['Qh_re'], 44.3, T_ref_C))
     else:
         oau_Ex_c_kWh = np.nan_to_num(np.vectorize(calc_Ex.calc_Ex_Qc)(results.filter(like='q_oau_chi').sum(axis=1), results['T_evap'], T_ref_C))
-    oau_Ex_h_kWh = results['q_reheat'].values
-    rau_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_coi_scu'], 7, T_ref_C)
-    scu_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_coi_lcu'], 16, T_ref_C)
+        oau_Ex_h_kWh = results['q_reheat'].values
+    rau_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_coi_lcu'], 7, T_ref_C)
+    scu_Ex_c_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_coi_scu'], 16, T_ref_C)
 
     # ex_df
     ex_df = pd.DataFrame()
@@ -49,7 +50,7 @@ def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
     ex_df['Ex_min_air'] = Ex_min_air_kWh
     ex_df['Ex_min_water'] = Ex_min_w_kWh
     ex_df['Ex_min_total'] = ex_df.filter(like='Ex_min').sum(axis=1)
-    ex_df['Ex_process_OAU'] = oau_Ex_air_kWh + oau_Ex_w_kWh
+    ex_df['Ex_process_OAU'] = oau_Ex_total_kWh
     ex_df['Ex_process_RAU'] = rau_EX_air_kWh + rau_Ex_w_kWh
     ex_df['Ex_process_SCU'] = scu_Ex_kWh
     ex_df['Ex_process_total'] = ex_df.filter(like='Ex_process').sum(axis=1)
@@ -96,7 +97,7 @@ def calc_process_Ex_requirement(T_ref_C, air_flow_df, ex_air_ext, ex_air_int, op
     # SCU
     scu_T_SA = 20
     scu_Ex_kWh = np.vectorize(calc_Ex.calc_Ex_Qc)(results['q_scu_sen'], scu_T_SA, T_ref_C)
-    return oau_Ex_air_kWh, oau_Ex_w_kWh, rau_EX_air_kWh, rau_Ex_w_kWh, scu_Ex_kWh
+    return oau_Ex_total_kWh, rau_EX_air_kWh, rau_Ex_w_kWh, scu_Ex_kWh
 
 
 def calc_RAU_process_Ex(T_ref_C, ex_air_int, results, rh_ref, w_RA_gperkg, w_ref_sat_gperkg):
