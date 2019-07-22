@@ -13,7 +13,7 @@ import pandas as pd
 from deap import tools, creator, base
 
 from cea.optimization import supportFn
-from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
+from cea.optimization.constants import CXPB, MUTPB, NAMES_TECHNOLOGY_OF_INDIVIDUAL
 from cea.optimization.master import crossover
 from cea.optimization.master import evaluation
 from cea.optimization.master import mutations
@@ -80,6 +80,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     # Hyperparameters
     NOBJ = 3  # number of objectives
     NGEN = config.optimization.ngen   # number of individuals
+    MU = config.optimization.initialind #int(H + (4 - H % 4)) # number of individuals to select
+
     K = config.optimization.initialind  # number of individuals to select
     # NDIM = NOBJ + K - 1  # number of problem dimensions
     P = [2, 1]
@@ -87,9 +89,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     SCALES = [1, 0.5]
     H = factorial(NOBJ + P2 - 1) / (factorial(P2) * factorial(NOBJ - 1))
     # BOUND_LOW, BOUND_UP = 0.0, 1.0
-    MU = config.optimization.initialind #int(H + (4 - H % 4)) # number of individuals to select
-    CXPB = 1.0
-    MUTPB = 1.0
 
     # classes and tools
     # reference points
@@ -152,17 +151,18 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     for gen in range(1, NGEN):
         print ("Evaluating Generation %s{} of %s{} generations", gen)
         # Select and clone the next generation individuals
-        offspring = map(toolbox.clone, toolbox.select(pop, len(pop)))
+        pop_cloned = map(toolbox.clone, toolbox.select(pop, len(pop)))
 
         # Apply crossover and mutation on the pop
-        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+        offspring = []
+        for child1, child2 in zip(pop_cloned[::2], pop_cloned[1::2]):
             child1, child2 = crossover.cxUniform(child1, child2, CXPB, nBuildings, config)
             del child1.fitness.values
             del child2.fitness.values
             offspring += [child1, child2]
 
         # Apply mutation
-        for mutant in offspring:
+        for mutant in pop_cloned:
             mutant = mutations.mutFlip(mutant, MUTPB, nBuildings, config)
             mutant = mutations.mutShuffle(mutant, MUTPB, nBuildings, config)
             offspring.append(mutations.mutGU(mutant, MUTPB, config))
