@@ -211,8 +211,8 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 DHN_temperature_considered = False
 DCN_temperature_considered = False
 
-PROBA = 0.5
-SIGMAP = 0.2
+CXPB = 0.5
+MUTPB = 0.5
 EPS_MARGIN = 0.001
 
 # Heat Recovery
