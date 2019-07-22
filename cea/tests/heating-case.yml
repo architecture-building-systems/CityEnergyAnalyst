@@ -1,0 +1,42 @@
+- script: data-helper
+- script: radiation-daysim
+- script: demand
+- script: emissions
+- script: operation-costs
+- script: network-layout
+  parameters:
+    network-type: DH
+- script: lake-potential
+- script: sewage-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: thermal-network
+  parameters:
+    network-type: DH
+    use-representative-week-per-month: true
+- script: thermal-network-optimization
+  parameters:
+    network-type: DH
+    use-representative-week-per-month: true
+    yearly-cost-calculations: true
+- script: decentralized
+- script: optimization
+  parameters:
+    initialind: 2
+    ngen: 2
+    halloffame: 5
+    random-seed: 1234
+- script: multi-criteria-analysis
+  parameters:
+    generations: 2
