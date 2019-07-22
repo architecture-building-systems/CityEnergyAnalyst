@@ -669,8 +669,15 @@ def read_schedules_from_file(schedules_csv):
 
     df_schedules = pd.read_csv(schedules_csv)
 
+    # convert to dict
+    building_schedules = df_schedules.to_dict(orient='list')
     # do some transformation
-    # return schedules in
+    # convert to np.arrays
+    for key, value in building_schedules.items():
+
+        building_schedules[key] = np.array(value)
+
+    return building_schedules
 
 
 def save_schedules_to_disc(locator, building_schedules, building_name):
@@ -680,6 +687,7 @@ def save_schedules_to_disc(locator, building_schedules, building_name):
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
     df_building_schedules.to_csv(schedules_csv_file)
+    print("Saving schedules for building {} to inputs/building-properties directory.".format(building_name))
 
 
 
@@ -718,7 +726,7 @@ def get_building_schedules(locator, bpr, config):
         # calculate mixed-use building schedules
         building_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
         # write the building schedules to disc for the next simulation or manipulation by the user
-        print("Saving schedules for building {} to inputs/building-properties directory.")
+
         save_schedules_to_disc(locator, building_schedules, building_name)
 
 
