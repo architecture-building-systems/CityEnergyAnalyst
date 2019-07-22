@@ -42,7 +42,7 @@ def main(path_result_folder, case, time_steps):
         all_results_dict[building] = building_result_df
 
         all_el_total_dict[building] = (el_compare_df.loc['el_Wh_total_per_Af']/1000).to_dict()
-        all_cop_dict[building] = el_compare_df.loc['cop_system_mean'].to_dict()  # FIXME
+        all_cop_dict[building] = el_compare_df.loc['cop_system'].to_dict()  # FIXME
         all_exergy_eff_dict[building] = (el_compare_df.loc['eff_exergy'] * 100).to_dict()
 
         ## write qc all tech to one dict
@@ -454,7 +454,7 @@ if __name__ == '__main__':
     # cases = ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     for case in cases:
         print case
-        path_result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0704'
+        path_result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0717'
         # path_result_folder = "D:\\SH\\WP1_3for2\\WP1_0702_3for2"
         # path_result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results_0629"
         time_steps = 168
