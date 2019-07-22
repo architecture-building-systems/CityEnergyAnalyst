@@ -73,7 +73,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy, locator, config)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
@@ -371,7 +371,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy, locator, config):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -394,11 +394,12 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
     # this is used in the NN please do not erase or change!!
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
-    list_uses = usage_schedules['list_uses']
-    archetype_schedules = usage_schedules['archetype_schedules']
-    archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
-                                               use_stochastic_occupancy)
+#    list_uses = usage_schedules['list_uses']
+#    archetype_schedules = usage_schedules['archetype_schedules']
+#    archetype_values = usage_schedules['archetype_values']
+    #schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
+    #                                           use_stochastic_occupancy)
+    schedules = occupancy_model.get_building_schedules(locator, bpr, config)
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = np.floor(schedules['people'])
