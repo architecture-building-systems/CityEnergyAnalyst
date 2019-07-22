@@ -2,6 +2,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
+import os
 import cea.inputlocator
 import cea.config
 from cea.utilities import epwreader
@@ -662,6 +663,67 @@ def calc_average(last, current, share_of_use):
     function to calculate the weighted average of schedules
     """
     return last + current * share_of_use
+
+
+def read_schedules_from_file(schedules_csv):
+
+    df_schedules = pd.read_csv(schedules_csv)
+
+    # do some transformation
+    # return schedules in
+
+
+def save_schedules_to_disc(locator, building_schedules, building_name):
+
+    path_to_folder = locator.get_building_properties_folder()
+    schedules_csv_file = os.path.join(path_to_folder, '{}_schedules.csv'.format(building_name))
+    # convert to DataFrame to use pandas csv writing method
+    df_building_schedules = pd.DataFrame.from_dict(building_schedules)
+    df_building_schedules.to_csv(schedules_csv_file)
+
+
+
+
+
+def get_building_schedules(locator, bpr, config):
+
+    # this is the new main function of this script
+    # it replaces two previous functions
+    # - schedule_maker: it was reading the archetyp schedules database and other archetypal values
+    # - calc_schedules: it was creating schedules of mixed use buildings from the archetype schedules
+
+    building_name = bpr.name
+
+
+    # (1) first the script checks if pre-defined schedules for the building exist
+    schedules_csv = locator.get_building_schedules(building_name)
+    if os.path.isfile(schedules_csv):
+        print("Schedules for building {} detected. Using these schedules.".format(building_name))
+
+        building_schedules = read_schedules_from_file(schedules_csv)
+
+    elif not os.path.isfile(schedules_csv):
+        print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
+        # get list of uses in building
+        list_uses = [key for (key, value) in bpr.occupancy.items() if value > 0.0]
+        # get dates vector
+        weather_data = epwreader.epw_reader(config.weather)[['year']]
+        year = weather_data['year'][0]
+        dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+        # get occupancy schedule config
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
+
+        # read archetypes database
+        archetype_schedules, archetype_values = schedule_maker(dates, locator, list_uses)
+        # calculate mixed-use building schedules
+        building_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
+        # write the building schedules to disc for the next simulation or manipulation by the user
+        print("Saving schedules for building {} to inputs/building-properties directory.")
+        save_schedules_to_disc(locator, building_schedules, building_name)
+
+
+    return building_schedules
+
 
 
 def main(config):
