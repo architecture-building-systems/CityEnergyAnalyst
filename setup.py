@@ -19,6 +19,7 @@ with open('README.rst', 'r') as f:
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'ephem',
+                    'deap==1.3.0',
                     'doit==0.29.0',
                     'geopandas',
                     'ipython',
