@@ -56,13 +56,13 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     @property
     def layout(self):
-        data_frame = self.process_individual_dispatch_curves()['heating_network']
+        data_frame = self.process_individual_dispatch_curve_heating()
         return dict(barmode='relative', yaxis=dict(title='Energy Generation [kW]'),
                     xaxis=dict(type='date', range=[data_frame.index[0], data_frame.index[168]], fixedrange=False))
 
     def calc_graph(self):
         # main data about technologies
-        data = self.process_individual_dispatch_curves()['heating_network']
+        data = self.process_individual_dispatch_curve_heating()
         graph = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:

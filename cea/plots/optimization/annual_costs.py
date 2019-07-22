@@ -46,6 +46,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
                          yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     def calc_graph(self):
+        self.multi_criteria=False #TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance()
         graph = []
         for field in self.analysis_fields:
