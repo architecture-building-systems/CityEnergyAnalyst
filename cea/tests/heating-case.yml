@@ -1,3 +1,13 @@
+- config: default
+  "general:multiprocessing": on
+  "general:project": ${TEMP}/${NOW}-heating-case-workflow/reference-case-open
+  "radiation-daysim:daysim-bin-directory": ${RAYPATH}
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: open
+- config: .
+  "general:scenario-name": baseline
 - script: data-helper
 - script: radiation-daysim
 - script: demand

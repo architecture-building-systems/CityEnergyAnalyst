@@ -6,6 +6,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import datetime
 import cea.config
 import cea.inputlocator
 import cea.api
@@ -24,12 +25,14 @@ __status__ = "Production"
 
 def run(config, script, **kwargs):
     print('Running {script} with args {args}'.format(script=script, args=kwargs))
-    f = getattr(cea.api, script.replace('-', '_'))
+    f = getattr(cea.api, script)
     f(config=config, **kwargs)
     print('-' * 80)
 
 
 def main(config):
+    os.environ["NOW"] = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
     workflow_yml = config.workflow.workflow
     if not os.path.exists(workflow_yml):
         raise cea.ConfigError("Workflow YAML file not found: {workflow}".format(workflow=workflow_yml))
@@ -38,11 +41,61 @@ def main(config):
         workflow = yaml.load(workflow_fp)
 
     for step in workflow:
-        script = cea.scripts.by_name(step["script"])
-        print("Workflow step: script={script}".format(script=script.name))
-        parameters = {p for s, p in config.matching_parameters(script.parameters)}
-        if "parameters" in step:
-            parameters.update(step["parameters"])
+        if "script" in step:
+            do_script_step(config, step)
+        elif "config" in step:
+            config = do_config_step(config, step)
+        else:
+            raise ValueError("Invalid step configuration: {step}".format(step=step))
+
+
+def do_config_step(config, step):
+    """update the :py:class:cea.config.Configuration object, returning the new value for the config"""
+    base_config = step["config"]
+    if base_config == "default":
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    elif base_config == "user":
+        config = cea.config.Configuration()
+    elif base_config == ".":
+        # keep the current config, we're just going to update some parameters
+        config = config
+    else:
+        # load the config from a file
+        config = cea.config.Configuration(base_config)
+
+    for fqn in step.keys():
+        if fqn == "config":
+            continue
+        parameter = config.get_parameter(fqname=fqn)
+        value = step[fqn]
+        set_parameter(config, parameter, value)
+    return config
+
+
+def set_parameter(config, parameter, value):
+    """Set a parameter to a value (expand with environment vars) without tripping the restricted_to part of config"""
+    original_restricted_to = config.restricted_to
+    try:
+        config.restricted_to = None
+        print("Setting {parameter}={value}".format(parameter=parameter.fqname, value=value))
+        if not isinstance(value, basestring):
+            value = str(value)
+        expanded_value = os.path.expandvars(value)
+        parameter.set(parameter.decode(expanded_value))
+    finally:
+        config.restricted_to = original_restricted_to
+
+
+def do_script_step(config, step):
+    """Run a script based on the step's "script" and "parameters" (optional) keys."""
+    script = cea.scripts.by_name(step["script"])
+    print("Workflow step: script={script}".format(script=script.name))
+    parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
+    if "parameters" in step:
+        parameters.update(step["parameters"])
+    py_script = script.name.replace("-", "_")
+    py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
+    run(config, py_script, **py_parameters)
 
 
 if __name__ == '__main__':
