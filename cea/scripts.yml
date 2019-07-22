@@ -401,13 +401,6 @@ default:
     module: cea.tests.trace_inputlocator
     parameters: ['general:scenario', trace-inputlocator]
 
-  - name: cooling-case-workflow
-    label: cooling case workflow
-    description: Run the cooling case from start to end to test the cea
-    interfaces: [cli]
-    module: cea.tests.cooling_case_workflow
-    parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
-
   - name: workflow
     lable: Workflow
     description: Run a workflow.yml file from start to end
