@@ -7,13 +7,11 @@ import time
 import warnings
 from itertools import repeat, izip
 
+from math import factorial
 import numpy as np
 import pandas as pd
-from deap import base
-from deap import creator
-from deap import tools
+from deap import tools, creator, base
 
-import cea.config
 from cea.optimization import supportFn
 from cea.optimization.constants import PROBA, SIGMAP, NAMES_TECHNOLOGY_OF_INDIVIDUAL
 from cea.optimization.master import crossover
@@ -31,11 +29,9 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
+NOBJ = 3  # number of objectives
+creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
-config = cea.config.Configuration()
-random.seed(config.optimization.random_seed)
-np.random.seed(config.optimization.random_seed)
 
 
 def objective_function(individual, individual_number, generation, building_names, locator,
@@ -71,84 +67,126 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                             network_features, config, prices, lca):
     t0 = time.clock()
 
-    genCP = config.optimization.recoverycheckpoint
     # initiating hall of fame size and the function evaluations
-    halloffame_size = config.optimization.halloffame
-    function_evals = 0
     euclidean_distance = 0
     spread = 0
-    proba, sigmap = PROBA, SIGMAP
+    random.seed(config.optimization.random_seed)
+    np.random.seed(config.optimization.random_seed)
 
     # get number of buildings
     nBuildings = len(building_names)
 
     # SET-UP EVOLUTIONARY ALGORITHM
-    # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
-    # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
+    # Hyperparameters
+    NOBJ = 3  # number of objectives
+    NGEN = config.optimization.ngen   # number of individuals
+    K = config.optimization.initialind  # number of individuals to select
+    # NDIM = NOBJ + K - 1  # number of problem dimensions
+    P = [2, 1]
+    P2 = 12
+    SCALES = [1, 0.5]
+    H = factorial(NOBJ + P2 - 1) / (factorial(P2) * factorial(NOBJ - 1))
+    # BOUND_LOW, BOUND_UP = 0.0, 1.0
+    MU = config.optimization.initialind #int(H + (4 - H % 4)) # number of individuals to select
+    CXPB = 1.0
+    MUTPB = 1.0
+
+    # classes and tools
+    # reference points
+    ref_points = [tools.uniform_reference_points(NOBJ, p, s) for p, s in zip(P, SCALES)]
+    ref_points = np.concatenate(ref_points)
+    _, uniques = np.unique(ref_points, axis=0, return_index=True)
+    ref_points = ref_points[uniques]
     toolbox = base.Toolbox()
     toolbox.register("generate", generate_main, nBuildings, config)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function_wrapper)
-    toolbox.register("select", tools.selNSGA2)
+    # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=30.0)
+    # toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
+    toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
     # configure multiprocessing
     if config.multiprocessing:
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         toolbox.register("map", pool.map)
 
-    # Initialization of variables
-    DHN_network_list = []
-    DCN_network_list = []
-    halloffame = []
-    halloffame_fitness = []
-    epsInd = []
-
-    #this will help when we save the results (to know what the individual has inside
-    columns_of_saved_files = initialize_column_names_of_individual(building_names)
-
+    # Initialize statistics object
     stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-    if genCP is 0:
+    pop = toolbox.population(n=MU)
 
-        pop = toolbox.population(n=config.optimization.initialind)
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, izip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
+                                         repeat(building_names, len(invalid_ind)),
+                                         repeat(locator, len(invalid_ind)),
+                                         repeat(network_features, len(invalid_ind)),
+                                         repeat(config, len(invalid_ind)),
+                                         repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
 
-        for ind in pop:
-            DHN_network_list, DCN_network_list = evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator,
-                                                                     config, building_names)
+    # Compile statistics about the population
+    record = stats.compile(pop)
+    logbook.record(gen=0, evals=len(invalid_ind), **record)
 
-        # Evaluate the initial population
-        print "Evaluate initial population"
+    print(logbook.stream)
+
+    # Begin the generational process
+    # Initialization of variables
+    DHN_network_list = []
+    DCN_network_list = []
+    halloffame = []
+    halloffame_fitness = []
+    epsInd = []
+    # this will help when we save the results (to know what the individual has inside
+    columns_of_saved_files = initialize_column_names_of_individual(building_names)
+    for gen in range(1, NGEN):
+        print ("Evaluating Generation %s{} of %s{} generations", gen)
+        # Select and clone the next generation individuals
+        offspring = map(toolbox.clone, toolbox.select(pop, len(pop)))
+
+        # Apply crossover and mutation on the pop
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            child1, child2 = crossover.cxUniform(child1, child2, CXPB, nBuildings, config)
+            del child1.fitness.values
+            del child2.fitness.values
+            offspring += [child1, child2]
+
+        # Apply mutation
+        for mutant in offspring:
+            mutant = mutations.mutFlip(mutant, MUTPB, nBuildings, config)
+            mutant = mutations.mutShuffle(mutant, MUTPB, nBuildings, config)
+            offspring.append(mutations.mutGU(mutant, MUTPB, config))
 
         # Evaluate the individuals with an invalid fitness
-        tested_population = [ind for ind in pop if not ind.fitness.valid]
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate,
-                                izip(tested_population, range(len(tested_population)), repeat(genCP, len(tested_population)),
-                                     repeat(building_names, len(tested_population)),
-                                     repeat(locator, len(tested_population)),
-                                     repeat(network_features, len(tested_population)),
-                                     repeat(config, len(tested_population)),
-                                     repeat(prices, len(tested_population)), repeat(lca, len(tested_population))))
-
-        function_evals = function_evals + len(tested_population)  # keeping track of number of function evaluations
-        # linking every individual with the corresponding fitness, this also keeps a track of the number of function
-        # evaluations. This can further be used as a stopping criteria in future
-        for ind, fit in zip(tested_population, fitnesses):
+                                    izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
+                                         repeat(building_names, len(invalid_ind)),
+                                         repeat(locator, len(invalid_ind)),
+                                         repeat(network_features, len(invalid_ind)),
+                                         repeat(config, len(invalid_ind)),
+                                         repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
+        for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        pop = toolbox.select(pop, len(pop))  # assigning crowding distance
+        # Select the next generation population from parents and offspring
+        pop = toolbox.select(pop + offspring, MU)
 
-        # halloffame is the best individuals that are observed in all generations
-        # the size of the halloffame is linked to the number of initial individuals
-        if len(halloffame) <= halloffame_size:
-            halloffame.extend(pop)
+        # Compile statistics about the new population
+        record = stats.compile(pop)
+        logbook.record(gen=gen, evals=len(invalid_ind), **record)
+        print(logbook.stream)
 
-        #get only the DHN and DCN list for selected individuals
         DCN_network_list_selected = []
         DHN_network_list_selected = []
         for individual in pop:
@@ -157,30 +195,30 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
             DCN_network_list_selected.append(DCN_barcode)
             DHN_network_list_selected.append(DHN_barcode)
 
-
         DHN_network_list_tested = []
         DCN_network_list_tested = []
-        for individual in tested_population:
+        for individual in invalid_ind:
             DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
                                                                                                              building_names)
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
-        print "Save Initial population \n"
-        save_generation_dataframes(genCP, tested_population, locator, DCN_network_list_tested,
-                                   DHN_network_list_tested)
-        save_generation_individuals(columns_of_saved_files, genCP, tested_population, locator)
+        print "Save population \n"
+        save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
+        save_generation_individuals(columns_of_saved_files, gen, invalid_ind, locator)
 
-        with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
-            cp = dict(nsga_selected_population=pop,
-                      generation=0,
+        # Create Checkpoint if necessary
+        print "Create CheckPoint", gen, "\n"
+        with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
+            cp = dict(selected_population=pop,
+                      generation=gen,
                       all_population_DHN_network_barcode=DHN_network_list,
                       all_population_DCN_network_barcode=DCN_network_list,
                       tested_population_DHN_network_barcode=DHN_network_list_tested,
                       tested_population_DCN_network_barcode=DCN_network_list_tested,
                       selected_population_DHN_network_barcode=DHN_network_list_selected,
                       selected_population_DCN_network_barcode=DCN_network_list_selected,
-                      tested_population=tested_population,
+                      tested_population=invalid_ind,
                       tested_population_fitness=fitnesses,
                       epsIndicator=epsInd,
                       halloffame=halloffame,
@@ -189,195 +227,13 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                       spread=spread,
                       detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
                       district_heating_network=config.optimization.district_heating_network,
-                      district_cooling_network=config.optimization.district_cooling_network)
+                      district_cooling_network=config.optimization.district_cooling_network
+                      )
             json.dump(cp, fp)
-    else:
-        print "Recover from CP " + str(genCP) + "\n"
-        # import the checkpoint based on the genCP
-        with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
-            cp = json.load(fp)
-            pop = toolbox.population(n=config.optimization.initialind)
-            for i in xrange(len(pop)):
-                for j in xrange(len(pop[i])):
-                    pop[i][j] = cp['nsga_selected_population'][i][j]
-            DHN_network_list = cp['DHN_network_list']
-            DCN_network_list = cp['DCN_network_list']
-
-            for ind in pop:
-                DHN_network_list, DCN_network_list = evaluation.checkNtw(ind, DHN_network_list, DCN_network_list,
-                                                                         locator, config, building_names)
-
-            # Evaluate the individuals with an invalid fitness
-            tested_population = [ind for ind in pop if not ind.fitness.valid]
-
-
-            fitnesses = toolbox.map(toolbox.evaluate,
-                                    izip(tested_population, range(len(tested_population)), repeat(genCP, len(tested_population)),
-                                         repeat(building_names, len(tested_population)),
-                                         repeat(locator, len(tested_population)),
-                                         repeat(network_features, len(tested_population)),
-                                         repeat(config, len(tested_population)),
-                                         repeat(prices, len(tested_population)), repeat(lca, len(tested_population))))
-
-            function_evals = function_evals + len(tested_population)  # keeping track of number of function evaluations
-            # linking every individual with the corresponding fitness, this also keeps a track of the number of function
-            # evaluations. This can further be used as a stopping criteria in future
-            for ind, fit in zip(pop, fitnesses):
-                ind.fitness.values = fit
-
-            pop = toolbox.select(pop, len(pop))  # assigning crowding distance
-
-    # Evolution starts !
-
-    g = genCP
-    stopCrit = False  # Threshold for the Epsilon indicator, Not used
-    xs = [((objectives[0])) for objectives in fitnesses]  # Costs
-    ys = [((objectives[1])) for objectives in fitnesses]  # GHG emissions
-    zs = [((objectives[2])) for objectives in fitnesses]  # primary energy MJ
-
-    # normalization is used for optimization metrics as the objectives are all present in different scales
-    # to have a consistent value for normalization, the values of the objectives of the initial generation are taken
-    normalization = [max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs)]
-
-    # Initialization of variables
-    while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
-        g += 1
-        print "Generation", g
-        offspring = list(pop)
-        # Apply crossover and mutation on the pop
-        for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = crossover.cxUniform(ind1, ind2, proba, nBuildings, config)
-            offspring += [child1, child2]
-
-        for mutant in pop:
-            mutant = mutations.mutFlip(mutant, proba, nBuildings, config)
-            mutant = mutations.mutShuffle(mutant, proba, nBuildings, config)
-            offspring.append(mutations.mutGU(mutant, proba, config))
-
-        tested_population = [ind for ind in offspring if not ind.fitness.valid]
-
-        for ind in tested_population:
-            DHN_network_list, DCN_network_list, evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator,
-                                                                    config, building_names)
-
-        # Evaluate the individuals with an invalid fitness
-        fitnesses = toolbox.map(toolbox.evaluate,
-                                izip(tested_population, range(len(tested_population)), repeat(g, len(tested_population)),
-                                     repeat(building_names, len(tested_population)),
-                                     repeat(locator, len(tested_population)),
-                                     repeat(network_features, len(tested_population)),
-                                     repeat(config, len(tested_population)),
-                                     repeat(prices, len(tested_population)), repeat(lca, len(tested_population))))
-
-        function_evals = function_evals + len(tested_population)  # keeping track of number of function evaluations
-        # linking every individual with the corresponding fitness, this also keeps a track of the number of function
-        # evaluations. This can further be used as a stopping criteria in future
-        for ind, fit in zip(tested_population, fitnesses):
-            ind.fitness.values = fit
-
-        selection = toolbox.select(pop + tested_population, config.optimization.initialind)  # assigning crowding distance
-
-        if len(halloffame) <= halloffame_size:
-            halloffame.extend(selection)
-        else:
-            halloffame.extend(selection)
-            halloffame = toolbox.select(halloffame, halloffame_size)
-
-        halloffame_fitness = []
-        for ind in halloffame:
-            halloffame_fitness.append(ind.fitness.values)
-
-        # Compute the epsilon criteria [and check the stopping criteria]
-        epsInd.append(evaluation.epsIndicator(pop, selection))
-        # compute the optimization metrics for every front apart from generation 0
-        euclidean_distance, spread = convergence_metric(pop, selection, normalization)
-
-        pop[:] = selection
-
-        DCN_network_list_selected = []
-        DHN_network_list_selected = []
-        for individual in pop:
-            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                             building_names)
-            DCN_network_list_selected.append(DCN_barcode)
-            DHN_network_list_selected.append(DHN_barcode)
-
-        DHN_network_list_tested = []
-        DCN_network_list_tested = []
-        for individual in tested_population:
-            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                             building_names)
-            DCN_network_list_tested.append(DCN_barcode)
-            DHN_network_list_tested.append(DHN_barcode)
-
-        print "Save population \n"
-        save_generation_dataframes(g, tested_population, locator, DCN_network_list_tested, DHN_network_list_tested)
-        save_generation_individuals(columns_of_saved_files, g, tested_population, locator)
-
-        # Create Checkpoint if necessary
-        # The networks created for all the tested population is bigger than the selected population, as this is being
-        # used in plots scripts, they are exclusively separated with two variables, which are further used
-        if g % config.optimization.fcheckpoint == 0:
-            print "Create CheckPoint", g, "\n"
-            with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(selected_population=pop,
-                          generation=g,
-                          all_population_DHN_network_barcode=DHN_network_list,
-                          all_population_DCN_network_barcode=DCN_network_list,
-                          tested_population_DHN_network_barcode=DHN_network_list_tested,
-                          tested_population_DCN_network_barcode=DCN_network_list_tested,
-                          selected_population_DHN_network_barcode=DHN_network_list_selected,
-                          selected_population_DCN_network_barcode=DCN_network_list_selected,
-                          tested_population=tested_population,
-                          tested_population_fitness=fitnesses,
-                          epsIndicator=epsInd,
-                          halloffame=halloffame,
-                          halloffame_fitness=halloffame_fitness,
-                          euclidean_distance=euclidean_distance,
-                          spread=spread,
-                          detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
-                          district_heating_network=config.optimization.district_heating_network,
-                          district_cooling_network=config.optimization.district_cooling_network
-                          )
-                json.dump(cp, fp)
-
-    if g == config.optimization.ngen:
-        print "Final Generation reached"
-    else:
-        print "Stopping criteria reached"
-
-    # Dataframe with all the individuals whose objective functions are calculated, gathering all the results from
-    # multiple generations
-    df = pd.read_csv(locator.get_optimization_individuals_in_generation(0))
-    for i in range(config.optimization.ngen):
-        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i + 1)),ignore_index=True)
-    df.to_csv(locator.get_optimization_all_individuals())
-    # # Saving the final results
-    # print "Save final results. " + str(len(pop)) + " individuals in final population"
-    with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
-        cp = dict(selected_population=pop,
-                  generation=g,
-                  all_population_DHN_network_barcode=DHN_network_list,
-                  all_population_DCN_network_barcode=DCN_network_list,
-                  tested_population_DHN_network_barcode=DHN_network_list_tested,
-                  tested_population_DCN_network_barcode=DCN_network_list_tested,
-                  selected_population_DHN_network_barcode=DHN_network_list_selected,
-                  selected_population_DCN_network_barcode=DCN_network_list_selected,
-                  tested_population=tested_population,
-                  tested_population_fitness=fitnesses,
-                  epsIndicator=epsInd,
-                  halloffame=halloffame,
-                  halloffame_fitness=halloffame_fitness,
-                  euclidean_distance=euclidean_distance,
-                  spread=spread,
-                  detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
-                  district_heating_network=config.optimization.district_heating_network,
-                  district_cooling_network=config.optimization.district_cooling_network)
-        json.dump(cp, fp)
 
     print("save totals for generation")
     print "Master Work Complete \n"
-    print ("Number of function evaluations = " + str(function_evals))
+    # print ("Number of function evaluations = " + str(function_evals))
     t1 = time.clock()
     print (t1 - t0)
     if config.multiprocessing:
@@ -386,16 +242,16 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     return pop, logbook
 
 
-def save_generation_dataframes(generation, slected_individuals, locator, DCN_network_list_selected, DHN_network_list_selected):
-
+def save_generation_dataframes(generation, slected_individuals, locator, DCN_network_list_selected,
+                               DHN_network_list_selected):
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["Option "+str(x)for x in individual_list]
+    individual_name_list = ["Option " + str(x) for x in individual_list]
     performance_distributed = pd.DataFrame()
     performance_cooling = pd.DataFrame()
     performance_heating = pd.DataFrame()
     performance_electricity = pd.DataFrame()
     performance_totals = pd.DataFrame()
-    for ind, DCN_barcode, DHN_barcode in zip(individual_list,DCN_network_list_selected,DHN_network_list_selected) :
+    for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
         if DHN_barcode.count("1") > 0:
             performance_heating = pd.concat([performance_heating,
                                              pd.read_csv(
@@ -403,7 +259,8 @@ def save_generation_dataframes(generation, slected_individuals, locator, DCN_net
                                             ignore_index=True)
         if DCN_barcode.count("1") > 0:
             performance_cooling = pd.concat([performance_cooling,
-                                             pd.read_csv(locator.get_optimization_slave_cooling_performance(ind, generation))],
+                                             pd.read_csv(
+                                                 locator.get_optimization_slave_cooling_performance(ind, generation))],
                                             ignore_index=True)
 
         performance_distributed = pd.concat([performance_distributed, pd.read_csv(
@@ -431,7 +288,7 @@ def save_generation_dataframes(generation, slected_individuals, locator, DCN_net
     performance_electricity['generation'] = generation
     performance_totals['generation'] = generation
 
-    #save all results to disk
+    # save all results to disk
     performance_distributed.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
     performance_cooling.to_csv(locator.get_optimization_generation_cooling_performance(generation))
     performance_heating.to_csv(locator.get_optimization_generation_heating_performance(generation))
@@ -439,10 +296,8 @@ def save_generation_dataframes(generation, slected_individuals, locator, DCN_net
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation))
 
 
-
 def save_generation_individuals(columns_of_saved_files, generation, invalid_ind, locator):
-
-    #now get information about individuals and save to disk
+    # now get information about individuals and save to disk
     individual_list = range(len(invalid_ind))
     individuals_info = pd.DataFrame()
     for ind in invalid_ind:
