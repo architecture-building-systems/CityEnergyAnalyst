@@ -148,7 +148,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     epsInd = []
     # this will help when we save the results (to know what the individual has inside
     columns_of_saved_files = initialize_column_names_of_individual(building_names)
-    for gen in range(1, NGEN):
+    for gen in range(1, NGEN+1):
         print ("Evaluating Generation %s{} of %s{} generations", gen)
         # Select and clone the next generation individuals
         pop_cloned = map(toolbox.clone, toolbox.select(pop, len(pop)))
