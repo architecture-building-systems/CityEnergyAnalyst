@@ -372,7 +372,7 @@ def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_con
             buildings_in_heating_network = total_demand.Name.values
             # Run the substation and distribution routines
             substation.substation_main_heating(locator, total_demand, buildings_in_heating_network, DHN_configuration,
-                                               Flag=True)
+                                           DHN_barcode)
             summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
                                            "DH", DHN_barcode, DHN_barcode)
 
