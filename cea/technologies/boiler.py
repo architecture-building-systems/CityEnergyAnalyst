@@ -7,7 +7,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
-from cea.optimization.constants import BOILER_P_AUX
+from cea.technologies.constants import BOILER_P_AUX
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -71,7 +71,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     return boiler_eff
 
 
-def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, prices, lca, hour):
+def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, prices, lca, hour):
     """
     Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
@@ -105,10 +105,7 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     else:
         GAS_PRICE = prices.NG_PRICE
 
-    if ElectricityType == 'green':
-        ELEC_PRICE = lca.ELEC_PRICE_GREEN[hour]
-    else:
-        ELEC_PRICE = lca.ELEC_PRICE[hour]
+    ELEC_PRICE = lca.ELEC_PRICE[hour]
 
 
     Opex_var_Boiler_USD = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  USD-2015 / Wh - cost of thermal energy
@@ -180,7 +177,7 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    Capex_a_fix_Boiler_USD = 0
+    Capex_a_Boiler_USD = 0
     Opex_a_fix_Boiler_USD = 0
     Capex_Boiler_USD = 0
 
@@ -209,8 +206,8 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-            Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
+            Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 
         else:
@@ -231,8 +228,8 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
-            Capex_a_fix_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_a_fix_Boiler_USD = Capex_a_fix_Boiler_USD * Inv_OM
+            Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 
-    return Capex_a_fix_Boiler_USD, Opex_a_fix_Boiler_USD, Capex_Boiler_USD
+    return Capex_a_Boiler_USD, Opex_a_fix_Boiler_USD, Capex_Boiler_USD

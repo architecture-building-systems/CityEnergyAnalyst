@@ -132,7 +132,7 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
             Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
             InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
             Capex_a_VCC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_VCC_USD = Capex_a_VCC_USD * Inv_OM
+            Opex_fixed_VCC_USD = InvC * Inv_OM
             Capex_VCC_USD = InvC
         else:  # more than one unit of ACH are activated
             number_of_chillers = int(ceil(qcold_W / max_chiller_size))
@@ -152,7 +152,7 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
                     Q_nom_each_chiller)
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Capex_a_VCC_USD = Capex_a_VCC_USD + Capex_a1
-                Opex_fixed_VCC_USD = Opex_fixed_VCC_USD + Capex_a1 * Inv_OM
+                Opex_fixed_VCC_USD = Opex_fixed_VCC_USD + InvC * Inv_OM
                 Capex_VCC_USD = Capex_VCC_USD + InvC
 
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD

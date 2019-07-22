@@ -59,13 +59,13 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
         InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
         Capex_a_HEX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_HEX_USD = Capex_a_HEX_USD * Inv_OM
+        Opex_fixed_HEX_USD = InvC * Inv_OM
         Capex_HEX_USD = InvC
 
     else:
-        Capex_a_HEX_USD = 0
-        Opex_fixed_HEX_USD = 0
-        Capex_HEX_USD = 0
+        Capex_a_HEX_USD = 0.0
+        Opex_fixed_HEX_USD = 0.0
+        Capex_HEX_USD = 0.0
 
     return Capex_a_HEX_USD, Opex_fixed_HEX_USD, Capex_HEX_USD
 
@@ -133,7 +133,7 @@ def calc_Cinv_HEX_hisaka(network_info):
                     Capex_substation_hex = Capex_substation_hex + (a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub))
 
             Capex_a_substation_hex = Capex_substation_hex * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_substation_hex = Capex_a_substation_hex * Inv_OM
+            Opex_fixed_substation_hex = Capex_substation_hex * Inv_OM
 
             # aggregate all substation costs in a network
             Capex_a = Capex_a + Capex_a_substation_hex
