@@ -42,7 +42,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
 
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
-        cls.use_stochastic_occupancy = cls.config.demand.use_stochastic_occupancy
+        #cls.use_stochastic_occupancy = cls.config.demand.use_stochastic_occupancy
         cls.resolution_output = cls.config.demand.resolution_output
         cls.loads_output = cls.config.demand.loads_output
         cls.massflows_output = cls.config.demand.massflows_output
@@ -56,7 +56,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
-                                    self.format_output, self.config, self.write_detailed_output, self.config)
+                                    self.format_output, self.config, self.write_detailed_output, self.debug)
         self.assertIsNone(result)
         self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01', self.format_output)),
                         'Building csv not produced')
