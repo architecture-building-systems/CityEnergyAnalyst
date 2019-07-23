@@ -6,14 +6,16 @@ import random
 import time
 import warnings
 from itertools import repeat, izip
-
 from math import factorial
+
 import numpy as np
 import pandas as pd
 from deap import tools, creator, base
 
 from cea.optimization import supportFn
-from cea.optimization.constants import CXPB, MUTPB, NAMES_TECHNOLOGY_OF_INDIVIDUAL
+from cea.optimization.constants import CXPB, MUTPB
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
+    DC_CONVERSION_TECHNOLOGIES_NAMES, DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE, DH_ACRONYM, DC_ACRONYM
 from cea.optimization.master import crossover
 from cea.optimization.master import evaluation
 from cea.optimization.master import mutations
@@ -35,7 +37,9 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
 
 def objective_function(individual, individual_number, generation, building_names, locator,
-                       network_features, config, prices, lca):
+                       network_features, config, prices, lca, column_names,
+                       column_names_buildings_heating,
+                       column_names_buildings_cooling):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -52,7 +56,11 @@ def objective_function(individual, individual_number, generation, building_names
                                                                                                      config,
                                                                                                      prices, lca,
                                                                                                      individual_number,
-                                                                                                     generation)
+                                                                                                     generation,
+                                                                                                     column_names,
+                                                                                                     column_names_buildings_heating,
+                                                                                                     column_names_buildings_cooling
+                                                                                                     )
 
     return costs_USD, CO2_ton, prim_MJ
 
@@ -67,28 +75,37 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                             network_features, config, prices, lca):
     t0 = time.clock()
 
-    # initiating hall of fame size and the function evaluations
+    # LOCAL VARIABLES
     euclidean_distance = 0
     spread = 0
     random.seed(config.optimization.random_seed)
     np.random.seed(config.optimization.random_seed)
-
-    # get number of buildings
-    nBuildings = len(building_names)
+    district_heating_network = network_features.district_heating_network
+    district_cooling_network = network_features.district_cooling_network
+    NGEN = config.optimization.ngen  # number of individuals
+    MU = config.optimization.initialind  # int(H + (4 - H % 4)) # number of individuals to select
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
     NOBJ = 3  # number of objectives
-    NGEN = config.optimization.ngen   # number of individuals
-    MU = config.optimization.initialind #int(H + (4 - H % 4)) # number of individuals to select
-
-    K = config.optimization.initialind  # number of individuals to select
     # NDIM = NOBJ + K - 1  # number of problem dimensions
     P = [2, 1]
     P2 = 12
     SCALES = [1, 0.5]
     H = factorial(NOBJ + P2 - 1) / (factorial(P2) * factorial(NOBJ - 1))
     # BOUND_LOW, BOUND_UP = 0.0, 1.0
+
+    # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLLUMN_NAMES)
+    column_names, \
+    column_names_buildings_heating, \
+    column_names_buildings_cooling = get_column_names_individual(building_names,
+                                                                 district_heating_network,
+                                                                 district_cooling_network)
+    empty_individual_df = create_empty_individual(column_names,
+                                                  column_names_buildings_heating,
+                                                  column_names_buildings_cooling,
+                                                  district_heating_network,
+                                                  district_cooling_network)
 
     # classes and tools
     # reference points
@@ -97,13 +114,27 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     _, uniques = np.unique(ref_points, axis=0, return_index=True)
     ref_points = ref_points[uniques]
     toolbox = base.Toolbox()
-    toolbox.register("generate", generate_main, nBuildings, config)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", objective_function_wrapper)
-    # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=30.0)
-    # toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
-    toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
+    toolbox.register("generate",
+                     generate_main,
+                     empty_individual_df,
+                     column_names,
+                     column_names_buildings_heating,
+                     column_names_buildings_cooling,
+                     district_heating_network,
+                     district_cooling_network)
+    toolbox.register("individual",
+                     tools.initIterate,
+                     creator.Individual,
+                     toolbox.generate)
+    toolbox.register("population",
+                     tools.initRepeat,
+                     list,
+                     toolbox.individual)
+    toolbox.register("evaluate",
+                     objective_function_wrapper)
+    toolbox.register("select",
+                     tools.selNSGA3,
+                     ref_points=ref_points)
 
     # configure multiprocessing
     if config.multiprocessing:
@@ -125,11 +156,16 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate, izip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
-                                         repeat(building_names, len(invalid_ind)),
-                                         repeat(locator, len(invalid_ind)),
-                                         repeat(network_features, len(invalid_ind)),
-                                         repeat(config, len(invalid_ind)),
-                                         repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
+                                                   repeat(building_names, len(invalid_ind)),
+                                                   repeat(locator, len(invalid_ind)),
+                                                   repeat(network_features, len(invalid_ind)),
+                                                   repeat(config, len(invalid_ind)),
+                                                   repeat(prices, len(invalid_ind)),
+                                                   repeat(lca, len(invalid_ind)),
+                                                   repeat(column_names, len(invalid_ind)),
+                                                   repeat(column_names_buildings_heating, len(invalid_ind)),
+                                                   repeat(column_names_buildings_cooling, len(invalid_ind))))
+
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
 
@@ -146,9 +182,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     halloffame = []
     halloffame_fitness = []
     epsInd = []
-    # this will help when we save the results (to know what the individual has inside
-    columns_of_saved_files = initialize_column_names_of_individual(building_names)
-    for gen in range(1, NGEN+1):
+    for gen in range(1, NGEN + 1):
         print ("Evaluating Generation %s{} of %s{} generations", gen)
         # Select and clone the next generation individuals
         pop_cloned = map(toolbox.clone, toolbox.select(pop, len(pop)))
@@ -170,12 +204,17 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate,
-                                    izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
-                                         repeat(building_names, len(invalid_ind)),
-                                         repeat(locator, len(invalid_ind)),
-                                         repeat(network_features, len(invalid_ind)),
-                                         repeat(config, len(invalid_ind)),
-                                         repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
+                                izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
+                                     repeat(building_names, len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)),
+                                     repeat(network_features, len(invalid_ind)),
+                                     repeat(config, len(invalid_ind)),
+                                     repeat(prices, len(invalid_ind)),
+                                     repeat(lca, len(invalid_ind)),
+                                     repeat(column_names, len(invalid_ind)),
+                                     repeat(column_names_buildings_heating, len(invalid_ind)),
+                                     repeat(column_names_buildings_cooling, len(invalid_ind))))
+
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
@@ -205,7 +244,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
 
         print "Save population \n"
         save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
-        save_generation_individuals(columns_of_saved_files, gen, invalid_ind, locator)
+        save_generation_individuals(column_names, gen, invalid_ind, locator)
 
         # Create Checkpoint if necessary
         print "Create CheckPoint", gen, "\n"
@@ -309,18 +348,6 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation))
 
 
-def initialize_column_names_of_individual(building_names):
-    # here we take the names of technologies we consider for each individual
-    # and expanded to the potential connections of buildings to the district heating and cooling networks.
-    Name_of_entries_of_individual = NAMES_TECHNOLOGY_OF_INDIVIDUAL
-    for i in building_names:  # DHN
-        Name_of_entries_of_individual.append(str(i) + ' DHN')
-    for i in building_names:  # DCN
-        Name_of_entries_of_individual.append(str(i) + ' DCN')
-
-    return Name_of_entries_of_individual
-
-
 def convergence_metric(old_front, new_front, normalization):
     #  This function calculates the metrics corresponding to a Pareto-front
     #  combined_euclidean_distance calculates the euclidean distance between the current front and the previous one
@@ -375,6 +402,86 @@ def convergence_metric(old_front, new_front, normalization):
     print ('spread = ' + str(spread_final))
 
     return combined_euclidean_distance, spread_final
+
+
+def create_empty_individual(column_names, column_names_buildings_heating, column_names_buildings_cooling,
+                            district_heating_network, district_cooling_network):
+    # local variables
+    heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
+    cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
+
+    heating_unit_activation_int = [0] * len(heating_unit_names)
+    heating_unit_share_float = [0.0] * len(heating_unit_names)
+
+    cooling_unit_activation_int = [0] * len(cooling_unit_names)
+    cooling_unit_share_float = [0.0] * len(cooling_unit_names)
+
+    DH_buildings_connected_int = [0] * len(column_names_buildings_heating)
+    DC_buildings_connected_int = [0] * len(column_names_buildings_cooling)
+
+    # 3 cases are possible
+    if district_heating_network and district_cooling_network:
+        # combine both strings and calculate the ranges of each part of the individual
+        individual = heating_unit_activation_int + \
+                     heating_unit_share_float + \
+                     DH_buildings_connected_int + \
+                     cooling_unit_activation_int + \
+                     cooling_unit_share_float + \
+                     DC_buildings_connected_int
+
+    elif district_heating_network:
+        individual = heating_unit_activation_int + \
+                     heating_unit_share_float + \
+                     DH_buildings_connected_int
+
+    elif district_cooling_network:
+        individual = cooling_unit_activation_int + \
+                     cooling_unit_share_float + \
+                     DC_buildings_connected_int
+
+    individual_df = pd.DataFrame(dict(zip(column_names, individual)), index=[0], columns=column_names)
+
+    return individual_df
+
+
+def get_column_names_individual(building_names, district_heating_network, district_cooling_network):
+    # 3 cases are possible
+    if district_heating_network and district_cooling_network:
+        # local variables
+        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
+        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names]
+        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names]
+        # combine both strings and calculate the ranges of each part of the individual
+        column_names = heating_unit_names + \
+                       heating_unit_names_share + \
+                       column_names_buildings_heating + \
+                       cooling_unit_names + \
+                       cooling_unit_names_share + \
+                       column_names_buildings_cooling
+
+    elif district_heating_network:
+        # local variables
+        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names]
+        column_names_buildings_cooling = []
+        column_names = heating_unit_names + \
+                       heating_unit_names_share + \
+                       column_names_buildings_heating
+    elif district_cooling_network:
+        # local variables
+        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names]
+        column_names_buildings_heating = []
+        column_names = cooling_unit_names + \
+                       cooling_unit_names_share + \
+                       column_names_buildings_cooling
+
+    return column_names, column_names_buildings_heating, column_names_buildings_cooling
 
 
 if __name__ == "__main__":

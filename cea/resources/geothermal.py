@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
+def calc_ground_temperature(locator, T_ambient_C, depth_m):
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
 
