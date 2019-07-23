@@ -43,21 +43,23 @@ Interfaces
 
 There are different ways in which you can interact with the code of CEA. As of now, the CEA dashboard does not work on macOS, however the following interfaces are included:
 
-#. The command line interface: This is the command line to all the commands of CEA from your computer terminal
-#. The pycharm interface: this interface provides access to all the source code of CEA.
-While the command line interface is included during the installation of CEA, the Pycharm interface requires a few steps to get up and running.
+#. The command line interface: This is the command line to all the commands of CEA from your computer terminal.
+#. The PyCharm interface: this interface provides access to all the source code of CEA.
 
-Pycharm
+While the command line interface is included during the installation of CEA, the PyCharm interface requires a few steps to get up and running.
+
+PyCharm
 -------
 
-In order to access and work on the source code of CEA from pycharm do:
+In order to access and work on the source code of CEA from PyCharm do:
 
-#. Download and install Pycharm Community edition (64-bit) OR your own favorite editor.
+#. Download and install PyCharm Community edition (64-bit) OR your own favorite editor.
 #. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CityEnergyAnalyst).
 #. Open Preferences>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter.
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add Local.
 #. Click Conda Environment from the left hand list and select existing environment.
-#. Point to the location of your conda environment. It should look something like \Users\your_name\Miniconda2\envs\cea\bin\python
+#. Point to the location of your conda environment. It should look something like 
+   ``\Users\your_name\Miniconda2\envs\cea\bin\python``
    where ‘your_name’ represents your user name in Mac.
 #. Click apply changes.
 
