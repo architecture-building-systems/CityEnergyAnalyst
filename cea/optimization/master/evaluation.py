@@ -75,6 +75,13 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
                                                                                                      building_names)
 
+
+    #EVALUATE EXTRA CONSTRAIN (DUE TO USE OF HYBRID COOLING TECHNOLOGIES
+    #TODO: shanshan, kindly fix this
+    if HYBRID_HEATING_COOLING_ALLOWED == False:
+        DHN_configuration = 7 #this is a configuration that works in all cases
+        DCN_configuration = 7 #this is a configuration that works in all cases
+
     # CREATE CLASS AND PASS KEY CHACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names,
@@ -84,7 +91,6 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                 district_heating_network,
                                                                 district_cooling_network
                                                                 )
-
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     performance_heating = {}
     performance_cooling = {}
@@ -335,8 +341,6 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
                                                           num_total_buildings,
                                                           DHN_barcode,
                                                           DCN_barcode,
-                                                          DHN_configuration,
-                                                          DCN_configuration,
                                                           network_file_name_heating,
                                                           network_file_name_cooling,
                                                           Q_heating_nom_W,
@@ -541,13 +545,10 @@ def calc_master_to_slave_variables(locator, gen,
     :rtype: class
     """
 
-
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
-    configkey = "".join(str(e)[0:4] for e in individual)
-    configkey = configkey[:-2 * len(DHN_barcode)] + hex(int(str(DHN_barcode), 2)) + hex(int(str(DCN_barcode), 2))
 
-    master_to_slave_vars.configKey = configkey
+
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1")
     master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1")
     master_to_slave_vars.individual_number = ind_num
@@ -558,8 +559,6 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
-    master_to_slave_vars.DHN_supplyunits = DHN_configuration
-    master_to_slave_vars.DCN_supplyunits = DCN_configuration
 
     #useful to know if there are these type s of networks
     if district_heating_network and DHN_barcode.count("1") > 0:

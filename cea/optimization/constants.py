@@ -143,12 +143,12 @@ BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = 
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
 DATACENTER_HEAT_RECOVERY_ALLOWED = True
+HYBRID_HEATING_COOLING_ALLOWED = False # False the configuration of decentralized buildings with hybrid technologies is not enabled.
 GHP_ALLOWED = True
 CC_ALLOWED = True
-FURNACE_ALLOWED = False
+FURNACE_ALLOWED = True
 DISC_GHP_FLAG = True  # Is geothermal allowed in disconnected buildings? False = NO ; True = YES
 DISC_BIOGAS_FLAG = False  # True = use Biogas only in Disconnected Buildings, no Natural Gas; False = both possible
-
 LAKE_COOLING_ALLOWED = True
 VCC_ALLOWED = True
 ABSORPTION_CHILLER_ALLOWED = True
