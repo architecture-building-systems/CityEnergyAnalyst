@@ -13,11 +13,11 @@ Prerequisites
 * Download and install Miniconda(64-bit) for Python 2.7.
 * Download and install CMake.
 * Install DAYSIM version >= 4.0 – Open Terminal and run the following commands:
-  * ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``;
-  * ``mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install``
-  * ``cp ./CMakeLists.txt /Daysim/CMakeLists.txt``
-  * ``cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/Daysim/bin``
-  * ``export PATH="path_to_cea_env:path_to_daysim_bin:$PATH"``
+  - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``;
+  - ``mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install``
+  - ``cp ./CMakeLists.txt /Daysim/CMakeLists.txt``
+  - ``cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/Daysim/bin``
+  - ``export PATH="path_to_cea_env:path_to_daysim_bin:$PATH"``
    where "path_to_cea_env" is the path to the CEA conda environment and should look something like
    `\Users\your_name\Miniconda2\envs\cea\bin`
    (where 'your_name' represents your user name in Mac)
