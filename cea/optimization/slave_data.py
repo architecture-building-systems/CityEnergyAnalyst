@@ -30,11 +30,14 @@ class SlaveData(object):
         self.DHN_barcode = ""
         self.individual_number = ""
         self.generation_number = ""
-        self.total_buildings = 0
+        self.num_total_buildings = 0
+        self.date = 0
+        self.DHN_exists = False
+        self.DCN_exists = False
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
-        self.EL_TYPE = 'normal'  # type normal or green (=green power)
+        # self.EL_TYPE = 'normal'  # type normal or green (=green power)
 
         # Heating Technologies
         # Geothermal Heat Pump,

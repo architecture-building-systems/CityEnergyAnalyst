@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.optimization.master.master_main import initialize_column_names_of_individual
+from cea.optimization.constants import NAMES_TECHNOLOGY_OF_INDIVIDUAL
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -58,13 +58,13 @@ def get_pointers_to_correct_individual_generation(generation, individual, locato
 def locating_individuals_in_generation_script(generation, locator):
     data_generation = preprocessing_generations_data(locator, generation)
 
-    individual_list = data_generation['final_generation']['individual_barcode'].axes[0]
+    individual_list = data_generation['individual_barcode']
 
     generation_number_address = []
     individual_number_address = []
 
     for ind in individual_list:
-        generation_number, individual_number = preprocessing_individual_data(locator, data_generation['final_generation'], ind)
+        generation_number, individual_number = preprocessing_individual_data(locator, data_generation, ind)
         generation_number_address.append(generation_number)
         individual_number_address.append(individual_number)
 
@@ -110,12 +110,17 @@ def preprocessing_individual_data(locator, data_raw, individual):
     #     "DATE")
 
     # get data about the activation patterns of these buildings
-    individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+    individual_barcode_list = data_raw['individual_barcode'][individual]
     df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
     # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
     # correspondingly these columns_of_saved_files needs to be changed
-    columns_of_saved_files = initialize_column_names_of_individual(building_names)
+    columns_of_saved_files = NAMES_TECHNOLOGY_OF_INDIVIDUAL
+    for i in building_names:  # DHN
+        columns_of_saved_files.append(str(i) + ' DHN')
+
+    for i in building_names:  # DCN
+        columns_of_saved_files.append(str(i) + ' DCN')
 
 
     df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
@@ -123,9 +128,9 @@ def preprocessing_individual_data(locator, data_raw, individual):
         df_current_individual[ind] = individual_barcode_list[i]
     for i in range(len(df_all_generations)):
         matching_number_between_individuals = 0
-        for column_name in columns_of_saved_files:
-            if np.isclose(float(df_all_generations[column_name][i]), float(df_current_individual[column_name][0])):
-                matching_number_between_individuals +=  1
+        for j in columns_of_saved_files:
+            if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
+                matching_number_between_individuals = matching_number_between_individuals + 1
 
         if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
             # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
@@ -140,49 +145,15 @@ def preprocessing_individual_data(locator, data_raw, individual):
 
 def preprocessing_generations_data(locator, generations):
 
-    data_processed = []
     with open(locator.get_optimization_checkpoint(generations), "rb") as fp:
         data = json.load(fp)
-    # get lists of data for performance values of the population
-    costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                 data['tested_population_fitness']]  # convert to millions
-    emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                     data['tested_population_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                      data['tested_population_fitness']]  # convert to gigajoules x 10^3
-    individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
-
-    df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                  'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
-                                  }).set_index("Name")
 
     individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
                            individual] for individual in data['tested_population']]
-    def_individual_barcode = pd.DataFrame({'Name': individual_names,
-                                           'individual_barcode': individual_barcode}).set_index("Name")
 
-    # get lists of data for performance values of the population (hall_of_fame
-    costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
-                     data['halloffame_fitness']]  # convert to millions
-    emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
-                         data['halloffame_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
-                          data['halloffame_fitness']]  # convert to gigajoules x 10^3
-    individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
-    df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                  'emissions_ton': emissions_ton_HOF,
-                                  'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
+    data_processed = {'individual_barcode': individual_barcode}
 
-    #dict_network = data['DCN_list_All']
-
-    #df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
-
-    data_processed.append(
-        {'population': df_population,
-         'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
-         'individual_barcode': def_individual_barcode})
-
-    return {'final_generation': data_processed[-1:][0]}
+    return data_processed
 
 
 def main(config):

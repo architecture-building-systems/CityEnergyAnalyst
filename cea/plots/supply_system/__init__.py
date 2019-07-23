@@ -21,31 +21,43 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-#label = 'Supply System'
+label = 'Supply System'
 
 
 class SupplySystemPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "supply_system"
+    category_name = "supply-system"
 
-    # cache hourly_loads results to avoid recalculating it every time
-    _cache = {}
+    expected_parameters = {
+        'generation': 'plots-supply-system:generation',
+        'individual': 'plots-supply-system:individual',
+        'scenario-name': 'general:scenario-name',
+    }
 
-    def __init__(self, config, locator, **parameters):
-        super(SupplySystemPlotBase, self).__init__(config, locator, **parameters)
+    def __init__(self, project, parameters, cache):
+        super(SupplySystemPlotBase, self).__init__(project, parameters, cache)
 
-        self.category_path = "new-optimization-detailed"
+        self.category_path = os.path.join('testing', 'supply-system-overview')
+        self.generation = self.parameters['generation']
+        self.individual = self.parameters['individual']
 
-        # add default attributes from config file if not set in `parameters`
-        if not hasattr(self, 'individual'):
-            self.individual = config.plots_supply_system.individual
-        if not hasattr(self, 'generation'):
-            self.generation = config.plots_supply_system.generation
-        if not hasattr(self, 'network_type'):
-            self.network_type = config.plots_supply_system.network_type
+    @cea.plots.cache.cached
+    def process_individual_dispatch_curve_heating(self):
+        data_heating = pd.read_csv(
+            self.locator.get_optimization_slave_heating_activation_pattern(self.individual, self.generation)).set_index(
+            'DATE')
+        return data_heating
 
-    @property
-    def output_path(self):
-        """Overriding output_path to include the individual and generation parameters"""
-        return self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', self.category_path)
+    @cea.plots.cache.cached
+    def process_individual_dispatch_curve_cooling(self):
+        data_cooling = pd.read_csv(
+            self.locator.get_optimization_slave_cooling_activation_pattern(self.individual, self.generation)).set_index(
+            'DATE')
+        return data_cooling
+
+    @cea.plots.cache.cached
+    def process_individual_dispatch_curve_electricity(self):
+        data_electricity = pd.read_csv(
+            self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
+                                                                               self.generation)).set_index('DATE')
+        return data_electricity

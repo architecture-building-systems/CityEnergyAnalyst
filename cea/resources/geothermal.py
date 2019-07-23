@@ -25,14 +25,14 @@ def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
     :param depth_m: globalvar.py
 
 
-    :return Tg: vector with ground temperatures in [K]
-    :rtype Tg: np array
+    :return T_ground_K: vector with ground temperatures in [K]
+    :rtype T_ground_K: np array
 
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """
 
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname='MATERIAL PROPERTIES').set_index(
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheet_name='MATERIAL PROPERTIES').set_index(
         'material')
     heat_capacity_soil = material_properties.loc['Soil','Cp_JkgK']   # _[A. Kecebas et al., 2011]
     conductivity_soil = material_properties.loc['Soil','lambda_WmK']  # _[A. Kecebas et al., 2011]
@@ -42,7 +42,7 @@ def calc_ground_temperature(locator, config, T_ambient_C, depth_m):
     T_max = max(T_ambient_C) + 273.15 # to K
     T_avg = np.mean(T_ambient_C) + 273.15 # to K
     e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil)) # soil constants
-    Tg = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / HOURS_IN_YEAR ) - e )
+    T_ground_K = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / HOURS_IN_YEAR ) - e )
            for i in range(HOURS_IN_YEAR)]
 
-    return Tg
+    return T_ground_K
