@@ -3,7 +3,7 @@ A simple CEA script that renames a building in the input files - NOTE: you'll ha
 analysis scripts to get the changes as only the files defined in ``inputs.yml`` (the files you see in the CEA Dashboard
 input editor) are changed.
 
-This is the script behind ``cea rename-building --from <building> --to <building>``
+This is the script behind ``cea rename-building --old <building> --new <building>``
 """
 
 from __future__ import division
