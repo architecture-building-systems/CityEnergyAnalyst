@@ -19,6 +19,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.optimization.master.master_main import initialize_column_names_of_individual
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -114,20 +115,7 @@ def preprocessing_individual_data(locator, data_raw, individual):
 
     # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
     # correspondingly these columns_of_saved_files needs to be changed
-    columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
-                              'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-                              'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
-                              'GHP Share',
-                              'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
-                              'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration',
-                              'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-                              'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
-                              'DCN Temperature', 'DCN unit configuration']
-    for i in building_names:  # DHN
-        columns_of_saved_files.append(str(i) + ' DHN')
-
-    for i in building_names:  # DCN
-        columns_of_saved_files.append(str(i) + ' DCN')
+    columns_of_saved_files = initialize_column_names_of_individual(building_names)
 
 
     df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
@@ -135,9 +123,9 @@ def preprocessing_individual_data(locator, data_raw, individual):
         df_current_individual[ind] = individual_barcode_list[i]
     for i in range(len(df_all_generations)):
         matching_number_between_individuals = 0
-        for j in columns_of_saved_files:
-            if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                matching_number_between_individuals = matching_number_between_individuals + 1
+        for column_name in columns_of_saved_files:
+            if np.isclose(float(df_all_generations[column_name][i]), float(df_current_individual[column_name][0])):
+                matching_number_between_individuals +=  1
 
         if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
             # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
@@ -188,8 +176,6 @@ def preprocessing_generations_data(locator, generations):
     #dict_network = data['DCN_list_All']
 
     #df_network = pd.DataFrame({'Name': individual_names, "network": dict_network}).set_index("Name")
-
-
 
     data_processed.append(
         {'population': df_population,

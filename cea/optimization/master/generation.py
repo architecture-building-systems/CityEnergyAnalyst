@@ -45,6 +45,10 @@ def generate_main(nBuildings, config):
     :rtype: list
     """
 
+    #local variables
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
     # heating block
     # create list to store values of inidividual
     heating_block = [0] * (N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN)  # nHeat is each technology and is associated with 2 values
@@ -70,7 +74,7 @@ def generate_main(nBuildings, config):
                 sharetoallocate += 1
             rank += 2
 
-    if config.district_heating_network:
+    if district_heating_network:
 
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDHN = 0
@@ -133,13 +137,13 @@ def generate_main(nBuildings, config):
     countSolar = 0
     index = N_HEAT * 2 + N_HR
 
-    if config.district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
+    if district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
         heating_block[index] = random.randint(0, 1)
         if heating_block[index]:
             heating_block[index+1] = random.random()
 
 
-    if config.district_heating_network:
+    if district_heating_network:
         for Solar in range(N_SOLAR):
             choice_Solar = random.randint(0, 1)
             if choice_Solar == 1:
@@ -154,7 +158,7 @@ def generate_main(nBuildings, config):
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
 
-    if config.district_cooling_network:
+    if district_cooling_network:
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDCN = 0
 
@@ -224,14 +228,14 @@ def generate_main(nBuildings, config):
         # 7 - AHU + ARU + SCU
     # DHN
     heating_network_block = [0] * nBuildings
-    if config.district_heating_network:
+    if district_heating_network:
         for i in range(nBuildings):
             choice_buildCon = random.randint(0, 1)
             heating_network_block[i] = choice_buildCon
 
     # DCN
     cooling_network_block = [0] * nBuildings
-    if config.district_cooling_network:
+    if district_cooling_network:
         for j in range(nBuildings):
             choice_buildCon = random.randint(0, 1)
             cooling_network_block[j] = choice_buildCon

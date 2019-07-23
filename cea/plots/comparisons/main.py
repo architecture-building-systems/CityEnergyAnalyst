@@ -11,7 +11,7 @@ from cea.plots.comparisons.primary_energy_intensity import primary_energy_intens
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
+from cea.utilities.dbf import dbf_to_dataframe
 from cea.plots.comparisons.emissions import emissions
 from cea.plots.comparisons.emissions_intensity import emissions_intensity
 from cea.plots.comparisons.energy_demand import energy_demand_district
@@ -19,7 +19,7 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
-from cea.plots.supply_system.main import preprocessing_generations_data, processing_mcda_data
+from cea.plots.supply_system.old.main import preprocessing_generations_data, processing_mcda_data
 
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
     get_pointers_to_correct_individual_generation
