@@ -185,7 +185,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Q_excess_W = np.zeros(HOURS_IN_YEAR)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
                                                          'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(HOURS_IN_YEAR):
         Q_therm_req_W = Q_req_after_storage_W[hour]

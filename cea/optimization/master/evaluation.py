@@ -34,7 +34,7 @@ from cea.utilities import epwreader
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, network_features, config, prices, lca,
-                    ind_num, gen):
+                    ind_num, gen, column_names, column_names_buildings_heating, column_names_buildings_cooling):
     """
     This function evaluates an individual
 
@@ -62,35 +62,24 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     """
 
     # local variables
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
+    district_heating_network = network_features.district_heating_network
+    district_cooling_network = network_features.district_cooling_network
     num_total_buildings = len(building_names)
     solar_features = SolarFeatures()
 
-    # EVALUATE CONSTRAINTS = CHECK CONSISTENCY OF INDIVIDUAL
-    individual = evaluate_constrains(individual, num_total_buildings, config, district_heating_network,
-                                     district_cooling_network)
-
     # CREATE THE INDIVIDUAL BARCODE
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                     building_names)
-
-
-    #EVALUATE EXTRA CONSTRAIN (DUE TO USE OF HYBRID COOLING TECHNOLOGIES
-    #TODO: shanshan, kindly fix this
-    if HYBRID_HEATING_COOLING_ALLOWED == False:
-        DHN_configuration = 7 #this is a configuration that works in all cases
-        DCN_configuration = 7 #this is a configuration that works in all cases
+    DHN_barcode, DCN_barcode = individual_to_barcode(individual,
+                                                     column_names,
+                                                     column_names_buildings_heating,
+                                                     column_names_buildings_cooling)
 
     # CREATE CLASS AND PASS KEY CHACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names,
                                                                 num_total_buildings,
-                                                                DHN_barcode, DCN_barcode, DHN_configuration,
-                                                                DCN_configuration, config,
+                                                                DHN_barcode, DCN_barcode, config,
                                                                 district_heating_network,
-                                                                district_cooling_network
-                                                                )
+                                                                district_cooling_network)
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     performance_heating = {}
     performance_cooling = {}
@@ -155,15 +144,15 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     # NATURAL GAS
     print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
     fuels_dispatch = natural_gas_main.fuel_imports(master_to_slave_vars, heating_dispatch,
-                                                        cooling_dispatch)
+                                                   cooling_dispatch)
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
-                                                                              performance_storage,
-                                                                              performance_heating,
-                                                                              performance_cooling,
-                                                                              performance_disconnected,
-                                                                              performance_electricity)
+                                                                                                  performance_storage,
+                                                                                                  performance_heating,
+                                                                                                  performance_cooling,
+                                                                                                  performance_disconnected,
+                                                                                                  performance_electricity)
 
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
@@ -181,18 +170,17 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
                  fuels_dispatch, performance_totals):
-
-    #put data inside a list, otherwise pandas cannot save it
+    # put data inside a list, otherwise pandas cannot save it
     for column in performance_disconnected.keys():
-        performance_disconnected[column] =[performance_disconnected[column]]
+        performance_disconnected[column] = [performance_disconnected[column]]
     for column in performance_cooling.keys():
-        performance_cooling[column] =[performance_cooling[column]]
+        performance_cooling[column] = [performance_cooling[column]]
     for column in performance_heating.keys():
-        performance_heating[column] =[performance_heating[column]]
+        performance_heating[column] = [performance_heating[column]]
     for column in performance_electricity.keys():
-        performance_electricity[column] =[performance_electricity[column]]
+        performance_electricity[column] = [performance_electricity[column]]
     for column in performance_totals.keys():
-        performance_totals[column] =[performance_totals[column]]
+        performance_totals[column] = [performance_totals[column]]
 
     # export all including performance heating and performance cooling since we changed them
     pd.DataFrame(performance_disconnected).to_csv(
@@ -217,7 +205,7 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
 
     pd.DataFrame(performance_totals).to_csv(
         locator.get_optimization_slave_total_performance(master_to_slave_vars.individual_number,
-                                                               master_to_slave_vars.generation_number),
+                                                         master_to_slave_vars.generation_number),
         index=False)
 
     # add date and plot
@@ -313,7 +301,7 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
 
 
 def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, building_names, num_total_buildings,
-                                         DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration, config,
+                                         DHN_barcode, DCN_barcode, config,
                                          district_heating_network,
                                          district_cooling_network
                                          ):
@@ -321,9 +309,7 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
     Q_cooling_nom_W, Q_heating_nom_W, \
     network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(locator, individual,
                                                                                               DCN_barcode,
-                                                                                              DCN_configuration,
                                                                                               DHN_barcode,
-                                                                                              DHN_configuration,
                                                                                               config,
                                                                                               num_total_buildings)
 
@@ -352,13 +338,12 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
     return master_to_slave_vars
 
 
-def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_configuration, DHN_barcode,
-                                       DHN_configuration, config, num_total_buildings):
+def extract_capacities_from_individual(locator, individual, DCN_barcode, DHN_barcode, config, num_total_buildings):
     # local variables
     weather_file = config.weather
     network_depth_m = Z0
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
+    ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
     if DHN_barcode.count("1") == num_total_buildings:
@@ -375,8 +360,8 @@ def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_con
             total_demand = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
             buildings_in_heating_network = total_demand.Name.values
             # Run the substation and distribution routines
-            substation.substation_main_heating(locator, total_demand, buildings_in_heating_network, DHN_configuration,
-                                           DHN_barcode)
+            substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
+                                               DHN_barcode=DHN_barcode)
             summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
                                            "DH", DHN_barcode, DHN_barcode)
 
@@ -405,8 +390,8 @@ def extract_capacities_from_individual(locator, individual, DCN_barcode, DCN_con
             buildings_in_cooling_network = total_demand.Name.values
 
             # Run the substation and distribution routines
-            substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network, DCN_configuration,
-                                               DCN_barcode)
+            substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
+                                               DCN_barcode=DCN_barcode)
             summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
                                            'DC', DCN_barcode, DCN_barcode)
 
@@ -521,8 +506,6 @@ def calc_master_to_slave_variables(locator, gen,
                                    num_total_buildings,
                                    DHN_barcode,
                                    DCN_barcode,
-                                   DHN_configuration,
-                                   DCN_configuration,
                                    network_file_name_heating,
                                    network_file_name_cooling,
                                    Q_heating_nom_W,
@@ -548,7 +531,6 @@ def calc_master_to_slave_variables(locator, gen,
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
-
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1")
     master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1")
     master_to_slave_vars.individual_number = ind_num
@@ -560,7 +542,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
 
-    #useful to know if there are these type s of networks
+    # useful to know if there are these type s of networks
     if district_heating_network and DHN_barcode.count("1") > 0:
         master_to_slave_vars.DHN_exists = True
     else:
@@ -633,7 +615,7 @@ def calc_master_to_slave_variables(locator, gen,
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         # get sewage potential
         sewage_potential = pd.read_csv(locator.get_sewage_heat_potential())
-        Q_max_sewage = (sewage_potential['Qsw_kW']*1000).max()
+        Q_max_sewage = (sewage_potential['Qsw_kW'] * 1000).max()
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize_W = max(individual[9] * Q_max_sewage, Q_MIN_SHARE * Q_heating_nom_W)
 
@@ -713,7 +695,7 @@ def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, bu
     weather_file = config.weather
     network_depth_m = Z0
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
+    ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
     total_demand = pd.read_csv(locator.get_total_demand())
 
     ## add network barcodes to lists and run network simulation
@@ -788,3 +770,28 @@ def epsIndicator(frontOld, frontNew):
             epsInd = tempEpsInd
 
     return epsInd
+
+
+def individual_to_barcode(individual, column_names, column_names_buildings_heating,
+                          column_names_buildings_cooling):
+    """
+    Reads the 0-1 combination of connected/disconnected buildings
+    and creates a list of strings type barcode i.e. ("12311111123012")
+    :param individual: list containing the combination of connected/disconnected buildings
+    :type individual: list
+    :return: indCombi: list of strings
+    :rtype: list
+    """
+    # pair individual values with their names
+    dict_individuals = dict(zip(column_names, individual))
+    DHN_barcode = ""
+    for name in column_names_buildings_heating:
+        if name in dict_individuals.keys():
+            DHN_barcode += str(int(dict_individuals[name]))
+
+    DCN_barcode = ""
+    for name in column_names_buildings_cooling:
+        if name in dict_individuals.keys():
+            DCN_barcode += str(int(dict_individuals[name]))
+
+    return DHN_barcode, DCN_barcode

@@ -59,32 +59,6 @@ def calcQmax(file_name, path):
     return Qmax
 
 
-def individual_to_barcode(individual, building_list):
-    """
-    Reads the 0-1 combination of connected/disconnected buildings
-    and creates a list of strings type barcode i.e. ("12311111123012")
-    :param individual: list containing the combination of connected/disconnected buildings
-    :type individual: list
-    :return: indCombi: list of strings
-    :rtype: list
-    """
-    len_of_heating_supply_systems = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
-    # two indices for heating technologies and solar technologies
-    len_of_cooling_supply_systems = N_COOL * 2 + INDICES_CORRESPONDING_TO_DHN
-
-    DHN_barcode = ""
-    DCN_barcode = ""
-    cooling = len_of_heating_supply_systems + len(building_list) + len_of_cooling_supply_systems
-    for i in range(len_of_heating_supply_systems + len_of_cooling_supply_systems, cooling):
-        DHN_barcode += str(int(individual[i]))
-    for j in range(cooling, len(individual)):
-        DCN_barcode += str(int(individual[j]))
-
-    DHN_configuration = individual[len_of_heating_supply_systems - 1]
-    DCN_configuration = individual[len_of_heating_supply_systems + len_of_cooling_supply_systems - 1]
-
-
-    return DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration
 
 
 def createTotalNtwCsv(network_type, indCombi, locator):

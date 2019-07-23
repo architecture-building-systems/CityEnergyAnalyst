@@ -10,7 +10,6 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import LcaCalculations
@@ -60,23 +59,22 @@ def moo_optimization(locator, weather_file, config):
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
+    building_names = list(total_demand.Name.values) #needs to be a list to avoid errors
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator, config)
+
+    #local flags
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
-    preproccessing(locator, total_demand, weather_file, config)
-
-    # optimize the distribution and linearize the results
-    print("NETWORK OPTIMIZATION")
-    network_features = NetworkOptimizationFeatures(config, locator)
+    network_features = preproccessing(locator, total_demand, weather_file, district_heating_network, district_cooling_network)
 
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
-    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names,
-                                                        network_features, config, prices, lca)
+    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, network_features, config, prices, lca)
 
 
 

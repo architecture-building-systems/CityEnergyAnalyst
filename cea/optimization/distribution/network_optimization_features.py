@@ -22,7 +22,7 @@ class NetworkOptimizationFeatures(object):
     Unfortunately his work only worked for this case study and could not be used else where
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
-    def __init__(self, config, locator):
+    def __init__(self, district_heating_network, district_cooling_network,  locator):
         self.pipesCosts_DHN_USD = 0     # USD-2015
         self.pipesCosts_DCN_USD = 0     # USD-2015
         self.DeltaP_DHN = np.zeros(HOURS_IN_YEAR)         # Pa
@@ -30,8 +30,8 @@ class NetworkOptimizationFeatures(object):
         self.thermallosses_DHN = 0
         self.thermallosses_DCN = 0
         self.network_names = ['']
-        self.district_heating_network = config.optimization.district_heating_network
-        self.district_cooling_network = config.optimization.district_cooling_network
+        self.district_heating_network = district_heating_network
+        self.district_cooling_network = district_cooling_network
 
         for network_name in self.network_names:
             if self.district_heating_network:
