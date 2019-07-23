@@ -27,7 +27,8 @@ REFERENCE_TIME = 3456
 class TestSavingLoadingSchedules(unittest.TestCase):
     """Make sure that the schedules loaded from disk are the same as those loaded if they're not present."""
 
-    def test_saving_loading_schedules_same_same(self):
+    def test_get_building_schedules(self):
+        """Make sure running get_building_schedules for same case returns the same value"""
         config = cea.config.Configuration()
         config.demand.use_stochastic_occupancy = False
         locator = ReferenceCaseOpenLocator()
