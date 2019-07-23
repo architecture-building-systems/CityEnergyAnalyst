@@ -31,7 +31,7 @@ def run(config, script, **kwargs):
 
 
 def main(config):
-    os.environ["NOW"] = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    set_up_environment_variables(config)
 
     workflow_yml = config.workflow.workflow
     if not os.path.exists(workflow_yml):
@@ -47,6 +47,20 @@ def main(config):
             config = do_config_step(config, step)
         else:
             raise ValueError("Invalid step configuration: {step}".format(step=step))
+
+
+def set_up_environment_variables(config):
+    """
+    create some environment variables to be used when configuring stuff. this includes the variable NOW, plus
+    one variable for each config parameter, named "CEA_{SECTION}_{PARAMETER}".
+
+    This is useful for referring to the "user" config, when basing a workflow of the default config.
+    """
+    os.environ["NOW"] = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    for section in config.sections.values():
+        for parameter in section.parameters.values():
+            variable = "CEA_{section}_{parameter}".format(section=section.name, parameter=parameter.name)
+            os.environ[variable] = parameter.get_raw()
 
 
 def do_config_step(config, step):

@@ -1,7 +1,7 @@
 - config: default
   "general:multiprocessing": on
-  "general:project": "{general:project}/../reference-case-open"
-  "radiation-daysim:daysim-bin-directory": ${RAYPATH}
+  "general:project": "${cea_general_project}/../reference-case-open"
+  "radiation-daysim:daysim-bin-directory": "${cea_radiation-daysim_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
