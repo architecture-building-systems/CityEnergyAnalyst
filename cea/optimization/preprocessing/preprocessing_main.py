@@ -13,11 +13,13 @@ import pandas as pd
 import numpy as np
 
 from cea.optimization.master import summarize_network
-from cea.resources import geothermal
-from cea.utilities import epwreader
 from cea.technologies import substation
-from cea.constants import HOURS_IN_YEAR
 
+from cea.resources.geothermal import calc_ground_temperature
+from cea.optimization.constants import Z0
+from cea.utilities import epwreader
+import cea.optimization.preprocessing.processheat as process_heat
+from cea.optimization.preprocessing import electricity
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +31,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices, lca):
+def preproccessing(locator, total_demand, weather_file, config):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -57,94 +59,63 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
     """
 
-    # GET ENERGY POTENTIALS
-    # geothermal
+    # local variables
+    network_depth_m = Z0
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
+
+    print("PRE-PROCESSING 1/2: weather properties")
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = gv.NetworkDepth # [m]
-    gv.ground_temperature = geothermal.calc_ground_temperature(locator, config, T_ambient.values, network_depth_m)
+    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
 
-    # solar
-    print "Solar features extraction"
-    solar_features = SolarFeatures(locator, building_names, config)
+    print("PRE-PROCESSING 2/2: thermal networks")  # at first estimate a distribution with all the buildings connected
+    if district_heating_network:
+        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+        if len(buildings_names_connected) <= 1:
+            raise Exception(
+                "There is just one or zero buildings with heating load, a district heating network will not work,"
+                "CEA can not continue")
+        num_tot_buildings = len(buildings_names_connected)
 
-    # GET LOADS IN SUBSTATIONS
-    # prepocess space heating, domestic hot water and space cooling to substation.
-    print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
-                               Flag=False)  # True if disconnected buildings are calculated
+        substation.substation_main_heating(locator, total_demand, buildings_names_connected,
+                                           DHN_barcode = "all")
 
-    # GET DH adn DC NETWORK
-    # at first estimate a distribution with all the buildings connected at it.
-    print "Create distribution file with all buildings connected"
-    summarize_network.network_main(locator, total_demand, building_names, config, gv, "all") #"_all" key for all buildings
+        summarize_network.network_main(locator, buildings_names_connected,
+                                       ground_temp, num_tot_buildings, "DH",
+                                       "all", "all")  # "_all" key for all buildings
+    if district_cooling_network:
+        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+        if len(buildings_names_connected) <= 1:
+            raise Exception(
+                "There is just one or zero buildings with a cooling load, a district coooling network will not work,"
+                "CEA can not continue")
+
+        num_tot_buildings = len(buildings_names_connected)
+        substation.substation_main_cooling(locator, total_demand, buildings_names_connected,
+                                           DCN_barcode = "all")
+
+        summarize_network.network_main(locator, buildings_names_connected,
+                                       ground_temp, num_tot_buildings, "DC", "all", "all")  # "_all" key for all buildings
 
 
-    return  solar_features
+    return
 
 
-class SolarFeatures(object):
-    def __init__(self, locator, building_names, config):
-        E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_SC_FP_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        Q_SC_ET_gen_kWh = np.zeros(HOURS_IN_YEAR)
-        A_PV_m2 = np.zeros(HOURS_IN_YEAR)
-        A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
-        A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
-        A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
-        if config.district_heating_network:
-            for name in building_names:
-                building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-                building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
-                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
-                E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-                E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
-                Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-                Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
-                Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
-                A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
-                A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
-                A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
-                A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
+def get_building_names_with_load(total_demand, load_name):
+    building_names = total_demand.Name.values
+    buildings_names_connected = []
+    for building in building_names:
+        demand = total_demand[total_demand['Name'] == building].loc[:, load_name].values[0]
+        if demand > 0.0:
+            buildings_names_connected.append(building)
+    return buildings_names_connected
 
-            self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
-            self.A_PV_m2 = A_PV_m2.values.max()
-            self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
-            self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
-            self.A_PVT_m2 = A_PVT_m2.values.max()
-            self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
-            self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
-            self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
-            self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
-        elif config.district_cooling_network:
-            for name in building_names:
-                building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-                building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
-                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
-                E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-                E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
-                Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-                Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
-                Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
-                A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
-                A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
-                A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
-                A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
 
-            self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
-            self.A_PV_m2 = A_PV_m2.values.max()
-            self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
-            self.A_PVT_m2 = A_PVT_m2.values.max()
-            self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
-            self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
-            self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
-            self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
-#============================
-#test
-#============================
+
+
+# ============================
+# test
+# ============================
 
 
 def main(config):
@@ -159,6 +130,7 @@ def main(config):
     preproccessing(locator, total_demand, building_names, weather_file, gv, config)
 
     print 'test_preprocessing_main() succeeded'
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
