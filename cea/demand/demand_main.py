@@ -104,7 +104,7 @@ def demand_calculation(locator, config):
         return list_buildings_less_100m2
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print('Warning!, the next list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
