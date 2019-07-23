@@ -46,6 +46,10 @@ class TestSavingLoadingSchedules(unittest.TestCase):
 
         self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
         for schedule in fresh_schedules:
+            for i in range(len(fresh_schedules[schedule])):
+                fresh = fresh_schedules[schedule][i]
+                frozen = frozen_schedules[schedule][i]
+                self.assertEqual(fresh, frozen)
             self.assertTrue(np.array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
 
 
