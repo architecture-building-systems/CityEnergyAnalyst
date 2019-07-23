@@ -80,13 +80,8 @@ def individual_to_barcode(individual, building_list):
     for j in range(cooling, len(individual)):
         DCN_barcode += str(int(individual[j]))
 
-    #disable the ability of work with decentralized hybrid technologies
-    if HYBRID_HEATING_COOLING_RECOVERY_ALLOWED:
-        DHN_configuration = individual[len_of_heating_supply_systems - 1]
-        DCN_configuration = individual[len_of_heating_supply_systems + len_of_cooling_supply_systems - 1]
-    else:
-        DHN_configuration = 7
-        DCN_configuration = 7
+    DHN_configuration = individual[len_of_heating_supply_systems - 1]
+    DCN_configuration = individual[len_of_heating_supply_systems + len_of_cooling_supply_systems - 1]
 
 
     return DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration
