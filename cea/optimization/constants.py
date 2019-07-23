@@ -28,7 +28,7 @@ NAMES_TECHNOLOGY_OF_INDIVIDUAL = ['CHP/Furnace',
                                   'GHP',
                                   'GHP Share',
                                   'Data Centre',
-                                  'Compressed Air',
+                                  'Data Centre Share',
                                   'PV',
                                   'PV Area Share',
                                   'PVT',
@@ -49,7 +49,6 @@ NAMES_TECHNOLOGY_OF_INDIVIDUAL = ['CHP/Furnace',
                                   'Storage Share',
                                   'DCN Temperature',
                                   'DCN unit configuration']
-NUMBER_TECHNOLOGY_INDIVIDUAL = len(NAMES_TECHNOLOGY_OF_INDIVIDUAL)
 
 # Losses and margins
 DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
@@ -138,26 +137,12 @@ CC_DELTA_T_DH = 5.0  # pinch for condenser
 
 ST_GEN_ETA = 0.9  # generator efficiency after steam turbine
 
-# Boiler
-# Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
-# ELCO-Loesungsbeispiel-Huber.pdf
-
-BOILER_C_FUEL = 20.0  # € / MWh_therm_bought(for LHV), AFO
-BOILER_P_AUX = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
-BOILER_MIN = 0.05  # minimum Part Load of Boiler
-BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
-BOILER_ETA_HP = 0.9
-
-# Furnace
-FURNACE_FUEL_COST_WET = 0.057 * 1E-3  # CHF / Wh = 5.7 Rp / kWh for wet (50wt%) Wood Chips, after
-FURNACE_FUEL_COST_DRY = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Wood Chips,
-FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
-FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant
 
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
+DATACENTER_HEAT_RECOVERY_ALLOWED = True
 GHP_ALLOWED = True
 CC_ALLOWED = True
 FURNACE_ALLOWED = False
@@ -226,8 +211,8 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 DHN_temperature_considered = False
 DCN_temperature_considered = False
 
-PROBA = 0.5
-SIGMAP = 0.2
+CXPB = 0.5
+MUTPB = 0.5
 EPS_MARGIN = 0.001
 
 # Heat Recovery
@@ -251,37 +236,10 @@ T_SUP_SC_ET80 = 80 + 273.0  # K
 # solar PV and PVT
 N_PV = 0.16
 N_PVT = 0.16
-# ==============================================================================================================
-# solar thermal collector # FIXME: redundant???
-# ==============================================================================================================
-
-T_IN = 75  # average temeperature
-MODULE_LENGTH_SC = 2  # m # 1 for PV and 2 for solar collectors
-MIN_PRODUCTION = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-GRID_SIDE = 2  # in a rectangular grid of points, one side of the square. this cannot be changed if the solra potential was made with this.
-ANGLE_NORTH = 122.5
-TYPE_SC_PANEL = 1  # Flatplate collector
-
-# ==============================================================================================================
-# sewage potential
-# ==============================================================================================================
-
-SW_RATIO = 0.95  # ratio of waste water to fresh water production.
-WIDTH_HEX = 0.40  # in m
-VEL_FLOW = 3  # in m/s
-MIN_FLOW = 9  # in lps
-T_MIN = 8  # tmin of extraction
-H0 = 1.5  # kW/m2K # heat trasnfer coefficient/
-AT_HEX = 5
-AT_MIN = 2
 
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
 LHV_BG = 21.4E6  # [J/kg]
-
-# DCN
-T_SUP_COOL = 6 + 273
-T_RE_COOL_MAX = 12 + 273.0
 
 # Values for the calculation of Delta P (from F. Muller network optimization code)
 # WARNING : current = values for Inducity SQ

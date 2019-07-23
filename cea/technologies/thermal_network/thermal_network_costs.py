@@ -104,7 +104,7 @@ def calc_Ctot_network_pump(network_info):
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var
@@ -449,7 +449,7 @@ def calc_Ctot_cs_district(network_info):
     detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
-    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
+    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 

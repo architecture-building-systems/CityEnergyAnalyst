@@ -69,7 +69,7 @@ def calc_Cinv_DX(Q_design_W):
         Inv_OM = 5 / 100
 
         Capex_a_DX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_DX_USD = Capex_a_DX_USD * Inv_OM
+        Opex_fixed_DX_USD = InvC * Inv_OM
         Capex_DX_USD = InvC
 
     return Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD

@@ -68,6 +68,7 @@ def terrain_elevation_extractor(locator, config):
     grid_size = config.terrain_helper.grid_size
     extra_border = np.float32(30)  # adding extra 30 m to avoid errors of no data
     raster_path = locator.get_terrain()
+    locator.ensure_parent_folder_exists(raster_path)
 
     # get the bounding box coordinates
     assert os.path.exists(

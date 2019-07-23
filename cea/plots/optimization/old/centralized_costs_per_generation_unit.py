@@ -17,7 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.OptimizationOverviewPlotBase):
+class CentralizedCostsPerGenerationUnitPlot(cea.plots.optimization.GenerationPlotBase):
     """Implements the "CAPEX vs. OPEX district cooling network for every optimal supply system scenario in
     generation  X" plot"""
 

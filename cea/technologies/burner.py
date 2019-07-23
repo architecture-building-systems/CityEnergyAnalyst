@@ -7,7 +7,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
-from cea.optimization.constants import BOILER_P_AUX
+from cea.technologies.constants import BOILER_P_AUX
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -40,7 +40,7 @@ def calc_cop_burner(Q_load_W, Q_design_W):
     return burner_eff
 
 
-def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, lca, prices):
+def burner_op_cost(Q_load_W, Q_design_W, FuelType, lca, prices):
     """
     This function calculates the operation cost of gas burners supplying heat directly to the high temperature generators
     in double effect absorption chillers.
@@ -69,10 +69,7 @@ def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, lca, prices)
     else:
         GAS_PRICE = prices.NG_PRICE
 
-    if ElectricityType == 'green':
-        ELEC_PRICE = lca.ELEC_PRICE_GREEN
-    else:
-        ELEC_PRICE = lca.ELEC_PRICE
+    ELEC_PRICE = lca.ELEC_PRICE
 
     C_boil_therm = Q_load_W / eta_burner * GAS_PRICE + (
                                                        BOILER_P_AUX * ELEC_PRICE) * Q_load_W  # CHF / Wh - cost of thermal energy
@@ -124,7 +121,7 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
             Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_burner_USD = Capex_a_burner_USD * Inv_OM
+            Opex_fixed_burner_USD = InvC * Inv_OM
             Capex_burner_USD = InvC
 
         else:
@@ -146,7 +143,7 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
             Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_burner_USD = Capex_a_burner_USD * Inv_OM
+            Opex_fixed_burner_USD = InvC * Inv_OM
             Capex_burner_USD = InvC
 
 

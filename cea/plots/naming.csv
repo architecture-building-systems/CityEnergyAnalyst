@@ -194,32 +194,46 @@ Activation curve,Q_from_VCC_backup_W,W,Cooling load supplied by backup vapor com
 Activation curve,Q_from_storage_tank_W,W,Cooling load supplied by thermal storage,orange
 Activation curve,Q_total_cooling_W,W,Total cooling demand,red_light
 
-Activation curve,Q_PVT_to_directload_W,W,PVT generation (thermal) to direct load,purple
-Activation curve,Q_SC_ET_to_directload_W,W,Solar collector (ET) generation to direct load,brown
-Activation curve,Q_SC_FP_to_directload_W,W,Solar collector (FP) generation to direct load,orange
-Activation curve,Q_compair_to_directload_W,W,Heat recovery from compressed-air to direct load,yellow
-Activation curve,Q_server_to_directload_W,W,Heat recovery from data center to direct load,red
-Activation curve,Q_SOLARandPVT_gen_Wh,W,Combined generation (thermaL) PVT and Solar collector ,yellow
-Activation curve,Q_from_storage_used_W,W,Thermal storage to direct load,red_light
-Activation curve,Q_AddBoiler_W,W,Back-up boiler generation,grey
-Activation curve,Q_BaseBoiler_W,W,Base boiler generation,red
-Activation curve,Q_PeakBoiler_W,W,Peak boiler generation,black
-Activation curve,Q_CHP_W,W,CHP generation (thermal) to direct load,brown
-Activation curve,Q_Furnace_W,W,Heating load provided by CHP-furnace,green
-Activation curve,Q_GHP_W,W,Heating load provided by geothermal heat pump,purple
-Activation curve,Q_HPLake_W,W,Heating load provided by heat pump associated with lake,blue
-Activation curve,Q_HPSew_W,W,Heating load provided by heat pump associated with sewage,blue_light
-Activation curve,Q_DHNf_W,W,Final heating load of the district heating network,grey_light
+
+Activation curve,Q_PVT_gen_directload_W,W,PVT generation (thermal) to direct load,purple
+Activation curve,Q_SC_ET_gen_directload_W,W,Solar collector (ET) generation to direct load,brown
+Activation curve,Q_SC_FP_gen_directload_W,W,Solar collector (FP) generation to direct load,orange
+Activation curve,Q_HP_Server_gen_directload_W,W,Heat recovery from data center to direct load,red
+Activation curve,Q_HP_Sew_gen_directload_W,W,Heating load provided by heat pump associated with sewage,blue_light
+Activation curve,Q_HP_Lake_gen_directload_W,W,Heating load provided by heat pump associated with lake,green
+Activation curve,Q_GHP_gen_directload_W,W,Heating load provided by geothermal heat pump,purple
+Activation curve,Q_CHP_gen_directload_W,W,CHP generation (thermal) to direct load,brown
+Activation curve,Q_Furnace_gen_directload_W,W,Heating load provided by CHP-furnace,green
+Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
+Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
+Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
+Activation curve,Q_Storage_gen_W,W,Thermal storage to direct load,red_light
+Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
+
+Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
+Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red
+Activation curve,E_CHP_gen_directload_W,W,CHP district heating generation to direct load,purple
+Activation curve,E_Furnace_gen_directload_W,W,CHP-furnace generation to direct load,blue_light
+Activation curve,E_CCGT_gen_directload_W,W,CCGT district cooling generation to direct load,blue_light
+Activation curve,E_GRID_directload_W,W,Electricity imports,red
+Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand of buildings connected to district,blue_light
+Activation curve,E_PV_gen_export_W,W,PV generation exported,green_light
+Activation curve,E_PVT_gen_export_W,W,PVT generation exported,brown
+Activation curve,E_CHP_gen_export_W,W,CHP district heating generation exported,brown_light
+Activation curve,E_CCGT_gen_export_W,W,CCGT district cooling generation exported,brown_light
+Activation curve,E_Furnace_gen_export_W,W,CHP-furnace generation exported,black
+
 Activation curve,Q_PVT_to_storage_W,W,Heating load provided from photovoltaic-thermal to storage tank,grey_light
 Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tube collector to storage tank,blue_light
 Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
 Activation curve,Q_VCC_total_W,W,Yearly cooling load by VCC,red
-Activation curve,Q_Lake_total_W,W,Yearly cooling load by Lake,green
+
 Activation curve,Q_ACH_total_W,W,Yearly cooling load by ACH,blue
 Activation curve,Q_VCC_backup_total_W,W,Yearly cooling load by backup VCC,grey
 Activation curve,Q_thermal_storage_total_W,W,Yearly cooling load by thermal storage,purple
+Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
 
 Activation curve,E_ACH_total_W,W,Yearly electricity requirement of ACH,blue_light
 Activation curve,E_VCC_total_W,W,Yearly electricity requirement of VCC,red_light
@@ -227,17 +241,9 @@ Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup
 Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
-Activation curve,E_PV_to_directload_W,W,PV generation to direct load,yellow
-Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
-Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
-Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
-Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,PV generation exported,green_light
-Activation curve,E_PVT_to_grid_W,W,PVT generation exported,brown
-Activation curve,E_CHP_to_grid_W,W,CHP-CCGT generation exported,brown_light
-Activation curve,E_Furnace_to_grid_W,W,CHP-furnace generation exported,black
-Activation curve,E_from_grid_W,W,Electricity imports,red
-Activation curve,Electr_netw_total_W,W,Total electricity demand of buildings connected to district,blue_light
+
+
+
 Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
 Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
 Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange
@@ -280,8 +286,15 @@ Cost Analysis,Opex_CHP_Total_USD,$USD(2015),OPEX of combined cycle heat pump,blu
 Cost Analysis,Opex_Furnace_Total_USD,$USD(2015),OPEX of furnace,orange_light
 Cost Analysis,Opex_Boiler_Total_USD,$USD(2015),Combined OPEX of base/back-up/and peak boilers,red_light
 Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
+
+Cost Analysis,Capex_a_sys_disconnected_USD,$USD(2015)/yr,Annual CAPEX of decentralized energy systems,yellow_light
+Cost Analysis,Opex_a_sys_disconnected_USD,$USD(2015)/yr,Annual OPEX of decentralized energy systems,blue_light
+Cost Analysis,Capex_a_sys_connected_USD,$USD(2015)/yr,Annual CAPEX of central energy system,yellow
+Cost Analysis,Opex_a_sys_connected_USD,$USD(2015)/yr,Annual OPEX of central energy system,blue
 Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_Centralized_MioUSD,Mio $USD(2015),Annualized CAPEX of district energy system,green
+Cost Analysis,Opex_Centralized_MioUSD,Mio $USD(2015),OPEX of district energy system,brown
 Cost Analysis,Capex_Centralized_USD,$USD(2015),Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized_USD,$USD(2015),OPEX of district energy system,brown
 
@@ -318,6 +331,10 @@ Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,
 Cost Analysis,Network_costs_USD,$USD(2015),Annualized CAPEX of installing the district network,red_light
 Cost Analysis,Substation_costs_USD,$USD(2015),Annualized CAPEX of substations in the district network,blue
 
+Emissions and Primary Energy,GHG_sys_disconnected_tonCO2,ton CO2-eq/yr,Annual emissions of decentralized energy systems,grey
+Emissions and Primary Energy,GHG_sys_connected_tonCO2,ton CO2-eq/yr,Annual emissions of central energy system,black
+Emissions and Primary Energy,PEN_sys_disconnected_MJoil,MJ oil-eq/yr,Annual primary energy of decentralized energy systems,red_light
+Emissions and Primary Energy,PEN_sys_connected_MJoil,MJ oil-eq/yr,Annual primary energy of central energy system,red
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
@@ -331,6 +348,7 @@ Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Energy system operation,
 Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Building construction and decomissioning,red
 Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Commuting,red_lighter
 Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Energy system operation,red_light
+
 Thermal Network,P_loss_%,-,Pumping energy,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange
 Thermal Network,T_sup_C,C,Plant supply temperature,red
@@ -451,10 +469,9 @@ Urban,SERVERROOM,m2,Data center,blue
 Urban,SWIMMING,m2,Swimming halls,purple
 
 
-potential_duplicate,individual,-,Individual ID,red
-potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
-potential_duplicate,total_emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
-potential_duplicate,total_prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
-potential_duplicate,renewable_share_electricity,-,Renewable share (%),red
-potential_duplicate,Capex_total_Mio,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
-potential_duplicate,Opex_total_Mio,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red
+potential_duplicate,individual_name,-,System Option,red
+potential_duplicate,TAC_sys_USD,$USD(2015)/yr,Total annualized costs of energy system ($USD(2015)/yr),red
+potential_duplicate,GHG_sys_tonCO2,ton CO2-eq/yr,Green house gas emissions of energy system (ton CO2-eq/yr),red
+potential_duplicate,PEN_sys_MJoil,MJ oil-eq/yr,Primary energy of energy system (MJ oil-eq/yr),red
+potential_duplicate,Capex_total_sys_USD,$USD(2015),Total CAPEX of energy system ($USD(2015)),red
+potential_duplicate,Opex_a_sys_USD,$USD(2015)/yr,Annual OPEX ($USD(2015)/yr),red

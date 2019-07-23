@@ -341,7 +341,7 @@ def calc_bui_sys_decentralized_heating(building, bui_sys_config, district_supply
     bui_results_best = bui_results[bui_results['Best configuration'] > 0.0]
 
     technology_columns = [item for item in bui_results_best.columns if 'Nominal Power' in item]
-    cost_columns = [item for item in bui_results_best.columns if 'Costs' in item]
+    cost_columns = [item for item in bui_results_best.columns if 'USD' in item]
     technology_columns.extend(cost_columns)
     bui_results_best = bui_results_best[technology_columns].reset_index(drop=True)
 
@@ -352,8 +352,8 @@ def calc_bui_sys_decentralized_heating(building, bui_sys_config, district_supply
     Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, locator)
     bui_sys_detail.loc[building, 'PV_m2'] = PV_installed_area_m2
     # get decentralized capex/opex
-    Capex_a_total = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]'] + Capex_a_PV
-    Opex_a_total = bui_results_best.loc[0, 'Operation Costs [CHF]'] + Opex_a_PV
+    Capex_a_total = bui_results_best.loc[0, 'Capex_a_USD'] + Capex_a_PV
+    Opex_a_total = bui_results_best.loc[0, 'Opex_a_USD'] + Opex_a_PV
     bui_sys_detail.loc[building, 'Capex_Decentralized'] = Capex_a_total
     bui_sys_detail.loc[building, 'Opex_Decentralized'] = Opex_a_total
 

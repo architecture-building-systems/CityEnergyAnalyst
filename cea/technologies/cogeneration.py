@@ -12,6 +12,7 @@ from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import SPEC_VOLUME_STEAM
+import cea.resources.natural_gas as ngas
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +29,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -88,7 +89,7 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
 
         range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
         range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * lca_hour) / range_q_output_CC_W[i]
+            i] * electricity_price_perWh) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
@@ -445,12 +446,17 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     CCGT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
+
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if CC_size_W < CCGT_cost_data['cap_min'][0]:
         CC_size_W = CCGT_cost_data['cap_min'][0]
     CCGT_cost_data = CCGT_cost_data[
         (CCGT_cost_data['cap_min'] <= CC_size_W) & (CCGT_cost_data['cap_max'] > CC_size_W)]
+
+
+    #costs of connection
+    connection_costs = ngas.calc_Cinv_gas(CC_size_W)
 
     Inv_a = CCGT_cost_data.iloc[0]['a']
     Inv_b = CCGT_cost_data.iloc[0]['b']
@@ -463,8 +469,8 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
-    Capex_a_CCGT_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_CCGT_USD = Capex_a_CCGT_USD * Inv_OM
+    Capex_a_CCGT_USD = (InvC+connection_costs) * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_CCGT_USD = InvC * Inv_OM
     Capex_CCGT_USD = InvC
 
     return Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD
@@ -501,7 +507,7 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
 
     Capex_a_FC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_FC_USD = Capex_a_FC_USD * Inv_OM
+    Opex_fixed_FC_USD = InvC * Inv_OM
     Capex_FC_USD = InvC
 
     return Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD

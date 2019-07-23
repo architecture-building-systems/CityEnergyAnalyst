@@ -32,7 +32,9 @@ def main(config):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = os.path.join(working_dir, 'reference-case-cooling', 'baseline')
         config.weather = 'Singapore'
-        config.district_cooling_network = True
+        # local variables
+        config.optimization.district_cooling_network = True
+        config.config.supply_system_simulation.district_cooling_network = True
         config.thermal_network.network_type = 'DC'
         config.data_helper.region = 'SG'
     else:
