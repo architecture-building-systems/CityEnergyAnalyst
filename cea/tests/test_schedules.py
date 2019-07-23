@@ -7,19 +7,45 @@ test data - you should only do this if you are sure that the new data is correct
 import os
 import unittest
 import pandas as pd
+import numpy as np
 import json
 import ConfigParser
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.occupancy_model import calc_schedules
-from cea.demand.occupancy_model import schedule_maker
+from cea.demand.occupancy_model import schedule_maker, get_building_schedules
 from cea.utilities import epwreader
+from cea.demand.demand_main import get_dates_from_year
 import cea.config
 from cea.demand.building_properties import BuildingProperties
 from cea.constants import HOURS_IN_YEAR
 
 REFERENCE_TIME = 3456
+
+
+class TestSavingLoadingSchedules(unittest.TestCase):
+    """Make sure that the schedules loaded from disk are the same as those loaded if they're not present."""
+
+    def test_saving_loading_schedules_same_same(self):
+        config = cea.config.Configuration()
+        config.demand.use_stochastic_occupancy = False
+        locator = ReferenceCaseOpenLocator()
+        date_range = get_dates_from_year(2005)
+        building_properties = BuildingProperties(locator, override_variables=False)
+        bpr = building_properties["B01"]
+
+        # run get_building_schedules on clean folder - they're created from scratch
+        if os.path.exists(locator.get_building_schedules("B01")):
+            os.remove(locator.get_building_schedules("B01"))
+        fresh_schedules = get_building_schedules(locator, bpr, date_range, config)
+
+        # run again to get the frozen version
+        frozen_schedules = get_building_schedules(locator, bpr, date_range, config)
+
+        self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
+        for schedule in fresh_schedules:
+            self.assertTrue(np.array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
 
 
 class TestBuildingPreprocessing(unittest.TestCase):
