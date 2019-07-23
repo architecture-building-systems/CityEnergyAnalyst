@@ -118,7 +118,7 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (CT_size_W) ** Inv_c + (Inv_d + Inv_e * CT_size_W) * log(CT_size_W)
 
             Capex_a_CT_USD =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_CT_USD = Capex_a_CT_USD * Inv_OM
+            Opex_fixed_CT_USD = InvC * Inv_OM
             Capex_CT_USD = InvC
 
         else:
@@ -139,7 +139,7 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
                 InvC = Inv_a + Inv_b * (Q_nom_each_CT) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_CT) * log(Q_nom_each_CT)
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Capex_a_CT_USD = Capex_a_CT_USD + Capex_a1
-                Opex_fixed_CT_USD = Opex_fixed_CT_USD + Capex_a1 * Inv_OM
+                Opex_fixed_CT_USD = Opex_fixed_CT_USD + InvC * Inv_OM
                 Capex_CT_USD = Capex_CT_USD + InvC
 
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD

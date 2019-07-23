@@ -24,8 +24,11 @@ def mutFlip(individual, proba, nBuildings, config):
     :rtype: list
     """
     mutant = toolbox.clone(individual)
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
-    if config.district_heating_network:
+    if district_heating_network:
         # Flip the CHP
         if individual[0] > 0:
             if random.random() < proba:
@@ -49,7 +52,7 @@ def mutFlip(individual, proba, nBuildings, config):
                 mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR]+1) % 2
     heating_block = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN
 
-    if config.district_cooling_network:
+    if district_cooling_network:
 
         # Flip the cooling absorption chiller technology
         if individual[heating_block + 4] > 0:
@@ -60,13 +63,13 @@ def mutFlip(individual, proba, nBuildings, config):
 
     # Flip the buildings' connection
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
-    if config.district_heating_network:
+    if district_heating_network:
         for building in range(nBuildings):
             if random.random() < proba:
                 mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
 
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings
-    if config.district_cooling_network:
+    if district_cooling_network:
         for building in range(nBuildings):
             if random.random() < proba:
                 mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
@@ -87,6 +90,9 @@ def mutShuffle(individual, proba, nBuildings, config):
     :rtype: list
     """
     mutant = toolbox.clone(individual)
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
     # Swap function
     def swap(nPlant, frank):
@@ -101,16 +107,16 @@ def mutShuffle(individual, proba, nBuildings, config):
                     mutant[irank:irank+2], mutant[rank:rank+2]
 
     # Swap
-    if config.district_heating_network:
+    if district_heating_network:
         swap(N_HEAT,0)
     swap(N_SOLAR, N_HEAT * 2 + N_HR)
-    if config.district_cooling_network:
+    if district_cooling_network:
         swap(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
     # Swap buildings
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
 
-    if config.district_heating_network:
+    if district_heating_network:
         for i in range(nBuildings):
             if random.random() < proba:
                 iswap = random.randint(0, nBuildings - 2)
@@ -122,7 +128,7 @@ def mutShuffle(individual, proba, nBuildings, config):
 
     network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings
 
-    if config.district_cooling_network:
+    if district_cooling_network:
         for i in range(nBuildings):
             if random.random() < proba:
                 iswap = random.randint(0, nBuildings - 2)
@@ -271,6 +277,9 @@ def mutGU(individual, proba, config):
     :rtype: list
     """
     mutant = toolbox.clone(individual)
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
     def flip(nPlants, irank):
         for rank in range(nPlants):
@@ -310,10 +319,10 @@ def mutGU(individual, proba, config):
                     for i in range(nPlants):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
-    if config.district_heating_network:
+    if district_heating_network:
         flip(N_HEAT, 0)
     flip(N_SOLAR, N_HEAT * 2 + N_HR)
-    if config.district_cooling_network:
+    if district_cooling_network:
         flip(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
     

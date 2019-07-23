@@ -76,7 +76,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     return E_req_W
 
 
-def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
+def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -111,7 +111,7 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
         tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = ground_temp - HP_DELTA_T_EVAP
+    tevap_K = ground_temp_K - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -331,11 +331,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    Capex_a_HP_USD = 0
-    Opex_fixed_HP_USD = 0
-    Capex_HP_USD = 0
+    Capex_a_HP_USD = 0.0
+    Opex_fixed_HP_USD = 0.0
+    Capex_HP_USD = 0.0
 
-    if HP_Size > 0:
+    if HP_Size > 0.0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HP")
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -343,9 +343,9 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
         if HP_Size < HP_cost_data.iloc[0]['cap_min']:
             HP_Size = HP_cost_data.iloc[0]['cap_min']
 
-        max_chiller_size = max(HP_cost_data['cap_max'].values)
+        max_HP_size = max(HP_cost_data['cap_max'].values)
 
-        if HP_Size <= max_chiller_size:
+        if HP_Size <= max_HP_size:
 
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
@@ -362,11 +362,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
 
             Capex_a_HP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_HP_USD = Capex_a_HP_USD * Inv_OM
+            Opex_fixed_HP_USD = InvC * Inv_OM
             Capex_HP_USD = InvC
 
         else:
-            number_of_chillers = int(ceil(HP_Size / max_chiller_size))
+            number_of_chillers = int(ceil(HP_Size / max_HP_size))
             Q_nom_each_chiller = HP_Size / number_of_chillers
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= Q_nom_each_chiller) & (HP_cost_data['cap_max'] > Q_nom_each_chiller)]
@@ -384,9 +384,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
 
-                Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Opex_fixed_HP_USD = Opex_fixed_HP_USD + Capex_a_HP_USD * Inv_OM
-                Capex_HP_USD = InvC
+                Capex_a_HP_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed_HP_USD += InvC * Inv_OM
+                Capex_HP_USD += InvC
+    else:
+        Capex_a_HP_USD = Opex_fixed_HP_USD = Capex_HP_USD = 0.0
 
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
@@ -423,7 +425,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_GHP = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_GHP_USD = Capex_a_GHP_USD * Inv_OM
+    Opex_fixed_GHP_USD = InvC_GHP * Inv_OM
     
     BH_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="BH")
     technology_code = list(set(BH_cost_data['code']))
@@ -447,7 +449,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_BH = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_BH_USD = InvC_BH * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_BH_USD = Capex_a_BH_USD * Inv_OM
+    Opex_fixed_BH_USD = InvC_BH * Inv_OM
 
     Capex_a_GHP_total_USD = Capex_a_BH_USD + Capex_a_GHP_USD
     Opex_fixed_GHP_total_USD = Opex_fixed_BH_USD + Opex_fixed_GHP_USD

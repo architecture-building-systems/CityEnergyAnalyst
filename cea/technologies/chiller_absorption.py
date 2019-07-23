@@ -198,7 +198,7 @@ def calc_Cinv_ACH(qcold_W, locator, ACH_type, config):
 
             InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
             Capex_a_ACH_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_ACH_USD = Capex_a_ACH_USD * Inv_OM
+            Opex_fixed_ACH_USD = InvC * Inv_OM
             Capex_ACH_USD = InvC
         else:
             number_of_chillers = int(ceil(qcold_W / max_chiller_size))
@@ -220,7 +220,7 @@ def calc_Cinv_ACH(qcold_W, locator, ACH_type, config):
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Capex_a_ACH_USD = Capex_a_ACH_USD + Capex_a1
-                Opex_fixed_ACH_USD = Opex_fixed_ACH_USD + Capex_a1 * Inv_OM
+                Opex_fixed_ACH_USD = Opex_fixed_ACH_USD + InvC * Inv_OM
                 Capex_ACH_USD = Capex_ACH_USD + InvC
 
     return Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD
