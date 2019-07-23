@@ -21,6 +21,10 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     
     # initializing the capacities of technologies which will not always be used, but to keep the dataframe 
     # consistent for all the cases, the capacities are all initiated with 0's
+    # local variables
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
+
     Furnace_wet = 0
     Furnace_wet_capacity_W = 0
     Furnace_dry = 0
@@ -40,9 +44,9 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     Backup_boiler_NG_capacity_W = 0
     Backup_boiler_BG_capacity_W = 0
 
-    if config.district_heating_network:
+    if district_heating_network:
         network = master_to_slave_vars.DHN_barcode
-    elif config.district_cooling_network:
+    elif district_cooling_network:
         network = master_to_slave_vars.DCN_barcode
     cooling_all_units = 'AHU_ARU_SCU'
     heating_all_units = 'AHU_ARU_SHU' # in this version, split heating demand is not fully calculated
@@ -167,7 +171,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
         if network[i] == "0":
             # if the building is not connected to the centralized plant, then the corresponding demand is satisfied
             # by the decentralized technologies, which were already generated using cea\optimization\preprocessing\decentralized_building_main.py
-            if config.district_heating_network:
+            if district_heating_network:
                 df = pd.read_csv(
                     locator.get_optimization_decentralized_folder_building_result_heating(building_names[i]))
                 dfBest = df[df["Best configuration"] == 1]
@@ -259,7 +263,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                 df_installed_capacity['Decentralized_direct_expansion_to_AHU_ARU_SCU_share_cooling'][i] = Decentralized_direct_expansion_to_AHU_ARU_SCU_share_cooling
                 df_installed_capacity['Decentralized_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W'][i] = Decentralized_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
 
-            elif config.district_cooling_network:
+            elif district_cooling_network:
 
                 df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_names[i],
                                                                                                       cooling_all_units))
@@ -685,7 +689,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     GHP_capacity_W = master_to_slave_vars.GHP_number * GHP_HMAX_SIZE
     PV = individual[N_HEAT * 2 + N_HR]
     PV_capacity_W = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-    if config.district_heating_network:
+    if district_heating_network:
         PVT = individual[N_HEAT * 2 + N_HR + 2]
         PVT_capacity_W = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
     else:

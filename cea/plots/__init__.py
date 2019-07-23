@@ -63,20 +63,34 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache, name='Default Dashboard', description=''):
+def default_dashboard(config, cache, name='Default Dashboard', description='', layout='row'):
     """Return a default Dashboard"""
     return Dashboard(config, {'name': name,
                               'description': description,
+                              'layout': layout,
                               'plots': []}, cache)
 
 
-def new_dashboard(config, cache, name, description):
+def new_dashboard(config, cache, name, description, layout):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
     dashboards = read_dashboards(config, cache)
-    dashboards.append(default_dashboard(config, cache, name, description))
+    dashboards.append(default_dashboard(config, cache, name, description, layout))
+    write_dashboards(config, dashboards)
+    return len(dashboards) - 1
+
+
+def duplicate_dashboard(config, cache, name, description, dashboard_index):
+    dashboards = read_dashboards(config, cache)
+    dashboard = dashboards[dashboard_index].to_dict()
+    dashboards.append(Dashboard(config, {
+        'name': name,
+        'description': description,
+        'layout': dashboard['layout'],
+        'plots': dashboard['plots']
+    }, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
@@ -99,7 +113,11 @@ class Dashboard(object):
         try:
             self.description = dashboard_dict['description']
         except KeyError:
-            self.description = None
+            self.description = ''
+        try:
+            self.layout = dashboard_dict['layout']
+        except KeyError:
+            self.layout = 'row'
 
     def add_plot(self, category, plot_id):
         """Add a new plot to the dashboard"""
@@ -109,6 +127,14 @@ class Dashboard(object):
         plot = plot_class(self.config.project, parameters, self.cache)
         self.plots.append(plot)
 
+    def replace_plot(self, category, plot_id, plot_index):
+        """Replace plot at index"""
+        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
+        parameters = plot_class.get_default_parameters(self.config)
+
+        plot = plot_class(self.config.project, parameters, self.cache)
+        self.plots[plot_index] = plot
+
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
         self.plots.pop(plot_index)
@@ -117,6 +143,7 @@ class Dashboard(object):
         """Return a dict representation for storing in yaml"""
         return {'name': self.name,
                 'description': self.description,
+                'layout': self.layout,
                 'plots': [{'plot': p.id(),
                            'category': p.category_name,
                            'parameters': p.parameters} for p in self.plots]}

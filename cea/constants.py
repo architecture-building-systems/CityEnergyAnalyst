@@ -32,6 +32,7 @@ HOURS_IN_YEAR = 8760
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
 DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 = 983.21  # [kg/m^3] density of Water @ 60°C
 P_WATER_KGPERM3 = 998.0  # water density kg/m3
+P_SEWAGEWATER_KGPERM3 = 1400  # sewagewater density kg/m3
 WH_TO_J = 3600.0
 J_TO_WH = 0.000277
 
@@ -46,6 +47,6 @@ CT_MAX_SIZE_W = 10000000
 
 # ??
 VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
-MIN_FLOW_MPERS = 9  # in lps got from Rabtherm technology
+MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
 H0_KWPERM2K = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
