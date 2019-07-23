@@ -13,6 +13,7 @@ Prerequisites
 * Download and install Miniconda(64-bit) for Python 2.7.
 * Download and install CMake.
 * Install DAYSIM version >= 4.0 – Open Terminal and run the following commands:
+
   - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``;
   - ``mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install``
   - ``cp ./CMakeLists.txt /Daysim/CMakeLists.txt``
