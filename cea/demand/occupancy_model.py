@@ -734,8 +734,7 @@ def get_building_schedules(locator, bpr, date_range, config):
     if os.path.isfile(schedules_csv):
         print("Schedules for building {} detected. Using these schedules.".format(building_name))
         building_schedules = read_schedules_from_file(schedules_csv)
-
-    elif not os.path.isfile(schedules_csv):
+    else:
         print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
         # get list of uses in building
         list_uses = [key for (key, value) in bpr.occupancy.items() if value > 0.0]
