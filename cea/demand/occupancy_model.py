@@ -697,9 +697,7 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     :type building_name: str
     :return: this function returns nothing
     """
-
-    path_to_folder = locator.get_building_properties_folder()
-    schedules_csv_file = os.path.join(path_to_folder, '{}_schedules.csv'.format(building_name))
+    schedules_csv_file = locator.get_building_schedules(building_name)
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
     df_building_schedules.to_csv(schedules_csv_file, index=False)
