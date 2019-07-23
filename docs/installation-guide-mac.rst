@@ -18,7 +18,7 @@ Prerequisites
   - ``mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install``
   - ``cp ./CMakeLists.txt /Daysim/CMakeLists.txt``
   - ``cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/Daysim/bin``
-  - ``export PATH="path_to_cea_env:path_to_daysim_bin:$PATH"`` where "path_to_cea_env" is the path to the CEA conda environment (it should look something like `\Users\your_name\Miniconda2\envs\cea\bin` where 'your_name' represents your user name in macOS) and "path_to_daysim_bin" is the path to the Daysim bin folder (it should look something like `\Users\your_name\Daysim\bin`).
+  - ``export PATH="path_to_cea_env:path_to_daysim_bin:$PATH"`` where "path_to_cea_env" is the path to the CEA conda environment (it should look something like `\Users\your_name\Miniconda2\envs\cea\bin` where 'your_name' represents your user name on your Mac) and "path_to_daysim_bin" is the path to the Daysim bin folder (it should look something like `\Users\your_name\Daysim\bin`).
 
 Installation of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,6 +57,6 @@ In order to access and work on the source code of CEA from PyCharm do:
 #. Click Conda Environment from the left hand list and select existing environment.
 #. Point to the location of your conda environment. It should look something like 
    ``\Users\your_name\Miniconda2\envs\cea\bin\python``
-   where ‘your_name’ represents your user name in Mac.
+   where ‘your_name’ represents your user name on your Mac.
 #. Click apply changes.
 
