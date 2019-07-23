@@ -42,7 +42,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
 
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
-        #cls.use_stochastic_occupancy = cls.config.demand.use_stochastic_occupancy
         cls.resolution_output = cls.config.demand.resolution_output
         cls.loads_output = cls.config.demand.loads_output
         cls.massflows_output = cls.config.demand.massflows_output
