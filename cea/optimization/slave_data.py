@@ -133,11 +133,11 @@ class SlaveData(object):
         self.WasteCompressorHeatRecovery = 0
         self.storage_heating_on = 0
         self.DHN_temperature = 0.0  # Supply temperature of the DHN in degree C
-        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DHN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
 
         self.VCC_on = 0
         self.Absorption_Chiller_on = 0
         self.Lake_cooling_on = 0
         self.storage_cooling_on = 0
         self.DCN_temperature = 0.0  # Supply temperature of the DCN in degree C
-        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DCN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
