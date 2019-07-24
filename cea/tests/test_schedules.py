@@ -60,7 +60,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
 
-        calculated_results = calculate_test_mixed_use_archetype_values_results(locator).to_dict()
+        calculated_results = calculate_mixed_use_archetype_values_results(locator).to_dict()
 
         # compare to reference values
         expected_results = json.loads(config.get('test_mixed_use_archetype_values', 'expected_results'))
@@ -122,7 +122,7 @@ def get_test_config_path():
     return os.path.join(os.path.dirname(__file__), 'test_schedules.config')
 
 
-def calculate_test_mixed_use_archetype_values_results(locator):
+def calculate_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
     office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE', index_col=0).T['density'].values[:1][0])
@@ -136,7 +136,7 @@ def calculate_test_mixed_use_archetype_values_results(locator):
     return calculated_results
 
 
-def create_test_data():
+def create_data():
     """Create test data to compare against - run this the first time you make changes that affect the results. Note,
     this will overwrite the previous test data."""
     test_config = ConfigParser.SafeConfigParser()
@@ -144,7 +144,7 @@ def create_test_data():
     if not test_config.has_section('test_mixed_use_archetype_values'):
         test_config.add_section('test_mixed_use_archetype_values')
     locator = ReferenceCaseOpenLocator()
-    expected_results = calculate_test_mixed_use_archetype_values_results(locator)
+    expected_results = calculate_mixed_use_archetype_values_results(locator)
     test_config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -174,4 +174,4 @@ def create_test_data():
 
 
 if __name__ == '__main__':
-    create_test_data()
+    create_data()
