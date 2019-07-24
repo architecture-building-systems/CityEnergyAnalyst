@@ -256,7 +256,7 @@ Optimization:
                  'general:district-heating-network', 'general:district-cooling-network',
                  'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
 
-Thermal networks:
+Networks:
 
   - name: network-layout
     label: Thermal Network I (Layout)
