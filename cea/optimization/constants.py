@@ -43,13 +43,15 @@ DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE = [["CHP/Furnace Share", [0.0, 1.0]],
                                           ["SC_FP Share", [0.0, 1.0]],
                                           ["PV Share", [0.0, 1.0]]]
 
-DC_CONVERSION_TECHNOLOGIES_NAMES = [["HPLake", [0, 1]],
+DC_CONVERSION_TECHNOLOGIES_NAMES = [["FLake", [0, 1]],
                                     ["VCC", [0, 1]],
-                                    ["ACH", [0, 1]]]
+                                    ["ACH", [0, 1]],
+                                    ["Storage", [0, 1]]]
 
-DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE = [["HPLake", [0.0, 1.0]],
-                                          ["VCC", [0.0, 1.0]],
-                                          ["ACH", [0.0, 1.0]]]
+DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE = [["FLake Share", [0.0, 1.0]],
+                                          ["VCC Share", [0.0, 1.0]],
+                                          ["ACH Share", [0.0, 1.0]],
+                                          ["Storage Share", [0, 1]]]
 
 DC_TECHNOLOGIES_SHARING_SPACE = []
 
