@@ -5,7 +5,7 @@ Analysis:
     description: Multicriteria analysis
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.multicriteria.main
-    parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria,
+    parameters: ['general:scenario', multi-criteria,
                  'thermal-network:network-names', 'thermal-network:network-type']
 
 
@@ -222,7 +222,7 @@ Optimization:
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization',
-                 'network-layout', 'general:detailed-electricity-pricing']
+                 'network-layout']
 
   - name: optimization
     label: Central supply system
@@ -237,8 +237,7 @@ Optimization:
     description: Run decentralized building optimization
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'general:weather', 'decentralized',
-                 'general:detailed-electricity-pricing']
+    parameters: ['general:scenario', 'general:weather', 'decentralized']
 
 
   - name: supply-system-simulation
@@ -272,7 +271,7 @@ Thermal networks:
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
                  'thermal-network-optimization:use-representative-week-per-month']
     input-files:
-      - [get_network_layout_nodes_shapefile, network_type, network_name]
+      - [get_network_layout_nodes_shapefile, "thermal-network:network_type", "thermal-network:network_name"]
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
@@ -402,12 +401,12 @@ default:
     module: cea.tests.trace_inputlocator
     parameters: ['general:scenario', trace-inputlocator]
 
-  - name: cooling-case-workflow
-    label: cooling case workflow
-    description: Run the cooling case from start to end to test the cea
+  - name: workflow
+    lable: Workflow
+    description: Run a workflow.yml file from start to end
     interfaces: [cli]
-    module: cea.tests.cooling_case_workflow
-    parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
+    module: cea.tests.workflow
+    parameters: [workflow]
 
 
 Documentation:
