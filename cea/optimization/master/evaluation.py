@@ -618,17 +618,16 @@ def calc_master_to_slave_variables(locator, gen,
 
     # GHP
     if individual_with_names_dict['GHP'] == 1 and GHP_ALLOWED == True:
-        sewage_potential = pd.read_csv(locator.get_sewage_heat_potential())
-        Q_max_sewage = (sewage_potential['Qsw_kW'] * 1000).max()
+        ghp_potential = pd.read_csv(locator.get_geothermal_potential())
+        Q_max_ghp = (ghp_potential['QGHP_kW'] * 1000).max()
         master_to_slave_vars.GHP_on = 1
-        GHP_Qmax = max(individual_with_names_dict['GHP Share'] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
-        master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
+        master_to_slave_vars.GHP_maxSize_W = min(individual_with_names_dict['GHP Share'] * Q_max_ghp,
+                                                 individual_with_names_dict['GHP Share'] * Q_heating_nom_W)
 
-    # server waste heat
-    if individual_with_names_dict[12] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
+    #HPServer
+    if individual_with_names_dict['HPServer'] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
-        master_to_slave_vars.HPServer_maxSize_W = max(individual_with_names_dict[13] * Q_heating_nom_W,
-                                                      Q_MIN_SHARE * Q_heating_nom_W)
+        master_to_slave_vars.HPServer_maxSize_W = individual_with_names_dict['HPServer Share'] * Q_heating_nom_W
 
     # SOLAR SYSTEMS
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
