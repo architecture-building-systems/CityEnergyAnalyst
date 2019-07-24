@@ -307,17 +307,12 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
                                          ):
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     Q_cooling_nom_W, Q_heating_nom_W, \
-    network_file_name_cooling, network_file_name_heating = extract_capacities_from_individual(locator, individual,
-                                                                                              DCN_barcode,
-                                                                                              DHN_barcode,
-                                                                                              config,
-                                                                                              num_total_buildings)
+    network_file_name_cooling, network_file_name_heating = extract_loads_individual(locator, individual,
+                                                                                    DCN_barcode,
+                                                                                    DHN_barcode,
+                                                                                    config,
+                                                                                    num_total_buildings)
 
-    # MODIFY EXTRA CONSTRAINT
-    try:
-        check.GHPCheck(individual, locator, Q_heating_nom_W, building_names)
-    except:
-        print "No GHP constraint check possible \n"
 
     # CREATE MASTER TO SLAVE AND FILL-IN
     master_to_slave_vars = calc_master_to_slave_variables(locator, gen,
@@ -338,7 +333,7 @@ def export_data_to_master_to_slave_class(locator, gen, individual, ind_num, buil
     return master_to_slave_vars
 
 
-def extract_capacities_from_individual(locator, individual, DCN_barcode, DHN_barcode, config, num_total_buildings):
+def extract_loads_individual(locator, individual, DCN_barcode, DHN_barcode, config, num_total_buildings):
     # local variables
     weather_file = config.weather
     network_depth_m = Z0
@@ -669,65 +664,6 @@ def calc_master_to_slave_variables(locator, gen,
                 master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     return master_to_slave_vars
-
-
-def checkNtw(individual, DHN_barcode_list, DCN_barcode_list, locator, config, building_names):
-    """
-    This function adds new DH/DC networks to lists and run network simulations for new networks.
-    
-    :param individual: network configuration considered
-    :param DHN_barcode_list: list of DHN configurations previously encountered in the master
-    :param DCN_barcode_list: list of DCN configurations previously encountered in the master
-    :param locator: path to the folder
-    :type individual: list
-    :type DHN_barcode_list: list
-    :type DCN_barcode_list: list
-    :type locator: string
-    :return: None
-    files changes: DHN_network_list, DCN_network_list
-    :rtype: Nonetype
-    """
-
-    # decode an individual
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                     building_names)
-    # local variables
-    weather_file = config.weather
-    network_depth_m = Z0
-    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
-    total_demand = pd.read_csv(locator.get_total_demand())
-
-    ## add network barcodes to lists and run network simulation
-    if not (DHN_barcode in DHN_barcode_list) and DHN_barcode.count("1") > 0:
-        DHN_barcode_list.append(DHN_barcode)
-        demand_this_network = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
-        buildings_in_heating_network = demand_this_network.Name.values
-
-        # Run the substation and distribution routines
-        substation.substation_main_heating(locator, demand_this_network, buildings_in_heating_network,
-                                           DHN_configuration,
-                                           DHN_barcode)
-        # Run thermal network simulation
-        num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr'))
-        summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_tot_buildings, "DH",
-                                       DHN_barcode, DHN_barcode)
-
-    if not (DCN_barcode in DCN_barcode_list) and DCN_barcode.count("1") > 0:
-        DCN_barcode_list.append(DCN_barcode)
-        demand_this_network = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
-        buildings_in_cooling_network = demand_this_network.Name.values
-
-        # Run the substation and distribution routines
-        substation.substation_main_cooling(locator, demand_this_network, buildings_in_cooling_network,
-                                           DCN_configuration,
-                                           DCN_barcode)
-        # Run thermal network simulation
-        num_tot_buildings = len(get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr'))
-        summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_tot_buildings, "DC",
-                                       DCN_barcode, DCN_barcode)
-
-    return DHN_barcode_list, DCN_barcode_list
 
 
 def epsIndicator(frontOld, frontNew):

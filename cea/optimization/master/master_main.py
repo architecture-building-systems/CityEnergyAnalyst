@@ -76,10 +76,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     t0 = time.clock()
 
     # LOCAL VARIABLES
-    euclidean_distance = 0
-    spread = 0
-    random.seed(config.optimization.random_seed)
-    np.random.seed(config.optimization.random_seed)
     district_heating_network = network_features.district_heating_network
     district_cooling_network = network_features.district_cooling_network
     NGEN = config.optimization.ngen  # number of individuals
@@ -88,14 +84,18 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
     NOBJ = 3  # number of objectives
-    # NDIM = NOBJ + K - 1  # number of problem dimensions
     P = [2, 1]
-    P2 = 12
     SCALES = [1, 0.5]
-    H = factorial(NOBJ + P2 - 1) / (factorial(P2) * factorial(NOBJ - 1))
-    # BOUND_LOW, BOUND_UP = 0.0, 1.0
+    euclidean_distance = 0
+    spread = 0
+    random.seed(config.optimization.random_seed)
+    np.random.seed(config.optimization.random_seed)
+    ref_points = [tools.uniform_reference_points(NOBJ, p, s) for p, s in zip(P, SCALES)]
+    ref_points = np.concatenate(ref_points)
+    _, uniques = np.unique(ref_points, axis=0, return_index=True)
+    ref_points = ref_points[uniques]
 
-    # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLLUMN_NAMES)
+    # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLUM_NAMES)
     column_names, \
     column_names_buildings_heating, \
     column_names_buildings_cooling = get_column_names_individual(building_names,
@@ -107,12 +107,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                                   district_heating_network,
                                                   district_cooling_network)
 
-    # classes and tools
+    # DEAP LIBRARY REFERENCE_POINT CLASSES AND TOOLS
     # reference points
-    ref_points = [tools.uniform_reference_points(NOBJ, p, s) for p, s in zip(P, SCALES)]
-    ref_points = np.concatenate(ref_points)
-    _, uniques = np.unique(ref_points, axis=0, return_index=True)
-    ref_points = ref_points[uniques]
     toolbox = base.Toolbox()
     toolbox.register("generate",
                      generate_main,
