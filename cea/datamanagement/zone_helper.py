@@ -122,6 +122,11 @@ def zone_helper(locator, config):
     occupancy_output_path = locator.get_building_occupancy()
     age_output_path = locator.get_building_age()
 
+    # ensure folders exist
+    locator.ensure_parent_folder_exists(zone_output_path)
+    locator.ensure_parent_folder_exists(occupancy_output_path)
+    locator.ensure_parent_folder_exists(age_output_path)
+
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
