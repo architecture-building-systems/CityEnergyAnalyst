@@ -455,7 +455,7 @@ class InputLocator(object):
         return os.path.join(self.get_potentials_folder(), "Sewage_heat_potential.csv")
 
     def get_lake_potential(self):
-        return os.path.join(self.get_potentials_folder(), "Lake_potential.csv")
+        return os.path.join(self.get_potentials_folder(), "Water_body_potential.csv")
 
     # POTENTIAL
     def get_potentials_folder(self):
@@ -470,7 +470,7 @@ class InputLocator(object):
 
     def get_geothermal_potential(self):
         """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
-        return os.path.join(self.get_potentials_folder(), "geothermal", "geothermal.csv")
+        return os.path.join(self.get_potentials_folder(), "Shallow_geothermal_potential.csv")
 
     def get_potentials_retrofit_folder(self):
         """scenario/outputs/data/potentials/retrofit.csv"""

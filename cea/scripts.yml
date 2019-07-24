@@ -136,6 +136,13 @@ Demand forecasting:
 
 
 Energy potentials:
+  - name: shallow-geothermal
+    label: shallow geothermal potential
+    description: Calculate the heat extracted from a geothermal probes (up to 50 m length)
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.resources.geothermal
+    parameters: ['general:scenario', shallow-geothermal]
+
   - name: water-body
     label: Water body potential
     description: Calculate the heat extracted from a lake or a water body

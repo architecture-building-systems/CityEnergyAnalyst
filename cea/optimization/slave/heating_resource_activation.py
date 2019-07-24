@@ -148,7 +148,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             Q_HPLake_gen_W = master_to_slave_vars.HPLake_maxSize_W
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
                     HEAT_CAPACITY_OF_WATER_JPERKGK * (
-                    tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
+                    tdhsup_K - tdhret_req_K))
+            # scale down the mass flow if the thermal demand is lowered
         else:  # regular operation possible
             Q_HPLake_gen_W = Q_heat_unmet_W
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -164,13 +165,13 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             hour <= master_to_slave_vars.GHP_SEASON_OFF and \
             Q_heat_unmet_W > 0 and not np.isclose(
             tdhsup_K, tdhret_req_K):
-
         source_GHP = 1
         # activating GHP plant if possible
-        Q_max_GHP_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground_K, master_to_slave_vars.GHP_number)
+        Q_max_GHP_W = master_to_slave_vars.GHP_maxSize_W
+        _, GHP_COP = GHP_Op_max(Q_max_GHP_W, tdhsup_K, T_ground_K,)
 
-        if Q_heat_unmet_W >= Q_max_GHP_W:
-            Q_therm_GHP_W = Q_max_GHP_W
+        if Q_heat_unmet_W >= master_to_slave_vars.GHP_maxSize_W:
+            Q_therm_GHP_W = master_to_slave_vars.GHP_maxSize_W
             mdot_DH_to_GHP_kgpers = Q_therm_GHP_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:  # regular operation possible, demand is covered
             Q_therm_GHP_W = float(Q_heat_unmet_W)
