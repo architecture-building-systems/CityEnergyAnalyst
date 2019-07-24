@@ -14,7 +14,6 @@ from cea.optimization import slave_data
 from cea.optimization import supportFn
 from cea.optimization.constants import *
 from cea.optimization.master import cost_model
-from cea.optimization.master import generation
 from cea.optimization.master import summarize_network
 from cea.optimization.master.performance_aggregation import summarize_results_individual
 from cea.optimization.slave import cooling_main
@@ -472,7 +471,42 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
 
     # Store inforamtion about which units are activated
-    # CHP/Furnace
+    if master_to_slave_vars.DHN_exists:
+        master_to_slave_vars = master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars)
+
+    if master_to_slave_vars.DCN_exists:
+        master_to_slave_vars = master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars)
+
+    return master_to_slave_vars
+
+
+def master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars):
+    # COOLING SYSTEMS
+    # Lake Cooling
+    if individual_with_names_dict['FLake'] == 1 and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.Lake_cooling_on = 1
+        master_to_slave_vars.Lake_cooling_size_W = individual_with_names_dict['FLake Share'] * Q_cooling_nom_W
+    # VCC Cooling
+    if individual_with_names_dict['VCC'] == 1 and VCC_ALLOWED is True:
+        master_to_slave_vars.VCC_on = 1
+        master_to_slave_vars.VCC_cooling_size_W = individual_with_names_dict['VCC Share'] * Q_cooling_nom_W
+    # Absorption Chiller Cooling
+    if individual_with_names_dict['ACH'] == 1 and ABSORPTION_CHILLER_ALLOWED is True:
+        master_to_slave_vars.Absorption_Chiller_on = 1
+        master_to_slave_vars.Absorption_chiller_size_W = individual_with_names_dict['ACH Share'] * Q_cooling_nom_W
+    # Storage Cooling
+    if individual_with_names_dict['Storage'] == 1 and STORAGE_COOLING_ALLOWED is True:
+        if (individual_with_names_dict['VCC'] == 1 and VCC_ALLOWED is True) or \
+                (individual_with_names_dict['ACH'] == 1 and ABSORPTION_CHILLER_ALLOWED is True):
+            master_to_slave_vars.storage_cooling_on = 1
+            master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage Share'] * Q_cooling_nom_W
+            if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
+                master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
+
+    return master_to_slave_vars
+
+
+def master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars):
     if individual_with_names_dict['CHP/Furnace'] == 1 and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_on = 1
         master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['CHP/Furnace Share'] * Q_heating_nom_W
@@ -491,7 +525,6 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.CC_GT_SIZE_W = individual_with_names_dict['CHP/Furnace Share'] * Q_heating_nom_W * 1.3
         # 1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
         master_to_slave_vars.gt_fuel = "BG"
-
     # Base boiler
     if individual_with_names_dict['BaseBoiler'] == 1:  # NG-fired boiler
         master_to_slave_vars.Boiler_on = 1
@@ -501,7 +534,6 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max_W = individual_with_names_dict['BaseBoiler Share'] * Q_heating_nom_W
         master_to_slave_vars.BoilerType = "BG"
-
     # peak boiler
     if individual_with_names_dict['PeakBoiler'] == 1:  # BG-fired boiler
         master_to_slave_vars.BoilerPeak_on = 1
@@ -511,15 +543,13 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max_W = individual_with_names_dict['PeakBoiler Share'] * Q_heating_nom_W
         master_to_slave_vars.BoilerPeakType = "BG"
-
     # HPLake
     if individual_with_names_dict['HPLake'] == 1 and HP_LAKE_ALLOWED == True:
         lake_potential = pd.read_csv(locator.get_lake_potential())
         Q_max_lake = (lake_potential['QLake_kW'] * 1000).max()
         master_to_slave_vars.HP_Lake_on = 1
         master_to_slave_vars.HPLake_maxSize_W = min(individual_with_names_dict['HPLake Share'] * Q_max_lake,
-                                                individual_with_names_dict['HPLake Share'] * Q_heating_nom_W)
-
+                                                    individual_with_names_dict['HPLake Share'] * Q_heating_nom_W)
     # HPSewage
     if individual_with_names_dict['HPSewage'] == 1 and HP_SEW_ALLOWED == True:
         sewage_potential = pd.read_csv(locator.get_sewage_heat_potential())
@@ -527,7 +557,6 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize_W = min(individual_with_names_dict['HPSewage Share'] * Q_max_sewage,
                                                    individual_with_names_dict['HPSewage Share'] * Q_heating_nom_W)
-
     # GHP
     if individual_with_names_dict['GHP'] == 1 and GHP_ALLOWED == True:
         ghp_potential = pd.read_csv(locator.get_geothermal_potential())
@@ -535,55 +564,15 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.GHP_on = 1
         master_to_slave_vars.GHP_maxSize_W = min(individual_with_names_dict['GHP Share'] * Q_max_ghp,
                                                  individual_with_names_dict['GHP Share'] * Q_heating_nom_W)
-
-    #HPServer
+    # HPServer
     if individual_with_names_dict['HPServer'] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
         master_to_slave_vars.HPServer_maxSize_W = individual_with_names_dict['HPServer Share'] * Q_heating_nom_W
-
-    # SOLAR SYSTEMS
-    shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
-    irank = N_HEAT * 2 + N_HR
-    master_to_slave_vars.SOLAR_PART_PV = max(
-        individual_with_names_dict[irank] * individual_with_names_dict[irank + 1] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(
-        individual_with_names_dict[irank + 2] * individual_with_names_dict[irank + 3] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_SC_ET = max(
-        individual_with_names_dict[irank + 4] * individual_with_names_dict[irank + 5] * shareAvail, 0)
-    master_to_slave_vars.SOLAR_PART_SC_FP = max(
-        individual_with_names_dict[irank + 6] * individual_with_names_dict[irank + 7] * shareAvail, 0)
-
-    heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
-    # COOLING SYSTEMS
-    # Lake Cooling
-    if individual_with_names_dict[heating_block] == 1 and LAKE_COOLING_ALLOWED is True:
-        master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size_W = max(individual_with_names_dict[heating_block + 1] * Q_cooling_nom_W,
-                                                       Q_MIN_SHARE * Q_cooling_nom_W)
-
-    # VCC Cooling
-    if individual_with_names_dict[heating_block + 2] == 1 and VCC_ALLOWED is True:
-        master_to_slave_vars.VCC_on = 1
-        master_to_slave_vars.VCC_cooling_size_W = max(individual_with_names_dict[heating_block + 3] * Q_cooling_nom_W,
-                                                      Q_MIN_SHARE * Q_cooling_nom_W)
-
-    # Absorption Chiller Cooling
-    if individual_with_names_dict[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True:
-        master_to_slave_vars.Absorption_Chiller_on = 1
-        master_to_slave_vars.Absorption_chiller_size_W = max(
-            individual_with_names_dict[heating_block + 5] * Q_cooling_nom_W,
-            Q_MIN_SHARE * Q_cooling_nom_W)
-
-    # Storage Cooling
-    if individual_with_names_dict[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
-        if (individual_with_names_dict[heating_block + 2] == 1 and VCC_ALLOWED is True) or (
-                individual_with_names_dict[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True):
-            master_to_slave_vars.storage_cooling_on = 1
-            master_to_slave_vars.Storage_cooling_size_W = max(
-                individual_with_names_dict[heating_block + 7] * Q_cooling_nom_W,
-                Q_MIN_SHARE * Q_cooling_nom_W)
-            if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
-                master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
+    # SOLAR TECHNOLOGIES
+    master_to_slave_vars.SOLAR_PART_PV = individual_with_names_dict['PV Share']
+    master_to_slave_vars.SOLAR_PART_PVT = individual_with_names_dict['PVT Share']
+    master_to_slave_vars.SOLAR_PART_SC_ET = individual_with_names_dict['SC_ET Share']
+    master_to_slave_vars.SOLAR_PART_SC_FP = individual_with_names_dict['SC_FP Share']
 
     return master_to_slave_vars
 

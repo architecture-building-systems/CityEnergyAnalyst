@@ -42,7 +42,7 @@ class SlaveData(object):
         # Heating Technologies
         # Geothermal Heat Pump,
         # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
-        self.GHP_number = 0.0  # number of probes
+        self.GHP_maxSize_W = 0.0  # number of probes
         # self.GHP_max = self.GHP_number * self.GHP_max_i
         self.GHP_SEASON_ON = 0  # Hour in Year, when to switch on GHP
         self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
