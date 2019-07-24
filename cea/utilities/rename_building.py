@@ -57,6 +57,11 @@ def main(config):
         file_type = input_data["type"]  # "shp" or "dbf"
         location = input_data["location"]
         file_path = getattr(locator, location)()
+
+        if not os.path.exists(file_path):
+            print("Skipping input file {file_path} (not found)".format(file_path=file_path))
+            continue
+
         print("Processing input file {file_path}".format(file_path=file_path))
 
         if file_type == "shp":
