@@ -17,6 +17,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# local constants
+DECIMALS_FOR_SCHEDULE_ROUNDING = 5
+
 
 def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
     """
@@ -88,6 +91,10 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
                                                                          archetype_values[schedule], list_uses,
                                                                          bpr.occupancy, codes[schedule],
                                                                          archetype_values['people'])
+
+    # round schedules to avoid rounding errors when saving and reading schedules from disk
+    for schedule_type in schedules.keys():
+        schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
     return schedules
 
@@ -680,7 +687,8 @@ def read_schedules_from_file(schedules_csv):
     building_schedules = df_schedules.to_dict(orient='list')
     # convert lists to np.arrays
     for key, value in building_schedules.items():
-        building_schedules[key] = np.array(value)
+        building_schedules[key] = np.round(np.array(value), DECIMALS_FOR_SCHEDULE_ROUNDING)
+        # round values to expected number of decimals of data created in calc_schedules()
 
     return building_schedules
 
