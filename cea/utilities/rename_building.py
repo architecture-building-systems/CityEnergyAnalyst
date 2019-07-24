@@ -42,9 +42,11 @@ def rename_dbf_file(path, pk, old, new):
 def main(config):
     old = config.rename_building.old
     new = config.rename_building.new
+
     if not new.strip():
-        # make sure we don't remove the building name!
-        new = old
+        print("Please specify a new name for the building.")
+        return
+
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # read in the list of input files (same metadata as used by dashboard building_properties)
