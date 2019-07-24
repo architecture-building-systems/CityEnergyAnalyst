@@ -18,8 +18,8 @@ __status__ = "Production"
 # in the optimization algorithm we add more entries to specify network connections to buildings.
 
 DH_CONVERSION_TECHNOLOGIES_NAMES = [["CHP/Furnace", [0, 4]],
-                                    ["BaseBoiler", [0, 1]],
-                                    ["PeakBoiler", [0, 1]],
+                                    ["BaseBoiler", [0, 2]],
+                                    ["PeakBoiler", [0, 2]],
                                     ["HPLake", [0, 1]],
                                     ["HPSewage", [0, 1]],
                                     ["GHP", [0, 1]],

@@ -20,8 +20,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers,Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
-                             prices, lca, T_ground):
+def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
+                             prices, lca, T_ground_K):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -167,7 +167,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         source_GHP = 1
         # activating GHP plant if possible
-        Q_max_GHP_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground, master_to_slave_vars.GHP_number)
+        Q_max_GHP_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground_K, master_to_slave_vars.GHP_number)
 
         if Q_heat_unmet_W >= Q_max_GHP_W:
             Q_therm_GHP_W = Q_max_GHP_W

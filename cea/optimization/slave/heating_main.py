@@ -185,7 +185,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Q_excess_W = np.zeros(HOURS_IN_YEAR)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
                                                          'windspd_ms', 'skytemp_C']]
-    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+    ground_temp_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(HOURS_IN_YEAR):
         Q_therm_req_W = Q_req_after_storage_W[hour]
@@ -195,7 +195,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                                                     mdot_DH_kgpers[hour],
                                                     Q_therm_Sew_W[hour], TretsewArray_K[hour],
                                                     tdhsup_K[hour], tdhret_K[hour],
-                                                    prices, lca, ground_temp[hour])
+                                                    prices, lca, ground_temp_K[hour])
 
         Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
         Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
