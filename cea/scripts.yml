@@ -299,22 +299,19 @@ Utilities:
     module: cea.tests.dodo
     parameters: [test]
 
-default:
-
-
   - name: plots
     label: Plots basic
     description: Create plots for the default energy system of an urban scenario
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, arcgis]
     module: cea.plots.plots_main
     parameters: ['general:scenario', 'general:weather', plots]
-
-  - name: plots-scenario-comparisons
-    label: Plots comparison
-    description: Plots comparing urban scenarios and supply system configurations
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.plots.comparisons.main
-    parameters: [plots-scenario-comparisons]
+#
+#  - name: plots-scenario-comparisons
+#    label: Plots comparison
+#    description: Plots comparing urban scenarios and supply system configurations
+#    interfaces: [cli, arcgis, dashboard]
+#    module: cea.plots.comparisons.main
+#    parameters: [plots-scenario-comparisons]
 
 #  - name: plots-supply-system
 #    label: Plots optimization detailed
@@ -328,8 +325,7 @@ default:
 #    description: Create plots for the results of the optimzation of an urban scenario
 #    interfaces: [cli, arcgis, dashboard]
 #    module: cea.plots.optimization.main
-#    parameters: ['general:scenario', plots-optimization, 'general:detailed-electricity-pricing']
-
+#    parameters: ['general:scenario', plots-optimization,]
 
   - name: benchmark-graphs
     label: benchmark-graphs
