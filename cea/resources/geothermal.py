@@ -38,11 +38,17 @@ def calc_ground_temperature(locator, T_ambient_C, depth_m):
     conductivity_soil = material_properties.loc['Soil','lambda_WmK']  # _[A. Kecebas et al., 2011]
     density_soil = material_properties.loc['Soil','rho_kgm3']   # _[A. Kecebas et al., 2011]
 
+    T_amplitude = abs((max(T_ambient_C) - min(T_ambient_C))+ 273.15)  # to K
+    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    T_ground_K = calc_temperature_underground(T_amplitude, T_avg, conductivity_soil, density_soil, depth_m, heat_capacity_soil)
 
-    T_max = max(T_ambient_C) + 273.15 # to K
-    T_avg = np.mean(T_ambient_C) + 273.15 # to K
-    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil)) # soil constants
-    T_ground_K = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / HOURS_IN_YEAR ) - e )
-           for i in range(HOURS_IN_YEAR)]
+    return T_ground_K
 
+
+def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, density_soil, depth_m, heat_capacity_soil):
+
+    diffusivity = conductivity_soil /(density_soil *heat_capacity_soil) *3600 #in m2/hour
+    hour_with_minimum = 0
+    e = depth_m * math.sqrt(math.pi / HOURS_IN_YEAR / diffusivity)  # soil constants
+    T_ground_K = [T_avg - T_amplitude_K * (math.exp(-e) * math.cos(2*math.pi/HOURS_IN_YEAR*(i-hour_with_minimum-e/2)))for i in range(1, HOURS_IN_YEAR+1)]
     return T_ground_K

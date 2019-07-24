@@ -136,13 +136,12 @@ Demand forecasting:
 
 
 Energy potentials:
-
-  - name: lake-potential
-    label: Lake potential
-    description: Calculate the heat extracted from the Lake
+  - name: water-body
+    label: Water body potential
+    description: Calculate the heat extracted from a lake or a water body
     interfaces: [cli, arcgis, dashboard]
-    module: cea.resources.lake_potential
-    parameters: ['general:scenario', lake]
+    module: cea.resources.water_body_potential
+    parameters: ['general:scenario', water-body]
 
   - name: photovoltaic-thermal
     label: Photovoltaic-thermal Panels

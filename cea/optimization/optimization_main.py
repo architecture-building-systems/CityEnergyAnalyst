@@ -41,7 +41,7 @@ def moo_optimization(locator, weather_file, config):
         - evacuated tube solar collector potential: run cea/technologies/solar/solar_collector.py with
           config.solar.type_scpanel = 'ET'
         - waste water heat recovery: run cea/resources/sewage_heat_exchanger.py
-        - lake water potential: run cea/resources/lake_potential.py
+        - lake water potential: run cea/resources/water_body_potential.py
         - thermal network simulation: run cea/technologies/thermal_network/thermal_network.py
           if no network is currently present in the case study, consider running network_layout/main.py first
         - decentralized building simulation: run cea/optimization/preprocessing/decentralized_building_main.py

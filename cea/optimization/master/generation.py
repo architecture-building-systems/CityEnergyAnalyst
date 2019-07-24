@@ -77,7 +77,7 @@ def generate_main(empty_individual_df, column_names, column_names_buildings_heat
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
     individual = []
     for column in column_names:
-        individual.append(populated_individual_df[column].values)
+        individual.append(populated_individual_df[column].values[0])
 
     return individual
 
