@@ -6,12 +6,12 @@ from __future__ import division
 
 import random
 
-from deap import base
+from deap import tools, base
 
 from cea.optimization.constants import N_HR, N_HEAT, N_SOLAR, N_COOL, INDICES_CORRESPONDING_TO_DCN, \
     INDICES_CORRESPONDING_TO_DHN
 
-toolbox = base.Toolbox()
+from cea.optimization.master.validation import validation_main
 
 
 def mutation_main(individual, indpb,
@@ -26,108 +26,77 @@ def mutation_main(individual, indpb,
                   district_cooling_network
                   ):
     # create dict of individual with his/her name
-    individual_with_name = dict(zip(column_names, individual))
+    individual_with_name_dict = dict(zip(column_names, individual))
 
     if district_heating_network:
-        # flip buildings heating
-        buildings_heating = []
-        for column in column_names_buildings_heating:
-            buildings_heating.append(individual_with_name[column])
+        # MUTATE BUILDINGS CONNECTED
+        buildings_heating = [individual_with_name_dict[column] for column in column_names_buildings_heating]
         # apply mutations
-        buildings_heating_mutated = toolbox.mutFlipBit(buildings_heating, indpb)
-
+        buildings_heating_mutated = tools.mutFlipBit(buildings_heating, indpb)[0]
         # takeback to teh individual
         for column, mutated_value in zip(column_names_buildings_heating, buildings_heating_mutated):
-            individual_with_name[column] = mutated_value
+            individual_with_name_dict[column] = mutated_value
+
+        # MUTATE SUPPLY SYSTEM UNITS
+        heating_units = [individual_with_name_dict[column] for column in heating_unit_names]
+        # apply mutations
+        heating_units_mutated = tools.mutFlipBit(heating_units, indpb)[0]
+        # takeback to teh individual
+        for column, mutated_value in zip(heating_unit_names, heating_units_mutated):
+            individual_with_name_dict[column] = mutated_value
+
+        # MUTATE SUPPLY SYSTEM UNITS SHARE
+        heating_units_share = [individual_with_name_dict[column] for column in heating_unit_names_share]
+        # apply mutations
+        heating_units_share_mutated = tools.mutFlipBit(heating_units_share, indpb)[0]
+        # takeback to teh individual
+        for column, mutated_value in zip(heating_unit_names_share, heating_units_share_mutated):
+            individual_with_name_dict[column] = mutated_value
+
 
     if district_cooling_network:
 
-        # flip buildings cooling
-        buildings_cooling = []
-        for column in column_names_buildings_cooling:
-            buildings_cooling.append(individual_with_name[column])
-
+        # MUTATE BUILDINGS CONNECTED
+        buildings_cooling = [individual_with_name_dict[column] for column in column_names_buildings_cooling]
         # apply mutations
-        buildings_cooling_mutated = toolbox.mutFlipBit(buildings_cooling, indpb)
-
+        buildings_cooling_mutated = tools.mutFlipBit(buildings_cooling, indpb)[0]
         # take back to teh individual
         for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
-            individual_with_name[column] = mutated_value
+            individual_with_name_dict[column] = mutated_value
 
-    return
+        # MUTATE SUPPLY SYSTEM UNITS
+        cooling_units = [individual_with_name_dict[column] for column in cooling_unit_names]
+        # apply mutations
+        cooling_units_mutated = tools.mutFlipBit(cooling_units, indpb)[0]
+        # takeback to teh individual
+        for column, mutated_value in zip(cooling_unit_names, cooling_units_mutated):
+            individual_with_name_dict[column] = mutated_value
 
+        # MUTATE SUPPLY SYSTEM UNITS SHARE
+        cooling_units_share = [individual_with_name_dict[column] for column in cooling_unit_names_share]
+        # apply mutations
+        cooling_units_share_mutated = tools.mutFlipBit(cooling_units_share, indpb)[0]
+        # takeback to teh individual
+        for column, mutated_value in zip(cooling_unit_names_share, cooling_units_share_mutated):
+            individual_with_name_dict[column] = mutated_value
 
-def mutFlip(individual, proba, nBuildings, config):
-    """
-    For all integer parameters of individual except the connection integers,
-    flip the value with probability *proba*
-    :param individual: list of all parameters corresponding to an individual configuration
-    :param proba: mutation probability
-    :param gv: global variables class
-    :type individual: list
-    :type proba: float
-    :type gv: class
-    :return: mutant list
-    :rtype: list
-    """
-    mutant = toolbox.clone(individual)
-    # local variables
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
+    #now validate individual
+    individual_with_name_dict = validation_main(individual_with_name_dict,
+                                               heating_unit_names,
+                                               cooling_unit_names,
+                                               heating_unit_names_share,
+                                               cooling_unit_names_share,
+                                               column_names_buildings_heating,
+                                               column_names_buildings_cooling,
+                                               district_heating_network,
+                                               district_cooling_network
+                                               )
 
-    if district_heating_network:
-        # Flip the CHP
-        if individual[0] > 0:
-            if random.random() < proba:
-                CHPList = [1, 2, 3, 4]
-                CHPList.remove(individual[0])
-                mutant[0] = random.choice(CHPList)
+    #now pass all the values mutated to the original individual
+    for i, column in enumerate(column_names):
+        individual[i] = individual_with_name_dict[column]
 
-        # Flip the Boiler NG/BG
-        indexList = [2, 4]
-        for i in indexList:
-            if individual[i] == 1:
-                if random.random() < proba:
-                    individual[i] = 2
-            if individual[i] == 2:
-                if random.random() < proba:
-                    individual[i] = 1
-
-        # Flip the HR units
-        for HR in range(N_HR):
-            if random.random() < proba:
-                mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR] + 1) % 2
-    heating_block = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN
-
-    if district_cooling_network:
-
-        # Flip the cooling absorption chiller technology
-        if individual[heating_block + 4] > 0:
-            if random.random() < proba:
-                AC_List = [1, 2, 3, 4]
-                AC_List.remove(individual[heating_block + 4])
-                mutant[heating_block + 4] = random.choice(AC_List)
-
-    # Flip the buildings' connection
-    network_block_starting_index = (
-                                           N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
-    if district_heating_network:
-        for building in range(nBuildings):
-            if random.random() < proba:
-                mutant[network_block_starting_index + building] = (individual[
-                                                                       network_block_starting_index + building] + 1) % 2
-
-    network_block_starting_index = (
-                                           N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings
-    if district_cooling_network:
-        for building in range(nBuildings):
-            if random.random() < proba:
-                mutant[network_block_starting_index + building] = (individual[
-                                                                       network_block_starting_index + building] + 1) % 2
-
-    del mutant.fitness.values
-
-    return mutant
+    return individual, #add the, because deap needs this
 
 
 def mutShuffle(individual, proba, nBuildings, config):
