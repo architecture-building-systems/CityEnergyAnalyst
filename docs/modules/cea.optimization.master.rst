@@ -65,10 +65,10 @@ cea.optimization.master.mutations module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.master.normalization module
---------------------------------------------
+cea.optimization.master.performance\_aggregation module
+-------------------------------------------------------
 
-.. automodule:: cea.optimization.master.normalization
+.. automodule:: cea.optimization.master.performance_aggregation
     :members:
     :undoc-members:
     :show-inheritance:

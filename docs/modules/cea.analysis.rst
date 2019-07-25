@@ -16,7 +16,6 @@ Subpackages
     cea.analysis.lca
     cea.analysis.multicriteria
     cea.analysis.sensitivity
-    cea.analysis.uncertainty
 
 Submodules
 ----------

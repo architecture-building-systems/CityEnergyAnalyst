@@ -13,7 +13,6 @@ Subpackages
 
     cea.optimization.distribution
     cea.optimization.flexibility_model
-    cea.optimization.individual_evaluation
     cea.optimization.master
     cea.optimization.preprocessing
     cea.optimization.slave
