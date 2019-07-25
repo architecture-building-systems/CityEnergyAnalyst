@@ -8,9 +8,10 @@ import random
 
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, \
     DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
-    DC_CONVERSION_TECHNOLOGIES_NAMES,\
+    DC_CONVERSION_TECHNOLOGIES_NAMES, \
     DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
     DH_TECHNOLOGIES_SHARING_SPACE, DC_TECHNOLOGIES_SHARING_SPACE
+from cea.optimization.master.validation import validation_main
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,8 +23,15 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def generate_main(empty_individual_df, column_names, column_names_buildings_heating,
-                     column_names_buildings_cooling, district_heating_network,
+def generate_main(individual_with_names_dict,
+                  column_names,
+                  heating_unit_names,
+                  cooling_unit_names,
+                  heating_unit_names_share,
+                  cooling_unit_names_share,
+                  column_names_buildings_heating,
+                  column_names_buildings_cooling,
+                  district_heating_network,
                   district_cooling_network):
     """
     Creates an individual configuration for the evolutionary algorithm.
@@ -50,76 +58,89 @@ def generate_main(empty_individual_df, column_names, column_names_buildings_heat
 
     # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
     if district_heating_network and district_cooling_network:
-        populated_individual_df = populate_individual(empty_individual_df,
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                       DH_CONVERSION_TECHNOLOGIES_NAMES,
                                                       DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      DH_TECHNOLOGIES_SHARING_SPACE,
                                                       column_names_buildings_heating)
 
-        populated_individual_df = populate_individual(populated_individual_df,
+        populated_individual_with_name_dict = populate_individual(populated_individual_with_name_dict,
                                                       DC_CONVERSION_TECHNOLOGIES_NAMES,
                                                       DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      DC_TECHNOLOGIES_SHARING_SPACE,
                                                       column_names_buildings_cooling)
     elif district_heating_network:
-        populated_individual_df = populate_individual(empty_individual_df,
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                       DH_CONVERSION_TECHNOLOGIES_NAMES,
                                                       DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      DH_TECHNOLOGIES_SHARING_SPACE,
                                                       column_names_buildings_heating)
     elif district_cooling_network:
-        populated_individual_df = populate_individual(empty_individual_df,
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                       DC_CONVERSION_TECHNOLOGIES_NAMES,
                                                       DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      DC_TECHNOLOGIES_SHARING_SPACE,
                                                       column_names_buildings_cooling)
+
+    populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
+                                              heating_unit_names,
+                                              cooling_unit_names,
+                                              heating_unit_names_share,
+                                              cooling_unit_names_share,
+                                              column_names_buildings_heating,
+                                              column_names_buildings_cooling,
+                                              district_heating_network,
+                                              district_cooling_network
+                                              )
 
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
     individual = []
     for column in column_names:
-        individual.append(populated_individual_df[column].values[0])
+        individual.append(populated_individual_with_name_dict[column])
 
     return individual
 
 
-def populate_individual(empty_individual_df,
+def populate_individual(empty_individual_with_names_dict,
                         name_conversion_technologies,
                         name_share_conversion_technologies,
-                        name_technologies_sharing_space,
                         columns_buildings_name):
 
     # do it for units that are activated
-    columns_activation = [x[0] for x in name_conversion_technologies]
-    lim_inf_activation = [x[1][0] for x in name_conversion_technologies]
-    lim_sup_activation = [x[1][1] for x in name_conversion_technologies]
-    for column, lim_inf, lim_sup in zip(columns_activation, lim_inf_activation, lim_sup_activation):
-        empty_individual_df[column] = random.randint(lim_inf, lim_sup)
+    for column, limits in name_conversion_technologies:
+        lim_inf = limits[0]
+        lim_sup = limits[1]
+        empty_individual_with_names_dict[column] = random.randint(lim_inf, lim_sup)
 
     # do it for the share of the units that are activated
-    columns_share = [x[0] for x in name_share_conversion_technologies]
-    lim_inf_share = [x[1][0] for x in name_share_conversion_technologies]
-    lim_sup_share = [x[1][1] for x in name_share_conversion_technologies]
-    for column_activation, column_share, lim_inf, lim_sup in zip(columns_activation, columns_share, lim_inf_share, lim_sup_share):
-         empty_individual_df[column_share] = random.uniform(lim_inf, lim_sup)
+    for column, limits in name_share_conversion_technologies:
+        lim_inf = limits[0]
+        lim_sup = limits[1]
+        empty_individual_with_names_dict[column] = random.uniform(lim_inf, lim_sup)
 
     # do it for the buildings
     for column in columns_buildings_name:
-        empty_individual_df[column] = random.randint(0, 1)
+        empty_individual_with_names_dict[column] = random.randint(0, 1)
 
-    #constrain that only activated units can be more than 0
-    for column_activation, column_share, lim_inf, lim_sup in zip(columns_activation, columns_share, lim_inf_share, lim_sup_share):
-        if empty_individual_df[column_activation].values == 0: # only if the unit is not activated
-            empty_individual_df[column_share] = 0.0
+    return empty_individual_with_names_dict
 
-    # contrain that some technologies share space so the total must be 1
-    unit_name, unit_share = [], []
-    for column_activation, column_share in zip(columns_activation, columns_share):
-        if empty_individual_df[column_activation].values >= 1 and column_activation in name_technologies_sharing_space: # only if the unit is activated
-            unit_name.append(column_share)
-            unit_share.append(empty_individual_df[column_share])
-    sum_shares = sum(unit_share)
-    normalized_shares = [i / sum_shares for i in unit_share]
-    for column, share in zip(unit_name, normalized_shares):
-        empty_individual_df[column] = share
+def individual_to_barcode(individual, column_names, column_names_buildings_heating,
+                          column_names_buildings_cooling):
+    """
+    Reads the 0-1 combination of connected/disconnected buildings
+    and creates a list of strings type barcode i.e. ("12311111123012")
+    :param individual: list containing the combination of connected/disconnected buildings
+    :type individual: list
+    :return: indCombi: list of strings
+    :rtype: list
+    """
+    # pair individual values with their names
+    individual_with_name_dict = dict(zip(column_names, individual))
+    DHN_barcode = ""
+    for name in column_names_buildings_heating:
+        if name in individual_with_name_dict.keys():
+            DHN_barcode += str(int(individual_with_name_dict[name]))
 
-    return empty_individual_df
+    DCN_barcode = ""
+    for name in column_names_buildings_cooling:
+        if name in individual_with_name_dict.keys():
+            DCN_barcode += str(int(individual_with_name_dict[name]))
+
+    return DHN_barcode, DCN_barcode, individual_with_name_dict
+

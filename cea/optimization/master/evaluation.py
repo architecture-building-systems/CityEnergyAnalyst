@@ -24,6 +24,7 @@ from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies import substation
 from cea.utilities import epwreader
+from cea.optimization.master.generation import individual_to_barcode
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -619,26 +620,3 @@ def epsIndicator(frontOld, frontNew):
     return epsInd
 
 
-def individual_to_barcode(individual, column_names, column_names_buildings_heating,
-                          column_names_buildings_cooling):
-    """
-    Reads the 0-1 combination of connected/disconnected buildings
-    and creates a list of strings type barcode i.e. ("12311111123012")
-    :param individual: list containing the combination of connected/disconnected buildings
-    :type individual: list
-    :return: indCombi: list of strings
-    :rtype: list
-    """
-    # pair individual values with their names
-    individual_with_name_dict = dict(zip(column_names, individual))
-    DHN_barcode = ""
-    for name in column_names_buildings_heating:
-        if name in individual_with_name_dict.keys():
-            DHN_barcode += str(int(individual_with_name_dict[name]))
-
-    DCN_barcode = ""
-    for name in column_names_buildings_cooling:
-        if name in individual_with_name_dict.keys():
-            DCN_barcode += str(int(individual_with_name_dict[name]))
-
-    return DHN_barcode, DCN_barcode, individual_with_name_dict

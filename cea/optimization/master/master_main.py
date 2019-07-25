@@ -9,15 +9,16 @@ from itertools import repeat, izip
 
 import numpy as np
 import pandas as pd
-from deap import tools, creator, base
 from deap import algorithms
+from deap import tools, creator, base
+
 from cea.optimization import supportFn
 from cea.optimization.constants import CXPB, MUTPB
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
     DC_CONVERSION_TECHNOLOGIES_NAMES, DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE, DH_ACRONYM, DC_ACRONYM
 from cea.optimization.master import evaluation
-from cea.optimization.master import mutations
 from cea.optimization.master.generation import generate_main
+from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -104,19 +105,23 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     column_names_buildings_cooling = get_column_names_individual(building_names,
                                                                  district_heating_network,
                                                                  district_cooling_network)
-    empty_individual_df = create_empty_individual(column_names,
-                                                  column_names_buildings_heating,
-                                                  column_names_buildings_cooling,
-                                                  district_heating_network,
-                                                  district_cooling_network)
+    individual_with_names_dict = create_empty_individual(column_names,
+                                                         column_names_buildings_heating,
+                                                         column_names_buildings_cooling,
+                                                         district_heating_network,
+                                                         district_cooling_network)
 
     # DEAP LIBRARY REFERENCE_POINT CLASSES AND TOOLS
     # reference points
     toolbox = base.Toolbox()
     toolbox.register("generate",
                      generate_main,
-                     empty_individual_df=empty_individual_df,
+                     individual_with_names_dict=individual_with_names_dict,
                      column_names=column_names,
+                     heating_unit_names=heating_unit_names,
+                     cooling_unit_names=cooling_unit_names,
+                     heating_unit_names_share=heating_unit_names_share,
+                     cooling_unit_names_share=cooling_unit_names_share,
                      column_names_buildings_heating=column_names_buildings_heating,
                      column_names_buildings_cooling=column_names_buildings_cooling,
                      district_heating_network=district_heating_network,
@@ -243,16 +248,20 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         DCN_network_list_selected = []
         DHN_network_list_selected = []
         for individual in pop:
-            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                             building_names)
+            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
+                                                                                        column_names,
+                                                                                        column_names_buildings_heating,
+                                                                                        column_names_buildings_cooling)
             DCN_network_list_selected.append(DCN_barcode)
             DHN_network_list_selected.append(DHN_barcode)
 
         DHN_network_list_tested = []
         DCN_network_list_tested = []
         for individual in invalid_ind:
-            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = supportFn.individual_to_barcode(individual,
-                                                                                                             building_names)
+            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
+                                                                                        column_names,
+                                                                                        column_names_buildings_heating,
+                                                                                        column_names_buildings_cooling)
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
@@ -453,9 +462,9 @@ def create_empty_individual(column_names, column_names_buildings_heating, column
                      cooling_unit_share_float + \
                      DC_buildings_connected_int
 
-    individual_df = pd.DataFrame(dict(zip(column_names, individual)), index=[0], columns=column_names)
+    individual_with_names_dict = dict(zip(column_names, individual))
 
-    return individual_df
+    return individual_with_names_dict
 
 
 def get_column_names_individual(building_names, district_heating_network, district_cooling_network):
