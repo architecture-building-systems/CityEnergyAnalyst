@@ -33,4 +33,12 @@ cea.analysis.multicriteria.optimization\_post\_processing.locating\_individuals\
     :undoc-members:
     :show-inheritance:
 
+cea.analysis.multicriteria.optimization\_post\_processing.locating\_individuals\_in\_generation\_scriptss module
+----------------------------------------------------------------------------------------------------------------
+
+.. automodule:: cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_scriptss
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 

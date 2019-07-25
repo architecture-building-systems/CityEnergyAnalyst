@@ -17,14 +17,6 @@ cea.plots.old.clusters\_plot module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.old.graphs\_optimization module
------------------------------------------
-
-.. automodule:: cea.plots.old.graphs_optimization
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.plots.old.graphs\_solar\_potential module
 ---------------------------------------------
 
