@@ -688,6 +688,17 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
 
+
+    def get_building_schedules(self, building_name):
+        """
+        scenario/inputs/building-properties/{building_name}_schedules.csv
+        This file contains schedules of occupancy, appliance use, etc of each building.
+        Schedules are 8760 values per year
+        :param building_name:
+        :return:
+        """
+        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
+
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
@@ -1428,26 +1439,21 @@ class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
-    already_extracted = False  # only extract once per run
-
     def __init__(self):
 
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
         reference_case = os.path.join(project_folder, 'baseline')
 
-        if not ReferenceCaseOpenLocator.already_extracted:
-            import cea.examples
-            import zipfile
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        import cea.examples
+        import zipfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 
-            if os.path.exists(project_folder):
-                shutil.rmtree(project_folder)
-                assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+        if os.path.exists(project_folder):
+            shutil.rmtree(project_folder)
+            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
 
-            archive.extractall(temp_folder)
-            ReferenceCaseOpenLocator.already_extracted = True
-
+        archive.extractall(temp_folder)
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):
