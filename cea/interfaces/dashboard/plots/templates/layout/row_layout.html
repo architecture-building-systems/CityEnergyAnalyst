@@ -27,6 +27,12 @@
             </li>
             {% endif %}
             <li>
+              <a href="#" data-toggle="modal" data-dashboard-index="{{ dashboard_index }}"
+                 data-plot-index="{{ loop.index0 }}" data-target="#cea-dashboard-replace-plot">
+                <i class="fa fa-retweet"></i>
+              </a>
+            </li>
+            <li>
               <a id="table-btn-{{ loop.index0 }}" data-plot-title="{{ plot.title }}"
                  data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ loop.index0 }}"
                  onclick="open_table(this)" role="button" aria-expanded="false" style="display: none">
