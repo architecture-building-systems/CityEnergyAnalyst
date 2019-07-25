@@ -50,9 +50,10 @@ def main(building, building_result_path, case):
     tech_rank = get_tech_rank_by_el_total(compare_df)
     plot_chiller_T_Qc_scatter(chiller_T_Qc_all_tech_df, tech_rank, building, building_result_path, case)
 
-    # # plot T_SA, w_SA
+    # plot electricity usages
     if index > 24:
         plot_el_compare(building, building_result_path, compare_df)
+        plot_el_usages_by_unit(building, building_result_path)
     ## plot hourly COP vs SHR
     plot_COP_SHR_scatter(hourly_cop_shr_dict, building, case, building_result_path)
 
@@ -202,21 +203,21 @@ def plot_chiller_T_Qc_scatter(chiller_df, tech_rank, building, building_result_p
         x_labels_shown.append(label_dict[i])
     x_values = list(range(len(x_labels)))
 
-    # lookup table mapping category
-    lookup_table = dict((v, k) for k, v in enumerate(x_labels))  # determine the x-axis order
+    # lookup table mapping category, assign ranking to x labels
+    ranking_lookup_table = dict((v, k) for k, v in enumerate(x_labels))  # determine the x-axis order
 
     # build a list of points (x,y,annotation)
-    points = [(lookup_table[action], key, anno)
-              for action, values in chiller_dict.items()
-              for key, anno in (values if values else {}).items()]
-    x, y, anno = zip(*points)
+    points_list = [(ranking_lookup_table[tech], key_T, anno_Qc)
+              for tech, T_Qc_dict in chiller_dict.items()
+              for key_T, anno_Qc in (T_Qc_dict if T_Qc_dict else {}).items()]
+    x, y, anno_Qc = zip(*points_list)
     y_float = tuple(map(lambda i: float(i), y))
     # y axis (keys of the second level dict)
     y_values = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
     # y_values = [float(i) for i in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
-    area = tuple(map(lambda x: (x / 1000) ** 2, anno))  # area = Qc
+    area = tuple(map(lambda x: (x / 1000) ** 2, anno_Qc))  # area = Qc
 
     # figure name
     figure_name = 'chw_Qc'
@@ -303,6 +304,38 @@ def plot_el_compare(building, building_result_path, compare_df):
     plt.tight_layout()
     # plt.show()
     fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
+    return np.nan
+
+
+def plot_el_usages_by_unit(building, building_result_path):
+
+    TECH_TABLE = {'HCS_coil':'Config|1 Cooling Coils',
+                  'HCS_ER0': 'Config|2 Direct Evaporative Cooling',
+                  'HCS_3for2':'Config|3 Desiccant Wheels',
+                  'HCS_LD': 'Config|4 Liquid Desiccant',
+                  'HCS_IEHX': 'Config|5 Indirect Evaporative Cooling'}
+
+    for tech in TECH_TABLE.keys():
+        config_name = building + '\n' + TECH_TABLE[tech]
+        if os.path.isfile(path_to_elec_unit_csv(building, building_result_path, tech)):
+            fig, ax = plt.subplots()
+            el_per_unit_df = pd.read_csv(path_to_elec_unit_csv(building, building_result_path, tech))
+            el_per_unit_df = el_per_unit_df.iloc[72:96]  # WED
+            ax = plot_electricity_usages_units(ax, el_per_unit_df, config_name)
+            ax.xaxis.set_tick_params(labelsize=16)
+            ax.yaxis.set_tick_params(labelsize=16)
+            ax.set(ylabel='Electricity Use [Wh/m2]', xlabel='Time [hr]')
+            ax.yaxis.label.set_size(16)
+            ax.xaxis.label.set_size(16)
+            ax.legend(loc="upper center", ncol=3, fontsize='large', columnspacing=0.15)
+
+            ax.set_title(config_name, fontdict={'fontsize': 16})
+            # plot layout
+            filename = 'el_usages_' + 'WED'
+            # plt.legend()
+            plt.tight_layout()
+            # plt.show()
+            fig.savefig(path_to_save_fig(building, building_result_path, tech, filename))
     return np.nan
 
 
@@ -402,7 +435,7 @@ def path_to_save_cop_shr_scatter(building, building_result_path):
 
 if __name__ == '__main__':
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    buildings = ["B005", "B006"]
+    buildings = ["B004", "B005", "B006"]
     timestep = "168"
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
@@ -413,7 +446,7 @@ if __name__ == '__main__':
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
     # cases = ['WTP_CBD_m_WP1_OFF']
-    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0629'
+    result_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results_0717'
     # result_folder = "C:\\Users\\Shanshan\\Documents\\WP1_results"
     for case in cases:
         print case
