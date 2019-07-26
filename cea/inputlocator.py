@@ -640,7 +640,7 @@ class InputLocator(object):
             return []
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
-        return [b.encode('utf-8') for b in zone_building_names]
+        return [b.encode('utf-8') if isinstance(b, basestring) else str(b) for b in zone_building_names]
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""

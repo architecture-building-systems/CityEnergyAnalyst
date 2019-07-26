@@ -760,7 +760,10 @@ class SingleBuildingParameter(ChoiceParameter):
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        return locator.get_zone_building_names()
+        building_names = locator.get_zone_building_names()
+        if not building_names:
+            raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
+        return building_names
 
     def encode(self, value):
         if not str(value) in self._choices:

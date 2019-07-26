@@ -300,6 +300,8 @@ Utilities:
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
+    input-files:
+    - [get_zone_geometry]
 
 
 default:
