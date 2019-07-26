@@ -224,8 +224,8 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                      repeat(prices, len(invalid_ind)),
                                      repeat(lca, len(invalid_ind)),
                                      repeat(column_names, len(invalid_ind)),
-                                     repeat(column_names_buildings_heating, len(invalid_ind))))
-
+                                     repeat(column_names_buildings_heating, len(invalid_ind)),
+                                     repeat(column_names_buildings_cooling, len(invalid_ind))))
         # normalization of the second generation on
         fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
