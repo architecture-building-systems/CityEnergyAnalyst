@@ -8,10 +8,20 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a macOS syst
 Prerequisites
 ~~~~~~~~~~~~~
 
-* Download and install Git (64-bit).
-* Download and install Github Desktop (64-bit).
-* Download and install Miniconda(64-bit) for Python 2.7.
-* Download and install CMake.
+* Download and install `Git`_ (64-bit).
+* Download and install `GitHub Desktop`_ (64-bit).
+
+  * (this is not strictly necessary, but we find it easier for novice git users)
+
+* Download and install `Miniconda`_ (64-bit) for Python 2.7.
+
+  * (the Mac OS X 64-bit `.pkg installer`_ is probably the easiest way to install Miniconda on your Mac)
+
+* Download and install `CMake`_.
+
+  * (CMake is required for compiling DAYSIM)
+  * (this guide assumes you installed CMake to ``/Applications/CMake`` or have it in your PATH)
+
 * Install DAYSIM version >= 4.0: Open Terminal and run the following commands
 
   - ``git clone https://github.com/MITSustainableDesignLab/Daysim.git``
@@ -19,6 +29,12 @@ Prerequisites
   - ``cp ./CMakeLists.txt /Daysim/CMakeLists.txt``
   - ``cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/Daysim/bin``
   - ``export PATH="path_to_cea_env:path_to_daysim_bin:$PATH"`` where ‘path_to_cea_env‘ is the path to the CEA conda environment (it should look something like ``\Users\your_name\Miniconda2\envs\cea\bin`` where ‘your_name‘ represents your user name on your Mac) and ‘path_to_daysim_bin‘ is the path to the Daysim bin folder (it should look something like ``\Users\your_name\Daysim\bin``).
+
+.. _`Git`: https://www.atlassian.com/git/tutorials/install-git
+.. _`GitHub Desktop`: https://desktop.github.com/
+.. _`Miniconda`: https://docs.conda.io/en/latest/miniconda.html
+.. _`.pkg installer`: https://repo.anaconda.com/miniconda/Miniconda2-latest-MacOSX-x86_64.pkg
+.. _`CMake`: https://cmake.org/download/
 
 Installation of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,7 +49,7 @@ Excluding the above software, CEA installation requires approximately 13 GB of s
 #. Type ``cd Documents\GitHub\CityEnergyAnalyst`` and press ENTER.
 #. Type ``conda env create`` and press ENTER.
 #. Type ``conda activate cea`` and press ENTER.
-#. Type ``pip install -e .[dev]`` and press ENTER (mind the dot ‘.’ included in this command!).
+#. Type ``pip install -e .`` and press ENTER (mind the dot ‘.’ included in this command!).
 
 Interfaces
 ~~~~~~~~~~
