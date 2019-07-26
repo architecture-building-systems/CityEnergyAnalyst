@@ -6,11 +6,11 @@ from __future__ import division
 
 import random
 
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, \
-    DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
-    DC_CONVERSION_TECHNOLOGIES_NAMES, \
-    DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
-    DH_TECHNOLOGIES_SHARING_SPACE, DC_TECHNOLOGIES_SHARING_SPACE
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, \
+    DH_CONVERSION_TECHNOLOGIES_SHARE, \
+    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, \
+    DC_CONVERSION_TECHNOLOGIES_SHARE, \
+    DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS, DC_TECHNOLOGIES_SHARING_SPACE
 from cea.optimization.master.validation import validation_main
 
 __author__ = "Thuy-An Nguyen"
@@ -59,24 +59,24 @@ def generate_main(individual_with_names_dict,
     # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
     if district_heating_network and district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                      DH_CONVERSION_TECHNOLOGIES_NAMES,
-                                                      DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      column_names_buildings_heating)
+                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
+                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_heating)
 
         populated_individual_with_name_dict = populate_individual(populated_individual_with_name_dict,
-                                                      DC_CONVERSION_TECHNOLOGIES_NAMES,
-                                                      DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      column_names_buildings_cooling)
+                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
+                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_cooling)
     elif district_heating_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                      DH_CONVERSION_TECHNOLOGIES_NAMES,
-                                                      DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      column_names_buildings_heating)
+                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
+                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_heating)
     elif district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                      DC_CONVERSION_TECHNOLOGIES_NAMES,
-                                                      DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE,
-                                                      column_names_buildings_cooling)
+                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
+                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_cooling)
 
     populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
                                               heating_unit_names,

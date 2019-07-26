@@ -14,8 +14,8 @@ from deap import tools, creator, base
 
 from cea.optimization import supportFn
 from cea.optimization.constants import CXPB, MUTPB
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
-    DC_CONVERSION_TECHNOLOGIES_NAMES, DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE, DH_ACRONYM, DC_ACRONYM
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, DH_CONVERSION_TECHNOLOGIES_SHARE, \
+    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, DC_ACRONYM
 from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
@@ -430,8 +430,8 @@ def convergence_metric(old_front, new_front, normalization):
 def create_empty_individual(column_names, column_names_buildings_heating, column_names_buildings_cooling,
                             district_heating_network, district_cooling_network):
     # local variables
-    heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
-    cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
+    heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_CAPACITY]
+    cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_CAPACITIES]
 
     heating_unit_activation_int = [0] * len(heating_unit_names)
     heating_unit_share_float = [0.0] * len(heating_unit_names)
@@ -471,10 +471,10 @@ def get_column_names_individual(building_names, district_heating_network, distri
     # 3 cases are possible
     if district_heating_network and district_cooling_network:
         # local variables
-        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
-        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_CAPACITY]
+        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_CAPACITIES]
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE]
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names]
         # combine both strings and calculate the ranges of each part of the individual
@@ -487,8 +487,8 @@ def get_column_names_individual(building_names, district_heating_network, distri
 
     elif district_heating_network:
         # local variables
-        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES]
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_CAPACITY]
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names]
         cooling_unit_names = []
         cooling_unit_names_share = []
@@ -498,8 +498,8 @@ def get_column_names_individual(building_names, district_heating_network, distri
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES]
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE]
+        cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_CAPACITIES]
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names]
         heating_unit_names = []
         heating_unit_names_share = []
