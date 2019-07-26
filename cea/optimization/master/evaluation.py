@@ -164,7 +164,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
     print ('Total PEN non-renewable in MJoil ' + str(PEN_sys_MJoil) + "\n")
 
-    return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, master_to_slave_vars, individual
+    return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil
 
 
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,

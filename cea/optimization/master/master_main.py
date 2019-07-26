@@ -12,7 +12,6 @@ import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
 
-from cea.optimization import supportFn
 from cea.optimization.constants import CXPB, MUTPB
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, DH_CONVERSION_TECHNOLOGIES_SHARE, \
     DC_CONVERSION_TECHNOLOGIES_CAPACITIES, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, DC_ACRONYM
@@ -49,18 +48,20 @@ def objective_function(individual, individual_number, generation, building_names
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
-    costs_USD, CO2_ton, prim_MJ, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual,
-                                                                                                     building_names,
-                                                                                                     locator,
-                                                                                                     network_features,
-                                                                                                     config,
-                                                                                                     prices, lca,
-                                                                                                     individual_number,
-                                                                                                     generation,
-                                                                                                     column_names,
-                                                                                                     column_names_buildings_heating,
-                                                                                                     column_names_buildings_cooling
-                                                                                                     )
+    costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
+                                                             building_names,
+                                                             locator,
+                                                             network_features,
+                                                             config,
+                                                             prices, lca,
+                                                             individual_number,
+                                                             generation,
+                                                             column_names,
+                                                             column_names_buildings_heating,
+                                                             column_names_buildings_cooling
+                                                             )
+    #Normalize outputs
+
 
     return costs_USD, CO2_ton, prim_MJ
 
