@@ -97,7 +97,6 @@ def main(config):
         print(err.message)
         sys.exit(1)
 
-    print(config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, config=config)
 
     print('test_optimization_main() succeeded')

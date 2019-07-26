@@ -19,6 +19,7 @@ from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
+from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -38,7 +39,8 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 def objective_function(individual, individual_number, generation, building_names, locator,
                        network_features, config, prices, lca, column_names,
                        column_names_buildings_heating,
-                       column_names_buildings_cooling):
+                       column_names_buildings_cooling,
+                       ):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -47,7 +49,7 @@ def objective_function(individual, individual_number, generation, building_names
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
-        generation) + '/' + str(config.optimization.ngen))
+        generation) + '/' + str(config.optimization.number_of_generations))
     costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
                                                              building_names,
                                                              locator,
@@ -60,9 +62,6 @@ def objective_function(individual, individual_number, generation, building_names
                                                              column_names_buildings_heating,
                                                              column_names_buildings_cooling
                                                              )
-    #Normalize outputs
-
-
     return costs_USD, CO2_ton, prim_MJ
 
 
@@ -79,18 +78,20 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     # LOCAL VARIABLES
     district_heating_network = network_features.district_heating_network
     district_cooling_network = network_features.district_cooling_network
-    NGEN = config.optimization.ngen  # number of individuals
-    MU = config.optimization.initialind  # int(H + (4 - H % 4)) # number of individuals to select
+    NGEN = config.optimization.number_of_generations  # number of generations
+    NIND = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
+    RANDOM_SEED = config.optimization.random_seed
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
+    NIND_GEN0 = 20  # during the warmp up period we make sure we explore a wide range of solutions so the scaler works
     NOBJ = 3  # number of objectives
     P = [2, 1]
     SCALES = [1, 0.5]
     euclidean_distance = 0
     spread = 0
-    random.seed(config.optimization.random_seed)
-    np.random.seed(config.optimization.random_seed)
+    random.seed(RANDOM_SEED)
+    np.random.seed(RANDOM_SEED)
     ref_points = [tools.uniform_reference_points(NOBJ, p, s) for p, s in zip(P, SCALES)]
     ref_points = np.concatenate(ref_points)
     _, uniques = np.unique(ref_points, axis=0, return_index=True)
@@ -171,7 +172,7 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-    pop = toolbox.population(n=MU)
+    pop = toolbox.population(n=NIND_GEN0)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -186,6 +187,11 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                                    repeat(column_names_buildings_heating, len(invalid_ind)),
                                                    repeat(column_names_buildings_cooling, len(invalid_ind))))
 
+    # normalization of the first generation
+    scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
+    fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
+
+    # add fitnesses to population individuals
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
 
@@ -207,20 +213,6 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
         # Select and clone the next generation individuals
         offspring = algorithms.varAnd(pop, toolbox, CXPB, MUTPB)
 
-        # # # Apply crossover Uniform to the pop
-        # # offspring = []
-        # for child1, child2 in zip(pop_cloned[::2], pop_cloned[1::2]):
-        #     child1, child2 = toolbox.mate(child1, child2)
-        #     del child1.fitness.values
-        #     del child2.fitness.values
-        #     offspring += [child1, child2]
-        # #
-        # # # Apply mutation
-        # for mutant in pop_cloned:
-        #     mutant = mutations.mutFlip(mutant, MUTPB, nBuildings, config)
-        #     mutant = mutations.mutShuffle(mutant, MUTPB, nBuildings, config)
-        #     offspring.append(mutations.mutGU(mutant, MUTPB, config))
-
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate,
@@ -232,14 +224,16 @@ def non_dominated_sorting_genetic_algorithm(locator, building_names,
                                      repeat(prices, len(invalid_ind)),
                                      repeat(lca, len(invalid_ind)),
                                      repeat(column_names, len(invalid_ind)),
-                                     repeat(column_names_buildings_heating, len(invalid_ind)),
-                                     repeat(column_names_buildings_cooling, len(invalid_ind))))
+                                     repeat(column_names_buildings_heating, len(invalid_ind))))
+
+        # normalization of the second generation on
+        fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
         # Select the next generation population from parents and offspring
-        pop = toolbox.select(pop + offspring, MU)
+        pop = toolbox.select(pop + offspring, NIND)
 
         # Compile statistics about the new population
         record = stats.compile(pop)
