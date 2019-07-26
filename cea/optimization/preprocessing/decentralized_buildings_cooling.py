@@ -2385,7 +2385,7 @@ def main(config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
     prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config.detailed_electricity_pricing)
+    lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
 
     print 'test_decentralized_buildings_cooling() succeeded'
