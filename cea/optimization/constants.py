@@ -17,41 +17,41 @@ __status__ = "Production"
 # this is the firts part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
 
-DH_CONVERSION_TECHNOLOGIES_NAMES = [["CHP/Furnace", [0, 4]],
-                                    ["BaseBoiler", [0, 2]],
-                                    ["PeakBoiler", [0, 2]],
-                                    ["HPLake", [0, 1]],
-                                    ["HPSewage", [0, 1]],
-                                    ["GHP", [0, 1]],
-                                    ["HPServer", [0, 1]],
-                                    ["PVT", [0, 1]],
-                                    ["SC_ET", [0, 1]],
-                                    ["SC_FP", [0, 1]],
-                                    ["PV", [0, 1]]]
+DH_CONVERSION_TECHNOLOGIES_CAPACITY = [["CHP/Furnace", [0, 4]],
+                                       ["BaseBoiler", [0, 2]],
+                                       ["PeakBoiler", [0, 2]],
+                                       ["HPLake", [0, 1]],
+                                       ["HPSewage", [0, 1]],
+                                       ["GHP", [0, 1]],
+                                       ["HPServer", [0, 1]],
+                                       ["PVT", [0, 1]],
+                                       ["SC_ET", [0, 1]],
+                                       ["SC_FP", [0, 1]],
+                                       ["PV", [0, 1]]]
 
-DH_TECHNOLOGIES_SHARING_SPACE = ["PVT", "SC_ET", "SC_FP", "PV"]
+DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
 
-DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE = [["CHP/Furnace Share", [0.0, 1.0]],
-                                          ["BaseBoiler Share", [0.0, 1.0]],
-                                          ["PeakBoiler Share", [0.0, 1.0]],
-                                          ["HPLake Share", [0.0, 1.0]],
-                                          ["HPSewage Share", [0.0, 1.0]],
-                                          ["GHP Share", [0.0, 1.0]],
-                                          ["HPServer Share", [0.0, 1.0]],
-                                          ["PVT Share", [0.0, 1.0]],
-                                          ["SC_ET Share", [0.0, 1.0]],
-                                          ["SC_FP Share", [0.0, 1.0]],
-                                          ["PV Share", [0.0, 1.0]]]
+DH_CONVERSION_TECHNOLOGIES_SHARE = [["CHP/Furnace Share", [0.0, 1.0]],
+                                    ["BaseBoiler Share", [0.0, 1.0]],
+                                    ["PeakBoiler Share", [0.0, 1.0]],
+                                    ["HPLake Share", [0.0, 1.0]],
+                                    ["HPSewage Share", [0.0, 1.0]],
+                                    ["GHP Share", [0.0, 1.0]],
+                                    ["HPServer Share", [0.0, 1.0]],
+                                    ["PVT Share", [0.0, 1.0]],
+                                    ["SC_ET Share", [0.0, 1.0]],
+                                    ["SC_FP Share", [0.0, 1.0]],
+                                    ["PV Share", [0.0, 1.0]]]
 
-DC_CONVERSION_TECHNOLOGIES_NAMES = [["FLake", [0, 1]],
-                                    ["VCC", [0, 1]],
-                                    ["ACH", [0, 1]],
-                                    ["Storage", [0, 1]]]
+DC_CONVERSION_TECHNOLOGIES_CAPACITIES = [["FLake", [0, 1]],
+                                         ["VCC", [0, 1]],
+                                         ["ACH", [0, 1]],
+                                         ["Storage", [0, 1]]]
 
-DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE = [["FLake Share", [0.0, 1.0]],
-                                          ["VCC Share", [0.0, 1.0]],
-                                          ["ACH Share", [0.0, 1.0]],
-                                          ["Storage Share", [0, 1]]]
+DC_CONVERSION_TECHNOLOGIES_SHARE = [["FLake Share", [0.0, 1.0]],
+                                    ["VCC Share", [0.0, 1.0]],
+                                    ["ACH Share", [0.0, 1.0]],
+                                    ["Storage Share", [0, 1]]]
 
 DC_TECHNOLOGIES_SHARING_SPACE = []
 
@@ -68,7 +68,7 @@ DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
 SIZING_MARGIN = 0.20  # Reliability margin for the system nominal capacity
-Q_MIN_SHARE = 0.0  # Minimum percentage for the installed capacity
+Q_MIN_SHARE = 0.1  # Minimum percentage for the installed capacity
 STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")

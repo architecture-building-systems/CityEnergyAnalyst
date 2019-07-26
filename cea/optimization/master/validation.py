@@ -6,10 +6,11 @@ from __future__ import division
 
 import random
 
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_NAMES, \
-                                        DH_TECHNOLOGIES_SHARING_SPACE, \
-                                        DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE, \
-                                        DC_CONVERSION_TECHNOLOGIES_NAMES, DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, \
+    DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS, \
+    DH_CONVERSION_TECHNOLOGIES_SHARE, \
+    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, DC_CONVERSION_TECHNOLOGIES_SHARE, \
+    Q_MIN_SHARE
 
 
 def validation_main(individual_with_name_dict,
@@ -32,29 +33,39 @@ def validation_main(individual_with_name_dict,
                 individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS
-        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_NAMES:
+        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_CAPACITY:
             lim_inf = limits[0]
             lim_sup = limits[1]
             if individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS SHARE
-        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_NAMES_SHARE:
+        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE:
             lim_inf = limits[0]
             lim_sup = limits[1]
             if individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.uniform(lim_inf, lim_sup)
 
-        # constrain that only activated units can be more than 0
+        # constrain that units not activated should be 0.0
         for column_activation, column_share in zip(heating_unit_names, heating_unit_names_share):
-            if individual_with_name_dict[column_activation] == 0:  # only if the unit is not activated
+            if individual_with_name_dict[column_activation] == 0 and individual_with_name_dict[
+                column_share] > 0.0:  # only if the unit is not activated
                 individual_with_name_dict[column_share] = 0.0
+
+        # constrain that units activated should be more than 0.0
+        for column_activation, columnshare_and_limits in zip(heating_unit_names, DH_CONVERSION_TECHNOLOGIES_SHARE):
+            column_share, limits = columnshare_and_limits
+            lim_inf = limits[0] + Q_MIN_SHARE
+            lim_sup = limits[1]
+            if individual_with_name_dict[column_activation] >= 1 and individual_with_name_dict[
+                column_share] == 0.0:  # only if the unit is activated
+                individual_with_name_dict[column_share] = random.uniform(lim_inf, lim_sup)
 
         # contrain that some technologies share space so the total must be 1
         unit_name, unit_share = [], []
         for column_activation, column_share in zip(heating_unit_names, heating_unit_names_share):
             if individual_with_name_dict[
-                column_activation] >= 1 and column_activation in DH_TECHNOLOGIES_SHARING_SPACE:  # only if the unit is activated
+                column_activation] >= 1 and column_activation in DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
                 unit_name.append(column_share)
                 unit_share.append(individual_with_name_dict[column_share])
         sum_shares = sum(unit_share)
@@ -72,14 +83,14 @@ def validation_main(individual_with_name_dict,
                 individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS
-        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_NAMES:
+        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_CAPACITIES:
             lim_inf = limits[0]
             lim_sup = limits[1]
             if individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS SHARE
-        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_NAMES_SHARE:
+        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE:
             lim_inf = limits[0]
             lim_sup = limits[1]
             if individual_with_name_dict[technology_name] > lim_sup:
