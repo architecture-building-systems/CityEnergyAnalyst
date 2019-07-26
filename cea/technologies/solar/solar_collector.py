@@ -913,7 +913,7 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 
 # investment and maintenance costs
-def calc_Cinv_SC(Area_m2, locator, config, technology):
+def calc_Cinv_SC(Area_m2, locator, technology):
     """
     Lifetime 35 years
     """
