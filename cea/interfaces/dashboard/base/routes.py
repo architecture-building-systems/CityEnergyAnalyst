@@ -114,4 +114,4 @@ def not_found_error(error):
 def internal_error(error):
     import traceback
     error_trace = traceback.format_exc()
-    return render_template('errors/page_500.html', error=error_trace), 500
+    return error_trace, 500
