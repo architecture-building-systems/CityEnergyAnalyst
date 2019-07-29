@@ -41,15 +41,17 @@ Installation of the code base
 
 Excluding the above software, CEA installation requires approximately 13 GB of storage (depending on your existing Python library) and 1 hour of your time.
 
-#. Open GitHub Desktop from the start menu.
+#. Open "GitHub Desktop".
 #. Press Command+Shift+O (clone repository) and select the URL tab.
 #. Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
-#. Click Clone, this will take ~ 5 -10 minutes (Size 900MB).
-#. Open Anaconda prompt (terminal console) from the start menu.
-#. Type ``cd Documents\GitHub\CityEnergyAnalyst`` and press ENTER.
-#. Type ``conda env create`` and press ENTER.
+#. Click Clone, this will take ~ 5-10 minutes (Size 900MB). (this guide assumes you cloned to the default
+  folder ``~/Documents/GitHub/CityEnergyAnalyst``).
+#. Open the Terminal app.
+#. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
+#. Type ``conda env create -f environment.osx.yml`` and press ENTER.
 #. Type ``conda activate cea`` and press ENTER.
 #. Type ``pip install -e .`` and press ENTER (mind the dot ‘.’ included in this command!).
+#. (optional) Type ``cea test`` to run a basic test of the functionality
 
 Interfaces
 ~~~~~~~~~~
