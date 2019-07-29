@@ -61,53 +61,55 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
-    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=1)
+    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=['aru','ahu','scu'])
 
     for building_name in building_names:
 
         ## Calculate cooling loads for different combinations
+        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
+                                           cooling_configuration=['ahu'])
         loads_AHU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                 usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=2)
+                                           cooling_configuration=['aru'])
         loads_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                 usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=3)
+                                           cooling_configuration=['scu'])
         loads_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                 usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                          "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=4)
+                                           cooling_configuration=['aru','ahu'])
         loads_AHU_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                     usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=5)
+                                           cooling_configuration=['ahu','scu'])
         loads_AHU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                     usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=6)
+                                           cooling_configuration=['aru','scu'])
         loads_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                     usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                              "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=7)
+                                           cooling_configuration=['aru','ahu','scu'])
         loads_AHU_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                         usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                                  "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
