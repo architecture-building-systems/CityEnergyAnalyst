@@ -67,85 +67,30 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     for building_name in building_names:
 
         ## Calculate cooling loads for different combinations
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['scu'])
-        loads_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
+        Qc_nom_combination_SCU_W, \
+        T_re_SCU_K, \
+        T_sup_SCU_K, \
+        mdot_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand, cooling_configuration=['scu'])
 
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['aru','ahu'])
-        loads_AHU_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                    usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
+        Qc_nom_combination_AHU_ARU_W, \
+        T_re_AHU_ARU_K, \
+        T_sup_AHU_ARU_K, \
+        mdot_AHU_ARU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand, cooling_configuration=['ahu','aru'])
 
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['aru','ahu','scu'])
-        loads_AHU_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                        usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                                 "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                                 "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
+        Qc_nom_combination_AHU_ARU_SCU_W, \
+        T_re_AHU_ARU_SCU_K, \
+        T_sup_AHU_ARU_SCU_K, \
+        mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand, cooling_configuration=['ahu','aru','scu'])
 
-        Qc_load_combination_SCU_W = np.vectorize(calc_new_load)(
-            loads_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
-        Qc_load_combination_AHU_ARU_W = np.vectorize(calc_new_load)(
-            loads_AHU_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_AHU_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_AHU_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
-        Qc_load_combination_AHU_ARU_SCU_W = np.vectorize(calc_new_load)(
-            loads_AHU_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_AHU_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_AHU_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
-
-        Qc_nom_combination_SCU_W = Qc_load_combination_SCU_W.max() * (1 + SIZING_MARGIN)
-        Qc_nom_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.max() * (1 + SIZING_MARGIN)
-        Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
-
-        # read chilled water supply/return temperatures and mass flows from substation calculation
-        T_re_SCU_K = loads_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        T_sup_SCU_K = loads_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        mdot_SCU_kgpers = loads_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
-
-        T_re_AHU_ARU_K = loads_AHU_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        T_sup_AHU_ARU_K = loads_AHU_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        mdot_AHU_ARU_kgpers = loads_AHU_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
-
-        T_re_AHU_ARU_SCU_K = loads_AHU_ARU_SCU[
-            "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        T_sup_AHU_ARU_SCU_K = loads_AHU_ARU_SCU[
-            "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-        mdot_AHU_ARU_SCU_kgpers = loads_AHU_ARU_SCU[
-            "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
         ## calculate hot water supply conditions to absorption chillers from SC or boiler
         # Flate Plate Solar Collectors
-        SC_FP_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='FP'),
-                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
-                                          "Eaux_SC_kWh"])
-        q_sc_gen_FP_Wh = SC_FP_data['Q_SC_gen_kWh'] * 1000
-        q_sc_gen_FP_Wh = np.where(q_sc_gen_FP_Wh < 0.0, 0.0, q_sc_gen_FP_Wh)
-        el_aux_SC_FP_Wh = SC_FP_data['Eaux_SC_kWh'] * 1000
-        T_hw_in_FP_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_FP_data['T_SC_re_C']]
-
+        SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type = "FP")
         Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
                                                                                           locator, config,
                                                                                           panel_type="FP")
         # Evacuated Tube Solar Collectors
-        SC_ET_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='ET'),
-                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
-                                          "Eaux_SC_kWh"])
-        q_sc_gen_ET_Wh = SC_ET_data['Q_SC_gen_kWh'] * 1000
-        q_sc_gen_ET_Wh = np.where(q_sc_gen_ET_Wh < 0.0, 0.0, q_sc_gen_ET_Wh)
-        el_aux_SC_ET_Wh = SC_ET_data['Eaux_SC_kWh'] * 1000
-        T_hw_in_ET_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_ET_data['T_SC_re_C']]
-
+        SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
         Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
                                                                                           locator, config,
                                                                                           panel_type="ET")
@@ -159,13 +104,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # VCC
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
-        max_VCC_chiller_size_W = max(VCC_cost_data['cap_max'].values)
+        max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
         # ACH
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(),
-                                                     sheet_name="Absorption_chiller")
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[
             Absorption_chiller_cost_data['type'] == ACH_TYPE_SINGLE]
-        max_ACH_chiller_size_W = max(Absorption_chiller_cost_data['cap_max'].values)
+        max_ACH_unit_size_W = max(Absorption_chiller_cost_data['cap_max'].values)
         # # CT
         # CT_cost_data = pd.read_excel(locator.get_supply_systems(),sheet_name="CT")
         # CT_cost_data = CT_cost_data[Absorption_chiller_cost_data['code'] == 'CT1']
@@ -210,7 +154,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             # VCC operation
             Q_VCC_AHU_ARU_SCU_size_W, \
             number_of_VCC_AHU_ARU_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                          max_VCC_chiller_size_W)
+                                                                          max_VCC_unit_size_W)
             VCC_to_AHU_ARU_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_SCU_kgpers,
                                                                                   T_sup_AHU_ARU_SCU_K,
                                                                                   T_re_AHU_ARU_SCU_K,
@@ -234,7 +178,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             # calculate single-effect ACH operation
             Q_ACH_AHU_ARU_SCU_size_W, \
             number_of_ACH_AHU_ARU_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                          max_ACH_chiller_size_W)
+                                                                          max_ACH_unit_size_W)
             SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(
                 mdot_AHU_ARU_SCU_kgpers,
                 T_sup_AHU_ARU_SCU_K,
@@ -338,7 +282,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             # VCC (AHU + ARU) operation
             Q_VCC_AHU_ARU_size_W, \
-            number_of_VCC_AHU_ARU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_W, max_VCC_chiller_size_W)
+            number_of_VCC_AHU_ARU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_W, max_VCC_unit_size_W)
             VCC_to_AHU_ARU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_kgpers,
                                                                           T_sup_AHU_ARU_K,
                                                                           T_re_AHU_ARU_K, Q_VCC_AHU_ARU_size_W,
@@ -347,7 +291,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             q_cw_VCC_to_AHU_ARU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_operation])
             # VCC(SCU) operation
             Q_VCC_SCU_size_W, \
-            number_of_VCC_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_VCC_chiller_size_W)
+            number_of_VCC_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_VCC_unit_size_W)
             VCC_to_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_SCU_kgpers, T_sup_SCU_K,
                                                                       T_re_SCU_K, Q_VCC_SCU_size_W,
                                                                       number_of_VCC_SCU_chillers)
@@ -374,7 +318,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
             # ACH (SCU) operation
             Qnom_ACH_SCU_W, \
-            number_of_ACH_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_ACH_chiller_size_W)
+            number_of_ACH_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_ACH_unit_size_W)
             FP_to_single_ACH_to_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_SCU_kgpers,
                                                                                      T_sup_SCU_K,
                                                                                      T_re_SCU_K,
@@ -592,6 +536,37 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
+
+
+def get_SC_data(building_name, locator, panel_type):
+    SC_data = pd.read_csv(locator.SC_results(building_name, panel_type),
+                             usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
+                                      "Eaux_SC_kWh"])
+    q_sc_gen_Wh = SC_data['Q_SC_gen_kWh'] * 1000
+    q_sc_gen_Wh = np.where(q_sc_gen_Wh < 0.0, 0.0, q_sc_gen_Wh)
+    el_aux_SC_Wh = SC_data['Eaux_SC_kWh'] * 1000
+    if panel_type == "FP":
+        T_hw_in_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_data['T_SC_re_C']]
+    elif panel_type == "ET":
+        T_hw_in_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_data['T_SC_re_C']]
+    else:
+        print 'invalid panel type: ', panel_type
+    return SC_data, T_hw_in_C, el_aux_SC_Wh, q_sc_gen_Wh
+
+
+def calc_combined_cooling_loads(building_name, locator, total_demand, cooling_configuration):
+    buildings_name_with_cooling = [building_name]
+    substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration)
+    substation_operation = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
+                            usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
+                                     "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
+                                     "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
+    T_re_K = substation_operation["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+    T_sup_K = substation_operation["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+    mdot_kgpers = substation_operation["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
+    Qc_load_W = np.vectorize(calc_new_load)(mdot_kgpers, T_sup_K, T_re_K)
+    Qc_design_W = Qc_load_W.max() * (1 + SIZING_MARGIN)
+    return Qc_design_W, T_re_K, T_sup_K, mdot_kgpers
 
 
 def get_tech_size_and_number(Qc_nom_W, max_tech_size_W):
