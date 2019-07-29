@@ -416,13 +416,14 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
             # 1. VCC (AHU + ARU + SCU) + CT
             # VCC operation
+            mdot_AHU_ARU_SCU_kgpers = mdot_AHU_ARU_SCU_kgpers / number_of_VCC_AHU_ARU_SCU_chillers
             VCC_to_AHU_ARU_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_SCU_kgpers,
                                                                                   T_sup_AHU_ARU_SCU_K,
                                                                                   T_re_AHU_ARU_SCU_K,
                                                                                   Qnom_VCC_AHU_ARU_SCU_W,
                                                                                   number_of_VCC_AHU_ARU_SCU_chillers)
-            q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_SCU_operation])
-            el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_SCU_operation])
+            q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_SCU_operation]) * number_of_VCC_AHU_ARU_SCU_chillers
+            el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_SCU_operation]) * number_of_VCC_AHU_ARU_SCU_chillers
             # CT operation
             q_CT_VCC_to_AHU_ARU_SCU_W = q_cw_Wh
             CT_VCC_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
@@ -437,6 +438,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
             # 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
             # calculate single-effect ACH operation
+            mdot_AHU_ARU_SCU_kgpers = mdot_AHU_ARU_SCU_kgpers / number_of_ACH_AHU_ARU_SCU_chillers
             SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(
                 mdot_AHU_ARU_SCU_kgpers,
                 T_sup_AHU_ARU_SCU_K,
@@ -446,9 +448,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 ACH_TYPE_SINGLE,
                 Qnom_ACH_AHU_ARU_SCU_W,
                 locator, config)
-            el_single_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation])
-            q_cw_single_ACH_Wh = np.asarray([x['q_cw_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation])
-            q_hw_single_ACH_Wh = np.asarray([x['q_hw_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation])
+            el_single_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation]) * number_of_ACH_AHU_ARU_SCU_chillers
+            q_cw_single_ACH_Wh = np.asarray([x['q_cw_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation]) * number_of_ACH_AHU_ARU_SCU_chillers
+            q_hw_single_ACH_Wh = np.asarray([x['q_hw_W'] for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation]) * number_of_ACH_AHU_ARU_SCU_chillers
             T_hw_out_single_ACH_K = np.asarray([x['T_hw_out_C'] + 273.15 for x in SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation])
             el_for_FP_ACH_W = el_single_ACH_Wh + el_aux_SC_FP_Wh
             # CT operation
@@ -488,6 +490,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             print 'done with config 2'
 
             # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
+            mdot_AHU_ARU_SCU_kgpers = mdot_AHU_ARU_SCU_kgpers / number_of_ACH_AHU_ARU_SCU_chillers
             ET_to_single_ACH_to_AHU_ARU_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(
                 mdot_AHU_ARU_SCU_kgpers,
                 T_sup_AHU_ARU_SCU_K,
@@ -497,8 +500,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 ACH_TYPE_SINGLE,
                 Qnom_ACH_AHU_ARU_SCU_W,
                 locator, config)
-            el_single_ACH_Wh = np.asarray([x['wdot_W'] for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation])
-            q_cw_single_ACH_Wh = np.asarray([x['q_cw_W'] for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation])
+            el_single_ACH_Wh = np.asarray([x['wdot_W'] for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation]) * number_of_ACH_AHU_ARU_SCU_chillers
+            q_cw_single_ACH_Wh = np.asarray([x['q_cw_W'] for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation]) * number_of_ACH_AHU_ARU_SCU_chillers
             q_hw_single_ACH_Wh = np.asarray([x['q_hw_W'] for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation])
             T_hw_out_single_ACH_K = np.asarray([x['T_hw_out_C'] + 273.15 for x in ET_to_single_ACH_to_AHU_ARU_SCU_operation])
             el_for_ET_ACH_W = el_single_ACH_Wh + el_aux_SC_ET_Wh
@@ -539,18 +542,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             # VCC (AHU + ARU) operation
+            mdot_AHU_ARU_kgpers = mdot_AHU_ARU_SCU_kgpers / number_of_VCC_AHU_ARU_chillers
             VCC_to_AHU_ARU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_kgpers,
                                                                           T_sup_AHU_ARU_K,
                                                                           T_re_AHU_ARU_K, Qnom_VCC_AHU_ARU_W,
                                                                           number_of_VCC_AHU_ARU_chillers)
-            el_VCC_to_AHU_ARU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_operation])
-            q_cw_VCC_to_AHU_ARU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_operation])
+            el_VCC_to_AHU_ARU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_operation]) * number_of_VCC_AHU_ARU_chillers
+            q_cw_VCC_to_AHU_ARU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_operation]) * number_of_VCC_AHU_ARU_chillers
             # VCC(SCU) operation
+            mdot_SCU_kgpers = mdot_SCU_kgpers / number_of_VCC_SCU_chillers
             VCC_to_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_SCU_kgpers, T_sup_SCU_K,
                                                                       T_re_SCU_K, Qnom_VCC_SCU_W,
                                                                       number_of_VCC_SCU_chillers)
-            el_VCC_to_SCU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_SCU_operation])
-            q_cw_VCC_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_SCU_operation])
+            el_VCC_to_SCU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_SCU_operation]) * number_of_VCC_SCU_chillers
+            q_cw_VCC_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_SCU_operation]) * number_of_VCC_SCU_chillers
 
             el_VCC_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh
 
@@ -571,6 +576,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
             # ACH (SCU) operation
+            mdot_SCU_kgpers = mdot_SCU_kgpers / number_of_ACH_SCU_chillers
             FP_to_single_ACH_to_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_SCU_kgpers,
                                                                                      T_sup_SCU_K,
                                                                                      T_re_SCU_K,
@@ -579,9 +585,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                      ACH_TYPE_SINGLE,
                                                                                      Qnom_ACH_SCU_W,
                                                                                      locator, config)
-            el_FP_ACH_to_SCU_Wh = np.asarray([x['wdot_W'] for x in FP_to_single_ACH_to_SCU_operation])
-            q_cw_FP_ACH_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in FP_to_single_ACH_to_SCU_operation])
-            q_hw_FP_ACH_to_SCU_Wh = np.asarray([x['q_hw_W'] for x in FP_to_single_ACH_to_SCU_operation])
+            el_FP_ACH_to_SCU_Wh = np.asarray([x['wdot_W'] for x in FP_to_single_ACH_to_SCU_operation]) * number_of_ACH_SCU_chillers
+            q_cw_FP_ACH_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in FP_to_single_ACH_to_SCU_operation]) * number_of_ACH_SCU_chillers
+            q_hw_FP_ACH_to_SCU_Wh = np.asarray([x['q_hw_W'] for x in FP_to_single_ACH_to_SCU_operation]) * number_of_ACH_SCU_chillers
             T_hw_FP_ACH_to_SCU_K = np.asarray([x['T_hw_out_C'] + 273.15 for x in FP_to_single_ACH_to_SCU_operation])
 
             # boiler operation
@@ -677,9 +683,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
 
-            Capex_a_AHU_ARU_SCU_USD[1][0] = Capex_a_CT_USD + Capex_a_VCC_USD
-            Capex_total_AHU_ARU_SCU_USD[1][0] = Capex_CT_USD + Capex_VCC_USD
-            Opex_a_fixed_AHU_ARU_SCU_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
+            Capex_a_AHU_ARU_SCU_USD[1][0] = Capex_a_CT_USD + Capex_a_VCC_USD * number_of_VCC_AHU_ARU_SCU_chillers
+            Capex_total_AHU_ARU_SCU_USD[1][0] = Capex_CT_USD + Capex_VCC_USD * number_of_VCC_AHU_ARU_SCU_chillers
+            Opex_a_fixed_AHU_ARU_SCU_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD * number_of_VCC_AHU_ARU_SCU_chillers
 
 
             # 2: single effect ACH + CT + Boiler + SC_FP
@@ -690,10 +696,10 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 CT_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
             Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
                 boiler_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'BO1')
-            Capex_a_AHU_ARU_SCU_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_boiler_USD + Capex_a_SC_FP_USD
-            Capex_total_AHU_ARU_SCU_USD[2][0] = Capex_CT_USD + Capex_ACH_USD + Capex_boiler_USD + Capex_SC_FP_USD
+            Capex_a_AHU_ARU_SCU_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD * number_of_ACH_AHU_ARU_SCU_chillers + Capex_a_boiler_USD + Capex_a_SC_FP_USD
+            Capex_total_AHU_ARU_SCU_USD[2][0] = Capex_CT_USD + Capex_ACH_USD * number_of_ACH_AHU_ARU_SCU_chillers + Capex_boiler_USD + Capex_SC_FP_USD
             Opex_a_fixed_AHU_ARU_SCU_USD[2][
-                0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
+                0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD * number_of_ACH_AHU_ARU_SCU_chillers + Opex_fixed_boiler_USD + Opex_SC_FP_USD
 
             # 3: double effect ACH + CT + Boiler + SC_ET
             print 'double effect ACH + CT + Boiler + SC_ET'
@@ -716,13 +722,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Qc_nom_combination_SCU_W, locator, config, 'CH3')
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
-            Capex_a_AHU_ARU_SCU_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
-            Capex_total_AHU_ARU_SCU_USD[4][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_VCC_S_USD
-            Opex_a_fixed_AHU_ARU_SCU_USD[4][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_VCC_S_USD
+            Capex_a_AHU_ARU_SCU_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Capex_a_VCC_S_USD * number_of_VCC_SCU_chillers
+            Capex_total_AHU_ARU_SCU_USD[4][0] = Capex_CT_USD + Capex_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Capex_VCC_S_USD * number_of_VCC_SCU_chillers
+            Opex_a_fixed_AHU_ARU_SCU_USD[4][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Opex_VCC_S_USD * number_of_VCC_SCU_chillers
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
             print 'VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP'
-            Capex_a_ACH_S_USD, Opex_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
+            Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
                 Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'CT1')
@@ -731,11 +737,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(
                 SC_FP_data['Area_SC_m2'][0], locator, config, panel_type="FP")
             Capex_a_AHU_ARU_SCU_USD[5][
-                0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + Capex_a_SC_FP_USD + Capex_a_boiler_USD
+                0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Capex_a_ACH_S_USD + Capex_a_SC_FP_USD + Capex_a_boiler_USD
             Capex_total_AHU_ARU_SCU_USD[5][
-                0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + Capex_SC_FP_USD + Capex_boiler_USD
+                0] = Capex_CT_USD + Capex_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Capex_ACH_S_USD + Capex_SC_FP_USD + Capex_boiler_USD
             Opex_a_fixed_AHU_ARU_SCU_USD[5][
-                0] = Opex_fixed_CT_USD + Capex_a_ACH_S_USD + Opex_ACH_S_USD + Opex_SC_FP_USD + Opex_fixed_boiler_USD
+                0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD * number_of_VCC_AHU_ARU_chillers + Opex_fixed_ACH_S_USD * number_of_ACH_SCU_chillers + Opex_SC_FP_USD + Opex_fixed_boiler_USD
 
         # Best configuration AHU
         number_config = len(result_AHU)
