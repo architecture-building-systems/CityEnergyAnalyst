@@ -470,6 +470,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                 out=np.zeros_like(q_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W),
                                                 where=boiler_eff!=0)
             else:
+                boiler_FP_to_single_ACH_to_AHU_ARU_SCU_nom_size_W = 0.0
                 Q_gas_for_boiler_Wh = np.zeros(len(el_single_ACH_Wh))
 
             # add electricity costs
@@ -519,6 +520,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                   burner_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W)
                 Q_gas_for_burner_Wh = q_burner_ET_single_ACH_to_AHU_ARU_SCU_W / burner_eff
             else:
+                burner_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W = 0.0
                 Q_gas_for_burner_Wh = np.zeros(len(el_single_ACH_Wh))
 
             # add electricity costs
@@ -597,6 +599,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                 out=np.zeros_like(q_boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W),
                                                 where=boiler_eff != 0)
             else:
+                boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W = 0.0
                 Q_gas_for_boiler_Wh = np.zeros(len(el_FP_ACH_to_SCU_Wh))
 
             # CT operation
