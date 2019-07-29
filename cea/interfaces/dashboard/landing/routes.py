@@ -301,16 +301,6 @@ def parameters_for_script(script_name, config):
     return parameters
 
 
-@blueprint.route('/save-config/<script>', methods=['POST'])
-def route_save_config(script):
-    """Save the configuration for this tool to the configuration file"""
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        parameter.set(parameter.decode(request.form.get(parameter.name)))
-    current_app.cea_config.save()
-    return jsonify(True)
-
-
 @blueprint.route('/restore-defaults/<script_name>', methods=['POST'])
 def route_restore_defaults(script_name):
     """Restore the default configuration values for the CEA"""
