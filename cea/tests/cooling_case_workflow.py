@@ -34,7 +34,7 @@ def main(config):
         config.weather = 'Singapore'
         # local variables
         config.optimization.district_cooling_network = True
-        config.config.supply_system_simulation.district_cooling_network = True
+        config.supply_system_simulation.district_cooling_network = True
         config.thermal_network.network_type = 'DC'
         config.data_helper.region = 'SG'
     else:

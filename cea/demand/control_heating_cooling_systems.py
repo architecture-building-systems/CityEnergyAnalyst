@@ -345,8 +345,10 @@ def calc_simple_temp_control(tsd, bpr, weekday):
     :rtype: dict
     """
 
-    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point)(tsd['people'], range(HOURS_IN_YEAR), bpr, weekday)
-    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point)(tsd['people'], range(HOURS_IN_YEAR), bpr, weekday)
+    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point, otypes=[float])\
+        (tsd['people'], range(HOURS_IN_YEAR), bpr, weekday, )
+    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point, otypes=[float])\
+        (tsd['people'], range(HOURS_IN_YEAR), bpr, weekday)
 
     return tsd
 
