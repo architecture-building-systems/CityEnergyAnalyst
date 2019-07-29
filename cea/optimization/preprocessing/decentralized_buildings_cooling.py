@@ -62,25 +62,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
-    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=['aru','ahu','scu'])
+    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=['aru','ahu','scu']) # todo: redundant?
 
     for building_name in building_names:
 
         ## Calculate cooling loads for different combinations
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['ahu'])
-        loads_AHU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['aru'])
-        loads_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                         "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
                                            cooling_configuration=['scu'])
         loads_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
@@ -96,35 +82,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                              "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['ahu','scu'])
-        loads_AHU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                    usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
-                                           cooling_configuration=['aru','scu'])
-        loads_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                    usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-
-        substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling=[building_name],
                                            cooling_configuration=['aru','ahu','scu'])
         loads_AHU_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
                                         usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
                                                  "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
                                                  "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-
-        Qc_load_combination_AHU_W = np.vectorize(calc_new_load)(
-            loads_AHU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_AHU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_AHU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
-        Qc_load_combination_ARU_W = np.vectorize(calc_new_load)(
-            loads_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
         Qc_load_combination_SCU_W = np.vectorize(calc_new_load)(
             loads_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
@@ -136,28 +98,14 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             loads_AHU_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
             loads_AHU_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_AHU_SCU_W = np.vectorize(calc_new_load)(
-            loads_AHU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_AHU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_AHU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
-        Qc_load_combination_ARU_SCU_W = np.vectorize(calc_new_load)(
-            loads_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
-            loads_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
-            loads_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
-
         Qc_load_combination_AHU_ARU_SCU_W = np.vectorize(calc_new_load)(
             loads_AHU_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
             loads_AHU_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
             loads_AHU_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_nom_combination_AHU_W = Qc_load_combination_AHU_W.max() * (
-                1 + SIZING_MARGIN)  # 20% reliability margin on installed capacity
-        Qc_nom_combination_ARU_W = Qc_load_combination_ARU_W.max() * (1 + SIZING_MARGIN)
+
         Qc_nom_combination_SCU_W = Qc_load_combination_SCU_W.max() * (1 + SIZING_MARGIN)
         Qc_nom_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.max() * (1 + SIZING_MARGIN)
-        Qc_nom_combination_AHU_SCU_W = Qc_load_combination_AHU_SCU_W.max() * (1 + SIZING_MARGIN)
-        Qc_nom_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
         Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
 
         # read chilled water supply/return temperatures and mass flows from substation calculation
@@ -482,36 +430,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             print 'done with config 5'
 
         ## Calculate Capex/Opex
-        # AHU
-        Capex_a_AHU_USD = np.zeros((4, 1))
-        Capex_total_AHU_USD = np.zeros((4, 1))
-        Opex_a_fixed_AHU_USD = np.zeros((4, 1))
-
-        # ARU
-        Capex_a_ARU_USD = np.zeros((4, 1))
-        Capex_total_ARU_USD = np.zeros((4, 1))
-        Opex_a_fixed_ARU_USD = np.zeros((4, 1))
-
-        # SCU
-        Capex_a_SCU_USD = np.zeros((4, 1))
-        Capex_total_SCU_USD = np.zeros((4, 1))
-        Opex_a_fixed_SCU_USD = np.zeros((4, 1))
-
-        # AHU + ARU
-        Capex_a_AHU_ARU_USD = np.zeros((4, 1))
-        Capex_total_AHU_ARU_USD = np.zeros((4, 1))
-        Opex_a_fixed_AHU_ARU_USD = np.zeros((4, 1))
-
-        # AHU + SCU
-        Capex_a_AHU_SCU_USD = np.zeros((4, 1))
-        Capex_total_AHU_SCU_USD = np.zeros((4, 1))
-        Opex_a_fixed_AHU_SCU_USD = np.zeros((4, 1))
-
-        # ARU + SCU
-        Capex_a_ARU_SCU_USD = np.zeros((4, 1))
-        Capex_total_ARU_SCU_USD = np.zeros((4, 1))
-        Opex_a_fixed_ARU_SCU_USD = np.zeros((4, 1))
-
         # AHU + ARU + SCU
         Capex_a_AHU_ARU_SCU_USD = np.zeros((6, 1))
         Capex_total_AHU_ARU_SCU_USD = np.zeros((6, 1))
