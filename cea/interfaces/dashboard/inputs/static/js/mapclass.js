@@ -112,6 +112,7 @@ class MapClass {
                         extrude && $('#3d-button').trigger('click')
                     }
                 });
+                $('.mapboxgl-ctrl-icon[data-toggle="tooltip"]').tooltip();
             });
 
             let _jsonURLs = jsonURLs;
