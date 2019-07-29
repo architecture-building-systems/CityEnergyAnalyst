@@ -14,6 +14,8 @@
       <title>City Energy Analyst | {% block title %}{% endblock %}</title>
 
       {% block stylesheets %}
+        <!-- jQuery -->
+        <link href="{{ url_for('static', filename='vendors/jquery-ui/jquery-ui.css') }}" rel="stylesheet">
         <!-- Bootstrap -->
         <link href="{{ url_for('static', filename='vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
         <!-- Font Awesome -->
@@ -68,6 +70,7 @@
       {% block javascripts %}
         <!-- jQuery -->
         <script src="{{ url_for('static', filename='vendors/jquery/dist/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='vendors/jquery-ui/jquery-ui.js') }}"></script>
         <!-- Bootstrap -->
         <script src="{{ url_for('static', filename='vendors/bootstrap/dist/js/bootstrap.min.js') }}"></script>
         <!-- FastClick -->
