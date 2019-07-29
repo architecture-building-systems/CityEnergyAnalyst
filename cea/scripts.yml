@@ -5,8 +5,7 @@ Analysis:
     description: Multicriteria analysis
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.multicriteria.main
-    parameters: ['general:scenario', 'general:detailed-electricity-pricing', multi-criteria,
-                 'thermal-network:network-names', 'thermal-network:network-type']
+    parameters: ['general:scenario', multi-criteria]
 
 
   - name: emissions
@@ -64,7 +63,6 @@ Analysis:
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_analyze
     parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
-
 
 
 Data Management:
@@ -149,11 +147,18 @@ Energy potentials:
     description: Calculate electricity & heat production from photovoltaic / thermal technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'solar:buildings',  'solar:type-pvpanel',
+    parameters: ['general:scenario',
+                 'general:weather',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'solar:buildings',
+                 'solar:type-pvpanel',
                  'solar:type-scpanel',
-                 'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
-                 'solar:solar-window-solstice', 'solar:t-in-pvt']
+                 'solar:panel-on-roof',
+                 'solar:panel-on-wall',
+                 'solar:annual-radiation-threshold',
+                 'solar:solar-window-solstice',
+                 'solar:t-in-pvt']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -204,8 +209,7 @@ Energy potentials:
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.resources.radiation_daysim.radiation_main
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:debug',
-                 radiation-daysim]
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', 'general:weather', radiation-daysim]
     input-files:
       - [get_envelope_systems]
       - [get_district_geometry]
@@ -220,9 +224,7 @@ Optimization:
     description: Optimize network design variables (plant locations, layout,...)
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network_optimization
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network', 'thermal-network-optimization',
-                 'network-layout', 'general:detailed-electricity-pricing']
+    parameters: ['general:scenario', 'general:weather', thermal-network-optimization]
 
   - name: optimization
     label: Central supply system
@@ -237,8 +239,7 @@ Optimization:
     description: Run decentralized building optimization
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'general:weather', 'decentralized',
-                 'general:detailed-electricity-pricing']
+    parameters: ['general:scenario', 'general:weather', 'decentralized']
 
 
   - name: supply-system-simulation
@@ -272,7 +273,7 @@ Thermal networks:
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
                  'thermal-network-optimization:use-representative-week-per-month']
     input-files:
-      - [get_network_layout_nodes_shapefile, network_type, network_name]
+      - [get_network_layout_nodes_shapefile, "thermal-network:network_type", "thermal-network:network_name"]
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
@@ -292,9 +293,6 @@ Utilities:
     interfaces: [cli, arcgis, dashboard]
     module: cea.tests.dodo
     parameters: [test]
-
-default:
-
 
   - name: plots
     label: Plots basic
@@ -381,13 +379,6 @@ default:
     module: cea.interfaces.cli.list_demand_graphs_fields
     parameters: ['general:scenario']
 
-  #- name: scenario-plots
-  #  label: scenario-plots
-  #  description: scenario-plots
-  #  interfaces: [cli]
-  #  module: cea.plots.scenario_plots
-  #  parameters: [scenario-plots]
-
   - name: shapefile-to-excel
     label: shapefile-to-excel
     description: shapefile-to-excel
@@ -402,12 +393,12 @@ default:
     module: cea.tests.trace_inputlocator
     parameters: ['general:scenario', trace-inputlocator]
 
-  - name: cooling-case-workflow
-    label: cooling case workflow
-    description: Run the cooling case from start to end to test the cea
+  - name: workflow
+    lable: Workflow
+    description: Run a workflow.yml file from start to end
     interfaces: [cli]
-    module: cea.tests.cooling_case_workflow
-    parameters: ['cooling-case-workflow:scenario', 'cooling-case-workflow:last']
+    module: cea.tests.workflow
+    parameters: [workflow]
 
 
 Documentation:
