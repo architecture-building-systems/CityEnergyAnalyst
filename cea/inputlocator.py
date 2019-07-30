@@ -303,6 +303,11 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + buildingname + '_result_heating.csv')
 
+    def get_optimization_decentralized_folder_building_result_heating_activation(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_decentralized_folder(),
+                            'DiscOp_' + buildingname + '_result_heating_activation.csv')
+
     def get_optimization_network_results_summary(self, network_type, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         if network_type+ '_'+ 'Network_summary_result_' in key:
