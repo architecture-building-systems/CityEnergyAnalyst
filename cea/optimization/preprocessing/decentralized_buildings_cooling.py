@@ -64,19 +64,19 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SCU
-        Qc_nom_combination_SCU_W, \
+        Qc_nom_SCU_W, \
         T_re_SCU_K, \
         T_sup_SCU_K, \
         mdot_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                       cooling_configuration=['scu'])
         # AHU + ARU
-        Qc_nom_combination_AHU_ARU_W, \
+        Qc_nom_AHU_ARU_W, \
         T_re_AHU_ARU_K, \
         T_sup_AHU_ARU_K, \
         mdot_AHU_ARU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                           cooling_configuration=['ahu','aru'])
         # AHU + ARU + SCU
-        Qc_nom_combination_AHU_ARU_SCU_W, \
+        Qc_nom_AHU_ARU_SCU_W, \
         T_re_AHU_ARU_SCU_K, \
         T_sup_AHU_ARU_SCU_K, \
         mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
@@ -106,7 +106,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         ## Initialize table to save results
         # save costs of all supply configurations
-        operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_combination_SCU_W)
+        operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W)
         # save supply system activation of all supply configurations
         all_supply_activation_dict = {}
 
@@ -127,16 +127,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         ## 1. VCC (AHU + ARU + SCU) + CT
         print 'Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'
         # VCC operation
-        Q_VCC_AHU_ARU_SCU_installed_size_W, \
-        number_of_VCC_AHU_ARU_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                      max_VCC_unit_size_W)
-        VCC_to_AHU_ARU_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_SCU_kgpers,
-                                                                              T_sup_AHU_ARU_SCU_K,
-                                                                              T_re_AHU_ARU_SCU_K,
-                                                                              Q_VCC_AHU_ARU_SCU_installed_size_W,
-                                                                              number_of_VCC_AHU_ARU_SCU_chillers)
-        q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_SCU_operation])
-        el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_SCU_operation])
+        el_VCC_Wh, q_cw_Wh = calc_VCC_operation(Qc_nom_AHU_ARU_SCU_W, max_VCC_unit_size_W, T_re_AHU_ARU_SCU_K,
+                                                T_sup_AHU_ARU_SCU_K, mdot_AHU_ARU_SCU_kgpers)
         # CT operation
         q_CT_VCC_to_AHU_ARU_SCU_Wh = q_cw_Wh
         Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(max_CT_unit_size_W, q_CT_VCC_to_AHU_ARU_SCU_Wh)
@@ -148,31 +140,26 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         all_supply_activation_dict[1] = {'el_VCC_Wh': el_VCC_Wh,
                                          'el_CT_Wh': el_CT_Wh}
 
-        # 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
+        ## 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
         print 'Config 2: Flat-plate Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
         # calculate single-effect ACH operation
-        Q_ACH_AHU_ARU_SCU_size_W, \
-        number_of_ACH_AHU_ARU_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                      max_ACH_unit_size_W)
         T_hw_out_single_ACH_K, \
         el_single_ACH_Wh, \
         q_cw_single_ACH_Wh, \
-        q_hw_single_ACH_Wh = get_ACH_operation(Q_ACH_AHU_ARU_SCU_size_W, T_ground_K, T_hw_in_FP_C,
-                                               T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K, config, locator,
-                                               mdot_AHU_ARU_SCU_kgpers)
+        q_hw_single_ACH_Wh = calc_ACH_operation(Qc_nom_AHU_ARU_SCU_W, max_ACH_unit_size_W, T_ground_K,
+                                                T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K, config, locator,
+                                                mdot_AHU_ARU_SCU_kgpers)
         # CT operation
         q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(max_CT_unit_size_W,
                                                                                  q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W)
-
         # boiler operation
         q_gas_for_boiler_Wh, \
-        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W = calc_boiler_operation(Q_ACH_AHU_ARU_SCU_size_W,
+        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W = calc_boiler_operation(Qc_nom_AHU_ARU_SCU_W,
                                                                                T_hw_out_single_ACH_K,
                                                                                max_Boiler_unit_size_W,
                                                                                q_hw_single_ACH_Wh,
                                                                                q_sc_gen_FP_Wh)
-
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_FP_Wh + el_CT_Wh
         operation_results[2][7] = sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
@@ -189,29 +176,25 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                          'Boiler_gas_Wh': q_gas_for_boiler_Wh,
                                          'FP_solar_Wh': q_sc_gen_FP_Wh}
 
-
-
         # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
         print 'Config 3: Evacuated Tube Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
         T_hw_out_single_ACH_K, \
         el_single_ACH_Wh, \
         q_cw_single_ACH_Wh, \
-        q_hw_single_ACH_Wh = get_ACH_operation(Q_ACH_AHU_ARU_SCU_size_W, T_ground_K, T_hw_in_ET_C,
-                                               T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K, config, locator,
-                                               mdot_AHU_ARU_SCU_kgpers)
+        q_hw_single_ACH_Wh = calc_ACH_operation(Qc_nom_AHU_ARU_SCU_W, max_ACH_unit_size_W, T_ground_K,
+                                                T_hw_in_ET_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K, config, locator,
+                                                mdot_AHU_ARU_SCU_kgpers)
         # CT operation
         q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(max_CT_unit_size_W,
                                                                                  q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
-
         # burner operation
         q_gas_for_burner_Wh, \
-        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W = calc_burner_operation(Q_ACH_AHU_ARU_SCU_size_W,
+        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W = calc_burner_operation(Qc_nom_AHU_ARU_SCU_W,
                                                                                T_hw_out_single_ACH_K,
                                                                                max_Boiler_unit_size_W,
                                                                                q_hw_single_ACH_Wh,
                                                                                q_sc_gen_ET_Wh)
-
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
         operation_results[3][7] = sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
@@ -229,72 +212,48 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                          'q_sc_gen_ET_Wh': q_sc_gen_ET_Wh}
 
 
-        if Qc_nom_combination_SCU_W > 0.0:
+        if Qc_nom_SCU_W > 0.0:
+
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             print 'Config 4: Vapor Compression Chillers(HT) -> SCU & Vapor Compression Chillers(LT) -> AHU,ARU'
             # VCC (AHU + ARU) operation
-            Q_VCC_AHU_ARU_size_W, \
-            number_of_VCC_AHU_ARU_chillers = get_tech_size_and_number(Qc_nom_combination_AHU_ARU_W, max_VCC_unit_size_W)
-            VCC_to_AHU_ARU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_AHU_ARU_kgpers,
-                                                                          T_sup_AHU_ARU_K,
-                                                                          T_re_AHU_ARU_K, Q_VCC_AHU_ARU_size_W,
-                                                                          number_of_VCC_AHU_ARU_chillers)
-            el_VCC_to_AHU_ARU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_AHU_ARU_operation])
-            q_cw_VCC_to_AHU_ARU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_AHU_ARU_operation])
+            el_VCC_to_AHU_ARU_Wh, \
+            q_cw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(Qc_nom_AHU_ARU_W, max_VCC_unit_size_W, T_re_AHU_ARU_K,
+                                                        T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers)
             # VCC(SCU) operation
-            Q_VCC_SCU_size_W, \
-            number_of_VCC_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_VCC_unit_size_W)
-            VCC_to_SCU_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_SCU_kgpers, T_sup_SCU_K,
-                                                                      T_re_SCU_K, Q_VCC_SCU_size_W,
-                                                                      number_of_VCC_SCU_chillers)
-            el_VCC_to_SCU_Wh = np.asarray([x['wdot_W'] for x in VCC_to_SCU_operation])
-            q_cw_VCC_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in VCC_to_SCU_operation])
-
-            el_VCC_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh
-
+            el_VCC_to_SCU_Wh, \
+            q_cw_VCC_to_SCU_Wh = calc_VCC_operation(Qc_nom_SCU_W, max_VCC_unit_size_W, T_re_SCU_K,
+                                                    T_sup_SCU_K, mdot_SCU_kgpers)
             # CT operation
             q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
             Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(max_CT_unit_size_W,
                                                                                    q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
-
             # add el costs
-            el_total_Wh = el_VCC_total_Wh + el_CT_Wh
+            el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
             operation_results[4][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
             operation_results[4][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
             operation_results[4][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
 
-            all_supply_activation_dict[4] = {'VCCLT_el_Wh': el_VCC_to_AHU_ARU_Wh,
-                                             'VCCHT_el_Wh': el_VCC_to_SCU_Wh,
-                                             'CT_el_Wh': el_CT_Wh}
-
-
+            all_supply_activation_dict[4] = {'el_VCC_to_AHU_ARU_Wh': el_VCC_to_AHU_ARU_Wh,
+                                             'el_VCC_to_SCU_Wh': el_VCC_to_SCU_Wh,
+                                             'el_CT_Wh': el_CT_Wh}
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
             print 'Config 5: Vapor Compression Chillers(LT) -> AHU,ARU & Flate-place SC + Absorption Chillers(HT) -> SCU'
             # ACH (SCU) operation
-            Qnom_ACH_SCU_W, \
-            number_of_ACH_SCU_chillers = get_tech_size_and_number(Qc_nom_combination_SCU_W, max_ACH_unit_size_W)
-            FP_to_single_ACH_to_SCU_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_SCU_kgpers,
-                                                                                     T_sup_SCU_K,
-                                                                                     T_re_SCU_K,
-                                                                                     T_hw_in_FP_C,
-                                                                                     T_ground_K,
-                                                                                     ACH_TYPE_SINGLE,
-                                                                                     Qnom_ACH_SCU_W,
-                                                                                     locator, config)
-            el_FP_ACH_to_SCU_Wh = np.asarray([x['wdot_W'] for x in FP_to_single_ACH_to_SCU_operation])
-            q_cw_FP_ACH_to_SCU_Wh = np.asarray([x['q_cw_W'] for x in FP_to_single_ACH_to_SCU_operation])
-            q_hw_FP_ACH_to_SCU_Wh = np.asarray([x['q_hw_W'] for x in FP_to_single_ACH_to_SCU_operation])
-            T_hw_FP_ACH_to_SCU_K = np.asarray([x['T_hw_out_C'] + 273.15 for x in FP_to_single_ACH_to_SCU_operation])
-
+            T_hw_FP_ACH_to_SCU_K, \
+            el_FP_ACH_to_SCU_Wh, \
+            q_cw_FP_ACH_to_SCU_Wh, \
+            q_hw_FP_ACH_to_SCU_Wh = calc_ACH_operation(Qc_nom_SCU_W, max_ACH_unit_size_W, T_ground_K,
+                                                       T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, config,
+                                                       locator, mdot_SCU_kgpers)
             # boiler operation
             q_gas_for_boiler_Wh, \
-            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W = calc_boiler_operation(Qnom_ACH_SCU_W,
+            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W = calc_boiler_operation(Qc_nom_SCU_W,
                                                                                               T_hw_FP_ACH_to_SCU_K,
                                                                                               max_Boiler_unit_size_W,
                                                                                               q_hw_FP_ACH_to_SCU_Wh,
                                                                                               q_sc_gen_FP_Wh)
-
             # CT operation
             q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
@@ -306,17 +265,16 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             operation_results[5][8] = sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
             operation_results[5][9] = sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add gas costs
-            operation_results[5][7] += sum(prices.NG_PRICE * q_gas_for_boiler_Wh)  # CHF
-            operation_results[5][
-                8] += sum(q_gas_for_boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-            operation_results[5][
-                9] += sum(q_gas_for_boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+            q_gas_total_Wh = q_gas_for_boiler_Wh
+            operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
+            operation_results[5][8] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
+            operation_results[5][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
 
-            all_supply_activation_dict[5] = {'VCCLT_el_Wh': el_VCC_to_AHU_ARU_Wh,
-                                             'ACHHT_el_Wh': el_FP_ACH_to_SCU_Wh,
-                                             'FP_el_Wh': el_aux_SC_FP_Wh,
-                                             'CT_el_Wh': el_CT_Wh,
-                                             'Boiler_NG_Wh': q_gas_for_boiler_Wh}
+            all_supply_activation_dict[5] = {'el_VCC_to_AHU_ARU_Wh': el_VCC_to_AHU_ARU_Wh,
+                                             'el_FP_ACH_to_SCU_Wh': el_FP_ACH_to_SCU_Wh,
+                                             'el_aux_SC_FP_Wh': el_aux_SC_FP_Wh,
+                                             'el_CT_Wh': el_CT_Wh,
+                                             'q_gas_for_boiler_Wh': q_gas_for_boiler_Wh}
 
         ## Calculate Capex/Opex
         # Initialize arrays
@@ -327,14 +285,14 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         print 'Cost calculation...'
         # 0: DX
-        Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_SCU_W)
+        Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_AHU_ARU_SCU_W)
         Capex_a_USD[0][0] = Capex_a_DX_USD  # FIXME: a dummy value to rule out this configuration
         Capex_total_USD[0][0] = Capex_DX_USD  # FIXME: a dummy value to rule out this configuration
         Opex_a_fixed_USD[0][0] = Opex_fixed_DX_USD
 
         # 1: VCC + CT
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(
-            Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH3')
+            Qc_nom_AHU_ARU_SCU_W, locator, config, 'CH3')
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, config, 'CT1')
 
@@ -344,7 +302,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # 2: single effect ACH + CT + Boiler + SC_FP
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
@@ -356,24 +314,24 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         # 3: double effect ACH + CT + Boiler + SC_ET
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
+            Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE, config)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'CT1')
         Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
-            burner_ET_to_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'BO1')
+            Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
         Capex_a_USD[3][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_burner_USD + Capex_a_SC_ET_USD
         Capex_total_USD[3][0] = Capex_CT_USD + Capex_ACH_USD + Capex_burner_USD + Capex_SC_ET_USD
         Opex_a_fixed_USD[3][
             0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_burner_USD + Opex_SC_ET_USD
 
 
-        if Qc_nom_combination_SCU_W > 0.0:
+        if Qc_nom_SCU_W > 0.0:
 
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
+                Qc_nom_AHU_ARU_W, locator, config, 'CH3')
             Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_combination_SCU_W, locator, config, 'CH3')
+                Qc_nom_SCU_W, locator, config, 'CH3')
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, locator, config, 'CT1')
             Capex_a_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
@@ -382,7 +340,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
             Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
-                Qc_nom_combination_SCU_W, locator, ACH_TYPE_SINGLE, config)
+                Qc_nom_SCU_W, locator, ACH_TYPE_SINGLE, config)
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'CT1')
             Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
@@ -425,15 +383,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["PEN_MJoil"] = operation_results[:, 9]
         dico["TAC_USD"] = TAC_USD[:, 1]
         dico["Best configuration"] = Best[:, 0]
-        dico["Nominal Power DX to AHU_ARU_SCU [W]"] = operation_results[:, 0] * Qc_nom_combination_AHU_ARU_SCU_W
-        dico["Nominal Power VCC to AHU_ARU_SCU [W]"] = operation_results[:, 1] * Qc_nom_combination_AHU_ARU_SCU_W
+        dico["Nominal Power DX to AHU_ARU_SCU [W]"] = operation_results[:, 0] * Qc_nom_AHU_ARU_SCU_W
+        dico["Nominal Power VCC to AHU_ARU_SCU [W]"] = operation_results[:, 1] * Qc_nom_AHU_ARU_SCU_W
         dico["Nominal Power single effect ACH to AHU_ARU_SCU (FP) [W]"] = operation_results[:,
-                                                                          2] * Qc_nom_combination_AHU_ARU_SCU_W
+                                                                          2] * Qc_nom_AHU_ARU_SCU_W
         dico["Nominal Power single effect ACH to AHU_ARU_SCU (ET) [W]"] = operation_results[:,
-                                                                          3] * Qc_nom_combination_AHU_ARU_SCU_W
-        dico["Nominal Power VCC to AHU_ARU [W]"] = operation_results[:, 4] * Qc_nom_combination_AHU_ARU_W
-        dico["Nominal Power VCC to SCU [W]"] = operation_results[:, 5] * Qc_nom_combination_SCU_W
-        dico["Nominal Power single effect ACH to SCU (FP) [W]"] = operation_results[:, 6] * Qc_nom_combination_SCU_W
+                                                                          3] * Qc_nom_AHU_ARU_SCU_W
+        dico["Nominal Power VCC to AHU_ARU [W]"] = operation_results[:, 4] * Qc_nom_AHU_ARU_W
+        dico["Nominal Power VCC to SCU [W]"] = operation_results[:, 5] * Qc_nom_SCU_W
+        dico["Nominal Power single effect ACH to SCU (FP) [W]"] = operation_results[:, 6] * Qc_nom_SCU_W
 
         dico_df = pd.DataFrame(dico)
         fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
@@ -447,46 +405,58 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
 
 
+def calc_VCC_operation(Qc_nom_W, max_VCC_unit_size_W, T_chw_re_K, T_chw_sup_K, mdot_kgpers):
+    Q_VCC_unit_size_W, number_of_VCC_installed = get_tech_unit_size_and_number(Qc_nom_W, max_VCC_unit_size_W)
+    VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_kgpers,
+                                                                     T_chw_sup_K,
+                                                                     T_chw_re_K,
+                                                                     Q_VCC_unit_size_W,
+                                                                     number_of_VCC_installed)
+    q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_operation])
+    el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_operation])
+    return el_VCC_Wh, q_cw_Wh
+
+
 def calc_CT_operation(max_CT_unit_size_W, q_CT_load_Wh):
-    Q_nom_W = np.max(q_CT_load_Wh) * (1 + SIZING_MARGIN)
-    Q_CT_installed_size_W, number_of_CT_installed = get_tech_size_and_number(Q_nom_W, max_CT_unit_size_W)
-    el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_CT_installed_size_W)
-    return Q_nom_W, el_CT_Wh
+    Q_nom_CTs_W = np.max(q_CT_load_Wh) * (1 + SIZING_MARGIN)
+    Q_CT_unit_size_W, number_of_CT_installed = get_tech_unit_size_and_number(Q_nom_CTs_W, max_CT_unit_size_W)
+    el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_CT_unit_size_W)
+    return Q_nom_CTs_W, el_CT_Wh
 
 
 def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, max_Boiler_unit_size_W, q_hw_single_ACH_Wh,
                           q_sc_gen_FP_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_boiler_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_FP_Wh
-        Q_nom_Boiler_W = np.max(q_boiler_load_Wh) * (1 + SIZING_MARGIN)
-        Q_Boiler_installed_size_W, number_of_Boilers_installed = get_tech_size_and_number(Q_nom_Boiler_W, max_Boiler_unit_size_W)
+        Q_nom_Boilers_W = np.max(q_boiler_load_Wh) * (1 + SIZING_MARGIN)
+        Q_Boiler_unit_size_W, number_of_Boilers_installed = get_tech_unit_size_and_number(Q_nom_Boilers_W, max_Boiler_unit_size_W)
         # TODO: this is assuming the mdot in SC is higher than hot water in the generator
         T_re_boiler_K = T_hw_out_from_ACH_K
-        boiler_eff = np.vectorize(boiler.calc_Cop_boiler)(q_boiler_load_Wh, Q_Boiler_installed_size_W, T_re_boiler_K)
+        boiler_eff = np.vectorize(boiler.calc_Cop_boiler)(q_boiler_load_Wh, Q_Boiler_unit_size_W, T_re_boiler_K)
         Q_gas_for_boiler_Wh = np.divide(q_boiler_load_Wh, boiler_eff,
                                         out=np.zeros_like(q_boiler_load_Wh), where=boiler_eff != 0)
     else:
-        Q_nom_Boiler_W = 0.0
+        Q_nom_Boilers_W = 0.0
         Q_gas_for_boiler_Wh = np.zeros(len(q_hw_single_ACH_Wh))
-    return Q_gas_for_boiler_Wh, Q_nom_Boiler_W
+    return Q_gas_for_boiler_Wh, Q_nom_Boilers_W
 
 def calc_burner_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, max_Burner_unit_size_W, q_hw_single_ACH_Wh,
                           q_sc_gen_ET_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_burner_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_ET_Wh
-        Q_nom_Burber_W = np.max(q_burner_load_Wh) * (1 + SIZING_MARGIN)
-        Q_Burner_installed_size_W, number_of_Boilers_installed = get_tech_size_and_number(Q_nom_Burber_W, max_Burner_unit_size_W)
+        Q_nom_Burbers_W = np.max(q_burner_load_Wh) * (1 + SIZING_MARGIN)
+        Q_Burner_unit_size_W, number_of_Boilers_installed = get_tech_unit_size_and_number(Q_nom_Burbers_W, max_Burner_unit_size_W)
         # TODO: this is assuming the mdot in SC is higher than hot water in the generator
         T_re_boiler_K = T_hw_out_from_ACH_K
-        burner_eff = np.vectorize(boiler.calc_Cop_burner)(q_burner_load_Wh, Q_Burner_installed_size_W, T_re_boiler_K)
+        burner_eff = np.vectorize(burner.calc_Cop_burner)(q_burner_load_Wh, Q_Burner_unit_size_W, T_re_boiler_K)
         Q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)
     else:
-        Q_nom_Burber_W = 0.0
+        Q_nom_Burbers_W = 0.0
         Q_gas_for_burber_Wh = np.zeros(len(q_hw_single_ACH_Wh))
 
 
-    return Q_gas_for_burber_Wh, Q_nom_Burber_W
+    return Q_gas_for_burber_Wh, Q_nom_Burbers_W
 
 
 def get_maximum_tech_unit_size(locator):
@@ -549,7 +519,7 @@ def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
     return Best, indexBest
 
 
-def initialize_result_tables_for_supply_configurations(Qc_nom_SCU):
+def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
     """
     The cooling technologies are listed as follow:
     0: DX -> AHU,ARU,SCU
@@ -563,12 +533,12 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU):
     :return:
     """
 
-    if Qc_nom_SCU <= 0.0:
+    if Qc_nom_SCU_W <= 0.0:
         operation_results = np.zeros((4, 10))
     else:
         operation_results = np.zeros((6, 10))
 
-    # logging the supply technology used in each configuration
+    ## logging the supply technology used in each configuration
     # config 0: DX
     operation_results[0][0] = 1
     # config 1: VCC to AHU
@@ -578,7 +548,7 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU):
     # config 3: single-effect ACH with ET to AHU & ARU & SCU
     operation_results[3][3] = 1
     if operation_results.shape[0] > 4:
-        # These two configurations are only available when SCU is in use.
+        ## These two configurations are only available when SCU is in use.
         # config 4: VCC to AHU + ARU and VCC to SCU
         operation_results[4][4] = 1
         operation_results[4][5] = 1
@@ -588,8 +558,13 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU):
     return operation_results
 
 
-def get_ACH_operation(Q_ACH_unit_size_W, T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, config, locator,
-                      mdot_chw_kgpers):
+def calc_ACH_operation(Qc_nom_ACHs_W, max_ACH_unit_size_W, T_ground_K, T_SC_hw_in_C,
+                       T_chw_re_K, T_chw_sup_K, config, locator, mdot_chw_kgpers):
+
+    Q_ACH_unit_size_W, \
+    number_of_ACH_AHU_ARU_SCU_chillers = get_tech_unit_size_and_number(Qc_nom_ACHs_W,
+                                                                       max_ACH_unit_size_W)
+
     SC_to_single_ACH_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_chw_kgpers,
                                                                                     T_chw_sup_K,
                                                                                     T_chw_re_K,
@@ -634,11 +609,11 @@ def calc_combined_cooling_loads(building_name, locator, total_demand, cooling_co
     mdot_kgpers = substation_operation["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
     # calculate combined load
     Qc_load_W = np.vectorize(calc_new_load)(mdot_kgpers, T_sup_K, T_re_K)
-    Qc_design_W = Qc_load_W.max() * (1 + SIZING_MARGIN)
+    Qc_design_W = Qc_load_W.max()
     return Qc_design_W, T_re_K, T_sup_K, mdot_kgpers
 
 
-def get_tech_size_and_number(Qc_nom_W, max_tech_size_W):
+def get_tech_unit_size_and_number(Qc_nom_W, max_tech_size_W):
     if Qc_nom_W <= max_tech_size_W:
         Q_installed_W = Qc_nom_W
         number_of_installation = 1
