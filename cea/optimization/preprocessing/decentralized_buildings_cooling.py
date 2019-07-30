@@ -58,33 +58,29 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     """
 
     t0 = time.clock()
-
-    BestData = {}
+    # get total demand
     total_demand = pd.read_csv(locator.get_total_demand())
 
-    substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=['aru','ahu','scu']) # todo: redundant?
-
     for building_name in building_names:
-
         ## Calculate cooling loads for different combinations
+        # SCU
         Qc_nom_combination_SCU_W, \
         T_re_SCU_K, \
         T_sup_SCU_K, \
         mdot_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                       cooling_configuration=['scu'])
-
+        # AHU + ARU
         Qc_nom_combination_AHU_ARU_W, \
         T_re_AHU_ARU_K, \
         T_sup_AHU_ARU_K, \
         mdot_AHU_ARU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                           cooling_configuration=['ahu','aru'])
-
+        # AHU + ARU + SCU
         Qc_nom_combination_AHU_ARU_SCU_W, \
         T_re_AHU_ARU_SCU_K, \
         T_sup_AHU_ARU_SCU_K, \
         mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                               cooling_configuration=['ahu','aru','scu'])
-
 
         ## Get hourly hot water supply condition of Solar Collectors (SC)
         # Flate Plate Solar Collectors
@@ -615,6 +611,7 @@ def get_SC_data(building_name, locator, panel_type):
 
 
 def calc_combined_cooling_loads(building_name, locator, total_demand, cooling_configuration):
+    # get combined cooling supply/return conditions using substation script
     buildings_name_with_cooling = [building_name]
     substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration)
     substation_operation = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
@@ -624,6 +621,7 @@ def calc_combined_cooling_loads(building_name, locator, total_demand, cooling_co
     T_re_K = substation_operation["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
     T_sup_K = substation_operation["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
     mdot_kgpers = substation_operation["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
+    # calculate combined load
     Qc_load_W = np.vectorize(calc_new_load)(mdot_kgpers, T_sup_K, T_re_K)
     Qc_design_W = Qc_load_W.max() * (1 + SIZING_MARGIN)
     return Qc_design_W, T_re_K, T_sup_K, mdot_kgpers
