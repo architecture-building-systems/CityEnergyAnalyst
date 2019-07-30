@@ -13,3 +13,5 @@ dependencies:
   - pythonocc-core
   - pip:
     - numba
+    - flask
+    - sympy
