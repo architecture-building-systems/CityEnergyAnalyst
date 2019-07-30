@@ -12,27 +12,41 @@
       <small>{{ plot.parameters['scenario-name'] }}</small>
       <ul class="nav navbar-right panel_toolbox">
         <li>
-          <a href="#" data-toggle="modal" data-dashboard-index="{{ dashboard_index }}"
-             data-plot-index="{{ plot_index }}" data-target="#cea-dashboard-replace-plot">
-            <i class="fa fa-retweet"></i>
+          <a data-toggle="modal"
+             data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ plot_index }}"
+             data-target="#cea-dashboard-replace-plot">
+            <span data-toggle="tooltip" title="Change plot">
+              <i class="fa fa-retweet"></i>
+            </span>
           </a>
         </li>
         <li>
-          <a id="table-btn-{{ plot_index }}" data-plot-title="{{ plot.title }}"
-             data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ plot_index }}"
+          <a id="table-btn-{{ plot_index }}"
+             data-plot-title="{{ plot.title }}" data-dashboard-index="{{ dashboard_index }}"
+             data-plot-index="{{ plot_index }}"
              onclick="open_table(this)" role="button" aria-expanded="false" style="display: none">
-            <i class="fa fa-table"></i>
+            <span data-toggle="tooltip" title="Show table">
+              <i class="fa fa-table"></i>
+            </span>
           </a>
         </li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-dashboard-index="{{ dashboard_index }}"
-             data-plot-index="{{ plot_index }}" data-toggle="modal" data-target="#cea-dashboard-edit-plot"
+        <li>
+          <a data-toggle="modal"
+             data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ plot_index }}" data-toggle="modal"
+             data-target="#cea-dashboard-edit-plot"
              role="button" aria-expanded="false">
-            <i class="fa fa-wrench"></i>
+            <span data-toggle="tooltip" title="Edit plot parameters">
+              <i class="fa fa-wrench"></i>
+            </span>
           </a>
         </li>
-        <li><a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index, plot_index=plot_index) }}">
-          <i class="fa fa-close"></i></a>
+        <li>
+          <a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index,
+              plot_index=plot_index) }}">
+            <span data-toggle="tooltip" title="Remove plot">
+              <i class="fa fa-close"></i>
+            </span>
+          </a>
         </li>
       </ul>
       <div class="clearfix"></div>
