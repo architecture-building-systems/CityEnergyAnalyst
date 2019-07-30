@@ -39,7 +39,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
                                                                             config, prices, lca)
 
     if buildings_name_with_cooling != []:
-        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, total_demand, buildings_name_with_cooling,
+        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, buildings_name_with_cooling,
                                                                             config, prices, lca)
     print "Run decentralized model for buildings"
 
