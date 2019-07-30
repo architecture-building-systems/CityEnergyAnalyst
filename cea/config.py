@@ -304,6 +304,10 @@ class Parameter(object):
         # give subclasses a chance to specialize their behavior
         self.initialize(config.default_config)
 
+    @property
+    def default(self):
+        return self.decode(self.config.default_config.get(self.section.name, self.name))
+
     def __repr__(self):
         return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
 
