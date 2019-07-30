@@ -17,60 +17,49 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(qhotdot_W, Qdesign_W):
+def calc_CT(q_hot_Wh, Q_unit_size_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
     
-    :type qhotdot_W : float
-    :param qhotdot_W: heating power to condenser, From Model_VCC
-    :type Qdesign_W : float
-    :param Qdesign_W: Nominal cooling power
-    
-
-    :type wdot : float
-    :param wdot: electric power needed for the variable speed drive fan
+    :type q_hot_Wh : float
+    :param q_hot_Wh: heat rejected from chiller condensers
+    :type Q_unit_size_W : float
+    :param Q_unit_size_W: installed CT size
 
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
     wdot_W = 0
-    if qhotdot_W > CT_MAX_SIZE:
-        number_of_towers = int(ceil(qhotdot_W/CT_MAX_SIZE))
-        qhotdot_W_per_chiller = qhotdot_W/number_of_towers
-        for i in range(number_of_towers):
-            qpartload = qhotdot_W / Qdesign_W
-
-            wdesign_fan = 0.011 * Qdesign_W
-            wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
-                        qpartload + 0.0026
-
-            wdot_W = wdot_W + wpartload * wdesign_fan
-
+    if q_hot_Wh > Q_unit_size_W:
+        # distribute loads to multiple units
+        number_of_units = int(ceil(q_hot_Wh / Q_unit_size_W))
+        q_hot_per_unit_Wh = q_hot_Wh / number_of_units
+        qpartload = q_hot_per_unit_Wh / Q_unit_size_W
     else:
-        qpartload = qhotdot_W / Qdesign_W
+        # operate one unit at the load
+        number_of_units = 1
+        qpartload = q_hot_Wh / Q_unit_size_W
 
-        wdesign_fan = 0.011 * Qdesign_W
-        wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
-                    qpartload + 0.0026
+    # calculate operation of one unit
+    wdesign_fan = 0.011 * Q_unit_size_W
+    wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * qpartload + 0.0026
 
-        wdot_W = wpartload * wdesign_fan
+    # calculate outputs of all units
+    wdot_W = (wpartload * wdesign_fan) * number_of_units
     
     return wdot_W
 
 
-def calc_CT_yearly(qhotdot_kWh):
+def calc_CT_yearly(q_hot_kWh):
     """
     For the operation of a water condenser + direct cooling tower with a fit funciton based on the hourly calculation in calc_CT.
 
-    :type qhotdot_kWh : float
-    :param qhotdot_kWh: heating power to condenser, From Model_VCC
-
-    :type usd_elec : float
-    :param usd_elec: cost of electric power needed for the variable speed drive fan
+    :type q_hot_kWh : float
+    :param q_hot_kWh: heat rejected from chiller condensers
     """
-    if qhotdot_kWh > 0.0:
-        usd_elec = 19450 + 7.562 * 10 ** -9 * qhotdot_kWh ** 1.662
+    if q_hot_kWh > 0.0:
+        usd_elec = 19450 + 7.562 * 10 ** -9 * q_hot_kWh ** 1.662
     else:
         usd_elec = 0.0
 
@@ -79,12 +68,12 @@ def calc_CT_yearly(qhotdot_kWh):
 
 # Investment costs
 
-def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
+def calc_Cinv_CT(Q_nom_CT_W, locator, config, technology_type):
     """
     Annualized investment costs for the Combined cycle
 
-    :type CT_size_W : float
-    :param CT_size_W: Size of the Cooling tower in [W]
+    :type Q_nom_CT_W : float
+    :param Q_nom_CT_W: Nominal size of the cooling tower in [W]
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in Dollars
@@ -93,18 +82,18 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
     Opex_fixed_CT_USD = 0.0
     Capex_CT_USD = 0.0
 
-    if CT_size_W > 0:
+    if Q_nom_CT_W > 0:
         CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
         CT_cost_data = CT_cost_data[CT_cost_data['code'] == technology_type]
         max_chiller_size = max(CT_cost_data['cap_max'].values)
 
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if CT_size_W < CT_cost_data.iloc[0]['cap_min']:
-            CT_size_W = CT_cost_data.iloc[0]['cap_min']
-        if CT_size_W <= max_chiller_size:
+        if Q_nom_CT_W < CT_cost_data.iloc[0]['cap_min']:
+            Q_nom_CT_W = CT_cost_data.iloc[0]['cap_min']
+        if Q_nom_CT_W <= max_chiller_size:
             CT_cost_data = CT_cost_data[
-                (CT_cost_data['cap_min'] <= CT_size_W) & (CT_cost_data['cap_max'] > CT_size_W)]
+                (CT_cost_data['cap_min'] <= Q_nom_CT_W) & (CT_cost_data['cap_max'] > Q_nom_CT_W)]
 
             Inv_a = CT_cost_data.iloc[0]['a']
             Inv_b = CT_cost_data.iloc[0]['b']
@@ -115,15 +104,15 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
             Inv_LT = CT_cost_data.iloc[0]['LT_yr']
             Inv_OM = CT_cost_data.iloc[0]['O&M_%'] / 100
 
-            InvC = Inv_a + Inv_b * (CT_size_W) ** Inv_c + (Inv_d + Inv_e * CT_size_W) * log(CT_size_W)
+            InvC = Inv_a + Inv_b * (Q_nom_CT_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_CT_W) * log(Q_nom_CT_W)
 
             Capex_a_CT_USD =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
             Opex_fixed_CT_USD = InvC * Inv_OM
             Capex_CT_USD = InvC
 
         else:
-            number_of_chillers = int(ceil(CT_size_W / max_chiller_size))
-            Q_nom_each_CT = CT_size_W / number_of_chillers
+            number_of_chillers = int(ceil(Q_nom_CT_W / max_chiller_size))
+            Q_nom_each_CT = Q_nom_CT_W / number_of_chillers
 
             for i in range(number_of_chillers):
                 CT_cost_data = CT_cost_data[
