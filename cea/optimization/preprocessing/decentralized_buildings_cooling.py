@@ -142,7 +142,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         ## 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
         print 'Config 2: Flat-plate Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
-        # calculate single-effect ACH operation
+        # ACH operation
         T_hw_out_single_ACH_K, \
         el_single_ACH_Wh, \
         q_cw_single_ACH_Wh, \
@@ -150,11 +150,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                 T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K, config, locator,
                                                 mdot_AHU_ARU_SCU_kgpers)
         # CT operation
-        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
+        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = q_cw_single_ACH_Wh
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(max_CT_unit_size_W,
-                                                                                 q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W)
+                                                                                 q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh)
         # boiler operation
-        q_gas_for_boiler_Wh, \
+        q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh, \
         Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W = calc_boiler_operation(Qc_nom_AHU_ARU_SCU_W,
                                                                                T_hw_out_single_ACH_K,
                                                                                max_Boiler_unit_size_W,
@@ -166,18 +166,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         operation_results[2][8] = sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
         operation_results[2][9] = sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
-        operation_results[2][7] += sum(prices.NG_PRICE * q_gas_for_boiler_Wh)  # CHF
-        operation_results[2][8] += sum(q_gas_for_boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-        operation_results[2][9] += sum(q_gas_for_boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
-
+        q_gas_total_Wh = q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh
+        operation_results[2][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
+        operation_results[2][8] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
+        operation_results[2][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+        # add activation
         all_supply_activation_dict[2] = {'ACH_el_Wh': el_single_ACH_Wh,
                                          'CT_el_Wh': el_CT_Wh,
                                          'FP_el_Wh': el_aux_SC_FP_Wh,
-                                         'Boiler_gas_Wh': q_gas_for_boiler_Wh,
+                                         'Boiler_gas_Wh': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
                                          'FP_solar_Wh': q_sc_gen_FP_Wh}
 
         # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
         print 'Config 3: Evacuated Tube Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
+        # ACH operation
         T_hw_out_single_ACH_K, \
         el_single_ACH_Wh, \
         q_cw_single_ACH_Wh, \
@@ -204,16 +206,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
         operation_results[3][8] += sum(q_gas_for_burner_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
         operation_results[3][9] += sum(q_gas_for_burner_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
-
+        # add activation
         all_supply_activation_dict[3] = {'el_single_ACH_Wh': el_single_ACH_Wh,
                                          'el_CT_Wh': el_CT_Wh,
                                          'el_aux_SC_ET_Wh': el_aux_SC_ET_Wh,
                                          'q_gas_for_burner_Wh': q_gas_for_burner_Wh,
                                          'q_sc_gen_ET_Wh': q_sc_gen_ET_Wh}
 
-
+        # these two configurations are only activated when SCU is in use
         if Qc_nom_SCU_W > 0.0:
-
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             print 'Config 4: Vapor Compression Chillers(HT) -> SCU & Vapor Compression Chillers(LT) -> AHU,ARU'
             # VCC (AHU + ARU) operation
@@ -233,7 +234,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             operation_results[4][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
             operation_results[4][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
             operation_results[4][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-
+            # add activation
             all_supply_activation_dict[4] = {'el_VCC_to_AHU_ARU_Wh': el_VCC_to_AHU_ARU_Wh,
                                              'el_VCC_to_SCU_Wh': el_VCC_to_SCU_Wh,
                                              'el_CT_Wh': el_CT_Wh}
@@ -255,9 +256,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               q_hw_FP_ACH_to_SCU_Wh,
                                                                                               q_sc_gen_FP_Wh)
             # CT operation
-            q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
+            q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
-            el_CT_Wh = calc_CT_operation(max_CT_unit_size_W, q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W)
+            el_CT_Wh = calc_CT_operation(max_CT_unit_size_W, q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh)
 
             # add electricity costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
@@ -269,7 +270,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
             operation_results[5][8] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
             operation_results[5][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
-
+            # add activation
             all_supply_activation_dict[5] = {'el_VCC_to_AHU_ARU_Wh': el_VCC_to_AHU_ARU_Wh,
                                              'el_FP_ACH_to_SCU_Wh': el_FP_ACH_to_SCU_Wh,
                                              'el_aux_SC_FP_Wh': el_aux_SC_FP_Wh,
@@ -286,6 +287,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         print 'Cost calculation...'
         # 0: DX
         Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_AHU_ARU_SCU_W)
+        # add costs
         Capex_a_USD[0][0] = Capex_a_DX_USD  # FIXME: a dummy value to rule out this configuration
         Capex_total_USD[0][0] = Capex_DX_USD  # FIXME: a dummy value to rule out this configuration
         Opex_a_fixed_USD[0][0] = Opex_fixed_DX_USD
@@ -295,7 +297,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             Qc_nom_AHU_ARU_SCU_W, locator, config, 'CH3')
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, config, 'CT1')
-
+        # add costs
         Capex_a_USD[1][0] = Capex_a_CT_USD + Capex_a_VCC_USD
         Capex_total_USD[1][0] = Capex_CT_USD + Capex_VCC_USD
         Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
@@ -324,9 +326,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Opex_a_fixed_USD[3][
             0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_burner_USD + Opex_SC_ET_USD
 
-
+        # these two configurations are only activated when SCU is in use
         if Qc_nom_SCU_W > 0.0:
-
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
                 Qc_nom_AHU_ARU_W, locator, config, 'CH3')
@@ -345,8 +346,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'CT1')
             Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
                 Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'BO1')
-            Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(
-                SC_FP_data['Area_SC_m2'][0], locator, config, panel_type="FP")
             Capex_a_USD[5][
                 0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + Capex_a_SC_FP_USD + Capex_a_boiler_USD
             Capex_total_USD[5][
@@ -448,7 +447,7 @@ def calc_burner_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, max_Burner_unit_siz
         Q_Burner_unit_size_W, number_of_Boilers_installed = get_tech_unit_size_and_number(Q_nom_Burbers_W, max_Burner_unit_size_W)
         # TODO: this is assuming the mdot in SC is higher than hot water in the generator
         T_re_boiler_K = T_hw_out_from_ACH_K
-        burner_eff = np.vectorize(burner.calc_Cop_burner)(q_burner_load_Wh, Q_Burner_unit_size_W, T_re_boiler_K)
+        burner_eff = np.vectorize(burner.calc_cop_burner)(q_burner_load_Wh, Q_Burner_unit_size_W)
         Q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)
     else:
