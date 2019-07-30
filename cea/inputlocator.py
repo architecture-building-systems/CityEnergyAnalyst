@@ -292,6 +292,12 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_decentralized_folder(),
                             buildingname + '_' + configuration + '_result_cooling.csv')
 
+    def get_optimization_decentralized_folder_building_cooling_activation(self, buildingname, configuration):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+
+        return os.path.join(self.get_optimization_decentralized_folder(),
+                            buildingname + '_' + configuration + '_cooling_activation.csv')
+
     def get_optimization_decentralized_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_decentralized_folder(),
