@@ -117,3 +117,6 @@ cea/concept_project/data/reference-case-WTP/MIX_high_density/inputs/networks/nod
 
 # Ignore ipython notebook checkpoints
 **/*.ipynb_checkpoints/
+
+# Ignore the pydoit dbs
+.doit.db.db
