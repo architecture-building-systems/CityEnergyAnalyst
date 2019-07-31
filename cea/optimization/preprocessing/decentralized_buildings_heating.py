@@ -78,8 +78,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         Opex_a_var_USD[2][2] = 1 # Fuel Cell
 
         resourcesRes = np.zeros((13, 4))
-        Q_Boiler_for_GHP_W = np.zeros((10, 1))  # For the investment costs of the boiler used with GHP # fixme: redundant
-        GHP_el_size_W = np.zeros((10, 1))  # For the investment costs of the GHP
+        Q_Boiler_for_GHP_W = np.zeros((10, 1))  # Save peak capacity of GHP Backup Boilers
+        GHP_el_size_W = np.zeros((10, 1))  # Save peak capacity of GHP
 
         # save supply system activation of all supply configurations
         all_supply_activation_dict = {}
@@ -144,7 +144,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             qhot_missing_Wh, \
             tsup2_K, q_from_GHP_Wh = np.vectorize(calc_GHP_operation)(QnomGHP_W, T_ground_K, Texit_GHP_nom_K,
                                                        Tret_K, Tsup_K, mdot_kgpers, q_load_Wh)
-            GHP_el_size_W[i][0] = max(el_GHP_Wh) # FIXME: double check with GHP cost equations
+            GHP_el_size_W[i][0] = max(el_GHP_Wh)
             # GHP Backup Boiler operation
             if max(qhot_missing_Wh) > 0.0:
                 print "GHP unable to cover the whole demand, boiler activated!"
