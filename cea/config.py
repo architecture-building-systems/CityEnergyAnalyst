@@ -304,6 +304,10 @@ class Parameter(object):
         # give subclasses a chance to specialize their behavior
         self.initialize(config.default_config)
 
+    @property
+    def default(self):
+        return self.decode(self.config.default_config.get(self.section.name, self.name))
+
     def __repr__(self):
         return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
 
@@ -666,6 +670,21 @@ class PlantNodeParameter(ChoiceParameter):
         network_name = self.config.get(self.network_name_fqn)
         return locator.get_plant_nodes(network_type, network_name)
 
+    def encode(self, value):
+        """Allow encoding None, because not all scenarios have a thermal network"""
+        if value is None:
+            return ""
+        else:
+            return super(PlantNodeParameter, self).encode(value)
+
+    def decode(self, value):
+        if str(value) in self._choices:
+            return str(value)
+        elif self._choices:
+            return self._choices[0]
+        else:
+            return None
+
 
 class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
@@ -745,7 +764,10 @@ class SingleBuildingParameter(ChoiceParameter):
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        return locator.get_zone_building_names()
+        building_names = locator.get_zone_building_names()
+        if not building_names:
+            raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
+        return building_names
 
     def encode(self, value):
         if not str(value) in self._choices:
