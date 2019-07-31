@@ -76,7 +76,6 @@ def main(config=None):
 def print_help(config, remaining_args):
     """Print out the help message for the ``cea`` command line interface"""
     if remaining_args:
-        default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         script_name = remaining_args[0]
         try:
             cea_script = cea.scripts.by_name(script_name)
@@ -91,7 +90,7 @@ def print_help(config, remaining_args):
         for _, parameter in config.matching_parameters(cea_script.parameters):
             print("--%s: %s" % (parameter.name, parameter.get()))
             print("    %s" % parameter.help)
-            print("    (default: %s)" % default_config.get(parameter.fqname))
+            print("    (default: %s)" % parameter.default)
     else:
         print("usage: cea SCRIPT [OPTIONS]")
         print("       to run a specific script")
