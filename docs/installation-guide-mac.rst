@@ -51,6 +51,10 @@ Excluding the above software, CEA installation requires approximately 13 GB of s
 #. Type ``conda env create -f environment.osx.yml`` and press ENTER.
 #. Type ``conda activate cea`` and press ENTER.
 #. Type ``pip install -e .`` and press ENTER (mind the dot ‘.’ included in this command!).
+#. IMPORTANT: Due to how Mac OS X works, the version of python installed by conda will not work with matplotlib and
+   other libraries that require access to the graphics system. You need to edit the ``cea`` script - run ``which cea``
+   to find the exact path, it was ``/miniconda2/envs/cea/bin/cea`` on my system after installing using the above steps.
+   The first line (``#!/miniconda2/envs/cea/bin/python``) needs to be changed to ``#!/usr/bin/env pythonw``).
 #. (optional) Type ``cea test`` to run a basic test of the functionality
 
 Interfaces
