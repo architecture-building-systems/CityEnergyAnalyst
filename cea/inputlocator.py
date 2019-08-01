@@ -286,13 +286,13 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_heating.csv')
 
-    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration):
+    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration='AHU_ARU_SCU'):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
         return os.path.join(self.get_optimization_decentralized_folder(),
                             buildingname + '_' + configuration + '_result_cooling.csv')
 
-    def get_optimization_decentralized_folder_building_cooling_activation(self, buildingname, configuration):
+    def get_optimization_decentralized_folder_building_cooling_activation(self, buildingname, configuration='AHU_ARU_SCU'):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
         return os.path.join(self.get_optimization_decentralized_folder(),
