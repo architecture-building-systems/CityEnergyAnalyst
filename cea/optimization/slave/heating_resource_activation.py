@@ -59,7 +59,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
-    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0:
+    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0.0:
 
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
                                         prices, lca.ELEC_PRICE[hour])  # create cost information
@@ -97,14 +97,15 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
         source_Furnace = 1
         # Operate only if its above minimal load
         if Q_heat_unmet_W > (FURNACE_MIN_LOAD * master_to_slave_vars.Furnace_Q_max_W):
-            if Q_heat_unmet_W > master_to_slave_vars.Furnace_Q_max_W:  # scale down if above maximum load, Furnace operates at max. capacity
-                Furnace_Cost_Data = furnace_op_cost(master_to_slave_vars.Furnace_Q_max_W,
-                                                    master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,
+            if Q_heat_unmet_W > master_to_slave_vars.Furnace_Q_max_W:
+                Q_Furnace_gen_W = master_to_slave_vars.Furnace_Q_max_W
+                # scale down if above maximum load, Furnace operates at max. capacity
+                Furnace_Cost_Data = furnace_op_cost(Q_Furnace_gen_W,
+                                                    Q_Furnace_gen_W, tdhret_req_K,
                                                     master_to_slave_vars.Furn_Moist_type, lca, hour)
 
                 cost_Furnace_USD = Furnace_Cost_Data[0]
                 Wood_used_Furnace_W = Furnace_Cost_Data[2]
-                Q_Furnace_gen_W = master_to_slave_vars.Furnace_Q_max_W
                 E_Furnace_gen_W = Furnace_Cost_Data[4]
 
             else:  # Normal Operation Possible

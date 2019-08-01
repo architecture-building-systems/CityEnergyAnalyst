@@ -508,6 +508,7 @@ def master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, m
 
 
 def master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars):
+
     if individual_with_names_dict['CHP/Furnace'] == 1 and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_on = 1
         master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['CHP/Furnace Share'] * Q_heating_nom_W
