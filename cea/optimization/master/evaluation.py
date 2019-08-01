@@ -271,11 +271,11 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
                 E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
                 Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
                 A_PVT_m2 += building_PVT['Area_PVT_m2']
-            if master_to_slave_vars.SOLAR_PART_SC_ET > 0.0E-3:  # if PVT
+            if master_to_slave_vars.SOLAR_PART_SC_ET > 0.0E-3:  # if SC Evacuated tube
                 building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
                 Q_SC_ET_gen_kWh += building_SC_ET['Q_SC_gen_kWh']
                 A_SC_ET_m2 += building_SC_ET['Area_SC_m2']
-            if master_to_slave_vars.SOLAR_PART_SC_FP > 0.0E-3:  # if PVT
+            if master_to_slave_vars.SOLAR_PART_SC_FP > 0.0E-3:  # if SC Flat Plate
                 building_SC_FP = pd.read_csv(
                     os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
                 Q_SC_FP_gen_kWh += building_SC_FP['Q_SC_gen_kWh']
