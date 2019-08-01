@@ -463,6 +463,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DCN_barcode = DCN_barcode
     master_to_slave_vars.num_total_buildings = num_total_buildings
     master_to_slave_vars.building_names = building_names
+    master_to_slave_vars.individual_with_names_dict = individual_with_names_dict
 
     # Store the number of the individual and the generation to which it belongs
     master_to_slave_vars.individual_number = ind_num
