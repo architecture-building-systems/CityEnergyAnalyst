@@ -29,21 +29,21 @@ def validation_main(individual_with_name_dict,
         for building_name in column_names_buildings_heating:
             lim_inf = 0
             lim_sup = 1
-            if individual_with_name_dict[building_name] > lim_sup:
+            while individual_with_name_dict[building_name] > lim_sup:
                 individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS
         for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_CAPACITY:
             lim_inf = limits[0]
             lim_sup = limits[1]
-            if individual_with_name_dict[technology_name] > lim_sup:
+            while individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS SHARE
         for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE:
             lim_inf = limits[0]
             lim_sup = limits[1]
-            if individual_with_name_dict[technology_name] > lim_sup:
+            while individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.uniform(lim_inf, lim_sup)
 
         # constrain that units not activated should be 0.0
@@ -55,9 +55,9 @@ def validation_main(individual_with_name_dict,
         # constrain that units activated should be more than 0.0
         for column_activation, columnshare_and_limits in zip(heating_unit_names, DH_CONVERSION_TECHNOLOGIES_SHARE):
             column_share, limits = columnshare_and_limits
-            lim_inf = limits[0] + Q_MIN_SHARE
+            lim_inf = limits[0]
             lim_sup = limits[1]
-            if individual_with_name_dict[column_activation] >= 1 and individual_with_name_dict[
+            while individual_with_name_dict[column_activation] >= 1 and individual_with_name_dict[
                 column_share] == 0.0:  # only if the unit is activated
                 individual_with_name_dict[column_share] = random.uniform(lim_inf, lim_sup)
 
@@ -79,26 +79,35 @@ def validation_main(individual_with_name_dict,
         for building_name in column_names_buildings_cooling:
             lim_inf = 0
             lim_sup = 1
-            if individual_with_name_dict[building_name] > lim_sup:
+            while individual_with_name_dict[building_name] > lim_sup:
                 individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_CAPACITIES:
             lim_inf = limits[0]
             lim_sup = limits[1]
-            if individual_with_name_dict[technology_name] > lim_sup:
+            while individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.randint(lim_inf, lim_sup)
 
         # FOR SUPPLY SYSTEMS SHARE
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE:
             lim_inf = limits[0]
             lim_sup = limits[1]
-            if individual_with_name_dict[technology_name] > lim_sup:
+            while individual_with_name_dict[technology_name] > lim_sup:
                 individual_with_name_dict[technology_name] = random.uniform(lim_inf, lim_sup)
 
         # constrain that only activated units can be more than 0.0
         for column_activation, column_share in zip(cooling_unit_names, cooling_unit_names_share):
             if individual_with_name_dict[column_activation] == 0:  # only if the unit is not activated
                 individual_with_name_dict[column_share] = 0.0
+
+        # constrain that units activated should be more than 0.0
+        for column_activation, columnshare_and_limits in zip(heating_unit_names, DH_CONVERSION_TECHNOLOGIES_SHARE):
+            column_share, limits = columnshare_and_limits
+            lim_inf = limits[0]
+            lim_sup = limits[1]
+            while individual_with_name_dict[column_activation] >= 1 and individual_with_name_dict[
+                column_share] == 0.0:  # only if the unit is activated
+                individual_with_name_dict[column_share] = random.uniform(lim_inf, lim_sup)
 
     return individual_with_name_dict
