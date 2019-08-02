@@ -102,11 +102,15 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     Qc_peak_load_W = Q_cooling_req_W.max() * (1 + SIZING_MARGIN)
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharge_peak_W)
 
-    # WRITE
+    max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator)
+    min_ACH_unit_size_W, max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator)
 
     technology_capacities = {'Qc_VCC_nom_W': Qc_VCC_nom_W,
                              'Qc_ACH_nom_W': Qc_ACH_nom_W,
-                             'Qc_VCC_backup_nom_W': Qc_VCC_backup_nom_W}
+                             'Qc_VCC_backup_nom_W': Qc_VCC_backup_nom_W,
+                             'max_VCC_unit_size_W': max_VCC_unit_size_W,
+                             'max_ACH_unit_size_W': max_ACH_unit_size_W,
+                             'min_ACH_unit_size_W': min_ACH_unit_size_W}
 
 
     ### input variables
@@ -236,7 +240,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     ## Operation of the cooling tower
     if Q_CT_nom_W > 0:
         for hour in timesteps:
-            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W, locator)
+            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W, max_CT_unit_size_W)
             opex_var_CT_USDhr[hour] = (wdot_CT_Wh) * lca.ELEC_PRICE[hour]
             GHG_CT_tonCO2[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
             prim_energy_CT_MJoil[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
@@ -307,7 +311,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
                                                                                               config, 'TES2')
 
     # COOLING TOWERS
-    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, 'CT1')
 
     # LAKE
     if sum(E_used_Lake_W) > 0:  # there is lake cooling

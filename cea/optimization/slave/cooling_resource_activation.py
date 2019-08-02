@@ -24,7 +24,7 @@ __status__ = "Production"
 
 def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, locator, hour):
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, locator)
+    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, max_VCC_unit_size_W)
     # unpack outputs
     opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_VCC_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
@@ -34,9 +34,9 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, locator, hou
     return opex_var_VCC_USD, GHG_VCC_tonCO2perhr, prim_energy_VCC_MJoilperhr, Qc_CT_VCC_W, E_used_VCC_W
 
 
-def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, lca, locator, hour):
+def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, lca, max_VCC_unit_size_W, hour):
     mdot_VCC_kgpers = Qc_from_VCC_backup_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, locator)
+    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, max_VCC_unit_size_W)
     # unpack outputs
     opex_var_VCC_backup_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_VCC_backup_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
@@ -46,7 +46,8 @@ def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, lca
     return opex_var_VCC_backup_USD, GHG_VCC_backup_tonCO2perhr, prim_energy_VCC_backup_MJoilperhr, Qc_CT_VCC_backup_W, E_used_VCC_backup_W
 
 
-def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, lca, locator, hour):
+def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, lca, locator, hour,
+                                      min_chiller_size_W, max_chiller_size_W):
     ACH_type = 'double'
 
     if T_DCN_re_K == T_DCN_sup_K:
@@ -57,7 +58,8 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
 
 
     ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
-                                                         ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, locator)
+                                                         ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, locator,
+                                                         min_chiller_size_W, max_chiller_size_W)
 
     opex_var_ACH_USD = ACH_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_ACH_tonCO2perhr = ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3
@@ -94,6 +96,11 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
     Qc_tank_charge_max_W = storage_tank_properties['Qc_tank_charge_max_W']
     T_tank_fully_charged_C = storage_tank_properties['T_tank_fully_charged_K'] - 273.0
     T_ground_C = T_ground_K - 273.0
+
+    # unpack variables
+    max_VCC_unit_size_W = technology_capacities['max_VCC_unit_size_W']
+    min_ACH_unit_size_W = technology_capacities['max_VCC_unit_size_W']
+    max_ACH_unit_size_W = technology_capacities['max_ACH_unit_size_W']
 
     T_DCN_sup_K = T_sup_K
     T_DCN_re_K = T_re_K
@@ -208,7 +215,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         Qc_CT_ACH_W, \
         Qh_CHP_ACH_W, \
         E_used_ACH_W = calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K,
-                                                         lca, locator, hour)
+                                                         lca, locator, hour, min_ACH_unit_size_W, max_ACH_unit_size_W)
         opex_var_ACH_USD.append(opex_var_ACH_USDperhr)
 
         GHG_ACH_tonCO2.append(GHG_ACH_tonCO2perhr)
@@ -247,7 +254,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         opex_var_VCC_backup_USDperhr, GHG_VCC_backup_tonCO2perhr, \
         prim_energy_VCC_backup_MJoilperhr, Qc_CT_VCC_backup_W, \
         E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
-                                                        T_DCN_sup_K, lca, locator, hour)
+                                                        T_DCN_sup_K, lca, max_VCC_unit_size_W, hour)
         opex_var_VCC_backup_USD.append(opex_var_VCC_backup_USDperhr)
         GHG_VCC_backup_tonCO2.append(GHG_VCC_backup_tonCO2perhr)
         prim_energy_VCC_backup_MJoil.append(prim_energy_VCC_backup_MJoilperhr)
@@ -288,7 +295,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
             Qc_CT_ACH_W, \
             Qh_CHP_ACH_W, \
             E_used_ACH_W = calc_chiller_absorption_operation(Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K,
-                                                             T_ground_K, lca, locator, hour)
+                                                             T_ground_K, lca, locator, hour, min_ACH_unit_size_W,
+                                                             max_ACH_unit_size_W)
             opex_var_ACH_USD.append(opex_var_ACH_USDperhr)
             GHG_ACH_tonCO2.append(GHG_ACH_tonCO2perhr)
             prim_energy_ACH_MJoil.append(prim_energy_MJoilperhr)
