@@ -302,11 +302,6 @@ class InputLocator(object):
                                 network_type + '_' + 'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
         return path
 
-
-    def get_optimization_network_all_results_summary(self, network_type, key):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_results_folder(), network_type+'_'+'Network_summary_result_' + key + '.csv')
-
     def get_optimization_network_totals_folder_total(self, network_type, indCombi):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_network_totals_folder(),

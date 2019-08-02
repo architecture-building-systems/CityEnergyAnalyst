@@ -349,7 +349,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
     if district_heating_network:  # network exists
         if DHN_barcode.count("1") == num_total_buildings:
             network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-            Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'),
+            Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                    usecols=["Q_DHNf_W"]).values
             Q_heating_max_W = Q_DHNf_W.max()
         elif DHN_barcode.count("1") == 0:  # no network at all
@@ -378,9 +378,9 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
             network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
             if individual_with_name_dict['HPServer'] == 1:
                 # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                                usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
-                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                                  usecols=[
                                                      "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
 
@@ -388,7 +388,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
                         (Q_DCNf_W_with_data - Q_DCNf_W_no_data) * (individual_with_name_dict['HPShare']))
 
             else:
-                Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                        usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
             Q_cooling_max_W = Q_DCNf_W.max()
         elif DCN_barcode.count("1") == 0:
@@ -409,9 +409,9 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
 
             if individual_with_name_dict[
                 'HPServer'] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                                usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
-                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
                                                  usecols=[
                                                      "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
 
