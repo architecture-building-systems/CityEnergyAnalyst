@@ -2,18 +2,23 @@
 multi-objective optimization of supply systems for the CEA
 """
 
-from __future__ import print_function
 from __future__ import division
+from __future__ import print_function
+
 import os
+import warnings
+
 import pandas as pd
+
 import cea.config
 import cea.globalvar
 import cea.inputlocator
-from cea.optimization.prices import Prices as Prices
+from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from cea.optimization.lca_calculations import LcaCalculations
-import warnings
+from cea.optimization.prices import Prices as Prices
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+
 warnings.filterwarnings("ignore")
 
 __author__ = "Jimeno A. Fonseca"
@@ -59,23 +64,36 @@ def moo_optimization(locator, weather_file, config):
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = list(total_demand.Name.values) #needs to be a list to avoid errors
+    building_names = list(total_demand.Name.values)  # needs to be a list to avoid errors
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
-    #local flags
+    # local flags
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
+
+    #GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
+
+    buildings_heating_demand = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+    buildings_cooling_demand = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+    buildings_electricity_demand = get_building_names_with_load(total_demand, load_name='E_sys_MWhyr')
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
-    network_features = preproccessing(locator, total_demand, weather_file, district_heating_network, district_cooling_network)
+    network_features = preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,
+                                      weather_file, district_heating_network, district_cooling_network)
 
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
-    master_main.non_dominated_sorting_genetic_algorithm(locator, building_names, network_features, config, prices, lca)
-
+    master_main.non_dominated_sorting_genetic_algorithm(locator,
+                                                        building_names,
+                                                        district_heating_network,
+                                                        district_cooling_network,
+                                                        buildings_heating_demand,
+                                                        buildings_cooling_demand,
+                                                        buildings_electricity_demand,
+                                                        network_features, config, prices, lca)
 
 
 # ============================
@@ -126,7 +144,8 @@ def check_input_files(config, locator):
         raise ValueError(
             "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
     if not os.path.exists(locator.get_sewage_heat_potential()):
-        raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
+        raise ValueError(
+            "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
     if not os.path.exists(locator.get_lake_potential()):
         raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
     if not os.path.exists(locator.get_geothermal_potential()):

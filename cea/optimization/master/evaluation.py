@@ -30,13 +30,18 @@ from cea.utilities import epwreader
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, network_features, config, prices, lca,
-                    ind_num, gen, column_names, column_names_buildings_heating, column_names_buildings_cooling):
+def evaluation_main(individual, column_names_buildings_all, locator, network_features, config, prices, lca,
+                    ind_num, gen, column_names_individual, column_names_buildings_heating,
+                    column_names_buildings_cooling,
+                    column_names_buildings_electricity,
+                    district_heating_network,
+                    district_cooling_network,
+                    ):
     """
     This function evaluates an individual
 
     :param individual: list with values of the individual
-    :param building_names: list with names of buildings
+    :param column_names_buildings_all: list with names of buildings
     :param locator: locator class
     :param solar_features: solar features call to class
     :param network_features: network features call to class
@@ -45,7 +50,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     :param config: configuration file
     :param prices: class of prices used in optimization
     :type individual: list
-    :type building_names: list
+    :type column_names_buildings_all: list
     :type locator: string
     :type solar_features: class
     :type network_features: class
@@ -58,25 +63,25 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 
     """
 
-    # local variables
-    district_heating_network = network_features.district_heating_network
-    district_cooling_network = network_features.district_cooling_network
-    num_total_buildings = len(building_names)
-    solar_features = SolarFeatures()
-
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
     DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                column_names,
+                                                                                column_names_individual,
                                                                                 column_names_buildings_heating,
                                                                                 column_names_buildings_cooling)
 
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
-    master_to_slave_vars = export_data_to_master_to_slave_class(locator, gen,
+    master_to_slave_vars = export_data_to_master_to_slave_class(locator,
+                                                                config,
+                                                                gen,
+                                                                ind_num,
                                                                 individual_with_name_dict,
-                                                                ind_num, building_names,
-                                                                num_total_buildings,
-                                                                DHN_barcode, DCN_barcode, config,
+                                                                column_names_buildings_all,
+                                                                column_names_buildings_heating,
+                                                                column_names_buildings_cooling,
+                                                                column_names_buildings_electricity,
+                                                                DHN_barcode,
+                                                                DCN_barcode,
                                                                 district_heating_network,
                                                                 district_cooling_network)
     # INITIALIZE DICTS STORING PERFORMANCE DATA
@@ -90,7 +95,8 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
-        solar_features = calc_solar_features_individual(locator, building_names, DHN_barcode,
+        solar_features = SolarFeatures()
+        solar_features = calc_solar_features_individual(locator, column_names_buildings_all, DHN_barcode,
                                                         master_to_slave_vars, solar_features)
 
         # THERMAL STORAGE
@@ -124,7 +130,8 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
-    performance_disconnected = cost_model.add_disconnected_costs(building_names, locator, master_to_slave_vars)
+    performance_disconnected = cost_model.add_disconnected_costs(column_names_buildings_all, locator,
+                                                                 master_to_slave_vars)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("CALCULATING PERFORMANCE OF ELECTRICITY CONSUMPTION")
@@ -299,29 +306,36 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
     return solar_features
 
 
-def export_data_to_master_to_slave_class(locator, gen,
+def export_data_to_master_to_slave_class(locator,
+                                         config,
+                                         gen,
+                                         ind_num,
                                          individual_with_name_dict,
-                                         ind_num, building_names, num_total_buildings,
-                                         DHN_barcode, DCN_barcode, config,
+                                         column_names_buildings_all,
+                                         column_names_buildings_heating,
+                                         column_names_buildings_cooling,
+                                         column_names_buildings_electricity,
+                                         DHN_barcode,
+                                         DCN_barcode,
                                          district_heating_network,
-                                         district_cooling_network
-                                         ):
+                                         district_cooling_network):
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     Q_cooling_nom_W, Q_heating_nom_W, \
-    network_file_name_cooling, network_file_name_heating = extract_loads_individual(locator, individual_with_name_dict,
+    network_file_name_cooling, network_file_name_heating = extract_loads_individual(locator,
+                                                                                    config,
+                                                                                    individual_with_name_dict,
                                                                                     DCN_barcode,
                                                                                     DHN_barcode,
                                                                                     district_heating_network,
                                                                                     district_cooling_network,
-                                                                                    config,
-                                                                                    num_total_buildings)
+                                                                                    column_names_buildings_heating,
+                                                                                    column_names_buildings_cooling)
 
     # CREATE MASTER TO SLAVE AND FILL-IN
     master_to_slave_vars = calc_master_to_slave_variables(locator, gen,
                                                           ind_num,
                                                           individual_with_name_dict,
-                                                          building_names,
-                                                          num_total_buildings,
+                                                          column_names_buildings_all,
                                                           DHN_barcode,
                                                           DCN_barcode,
                                                           network_file_name_heating,
@@ -329,15 +343,24 @@ def export_data_to_master_to_slave_class(locator, gen,
                                                           Q_heating_nom_W,
                                                           Q_cooling_nom_W,
                                                           district_heating_network,
-                                                          district_cooling_network
+                                                          district_cooling_network,
+                                                          column_names_buildings_heating,
+                                                          column_names_buildings_cooling,
+                                                          column_names_buildings_electricity
                                                           )
 
     return master_to_slave_vars
 
 
-def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DHN_barcode, district_heating_network,
+def extract_loads_individual(locator,
+                             config,
+                             individual_with_name_dict,
+                             DCN_barcode,
+                             DHN_barcode,
+                             district_heating_network,
                              district_cooling_network,
-                             config, num_total_buildings):
+                             column_names_buildings_heating,
+                             column_names_buildings_cooling):
     # local variables
     weather_file = config.weather
     network_depth_m = Z0
@@ -346,7 +369,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
     if district_heating_network:  # network exists
-        if DHN_barcode.count("1") == num_total_buildings:
+        if DHN_barcode.count("1") == len(column_names_buildings_heating):
             network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
             Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                    usecols=["Q_DHNf_W"]).values
@@ -357,7 +380,8 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
         else:
             network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
             if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
-                total_demand = createTotalNtwCsv("DH", DHN_barcode, locator)
+                total_demand = createTotalNtwCsv("DH", DHN_barcode, locator, column_names_buildings_heating)
+                num_total_buildings = len(column_names_buildings_heating)
                 buildings_in_heating_network = total_demand.Name.values
                 # Run the substation and distribution routines
                 substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
@@ -373,7 +397,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
         network_file_name_heating = ""
 
     if district_cooling_network:  # network exists
-        if DCN_barcode.count("1") == num_total_buildings:
+        if DCN_barcode.count("1") == len(column_names_buildings_cooling):
             network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
             if individual_with_name_dict['HPServer'] == 1:
                 # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
@@ -397,7 +421,8 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
             network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
             if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
-                total_demand = createTotalNtwCsv("DC", DCN_barcode, locator)
+                total_demand = createTotalNtwCsv("DC", DCN_barcode, locator, column_names_buildings_cooling)
+                num_total_buildings = len(column_names_buildings_cooling)
                 buildings_in_cooling_network = total_demand.Name.values
 
                 # Run the substation and distribution routines
@@ -406,16 +431,18 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
                 summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
                                                'DC', DCN_barcode)
 
-            if individual_with_name_dict[
-                'HPServer'] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
-                                               usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
-                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
-                                                 usecols=[
-                                                     "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+            Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
+                                           usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+            Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_results_summary('DC', DCN_barcode),
+                                             usecols=[
+                                                 "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
 
+            # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+            if district_heating_network and individual_with_name_dict['HPServer'] == 1:
                 Q_DCNf_W = Q_DCNf_W_no_data + (
                         (Q_DCNf_W_with_data - Q_DCNf_W_no_data) * (individual_with_name_dict['HPShare']))
+            else:
+                Q_DCNf_W = Q_DCNf_W_with_data
 
             Q_cooling_max_W = Q_DCNf_W.max()
     else:
@@ -428,7 +455,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
     return Q_cooling_nom_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
 
 
-def createTotalNtwCsv(network_type, indCombi, locator):
+def createTotalNtwCsv(network_type, indCombi, locator, building_names):
     """
     Create and saves the total file for a specific DH or DC configuration
     to make the distribution routine possible
@@ -440,6 +467,7 @@ def createTotalNtwCsv(network_type, indCombi, locator):
     :rtype: string
     """
     df = pd.read_csv(locator.get_total_demand())
+    dict_buildings_in_this_network = dict(zip(indCombi, building_names))
 
     index = []
     rank = 0
@@ -460,7 +488,6 @@ def calc_master_to_slave_variables(locator, gen,
                                    ind_num,
                                    individual_with_names_dict,
                                    building_names,
-                                   num_total_buildings,
                                    DHN_barcode,
                                    DCN_barcode,
                                    network_file_name_heating,
@@ -468,7 +495,10 @@ def calc_master_to_slave_variables(locator, gen,
                                    Q_heating_nom_W,
                                    Q_cooling_nom_W,
                                    district_heating_network,
-                                   district_cooling_network
+                                   district_cooling_network,
+                                   column_names_buildings_heating,
+                                   column_names_buildings_cooling,
+                                   column_names_buildings_electricity
                                    ):
     """
     This function reads the list encoding a configuration and implements the corresponding
@@ -485,6 +515,9 @@ def calc_master_to_slave_variables(locator, gen,
     :rtype: class
     """
 
+    # calculate local variables
+    num_total_buildings = len(building_names)
+
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
@@ -500,7 +533,10 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
     master_to_slave_vars.num_total_buildings = num_total_buildings
-    master_to_slave_vars.building_names = building_names
+    master_to_slave_vars.building_names_all = building_names
+    master_to_slave_vars.building_names_heating = column_names_buildings_heating
+    master_to_slave_vars.building_names_cooling = column_names_buildings_cooling
+    master_to_slave_vars.building_names_electricity = column_names_buildings_electricity
     master_to_slave_vars.individual_with_names_dict = individual_with_names_dict
 
     # Store the number of the individual and the generation to which it belongs
@@ -516,18 +552,22 @@ def calc_master_to_slave_variables(locator, gen,
                                                              master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
-        master_to_slave_vars = master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict,
+        master_to_slave_vars = master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_names_dict,
                                                              master_to_slave_vars)
 
     return master_to_slave_vars
 
 
-def master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars):
+def master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars):
     # COOLING SYSTEMS
     # Lake Cooling
     if individual_with_names_dict['FLake'] == 1 and LAKE_COOLING_ALLOWED is True:
+        lake_potential = pd.read_csv(locator.get_lake_potential())
+        Q_max_lake = (lake_potential['QLake_kW'] * 1000).max()
         master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size_W = individual_with_names_dict['FLake Share'] * Q_cooling_nom_W
+        master_to_slave_vars.Lake_cooling_size_W = min(individual_with_names_dict['FLake Share'] * Q_max_lake,
+                                                    individual_with_names_dict['FLake Share'] * Q_cooling_nom_W)
+
     # VCC Cooling
     if individual_with_names_dict['VCC'] == 1 and VCC_ALLOWED is True:
         master_to_slave_vars.VCC_on = 1

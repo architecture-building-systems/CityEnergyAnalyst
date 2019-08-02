@@ -35,6 +35,10 @@ class SlaveData(object):
         self.DHN_exists = False
         self.DCN_exists = False
         self.individual_with_names_dict= {}
+        self.building_names_all = []
+        self.building_names_heating = []
+        self.building_names_cooling = []
+        self.building_names_electricity = []
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
