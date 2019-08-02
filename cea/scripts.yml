@@ -134,7 +134,7 @@ Demand forecasting:
 
 
 Energy potentials:
-  - name: shallow-geothermal
+  - name: shallow-geothermal-potential
     label: shallow geothermal potential
     description: Calculate the heat extracted from a geothermal probes (up to 50 m length)
     interfaces: [cli, arcgis, dashboard]
@@ -194,16 +194,6 @@ Energy potentials:
     input-files:
       - [get_total_demand]
       - [get_demand_results_file, building_name]
-
-
-  - name: shallow-geothermal-potential
-    label: Shallow Geothermal Heat Potential
-    description: Calculate the heat extracted from shallow geothermal
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.resources.geothermal
-    parameters: ['general:scenario', shallow-geothermal]
-    input-files:
-      - [get_zone_geometry]
 
   - name: solar-collector
     label: Solar collectors
