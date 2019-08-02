@@ -11,7 +11,6 @@ import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization import slave_data
-from cea.optimization import supportFn
 from cea.optimization.constants import *
 from cea.optimization.master import cost_model
 from cea.optimization.master import summarize_network
@@ -428,6 +427,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
 
     return Q_cooling_nom_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
 
+
 def createTotalNtwCsv(network_type, indCombi, locator):
     """
     Create and saves the total file for a specific DH or DC configuration
@@ -451,6 +451,7 @@ def createTotalNtwCsv(network_type, indCombi, locator):
     dfRes = df.drop(df.index[index])
     dfRes.to_csv(locator.get_optimization_network_totals_folder_total(network_type, indCombi), sep=',')
     return dfRes
+
 
 # +++++++++++++++++++++++++++++++++++
 # Boundary conditions
