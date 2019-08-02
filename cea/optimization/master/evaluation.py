@@ -15,6 +15,7 @@ from cea.optimization import supportFn
 from cea.optimization.constants import *
 from cea.optimization.master import cost_model
 from cea.optimization.master import summarize_network
+from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.performance_aggregation import summarize_results_individual
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
@@ -24,7 +25,6 @@ from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies import substation
 from cea.utilities import epwreader
-from cea.optimization.master.generation import individual_to_barcode
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -312,6 +312,8 @@ def export_data_to_master_to_slave_class(locator, gen,
     network_file_name_cooling, network_file_name_heating = extract_loads_individual(locator, individual_with_name_dict,
                                                                                     DCN_barcode,
                                                                                     DHN_barcode,
+                                                                                    district_heating_network,
+                                                                                    district_cooling_network,
                                                                                     config,
                                                                                     num_total_buildings)
 
@@ -334,7 +336,9 @@ def export_data_to_master_to_slave_class(locator, gen,
     return master_to_slave_vars
 
 
-def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DHN_barcode, config, num_total_buildings):
+def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DHN_barcode, district_heating_network,
+                             district_cooling_network,
+                             config, num_total_buildings):
     # local variables
     weather_file = config.weather
     network_depth_m = Z0
@@ -342,72 +346,82 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
     ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
-    if DHN_barcode.count("1") == num_total_buildings:
-        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'),
-                               usecols=["Q_DHNf_W"]).values
-        Q_heating_max_W = Q_DHNf_W.max()
-    elif DHN_barcode.count("1") == 0:  # no network at all
-        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        Q_heating_max_W = 0
-    else:
-        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
-            total_demand = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
-            buildings_in_heating_network = total_demand.Name.values
-            # Run the substation and distribution routines
-            substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
-                                               DHN_barcode=DHN_barcode)
-            summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
-                                           "DH", DHN_barcode)
-
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
-                               usecols=["Q_DHNf_W"]).values
-        Q_heating_max_W = Q_DHNf_W.max()
-
-    if DCN_barcode.count("1") == num_total_buildings:
-        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-        if individual_with_name_dict['HPServer'] == 1:
-            # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
-                                           usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
-            Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
-                                             usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
-
-            Q_DCNf_W = Q_DCNf_W_no_data + (
-                        (Q_DCNf_W_with_data - Q_DCNf_W_no_data) * (individual_with_name_dict['HPShare']))
-
+    if district_heating_network:  # network exists
+        if DHN_barcode.count("1") == num_total_buildings:
+            network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+            Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DH', 'all'),
+                                   usecols=["Q_DHNf_W"]).values
+            Q_heating_max_W = Q_DHNf_W.max()
+        elif DHN_barcode.count("1") == 0:  # no network at all
+            network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+            Q_heating_max_W = 0
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
-                                   usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
-        Q_cooling_max_W = Q_DCNf_W.max()
-    elif DCN_barcode.count("1") == 0:
-        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-        Q_cooling_max_W = 0.0
+            network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+            if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
+                total_demand = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
+                buildings_in_heating_network = total_demand.Name.values
+                # Run the substation and distribution routines
+                substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
+                                                   DHN_barcode=DHN_barcode)
+                summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
+                                               "DH", DHN_barcode)
+
+            Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
+                                   usecols=["Q_DHNf_W"]).values
+            Q_heating_max_W = Q_DHNf_W.max()
     else:
-        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        Q_heating_max_W = 0.0
+        network_file_name_heating = ""
 
-        if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
-            total_demand = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
-            buildings_in_cooling_network = total_demand.Name.values
+    if district_cooling_network:  # network exists
+        if DCN_barcode.count("1") == num_total_buildings:
+            network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+            if individual_with_name_dict['HPServer'] == 1:
+                # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                                               usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                                                 usecols=[
+                                                     "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
 
-            # Run the substation and distribution routines
-            substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
-                                               DCN_barcode=DCN_barcode)
-            summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
-                                           'DC',  DCN_barcode)
-
-        if individual_with_name_dict[
-            'HPServer'] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
-                                           usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
-            Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
-                                             usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
-
-            Q_DCNf_W = Q_DCNf_W_no_data + (
+                Q_DCNf_W = Q_DCNf_W_no_data + (
                         (Q_DCNf_W_with_data - Q_DCNf_W_no_data) * (individual_with_name_dict['HPShare']))
 
-        Q_cooling_max_W = Q_DCNf_W.max()
+            else:
+                Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                                       usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+            Q_cooling_max_W = Q_DCNf_W.max()
+        elif DCN_barcode.count("1") == 0:
+            network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+            Q_cooling_max_W = 0.0
+        else:
+            network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+
+            if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
+                total_demand = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
+                buildings_in_cooling_network = total_demand.Name.values
+
+                # Run the substation and distribution routines
+                substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
+                                                   DCN_barcode=DCN_barcode)
+                summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
+                                               'DC', DCN_barcode)
+
+            if individual_with_name_dict[
+                'HPServer'] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+                Q_DCNf_W_no_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                                               usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+                Q_DCNf_W_with_data = pd.read_csv(locator.get_optimization_network_all_results_summary('DC', 'all'),
+                                                 usecols=[
+                                                     "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+
+                Q_DCNf_W = Q_DCNf_W_no_data + (
+                        (Q_DCNf_W_with_data - Q_DCNf_W_no_data) * (individual_with_name_dict['HPShare']))
+
+            Q_cooling_max_W = Q_DCNf_W.max()
+    else:
+        Q_cooling_max_W = 0.0
+        network_file_name_cooling = ""
 
     Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
     Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
@@ -474,10 +488,12 @@ def calc_master_to_slave_variables(locator, gen,
 
     # Store inforamtion about which units are activated
     if master_to_slave_vars.DHN_exists:
-        master_to_slave_vars = master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars)
+        master_to_slave_vars = master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator,
+                                                             master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
-        master_to_slave_vars = master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars)
+        master_to_slave_vars = master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict,
+                                                             master_to_slave_vars)
 
     return master_to_slave_vars
 
@@ -509,7 +525,6 @@ def master_to_slave_DCN_variables(Q_cooling_nom_W, individual_with_names_dict, m
 
 
 def master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars):
-
     if individual_with_names_dict['CHP/Furnace'] == 1 and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_on = 1
         master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['CHP/Furnace Share'] * Q_heating_nom_W
@@ -620,5 +635,3 @@ def epsIndicator(frontOld, frontNew):
             epsInd = tempEpsInd
 
     return epsInd
-
-
