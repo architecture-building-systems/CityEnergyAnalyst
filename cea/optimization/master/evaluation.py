@@ -358,7 +358,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
         else:
             network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
             if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
-                total_demand = supportFn.createTotalNtwCsv("DH", DHN_barcode, locator)
+                total_demand = createTotalNtwCsv("DH", DHN_barcode, locator)
                 buildings_in_heating_network = total_demand.Name.values
                 # Run the substation and distribution routines
                 substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
@@ -398,7 +398,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
             network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
             if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
-                total_demand = supportFn.createTotalNtwCsv("DC", DCN_barcode, locator)
+                total_demand = createTotalNtwCsv("DC", DCN_barcode, locator)
                 buildings_in_cooling_network = total_demand.Name.values
 
                 # Run the substation and distribution routines
@@ -428,6 +428,29 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
 
     return Q_cooling_nom_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
 
+def createTotalNtwCsv(network_type, indCombi, locator):
+    """
+    Create and saves the total file for a specific DH or DC configuration
+    to make the distribution routine possible
+    :param indCombi: string of 0 and 1: 0 if the building is disconnected, 1 if connected
+    :param locator: path to raw files
+    :type indCombi: string
+    :type locator: string
+    :return: name of the total file
+    :rtype: string
+    """
+    df = pd.read_csv(locator.get_total_demand())
+
+    index = []
+    rank = 0
+    for el in indCombi:
+        if el == "0":
+            index.append(rank)
+        rank += 1
+
+    dfRes = df.drop(df.index[index])
+    dfRes.to_csv(locator.get_optimization_network_totals_folder_total(network_type, indCombi), sep=',')
+    return dfRes
 
 # +++++++++++++++++++++++++++++++++++
 # Boundary conditions
