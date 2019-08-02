@@ -51,7 +51,7 @@ DC_CONVERSION_TECHNOLOGIES_CAPACITIES = [["FLake", [0, 1]],
 DC_CONVERSION_TECHNOLOGIES_SHARE = [["FLake Share", [0.0, 1.0]],
                                     ["VCC Share", [0.0, 1.0]],
                                     ["ACH Share", [0.0, 1.0]],
-                                    ["Storage Share", [0, 1]]]
+                                    ["Storage Share", [0.0, 1.0]]]
 
 DC_TECHNOLOGIES_SHARING_SPACE = []
 

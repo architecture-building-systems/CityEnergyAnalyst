@@ -73,6 +73,17 @@ def validation_main(individual_with_name_dict,
         for column, share in zip(unit_name, normalized_shares):
             individual_with_name_dict[column] = share
 
+        #constrains that at least 2 buildings should be connected to the network
+        lim_inf = 0
+        lim_sup = 1
+        candidate = ''
+        while candidate.count('1') < 2:
+            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in column_names_buildings_heating)
+            if candidate.count('1') < 2:  #there are at least two buildings connected
+                for building_name in column_names_buildings_heating:
+                        individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
+
+
     if district_cooling_network:
 
         # FOR BUILDINGS CONNECTIONS
@@ -109,5 +120,15 @@ def validation_main(individual_with_name_dict,
             while individual_with_name_dict[column_activation] >= 1 and individual_with_name_dict[
                 column_share] == 0.0:  # only if the unit is activated
                 individual_with_name_dict[column_share] = random.uniform(lim_inf, lim_sup)
+
+        #constrains that at least 2 buildings should be connected to the network
+        lim_inf = 0
+        lim_sup = 1
+        candidate = ''
+        while candidate.count('1') < 2:
+            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in column_names_buildings_cooling)
+            if candidate.count('1') < 2:  #there are at least two buildings connected
+                for building_name in column_names_buildings_cooling:
+                        individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
 
     return individual_with_name_dict

@@ -62,7 +62,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
     # local variables:
     DHN_barcode = master_to_slave_vars.DHN_barcode
-    building_names = master_to_slave_vars.building_names
+    building_names = master_to_slave_vars.building_names_heating
 
     # Import data from storage optimization
     Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
@@ -96,13 +96,7 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
 
     # Import Temperatures from Network Summary:
-    network_data = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
-    tdhret_K = network_data['T_DHNf_re_K']
-
-    mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
-    tdhsup_K = network_data['T_DHNf_sup_K']
-    # import Marginal Cost of PP Data :
-    # os.chdir(Cost_Maps_Path)
+    mdot_DH_kgpers, tdhret_K, tdhsup_K = calc_network_summary_DHN(locator, master_to_slave_vars)
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage
@@ -658,6 +652,14 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     }
 
     return performance, heating_dispatch
+
+
+def calc_network_summary_DHN(locator, master_to_slave_vars):
+    network_data = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
+    tdhret_K = network_data['T_DHNf_re_K']
+    mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
+    tdhsup_K = network_data['T_DHNf_sup_K']
+    return mdot_DH_kgpers, tdhret_K, tdhsup_K
 
 
 def calc_primary_energy_and_CO2(storage_dispatch,
