@@ -53,9 +53,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
     Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     Gas_used_HPSew_W, Gas_used_HPLake_W, Gas_used_GHP_W, Gas_used_CHP_W, Gas_used_Furnace_W, Gas_used_BaseBoiler_W, Gas_used_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-    Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Wood_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-    Q_coldsource_HPSew_W, Q_coldsource_HPLake_W, Q_coldsource_GHP_W, Q_coldsource_CHP_W, \
-    Q_coldsource_Furnace_W, Q_coldsource_BaseBoiler_W, Q_coldsource_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Biomass_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
@@ -105,21 +103,21 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
                                                     master_to_slave_vars.Furn_Moist_type, lca, hour)
 
                 cost_Furnace_USD = Furnace_Cost_Data[0]
-                Wood_used_Furnace_W = Furnace_Cost_Data[2]
+                Biomass_used_Furnace_W = Furnace_Cost_Data[2]
                 E_Furnace_gen_W = Furnace_Cost_Data[4]
 
             else:  # Normal Operation Possible
                 Furnace_Cost_Data = furnace_op_cost(Q_therm_req_W, master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,
                                                     master_to_slave_vars.Furn_Moist_type, lca, hour)
 
-                Wood_used_Furnace_W = Furnace_Cost_Data[2]
+                Biomass_used_Furnace_W = Furnace_Cost_Data[2]
                 cost_Furnace_USD = Furnace_Cost_Data[0]
                 Q_Furnace_gen_W = Q_heat_unmet_W
                 E_Furnace_gen_W = Furnace_Cost_Data[4]
         else:
             source_Furnace = 0
             E_Furnace_gen_W = 0.0
-            Wood_used_Furnace_W = 0.0
+            Biomass_used_Furnace_W = 0.0
             Q_Furnace_gen_W = 0.0
             cost_Furnace_USD = 0.0
 
@@ -254,34 +252,17 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
     E_output = {'E_HPSew_req_W': E_HPSew_req_W,
                 'E_HPLake_req_W': E_HPLake_req_W,
+                'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
+                'E_PeakBoiler_req_W': E_PeakBoiler_req_W,
                 'E_GHP_req_W': E_GHP_req_W,
                 'E_CHP_gen_W': E_CHP_gen_W,
                 'E_Furnace_gen_W': E_Furnace_gen_W,
-                'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
-                'E_PeakBoiler_req_W': E_PeakBoiler_req_W}
-
-    Gas_output = {'Gas_used_HPSew_W': Gas_used_HPSew_W,
-                  'Gas_used_HPLake_W': Gas_used_HPLake_W,
-                  'Gas_used_GHP_W': Gas_used_GHP_W,
-                  'Gas_used_CHP_W': Gas_used_CHP_W,
-                  'Gas_used_Furnace_W': Gas_used_Furnace_W,
+}
+    Gas_output = {'Gas_used_CHP_W': Gas_used_CHP_W,
                   'Gas_used_BaseBoiler_W': Gas_used_BaseBoiler_W,
                   'Gas_used_PeakBoiler_W': Gas_used_PeakBoiler_W}
 
-    Wood_output = {'Wood_used_HPSew_W': Wood_used_HPSew_W,
-                   'Wood_used_HPLake_W': Wood_used_HPLake_W,
-                   'Wood_used_GHP_W': Wood_used_GHP_W,
-                   'Wood_used_CHP_W': Wood_used_CHP_W,
-                   'Wood_used_Furnace_W': Wood_used_Furnace_W,
-                   'Wood_used_BaseBoiler_W': Wood_used_BaseBoiler_W,
-                   'Wood_used_PeakBoiler_W': Wood_used_PeakBoiler_W}
+    Wood_output = {'Biomass_used_Furnace_W': Biomass_used_Furnace_W}
 
-    coldsource_output = {'Q_coldsource_HPSew_W': Q_coldsource_HPSew_W,
-                         'Q_coldsource_HPLake_W': Q_coldsource_HPLake_W,
-                         'Q_coldsource_GHP_W': Q_coldsource_GHP_W,
-                         'Q_coldsource_CHP_W': Q_coldsource_CHP_W,
-                         'Q_coldsource_Furnace_W': Q_coldsource_Furnace_W,
-                         'Q_coldsource_BaseBoiler_W': Q_coldsource_BaseBoiler_W,
-                         'Q_coldsource_PeakBoiler_W': Q_coldsource_PeakBoiler_W}
 
-    return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output
+    return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output

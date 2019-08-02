@@ -30,10 +30,13 @@ from cea.utilities import epwreader
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, column_names_buildings_all, locator, network_features, config, prices, lca,
-                    ind_num, gen, column_names_individual, column_names_buildings_heating,
+def evaluation_main(individual, building_names, locator, network_features, config, prices, lca,
+                    ind_num, gen, column_names_individual,
+                    column_names_buildings_heating,
                     column_names_buildings_cooling,
-                    column_names_buildings_electricity,
+                    building_names_heating,
+                    building_names_cooling,
+                    building_names_electricity,
                     district_heating_network,
                     district_cooling_network,
                     ):
@@ -76,10 +79,10 @@ def evaluation_main(individual, column_names_buildings_all, locator, network_fea
                                                                 gen,
                                                                 ind_num,
                                                                 individual_with_name_dict,
-                                                                column_names_buildings_all,
-                                                                column_names_buildings_heating,
-                                                                column_names_buildings_cooling,
-                                                                column_names_buildings_electricity,
+                                                                building_names,
+                                                                building_names_heating,
+                                                                building_names_cooling,
+                                                                building_names_electricity,
                                                                 DHN_barcode,
                                                                 DCN_barcode,
                                                                 district_heating_network,
@@ -91,12 +94,13 @@ def evaluation_main(individual, column_names_buildings_all, locator, network_fea
     storage_dispatch = {}
     heating_dispatch = {}
     cooling_dispatch = {}
+    solar_features = SolarFeatures()
 
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
-        solar_features = SolarFeatures()
-        solar_features = calc_solar_features_individual(locator, column_names_buildings_all, DHN_barcode,
+
+        solar_features = calc_solar_features_individual(locator, building_names_heating, DHN_barcode,
                                                         master_to_slave_vars, solar_features)
 
         # THERMAL STORAGE
@@ -130,7 +134,9 @@ def evaluation_main(individual, column_names_buildings_all, locator, network_fea
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
-    performance_disconnected = cost_model.add_disconnected_costs(column_names_buildings_all, locator,
+    performance_disconnected = cost_model.add_disconnected_costs(building_names_heating,
+                                                                 building_names_cooling,
+                                                                 locator,
                                                                  master_to_slave_vars)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
@@ -258,7 +264,7 @@ class SolarFeatures(object):
         self.A_SC_ET_m2 = 0.0
 
 
-def calc_solar_features_individual(locator, building_names, DHN_barcode, master_to_slave_vars,
+def calc_solar_features_individual(locator, building_names_heating, DHN_barcode, master_to_slave_vars,
                                    solar_features):
     E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
     E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
@@ -270,7 +276,7 @@ def calc_solar_features_individual(locator, building_names, DHN_barcode, master_
     A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
     A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
 
-    for index, name in zip(DHN_barcode, building_names):
+    for index, name in zip(DHN_barcode, building_names_heating):
         if index == "1":  # building is connected, then it has solar collectors
             if master_to_slave_vars.SOLAR_PART_PVT > 0.0E-3:  # if PVT
                 building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
@@ -311,10 +317,10 @@ def export_data_to_master_to_slave_class(locator,
                                          gen,
                                          ind_num,
                                          individual_with_name_dict,
-                                         column_names_buildings_all,
-                                         column_names_buildings_heating,
-                                         column_names_buildings_cooling,
-                                         column_names_buildings_electricity,
+                                         building_names,
+                                         building_names_heating,
+                                         building_names_cooling,
+                                         building_names_electricity,
                                          DHN_barcode,
                                          DCN_barcode,
                                          district_heating_network,
@@ -328,14 +334,14 @@ def export_data_to_master_to_slave_class(locator,
                                                                                     DHN_barcode,
                                                                                     district_heating_network,
                                                                                     district_cooling_network,
-                                                                                    column_names_buildings_heating,
-                                                                                    column_names_buildings_cooling)
+                                                                                    building_names_heating,
+                                                                                    building_names_cooling,)
 
     # CREATE MASTER TO SLAVE AND FILL-IN
     master_to_slave_vars = calc_master_to_slave_variables(locator, gen,
                                                           ind_num,
                                                           individual_with_name_dict,
-                                                          column_names_buildings_all,
+                                                          building_names,
                                                           DHN_barcode,
                                                           DCN_barcode,
                                                           network_file_name_heating,
@@ -344,9 +350,9 @@ def export_data_to_master_to_slave_class(locator,
                                                           Q_cooling_nom_W,
                                                           district_heating_network,
                                                           district_cooling_network,
-                                                          column_names_buildings_heating,
-                                                          column_names_buildings_cooling,
-                                                          column_names_buildings_electricity
+                                                          building_names_heating,
+                                                          building_names_cooling,
+                                                          building_names_electricity,
                                                           )
 
     return master_to_slave_vars
@@ -384,9 +390,14 @@ def extract_loads_individual(locator,
                 num_total_buildings = len(column_names_buildings_heating)
                 buildings_in_heating_network = total_demand.Name.values
                 # Run the substation and distribution routines
-                substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
+                substation.substation_main_heating(locator,
+                                                   total_demand,
+                                                   buildings_in_heating_network,
                                                    DHN_barcode=DHN_barcode)
-                summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
+                summarize_network.network_main(locator,
+                                               buildings_in_heating_network,
+                                               ground_temp,
+                                               num_total_buildings,
                                                "DH", DHN_barcode)
 
             Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
@@ -455,7 +466,7 @@ def extract_loads_individual(locator,
     return Q_cooling_nom_W, Q_heating_nom_W, network_file_name_cooling, network_file_name_heating
 
 
-def createTotalNtwCsv(network_type, indCombi, locator, building_names):
+def createTotalNtwCsv(network_type, DHN_barcode, locator, building_names):
     """
     Create and saves the total file for a specific DH or DC configuration
     to make the distribution routine possible
@@ -466,18 +477,17 @@ def createTotalNtwCsv(network_type, indCombi, locator, building_names):
     :return: name of the total file
     :rtype: string
     """
+    #obtain buildings which are in this network
+    buildings_in_this_network_config = []
+    for index, name in zip(DHN_barcode,building_names):
+        if index == '1':
+            buildings_in_this_network_config.append(name)
+
+    #get total demand file fro selecte
     df = pd.read_csv(locator.get_total_demand())
-    dict_buildings_in_this_network = dict(zip(indCombi, building_names))
+    dfRes = df[df.Name.isin(buildings_in_this_network_config)]
+    dfRes = dfRes.reset_index(drop=True)
 
-    index = []
-    rank = 0
-    for el in indCombi:
-        if el == "0":
-            index.append(rank)
-        rank += 1
-
-    dfRes = df.drop(df.index[index])
-    dfRes.to_csv(locator.get_optimization_network_totals_folder_total(network_type, indCombi), sep=',')
     return dfRes
 
 
@@ -496,9 +506,9 @@ def calc_master_to_slave_variables(locator, gen,
                                    Q_cooling_nom_W,
                                    district_heating_network,
                                    district_cooling_network,
-                                   column_names_buildings_heating,
-                                   column_names_buildings_cooling,
-                                   column_names_buildings_electricity
+                                   building_names_heating,
+                                   building_names_cooling,
+                                   building_names_electricity,
                                    ):
     """
     This function reads the list encoding a configuration and implements the corresponding
@@ -534,9 +544,9 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DCN_barcode = DCN_barcode
     master_to_slave_vars.num_total_buildings = num_total_buildings
     master_to_slave_vars.building_names_all = building_names
-    master_to_slave_vars.building_names_heating = column_names_buildings_heating
-    master_to_slave_vars.building_names_cooling = column_names_buildings_cooling
-    master_to_slave_vars.building_names_electricity = column_names_buildings_electricity
+    master_to_slave_vars.building_names_heating = building_names_heating
+    master_to_slave_vars.building_names_cooling = building_names_cooling
+    master_to_slave_vars.building_names_electricity = building_names_electricity
     master_to_slave_vars.individual_with_names_dict = individual_with_names_dict
 
     # Store the number of the individual and the generation to which it belongs

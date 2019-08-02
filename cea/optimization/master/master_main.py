@@ -14,7 +14,7 @@ from deap import tools, creator, base
 
 from cea.optimization.constants import CXPB, MUTPB
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, DH_CONVERSION_TECHNOLOGIES_SHARE, \
-    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, DC_CONVERSION_TECHNOLOGIES_SHARE
+    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, DC_ACRONYM
 from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
@@ -42,7 +42,9 @@ def objective_function(individual,
                        building_names,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
-                       column_names_buildings_electricity,
+                       building_names_heating,
+                       building_names_cooling,
+                       building_names_electricity,
                        locator,
                        network_features,
                        config,
@@ -51,7 +53,6 @@ def objective_function(individual,
                        district_heating_network,
                        district_cooling_network,
                        column_names):
-
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -72,7 +73,9 @@ def objective_function(individual,
                                                              column_names,
                                                              column_names_buildings_heating,
                                                              column_names_buildings_cooling,
-                                                             column_names_buildings_electricity,
+                                                             building_names_heating,
+                                                             building_names_cooling,
+                                                             building_names_electricity,
                                                              district_heating_network,
                                                              district_cooling_network,
                                                              )
@@ -86,12 +89,12 @@ def objective_function_wrapper(args):
 
 
 def non_dominated_sorting_genetic_algorithm(locator,
-                                            column_names_buildings_all,
+                                            building_names_all,
                                             district_heating_network,
                                             district_cooling_network,
-                                            column_names_buildings_heating,
-                                            column_names_buildings_cooling,
-                                            column_names_buildings_electricity,
+                                            building_names_heating,
+                                            building_names_cooling,
+                                            building_names_electricity,
                                             network_features,
                                             config,
                                             prices,
@@ -123,11 +126,13 @@ def non_dominated_sorting_genetic_algorithm(locator,
     heating_unit_names, \
     cooling_unit_names, \
     heating_unit_names_share, \
-    cooling_unit_names_share = get_column_names_individual(district_heating_network,
-                                                           district_cooling_network,
-                                                           column_names_buildings_heating,
-                                                           column_names_buildings_cooling,
-                                                           )
+    cooling_unit_names_share, \
+    column_names_buildings_heating, \
+    column_names_buildings_cooling = get_column_names_individual(district_heating_network,
+                                                                 district_cooling_network,
+                                                                 building_names_heating,
+                                                                 building_names_cooling,
+                                                                 )
     individual_with_names_dict = create_empty_individual(column_names,
                                                          column_names_buildings_heating,
                                                          column_names_buildings_cooling,
@@ -198,10 +203,12 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate, izip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
-                                                   repeat(column_names_buildings_all, len(invalid_ind)),
+                                                   repeat(building_names_all, len(invalid_ind)),
                                                    repeat(column_names_buildings_heating, len(invalid_ind)),
                                                    repeat(column_names_buildings_cooling, len(invalid_ind)),
-                                                   repeat(column_names_buildings_electricity, len(invalid_ind)),
+                                                   repeat(building_names_heating, len(invalid_ind)),
+                                                   repeat(building_names_cooling, len(invalid_ind)),
+                                                   repeat(building_names_electricity, len(invalid_ind)),
                                                    repeat(locator, len(invalid_ind)),
                                                    repeat(network_features, len(invalid_ind)),
                                                    repeat(config, len(invalid_ind)),
@@ -241,10 +248,12 @@ def non_dominated_sorting_genetic_algorithm(locator,
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
-                                     repeat(column_names_buildings_all, len(invalid_ind)),
+                                     repeat(building_names_all, len(invalid_ind)),
                                      repeat(column_names_buildings_heating, len(invalid_ind)),
                                      repeat(column_names_buildings_cooling, len(invalid_ind)),
-                                     repeat(column_names_buildings_electricity, len(invalid_ind)),
+                                     repeat(building_names_heating, len(invalid_ind)),
+                                     repeat(building_names_cooling, len(invalid_ind)),
+                                     repeat(building_names_electricity, len(invalid_ind)),
                                      repeat(locator, len(invalid_ind)),
                                      repeat(network_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
@@ -489,9 +498,10 @@ def create_empty_individual(column_names, column_names_buildings_heating, column
     return individual_with_names_dict
 
 
-def get_column_names_individual(district_heating_network, district_cooling_network,
-                                column_names_buildings_heating,
-                                column_names_buildings_cooling,
+def get_column_names_individual(district_heating_network,
+                                district_cooling_network,
+                                building_names_heating,
+                                building_names_cooling,
                                 ):
     # 3 cases are possible
     if district_heating_network and district_cooling_network:
@@ -500,6 +510,8 @@ def get_column_names_individual(district_heating_network, district_cooling_netwo
         cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_CAPACITIES]
         heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE]
         cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE]
+        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
+        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         # combine both strings and calculate the ranges of each part of the individual
         column_names = heating_unit_names + \
                        heating_unit_names_share + \
@@ -512,8 +524,10 @@ def get_column_names_individual(district_heating_network, district_cooling_netwo
         # local variables
         heating_unit_names = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_CAPACITY]
         heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE]
+        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names = []
         cooling_unit_names_share = []
+        column_names_buildings_cooling = []
         column_names = heating_unit_names + \
                        heating_unit_names_share + \
                        column_names_buildings_heating
@@ -521,8 +535,10 @@ def get_column_names_individual(district_heating_network, district_cooling_netwo
         # local variables
         cooling_unit_names = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_CAPACITIES]
         cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE]
+        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names = []
         heating_unit_names_share = []
+        column_names_buildings_heating = []
         column_names = cooling_unit_names + \
                        cooling_unit_names_share + \
                        column_names_buildings_cooling
@@ -532,6 +548,8 @@ def get_column_names_individual(district_heating_network, district_cooling_netwo
            cooling_unit_names, \
            heating_unit_names_share, \
            cooling_unit_names_share, \
+           column_names_buildings_heating, column_names_buildings_cooling
+
 
 if __name__ == "__main__":
     x = 'no_testing_todo'

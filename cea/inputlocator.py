@@ -436,7 +436,7 @@ class InputLocator(object):
         Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
-    def get_optimization_substations_results_file(self, building_name, network_type_code,district_network_barcode):
+    def get_optimization_substations_results_file(self, building_name, network_type_code ,district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
         return os.path.join(self.get_optimization_substations_folder(), "%(district_network_barcode)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
 
