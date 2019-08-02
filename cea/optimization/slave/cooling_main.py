@@ -86,7 +86,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     if master_to_slave_vars.Storage_cooling_size_W > 0.0:
         Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_W
         Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
-        peak_hour = Q_cooling_req_W.max()
+        peak_hour = np.argmax(Q_cooling_req_W)
         mdot_DCN_peak_kgpers = mdot_kgpers[peak_hour]
         T_sup_DCN_peak_K = mdot_kgpers[peak_hour]
         T_re_DCN_peak_K = mdot_kgpers[peak_hour]
@@ -162,7 +162,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
 
     ### input variables
     lake_available_cooling = pd.read_csv(locator.get_lake_potential(), usecols=['QLake_kW']) * 1000  # to W
-    Qc_available_from_lake_W = np.sum(lake_available_cooling).values[0] + np.sum(Q_Lake_Array_W)
+    Qc_available_from_lake_W = np.sum(lake_available_cooling).values[0]
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,
