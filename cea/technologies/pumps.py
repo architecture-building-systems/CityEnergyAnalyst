@@ -83,10 +83,10 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
     if network_type == "DC":
 
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating),
+            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                              usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
         else:
-            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating),
+            df = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                              usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
 
         mdotA_kgpers = np.array(df)
