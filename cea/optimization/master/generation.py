@@ -3,13 +3,15 @@ Create individuals
 
 """
 from __future__ import division
+
 import random
-import numpy.random
-from itertools import izip
-from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, INDICES_CORRESPONDING_TO_DHN, \
-    INDICES_CORRESPONDING_TO_DCN, N_COOL, DCN_temperature_considered, \
-    DCN_temperature_lower_bound, DCN_temperature_upper_bound, DHN_temperature_considered, DHN_temperature_upper_bound, \
-    DHN_temperature_lower_bound
+
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, \
+    DH_CONVERSION_TECHNOLOGIES_SHARE, \
+    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, \
+    DC_CONVERSION_TECHNOLOGIES_SHARE, \
+    DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS, DC_TECHNOLOGIES_SHARING_SPACE
+from cea.optimization.master.validation import validation_main
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +23,16 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def generate_main(nBuildings, config):
+def generate_main(individual_with_names_dict,
+                  column_names,
+                  heating_unit_names,
+                  cooling_unit_names,
+                  heating_unit_names_share,
+                  cooling_unit_names_share,
+                  column_names_buildings_heating,
+                  column_names_buildings_cooling,
+                  district_heating_network,
+                  district_cooling_network):
     """
     Creates an individual configuration for the evolutionary algorithm.
     The individual is divided into four parts namely Heating technologies, Cooling Technologies, Heating Network
@@ -45,201 +56,91 @@ def generate_main(nBuildings, config):
     :rtype: list
     """
 
-    #local variables
-    # local variables
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
-    # heating block
-    # create list to store values of inidividual
-    heating_block = [0] * (N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN)  # nHeat is each technology and is associated with 2 values
-    # in the individual, one corresponding to the ON/OFF of technology and second corresponding to the size
-    # nHR is the ON/OFF of the recovery technologies, no sizing for these
-    # nSolar corresponds to the solar technologies and the associated area in the total solar area
-    # INDICES_CORRESPONDING_TO_DHN corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
-    # the order of heating technologies is CHP/Furnace, Base Boiler, Peak Boiler, HP Lake, HP Sewage, GHP
-    # don't get confused with the order of activation of the technologies, that order is given in heating_resource_activation
+    # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
+    if district_heating_network and district_cooling_network:
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
+                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
+                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_heating)
 
-    # Allocation of Shares
-    def cuts(ind, nPlants, irank):
-        cuts = sorted(numpy.random.random_sample(nPlants - 1) * 0.99 + 0.009)
-        edge = [0] + cuts + [1]
-        share = [(b - a) for a, b in izip(edge, edge[1:])]
+        populated_individual_with_name_dict = populate_individual(populated_individual_with_name_dict,
+                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
+                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_cooling)
+    elif district_heating_network:
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
+                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
+                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_heating)
+    elif district_cooling_network:
+        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
+                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
+                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  column_names_buildings_cooling)
 
-        n = len(share)
-        sharetoallocate = 0
-        rank = irank
-        while sharetoallocate < n:
-            if ind[rank] > 0:
-                ind[rank + 1] = share[sharetoallocate]
-                sharetoallocate += 1
-            rank += 2
+    populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
+                                              heating_unit_names,
+                                              cooling_unit_names,
+                                              heating_unit_names_share,
+                                              cooling_unit_names_share,
+                                              column_names_buildings_heating,
+                                              column_names_buildings_cooling,
+                                              district_heating_network,
+                                              district_cooling_network
+                                              )
 
-    if district_heating_network:
-
-        # Count the number of GUs (makes sure there's at least one heating system in the central hub)
-        countDHN = 0
-
-        if N_HEAT == 0:
-            countDHN = 1
-
-        # Choice of the GUs for the DHN
-        while countDHN == 0:
-            index = 0
-
-            # First GU to choose is the CHP
-            choice_CHP = random.randint(0, 1)
-            if choice_CHP == 1:
-                choice_CHP = random.randint(1, 4)
-                countDHN += 1
-            heating_block[index] = choice_CHP
-            index += 2
-
-            # Other GUs for the DHN
-            for GU in range(1, N_HEAT):
-                choice_GU = random.randint(0, 1)
-                if choice_GU == 1:
-                    countDHN += 1
-                heating_block[index] = choice_GU
-                index += 2
-
-            # Boiler NG or BG
-            if heating_block[2] == 1:
-                choice_GU = random.randint(1, 2)
-                heating_block[2] = choice_GU
-            if heating_block[4] == 1:
-                choice_GU = random.randint(1, 2)
-                heating_block[4] = choice_GU
-
-        # Heat Recovery units
-        for HR in range(N_HR):
-            choice_HR = random.randint(0, 1)
-            heating_block[index] = choice_HR
-            index += 1
-
-        cuts(heating_block, countDHN, 0)
-
-        # DHN supply temperature and the number of units of AHU/ARU/SHU it is supplied to
-        if DHN_temperature_considered:
-            heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
-                    DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
-
-        heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2 + 1] = random.randint(1,
-                                                                            7)  # corresponding to number of units between 1-7
-        # 1 - AHU only
-        # 2 - ARU only
-        # 3 - SHU only
-        # 4 - AHU + ARU
-        # 5 - AHU + SHU
-        # 6 - ARU + SHU
-        # 7 - AHU + ARU + SHU
-
-    # Solar units
-    countSolar = 0
-    index = N_HEAT * 2 + N_HR
-
-    if district_cooling_network:  # This is a temporary fix, need to change it in an elaborate method
-        heating_block[index] = random.randint(0, 1)
-        if heating_block[index]:
-            heating_block[index+1] = random.random()
-
-
-    if district_heating_network:
-        for Solar in range(N_SOLAR):
-            choice_Solar = random.randint(0, 1)
-            if choice_Solar == 1:
-                countSolar += 1
-            heating_block[index] = choice_Solar
-            index += 2
-
-        if countSolar > 0:
-            cuts(heating_block, countSolar, N_HEAT * 2 + N_HR)
-
-    cooling_block = [0] * (N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
-    # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
-    # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
-
-    if district_cooling_network:
-        # Count the number of GUs (makes sure there's at least one heating system in the central hub)
-        countDCN = 0
-
-        if N_COOL == 0:
-            countDCN = 1
-
-        # Choice of the GUs for the DHN
-        while countDCN == 0:
-            index = 0
-
-            # Other GUs for the DHN
-            for GU in range(0, N_COOL):
-                choice_GU = random.randint(0, 1)
-                if choice_GU == 1:
-                    countDCN += 1
-                cooling_block[index] = choice_GU
-                index += 2
-
-            # Boiler NG or BG
-            if cooling_block[4] == 1:
-                choice_GU = random.randint(1, 4)  # 1 corresponds to heating from CHP, 2 from NG Boiler
-                # 3 corresponds to heating from BG Boiler, 4 from Solar Collector
-                cooling_block[4] = choice_GU
-
-        # Allocation of Shares
-        def cuts(ind, nPlants, irank):
-            cuts = sorted(numpy.random.random_sample(nPlants - 1) * 0.99 + 0.009)
-            edge = [0] + cuts + [1]
-            share = [(b - a) for a, b in izip(edge, edge[1:])]
-
-            n = len(share)
-            sharetoallocate = 0
-            rank = irank
-            while sharetoallocate < n:
-                if ind[rank] > 0:
-                    ind[rank + 1] = share[sharetoallocate]
-                    sharetoallocate += 1
-                rank += 2
-
-        cuts(cooling_block, countDCN, 0)
-
-        # DCN supply temperature and the number of units of AHU/ARU/SCU it is supplied to
-        if DCN_temperature_considered:
-            cooling_block[N_COOL * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
-                    DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
-
-        cooling_configuration = [7]
-        if config.decentralized.ahuflag:
-            cooling_configuration.append(6)
-        if config.decentralized.aruflag:
-            cooling_configuration.append(5)
-        if config.decentralized.scuflag:
-            cooling_configuration.append(4)
-        if config.decentralized.ahuaruflag:
-            cooling_configuration.append(3)
-        if config.decentralized.ahuscuflag:
-            cooling_configuration.append(2)
-        if config.decentralized.aruscuflag:
-            cooling_configuration.append(1)
-
-        cooling_block[N_COOL * 2 + 1] = random.choice(cooling_configuration)  # corresponding to number of units between 1-7
-        # 1 - AHU only
-        # 2 - ARU only
-        # 3 - SCU only
-        # 5 - AHU + SCU
-        # 6 - ARU + SCU
-        # 7 - AHU + ARU + SCU
-    # DHN
-    heating_network_block = [0] * nBuildings
-    if district_heating_network:
-        for i in range(nBuildings):
-            choice_buildCon = random.randint(0, 1)
-            heating_network_block[i] = choice_buildCon
-
-    # DCN
-    cooling_network_block = [0] * nBuildings
-    if district_cooling_network:
-        for j in range(nBuildings):
-            choice_buildCon = random.randint(0, 1)
-            cooling_network_block[j] = choice_buildCon
-
-    individual = heating_block + cooling_block + heating_network_block + cooling_network_block
+    # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
+    individual = []
+    for column in column_names:
+        individual.append(populated_individual_with_name_dict[column])
 
     return individual
+
+
+def populate_individual(empty_individual_with_names_dict,
+                        name_conversion_technologies,
+                        name_share_conversion_technologies,
+                        columns_buildings_name):
+
+    # do it for units that are activated
+    for column, limits in name_conversion_technologies:
+        lim_inf = limits[0]
+        lim_sup = limits[1]
+        empty_individual_with_names_dict[column] = random.randint(lim_inf, lim_sup)
+
+    # do it for the share of the units that are activated
+    for column, limits in name_share_conversion_technologies:
+        lim_inf = limits[0]
+        lim_sup = limits[1]
+        empty_individual_with_names_dict[column] = random.uniform(lim_inf, lim_sup)
+
+    # do it for the buildings
+    for column in columns_buildings_name:
+        empty_individual_with_names_dict[column] = random.randint(0, 1)
+
+    return empty_individual_with_names_dict
+
+def individual_to_barcode(individual, column_names, column_names_buildings_heating,
+                          column_names_buildings_cooling):
+    """
+    Reads the 0-1 combination of connected/disconnected buildings
+    and creates a list of strings type barcode i.e. ("12311111123012")
+    :param individual: list containing the combination of connected/disconnected buildings
+    :type individual: list
+    :return: indCombi: list of strings
+    :rtype: list
+    """
+    # pair individual values with their names
+    individual_with_name_dict = dict(zip(column_names, individual))
+    DHN_barcode = ""
+    for name in column_names_buildings_heating:
+        if name in individual_with_name_dict.keys():
+            DHN_barcode += str(int(individual_with_name_dict[name]))
+
+    DCN_barcode = ""
+    for name in column_names_buildings_cooling:
+        if name in individual_with_name_dict.keys():
+            DCN_barcode += str(int(individual_with_name_dict[name]))
+
+    return DHN_barcode, DCN_barcode, individual_with_name_dict
+

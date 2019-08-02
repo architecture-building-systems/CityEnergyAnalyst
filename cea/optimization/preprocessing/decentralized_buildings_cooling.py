@@ -27,7 +27,7 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 
-def disconnected_buildings_cooling_main(locator, building_names, config, prices, lca):
+def disconnected_buildings_cooling_main(locator, total_demand, building_names, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -87,11 +87,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
                                                                                           locator, config,
                                                                                           panel_type="FP")
+
         # Evacuated Tube Solar Collectors
         SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
         Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
                                                                                           locator, config,
                                                                                           panel_type="ET")
+
 
         ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
         T_ground_K = calculate_ground_temperature(locator,
@@ -392,12 +394,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'CT1')
             Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
                 Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'BO1')
-            Capex_a_USD[5][
-                0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + Capex_a_SC_FP_USD + Capex_a_boiler_USD
-            Capex_total_USD[5][
-                0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + Capex_SC_FP_USD + Capex_boiler_USD
-            Opex_a_fixed_USD[5][
-                0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_fixed_ACH_S_USD + Opex_SC_FP_USD + Opex_fixed_boiler_USD
+            Capex_a_USD[5][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + \
+                                Capex_a_SC_FP_USD + Capex_a_boiler_USD
+            Capex_total_USD[5][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + \
+                                    Capex_SC_FP_USD + Capex_boiler_USD
+            Opex_a_fixed_USD[5][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_fixed_ACH_S_USD + \
+                                     Opex_SC_FP_USD + Opex_fixed_boiler_USD
 
         ## write all results from the configurations into TotalCosts, TotalCO2, TotalPrim
         Opex_a_USD, TAC_USD, TotalCO2, TotalPrim = compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD,

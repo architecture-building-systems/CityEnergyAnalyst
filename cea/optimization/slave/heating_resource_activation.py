@@ -20,8 +20,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers,Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
-                             prices, lca, T_ground):
+def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
+                             prices, lca, T_ground_K):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -59,7 +59,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
-    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0:
+    if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0.0:
 
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CC_GT_SIZE_W, tdhsup_K, master_to_slave_vars.gt_fuel,
                                         prices, lca.ELEC_PRICE[hour])  # create cost information
@@ -97,14 +97,15 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
         source_Furnace = 1
         # Operate only if its above minimal load
         if Q_heat_unmet_W > (FURNACE_MIN_LOAD * master_to_slave_vars.Furnace_Q_max_W):
-            if Q_heat_unmet_W > master_to_slave_vars.Furnace_Q_max_W:  # scale down if above maximum load, Furnace operates at max. capacity
-                Furnace_Cost_Data = furnace_op_cost(master_to_slave_vars.Furnace_Q_max_W,
-                                                    master_to_slave_vars.Furnace_Q_max_W, tdhret_req_K,
+            if Q_heat_unmet_W > master_to_slave_vars.Furnace_Q_max_W:
+                Q_Furnace_gen_W = master_to_slave_vars.Furnace_Q_max_W
+                # scale down if above maximum load, Furnace operates at max. capacity
+                Furnace_Cost_Data = furnace_op_cost(Q_Furnace_gen_W,
+                                                    Q_Furnace_gen_W, tdhret_req_K,
                                                     master_to_slave_vars.Furn_Moist_type, lca, hour)
 
                 cost_Furnace_USD = Furnace_Cost_Data[0]
                 Wood_used_Furnace_W = Furnace_Cost_Data[2]
-                Q_Furnace_gen_W = master_to_slave_vars.Furnace_Q_max_W
                 E_Furnace_gen_W = Furnace_Cost_Data[4]
 
             else:  # Normal Operation Possible
@@ -148,7 +149,8 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             Q_HPLake_gen_W = master_to_slave_vars.HPLake_maxSize_W
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
                     HEAT_CAPACITY_OF_WATER_JPERKGK * (
-                    tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
+                    tdhsup_K - tdhret_req_K))
+            # scale down the mass flow if the thermal demand is lowered
         else:  # regular operation possible
             Q_HPLake_gen_W = Q_heat_unmet_W
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -164,13 +166,13 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             hour <= master_to_slave_vars.GHP_SEASON_OFF and \
             Q_heat_unmet_W > 0 and not np.isclose(
             tdhsup_K, tdhret_req_K):
-
         source_GHP = 1
         # activating GHP plant if possible
-        Q_max_GHP_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground, master_to_slave_vars.GHP_number)
+        Q_max_GHP_W = master_to_slave_vars.GHP_maxSize_W
+        _, GHP_COP = GHP_Op_max(Q_max_GHP_W, tdhsup_K, T_ground_K,)
 
-        if Q_heat_unmet_W >= Q_max_GHP_W:
-            Q_therm_GHP_W = Q_max_GHP_W
+        if Q_heat_unmet_W >= master_to_slave_vars.GHP_maxSize_W:
+            Q_therm_GHP_W = master_to_slave_vars.GHP_maxSize_W
             mdot_DH_to_GHP_kgpers = Q_therm_GHP_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:  # regular operation possible, demand is covered
             Q_therm_GHP_W = float(Q_heat_unmet_W)

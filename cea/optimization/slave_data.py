@@ -34,6 +34,11 @@ class SlaveData(object):
         self.date = 0
         self.DHN_exists = False
         self.DCN_exists = False
+        self.individual_with_names_dict= {}
+        self.building_names_all = []
+        self.building_names_heating = []
+        self.building_names_cooling = []
+        self.building_names_electricity = []
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
@@ -42,7 +47,7 @@ class SlaveData(object):
         # Heating Technologies
         # Geothermal Heat Pump,
         # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
-        self.GHP_number = 0.0  # number of probes
+        self.GHP_maxSize_W = 0.0  # number of probes
         # self.GHP_max = self.GHP_number * self.GHP_max_i
         self.GHP_SEASON_ON = 0  # Hour in Year, when to switch on GHP
         self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
@@ -133,11 +138,11 @@ class SlaveData(object):
         self.WasteCompressorHeatRecovery = 0
         self.storage_heating_on = 0
         self.DHN_temperature = 0.0  # Supply temperature of the DHN in degree C
-        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DHN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
 
         self.VCC_on = 0
         self.Absorption_Chiller_on = 0
         self.Lake_cooling_on = 0
         self.storage_cooling_on = 0
         self.DCN_temperature = 0.0  # Supply temperature of the DCN in degree C
-        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DCN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
