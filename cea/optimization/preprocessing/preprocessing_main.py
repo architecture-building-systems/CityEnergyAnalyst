@@ -70,7 +70,7 @@ def preproccessing(locator, total_demand, weather_file, district_heating_network
                 "There is just one or zero buildings with heating load, a district heating network will not work,"
                 "CEA can not continue")
         num_tot_buildings = len(buildings_names_connected)
-        DHN_barcode = ''.join(str(e+1) for e in range(num_tot_buildings))
+        DHN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
         substation.substation_main_heating(locator, total_demand, buildings_names_connected,
                                            DHN_barcode=DHN_barcode)
 
@@ -84,7 +84,7 @@ def preproccessing(locator, total_demand, weather_file, district_heating_network
                 "CEA can not continue")
 
         num_tot_buildings = len(buildings_names_connected)
-        DCN_barcode = ''.join(str(e+1) for e in range(num_tot_buildings))
+        DCN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
         substation.substation_main_cooling(locator, total_demand, buildings_names_connected,
                                            DCN_barcode=DCN_barcode)
 
