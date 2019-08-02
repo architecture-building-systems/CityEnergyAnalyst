@@ -80,7 +80,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         GHP_el_size_W = np.zeros((10, 1))  # Save peak capacity of GHP
 
         # save supply system activation of all supply configurations
-        all_supply_activation_dict = {}
+        heating_dispatch = {}
 
         # Supply with the Boiler / FC / GHP
         Tret_K = substation_results["T_return_DH_result_K"].values
@@ -94,13 +94,16 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         ## 0: Boiler NG
         BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_Wh, Qnom_W, Tret_K)
         Qgas_to_Boiler_Wh = np.divide(q_load_Wh, BoilerEff, out=np.zeros_like(q_load_Wh), where=BoilerEff != 0.0)
+        Boiler_Status = np.where(Qgas_to_Boiler_Wh > 0.0, 1, 0)
         # add costs
         Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)  # CHF
         GHG_tonCO2[0][5] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
         PEN_MJoil[0][6] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
         # add activation
         resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
-        all_supply_activation_dict[0] = {'Q_NG_Wh': Qgas_to_Boiler_Wh}
+        heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
+                                         'Boiler_Status': Boiler_Status,
+                                         'NG_Boiler_used_W': Qgas_to_Boiler_Wh}
 
         ## 1: Boiler BG
         # add costs
@@ -109,12 +112,15 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         PEN_MJoil[1][6] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
         # add activation
         resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
-        all_supply_activation_dict[1] = {'Q_BG_Wh': Qgas_to_Boiler_Wh}
+        heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
+                               'Boiler_Status': Boiler_Status,
+                               'BG_Boiler_used_W': Qgas_to_Boiler_Wh}
 
         ## 2: Fuel Cell
         (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
         Qgas_to_FC_Wh = q_load_Wh / (FC_Effth + FC_Effel)  # FIXME: should be q_load_Wh/FC_Effth?
         el_from_FC_Wh = Qgas_to_FC_Wh * FC_Effel
+        FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
         # add variable costs, emissions and primary energy
         Opex_a_var_USD[2][4] += sum(
             prices.NG_PRICE * Qgas_to_FC_Wh - lca.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
@@ -128,8 +134,10 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         # add activation
         resourcesRes[2][0] = sum(q_load_Wh)  # q from NG
         resourcesRes[2][2] = sum(el_from_FC_Wh)  # el for GHP # FIXME: el from FC
-        all_supply_activation_dict[2] = {'Q_NG_Wh': Qgas_to_FC_Wh,
-                                         'el_from_FC_Wh': (el_from_FC_Wh) * (-1.0)}
+        heating_dispatch[2] = {'Q_Fuelcell_to_directload_W': q_load_Wh,
+                               'Fuelcell_Status': FC_Status,
+                               'Q_NG_FuelCell_used_W': Qgas_to_FC_Wh,
+                               'E_Fuelcell_gen_expoer_W': el_from_FC_Wh}
 
         # 3-13: Boiler NG + GHP
         for i in range(10):
@@ -144,6 +152,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             tsup2_K, q_from_GHP_Wh = np.vectorize(calc_GHP_operation)(QnomGHP_W, T_ground_K, Texit_GHP_nom_K,
                                                                       Tret_K, Tsup_K, mdot_kgpers, q_load_Wh)
             GHP_el_size_W[i][0] = max(el_GHP_Wh)
+            GHP_Status = np.where(q_from_GHP_Wh > 0.0, 1, 0)
             # GHP Backup Boiler operation
             if max(qhot_missing_Wh) > 0.0:
                 print "GHP unable to cover the whole demand, boiler activated!"
@@ -155,11 +164,13 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                 Qgas_to_GHPBoiler_Wh = np.zeros(q_load_Wh.shape[0])
                 Qnom_GHP_Backup_Boiler_W = 0.0
             Q_Boiler_for_GHP_W[i][0] = Qnom_GHP_Backup_Boiler_W
+            GHPbackupBoiler_Status = np.where(qhot_missing_Wh > 0.0, 1, 0)
 
             # NG Boiler operation
             BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_NG_Boiler_Wh, QnomBoiler_W, Texit_GHP_nom_K)
             Qgas_to_Boiler_Wh = np.divide(q_load_NG_Boiler_Wh, BoilerEff,
                                           out=np.zeros_like(q_load_NG_Boiler_Wh), where=BoilerEff != 0.0)
+            Boiler_Status = np.where(q_load_NG_Boiler_Wh > 0.0, 1, 0)
 
             # add costs
             # electricity
@@ -178,9 +189,15 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             resourcesRes[3 + i][2] = sum(el_GHP_Wh)
             resourcesRes[3 + i][3] = sum(q_from_GHP_Wh)
 
-            all_supply_activation_dict[3 + i] = {'Q_NG_for_GHP_Backup_Boiler_Wh': Qgas_to_GHPBoiler_Wh,
-                                                 'Q_NG_for_Boiler_Wh': Qgas_to_Boiler_Wh,
-                                                 'el_GHP_Wh': el_GHP_Wh}
+            heating_dispatch[3 + i] = {'Q_GHP_gen_directload_W': q_from_GHP_Wh,
+                                       'Q_GHPbackupBoiler_gen_directload_W': qhot_missing_Wh,
+                                       'Q_Boiler_gen_directload_W': q_load_NG_Boiler_Wh,
+                                       'GHP_Status': GHP_Status,
+                                       'GHPbackupBoiler_Status': GHPbackupBoiler_Status,
+                                       'Boiler_Status': Boiler_Status,
+                                       'Q_NG_GHPbackupBoiler_used_Wh': Qgas_to_GHPBoiler_Wh,
+                                       'Q_NG_Boiler_used_Wh': Qgas_to_Boiler_Wh,
+                                       'E_electricalnetwork_sys_req_W': el_GHP_Wh}
 
         # Add all costs
         # 0: Boiler NG
@@ -314,7 +331,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         results_to_csv.to_csv(fName_result, sep=',')
 
         # save activation for the best supply system configuration
-        best_activation_df = pd.DataFrame.from_dict(all_supply_activation_dict[indexBest])  #
+        best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])  #
         best_activation_df.to_csv(
             locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name))
 
