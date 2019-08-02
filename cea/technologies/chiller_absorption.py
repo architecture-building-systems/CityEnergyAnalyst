@@ -23,7 +23,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Q_chiller_unit_size_W, locator, config):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, locator, config):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -42,7 +42,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     :type T_hw_in_C: float
     :param T_ground_K: ground temperature
     :type T_ground_K: float
-    :param Q_chiller_unit_size_W: installed chiller capacity
     :param locator: locator class
     :return:
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
@@ -57,6 +56,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     q_chw_total_W = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K)
 
+
     if np.isclose(q_chw_total_W, 0.0):
         wdot_W = 0.0
         q_cw_W = 0.0
@@ -68,29 +68,36 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         # read chiller operation parameters from database
         chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-        chiller_prop = get_chiller_property_by_chiller_capacity(chiller_prop, Q_chiller_unit_size_W)
+        min_chiller_size_W = min(chiller_prop['cap_min'].values)
+        max_chiller_size_W = max(chiller_prop['cap_max'].values)
+
+        # get chiller properties and input conditions according to load
+        if q_chw_total_W < min_chiller_size_W:
+            # get chiller property according to load
+            chiller_prop = chiller_prop[chiller_prop['cap_min'] == min_chiller_size_W]
+            # operate at minimum load
+            number_of_chillers_activated = 1.0  # only activate one chiller
+            input_conditions['q_chw_W'] = chiller_prop['cap_min'].values  # minimum load
+        elif q_chw_total_W <= max_chiller_size_W:
+            # get chiller property according to load
+            chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= q_chw_total_W) &
+                                        (chiller_prop['cap_max'] > q_chw_total_W)]
+            # operate one chiller at the cooling load
+            number_of_chillers_activated = 1.0  # only activate one chiller
+            input_conditions['q_chw_W'] = q_chw_total_W # operate at the chilled water load
+        else:
+            # get chiller property according to load
+            chiller_prop = chiller_prop[chiller_prop['cap_min'] == max_chiller_size_W]
+            # distribute loads to multiple chillers
+            number_of_chillers_activated = q_chw_total_W / max_chiller_size_W
+            input_conditions['q_chw_W'] = chiller_prop['cap_max'].values.max() # operate at maximum load
 
         # calculate operating conditions at given input conditions
-        if q_chw_total_W < chiller_prop['cap_min'].values.min():
-            # operate at minimum load
-            number_of_chillers_activated = 1  # only activate one chiller
-            input_conditions['q_chw_W'] = chiller_prop['cap_min'].values  # minimum load
-            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-        elif q_chw_total_W <= Q_chiller_unit_size_W:
-            # operate one chiller at the cooling load
-            number_of_chillers_activated = 1  # only activate one chiller
-            input_conditions['q_chw_W'] = q_chw_total_W
-            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-        else:
-            # distribute loads to multiple chillers
-            number_of_chillers_activated = int(ceil(q_chw_total_W / Q_chiller_unit_size_W))
-            input_conditions['q_chw_W'] = q_chw_total_W / number_of_chillers_activated
-            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-
+        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
         # calculate chiller outputs
-        wdot_W = chiller_prop['el_W'].values[0] * number_of_chillers_activated  # TODO: check if change with capacity
-        q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers_activated  # to W
-        q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers_activated  # to W
+        wdot_W = chiller_prop['el_W'].values[0] * number_of_chillers_activated
+        q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers_activated
+        q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers_activated
         T_hw_out_C = operating_conditions['T_hw_out_C']
         EER = q_chw_total_W / (q_hw_W + wdot_W)
 
@@ -102,11 +109,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
 
     return chiller_operation
 
-
-def get_chiller_property_by_chiller_capacity(chiller_prop, Q_installed_size_W):
-    # keep properties of the associated capacity
-    chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= Q_installed_size_W) & (chiller_prop['cap_max'] > Q_installed_size_W)]
-    return chiller_prop
 
 
 def calc_operating_conditions(chiller_prop, input_conditions):
@@ -242,7 +244,7 @@ def main(config):
     Q_installed_size_W = 80000
     ACH_type = 'single'
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type,
-                                          Q_installed_size_W, locator, config)
+                                          locator, config)
     print(chiller_operation)
 
     print('test_decentralized_buildings_cooling() succeeded')

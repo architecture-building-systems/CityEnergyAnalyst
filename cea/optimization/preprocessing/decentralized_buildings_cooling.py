@@ -608,7 +608,6 @@ def calc_ACH_operation(Qc_nom_ACHs_W, max_ACH_unit_size_W, T_ground_K, T_SC_hw_i
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
                                                                                     ACH_TYPE_SINGLE,
-                                                                                    Q_ACH_unit_size_W,
                                                                                     locator, config)
     el_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_to_single_ACH_operation])
     q_chw_ACH_Wh = np.asarray([x['q_chw_W'] for x in SC_to_single_ACH_operation])
