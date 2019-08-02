@@ -25,7 +25,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, Q_VCC_unit_size_W, number_of_VCC_installed): # todo: refactor
+def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -42,33 +42,30 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, Q_VCC_unit_size_W, number_of_
     vapor-compression liquid chillers. Applied Thermal Engineering.
     """
 
-    if mdot_kgpers == 0:
-        wdot_W = 0
-        q_cw_W = 0
-
-    elif Q_VCC_unit_size_W == 0:
-        wdot_W = 0
-        q_cw_W = 0
+    if mdot_kgpers == 0.0:
+        wdot_W = 0.0
+        q_cw_W = 0.0
+        q_chw_load_Wh = 0.0
 
     else:
-        q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)  # required cooling at the chiller evaporator
+        # required cooling at the chiller evaporator
+        q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
         # calculate chw load of each chiller
-        if q_chw_load_Wh <= Q_VCC_unit_size_W:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
-
+        if q_chw_load_Wh <= max_VCC_unit_size_W:
             # Tim Change:
             # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
             #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
             #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
 
             # operate one chiller at the cooling load
-            number_of_chiller_activated = 1
+            number_of_VCC_activated = 1.0
             q_chw_per_chiller_Wh = q_chw_load_Wh
         else:
-            # distribute loads to multiple chillers
-            number_of_chiller_activated = int(ceil(q_chw_load_Wh / Q_VCC_unit_size_W))
-            q_chw_per_chiller_Wh = q_chw_load_Wh / number_of_chiller_activated
+            # operate chillers at maximum load
+            number_of_VCC_activated = q_chw_load_Wh / max_VCC_unit_size_W
+            q_chw_per_chiller_Wh = max_VCC_unit_size_W
 
         # calculate chiller COP from chw load of each chiller
         COP = calc_COP(T_cw_in_K, T_chw_re_K, q_chw_per_chiller_Wh)
@@ -76,10 +73,10 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, Q_VCC_unit_size_W, number_of_
             print ('Negative COP: ', COP, mdot_kgpers, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
         # calculate chiller outputs
-        wdot_W = (q_chw_per_chiller_Wh / COP) * number_of_chiller_activated
+        wdot_W = (q_chw_per_chiller_Wh / COP) * number_of_VCC_activated
         q_cw_W = wdot_W + q_chw_load_Wh  # heat rejected to the cold water (cw) loop
 
-    chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
+    chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_chw_W': q_chw_load_Wh}
 
     return chiller_operation
 
@@ -197,15 +194,23 @@ def calc_VCC_COP(config, load_types, centralized=True):
 
     return cop_system, cop_chiller
 
+def get_max_VCC_unit_size(locator, VCC_code='CH3'):
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
+    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
+    max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
+    return max_VCC_unit_size_W
 
-def main():
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     Qc_W = 3.5
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     mdot_chw_kgpers = Qc_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K))
-    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K)
+    max_VCC_unit_size_W = get_max_VCC_unit_size(locator)
+    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W)
     print chiller_operation
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
