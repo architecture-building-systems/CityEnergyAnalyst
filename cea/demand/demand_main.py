@@ -14,7 +14,6 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import demand_writers
-from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
@@ -74,7 +73,6 @@ def demand_calculation(locator, config):
     multiprocessing = config.multiprocessing
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
-    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
@@ -86,10 +84,11 @@ def demand_calculation(locator, config):
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
+    # create date range for the calculation year
+    date_range = get_dates_from_year(year)
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year,
-                                                                        override_variables)
+    building_properties = BuildingProperties(locator, override_variables)
 
     # add a message i2065 of warning. This needs a more elegant solution
     def calc_buildings_less_100m2(building_properties):
@@ -104,8 +103,7 @@ def demand_calculation(locator, config):
         return list_buildings_less_100m2
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print('!!!Warning!!!, the next list of buildings have less than 100m2 of net area, CEA does not handle well thses'
-              'buildings, it might be that CEA fails: These are the buildings%s' % list_buildings_less_100m2)
+        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
@@ -116,13 +114,13 @@ def demand_calculation(locator, config):
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
-        calc_demand_multiprocessing(building_properties, date, locator, list_building_names,
-                                    schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
+        calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
+                                    weather_data, use_dynamic_infiltration,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output, config, write_detailed_output, debug)
     else:
-        calc_demand_singleprocessing(building_properties, date, locator, list_building_names, schedules_dict,
-                                     weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
+        calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
+                                     weather_data, use_dynamic_infiltration,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output, config, write_detailed_output, debug)
 
@@ -141,39 +139,22 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def properties_and_schedule(locator, year, override_variables=False):
-    # this script is called from the Neural network please do not mess with it!
-
-    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
-    # building properties model
-
-    building_properties = BuildingProperties(locator, override_variables)
-
-    # schedules model
-    list_uses = list(building_properties._prop_occupancy.columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
-
-    schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
-        archetype_values['people'], 'archetype_values': archetype_values}
-    return building_properties, schedules_dict, date
-
-
-def calc_demand_singleprocessing(building_properties, date, locator, list_building_names, usage_schedules,
-                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
+def calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
+                                 weather_data, use_dynamic_infiltration_calculation,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output, config, write_detailed_output, debug):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, locator,
-                                         use_stochastic_occupancy, use_dynamic_infiltration_calculation,
+        thermal_loads.calc_thermal_loads(building, bpr, weather_data, date_range, locator,
+                                         use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
                                          format_output, config, write_detailed_output, debug)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def calc_demand_multiprocessing(building_properties, date, locator, list_building_names, usage_schedules,
-                                weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
+def calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
+                                weather_data, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
                                 config, write_detailed_output, debug):
     number_of_processes = config.get_number_of_processes()
@@ -184,8 +165,8 @@ def calc_demand_multiprocessing(building_properties, date, locator, list_buildin
     for building in list_building_names:
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, usage_schedules, date, locator,
-                                use_stochastic_occupancy, use_dynamic_infiltration_calculation,
+                               [building, bpr, weather_data, date_range, locator,
+                                use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
                                 format_output, config, write_detailed_output, debug])
         joblist.append(job)
@@ -223,6 +204,18 @@ def radiation_files_exist(config, locator):
             locator.get_radiation_building(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
+
+
+def get_dates_from_year(year):
+    """
+    creates date range for the year of the calculation
+    :param year: year of first row in weather file
+    :type year: int
+    :return: pd.date_range with 8760 values
+    :rtype: pandas.data_range
+    """
+    return pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+
 
 
 if __name__ == '__main__':
