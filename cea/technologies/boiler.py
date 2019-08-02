@@ -141,7 +141,7 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
     """
 
-    if Q_nom_W > 0.0:
+    if (Q_nom_W > 0.0 and q_load_Wh > 0.0):
 
         # Implement Curves provided by http://www.greenshootscontrols.net/?p=153
         x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100, 150,
