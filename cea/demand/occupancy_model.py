@@ -2,6 +2,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
+import os
 import cea.inputlocator
 import cea.config
 from cea.utilities import epwreader
@@ -15,6 +16,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+# local constants
+DECIMALS_FOR_SCHEDULE_ROUNDING = 5
 
 
 def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
@@ -87,6 +91,10 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
                                                                          archetype_values[schedule], list_uses,
                                                                          bpr.occupancy, codes[schedule],
                                                                          archetype_values['people'])
+
+    # round schedules to avoid rounding errors when saving and reading schedules from disk
+    for schedule_type in schedules.keys():
+        schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
     return schedules
 
@@ -662,6 +670,91 @@ def calc_average(last, current, share_of_use):
     function to calculate the weighted average of schedules
     """
     return last + current * share_of_use
+
+
+def read_schedules_from_file(schedules_csv):
+    """
+    A function to read building schedules from a csv file to a dict.
+    :param schedules_csv: the file path to the csv file
+    :type schedules_csv: os.path
+    :return: building_schedules, the building schedules
+    :rtype: dict
+    """
+
+    # read csv into dataframe
+    df_schedules = pd.read_csv(schedules_csv)
+    # convert to dataframe to dict
+    building_schedules = df_schedules.to_dict(orient='list')
+    # convert lists to np.arrays
+    for key, value in building_schedules.items():
+        building_schedules[key] = np.round(np.array(value), DECIMALS_FOR_SCHEDULE_ROUNDING)
+        # round values to expected number of decimals of data created in calc_schedules()
+
+    return building_schedules
+
+
+def save_schedules_to_file(locator, building_schedules, building_name):
+    """
+    A function to save schedules to csv files in the inputs/building-properties directory
+
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param building_schedules: the building schedules
+    :type building_schedules: dict
+    :param building_name: the building name
+    :type building_name: str
+    :return: this function returns nothing
+    """
+    schedules_csv_file = locator.get_building_schedules(building_name)
+    # convert to DataFrame to use pandas csv writing method
+    df_building_schedules = pd.DataFrame.from_dict(building_schedules)
+    df_building_schedules.to_csv(schedules_csv_file, index=False)
+    print("Saving schedules for building {} to inputs/building-properties directory.".format(building_name))
+
+
+def get_building_schedules(locator, bpr, date_range, config):
+    """
+    Gets building schedules either from (user-defined) csv files or from creates them from the archetypes database.
+    Schedules that are created, are saved to disc.
+    This is the main function of this script.
+    It includes two functions that were previously called in demand_main and in thermal_loads:
+    - schedule_maker: it was reading the archetyp schedules database and other archetypal values
+    - calc_schedules: it was creating schedules of mixed use buildings from the archetype schedules
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param bpr: the building properties object
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :param date_range: the data range for the year of th calculation
+    :type: pd.data_range
+    :param config: the configuration
+    :type config: cea.config.Configuration
+    :return: building_schedules, a dict containing the building schedules in form of np.array with 8760 elements
+    :rtype: dict
+    """
+
+    # get the building name
+    building_name = bpr.name
+
+    # first the script checks if pre-defined schedules for the building exist
+    schedules_csv = locator.get_building_schedules(building_name)
+    if os.path.isfile(schedules_csv):
+        print("Schedules for building {} detected. Using these schedules.".format(building_name))
+        building_schedules = read_schedules_from_file(schedules_csv)
+    else:
+        print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
+        # get list of uses in building
+        list_uses = [key for (key, value) in bpr.occupancy.items() if value > 0.0]
+        # get occupancy schedule config
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
+        # read archetypes database
+        archetype_schedules, archetype_values = schedule_maker(date_range, locator, list_uses)
+        # calculate mixed-use building schedules
+        building_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
+        # write the building schedules to disc for the next simulation or manipulation by the user
+        save_schedules_to_file(locator, building_schedules, building_name)
+
+    return building_schedules
+
 
 
 def main(config):
