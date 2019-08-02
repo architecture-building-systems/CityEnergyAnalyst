@@ -17,36 +17,42 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(q_hot_Wh, Q_unit_size_W):
+def calc_CT(q_hot_Wh, Q_nom_W, locator):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
     
     :type q_hot_Wh : float
     :param q_hot_Wh: heat rejected from chiller condensers
-    :type Q_unit_size_W : float
-    :param Q_unit_size_W: installed CT size
+    :type Q_nom_W : float
+    :param Q_nom_W: installed CT size
 
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
-    wdot_W = 0
-    if q_hot_Wh > Q_unit_size_W:
+
+    # get maximum CT size
+    CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
+    CT_cost_data = CT_cost_data[CT_cost_data['code'] == 'CT1']
+    Q_max_CT_W = max(CT_cost_data['cap_max'].values)
+
+    # calculate number of CT activated according to loads
+    if q_hot_Wh > Q_max_CT_W:
         # distribute loads to multiple units
-        number_of_units = int(ceil(q_hot_Wh / Q_unit_size_W))
-        q_hot_per_unit_Wh = q_hot_Wh / number_of_units
-        qpartload = q_hot_per_unit_Wh / Q_unit_size_W
+        number_of_units_activated = q_hot_Wh / Q_max_CT_W
     else:
         # operate one unit at the load
-        number_of_units = 1
-        qpartload = q_hot_Wh / Q_unit_size_W
+        number_of_units_activated = 1.0
 
-    # calculate operation of one unit
-    wdesign_fan = 0.011 * Q_unit_size_W
+    # calculate CT operation at part load
+    qpartload = q_hot_Wh / Q_nom_W
     wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * qpartload + 0.0026
 
-    # calculate outputs of all units
-    wdot_W = (wpartload * wdesign_fan) * number_of_units
+    # calculate fan power
+    wdesign_fan = 0.011 * Q_nom_W
+
+    # calculate total electricity consumption
+    wdot_W = (wpartload * wdesign_fan) * number_of_units_activated # FIXME: should be wpartload + wdesign_fan?
     
     return wdot_W
 
