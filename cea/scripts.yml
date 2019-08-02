@@ -246,16 +246,6 @@ Optimization:
     parameters: ['general:scenario', 'general:weather', 'decentralized',
                  'general:detailed-electricity-pricing']
 
-
-  - name: supply-system-simulation
-    label: Supply system simulation
-    description: Simulate the performances of a single supply system configuration
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.supply.supply_system_simulation
-    parameters: ['general:scenario', 'general:weather', 'supply-system-simulation',
-                 'general:district-heating-network', 'general:district-cooling-network',
-                 'thermal-network:network-type', 'thermal-network:network-names', 'decentralized']
-
 Networks:
 
   - name: network-layout

@@ -70,13 +70,12 @@ def preproccessing(locator, total_demand, weather_file, district_heating_network
                 "There is just one or zero buildings with heating load, a district heating network will not work,"
                 "CEA can not continue")
         num_tot_buildings = len(buildings_names_connected)
-
+        DHN_barcode = ''.join(str(e+1) for e in range(num_tot_buildings))
         substation.substation_main_heating(locator, total_demand, buildings_names_connected,
-                                           DHN_barcode="all")
+                                           DHN_barcode=DHN_barcode)
 
-        summarize_network.network_main(locator, buildings_names_connected,
-                                       ground_temp, num_tot_buildings, "DH",
-                                       "all", "all")  # "_all" key for all buildings
+        summarize_network.network_main(locator, buildings_names_connected, ground_temp, num_tot_buildings, "DH", DHN_barcode)
+        # "_all" key for all buildings
     if district_cooling_network:
         buildings_names_connected = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         if len(buildings_names_connected) <= 1:
@@ -85,12 +84,12 @@ def preproccessing(locator, total_demand, weather_file, district_heating_network
                 "CEA can not continue")
 
         num_tot_buildings = len(buildings_names_connected)
+        DCN_barcode = ''.join(str(e+1) for e in range(num_tot_buildings))
         substation.substation_main_cooling(locator, total_demand, buildings_names_connected,
-                                           DCN_barcode="all")
+                                           DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_names_connected,
-                                       ground_temp, num_tot_buildings, "DC", "all",
-                                       "all")  # "_all" key for all buildings
+                                       ground_temp, num_tot_buildings, "DC", DCN_barcode)  # "_all" key for all buildings
 
     network_features = NetworkOptimizationFeatures(district_heating_network, district_cooling_network, locator)
 

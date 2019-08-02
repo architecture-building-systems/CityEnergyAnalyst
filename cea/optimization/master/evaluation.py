@@ -359,7 +359,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
             substation.substation_main_heating(locator, total_demand, buildings_in_heating_network,
                                                DHN_barcode=DHN_barcode)
             summarize_network.network_main(locator, buildings_in_heating_network, ground_temp, num_total_buildings,
-                                           "DH", DHN_barcode, DHN_barcode)
+                                           "DH", DHN_barcode)
 
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary('DH', DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
@@ -395,7 +395,7 @@ def extract_loads_individual(locator, individual_with_name_dict, DCN_barcode, DH
             substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
                                                DCN_barcode=DCN_barcode)
             summarize_network.network_main(locator, buildings_in_cooling_network, ground_temp, num_total_buildings,
-                                           'DC', DCN_barcode, DCN_barcode)
+                                           'DC',  DCN_barcode)
 
         if individual_with_name_dict[
             'HPServer'] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
