@@ -28,7 +28,7 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 
-def disconnected_buildings_cooling_main(locator, building_names, config, prices, lca):
+def disconnected_buildings_cooling_main(locator, total_demand, building_names, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -57,9 +57,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     """
 
     t0 = time.clock()
-
-    BestData = {}
-    total_demand = pd.read_csv(locator.get_total_demand())
 
     substation.substation_main_cooling(locator, total_demand, building_names, cooling_configuration=1)
 
@@ -199,8 +196,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_hw_in_FP_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_FP_data['T_SC_re_C']]
 
         Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
-                                                                                          locator, config,
-                                                                                          technology=0)
+                                                                                          locator,
+                                                                                          technology='FP')
         # Evacuated Tube Solar Collectors
         SC_ET_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='ET'),
                                  usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
@@ -210,8 +207,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_hw_in_ET_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_ET_data['T_SC_re_C']]
 
         Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
-                                                                                          locator, config,
-                                                                                          technology=1)
+                                                                                          locator,
+                                                                                          technology='ET')
 
         ## calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
         T_ground_K = calculate_ground_temperature(locator,
@@ -1818,7 +1815,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
                 boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_nom_size_W, locator, config, 'BO1')
             Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(
-                SC_FP_data['Area_SC_m2'][0], locator, config, technology=0)
+                SC_FP_data['Area_SC_m2'][0], locator, technology='FP')
             Capex_a_AHU_ARU_SCU_USD[5][
                 0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + Capex_a_SC_FP_USD + Capex_a_boiler_USD
             Capex_total_AHU_ARU_SCU_USD[5][

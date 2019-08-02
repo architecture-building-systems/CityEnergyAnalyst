@@ -80,7 +80,7 @@ class LcaCalculations(object):
                                           'PEN'] / self.ETA_FINAL_TO_USEFUL * (
                                               1 + self.CC_SIGMA)  # MJ_oil / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
+            if BIOGAS_FROM_AGRICULTURE_FLAG:
                 self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_CO2 / (
                         1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
                 self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_EPRIM / (
@@ -114,7 +114,7 @@ class LcaCalculations(object):
             self.GHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                       'PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
+            if BIOGAS_FROM_AGRICULTURE_FLAG:
                 self.BG_CC_TO_CO2_STD = (
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA))  # kg_CO2 / MJ_useful
@@ -130,7 +130,7 @@ class LcaCalculations(object):
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA))  # kg_CO2 / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:  # Use Biogas from Agriculture
+            if BIOGAS_FROM_AGRICULTURE_FLAG:  # Use Biogas from Agriculture
                 self.EL_BGCC_TO_OIL_EQ_STD = (
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'PEN'] * self.CC_EL_TO_TOTAL)  # kg_CO2 / MJ_final

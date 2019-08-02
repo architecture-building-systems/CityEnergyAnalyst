@@ -204,6 +204,23 @@ indoor-comfort:
     type: float
   - name: rhum_min_pc
     type: float
+technical-systems:
+  pk: Name
+  type: dbf
+  location: get_building_hvac
+  fields:
+    - name: Name
+      type: str
+    - name: type_cs
+      type: str
+    - name: type_hs
+      type: str
+    - name: type_dhw
+      type: str
+    - name: type_ctrl
+      type: str
+    - name: type_vent
+      type: str
 
 
 

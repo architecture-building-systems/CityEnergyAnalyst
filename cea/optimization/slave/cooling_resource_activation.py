@@ -106,8 +106,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
 
 
 def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_resource_potentials, T_ground_K, prices,
-                               lca,
-                               master_to_slave_variables, config, Q_cooling_req, hour):
+                               lca, master_to_slave_variables, config, Q_cooling_req, hour):
     """
 
     :param DCN_cooling:
@@ -178,8 +177,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     Qc_load_unmet_W = Q_cooling_req
 
     # LAKE COOLING (FREE COOLING)
-    if Qc_load_unmet_W <= (
-            Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
+    if Qc_load_unmet_W <= ( Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0.0:
+        # Free cooling possible from the lake
 
         Source_Lake = 1
 
@@ -286,7 +285,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         T_chiller_in_K = T_tank_C + 273.0  # temperature of a fully mixed tank
         T_chiller_out_K = (T_tank_fully_charged_C + 273.0) - DT_COOL
 
-        if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0:  # activate VCC to charge the tank
+        if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0.0:  # activate VCC to charge the tank
             Qc_from_VCC_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
             opex_var_VCC_USDperhr, GHG_VCC_tonCO2perhr, prim_energy_VCC_MJoilperhr, Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(
                 Qc_from_VCC_to_tank_W, T_chiller_in_K,
@@ -297,7 +296,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
             Qc_CT_W.append(Qc_CT_VCC_W)
             Qc_to_tank_W -= Qc_from_VCC_to_tank_W
 
-        if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0:  # activate ACH to charge the tank
+        if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0.0:  # activate ACH to charge the tank
             Qc_from_ACH_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
             opex_var_ACH_USDperhr, GHG_ACH_tonCO2perhr, prim_energy_MJoilperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W = calc_chiller_absorption_operation(
                 Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits, hour)

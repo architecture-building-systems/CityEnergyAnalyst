@@ -3,6 +3,7 @@
 This file contains the constants used in objective function calculation in optimization
 """
 from __future__ import absolute_import
+
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
@@ -15,40 +16,51 @@ __status__ = "Production"
 # Length of entries of an individual and the name of every entry
 # this is the firts part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
-NAMES_TECHNOLOGY_OF_INDIVIDUAL = ['CHP/Furnace',
-                                  'CHP/Furnace Share',
-                                  'Base Boiler',
-                                  'Base Boiler Share',
-                                  'Peak Boiler',
-                                  'Peak Boiler Share',
-                                  'Heating Lake',
-                                  'Heating Lake Share',
-                                  'Heating Sewage',
-                                  'Heating Sewage Share',
-                                  'GHP',
-                                  'GHP Share',
-                                  'Data Centre',
-                                  'Data Centre Share',
-                                  'PV',
-                                  'PV Area Share',
-                                  'PVT',
-                                  'PVT Area Share',
-                                  'SC_ET',
-                                  'SC_ET Area Share',
-                                  'SC_FP',
-                                  'SC_FP Area Share',
-                                  'DHN Temperature',
-                                  'DHN unit configuration',
-                                  'Lake Cooling',
-                                  'Lake Cooling Share',
-                                  'VCC Cooling',
-                                  'VCC Cooling Share',
-                                  'Absorption Chiller',
-                                  'Absorption Chiller Share',
-                                  'Storage',
-                                  'Storage Share',
-                                  'DCN Temperature',
-                                  'DCN unit configuration']
+
+DH_CONVERSION_TECHNOLOGIES_CAPACITY = [["CHP/Furnace", [0, 4]],
+                                       ["BaseBoiler", [0, 2]],
+                                       ["PeakBoiler", [0, 2]],
+                                       ["HPLake", [0, 1]],
+                                       ["HPSewage", [0, 1]],
+                                       ["GHP", [0, 1]],
+                                       ["HPServer", [0, 1]],
+                                       ["PVT", [0, 1]],
+                                       ["SC_ET", [0, 1]],
+                                       ["SC_FP", [0, 1]],
+                                       ["PV", [0, 1]]]
+
+DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
+
+DH_CONVERSION_TECHNOLOGIES_SHARE = [["CHP/Furnace Share", [0.0, 1.0]],
+                                    ["BaseBoiler Share", [0.0, 1.0]],
+                                    ["PeakBoiler Share", [0.0, 1.0]],
+                                    ["HPLake Share", [0.0, 1.0]],
+                                    ["HPSewage Share", [0.0, 1.0]],
+                                    ["GHP Share", [0.0, 1.0]],
+                                    ["HPServer Share", [0.0, 1.0]],
+                                    ["PVT Share", [0.0, 1.0]],
+                                    ["SC_ET Share", [0.0, 1.0]],
+                                    ["SC_FP Share", [0.0, 1.0]],
+                                    ["PV Share", [0.0, 1.0]]]
+
+DC_CONVERSION_TECHNOLOGIES_CAPACITIES = [["FLake", [0, 1]],
+                                         ["VCC", [0, 1]],
+                                         ["ACH", [0, 1]],
+                                         ["Storage", [0, 1]]]
+
+DC_CONVERSION_TECHNOLOGIES_SHARE = [["FLake Share", [0.0, 1.0]],
+                                    ["VCC Share", [0.0, 1.0]],
+                                    ["ACH Share", [0.0, 1.0]],
+                                    ["Storage Share", [0.0, 1.0]]]
+
+DC_TECHNOLOGIES_SHARING_SPACE = []
+
+DH_ACRONYM = "DH"
+DC_ACRONYM = "DC"
+
+
+
+
 
 # Losses and margins
 DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
@@ -56,8 +68,8 @@ DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
 SIZING_MARGIN = 0.20  # Reliability margin for the system nominal capacity
-Q_MIN_SHARE = 0.0  # Minimum percentage for the installed capacity
-STORAGE_COOLING_SHARE_RESTRICTION = 0.3 # Maximum percentage of the nominal cooling load that is allowed
+Q_MIN_SHARE = 0.1  # Minimum percentage for the installed capacity
+STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
@@ -70,8 +82,8 @@ BSL = 1.5  # thermal conductivity of ground in W/m.K
 # Heat Exchangers
 U_COOL = 2500.0  # W/m2K
 U_HEAT = 2500.0  # W/m2K
-DT_HEAT = 5.0    # K - pinch delta at design conditions
-DT_COOL = 2.0    # K - pinch delta at design conditions
+DT_HEAT = 5.0  # K - pinch delta at design conditions
+DT_COOL = 2.0  # K - pinch delta at design conditions
 
 # Heat pump
 HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]
@@ -84,7 +96,6 @@ HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 HP_COP_MAX = 8.5  # maximum achieved by 3for2 21.05.18
 HP_COP_MIN = 2.7  # COP of typical air-to-air unit
-
 
 # Solar area to Wpeak
 ETA_AREA_TO_PEAK = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
@@ -137,35 +148,32 @@ CC_DELTA_T_DH = 5.0  # pinch for condenser
 
 ST_GEN_ETA = 0.9  # generator efficiency after steam turbine
 
-
-
 BIOGAS_FROM_AGRICULTURE_FLAG = False  # True = Biogas from Agriculture, False = Biogas normal
 HP_SEW_ALLOWED = True
 HP_LAKE_ALLOWED = True
 DATACENTER_HEAT_RECOVERY_ALLOWED = True
+HYBRID_HEATING_COOLING_ALLOWED = False  # False the configuration of decentralized buildings with hybrid technologies is not enabled.
 GHP_ALLOWED = True
 CC_ALLOWED = True
-FURNACE_ALLOWED = False
+FURNACE_ALLOWED = True
 DISC_GHP_FLAG = True  # Is geothermal allowed in disconnected buildings? False = NO ; True = YES
 DISC_BIOGAS_FLAG = False  # True = use Biogas only in Disconnected Buildings, no Natural Gas; False = both possible
-
 LAKE_COOLING_ALLOWED = True
 VCC_ALLOWED = True
 ABSORPTION_CHILLER_ALLOWED = True
 STORAGE_COOLING_ALLOWED = True
-
 
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 
 # Absorption chiller
-ACH_T_IN_FROM_CHP = 150 + 273.0 # hot water from CHP to the generator of ACH
-ACH_TYPE_SINGLE = 'single' # single effect absorption chiller
-ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
+ACH_T_IN_FROM_CHP = 150 + 273.0  # hot water from CHP to the generator of ACH
+ACH_TYPE_SINGLE = 'single'  # single effect absorption chiller
+ACH_TYPE_DOUBLE = 'double'  # double effect absorption chiller
 
-T_GENERATOR_FROM_FP_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
-T_GENERATOR_FROM_ET_C = 100 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
+T_GENERATOR_FROM_FP_C = 75  # fixme: this number is set corresponding to the flat plate solar thermal collector operation
+T_GENERATOR_FROM_ET_C = 100  # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
@@ -196,12 +204,12 @@ N_HEAT = 6  # number of heating technologies
 N_HR = 2  # number of heat recovery options
 N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
 
-INDICES_CORRESPONDING_TO_DHN = 2 # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
-DHN_temperature_lower_bound = 30 # Lower bound of the temperature that can be supplied by DHN
-DHN_temperature_upper_bound = 120 # Upper bound of the temperature that can be supplied by DHN
-INDICES_CORRESPONDING_TO_DCN = 2 # one index for temperature and one for the number of AHU/ARU/SCU the DCN is supplying
-DCN_temperature_lower_bound = 6 # Lower bound of the temperature that can be supplied by DCN
-DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be supplied by DCN
+INDICES_CORRESPONDING_TO_DHN = 2  # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
+DHN_temperature_lower_bound = 30  # Lower bound of the temperature that can be supplied by DHN
+DHN_temperature_upper_bound = 120  # Upper bound of the temperature that can be supplied by DHN
+INDICES_CORRESPONDING_TO_DCN = 2  # one index for temperature and one for the number of AHU/ARU/SCU the DCN is supplying
+DCN_temperature_lower_bound = 6  # Lower bound of the temperature that can be supplied by DCN
+DCN_temperature_upper_bound = 18  # Upper bound of the temperature that can be supplied by DCN
 
 #  variable corresponding to the consideration of DHN temperature in the optimization,
 # if this is True, the temperature of the DHN is generated between the lower and upper bounds and considered as the
@@ -211,8 +219,8 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 DHN_temperature_considered = False
 DCN_temperature_considered = False
 
-CXPB = 0.5
-MUTPB = 0.5
+CXPB = 0.8
+MUTPB = 0.8
 EPS_MARGIN = 0.001
 
 # Heat Recovery
