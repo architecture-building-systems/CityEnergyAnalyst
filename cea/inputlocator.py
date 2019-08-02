@@ -38,6 +38,10 @@ class InputLocator(object):
             os.makedirs(folder)
         return folder
 
+    def ensure_parent_folder_exists(self, file_path):
+        """Use os.makedirs to ensure the folders exist"""
+        self._ensure_folder(os.path.dirname(file_path))
+
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
@@ -592,14 +596,14 @@ class InputLocator(object):
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-geometry')
+        return os.path.join(self.scenario, 'inputs', 'building-geometry')
 
     def get_building_properties_folder(self):
         """scenario/inputs/building-properties/"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-properties')
+        return os.path.join(self.scenario, 'inputs', 'building-properties')
 
     def get_terrain_folder(self):
-        return self._ensure_folder(self.scenario, 'inputs', 'topography')
+        return os.path.join(self.scenario, 'inputs', 'topography')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
@@ -631,7 +635,7 @@ class InputLocator(object):
             return []
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
-        return [b.encode('utf-8') for b in zone_building_names]
+        return [b.encode('utf-8') if isinstance(b, basestring) else str(b) for b in zone_building_names]
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
@@ -678,6 +682,17 @@ class InputLocator(object):
         those files and are matched by column name.
         """
         return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
+
+
+    def get_building_schedules(self, building_name):
+        """
+        scenario/inputs/building-properties/{building_name}_schedules.csv
+        This file contains schedules of occupancy, appliance use, etc of each building.
+        Schedules are 8760 values per year
+        :param building_name:
+        :return:
+        """
+        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
@@ -1419,26 +1434,21 @@ class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
-    already_extracted = False  # only extract once per run
-
     def __init__(self):
 
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
         reference_case = os.path.join(project_folder, 'baseline')
 
-        if not ReferenceCaseOpenLocator.already_extracted:
-            import cea.examples
-            import zipfile
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        import cea.examples
+        import zipfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 
-            if os.path.exists(project_folder):
-                shutil.rmtree(project_folder)
-                assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+        if os.path.exists(project_folder):
+            shutil.rmtree(project_folder)
+            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
 
-            archive.extractall(temp_folder)
-            ReferenceCaseOpenLocator.already_extracted = True
-
+        archive.extractall(temp_folder)
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

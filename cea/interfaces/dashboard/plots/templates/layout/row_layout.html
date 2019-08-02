@@ -17,31 +17,57 @@
             {% if not loop.first %}
             <li>
               <a href="{{ url_for('plots_blueprint.route_move_plot_up', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
-                <i class="fa fa-chevron-up"></i>
+                <span data-toggle="tooltip" title="Move plot up">
+                  <i class="fa fa-chevron-up"></i>
+                </span>
               </a>
             </li>
             {% endif %}
             {% if not loop.last %}
-            <li><a href="{{ url_for('plots_blueprint.route_move_plot_down', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
-              <i class="fa fa-chevron-down"></i></a>
+            <li>
+              <a href="{{ url_for('plots_blueprint.route_move_plot_down', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                <span data-toggle="tooltip" title="Move plot down">
+                  <i class="fa fa-chevron-down"></i>
+                </span>
+              </a>
             </li>
             {% endif %}
             <li>
-              <a id="table-btn-{{ loop.index0 }}" data-plot-title="{{ plot.title }}"
+              <a data-toggle="modal"
                  data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ loop.index0 }}"
+                 data-target="#cea-dashboard-replace-plot">
+                <span data-toggle="tooltip" title="Change plot">
+                  <i class="fa fa-retweet"></i>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a id="table-btn-{{ loop.index0 }}"
+                 data-plot-title="{{ plot.title }}" data-dashboard-index="{{ dashboard_index }}"
+                 data-plot-index="{{ loop.index0 }}"
                  onclick="open_table(this)" role="button" aria-expanded="false" style="display: none">
-                <i class="fa fa-table"></i>
+                <span data-toggle="tooltip" title="Show table">
+                  <i class="fa fa-table"></i>
+                </span>
               </a>
             </li>
             <li class="dropdown">
-              <a data-dashboard-index="{{ dashboard_index }}"
-                 data-plot-index="{{ loop.index0 }}" data-toggle="modal" data-target="#cea-dashboard-edit-plot"
+              <a data-toggle="modal"
+                 data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ loop.index0 }}"
+                 data-target="#cea-dashboard-edit-plot"
                  role="button" aria-expanded="false">
-                <i class="fa fa-wrench"></i>
+                <span data-toggle="tooltip" title="Edit plot parameters">
+                  <i class="fa fa-wrench"></i>
+                </span>
               </a>
             </li>
-            <li><a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
-              <i class="fa fa-close"></i></a>
+            <li>
+              <a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index,
+                  plot_index=loop.index0) }}">
+                <span data-toggle="tooltip" title="Remove plot">
+                  <i class="fa fa-close"></i>
+                </span>
+              </a>
             </li>
           </ul>
           <div class="clearfix"></div>

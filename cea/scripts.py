@@ -28,7 +28,6 @@ class CeaScript(object):
         was responsible for printing their own parameters, but that requires manually keeping track of these
         parameters.
         """
-        default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         print('City Energy Analyst version %s' % cea.__version__)
         script_name = self.name
         print("%(verb)s `cea %(script_name)s` with the following parameters:" % locals())
@@ -37,7 +36,7 @@ class CeaScript(object):
             parameter_name = parameter.name
             parameter_value = parameter.get()
             print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
-            print("  (default: %s)" % default_config.get(parameter.fqname))
+            print("  (default: %s)" % parameter.default)
 
     def print_missing_input_files(self, config):
         schema_data = schemas()
