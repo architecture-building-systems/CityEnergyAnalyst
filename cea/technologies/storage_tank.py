@@ -215,26 +215,7 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(mdot_DCN_peak_kgpers, T_sup_DCN_peak_K, T_re_DCN_peak_K, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W,
-                                 peak_hour,
-                                 master_to_slave_vars):
-
-    area_HEX_tank_discharege_m2, \
-    UA_HEX_tank_discharge_WperK = calc_cold_storage_discharge_HEX(mdot_DCN_peak_kgpers,
-                                                                  Qc_tank_discharge_peak_W,
-                                                                  T_TANK_FULLY_CHARGED_K,
-                                                                  T_re_DCN_peak_K,
-                                                                  T_sup_DCN_peak_K)
-    # charging
-    T_sup_to_storage_K = T_TANK_FULLY_CHARGED_K - DT_COOL
-    T_re_from_storage_K = T_TANK_FULLY_DISCHARGED_K - DT_COOL
-    mcp_charge_kgpers = Qc_tank_charge_max_W / (T_re_from_storage_K - T_sup_to_storage_K)
-    area_HEX_tank_charge_m2, \
-    UA_HEX_tank_charge_WperK = calc_cold_storage_charge_HEX(mcp_charge_kgpers,
-                                                            Qc_tank_charge_max_W,
-                                                            T_TANK_FULLY_DISCHARGED_K,
-                                                            T_sup_to_storage_K,
-                                                            T_re_from_storage_K)
+def calc_storage_tank_properties(Qc_tank_discharge_peak_W):
 
     # calculate tank volume
     Q_tank_capacity_J = Qc_tank_discharge_peak_W * WH_TO_J
@@ -242,7 +223,7 @@ def calc_storage_tank_properties(mdot_DCN_peak_kgpers, T_sup_DCN_peak_K, T_re_DC
                                      (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
-    return area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, V_tank_m3
+    return V_tank_m3
 
 
 # ====================
