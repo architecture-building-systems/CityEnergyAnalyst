@@ -35,7 +35,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
 
     # calculate substations
 
-    if buildings_name_with_heating != []:
+    if (buildings_name_with_heating != [] and config.data_helper.region != 'SG'): #FIXME: temporal fix to avoid heating calculation in SG
         decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand,
                                                                             buildings_name_with_heating,
                                                                             config, prices, lca)
