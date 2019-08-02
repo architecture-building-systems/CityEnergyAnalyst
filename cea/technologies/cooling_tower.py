@@ -17,7 +17,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(q_hot_Wh, Q_nom_W, locator):
+def calc_CT(q_hot_Wh, Q_nom_W, max_CT_unit_size_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
@@ -31,15 +31,10 @@ def calc_CT(q_hot_Wh, Q_nom_W, locator):
     PhD Thesis, University de Liege, Belgium
     """
 
-    # get maximum CT size
-    CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
-    CT_cost_data = CT_cost_data[CT_cost_data['code'] == 'CT1']
-    Q_max_CT_W = max(CT_cost_data['cap_max'].values)
-
     # calculate number of CT activated according to loads
-    if q_hot_Wh > Q_max_CT_W:
+    if q_hot_Wh > max_CT_unit_size_W:
         # distribute loads to multiple units
-        number_of_units_activated = q_hot_Wh / Q_max_CT_W
+        number_of_units_activated = q_hot_Wh / max_CT_unit_size_W
     else:
         # operate one unit at the load
         number_of_units_activated = 1.0
@@ -53,7 +48,7 @@ def calc_CT(q_hot_Wh, Q_nom_W, locator):
 
     # calculate total electricity consumption
     wdot_W = (wpartload * wdesign_fan) * number_of_units_activated # FIXME: should be wpartload + wdesign_fan?
-    
+
     return wdot_W
 
 
@@ -74,7 +69,7 @@ def calc_CT_yearly(q_hot_kWh):
 
 # Investment costs
 
-def calc_Cinv_CT(Q_nom_CT_W, locator, config, technology_type):
+def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     """
     Annualized investment costs for the Combined cycle
 
@@ -140,7 +135,11 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, config, technology_type):
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
-
+def get_CT_max_size(locator, CT_code='CT1'):
+    CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
+    CT_cost_data = CT_cost_data[CT_cost_data['code'] == CT_code]
+    max_CT_unit_size_W = max(CT_cost_data['cap_max'].values)
+    return max_CT_unit_size_W
 
 
 
