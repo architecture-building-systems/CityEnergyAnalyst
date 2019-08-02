@@ -36,7 +36,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                               heating_dispatch, cooling_dispatch
                                               ):
     # local variables
-    building_names = master_to_slave_vars.building_names
+    building_names = master_to_slave_vars.building_names_electricity
 
     # GET ENERGY GENERATION
     E_CHP_gen_W, \

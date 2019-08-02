@@ -317,11 +317,6 @@ class InputLocator(object):
                                 network_type + '_' + 'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
         return path
 
-
-    def get_optimization_network_all_results_summary(self, network_type, key):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_results_folder(), network_type+'_'+'Network_summary_result_' + key + '.csv')
-
     def get_optimization_network_totals_folder_total(self, network_type, indCombi):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_network_totals_folder(),
@@ -470,7 +465,7 @@ class InputLocator(object):
         return os.path.join(self.get_potentials_folder(), "Sewage_heat_potential.csv")
 
     def get_lake_potential(self):
-        return os.path.join(self.get_potentials_folder(), "Lake_potential.csv")
+        return os.path.join(self.get_potentials_folder(), "Water_body_potential.csv")
 
     # POTENTIAL
     def get_potentials_folder(self):
@@ -485,7 +480,7 @@ class InputLocator(object):
 
     def get_geothermal_potential(self):
         """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
-        return os.path.join(self.get_potentials_folder(), "geothermal", "geothermal.csv")
+        return os.path.join(self.get_potentials_folder(), "Shallow_geothermal_potential.csv")
 
     def get_potentials_retrofit_folder(self):
         """scenario/outputs/data/potentials/retrofit.csv"""

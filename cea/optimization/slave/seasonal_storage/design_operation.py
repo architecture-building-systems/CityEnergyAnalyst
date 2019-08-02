@@ -62,7 +62,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     # Get ground temperatures
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
                                                          'windspd_ms', 'skytemp_C']]
-    T_ground_K = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
+    T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     # Calculate DH operation with on-site energy sources and storage
     T_amb_K = weather_data['drybulb_C'] + 273.15  # K
