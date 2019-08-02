@@ -35,8 +35,8 @@ def calc_cop_DX(Q_load_W):
 def calc_DX(mdot_kgpers, T_sup_K, T_re_K):
 
     if np.isclose(mdot_kgpers, 0.0):
-
-        wdot_W = 0
+        q_chw_W = 0.0
+        wdot_W = 0.0
     else:
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)
 
@@ -44,7 +44,7 @@ def calc_DX(mdot_kgpers, T_sup_K, T_re_K):
 
         wdot_W = q_chw_W/cop_DX
 
-    return wdot_W
+    return wdot_W, q_chw_W
 
 
 # investment and maintenance costs
