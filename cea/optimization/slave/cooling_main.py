@@ -67,64 +67,14 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     # This is then followed by checking of the Heat recovery from Data Centre, if it is allowed, then the corresponding
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
+    # local variables
     t0 = time.time()
     DCN_barcode = master_to_slave_vars.DCN_barcode
-    building_names = master_to_slave_vars.building_names
-    print ('Cooling Main is Running')
+    building_names = master_to_slave_vars.building_names_cooling
 
-    # Space cooling previously aggregated in the substation routine
-    if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        df = pd.read_csv(
-            locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling),
-            usecols=["T_DCNf_space_cooling_and_refrigeration_sup_K", "T_DCNf_space_cooling_and_refrigeration_re_K",
-                     "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
-        df = df.fillna(0)
-        T_sup_K = df['T_DCNf_space_cooling_and_refrigeration_sup_K'].values
-        T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
-        mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
-    else:
-        df = pd.read_csv(
-            locator.get_optimization_network_results_summary('DC', master_to_slave_vars.network_data_file_cooling),
-            usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
-                     "T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
-                     "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
-        df = df.fillna(0)
-        T_sup_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_sup_K'].values
-        T_re_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_re_K'].values
-        mdot_kgpers = df['mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers'].values
-    DCN_operation_parameters = df.fillna(0)
-    DCN_operation_parameters_array = DCN_operation_parameters.values
-
-    Qc_DCN_W = np.array(
-        pd.read_csv(locator.get_optimization_network_results_summary(master_to_slave_vars.network_data_file_cooling),
-                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W",
-                             "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
-    # Data center cooling, (treated separately for each building)
-    df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdata_sys_MWhyr"])
-    arrayData = np.array(df)
-
-    # total cooling requirements based on the Heat Recovery Flag
-    Q_cooling_req_W = np.zeros(HOURS_IN_YEAR)
-    if master_to_slave_vars.WasteServersHeatRecovery == 0:
-        for hour in range(HOURS_IN_YEAR):  # summing cooling loads of space cooling, refrigeration and data center
-            Q_cooling_req_W[hour] = Qc_DCN_W[hour][1]
-    else:
-        for hour in range(HOURS_IN_YEAR):  # only including cooling loads of space cooling and refrigeration
-            Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
-
-    ############# Recover the heat already taken from the Lake by the heat pumps
-    if district_heating_network:
-        try:
-            dfSlave = pd.read_csv(
-                locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                          master_to_slave_vars.generation_number),
-                usecols=["Q_coldsource_HPLake_W"])
-            Q_Lake_Array_W = np.array(dfSlave)
-
-        except:
-            Q_Lake_Array_W = [0]
-    else:
-        Q_Lake_Array_W = [0]
+    # Import Temperatures from Network Summary:
+    Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers = calc_network_summary_DCN(district_heating_network, locator,
+                                                                             master_to_slave_vars)
 
     ### input parameters
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size_W
@@ -132,15 +82,24 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
 
     T_ground_K = calculate_ground_temperature(locator, config)
 
-    # sizing cold water storage tank
-    if master_to_slave_vars.Storage_cooling_size_W > 0:
+    # SIZE THE COLD STORAGE TANK
+    if master_to_slave_vars.Storage_cooling_size_W > 0.0:
         Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size_W
         Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
-        peak_hour = np.argmax(Q_cooling_req_W)
-        area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
-        area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
-        V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
-                                                              Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars)
+        peak_hour = Q_cooling_req_W.max()
+        mdot_DCN_peak_kgpers = mdot_kgpers[peak_hour]
+        T_sup_DCN_peak_K = mdot_kgpers[peak_hour]
+        T_re_DCN_peak_K = mdot_kgpers[peak_hour]
+
+        area_HEX_tank_discharege_m2, \
+        UA_HEX_tank_discharge_WperK, \
+        area_HEX_tank_charge_m2, \
+        UA_HEX_tank_charge_WperK, \
+        V_tank_m3 = storage_tank.calc_storage_tank_properties(mdot_DCN_peak_kgpers, T_sup_DCN_peak_K, T_re_DCN_peak_K,
+                                                              Qc_tank_charge_max_W,
+                                                              Qc_tank_discharge_peak_W,
+                                                              peak_hour,
+                                                              master_to_slave_vars)
     else:
         Qc_tank_discharge_peak_W = 0
         Qc_tank_charge_max_W = 0
@@ -202,7 +161,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
               'UA_HEX_tank_charge_WperK': UA_HEX_tank_charge_WperK}
 
     ### input variables
-    lake_available_cooling = pd.read_csv(locator.get_lake_potential(), usecols=['lake_potential'])
+    lake_available_cooling = pd.read_csv(locator.get_lake_potential(), usecols=['QLake_kW']) * 1000  # to W
     Qc_available_from_lake_W = np.sum(lake_available_cooling).values[0] + np.sum(Q_Lake_Array_W)
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
@@ -210,7 +169,8 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
-    network_costs_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count('1') / master_to_slave_vars.num_total_buildings
+    network_costs_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count(
+        '1') / master_to_slave_vars.num_total_buildings
     network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
             (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
     costs_a_USD = network_costs_a_USD
@@ -247,6 +207,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     opex_var_CCGT_USDhr = np.zeros(HOURS_IN_YEAR)
     opex_var_CT_USDhr = np.zeros(HOURS_IN_YEAR)
     E_used_Lake_W = np.zeros(HOURS_IN_YEAR)
+    deltaPmax = np.zeros(HOURS_IN_YEAR)
     E_used_VCC_W = np.zeros(HOURS_IN_YEAR)
     E_used_VCC_backup_W = np.zeros(HOURS_IN_YEAR)
     E_used_ACH_W = np.zeros(HOURS_IN_YEAR)
@@ -264,21 +225,21 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     prim_energy_CCGT_MJoil = np.zeros(HOURS_IN_YEAR)
     prim_energy_CT_MJoil = np.zeros(HOURS_IN_YEAR)
     NG_used_CCGT_W = np.zeros(HOURS_IN_YEAR)
-    Lake_Status= np.zeros(HOURS_IN_YEAR)
-    ACH_Status= np.zeros(HOURS_IN_YEAR)
-    VCC_Status= np.zeros(HOURS_IN_YEAR)
-    VCC_Backup_Status= np.zeros(HOURS_IN_YEAR)
+    Lake_Status = np.zeros(HOURS_IN_YEAR)
+    ACH_Status = np.zeros(HOURS_IN_YEAR)
+    VCC_Status = np.zeros(HOURS_IN_YEAR)
+    VCC_Backup_Status = np.zeros(HOURS_IN_YEAR)
     calfactor_total = 0
 
     for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
         performance_indicators_output, \
         Qc_supply_to_DCN, \
         Qc_CT_W, Qh_CHP_ACH_W, \
-        cooling_resource_potentials,\
-            source_output= cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
-                                                                 limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, lca, master_to_slave_vars,
-                                                                 config, Q_cooling_req_W[hour], hour)
+        cooling_resource_potentials, \
+        source_output = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
+                                                   limits, cooling_resource_potentials,
+                                                   T_ground_K[hour], prices, lca, master_to_slave_vars,
+                                                   config, Q_cooling_req_W[hour], hour)
 
         # print (hour)
         # save results for each time-step
@@ -307,14 +268,17 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
         ACH_Status[hour] = source_output["ACH_Status"]
         VCC_Status[hour] = source_output["VCC_Status"]
         VCC_Backup_Status[hour] = source_output["VCC_Backup_Status"]
-
+        deltaPmax[hour] = performance_indicators_output['deltaPmax']
 
         Qc_req_from_CT_W[hour] = Qc_CT_W
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
     calfactor_total += np.sum(calfactor_buildings)
-    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(
-        Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
+    TotalCool += np.sum(Qc_from_Lake_W) + \
+                 np.sum(Qc_from_VCC_W) + \
+                 np.sum(Qc_from_ACH_W) + \
+                 np.sum(Qc_from_VCC_backup_W) + \
+                 np.sum(Qc_from_storage_tank_W)
     Q_VCC_nom_W = limits['Qnom_VCC_W']
     Q_ACH_nom_W = limits['Qnom_ACH_W']
     Q_VCC_backup_nom_W = limits['Qnom_VCC_backup_W']
@@ -521,11 +485,31 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
         "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
         "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
         "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W,
-        "Lake_Status":Lake_Status,
-        "ACH_Status":ACH_Status,
-        "VCC_Status":VCC_Status,
-        "VCC_Backup_Status":VCC_Backup_Status}
+        "Lake_Status": Lake_Status,
+        "ACH_Status": ACH_Status,
+        "VCC_Status": VCC_Status,
+        "VCC_Backup_Status": VCC_Backup_Status}
     return performance, cooling_dispatch
+
+
+def calc_network_summary_DCN(district_heating_network, locator, master_to_slave_vars):
+    if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
+        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
+                                                                          master_to_slave_vars.network_data_file_cooling))
+        df = df.fillna(0)
+        T_sup_K = df['T_DCNf_space_cooling_and_refrigeration_sup_K'].values
+        T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
+        mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
+        Q_cooling_req_W = df['Q_DCNf_space_cooling_and_refrigeration_W'].values
+    else:
+        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
+                                                                          master_to_slave_vars.network_data_file_cooling))
+        df = df.fillna(0)
+        T_sup_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_sup_K'].values
+        T_re_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_re_K'].values
+        mdot_kgpers = df['mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers'].values
+        Q_cooling_req_W = df['Q_DCNf_space_cooling_data_center_and_refrigeration_W'].values
+    return Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers
 
 
 def calc_network_costs_cooling(district_network_barcode, locator, master_to_slave_vars,
@@ -564,11 +548,13 @@ def calc_substations_costs_cooling(building_names, df_current_individual, distri
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
             if df_current_individual['Data Centre'][0] == 1:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
-                                 usecols=["Q_space_cooling_and_refrigeration_W"])
+                df = pd.read_csv(
+                    locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
+                    usecols=["Q_space_cooling_and_refrigeration_W"])
             else:
-                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
-                                 usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
+                df = pd.read_csv(
+                    locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
+                    usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray)

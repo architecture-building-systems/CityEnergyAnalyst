@@ -19,12 +19,6 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
-from cea.plots.supply_system.old.main import preprocessing_generations_data, processing_mcda_data
-
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
-    get_pointers_to_correct_individual_generation
-from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import \
-    energy_mix_based_on_technologies_script
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

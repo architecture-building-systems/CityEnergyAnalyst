@@ -7,7 +7,7 @@ from __future__ import division
 from math import log
 
 import pandas as pd
-
+from scipy import interpolate
 from cea.technologies.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY, FURNACE_MIN_LOAD, \
     FURNACE_MIN_ELECTRIC, BOILER_P_AUX
 
@@ -154,7 +154,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca
         if Q_design_W < Q_th_load_W:
             Q_th_load_W = Q_design_W - 1
 
-        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE)
+        Furnace_eff = calc_eta_furnace(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE)
 
         eta_therm_real, eta_el, Q_aux_W = Furnace_eff
 
