@@ -82,13 +82,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         # Flate Plate Solar Collectors
         SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
         Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
-                                                                                          locator, config,
+                                                                                          locator,
                                                                                           panel_type="FP")
 
         # Evacuated Tube Solar Collectors
         SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
         Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
-                                                                                          locator, config,
+                                                                                          locator,
                                                                                           panel_type="ET")
 
 
