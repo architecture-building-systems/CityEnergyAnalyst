@@ -19,7 +19,10 @@ __status__ = "Production"
 class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
     name = "Annual emissions"
-
+    expected_parameters = {
+        'generation': 'plots-optimization:generation',
+        'scenario-name': 'general:scenario-name',
+    }
     def __init__(self, project, parameters, cache):
         super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["GHG_sys_connected_tonCO2",
@@ -44,7 +47,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
                          yaxis=dict(title='Annual emissions [ton CO2-eq/year]', domain=[0.0, 1.0]))
 
     def calc_graph(self):
-        self.multi_criteria=False #TODO: add capabilities to plot muticriteria in this plot too
+        self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance()
         graph = []
         for field in self.analysis_fields:
@@ -67,11 +70,10 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     AnnualEmissionsPlot(config.project,
-                    {'buildings': None,
-                            'scenario-name': config.scenario_name,
-                            'generation': config.plots_optimization.generation,
-                            'multicriteria': config.plots_optimization.multicriteria},
-                    cache).plot(auto_open=True)
+                        {'buildings': None,
+                         'scenario-name': config.scenario_name,
+                         'generation': config.plots_optimization.generation},
+                        cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
