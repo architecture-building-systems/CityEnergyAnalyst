@@ -328,7 +328,7 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "network")
 
-    def get_thermal_network_data_folder(self, network_data_file):
+    def get_optimization_thermal_network_data_file(self, network_data_file):
         """scenario/outputs/data/optimization/network
         Network summary results
         """

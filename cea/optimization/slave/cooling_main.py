@@ -40,8 +40,8 @@ __status__ = "Production"
 
 # technical model
 
-def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, prices, lca, config,
-                                         reduced_timesteps_flag, district_heating_network):
+def district_cooling_network(locator, master_to_slave_vars, network_features, prices, lca, config,
+                             reduced_timesteps_flag, district_heating_network):
     """
     Computes the parameters for the cooling of the complete DCN
 
