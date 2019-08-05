@@ -44,8 +44,7 @@ def add_disconnected_costs(column_names_buildings_heating,
     TAC_cooling_disconnected_USD, Opex_a_cooling_disconnected_USD, \
     PEN_cooling_disconnected_MJoil, Capex_total_cooling_disconnected_USD = calc_costs_emissions_decentralized_DC(
         DCN_barcode,
-        column_names_buildings_cooling, locator,
-        master_to_slave_vars)
+        column_names_buildings_cooling, locator)
 
     Capex_a_disconnected_USD = Capex_a_cooling_disconnected_USD + Capex_a_heating_disconnected_USD
     Capex_total_disconnected_USD = Capex_total_cooling_disconnected_USD + Capex_total_heating_disconnected_USD
@@ -408,9 +407,8 @@ def calc_generation_costs_heating(locator,
     return performance_costs
 
 
-def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
-                                          master_to_slave_vars):
-    PV_barcode = ''
+def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
+                                          ):
     CO2DiscBuild = 0.0
     Capex_Disconnected = 0.0
     CostDiscBuild = 0.0
@@ -418,143 +416,16 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
     PrimDiscBuild = 0.0
     Capex_total_Disconnected = 0.0
     total_demand = pd.read_csv(locator.get_total_demand())
-    buildings_names_with_cooling_load = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-    for (index, building_name) in zip(DCN_barcode, buildList):
+    for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
-            if building_name in buildings_names_with_cooling_load:
-                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                                       configuration='AHU_ARU_SCU'))
-                dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                to_PV = 1
-                if dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0] == 1:
-                    to_PV = 0
-                if dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0] == 1:
-                    to_PV = 0
-                if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
-                    to_PV = 0
-            else:
-                to_PV = 0
-        else:  # adding costs for buildings in which the centralized plant provides a part of the load requirements
-            if building_name in buildings_names_with_cooling_load:
-                DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
-                if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'ARU_SCU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'AHU_SCU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'AHU_ARU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to AHU_ARU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'SCU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to SCU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'ARU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to ARU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to ARU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
-                    decentralized_configuration = 'AHU'
-                    df = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
-                                                                                              decentralized_configuration))
-                    dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                    CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                    PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                    Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                    Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                    Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                    to_PV = 1
-                    if dfBest["single effect ACH to AHU Share (FP)"].iloc[0] == 1:
-                        to_PV = 0
-                    if dfBest["single effect ACH to AHU Share (ET)"].iloc[0] == 1:
-                        to_PV = 0
-
-                if DCN_unit_configuration == 7:  # corresponds to AHU + ARU + SCU from central plant
-                    to_PV = 1
-            else:
-                to_PV = 0
+            df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name, configuration='AHU_ARU_SCU'))
+            dfBest = df[df["Best configuration"] == 1]
+            CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
+            CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
+            PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
+            Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+            Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
+            Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
     return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild, Capex_total_Disconnected
 
 

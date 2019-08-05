@@ -286,16 +286,27 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_heating.csv')
 
-    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration):
+    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration='AHU_ARU_SCU'):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
         return os.path.join(self.get_optimization_decentralized_folder(),
                             buildingname + '_' + configuration + '_result_cooling.csv')
 
+    def get_optimization_decentralized_folder_building_cooling_activation(self, buildingname, configuration='AHU_ARU_SCU'):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+
+        return os.path.join(self.get_optimization_decentralized_folder(),
+                            buildingname + '_' + configuration + '_cooling_activation.csv')
+
     def get_optimization_decentralized_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + buildingname + '_result_heating.csv')
+
+    def get_optimization_decentralized_folder_building_result_heating_activation(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_decentralized_folder(),
+                            'DiscOp_' + buildingname + '_result_heating_activation.csv')
 
     def get_optimization_network_results_summary(self, network_type, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
