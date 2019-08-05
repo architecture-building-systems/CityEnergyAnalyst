@@ -28,24 +28,28 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "supply-system"
 
-    expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
-        'scenario-name': 'general:scenario-name',
-    }
-
     def __init__(self, project, parameters, cache):
         super(SupplySystemPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('testing', 'supply-system-overview')
         self.generation = self.parameters['generation']
         self.individual = self.parameters['individual']
+        self.timeframe = self.parameters['timeframe']
 
     @cea.plots.cache.cached
     def process_individual_dispatch_curve_heating(self):
         data_heating = pd.read_csv(
             self.locator.get_optimization_slave_heating_activation_pattern(self.individual, self.generation)).set_index(
             'DATE')
+        if self.timeframe == "daily":
+            data_heating.index = pd.to_datetime(data_heating.index)
+            data_heating = data_heating.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_heating.index = pd.to_datetime(data_heating.index)
+            data_heating = data_heating.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_heating.index = pd.to_datetime(data_heating.index)
+            data_heating = data_heating.resample('M').sum()
         return data_heating
 
     @cea.plots.cache.cached
@@ -53,6 +57,15 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         data_cooling = pd.read_csv(
             self.locator.get_optimization_slave_cooling_activation_pattern(self.individual, self.generation)).set_index(
             'DATE')
+        if self.timeframe == "daily":
+            data_cooling.index = pd.to_datetime(data_cooling.index)
+            data_cooling = data_cooling.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_cooling.index = pd.to_datetime(data_cooling.index)
+            data_cooling = data_cooling.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_cooling.index = pd.to_datetime(data_cooling.index)
+            data_cooling = data_cooling.resample('M').sum()
         return data_cooling
 
     @cea.plots.cache.cached
@@ -60,4 +73,13 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         data_electricity = pd.read_csv(
             self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
                                                                                self.generation)).set_index('DATE')
+        if self.timeframe == "daily":
+            data_electricity.index = pd.to_datetime(data_electricity.index)
+            data_electricity = data_electricity.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_electricity.index = pd.to_datetime(data_electricity.index)
+            data_electricity = data_electricity.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_electricity.index = pd.to_datetime(data_electricity.index)
+            data_electricity = data_electricity.resample('M').sum()
         return data_electricity

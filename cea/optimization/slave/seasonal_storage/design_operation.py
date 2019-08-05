@@ -75,7 +75,7 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     Q_SC_FP_gen_Whr = solar_technologies_data['Q_SC_FP_gen_W']
     Solar_Tscr_th_PVT_K_hour = solar_technologies_data['Tscr_th_PVT_K']
     Solar_Tscr_th_SC_ET_K_hour = solar_technologies_data['Tscr_th_SC_ET_K']
-    Solar_Tscr_th_SC_FP_K_hour = solar_technologies_data['Solar_Tscr_th_SC_FP_K_hour']
+    Solar_Tscr_th_SC_FP_K_hour = solar_technologies_data['Tscr_th_SC_FP_K']
 
     # Initialize variables
     Q_storage_content_final_Whr = np.zeros(HOURS_IN_YEAR)
