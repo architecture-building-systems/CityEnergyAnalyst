@@ -94,7 +94,7 @@ def calc_temp_hex_building_side(building_demand_df, heating_configuration):
     return Ths_supply_C, Ths_return
 
 
-def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration=7, DCN_barcode=""):
+def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration=['aru','ahu','scu'], DCN_barcode=""):
     if DCN_barcode.count("1") > 0:  # CALCULATE SUBSTATIONS DURING CENTRALIZED OPTIMIZATION
         buildings_dict = {}
         cooling_system_temperatures_dict = {}
@@ -192,60 +192,43 @@ def calc_temp_this_building_cooling(T_supply_to_cs_ref, T_supply_to_cs_ref_data)
 def calc_compound_Tcs(building_demand_df,
                       cooling_configuration):
     # HEX sizing for spacing cooling, calculate t_DC_return_cs, mcp_DC_cs
-    Qcs_sys_ahu_kWh = abs(building_demand_df.Qcs_sys_ahu_kWh.values)
-    Qcs_sys_aru_kWh = abs(building_demand_df.Qcs_sys_aru_kWh.values)
-    Qcs_sys_scu_kWh = abs(building_demand_df.Qcs_sys_scu_kWh.values)
-    Qcs_sys_kWh_dict = {1: Qcs_sys_ahu_kWh, 2: Qcs_sys_aru_kWh, 3: Qcs_sys_scu_kWh,
-                        4: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh, 5: Qcs_sys_ahu_kWh + Qcs_sys_scu_kWh,
-                        6: Qcs_sys_aru_kWh + Qcs_sys_scu_kWh, 7: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh + Qcs_sys_scu_kWh}
-    mcpcs_sys_ahu_kWperC = abs(building_demand_df.mcpcs_sys_ahu_kWperC.values)
-    mcpcs_sys_aru_kWperC = abs(building_demand_df.mcpcs_sys_aru_kWperC.values)
-    mcpcs_sys_scu_kWperC = abs(building_demand_df.mcpcs_sys_scu_kWperC.values)
-    mcpcs_sys_kWperC_dict = {1: mcpcs_sys_ahu_kWperC, 2: mcpcs_sys_aru_kWperC, 3: mcpcs_sys_scu_kWperC,
-                             4: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC,
-                             5: mcpcs_sys_ahu_kWperC + mcpcs_sys_scu_kWperC,
-                             6: mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC,
-                             7: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC}
+    Qcs_sys_kWh_dict = {'ahu': abs(building_demand_df.Qcs_sys_ahu_kWh.values),
+                        'aru': abs(building_demand_df.Qcs_sys_aru_kWh.values),
+                        'scu': abs(building_demand_df.Qcs_sys_scu_kWh.values)}
+    mcpcs_sys_kWperC_dict = {'ahu': abs(building_demand_df.mcpcs_sys_ahu_kWperC.values),
+                             'aru': abs(building_demand_df.mcpcs_sys_aru_kWperC.values),
+                             'scu': abs(building_demand_df.mcpcs_sys_scu_kWperC.values)}
     # cooling supply temperature calculations based on heating configurations
-    Tcs_ahu_supply = building_demand_df.Tcs_sys_sup_ahu_C.values
-    Tcs_aru_supply = building_demand_df.Tcs_sys_sup_aru_C.values
-    Tcs_scu_supply = building_demand_df.Tcs_sys_sup_scu_C.values
-    Tcs_ahu_return = building_demand_df.Tcs_sys_re_ahu_C.values
-    Tcs_aru_return = building_demand_df.Tcs_sys_re_aru_C.values
-    Tcs_scu_return = building_demand_df.Tcs_sys_re_scu_C.values
+    T_cs_supply_dict = {'ahu':building_demand_df.Tcs_sys_sup_ahu_C.values,
+                        'aru':building_demand_df.Tcs_sys_sup_aru_C.values,
+                        'scu':building_demand_df.Tcs_sys_sup_scu_C.values}
+    T_cs_return_dict = {'ahu':building_demand_df.Tcs_sys_re_ahu_C.values,
+                        'aru':building_demand_df.Tcs_sys_re_aru_C.values,
+                        'scu':building_demand_df.Tcs_sys_re_scu_C.values}
 
-    if cooling_configuration == 1:  # AHU
-        Tcs_supply = Tcs_ahu_supply
-        Tcs_return = Tcs_ahu_return
-    elif cooling_configuration == 2:  # ARU
-        Tcs_supply = Tcs_aru_supply
-        Tcs_return = Tcs_aru_return
-    elif cooling_configuration == 3:  # SCU
-        Tcs_supply = Tcs_scu_supply
-        Tcs_return = Tcs_scu_return
-    elif cooling_configuration == 4:  # AHU + ARU
-        Tcs_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
-        Tcs_return = np.vectorize(calc_HEX_mix_2_flows)(Qcs_sys_kWh_dict[1], Qcs_sys_kWh_dict[2],
-                                                        mcpcs_sys_kWperC_dict[1], mcpcs_sys_kWperC_dict[2],
-                                                        Tcs_ahu_return, Tcs_aru_return)
-    elif cooling_configuration == 5:  # AHU + SCU
-        Tcs_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_scu_supply)
-        Tcs_return = np.vectorize(calc_HEX_mix_2_flows)(Qcs_sys_kWh_dict[1], Qcs_sys_kWh_dict[3],
-                                                        mcpcs_sys_kWperC_dict[1], mcpcs_sys_kWperC_dict[3],
-                                                        Tcs_ahu_return, Tcs_scu_return)
-    elif cooling_configuration == 6:  # ARU + SCU
-        Tcs_supply = np.vectorize(calc_DC_supply)(Tcs_aru_supply, Tcs_scu_supply)
-        Tcs_return = np.vectorize(calc_HEX_mix_2_flows)(Qcs_sys_kWh_dict[2], Qcs_sys_kWh_dict[3],
-                                                        mcpcs_sys_kWperC_dict[2], mcpcs_sys_kWperC_dict[3],
-                                                        Tcs_aru_return, Tcs_scu_return)
-    elif cooling_configuration == 7:  # AHU + ARU + SCU
-        T_space_cooling_intermediate_1 = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
-        Tcs_supply = np.vectorize(calc_DC_supply)(T_space_cooling_intermediate_1, Tcs_scu_supply)
+    if len(cooling_configuration) == 1:
+        Tcs_supply = T_cs_supply_dict[cooling_configuration[0]]
+        Tcs_return = T_cs_return_dict[cooling_configuration[0]]
+    elif len(cooling_configuration) == 2:  # AHU + ARU
+        unit_1 = cooling_configuration[0]
+        unit_2 = cooling_configuration[1]
 
-        Tcs_return = np.vectorize(calc_HEX_mix_3_flows)(Qcs_sys_kWh_dict[1], Qcs_sys_kWh_dict[2], Qcs_sys_kWh_dict[3],
-                                                        mcpcs_sys_kWperC_dict[1], mcpcs_sys_kWperC_dict[2],
-                                                        mcpcs_sys_kWperC_dict[3],
-                                                        Tcs_ahu_return, Tcs_aru_return, Tcs_scu_return)
+        Tcs_supply = np.vectorize(calc_DC_supply)(T_cs_supply_dict[unit_1], T_cs_supply_dict[unit_2])
+        Tcs_return = np.vectorize(calc_HEX_mix_2_flows)(Qcs_sys_kWh_dict[unit_1], Qcs_sys_kWh_dict[unit_2],
+                                                        mcpcs_sys_kWperC_dict[unit_1], mcpcs_sys_kWperC_dict[unit_2],
+                                                        T_cs_return_dict[unit_1], T_cs_return_dict[unit_2])
+    elif len(cooling_configuration) == 3:  # AHU + ARU + SCU
+        unit_1 = cooling_configuration[0]
+        unit_2 = cooling_configuration[1]
+        unit_3 = cooling_configuration[2]
+
+        T_space_cooling_intermediate_1 = np.vectorize(calc_DC_supply)(T_cs_supply_dict[unit_1], T_cs_supply_dict[unit_2])
+        Tcs_supply = np.vectorize(calc_DC_supply)(T_space_cooling_intermediate_1, T_cs_supply_dict[unit_3])
+        Tcs_return = np.vectorize(calc_HEX_mix_3_flows)(Qcs_sys_kWh_dict[unit_1], Qcs_sys_kWh_dict[unit_2],
+                                                        Qcs_sys_kWh_dict[unit_3], mcpcs_sys_kWperC_dict[unit_1],
+                                                        mcpcs_sys_kWperC_dict[unit_2], mcpcs_sys_kWperC_dict[unit_3],
+                                                        T_cs_return_dict[unit_1], T_cs_return_dict[unit_2],
+                                                        T_cs_return_dict[unit_3])
     elif cooling_configuration == 0:
         Tcs_supply = np.zeros(HOURS_IN_YEAR) + 1E6
         Tcs_return = np.zeros(HOURS_IN_YEAR) - 1E6
@@ -259,36 +242,34 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
                              Tcs_return_C, cs_configuration,
                              locator, DCN_barcode=""):
     # HEX sizing for spacing cooling, calculate t_DC_return_cs, mcp_DC_cs
-    Qcs_sys_ahu_kWh = abs(building.Qcs_sys_ahu_kWh.values)
-    Qcs_sys_aru_kWh = abs(building.Qcs_sys_aru_kWh.values)
-    Qcs_sys_scu_kWh = abs(building.Qcs_sys_scu_kWh.values)
-    Qcs_sys_kWh_dict = {1: Qcs_sys_ahu_kWh, 2: Qcs_sys_aru_kWh, 3: Qcs_sys_scu_kWh,
-                        4: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh, 5: Qcs_sys_ahu_kWh + Qcs_sys_scu_kWh,
-                        6: Qcs_sys_aru_kWh + Qcs_sys_scu_kWh, 7: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh + Qcs_sys_scu_kWh}
-    mcpcs_sys_ahu_kWperC = abs(building.mcpcs_sys_ahu_kWperC.values)
-    mcpcs_sys_aru_kWperC = abs(building.mcpcs_sys_aru_kWperC.values)
-    mcpcs_sys_scu_kWperC = abs(building.mcpcs_sys_scu_kWperC.values)
-    mcpcs_sys_kWperC_dict = {1: mcpcs_sys_ahu_kWperC, 2: mcpcs_sys_aru_kWperC, 3: mcpcs_sys_scu_kWperC,
-                             4: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC,
-                             5: mcpcs_sys_ahu_kWperC + mcpcs_sys_scu_kWperC,
-                             6: mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC,
-                             7: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC}
+    Qcs_sys_kWh_dict = {'ahu': abs(building.Qcs_sys_ahu_kWh.values),
+                        'aru': abs(building.Qcs_sys_aru_kWh.values),
+                        'scu': abs(building.Qcs_sys_scu_kWh.values)}
+    mcpcs_sys_kWperC_dict = {'ahu': abs(building.mcpcs_sys_ahu_kWperC.values),
+                             'aru': abs(building.mcpcs_sys_aru_kWperC.values),
+                             'scu': abs(building.mcpcs_sys_scu_kWperC.values)}
 
     ## SIZE FOR THE SPACE COOLING HEAT EXCHANGER
-    if cs_configuration == 0:
+    if len(cs_configuration) == 0:
         t_DC_return_cs = 0
         mcp_DC_cs = 0
         A_hex_cs = 0
         Qcs_sys_W = np.zeros(HOURS_IN_YEAR)
     else:
         tci = T_DC_supply_to_cs_ref_data_C + 273  # fixme: change according to cs_ref or ce_ref_data
-        Qcs_sys_W = abs(Qcs_sys_kWh_dict[cs_configuration]) * 1000  # in W
+        Qcs_sys_kWh = 0.0
+        for unit in cs_configuration:
+            Qcs_sys_kWh += Qcs_sys_kWh_dict[unit]
+        Qcs_sys_W = abs(Qcs_sys_kWh) * 1000  # in W
         # only include space cooling and refrigeration
         Qnom_W = max(Qcs_sys_W)  # in W
         if Qnom_W > 0:
             tho = Tcs_supply_C + 273  # in K
             thi = Tcs_return_C + 273  # in K
-            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+            mcpcs_sys_kWperC = 0.0
+            for unit in cs_configuration:
+                mcpcs_sys_kWperC += mcpcs_sys_kWperC_dict[unit]
+            ch = (mcpcs_sys_kWperC) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
             index = np.where(Qcs_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
@@ -303,7 +284,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             A_hex_cs = 0
 
     # HEX sizing for refrigeration, calculate t_DC_return_ref, mcp_DC_ref
-    if cs_configuration == 0:
+    if len(cs_configuration) == 0:
         t_DC_return_ref = tci
         mcp_DC_ref = 0
         A_hex_ref = 0
@@ -315,7 +296,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         if Qnom_W > 0:
             tho = building.Tcref_sup_C + 273  # in K
             thi = building.Tcref_re_C + 273  # in K
-            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K
+            ch = abs(building.mcpcre_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcre_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
@@ -329,7 +310,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             A_hex_ref = 0
 
     # HEX sizing for datacenter, calculate t_DC_return_data, mcp_DC_data
-    if cs_configuration == 0:
+    if len(cs_configuration) == 0:
         t_DC_return_data = tci
         mcp_DC_data = 0
         A_hex_data = 0
@@ -341,7 +322,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         if Qnom_W > 0:
             tho = building.Tcdata_sys_sup_C + 273  # in K
             thi = building.Tcdata_sys_re_C + 273  # in K
-            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K
+            ch = abs(building.mcpcdata_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]

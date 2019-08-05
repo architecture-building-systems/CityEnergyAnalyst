@@ -204,7 +204,7 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_BaseBoiler_gen_W
 
-    if (master_to_slave_vars.BoilerPeak_on) == 1 and Q_heat_unmet_W > 0:
+    if master_to_slave_vars.BoilerPeak_on == 1 and Q_heat_unmet_W > 0:
         source_PeakBoiler = 1
         if Q_heat_unmet_W >= BOILER_MIN * master_to_slave_vars.BoilerPeak_Q_max_W:  # Boiler can be activated?
             if Q_heat_unmet_W > master_to_slave_vars.BoilerPeak_Q_max_W:  # Boiler above maximum Load?
