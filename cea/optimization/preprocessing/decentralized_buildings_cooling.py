@@ -124,7 +124,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         cooling_dispatch[0] = {'Q_DX_gen_directload_W': q_DX_chw_Wh,
                                'E_DX_req_W': el_DX_hourly_Wh,
                                'DX_Status': DX_Status,
-                               'E_sys_req_W': el_DX_hourly_Wh,
+                               'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
                                }
 
         ## 1. VCC (AHU + ARU + SCU) + CT
@@ -144,7 +144,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
                                'E_VCC_req_W': el_VCC_Wh,
                                'E_CT_req_W': el_CT_Wh,
-                               'E_sys_req_W': el_total_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
                                'VCC_Status': VCC_Status
                                }
 
@@ -189,7 +189,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
                                'E_SC_FP_req_W': el_aux_SC_FP_Wh,
-                               'E_sys_req_W': el_total_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
                                'NG_Boiler_req': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
                                }
 
@@ -230,7 +230,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
                                'E_SC_FP_req_W': el_aux_SC_ET_Wh,
-                               'E_sys_req_W': el_total_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
                                'NG_Burner_req': q_gas_for_burner_Wh,
                                }
 
@@ -265,7 +265,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                    'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
                                    'E_VCC_HT_req_W': el_VCC_to_SCU_Wh,
                                    'E_CT_req_W': el_CT_Wh,
-                                   'E_sys_req_W': el_total_Wh
+                                   'E_cs_cre_cdata_req_W': el_total_Wh
                                    }
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
@@ -309,7 +309,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                    'E_ACH_HT_req_W': el_FP_ACH_to_SCU_Wh,
                                    'E_SC_FP_req_W': el_aux_SC_FP_Wh,
                                    'E_CT_req_W': el_CT_Wh,
-                                   'E_sys_req_W': el_total_Wh,
+                                   'E_cs_cre_cdata_req_W': el_total_Wh,
                                    'NG_Boiler_req': q_gas_for_boiler_Wh,
                                    }
 

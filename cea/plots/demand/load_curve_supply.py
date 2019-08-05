@@ -30,6 +30,16 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         return dict(yaxis=dict(title='Final Energy Demand [MW]'),
                     yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'))
 
+    @property
+    def title(self):
+        """Override the version in PlotBase"""
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
+            if len(self.buildings) == 1:
+                return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
+            else:
+                return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
+        return "%s for District (%s)" % (self.name, self.timeframe)
+
     def calc_graph(self):
         data = self._calculate_hourly_loads()
         traces = []
