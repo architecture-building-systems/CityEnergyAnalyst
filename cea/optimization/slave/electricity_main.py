@@ -30,7 +30,6 @@ __status__ = "Production"
 
 
 def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca,
-                                              solar_features,
                                               performance_heating,
                                               performance_cooling,
                                               heating_dispatch, cooling_dispatch
@@ -54,7 +53,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                                 )
 
     # GET ACTIVATION CURVE
-    electricity_dispatch = electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W,
+    electricity_dispatch = electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch,
+                                                        E_CCGT_gen_W, E_CHP_gen_W,
                                                         E_Furnace_gen_W, E_PVT_gen_W,
                                                         E_PV_gen_W, E_sys_req_W)
     E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
@@ -90,7 +90,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                                                 lca)
 
     # FINALLY CLACULATE THE EMISSIONS, COSTS AND PRIMARY ENERGY OF ELECTRICITY FROM THE GRID AND SOLAR TECHNOLOGIES
-    performance_electricity_costs = calc_electricity_performance_costs(locator, solar_features, master_to_slave_vars,
+    performance_electricity_costs = calc_electricity_performance_costs(locator, master_to_slave_vars,
                                                                        E_PV_gen_export_W, E_GRID_directload_W,
                                                                        lca)
 
@@ -173,11 +173,11 @@ def calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_direct
     return performance_electricity
 
 
-def calc_electricity_performance_costs(locator, solar_features, master_to_slave_vars,
+def calc_electricity_performance_costs(locator, master_to_slave_vars,
                                        E_PV_gen_export_W, E_GRID_directload_W,
                                        lca):
     # PV COSTS
-    PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2  # kW
+    PV_installed_area_m2 = master_to_slave_vars.A_PV_m2  # kW
     Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
     Opex_var_PV_gen_export_USD = sum([energy * cost for energy, cost in zip(E_PV_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_PV_gen_directload_US = 0.0
@@ -362,7 +362,8 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
     return performance_heating
 
 
-def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W, E_Furnace_gen_W,
+def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W,
+                                 E_Furnace_gen_W,
                                  E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
     # ACTIVATION PATTERN OF ELECTRICITY
     E_CHP_gen_directload_W = np.zeros(HOURS_IN_YEAR)
@@ -389,8 +390,6 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
             'ACH_Status']  # TODO: when absorption chiller then CCGT is activated. this is bananas
     else:
         CCGT_activation_flag = np.zeros(HOURS_IN_YEAR)
-
-
 
     for hour in range(HOURS_IN_YEAR):
         E_req_hour_W = E_sys_req_W[hour]
@@ -481,7 +480,7 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
 
     # TOTAL EXPORTS:
     electricity_dispatch = {
-        'E_electricalnetwork_sys_req_W':E_sys_req_W,
+        'E_electricalnetwork_sys_req_W': E_sys_req_W,
         'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
         'E_CHP_gen_export_W': E_CHP_gen_export_W,
         'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
@@ -532,10 +531,13 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
 
     if master_to_slave_vars.DHN_exists:
         # by storage system
-        E_Storage_req_W = heating_activation_data['E_Storage_req_charging_W'] + heating_activation_data['E_Storage_req_discharging_W']
+        E_Storage_req_W = heating_activation_data['E_Storage_req_charging_W'] + heating_activation_data[
+            'E_Storage_req_discharging_W']
         # by auxiliary and heat recovery
-        E_aux_solar_and_heat_recovery_W = heating_activation_data['E_HP_SC_FP_req_W'] + heating_activation_data['E_HP_SC_ET_req_W'] + \
-                                          heating_activation_data['E_HP_Server_req_W'] + heating_activation_data['E_HP_PVT_req_W']
+        E_aux_solar_and_heat_recovery_W = heating_activation_data['E_HP_SC_FP_req_W'] + heating_activation_data[
+            'E_HP_SC_ET_req_W'] + \
+                                          heating_activation_data['E_HP_Server_req_W'] + heating_activation_data[
+                                              'E_HP_PVT_req_W']
     else:
         E_Storage_req_W = np.zeros(HOURS_IN_YEAR)
         E_aux_solar_and_heat_recovery_W = np.zeros(HOURS_IN_YEAR)

@@ -13,9 +13,10 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
 from __future__ import division
 
-save_file = 1
 
 import numpy as np
+import os
+from cea.constants import HOURS_IN_YEAR
 import pandas as pd
 import cea.technologies.heatpumps as hp
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
@@ -49,8 +50,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     # Initiating
 
-    # SOLCOL_TYPE = master_to_slave_vars.SOLCOL_TYPE
-    SOLCOL_TYPE = "NONE"
+
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 
@@ -58,12 +58,14 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     T_ST_MAX = master_to_slave_vars.T_ST_MAX
     T_ST_MIN = master_to_slave_vars.T_ST_MIN
 
+    #read solar technologies data
+    solar_technologies_data = read_solar_technologies_data(locator, master_to_slave_vars)
+
     ## initial storage size
     V_storage_initial_m3 = master_to_slave_vars.STORAGE_SIZE
     V0 = V_storage_initial_m3
-    STORE_DATA = "yes"
-    Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old, locator,
-                                                      V_storage_initial_m3, STORE_DATA, master_to_slave_vars, 1e12,
+    Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old, locator,
+                                                      V_storage_initial_m3, solar_technologies_data, master_to_slave_vars, 1e12,
                                                       config)
 
     Q_stored_max0_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, \
@@ -85,9 +87,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
-    STORE_DATA = "yes"
-    Optimized_Data, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
-                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
+    Optimized_Data, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                            V_storage_possible_needed, solar_technologies_data, master_to_slave_vars, P_HP_max,
                                             config)
     Q_stored_max_opt_W, Q_rejected_fin_opt_W, Q_disc_seasonstart_opt_W, T_st_max_op_K, T_st_min_op_K, \
     Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
@@ -106,8 +107,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
         V2 = V_storage_possible_needed
         Q_initial_W = min(Q_disc_seasonstart_opt_W[0], Q_storage_content_fin_op_W[-1])
         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_possible_needed)
-        Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
-                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
+        Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                 V_storage_possible_needed, solar_technologies_data, master_to_slave_vars, P_HP_max,
                                                  config)
         Q_stored_max_opt2_W, Q_rejected_fin_opt2_W, Q_disc_seasonstart_opt2_W, T_st_max_op2_K, T_st_min_op2_K, \
         Q_storage_content_fin_op2_W, T_storage_fin_op2_K, Q_loss2_W, mdot_DH_fin2_kgpers, \
@@ -127,8 +128,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
             Q_initial_W = min(Q_disc_seasonstart_opt2_W[0], Q_storage_content_fin_op2_W[-1])
             T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-            Optimized_Data3, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
-                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
+            Optimized_Data3, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                     V_storage_possible_needed, solar_technologies_data, master_to_slave_vars,
                                                      P_HP_max, config)
             Q_stored_max_opt3_W, Q_rejected_fin_opt3_W, Q_disc_seasonstart_opt3_W, T_st_max_op3_K, T_st_min_op3_K, \
             Q_storage_content_fin_op3_W, T_storage_fin_op3_K, Q_loss3_W, mdot_DH_fin3_kgpers, \
@@ -146,8 +147,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                 Q_initial_W = min(Q_disc_seasonstart_opt3_W[0], Q_storage_content_fin_op3_W[-1])
                 T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                Optimized_Data4, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
-                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
+                Optimized_Data4, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                         V_storage_possible_needed, solar_technologies_data, master_to_slave_vars,
                                                          P_HP_max, config)
                 Q_stored_max_opt4_W, Q_rejected_fin_opt4_W, Q_disc_seasonstart_opt4_W, T_st_max_op4_K, T_st_min_op4_K, \
                 Q_storage_content_fin_op4_W, T_storage_fin_op4_K, Q_loss4_W, mdot_DH_fin4_kgpers, \
@@ -174,8 +175,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                     else:
                         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                    Optimized_Data5, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W, locator,
-                                                             V_storage_possible_needed, STORE_DATA,
+                    Optimized_Data5, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                             V_storage_possible_needed, solar_technologies_data,
                                                              master_to_slave_vars, P_HP_max, config)
                     Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
                     Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_final_W = Optimized_Data5
@@ -202,9 +203,9 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                        Optimized_Data6, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W,
+                        Optimized_Data6, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
                                                                  locator,
-                                                                 V_storage_possible_needed, STORE_DATA,
+                                                                 V_storage_possible_needed, solar_technologies_data,
                                                                  master_to_slave_vars,
                                                                  P_HP_max, config)
                         Q_stored_max_opt6, Q_rejected_fin_opt6, Q_disc_seasonstart_opt6, T_st_max_op6, T_st_min_op6, Q_storage_content_fin_op6, \
@@ -223,8 +224,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                             # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                            Optimized_Data7, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K, Q_initial_W,
-                                                                     locator, V_storage_possible_needed, STORE_DATA,
+                            Optimized_Data7, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
+                                                                     locator, V_storage_possible_needed, solar_technologies_data,
                                                                      master_to_slave_vars, P_HP_max, config)
                             Q_stored_max_opt7, Q_rejected_fin_opt7, Q_disc_seasonstart_opt7, T_st_max_op7, T_st_min_op7, Q_storage_content_fin_op7, \
                             T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_final_W = Optimized_Data7
@@ -243,10 +244,10 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                                 # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                Optimized_Data8, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K,
+                                Optimized_Data8, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
                                                                          Q_initial_W,
                                                                          locator,
-                                                                         V_storage_possible_needed, STORE_DATA,
+                                                                         V_storage_possible_needed, solar_technologies_data,
                                                                          master_to_slave_vars,
                                                                          P_HP_max, config)
                                 Q_stored_max_opt8, Q_rejected_fin_opt8, Q_disc_seasonstart_opt8, T_st_max_op8, T_st_min_op8, Q_storage_content_fin_op8, \
@@ -266,10 +267,10 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                                     # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                    Optimized_Data9, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K,
+                                    Optimized_Data9, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
                                                                              Q_initial_W,
                                                                              locator,
-                                                                             V_storage_possible_needed, STORE_DATA,
+                                                                             V_storage_possible_needed, solar_technologies_data,
                                                                              master_to_slave_vars,
                                                                              P_HP_max, config)
                                     Q_stored_max_opt9, Q_rejected_fin_opt9, Q_disc_seasonstart_opt9, T_st_max_op9, T_st_min_op9, Q_storage_content_fin_op9, \
@@ -289,18 +290,18 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                        Optimized_Data10, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial_K,
+                                        Optimized_Data10, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
                                                                                   Q_initial_W,
                                                                                   locator,
-                                                                                  V_storage_possible_needed, STORE_DATA,
+                                                                                  V_storage_possible_needed, solar_technologies_data,
                                                                                   master_to_slave_vars,
                                                                                   P_HP_max, config)
                                         Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_final_W = Optimized_Data10
 
     # Get results from storage operation
-    E_aux_ch_W = storage_dispatch['E_Storage_req_charging_W']
-    E_aux_dech_W = storage_dispatch['E_Storage_req_discharging_W']
+    E_aux_ch_W = storage_dispatch['E_Storage_charging_req_W']
+    E_aux_dech_W = storage_dispatch['E_Storage_discharging_req_W']
     E_thermalstorage_W = E_aux_ch_W + E_aux_dech_W
 
     # VARIABLE COSTS
@@ -354,7 +355,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_dispatch)
-    array = np.array(storage_dispatch_df[["E_Storage_req_charging_W", "E_Storage_req_discharging_W", "Q_Storage_gen_W", "Q_Storage_req_W"]])
+    array = np.array(storage_dispatch_df[["E_Storage_charging_req_W", "E_Storage_discharging_req_W", "Q_Storage_gen_W", "Q_Storage_req_W"]])
     Q_HP_max_storage_W = 0
     for i in range(8760):
         if array[i][0] > 0:
@@ -407,3 +408,101 @@ def calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX,
     V_storage_possible_needed = (Q_required_in_storage_W) * WH_TO_J / (
             DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
     return V_storage_possible_needed
+
+
+def read_solar_technologies_data(locator, master_to_slave_vars):
+    # Import Solar Data
+    if master_to_slave_vars.SC_ET_on == 1 and master_to_slave_vars.SC_ET_share > 0.0:
+        share_allowed = master_to_slave_vars.SC_ET_share
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        Q_SC_ET_gen_Wh, Tscr_th_SC_ET_K, Area_SC_ET_m2,E_SC_ET_req_Wh = calc_available_generation_solar(locator, buildings, share_allowed, type="SC_ET")
+    else:
+        Q_SC_ET_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_SC_ET_K = np.zeros(HOURS_IN_YEAR)
+        E_SC_ET_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    # SC_FP
+    if master_to_slave_vars.SC_FP_on == 1 and master_to_slave_vars.SC_FP_share > 0.0:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = master_to_slave_vars.SC_FP_share
+        Q_SC_FP_gen_Wh, Tscr_th_SC_FP_K, Area_SC_FP_m2, E_SC_FP_req_Wh = calc_available_generation_solar(locator, buildings, share_allowed, type="SC_FP")
+    else:
+        Q_SC_FP_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_SC_FP_K = np.zeros(HOURS_IN_YEAR)
+        E_SC_FP_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    # PVT
+    if master_to_slave_vars.PVT_on == 1 and master_to_slave_vars.PVT_share > 0.0:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = master_to_slave_vars.PVT_share
+        E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh = calc_available_generation_PVT(locator, buildings,
+                                                                                               share_allowed)
+    else:
+        E_PVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Q_PVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_PVT_K = np.zeros(HOURS_IN_YEAR)
+        E_PVT_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    Solar_E_aux_Wh = E_SC_ET_req_Wh + E_SC_FP_req_Wh + E_PVT_req_Wh
+
+    solar_technologies_data = {
+           'E_PVT_gen_W': E_PVT_gen_Wh,
+           'Q_PVT_gen_W': Q_PVT_gen_Wh,
+           "Q_SC_ET_gen_W": Q_SC_ET_gen_Wh,
+           "Q_SC_FP_gen_W": Q_SC_FP_gen_Wh,
+           "Solar_E_aux_W": Solar_E_aux_Wh,
+           "Tscr_th_PVT_K":Tscr_th_PVT_K,
+           "Tscr_th_SC_ET_K": Tscr_th_SC_ET_K,
+           "Tscr_th_SC_FP_K":Tscr_th_SC_FP_K
+           }
+
+    return solar_technologies_data
+
+
+def calc_available_generation_PVT(locator, buildings, share_allowed):
+    A_PVT_m2 = 0.0
+    E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    E_PVT_req_kWh = np.zeros(HOURS_IN_YEAR)
+    mcp_x_T = np.zeros(HOURS_IN_YEAR)
+    mcp = np.zeros(HOURS_IN_YEAR)
+    for building_name in buildings:
+        building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), building_name + '_PVT.csv')).fillna(value=0.0)
+        E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
+        Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
+        E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
+        A_PVT_m2 += building_PVT['Area_PVT_m2'][0]
+        mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C']+273) #to K
+        mcp += building_PVT['mcp_PVT_kWperC']
+
+    Tscr_th_PVT_K = (mcp_x_T / mcp)
+
+    E_PVT_gen_Wh = E_PVT_gen_kWh * share_allowed * 1000
+    Q_PVT_gen_Wh = Q_PVT_gen_kWh * share_allowed * 1000
+    E_PVT_req_Wh = E_PVT_req_kWh * share_allowed * 1000
+    Area_PVT_m2 = A_PVT_m2 * share_allowed
+
+    return E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh
+
+
+def calc_available_generation_solar(locator, buildings, share_allowed, type):
+    A_PVT_m2 = 0.0
+    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    E_SC_req_kWh = np.zeros(HOURS_IN_YEAR)
+    mcp_x_T = np.zeros(HOURS_IN_YEAR)
+    mcp = np.zeros(HOURS_IN_YEAR)
+    for building_name in buildings:
+        data = pd.read_csv(
+            os.path.join(locator.get_potentials_solar_folder(), building_name + '_'+type+'+.csv')).fillna(value=0.0)
+        Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
+        E_SC_req_kWh += data['Eaux_SC_kWh']
+        A_PVT_m2 += data['Area_SC_m2'][0]
+        mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C']+273) #to K
+        mcp += data['mcp_SC_kWperC']
+
+    Tscr_th_PVT_K = (mcp_x_T / mcp)
+    Q_PVT_gen_Wh = Q_PVT_gen_kWh * share_allowed * 1000
+    E_SC_req_Wh = E_SC_req_kWh * share_allowed * 1000
+    Area_PVT_m2 = A_PVT_m2 * share_allowed
+
+    return Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_SC_req_Wh

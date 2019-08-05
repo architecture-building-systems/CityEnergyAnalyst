@@ -20,7 +20,6 @@ from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
 from cea.optimization.slave import natural_gas_main
-from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies import substation
 from cea.utilities import epwreader
@@ -94,43 +93,29 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     storage_dispatch = {}
     heating_dispatch = {}
     cooling_dispatch = {}
-    solar_features = SolarFeatures()
 
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
-        print("CALCULATING SOLAR POTENTIAL CENTRAL HEATING GRID")
-
-        solar_features = calc_solar_features_individual(locator, building_names_heating, DHN_barcode,
-                                                        master_to_slave_vars, solar_features)
-
-        # THERMAL STORAGE
-        print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-        performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
-                                                                                  master_to_slave_vars,
-                                                                                  lca, prices,
-                                                                                  config)
-
         print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
-        performance_heating, heating_dispatch = heating_main.heating_calculations_of_DH_buildings(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  config, prices,
-                                                                                                  lca,
-                                                                                                  solar_features,
-                                                                                                  network_features,
-                                                                                                  storage_dispatch)
+        performance_heating, heating_dispatch = heating_main.district_heating_network(locator,
+                                                                                      master_to_slave_vars,
+                                                                                      config, prices,
+                                                                                      lca,
+                                                                                      network_features,
+                                                                                      )
 
     # DISTRICT COOLING NETWORK:
     if master_to_slave_vars.DCN_exists:
         print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
         reduced_timesteps_flag = False
-        performance_cooling, cooling_dispatch = cooling_main.cooling_calculations_of_DC_buildings(locator,
-                                                                                                  master_to_slave_vars,
-                                                                                                  network_features,
-                                                                                                  prices,
-                                                                                                  lca,
-                                                                                                  config,
-                                                                                                  reduced_timesteps_flag,
-                                                                                                  district_heating_network)
+        performance_cooling, cooling_dispatch = cooling_main.district_cooling_network(locator,
+                                                                                      master_to_slave_vars,
+                                                                                      network_features,
+                                                                                      prices,
+                                                                                      lca,
+                                                                                      config,
+                                                                                      reduced_timesteps_flag,
+                                                                                      district_heating_network)
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
@@ -147,7 +132,6 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     performance_cooling, = electricity_main.electricity_calculations_of_all_buildings(locator,
                                                                                       master_to_slave_vars,
                                                                                       lca,
-                                                                                      solar_features,
                                                                                       performance_heating,
                                                                                       performance_cooling,
                                                                                       heating_dispatch,
@@ -249,69 +233,6 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
                                                            master_to_slave_vars.generation_number), index=False)
 
 
-class SolarFeatures(object):
-    def __init__(self):
-        # import and sum all the area available
-
-        self.Peak_PV_Wh = 0.0
-        self.A_PV_m2 = 0.0
-        self.Peak_PVT_Wh = 0.0
-        self.Q_nom_PVT_Wh = 0.0
-        self.A_PVT_m2 = 0.0
-        self.Q_nom_SC_FP_Wh = 0.0
-        self.A_SC_FP_m2 = 0.0
-        self.Q_nom_SC_ET_Wh = 0.0
-        self.A_SC_ET_m2 = 0.0
-
-
-def calc_solar_features_individual(locator, building_names_heating, DHN_barcode, master_to_slave_vars,
-                                   solar_features):
-    E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    Q_SC_FP_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    Q_SC_ET_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    A_PV_m2 = np.zeros(HOURS_IN_YEAR)
-    A_PVT_m2 = np.zeros(HOURS_IN_YEAR)
-    A_SC_FP_m2 = np.zeros(HOURS_IN_YEAR)
-    A_SC_ET_m2 = np.zeros(HOURS_IN_YEAR)
-
-    for index, name in zip(DHN_barcode, building_names_heating):
-        if index == "1":  # building is connected, then it has solar collectors
-            if master_to_slave_vars.SOLAR_PART_PVT > 0.0E-3:  # if PVT
-                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-                E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
-                Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
-                A_PVT_m2 += building_PVT['Area_PVT_m2']
-            if master_to_slave_vars.SOLAR_PART_SC_ET > 0.0E-3:  # if SC Evacuated tube
-                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
-                Q_SC_ET_gen_kWh += building_SC_ET['Q_SC_gen_kWh']
-                A_SC_ET_m2 += building_SC_ET['Area_SC_m2']
-            if master_to_slave_vars.SOLAR_PART_SC_FP > 0.0E-3:  # if SC Flat Plate
-                building_SC_FP = pd.read_csv(
-                    os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
-                Q_SC_FP_gen_kWh += building_SC_FP['Q_SC_gen_kWh']
-                A_SC_FP_m2 += building_SC_FP['Area_SC_m2']
-
-        # if PV accepted then get all the potential (all buildings can be ocnnected to the electrical grid
-        if master_to_slave_vars.SOLAR_PART_PV > 0.0E-3:
-            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-            A_PV_m2 += building_PV['Area_PV_m2']
-            E_PV_gen_kWh += E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-
-    solar_features.Peak_PV_Wh = E_PV_gen_kWh.max() * 1E3
-    solar_features.A_PV_m2 = A_PV_m2.max()
-    solar_features.Peak_PVT_Wh = E_PVT_gen_kWh.max() * 1E3
-    solar_features.Q_nom_PVT_Wh = Q_PVT_gen_kWh.max() * 1E3
-    solar_features.A_PVT_m2 = A_PVT_m2.max()
-    solar_features.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.max() * 1E3
-    solar_features.A_SC_FP_m2 = A_SC_FP_m2.max()
-    solar_features.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.max() * 1E3
-    solar_features.A_SC_ET_m2 = A_SC_ET_m2.max()
-
-    return solar_features
-
-
 def export_data_to_master_to_slave_class(locator,
                                          config,
                                          gen,
@@ -335,7 +256,7 @@ def export_data_to_master_to_slave_class(locator,
                                                                                     district_heating_network,
                                                                                     district_cooling_network,
                                                                                     building_names_heating,
-                                                                                    building_names_cooling,)
+                                                                                    building_names_cooling, )
 
     # CREATE MASTER TO SLAVE AND FILL-IN
     master_to_slave_vars = calc_master_to_slave_variables(locator, gen,
@@ -477,13 +398,13 @@ def createTotalNtwCsv(network_type, DHN_barcode, locator, building_names):
     :return: name of the total file
     :rtype: string
     """
-    #obtain buildings which are in this network
+    # obtain buildings which are in this network
     buildings_in_this_network_config = []
-    for index, name in zip(DHN_barcode,building_names):
+    for index, name in zip(DHN_barcode, building_names):
         if index == '1':
             buildings_in_this_network_config.append(name)
 
-    #get total demand file fro selecte
+    # get total demand file fro selecte
     df = pd.read_csv(locator.get_total_demand())
     dfRes = df[df.Name.isin(buildings_in_this_network_config)]
     dfRes = dfRes.reset_index(drop=True)
@@ -536,14 +457,32 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.DHN_exists = True
     if district_cooling_network and DCN_barcode.count("1") > 0:
         master_to_slave_vars.DCN_exists = True
+
+    # store how many buildings are connected to district heating or cooling
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1")
     master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1")
+
+    # store the names of the buildings connected to district heating or district cooling
+    master_to_slave_vars.buildings_connected_to_district_heating = calc_connected_names(building_names_heating,
+                                                                                        DHN_barcode)
+    master_to_slave_vars.buildings_connected_to_district_cooling = calc_connected_names(building_names_cooling,
+                                                                                        DCN_barcode)
+
+    # store the name of the file where the network configuration is stored
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
+
+    # store the barcode which identifies which buildings are connected and disconencted
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
+
+    # store the total number of buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.num_total_buildings = num_total_buildings
+
+    # store the name of all buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.building_names_all = building_names
+
+    # store the name used to didentified the individual (this helps to know where is inside)
     master_to_slave_vars.building_names_heating = building_names_heating
     master_to_slave_vars.building_names_cooling = building_names_cooling
     master_to_slave_vars.building_names_electricity = building_names_electricity
@@ -557,18 +496,24 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
 
     # Store inforamtion about which units are activated
+    master_to_slave_vars = master_to_slave_electrical_technologies(individual_with_names_dict, locator,
+                                                                   master_to_slave_vars)
+
     if master_to_slave_vars.DHN_exists:
-        master_to_slave_vars = master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator,
-                                                             master_to_slave_vars)
+        master_to_slave_vars = master_to_slave_district_heating_technologies(Q_heating_nom_W,
+                                                                             individual_with_names_dict, locator,
+                                                                             master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
-        master_to_slave_vars = master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_names_dict,
-                                                             master_to_slave_vars)
+        master_to_slave_vars = master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W,
+                                                                             individual_with_names_dict,
+                                                                             master_to_slave_vars)
 
     return master_to_slave_vars
 
 
-def master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_names_dict, master_to_slave_vars):
+def master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W, individual_with_names_dict,
+                                                  master_to_slave_vars):
     # COOLING SYSTEMS
     # Lake Cooling
     if individual_with_names_dict['FLake'] == 1 and LAKE_COOLING_ALLOWED is True:
@@ -576,7 +521,7 @@ def master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_name
         Q_max_lake = (lake_potential['QLake_kW'] * 1000).max()
         master_to_slave_vars.Lake_cooling_on = 1
         master_to_slave_vars.Lake_cooling_size_W = min(individual_with_names_dict['FLake Share'] * Q_max_lake,
-                                                    individual_with_names_dict['FLake Share'] * Q_cooling_nom_W)
+                                                       individual_with_names_dict['FLake Share'] * Q_cooling_nom_W)
 
     # VCC Cooling
     if individual_with_names_dict['VCC'] == 1 and VCC_ALLOWED is True:
@@ -598,7 +543,28 @@ def master_to_slave_DCN_variables(locator, Q_cooling_nom_W, individual_with_name
     return master_to_slave_vars
 
 
-def master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, locator, master_to_slave_vars):
+def calc_connected_names(building_names, barcode):
+    connected_buildings = []
+    for name, index in zip(building_names, barcode):
+        if index == '1':
+            connected_buildings.append(name)
+    return connected_buildings
+
+
+def calc_available_area_solar(locator, buildings, share_allowed, technology):
+    area_m2 = 0.0
+    for building_name in buildings:
+        solar_technology_potential = pd.read_csv(
+            os.path.join(locator.get_potentials_solar_folder(), building_name + '_' + technology + '.csv'))
+        area_m2 += solar_technology_potential['Area_' + technology + '_m2'][0]
+
+    return area_m2 * share_allowed
+
+
+def master_to_slave_district_heating_technologies(Q_heating_nom_W,
+                                                  individual_with_names_dict,
+                                                  locator,
+                                                  master_to_slave_vars):
     if individual_with_names_dict['CHP/Furnace'] == 1 and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_on = 1
         master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['CHP/Furnace Share'] * Q_heating_nom_W
@@ -660,11 +626,42 @@ def master_to_slace_DHN_variables(Q_heating_nom_W, individual_with_names_dict, l
     if individual_with_names_dict['HPServer'] == 1 and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
         master_to_slave_vars.HPServer_maxSize_W = individual_with_names_dict['HPServer Share'] * Q_heating_nom_W
+
     # SOLAR TECHNOLOGIES
-    master_to_slave_vars.SOLAR_PART_PV = individual_with_names_dict['PV Share']
-    master_to_slave_vars.SOLAR_PART_PVT = individual_with_names_dict['PVT Share']
-    master_to_slave_vars.SOLAR_PART_SC_ET = individual_with_names_dict['SC_ET Share']
-    master_to_slave_vars.SOLAR_PART_SC_FP = individual_with_names_dict['SC_FP Share']
+    if individual_with_names_dict['PVT'] == 1:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = individual_with_names_dict['PVT Share']
+        master_to_slave_vars.PVT_on = 1
+        master_to_slave_vars.A_PVT_m2 = calc_available_area_solar(locator, buildings, share_allowed, 'PVT')
+        master_to_slave_vars.PVT_share = share_allowed
+
+    if individual_with_names_dict['SC_ET'] == 1:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = individual_with_names_dict['SC_ET Share']
+        master_to_slave_vars.SC_ET_on = 1
+        master_to_slave_vars.A_SC_ET_m2 = calc_available_area_solar(locator, buildings, share_allowed, 'SC_ET')
+        master_to_slave_vars.SC_ET_share = share_allowed
+
+    if individual_with_names_dict['SC_FP'] == 1:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = individual_with_names_dict['SC_FP Share']
+        master_to_slave_vars.SC_FP_on = 1
+        master_to_slave_vars.A_SC_FP_m2 = calc_available_area_solar(locator, buildings, share_allowed, "SC_FP")
+        master_to_slave_vars.SC_FP_share = share_allowed
+
+    return master_to_slave_vars
+
+
+def master_to_slave_electrical_technologies(individual_with_names_dict,
+                                            locator,
+                                            master_to_slave_vars):
+    # SOLAR TECHNOLOGIES
+    if individual_with_names_dict['PV'] == 1:
+        buildings = master_to_slave_vars.building_names_all
+        share_allowed = individual_with_names_dict['PV Share']
+        master_to_slave_vars.PV_on = 1
+        master_to_slave_vars.A_PV_m2 = calc_available_area_solar(locator, buildings, share_allowed, 'PV')
+        master_to_slave_vars.PV_share = share_allowed
 
     return master_to_slave_vars
 

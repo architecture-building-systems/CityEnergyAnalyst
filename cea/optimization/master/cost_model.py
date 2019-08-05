@@ -15,7 +15,6 @@ import cea.technologies.heatpumps as hp
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 from cea.optimization.constants import N_PVT
-from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -46,32 +45,28 @@ def add_disconnected_costs(column_names_buildings_heating,
         DCN_barcode,
         column_names_buildings_cooling, locator)
 
-    Capex_a_disconnected_USD = Capex_a_cooling_disconnected_USD + Capex_a_heating_disconnected_USD
-    Capex_total_disconnected_USD = Capex_total_cooling_disconnected_USD + Capex_total_heating_disconnected_USD
-    Opex_a_disconnected_USD = Opex_a_cooling_disconnected_USD + Opex_a_heating_disconnected_USD
-    TAC_disconnected_USD = TAC_heating_disconnected_USD + TAC_cooling_disconnected_USD
-    GHG_disconnected_tonCO2 = (GHG_heating_disconnected_tonCO2 + GHG_cooling_disconnected_tonCO2)
-    PEN_disconnected_MJoil = PEN_heating_disconnected_MJoil + PEN_cooling_disconnected_MJoil
-
     performance = {
+        # COSTS
+
+        # heating
         "Capex_a_heating_disconnected_USD": Capex_a_heating_disconnected_USD,
         "Capex_total_heating_disconnected_USD": Capex_total_heating_disconnected_USD,
         "Opex_a_heating_disconnected_USD": Opex_a_heating_disconnected_USD,
         "TAC_heating_disconnected_USD": TAC_heating_disconnected_USD,
-        "GHG_heating_disconnected_tonCO2": GHG_heating_disconnected_tonCO2,
-        "PEN_heating_disconnected_MJoil": PEN_heating_disconnected_MJoil,
+        # cooling
         "Capex_a_cooling_disconnected_USD": Capex_a_cooling_disconnected_USD,
         "Capex_total_cooling_disconnected_USD": Capex_total_cooling_disconnected_USD,
         "Opex_a_cooling_disconnected_USD": Opex_a_cooling_disconnected_USD,
         "TAC_cooling_disconnected_USD": TAC_cooling_disconnected_USD,
+
+        # CO2 EMISSIONS
+        "GHG_heating_disconnected_tonCO2": GHG_heating_disconnected_tonCO2,
         "GHG_cooling_disconnected_tonCO2": GHG_cooling_disconnected_tonCO2,
-        "PEN_cooling_disconnected_MJoil": PEN_cooling_disconnected_MJoil,
-        "Capex_a_disconnected_USD": Capex_a_disconnected_USD,
-        "Capex_total_disconnected_USD": Capex_total_disconnected_USD,
-        "Opex_a_disconnected_USD": Opex_a_disconnected_USD,
-        "TAC_disconnected_USD": TAC_disconnected_USD,
-        "GHG_disconnected_tonCO2": GHG_disconnected_tonCO2,
-        "PEN_disconnected_MJoil": PEN_disconnected_MJoil}
+
+        # PRIMARY ENERGY (NON-RENEWABLE)
+        "PEN_heating_disconnected_MJoil": PEN_heating_disconnected_MJoil,
+        "PEN_cooling_disconnected_MJoil": PEN_cooling_disconnected_MJoil
+    }
 
     return performance
 
@@ -81,7 +76,6 @@ def calc_generation_costs_heating(locator,
                                   Q_uncovered_design_W,
                                   config,
                                   storage_activation_data,
-                                  solar_features,
                                   heating_dispatch,
                                   ):
     """
@@ -114,7 +108,7 @@ def calc_generation_costs_heating(locator,
     """
 
     thermal_network = pd.read_csv(
-        locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
+        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
 
     # START VVALUES
     Capex_a_HEX_SC_ET_USD = 0.0
@@ -301,15 +295,15 @@ def calc_generation_costs_heating(locator,
 
     # SOLAR TECHNOLOGIES
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
-    SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
+    SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
     Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator,
                                                                                 'ET')
 
-    SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2
+    SC_FP_area_m2 = master_to_slave_vars.A_SC_FP_m2
     Capex_a_SC_FP_USD, Opex_fixed_SC_FP_USD, Capex_SC_FP_USD = stc.calc_Cinv_SC(SC_FP_area_m2, locator,
                                                                                 'FP')
 
-    PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT  # kW
+    PVT_peak_kW = master_to_slave_vars.A_PVT_m2 * N_PVT  # kW
     Capex_a_PVT_USD, Opex_fixed_PVT_USD, Capex_PVT_USD = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
 
     # HEATPUMP FOR SOLAR UPGRADE TO DISTRICT HEATING
@@ -415,10 +409,10 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
     Opex_Disconnected = 0.0
     PrimDiscBuild = 0.0
     Capex_total_Disconnected = 0.0
-    total_demand = pd.read_csv(locator.get_total_demand())
     for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
-            df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name, configuration='AHU_ARU_SCU'))
+            df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                                   configuration='AHU_ARU_SCU'))
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
             CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]

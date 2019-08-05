@@ -17,6 +17,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.master import cost_model
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
+from cea.optimization.slave.seasonal_storage import storage_main
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.utilities import epwreader
@@ -35,8 +36,8 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, prices, lca, solar_features,
-                                         network_features, storage_dispatch):
+def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
+                             network_features):
     """
     Computes the parameters for the heating of the complete DHN
 
@@ -64,6 +65,12 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     DHN_barcode = master_to_slave_vars.DHN_barcode
     building_names = master_to_slave_vars.building_names_heating
 
+    # THERMAL STORAGE
+    print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
+    performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
+                                                                              master_to_slave_vars,
+                                                                              lca, prices,
+                                                                              config)
     # Import data from storage optimization
     Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
     Q_req_after_storage_W = np.array(storage_dispatch['Q_req_after_storage_W'])
@@ -83,8 +90,8 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     Q_HP_Server_to_storage_W = storage_dispatch["Q_HP_Server_gen_storage_W"]
     Q_HP_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
 
-    E_Storage_req_charging_W = storage_dispatch["E_Storage_req_charging_W"]
-    E_Storage_req_discharging_W = storage_dispatch["E_Storage_req_discharging_W"]
+    E_Storage_req_charging_W = storage_dispatch["E_Storage_charging_req_W"]
+    E_Storage_req_discharging_W = storage_dispatch["E_Storage_discharging_req_W"]
     E_HP_SC_FP_req_W = storage_dispatch["E_HP_SC_FP_req_W"]
     E_HP_SC_ET_req_W = storage_dispatch["E_HP_SC_ET_req_W"]
     E_HP_PVT_req_W = storage_dispatch["E_HP_PVT_req_W"]
@@ -141,18 +148,18 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
     E_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    NG_used_CHP_W = np.zeros(HOURS_IN_YEAR)
-    NG_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
-    NG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
-    NG_used_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
+    NG_CHP_req_W = np.zeros(HOURS_IN_YEAR)
+    NG_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+    NG_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+    NG_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    BG_used_CHP_W = np.zeros(HOURS_IN_YEAR)
-    BG_used_BaseBoiler_W = np.zeros(HOURS_IN_YEAR)
-    BG_used_PeakBoiler_W = np.zeros(HOURS_IN_YEAR)
-    BG_used_BackupBoiler_W = np.zeros(HOURS_IN_YEAR)
+    BG_CHP_req_W = np.zeros(HOURS_IN_YEAR)
+    BG_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+    BG_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+    BG_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
-    WetBiomass_used_Furnace_W = np.zeros(HOURS_IN_YEAR)
-    DryBiomass_used_Furnace_W = np.zeros(HOURS_IN_YEAR)
+    WetBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
+    DryBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
 
     Q_excess_W = np.zeros(HOURS_IN_YEAR)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
@@ -164,10 +171,10 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         opex_output, source_output, \
         Q_output, E_output, Gas_output, \
         Biomass_output = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
-                                                                  mdot_DH_kgpers[hour],
-                                                                  Q_therm_Sew_W[hour], TretsewArray_K[hour],
-                                                                  tdhsup_K[hour], tdhret_K[hour],
-                                                                  prices, lca, ground_temp_K[hour])
+                                                  mdot_DH_kgpers[hour],
+                                                  Q_therm_Sew_W[hour], TretsewArray_K[hour],
+                                                  tdhsup_K[hour], tdhret_K[hour],
+                                                  prices, lca, ground_temp_K[hour])
 
         Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
         Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
@@ -203,21 +210,20 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         E_PeakBoiler_req_W[hour] = E_output['E_PeakBoiler_req_W']
 
         if master_to_slave_vars.gt_fuel == "NG":
-            NG_used_CHP_W[hour] = Gas_output['Gas_used_CHP_W']
-            NG_used_BaseBoiler_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
-            NG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
+            NG_CHP_req_W[hour] = Gas_output['Gas_used_CHP_W']
+            NG_BaseBoiler_req_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
+            NG_PeakBoiler_req_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
         elif master_to_slave_vars.gt_fuel == "BG":
-            BG_used_CHP_W[hour] = Gas_output['Gas_used_CHP_W']
-            BG_used_BaseBoiler_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
-            BG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
+            BG_CHP_req_W[hour] = Gas_output['Gas_used_CHP_W']
+            BG_BaseBoiler_req_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
+            BG_PeakBoiler_req_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
         if master_to_slave_vars.Furn_Moist_type == "wet":
-            WetBiomass_used_Furnace_W[hour] = Biomass_output['Biomass_used_Furnace_W']
+            WetBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_used_Furnace_W']
 
         elif master_to_slave_vars.Furn_Moist_type == "dry":
-            DryBiomass_used_Furnace_W[hour] = Biomass_output['Biomass_used_Furnace_W']
-
+            DryBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_used_Furnace_W']
 
     # save data
     elapsed = time.time() - t
@@ -246,9 +252,9 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
                 hour], E_BackupBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_BackupBoiler_req_W[hour] = E_BackupBoiler_req_W_hour
             if master_to_slave_vars.gt_fuel == "NG":
-                NG_used_BackupBoiler_W[hour] = Q_BackupBoiler_W[hour]
+                NG_BackupBoiler_req_W[hour] = Q_BackupBoiler_W[hour]
             else:
-                BG_used_BackupBoiler_W[hour] = Q_BackupBoiler_W[hour]
+                BG_BackupBoiler_req_W[hour] = Q_BackupBoiler_W[hour]
         Q_BackupBoiler_sum_W = np.sum(Q_BackupBoiler_W)
     else:
         Q_BackupBoiler_sum_W = 0.0
@@ -357,36 +363,36 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
         "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
 
         # FUEL REQUIREMENTS
-        "NG_CHP_req_W": NG_used_CHP_W,
-        "NG_BaseBoiler_req_W": NG_used_BaseBoiler_W,
-        "NG_PeakBoiler_req_W": NG_used_PeakBoiler_W,
-        "NG_BackupBoiler_req_W": NG_used_BackupBoiler_W,
-        "BG_CHP_req_W": BG_used_CHP_W,
-        "BG_BaseBoiler_req_W": BG_used_BaseBoiler_W,
-        "BG_PeakBoiler_req_W": BG_used_PeakBoiler_W,
-        "BG_BackupBoiler_req_W": BG_used_BackupBoiler_W,
-        "WetBiomass_Furnace_req_W": WetBiomass_used_Furnace_W,
-        "DryBiomass_Furnace_req_W": DryBiomass_used_Furnace_W,
+        "NG_CHP_req_W": NG_CHP_req_W,
+        "NG_BaseBoiler_req_W": NG_BaseBoiler_req_W,
+        "NG_PeakBoiler_req_W": NG_PeakBoiler_req_W,
+        "NG_BackupBoiler_req_W": NG_BackupBoiler_req_W,
+        "BG_CHP_req_W": BG_CHP_req_W,
+        "BG_BaseBoiler_req_W": BG_BaseBoiler_req_W,
+        "BG_PeakBoiler_req_W": BG_PeakBoiler_req_W,
+        "BG_BackupBoiler_req_W": BG_BackupBoiler_req_W,
+        "WetBiomass_Furnace_req_W": WetBiomass_Furnace_req_W,
+        "DryBiomass_Furnace_req_W": DryBiomass_Furnace_req_W,
     }
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
     performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                                                 config, storage_dispatch, solar_features,
+                                                                 config, storage_dispatch,
                                                                  heating_dispatch,
                                                                  )
 
     # THIS CALCULATES EMISSIONS
     performance_emissions_pen = calc_primary_energy_and_CO2(storage_dispatch,
-                                                            NG_used_CHP_W,
-                                                            NG_used_BaseBoiler_W,
-                                                            NG_used_PeakBoiler_W,
-                                                            NG_used_BackupBoiler_W,
-                                                            BG_used_CHP_W,
-                                                            BG_used_BaseBoiler_W,
-                                                            BG_used_PeakBoiler_W,
-                                                            NG_used_BackupBoiler_W,
-                                                            WetBiomass_used_Furnace_W,
-                                                            DryBiomass_used_Furnace_W,
+                                                            NG_CHP_req_W,
+                                                            NG_BaseBoiler_req_W,
+                                                            NG_PeakBoiler_req_W,
+                                                            NG_BackupBoiler_req_W,
+                                                            BG_CHP_req_W,
+                                                            BG_BaseBoiler_req_W,
+                                                            BG_PeakBoiler_req_W,
+                                                            BG_BackupBoiler_req_W,
+                                                            WetBiomass_Furnace_req_W,
+                                                            DryBiomass_Furnace_req_W,
                                                             lca,
                                                             )
 
@@ -545,71 +551,98 @@ def heating_calculations_of_DH_buildings(locator, master_to_slave_vars, config, 
 
 
 def calc_network_summary_DHN(locator, master_to_slave_vars):
-    network_data = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
+    network_data = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
     tdhret_K = network_data['T_DHNf_re_K']
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
     tdhsup_K = network_data['T_DHNf_sup_K']
     return mdot_DH_kgpers, tdhret_K, tdhsup_K
 
 
-def calc_primary_energy_and_CO2(storage_dispatch,
-                                NG_used_CHP_W,
-                                NG_used_BaseBoiler_W,
-                                NG_used_PeakBoiler_W,
-                                NG_used_BackupBoiler_W,
-                                BG_used_CHP_W,
-                                BG_used_BaseBoiler_W,
-                                BG_used_PeakBoiler_W,
-                                BG_used_BackupBoiler_W,
-                                WetBiomass_used_Furnace_W,
-                                DryBiomass_used_Furnace_W,
+def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
+                                Q_SC_FP_gen_W,
+                                Q_PVT_gen_W,
+                                NG_CHP_req_W,
+                                NG_BaseBoiler_req_W,
+                                NG_PeakBoiler_req_W,
+                                NG_BackupBoiler_req_W,
+                                BG_CHP_req_W,
+                                BG_BaseBoiler_req_W,
+                                BG_PeakBoiler_req_W,
+                                BG_BackupBoiler_req_W,
+                                WetBiomass_Furnace_req_W,
+                                DryBiomass_Furnace_req_W,
                                 lca,
                                 ):
     """
     This function calculates the emissions and primary energy consumption
 
     """
-    #Electricity is accounted in electricity main. so heatpumps etc. are not considered in here.
+
+    # CALCULATE YEARLY LOADS
+    Q_SC_ET_gen_Whyr = sum(Q_SC_ET_gen_W)
+    Q_SC_FP_gen_Whyr = sum(Q_SC_FP_gen_W)
+    Q_PVT_gen_Whyr = sum(Q_PVT_gen_W)
+    NG_CHP_req_Wyr = sum(NG_CHP_req_W)
+    NG_BaseBoiler_req_Wyr = sum(NG_BaseBoiler_req_W)
+    NG_PeakBoiler_req_Wyr = sum(NG_PeakBoiler_req_W)
+    NG_BackupBoiler_req_Wyr = sum(NG_BackupBoiler_req_W)
+    BG_CHP_req_Wyr = sum(BG_CHP_req_W)
+    BG_BaseBoiler_req_Wyr = sum(BG_BaseBoiler_req_W)
+    BG_PeakBoiler_req_Wyr = sum(BG_PeakBoiler_req_W)
+    BG_BackupBoiler_req_Wyr = sum(BG_BackupBoiler_req_W)
+    WetBiomass_Furnace_req_Wyr = sum(WetBiomass_Furnace_req_W)
+    DryBiomass_Furnace_req_Wyr = sum(DryBiomass_Furnace_req_W)
+
+    # calculate emissions hourly (to discount for exports and imports)
+    GHG_SC_ET_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(Q_SC_ET_gen_Whyr, lca.SOLARCOLLECTORS_TO_CO2)
+    GHG_SC_FP_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(Q_SC_FP_gen_Whyr, lca.SOLARCOLLECTORS_TO_CO2)
+    GHG_PVT_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(Q_PVT_gen_Whyr, lca.SOLARCOLLECTORS_TO_CO2)
+
+    PEN_SC_ET_connected_MJoil = calc_pen_Whyr_to_MJoilyr(Q_SC_ET_gen_Whyr, lca.SOLARCOLLECTORS_TO_OIL)
+    PEN_SC_FP_connected_MJoil = calc_pen_Whyr_to_MJoilyr(Q_SC_ET_gen_Whyr, lca.SOLARCOLLECTORS_TO_OIL)
+    PEN_PVT_connected_MJoil = calc_pen_Whyr_to_MJoilyr(Q_SC_ET_gen_Whyr, lca.SOLARCOLLECTORS_TO_OIL)
 
     ######### COMPUTE THE GHG emissions
+    GHG_CHP_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(NG_CHP_req_Wyr, lca.NG_CC_TO_CO2_STD)
+    GHG_BaseBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(NG_BaseBoiler_req_Wyr,
+                                                                         lca.NG_BOILER_TO_CO2_STD)
+    GHG_PeakBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(NG_PeakBoiler_req_Wyr,
+                                                                         lca.NG_BOILER_TO_CO2_STD)
+    GHG_BackupBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(NG_BackupBoiler_req_Wyr,
+                                                                           lca.NG_BOILER_TO_CO2_STD)
 
-    GHG_CHP_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(NG_used_CHP_W), lca.NG_CC_TO_CO2_STD)
-    GHG_BaseBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(NG_used_BaseBoiler_W), lca.NG_BOILER_TO_CO2_STD)
-    GHG_PeakBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(NG_used_PeakBoiler_W), lca.NG_BOILER_TO_CO2_STD)
-    GHG_BackupBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(NG_used_BackupBoiler_W), lca.NG_BOILER_TO_CO2_STD)
+    GHG_CHP_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(BG_CHP_req_Wyr, lca.BG_CC_TO_CO2_STD)
+    GHG_BaseBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(BG_BaseBoiler_req_Wyr,
+                                                                         lca.BG_BOILER_TO_CO2_STD)
+    GHG_PeakBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(BG_PeakBoiler_req_Wyr,
+                                                                         lca.BG_BOILER_TO_CO2_STD)
+    GHG_BackupBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(BG_BackupBoiler_req_Wyr,
+                                                                           lca.BG_BOILER_TO_CO2_STD)
 
-    GHG_CHP_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(BG_used_CHP_W), lca.BG_CC_TO_CO2_STD)
-    GHG_BaseBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(BG_used_BaseBoiler_W), lca.BG_BOILER_TO_CO2_STD)
-    GHG_PeakBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(BG_used_PeakBoiler_W), lca.BG_BOILER_TO_CO2_STD)
-    GHG_BackupBoiler_BG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(BG_used_BackupBoiler_W), lca.BG_BOILER_TO_CO2_STD)
-
-    GHG_Furnace_wet_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(WetBiomass_used_Furnace_W), lca.FURNACE_TO_CO2_STD)
-    GHG_Furnace_dry_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(np.sum(DryBiomass_used_Furnace_W), lca.FURNACE_TO_CO2_STD)
-
+    GHG_Furnace_wet_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(WetBiomass_Furnace_req_Wyr,
+                                                                       lca.FURNACE_TO_CO2_STD)
+    GHG_Furnace_dry_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(DryBiomass_Furnace_req_Wyr,
+                                                                       lca.FURNACE_TO_CO2_STD)
 
     ######## COMPUTE PRIMARY ENERGY
+    PEN_CHP_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(NG_CHP_req_Wyr, lca.NG_CC_TO_OIL_STD)
+    PEN_BaseBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(NG_BaseBoiler_req_Wyr, lca.NG_BOILER_TO_OIL_STD)
+    PEN_PeakBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(NG_PeakBoiler_req_Wyr, lca.NG_BOILER_TO_OIL_STD)
+    PEN_BackupBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(NG_BackupBoiler_req_Wyr, lca.NG_BOILER_TO_OIL_STD)
 
-    PEN_CHP_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(NG_used_CHP_W), lca.NG_CC_TO_OIL_STD)
-    PEN_BaseBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(NG_used_BaseBoiler_W), lca.NG_BOILER_TO_OIL_STD)
-    PEN_PeakBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(NG_used_PeakBoiler_W), lca.NG_BOILER_TO_OIL_STD)
-    PEN_BackupBoiler_NG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(NG_used_BackupBoiler_W), lca.NG_BOILER_TO_OIL_STD)
+    PEN_CHP_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(BG_CHP_req_Wyr, lca.NG_CC_TO_OIL_STD)
+    PEN_BaseBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(BG_BaseBoiler_req_Wyr, lca.BG_BOILER_TO_OIL_STD)
+    PEN_PeakBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(BG_PeakBoiler_req_Wyr, lca.BG_BOILER_TO_OIL_STD)
+    PEN_BackupBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(BG_BackupBoiler_req_Wyr, lca.BG_BOILER_TO_OIL_STD)
 
-    PEN_CHP_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(BG_used_CHP_W), lca.NG_CC_TO_OIL_STD)
-    PEN_BaseBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(BG_used_BaseBoiler_W), lca.BG_BOILER_TO_OIL_STD)
-    PEN_PeakBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(BG_used_PeakBoiler_W), lca.BG_BOILER_TO_OIL_STD)
-    PEN_BackupBoiler_BG_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(BG_used_BackupBoiler_W), lca.BG_BOILER_TO_OIL_STD)
-
-    PEN_Furnace_wet_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(WetBiomass_used_Furnace_W), lca.FURNACE_TO_OIL_STD)
-    PEN_Furnace_dry_connected_MJoil = calc_pen_Whyr_to_MJoilyr(np.sum(DryBiomass_used_Furnace_W), lca.FURNACE_TO_OIL_STD)
-
-
-    # FOR SOLAR THERMAL TECHNOLOGIES
-    emissions_solarthermal = performance_solarthermal_technologies(storage_dispatch, lca)
+    PEN_Furnace_wet_connected_MJoil = calc_pen_Whyr_to_MJoilyr(WetBiomass_Furnace_req_Wyr, lca.FURNACE_TO_OIL_STD)
+    PEN_Furnace_dry_connected_MJoil = calc_pen_Whyr_to_MJoilyr(DryBiomass_Furnace_req_Wyr, lca.FURNACE_TO_OIL_STD)
 
     performance_parameters = {
-        "GHG_SC_ET_connected_tonCO2": emissions_solarthermal['GHG_SC_ET_connected_tonCO2'],
-        "GHG_SC_FP_connected_tonCO2": emissions_solarthermal['GHG_SC_FP_connected_tonCO2'],
-        "GHG_PVT_connected_tonCO2": emissions_solarthermal['GHG_PVT_connected_tonCO2'],
+        # CO2 EMISSIONS)
+        "GHG_SC_ET_connected_tonCO2": GHG_SC_ET_connected_tonCO2,
+        "GHG_SC_FP_connected_tonCO2": GHG_SC_FP_connected_tonCO2,
+        "GHG_PVT_connected_tonCO2": GHG_PVT_connected_tonCO2,
         "GHG_BaseBoiler_NG_connected_tonCO2": GHG_BaseBoiler_NG_connected_tonCO2,
         "GHG_PeakBoiler_NG_connected_tonCO2": GHG_PeakBoiler_NG_connected_tonCO2,
         "GHG_BackupBoiler_NG_connected_tonCO2": GHG_BackupBoiler_NG_connected_tonCO2,
@@ -621,9 +654,11 @@ def calc_primary_energy_and_CO2(storage_dispatch,
         "GHG_Furnace_wet_connected_tonCO2": GHG_Furnace_wet_connected_tonCO2,
         "GHG_Furnace_dry_connected_tonCO2": GHG_Furnace_dry_connected_tonCO2,
         "GHG_SubstationsHeating_tonCO2": 0.0,  # we neglect them
-        "PEN_SC_ET_connected_MJoil": emissions_solarthermal['PEN_SC_ET_connected_MJoil'],
-        "PEN_SC_FP_connected_MJoil": emissions_solarthermal['PEN_SC_FP_connected_MJoil'],
-        "PEN_PVT_connected_MJoil": emissions_solarthermal['PEN_PVT_connected_MJoil'],
+
+        # PRIMARY ENERGY (NON-RENEWABLE)
+        "PEN_SC_ET_connected_MJoil": PEN_SC_ET_connected_MJoil,
+        "PEN_SC_FP_connected_MJoil": PEN_SC_FP_connected_MJoil,
+        "PEN_PVT_connected_MJoil": PEN_PVT_connected_MJoil,
         "PEN_CHP_BG_connected_MJoil": PEN_CHP_BG_connected_MJoil,
         "PEN_CHP_NG_connected_MJoil": PEN_CHP_NG_connected_MJoil,
         "PEN_BaseBoiler_NG_connected_MJoil": PEN_BaseBoiler_NG_connected_MJoil,
@@ -642,6 +677,7 @@ def calc_primary_energy_and_CO2(storage_dispatch,
 
 def calc_emissions_Whyr_to_tonCO2yr(E_Wh_yr, factor_kgCO2_to_MJ):
     return (E_Wh_yr * WH_TO_J / 1.0E6) * (factor_kgCO2_to_MJ / 1E3)
+
 
 def calc_pen_Whyr_to_MJoilyr(E_Wh_yr, factor_MJ_to_MJ):
     return (E_Wh_yr * WH_TO_J / 1.0E6) * factor_MJ_to_MJ
@@ -718,39 +754,4 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
 
 
 def performance_solarthermal_technologies(storage_dispatch, lca):
-    # Claculate emissions and primary energy
-    Q_SC_ET_gen_Wh = storage_dispatch['Q_SC_ET_gen_W']
-    Q_SC_FP_gen_Wh = storage_dispatch['Q_SC_FP_gen_W']
-    Q_PVT_gen_Wh = storage_dispatch['Q_PVT_gen_W']
-
-    # calculate emissions hourly (to discount for exports and imports
-    GHG_SC_ET_connected_tonCO2hr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3
-    GHG_SC_FP_connected_tonCO2hr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3
-    PEN_SC_ET_connected_MJoilhr = (Q_SC_ET_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL
-    PEN_SC_FP_connected_MJoilhr = (Q_SC_FP_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL
-
-    GHG_PVT_connected_tonCO2hr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_CO2 / 1E3)
-    PEN_PVT_connected_MJoilhr = ((Q_PVT_gen_Wh * WH_TO_J / 1.0E6) * lca.SOLARCOLLECTORS_TO_OIL)
-
-    # get yearly totals
-    GHG_SC_ET_connected_tonCO2 = sum(GHG_SC_ET_connected_tonCO2hr)
-    GHG_SC_FP_connected_tonCO2 = sum(GHG_SC_FP_connected_tonCO2hr)
-    GHG_PVT_connected_tonCO2 = sum(GHG_PVT_connected_tonCO2hr)
-
-    PEN_SC_ET_connected_MJoil = sum(PEN_SC_ET_connected_MJoilhr)
-    PEN_SC_FP_connected_MJoil = sum(PEN_SC_FP_connected_MJoilhr)
-    PEN_PVT_connected_MJoil = sum(PEN_PVT_connected_MJoilhr)
-
-    performance_emissions = {
-        # emissions
-        "GHG_SC_ET_connected_tonCO2": GHG_SC_ET_connected_tonCO2,
-        "GHG_SC_FP_connected_tonCO2": GHG_SC_FP_connected_tonCO2,
-        "GHG_PVT_connected_tonCO2": GHG_PVT_connected_tonCO2,
-
-        # primary energy
-        "PEN_SC_ET_connected_MJoil": PEN_SC_ET_connected_MJoil,
-        "PEN_SC_FP_connected_MJoil": PEN_SC_FP_connected_MJoil,
-        "PEN_PVT_connected_MJoil": PEN_PVT_connected_MJoil,
-    }
-
     return performance_emissions
