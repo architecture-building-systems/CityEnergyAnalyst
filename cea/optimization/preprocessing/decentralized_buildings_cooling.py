@@ -27,7 +27,7 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 
-def disconnected_buildings_cooling_main(locator, building_names, config, prices, lca):
+def disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -57,9 +57,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     """
 
     t0 = time.clock()
-    # get total demand
-    total_demand = pd.read_csv(locator.get_total_demand())
-
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SENSIBLE COOLING UNIT
