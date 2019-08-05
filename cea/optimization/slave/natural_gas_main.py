@@ -71,7 +71,7 @@ def main(config):
     district_heating_network = config.optimization.district_heating_network
     district_cooling_network = config.optimization.district_cooling_network
 
-    fuel_imports(generation, individual, locator, district_heating_network, district_cooling_network)
+    fuel_imports(generation, individual, locator)
 
 
 if __name__ == '__main__':
