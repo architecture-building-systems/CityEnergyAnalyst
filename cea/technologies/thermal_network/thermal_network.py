@@ -24,6 +24,7 @@ import multiprocessing
 from cea.utilities.workerstream import stream_from_queue
 import cea.utilities.workerstream
 from math import ceil
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
@@ -1168,9 +1169,16 @@ def assign_pipes_to_edges(thermal_network, set_diameter):
                 thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                            thermal_network.network_name))
             network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
+
+            # get coordinate system and project to WSG 84
+            lat, lon = get_lat_lon_projected_shapefile(network_edges)
+            # get coordinate system and re project to UTM
+            network_edges = network_edges.to_crs(get_projected_coordinate_system(lat, lon))
+            #watchout keep coordinate system
+
             network_edges.to_file(
                 thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                           thermal_network.network_name))
+                                                                           thermal_network.network_name),)
     else:
         # Find the pipe properties of the pipes from the .shp file
         # The shape file pipe DN is stored in edge_df
