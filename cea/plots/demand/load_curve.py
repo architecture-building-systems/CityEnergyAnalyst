@@ -26,12 +26,15 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LoadCurvePlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["E_sys_kWh",
+        self.analysis_fields = ["Eal_kWh",
+                                "Edata_kWh",
+                                "Epro_kWh",
+                                "Eaux_kWh",
                                 "Qhs_sys_kWh",
                                 "Qww_sys_kWh",
                                 "Qcs_sys_kWh",
                                 'Qcdata_sys_kWh',
-                                'Qcre_sys_kWh',"T_int_C", "T_ext_C"]
+                                'Qcre_sys_kWh']
 
     @property
     def layout(self):
@@ -39,12 +42,22 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
         return dict(yaxis=dict(title='End-Use Energy Demand [MWh]'),
                     yaxis2=dict(title='Outdoor Temperature [C]', overlaying='y', side='right'))
 
+    @property
+    def title(self):
+        """Override the version in PlotBase"""
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
+            if len(self.buildings) == 1:
+                return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
+            else:
+                return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
+        return "%s for District (%s)" % (self.name, self.timeframe)
+
     def calc_graph(self):
         data = self._calculate_hourly_loads()
         traces = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:
-            y = data[field].values / 1E3# to MW
+            y = data[field].values / 1E3  # to MW
             name = NAMING[field]
             trace = go.Scatter(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)

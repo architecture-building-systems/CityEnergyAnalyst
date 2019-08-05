@@ -105,7 +105,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                                          'Boiler_Status': Boiler_Status,
                                          'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                                         'E_sys_req_W': np.zeros(8760)}
+                                         'E_hs_ww_req_W': np.zeros(8760)}
 
         ## 1: Boiler BG
         # add costs
@@ -117,7 +117,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                                'Boiler_Status': Boiler_Status,
                                'BG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                               'E_sys_req_W': np.zeros(8760)}
+                               'E_hs_ww_req_W': np.zeros(8760)}
 
         ## 2: Fuel Cell
         (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
@@ -141,7 +141,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                                'Fuelcell_Status': FC_Status,
                                'NG_FuelCell_req_W': Qgas_to_FC_Wh,
                                'E_Fuelcell_gen_export_W': el_from_FC_Wh,
-                               'E_sys_req_W': np.zeros(8760)}
+                               'E_hs_ww_req_W': np.zeros(8760)}
 
         # 3-13: Boiler NG + GHP
         for i in range(10):
@@ -201,7 +201,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                                        'Boiler_Status': Boiler_Status,
                                        'NG_BackupBoiler_req_Wh': Qgas_to_GHPBoiler_Wh,
                                        'NG_Boiler_req_Wh': Qgas_to_Boiler_Wh,
-                                       'E_sys_req_W': el_GHP_Wh}
+                                       'E_hs_ww_req_W': el_GHP_Wh}
 
         # Add all costs
         # 0: Boiler NG

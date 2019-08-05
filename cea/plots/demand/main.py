@@ -16,7 +16,6 @@ from cea.plots.demand.energy_balance import energy_balance
 from cea.plots.demand.energy_demand import energy_demand_district
 from cea.plots.demand.energy_use_intensity import energy_use_intensity_district, energy_use_intensity
 from cea.plots.demand.heating_reset_schedule import heating_reset_schedule
-from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_district, peak_load_building
 

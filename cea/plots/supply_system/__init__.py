@@ -1,10 +1,11 @@
 from __future__ import division
 from __future__ import print_function
 
-import functools
-import cea.plots
-import pandas as pd
 import os
+
+import pandas as pd
+
+import cea.plots
 
 """
 Implements py:class:`cea.plots.SupplySystemPlotBase` as a base class for all plots in the category "supply-system" and also
@@ -27,6 +28,13 @@ label = 'Supply System'
 class SupplySystemPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "supply-system"
+
+    expected_parameters = {
+        'generation': 'plots-supply-system:generation',
+        'individual': 'plots-supply-system:individual',
+        'timeframe': 'plots-supply-system:timeframe',
+        'scenario-name': 'general:scenario-name',
+    }
 
     def __init__(self, project, parameters, cache):
         super(SupplySystemPlotBase, self).__init__(project, parameters, cache)
@@ -83,3 +91,19 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
             data_electricity.index = pd.to_datetime(data_electricity.index)
             data_electricity = data_electricity.resample('M').sum()
         return data_electricity
+
+    @cea.plots.cache.cached
+    def process_individual_requirements_curve_electricity(self):
+        data_el_requirements = pd.read_csv(
+            self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
+                                                                               self.generation)).set_index('DATE')
+        if self.timeframe == "daily":
+            data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
+            data_el_requirements = data_el_requirements.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
+            data_el_requirements = data_el_requirements.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
+            data_el_requirements = data_el_requirements.resample('M').sum()
+        return data_el_requirements

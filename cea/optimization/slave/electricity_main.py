@@ -13,8 +13,6 @@ import os
 import numpy as np
 import pandas as pd
 
-import cea.config
-import cea.inputlocator
 import cea.technologies.solar.photovoltaic as pv
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
@@ -331,7 +329,8 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
     # CALCULATE VARIABLES COSTS FOR UNITS WHICH SELL ENERGY (EXCEPT SOLAR - THAT IS WORKED OUT IN ANOTHER SCRIPT)
     Opex_var_CHP_export_USD = sum([energy * cost for energy, cost in zip(E_CHP_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_CHP_directload_USD = 0.0  # because the price of fuel is already included
-    Opex_var_Furnace_export_USD = sum([energy * cost for energy, cost in zip(E_Furnace_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_Furnace_export_USD = sum(
+        [energy * cost for energy, cost in zip(E_Furnace_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_Furnace_directload_USD = 0.0  # because the price of fuel is already included
     Opex_var_PVT_export_USD = sum([energy * cost for energy, cost in zip(E_PVT_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_PVT_directload_USD = 0.0  # because the price of fuel is already included
@@ -515,10 +514,11 @@ def calc_district_system_electricity_generated(locator, cooling_dispatch, heatin
         E_CCGT_gen_W = np.zeros(HOURS_IN_YEAR)
 
     # TECHNOLOGEIS THAT ONLY GENERATE ELECTRICITY
-    E_PV_gen_W = calc_available_generation_PV(locator, master_to_slave_vars.building_names_all , master_to_slave_vars.PV_share)
+    E_PV_gen_W = calc_available_generation_PV(locator, master_to_slave_vars.building_names_all,
+                                              master_to_slave_vars.PV_share)
 
     return E_CHP_gen_W, \
-           E_Furnace_gen_W,\
+           E_Furnace_gen_W, \
            E_CCGT_gen_W, \
            E_PV_gen_W, \
            E_PVT_gen_W
@@ -527,62 +527,69 @@ def calc_district_system_electricity_generated(locator, cooling_dispatch, heatin
 def calc_available_generation_PV(locator, buildings, share_allowed):
     E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
     for building_name in buildings:
-        building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), building_name + '_PV.csv')).fillna(value=0.0)
+        building_PVT = pd.read_csv(
+            os.path.join(locator.get_potentials_solar_folder(), building_name + '_PV.csv')).fillna(value=0.0)
         E_PV_gen_kWh += building_PVT['E_PV_gen_kWh']
     E_PVT_gen_Wh = E_PV_gen_kWh * share_allowed * 1000
     return E_PVT_gen_Wh
 
 
-
 def calc_district_system_electricity_requirements(master_to_slave_vars, building_names, cooling_activation_data,
                                                   heating_activation_data, locator):
     # by buildings
-    E_building_req_W = extract_demand_buildings(master_to_slave_vars, building_names, locator)
+    requirements_buildings = extract_demand_buildings(master_to_slave_vars, building_names, locator)
 
     # by generation units
-    E_generation_req_W = extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data,
-                                                               heating_activation_data)
+    requirements_generation = extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data,
+                                                                    heating_activation_data)
 
-    E_Storage_req_W = extract_requirements_storage(heating_activation_data, master_to_slave_vars)
+    requirements_storage = extract_requirements_storage(heating_activation_data, master_to_slave_vars)
 
     # by networks
-    E_Networks_req_W = extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
-                                                     heating_activation_data)
+    requirements_networks = extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
+                                                          heating_activation_data)
 
     # total system
-    E_sys_req_W = E_building_req_W + \
-                  E_generation_req_W + \
-                  E_Storage_req_W + \
-                  E_Networks_req_W
+    requirements_electricity = requirements_buildings.update(requirements_generation).update(
+        requirements_storage).update(requirements_networks)
+    E_sys_req_W = sum(requirements_electricity.itervalues())
 
-    return E_sys_req_W
+    return E_sys_req_W, requirements_electricity
 
 
 def extract_requirements_storage(heating_activation_data, master_to_slave_vars):
     if master_to_slave_vars.DHN_exists:
         # by storage system
-        E_Storage_req_W = heating_activation_data['E_Storage_charging_req_W'] + \
-                          heating_activation_data['E_Storage_discharging_req_W']
+        E_Storage_charging_req_W = heating_activation_data['E_Storage_charging_req_W']
+        E_Storage_discharging_req_W = heating_activation_data['E_Storage_discharging_req_W']
 
     else:
-        E_Storage_req_W = np.zeros(HOURS_IN_YEAR)
-    return E_Storage_req_W
+        E_Storage_charging_req_W = np.zeros(HOURS_IN_YEAR)
+        E_Storage_discharging_req_W = np.zeros(HOURS_IN_YEAR)
+
+    requirements_storage = {
+        "E_Storage_charging_req_W": E_Storage_charging_req_W,
+        "E_Storage_discharging_req_W": E_Storage_discharging_req_W,
+    }
+    return requirements_storage
 
 
 def extract_requirements_networks(master_to_slave_vars, cooling_activation_data, heating_activation_data):
     if master_to_slave_vars.DHN_exists:
-        E_DH_req_W = heating_activation_data['E_Pump_DHN_req_W']
+        E_Pump_DHN_req_W = heating_activation_data['E_Pump_DHN_req_W']
     else:
-        E_DH_req_W = np.zeros(HOURS_IN_YEAR)
+        E_Pump_DHN_req_W = np.zeros(HOURS_IN_YEAR)
 
     if master_to_slave_vars.DCN_exists:
-        E_DC_req_W = cooling_activation_data['E_Pump_DHN_req_W']
+        E_Pump_DCN_req_W = cooling_activation_data['E_Pump_DCN_req_W']
     else:
-        E_DC_req_W = np.zeros(HOURS_IN_YEAR)
+        E_Pump_DCN_req_W = np.zeros(HOURS_IN_YEAR)
 
-    E_Networks_req_W = E_DH_req_W + E_DC_req_W
-
-    return E_Networks_req_W
+    requirements_networks = {
+        "E_Pump_DHN_req_W": E_Pump_DHN_req_W,
+        "E_Pump_DCN_req_W": E_Pump_DCN_req_W,
+    }
+    return requirements_networks
 
 
 def extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data, heating_activation_data):
@@ -625,54 +632,135 @@ def extract_requirements_generation_units(master_to_slave_vars, cooling_activati
         E_ACH_req_W = np.zeros(HOURS_IN_YEAR)
         E_CT_req_W = np.zeros(HOURS_IN_YEAR)
 
-    E_generation_req_W = E_HP_SC_FP_req_W +\
-                         E_HP_SC_ET_req_W + \
-                         E_HP_PVT_req_W + \
-                         E_HP_Server_req_W +\
-                         E_HPSew_req_W + \
-                         E_HPLake_req_W + \
-                         E_GHP_req_W + \
-                         E_BaseBoiler_req_W + \
-                         E_PeakBoiler_req_W + \
-                         E_BackupBoiler_req_W + \
-                         E_FreeCooling_req_W + \
-                         E_VCC_req_W + \
-                         E_VCC_backup_req_W + \
-                         E_ACH_req_W + \
-                         E_CT_req_W
+    requirements_generation = {
+        'E_HP_SC_FP_req_W': E_HP_SC_FP_req_W,
+        'E_HP_SC_ET_req_W': E_HP_SC_ET_req_W,
+        'E_HP_PVT_req_W': E_HP_PVT_req_W,
+        'E_HP_Server_req_W': E_HP_Server_req_W,
+        'E_HPSew_req_W': E_HPSew_req_W,
+        'E_HPLake_req_W': E_HPLake_req_W,
+        'E_GHP_req_W': E_GHP_req_W,
+        'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
+        'E_PeakBoiler_req_W': E_PeakBoiler_req_W,
+        'E_BackupBoiler_req_W': E_BackupBoiler_req_W,
+        'E_FreeCooling_req_W': E_FreeCooling_req_W,
+        'E_VCC_req_W': E_VCC_req_W,
+        'E_VCC_backup_req_W': E_VCC_backup_req_W,
+        'E_ACH_req_W': E_ACH_req_W,
+        'E_CT_req_W': E_CT_req_W,
+    }
 
-    return E_generation_req_W
+    return requirements_generation
 
 
 def extract_demand_buildings(master_to_slave_vars, building_names, locator):
-    DHN_barcode = master_to_slave_vars.DHN_barcode
-    DCN_barcode = master_to_slave_vars.DCN_barcode
+    # store the names of the buildings connected to district heating or district cooling
+    buildings_connected_to_district_heating = master_to_slave_vars.buildings_connected_to_district_heating
+    buildings_connected_to_district_cooling = master_to_slave_vars.buildings_connected_to_district_cooling
 
-    # by buildings'electrical system
-    E_building_req_W = np.zeros(HOURS_IN_YEAR)
+    # these are all the buildngs with heating and cooling demand
+    building_names_heating  = master_to_slave_vars.building_names_heating
+    building_names_cooling  = master_to_slave_vars.building_names_cooling
+
+    # system requirements
+    E_hs_ww_req_W = np.zeros(HOURS_IN_YEAR)
+    E_cs_cre_cdata_req_W = np.zeros(HOURS_IN_YEAR)
+
+    # End-use demands
+    Eal_req_W = np.zeros(HOURS_IN_YEAR)
+    Edata_req_W = np.zeros(HOURS_IN_YEAR)
+    Epro_req_W = np.zeros(HOURS_IN_YEAR)
+    Eaux_req_W = np.zeros(HOURS_IN_YEAR)
+
+    # for all buildings with electricity demand
     for name in building_names:  # adding the electricity demand of
         building_demand = pd.read_csv(locator.get_demand_results_file(name))
-        E_building_req_W = E_building_req_W + building_demand['E_sys_kWh'].values * 1000
+        # end-use electrical demands
+        Eal_req_W += building_demand['Eal_kWh'] * 1000
+        Edata_req_W += building_demand['Edata_kWh'] * 1000
+        Epro_req_W += building_demand['Epro_kWh'] * 1000
+        Eaux_req_W += building_demand['Eaux_kWh'] * 1000
 
-    # by buildings' individual heating system and cooling system
-    for i, name in zip(DCN_barcode, building_names):
-        if i == '1':
+    # when the two networks are present
+    if master_to_slave_vars.DHN_exists and master_to_slave_vars.DCN_exists:
+        for name in building_names:
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
-            E_building_req_W = E_building_req_W + (building_demand['E_cdata_kWh'] +
-                                                   building_demand['E_cs_kWh'] +
-                                                   building_demand['E_cre_kWh']) * 1000
-        else:
-            building_demand = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
-            E_building_req_W = E_building_req_W + (building_demand['E_sys_req_W'])
+            if name in buildings_connected_to_district_heating and name in buildings_connected_to_district_cooling:
+                # if connected to the heating network
+                E_hs_ww_req_W += 0.0
+                E_cs_cre_cdata_req_W += 0.0
+            elif name in buildings_connected_to_district_heating:
+                # if disconnected from the heating network
+                E_hs_ww_req_W += 0.0
+                E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                                         building_demand['E_cre_kWh'] +
+                                         building_demand['E_cdata_kWh']) * 1000  # to W
+            elif name in buildings_connected_to_district_cooling:
+                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
+                E_cs_cre_cdata_req_W += 0.0
+            else:
+                building_dencentralized_system_heating = pd.read_csv(
+                    locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
+                building_dencentralized_system_cooling = pd.read_csv(
+                    locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
+                E_hs_ww_req_W += building_dencentralized_system_heating['E_hs_ww_req_W']
+                E_cs_cre_cdata_req_W += building_dencentralized_system_cooling['E_cs_cre_cdata_req_W']
 
-    for i, name in zip(DHN_barcode, building_names):
-        if i == '1':
+    # if only a district heating network exists.
+    elif master_to_slave_vars.DHN_exists:
+        for name in building_names:
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
-            E_building_req_W = E_building_req_W + (building_demand['E_ww_kWh'] +
-                                                   building_demand['E_hs_kWh']) * 1000
-        else:
-            building_demand = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
-            E_building_req_W = E_building_req_W + building_demand['E_sys_req_W']
+            if name in buildings_connected_to_district_heating:
+                # if connected to the heating network
+                E_hs_ww_req_W += 0.0  # because it is connected to the heating network
+                E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                                         building_demand['E_cre_kWh'] +
+                                         building_demand['E_cdata_kWh']) * 1000  # to W
+            else:
+                #if not then get airconditioning loads of the baseline
+                E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                                         building_demand['E_cre_kWh'] +
+                                         building_demand['E_cdata_kWh']) * 1000  # to W
+                if name in building_names_heating:
+                    #if there is a decentralized heating use it.
+                    building_dencentralized_system = pd.read_csv(
+                        locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
+                    E_hs_ww_req_W += building_dencentralized_system['E_hs_ww_req_W']
+                else:
+                    # if not (cae of building with electric load and not heating)
+                    E_hs_ww_req_W += 0.0
 
-    return E_building_req_W
+    # if only a district cooling network exists.
+    elif master_to_slave_vars.DCN_exists:
+        for name in building_names:
+            building_demand = pd.read_csv(locator.get_demand_results_file(name))
+            if name in buildings_connected_to_district_cooling:
+                # if connected to the cooling network
+                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
+                E_cs_cre_cdata_req_W += 0.0
+            else:
+                #if not then get electric boilers etc form baseline.
+                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
+                if name in building_names_cooling:
+                    #if there is a decentralized cooling use it.
+                    building_dencentralized_system = pd.read_csv(
+                        locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
+                    E_cs_cre_cdata_req_W += building_dencentralized_system['E_cs_cre_cdata_req_W']
+                else:
+                    #if not (cae of building with electric load and not cooling
+                    E_cs_cre_cdata_req_W += 0.0
 
+
+    requirements_buildings = {
+        # end-use demands
+        'Eal_req_W': Eal_req_W,
+        'Edata_req_W': Edata_req_W,
+        'Epro_req_W': Epro_req_W,
+        'Eaux_req_W': Eaux_req_W,
+
+        # system requirements (by decentralized units)
+        'E_hs_ww_req_W': E_hs_ww_req_W,
+        'E_cs_cre_cdata_req_W':E_cs_cre_cdata_req_W,
+    }
+
+    return requirements_buildings

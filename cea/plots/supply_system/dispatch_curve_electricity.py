@@ -22,12 +22,6 @@ __status__ = "Production"
 class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
     name = "Dispatch curve electricity"
-    expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
-        'timeframe': 'plots-supply-system:timeframe',
-        'scenario-name': 'general:scenario-name',
-    }
 
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictElectricityPlot, self).__init__(project, parameters, cache)
@@ -45,12 +39,12 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
                                         "E_PVT_gen_export_W",
                                         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
-        self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
+        self.input_files = [(self.locator.get_optimization_slave_electricity_activation_pattern,
                              [self.individual, self.generation])]
 
     @property
     def title(self):
-        return "Dispatch curve for electricity network Option {individual}".format(individual=self.individual)
+        return "Dispatch curve for electricity system #%s (%s)" % (self.individual, self.timeframe)
 
     @property
     def output_path(self):
