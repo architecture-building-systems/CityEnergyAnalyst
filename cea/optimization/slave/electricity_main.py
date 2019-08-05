@@ -549,9 +549,11 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
     requirements_networks = extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
                                                           heating_activation_data)
 
-    # total system
-    requirements_electricity = requirements_buildings.update(requirements_generation).update(
-        requirements_storage).update(requirements_networks)
+    # total system requirements
+    join1 = dict(requirements_buildings, **requirements_generation)
+    join2 = dict(join1, **requirements_storage)
+    requirements_electricity = dict(join2, **requirements_networks)
+
     E_sys_req_W = sum(requirements_electricity.itervalues())
 
     return E_sys_req_W, requirements_electricity
