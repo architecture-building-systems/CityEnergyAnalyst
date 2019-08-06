@@ -112,28 +112,28 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     if master_to_slave_vars.HPSew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
         Q_therm_Sew_W = np.array(HPSew_Data['Qsw_kW']) * 1E3
-        TretsewArray_K = np.array(HPSew_Data['ts_C']) + 273
+        T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
     else:
         Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
-        TretsewArray_K = np.zeros(HOURS_IN_YEAR)
+        T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
 
     # Import Data - sewage heat
     if master_to_slave_vars.HPLake_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
         Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
-        TretLakeArray_K = np.array(HPlake_Data['Ts_C']) + 273
+        T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
     else:
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
-        TretLakeArray_K = np.zeros(HOURS_IN_YEAR)
+        T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     # Import Data - geothermal (shallow)
     if master_to_slave_vars.GHP_on == 1:
         GHP_Data = pd.read_csv(locator.get_geothermal_potential())
         Q_therm_GHP_W = np.array(GHP_Data['QGHP_kW']) * 1E3
-        TretGHPArray_K = np.array(GHP_Data['Ts_C']) + 273
+        T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
     else:
         Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
-        TretGHPArray_K = np.zeros(HOURS_IN_YEAR)
+        T_source_average_GHP_W = np.zeros(HOURS_IN_YEAR)
 
     # Initiation of the variables
     Opex_var_HP_Sewage_USDhr = np.zeros(HOURS_IN_YEAR)
@@ -189,10 +189,10 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         Q_output, E_output, Gas_output, \
         Biomass_output = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
                                                   Q_therm_GHP_W[hour],
-                                                  TretGHPArray_K[hour],
-                                                  TretLakeArray_K[hour],
+                                                  T_source_average_GHP_W[hour],
+                                                  T_source_average_Lake_K[hour],
                                                   Q_therm_Lake_W[hour],
-                                                  Q_therm_Sew_W[hour], TretsewArray_K[hour],
+                                                  Q_therm_Sew_W[hour], T_source_average_sewage_K[hour],
                                                   tdhsup_K[hour], tdhret_K[hour],
                                                   prices, lca)
 
