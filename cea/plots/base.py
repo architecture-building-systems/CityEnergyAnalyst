@@ -79,6 +79,7 @@ class PlotBase(object):
                 return "%s for Selected Buildings" % self.name
         return "%s for District" % self.name
 
+
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
         traces = []
@@ -150,6 +151,7 @@ class PlotBase(object):
 
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
+        fig['layout'] = dict(fig['layout'],**{'margin':dict(l=50, r=50, t=50, b=50)})
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 
