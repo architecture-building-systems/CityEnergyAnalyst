@@ -1213,7 +1213,7 @@ def get_hourly_oau_operations(tech, results, composite_df):
                 # results['T_w_removed_1'] = results['T_OA1']
                 # results['m_w_removed_2'] = results['m_oau_in'] * (results['w_ext'] / 1000 - results['w_OA1'] / 1000)
                 # results['T_w_removed_2'] = results['T_OA1']
-                hourly_T_EA = results['T_EA_K']
+                hourly_T_EA = results['T_EA_K'] - 273.15
                 hourly_w_EA = results['w_EA']*1000
                 hourly_m_w_add.append(np.nan)
             else:
