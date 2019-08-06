@@ -44,11 +44,13 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                              master_to_slave_vars)
 
     # GET ENERGY REQUIREMENTS
-    E_sys_req_W = calc_district_system_electricity_requirements(master_to_slave_vars,
+    electricity_requirements = calc_district_system_electricity_requirements(master_to_slave_vars,
                                                                 building_names,
                                                                 cooling_dispatch,
                                                                 heating_dispatch, locator,
                                                                 )
+
+    E_sys_req_W = electricity_requirements['E_electricalnetwork_sys_req_W']
 
     # GET ACTIVATION CURVE
     electricity_dispatch = electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch,
@@ -136,7 +138,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
         "PEN_PV_connected_MJoil": PEN_PV_connected_MJoil,
         "PEN_GRID_connected_MJoil": PEN_GRID_connected_MJoil
     }
-    return performance_electricity, electricity_dispatch, performance_heating, performance_cooling,
+    return performance_electricity, electricity_dispatch, electricity_requirements, performance_heating, performance_cooling,
 
 
 def calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_directload_W):
@@ -480,7 +482,6 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
 
     # TOTAL EXPORTS:
     electricity_dispatch = {
-        'E_electricalnetwork_sys_req_W': E_sys_req_W,
         'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
         'E_CHP_gen_export_W': E_CHP_gen_export_W,
         'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
@@ -553,10 +554,13 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
     join1 = dict(requirements_buildings, **requirements_generation)
     join2 = dict(join1, **requirements_storage)
     requirements_electricity = dict(join2, **requirements_networks)
-
     E_sys_req_W = sum(requirements_electricity.itervalues())
 
-    return E_sys_req_W, requirements_electricity
+    # now get all the requirements
+    requirements_electricity["E_electricalnetwork_sys_req_W"] = E_sys_req_W
+
+
+    return requirements_electricity
 
 
 def extract_requirements_storage(heating_activation_data, master_to_slave_vars):

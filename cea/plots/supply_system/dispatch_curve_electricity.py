@@ -69,8 +69,9 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
             graph.append(trace)
 
         # data about demand
+        data_req = self.process_individual_requirements_curve_electricity()
         for field in self.analysis_field_demand:
-            y = (data[field].values) / 1E6 # into MWh
+            y = (data_req[field].values) / 1E6 # into MWh
             trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
                                line=dict(width=1, color=COLOR[field]))
 

@@ -40,7 +40,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
             "E_HPSew_req_W",
             "E_HPLake_req_W",
             "E_GHP_req_W",
-            "E_BaseBoiler_req_W"
+            "E_BaseBoiler_req_W",
             "E_PeakBoiler_req_W",
             "E_BackupBoiler_req_W",
             "E_FreeCooling_req_W",
@@ -67,7 +67,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
-        self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
+        self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
     @property

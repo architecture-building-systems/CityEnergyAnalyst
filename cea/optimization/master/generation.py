@@ -6,10 +6,7 @@ from __future__ import division
 
 import random
 
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_CAPACITY, \
-    DH_CONVERSION_TECHNOLOGIES_SHARE, \
-    DC_CONVERSION_TECHNOLOGIES_CAPACITIES, \
-    DC_CONVERSION_TECHNOLOGIES_SHARE
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
 from cea.optimization.master.validation import validation_main
 
 __author__ = "Jimeno A. Fonseca"
@@ -24,10 +21,6 @@ __status__ = "Production"
 
 def generate_main(individual_with_names_dict,
                   column_names,
-                  heating_unit_names,
-                  cooling_unit_names,
-                  heating_unit_names_share,
-                  cooling_unit_names_share,
                   column_names_buildings_heating,
                   column_names_buildings_cooling,
                   district_heating_network,
@@ -58,30 +51,22 @@ def generate_main(individual_with_names_dict,
     # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
     if district_heating_network and district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
                                                                   DH_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   column_names_buildings_heating)
 
         populated_individual_with_name_dict = populate_individual(populated_individual_with_name_dict,
-                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
                                                                   DC_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   column_names_buildings_cooling)
     elif district_heating_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DH_CONVERSION_TECHNOLOGIES_CAPACITY,
                                                                   DH_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   column_names_buildings_heating)
     elif district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DC_CONVERSION_TECHNOLOGIES_CAPACITIES,
                                                                   DC_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   column_names_buildings_cooling)
 
     populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
-                                                          heating_unit_names,
-                                                          cooling_unit_names,
-                                                          heating_unit_names_share,
-                                                          cooling_unit_names_share,
                                                           column_names_buildings_heating,
                                                           column_names_buildings_cooling,
                                                           district_heating_network,
@@ -97,19 +82,13 @@ def generate_main(individual_with_names_dict,
 
 
 def populate_individual(empty_individual_with_names_dict,
-                        name_conversion_technologies,
                         name_share_conversion_technologies,
                         columns_buildings_name):
-    # do it for units that are activated
-    for column, limits in name_conversion_technologies:
-        lim_inf = limits[0]
-        lim_sup = limits[1]
-        empty_individual_with_names_dict[column] = random.randint(lim_inf, lim_sup)
 
     # do it for the share of the units that are activated
-    for column, limits in name_share_conversion_technologies:
-        lim_inf = limits[0]
-        lim_sup = limits[1]
+    for column, limits in name_share_conversion_technologies.iteritems():
+        lim_inf = limits["liminf"]
+        lim_sup = limits["limsup"]
         empty_individual_with_names_dict[column] = random.uniform(lim_inf, lim_sup)
 
     # do it for the buildings

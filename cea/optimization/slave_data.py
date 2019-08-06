@@ -50,15 +50,18 @@ class SlaveData(object):
         # Geothermal Heat Pump,
         # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
         self.GHP_maxSize_W = 0.0  # number of probes
+        self.GHP_share = 0.0
         # self.GHP_max = self.GHP_number * self.GHP_max_i
         self.GHP_SEASON_ON = 0  # Hour in Year, when to switch on GHP
         self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
 
         # Sewage Heat Pump
         self.HPSew_maxSize_W = 0.0
+        self.HPSew_share = 0.0
 
         # Lake Heat Pump
         self.HPLake_maxSize_W = 0.0
+        self.HPLake_share = 0.0
 
         # Furnace
         self.Furnace_Q_max_W = 0.0
@@ -135,8 +138,8 @@ class SlaveData(object):
         self.BoilerPeak_on = 0
         self.Furnace_on = 0
         self.GHP_on = 0
-        self.HP_Lake_on = 0
-        self.HP_Sew_on = 0
+        self.HPLake_on = 0
+        self.HPSew_on = 0
         self.CC_on = 0
         self.WasteServersHeatRecovery = 0  # server heat
         self.WasteCompressorHeatRecovery = 0
