@@ -31,7 +31,6 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
                                 "Opex_a_sys_connected_USD",
                                 "Opex_a_sys_disconnected_USD"
                                 ]
-
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
 
     @property

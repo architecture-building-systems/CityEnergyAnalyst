@@ -31,19 +31,21 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictHeatingPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Q_HP_Server_gen_directload_W",
-                                "Q_PVT_gen_directload_W",
-                                "Q_SC_ET_gen_directload_W",
-                                "Q_SC_FP_gen_directload_W",
-                                "Q_Storage_gen_W",
-                                "Q_CHP_gen_directload_W",
-                                "Q_Furnace_gen_directload_W",
-                                "Q_HP_Sew_gen_directload_W",
-                                "Q_HP_Lake_gen_directload_W",
-                                "Q_GHP_gen_directload_W",
-                                "Q_BaseBoiler_gen_directload_W",
-                                "Q_PeakBoiler_gen_directload_W",
-                                "Q_AddBoiler_gen_directload_W"]
+        self.analysis_fields = [
+            "Q_Storage_gen_W",
+            "Q_HP_Server_gen_directload_W",
+            "Q_PVT_gen_directload_W",
+            "Q_SC_ET_gen_directload_W",
+            "Q_SC_FP_gen_directload_W",
+            "Q_CHP_gen_directload_W",
+            "Q_Furnace_gen_directload_W",
+            "Q_HP_Sew_gen_directload_W",
+            "Q_HP_Lake_gen_directload_W",
+            "Q_GHP_gen_directload_W",
+            "Q_BaseBoiler_gen_directload_W",
+            "Q_PeakBoiler_gen_directload_W",
+            "Q_AddBoiler_gen_directload_W",
+        ]
 
         self.analysis_field_demand = ['Q_districtheating_sys_req_W']
         self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
@@ -59,11 +61,10 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
             'gen{generation}_ind{individual}dispatch_curve_heating'.format(individual=self.individual,
                                                                            generation=self.generation),
             self.category_name)
-    
+
     @property
     def layout(self):
         return dict(barmode='relative', yaxis=dict(title='Energy Generation [MWh]'))
-
 
     def calc_graph(self):
         # main data about technologies
