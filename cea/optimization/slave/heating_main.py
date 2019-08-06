@@ -128,9 +128,9 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
 
     # Import Data - geothermal (shallow)
     if master_to_slave_vars.GHP_on == 1:
-        HPGHP_Data = pd.read_csv(locator.get_geothermal_potential())
-        Q_therm_GHP_W = np.array(HPGHP_Data['QGHP_kW']) * 1E3
-        TretGHPArray_K = np.array(HPlake_Data['Ts_C']) + 273
+        GHP_Data = pd.read_csv(locator.get_geothermal_potential())
+        Q_therm_GHP_W = np.array(GHP_Data['QGHP_kW']) * 1E3
+        TretGHPArray_K = np.array(GHP_Data['Ts_C']) + 273
     else:
         Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
         TretGHPArray_K = np.zeros(HOURS_IN_YEAR)
@@ -183,10 +183,6 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     WetBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
     DryBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
 
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
-                                                         'windspd_ms', 'skytemp_C']]
-    ground_temp_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
-
     for hour in range(HOURS_IN_YEAR):
         Q_therm_req_W = Q_req_after_storage_W[hour]
         opex_output, source_output, \
@@ -198,7 +194,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
                                                   Q_therm_Lake_W[hour],
                                                   Q_therm_Sew_W[hour], TretsewArray_K[hour],
                                                   tdhsup_K[hour], tdhret_K[hour],
-                                                  prices, lca, ground_temp_K[hour])
+                                                  prices, lca)
 
         Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
         Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']

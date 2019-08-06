@@ -319,11 +319,11 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     else:
         COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_sew_K)
 
-    if t_sup_K == t_re_K:
-        q_therm_W = 0
-        qcoldot_W = 0
-        E_HPSew_req_W = 0
-        cost_HPSew_USD = 0
+    if t_sup_sew_K >= t_sup_K + HP_DELTA_T_COND:
+        q_therm_W = Q_therm_Sew_W
+        qcoldot_W = Q_therm_Sew_W
+        E_HPSew_req_W = 0.0
+        cost_HPSew_USD = 0.0
     else:
         q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         if q_therm_W > Q_therm_Sew_W:
