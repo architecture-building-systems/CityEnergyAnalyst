@@ -95,7 +95,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     @cea.plots.cache.cached
     def process_individual_requirements_curve_electricity(self):
         data_el_requirements = pd.read_csv(
-            self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
+            self.locator.get_optimization_slave_electricity_requirements_data(self.individual,
                                                                                self.generation)).set_index('DATE')
         if self.timeframe == "daily":
             data_el_requirements.index = pd.to_datetime(data_el_requirements.index)

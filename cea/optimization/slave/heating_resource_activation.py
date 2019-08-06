@@ -20,7 +20,9 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_req_kgpers, Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
+def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
+                             Q_therm_GHP_W, TretGHPArray_K,
+                             TretLakeArray_K, Q_therm_Lake_W, Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
                              prices, lca, T_ground_K):
     """
     :param Q_therm_req_W:
@@ -123,28 +125,30 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_gen_W
 
-    if (master_to_slave_vars.HP_Sew_on) == 1 and Q_heat_unmet_W > 0:  # activate if its available
+    if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):  # activate if its available
 
         source_HP_Sewage = 1
-        if Q_heat_unmet_W >= Q_therm_Sew_W:
-            mdot_DH_to_Sew_kgpers = mdot_DH_req_kgpers * Q_therm_Sew_W / Q_heat_unmet_W
-            Q_therm_Sew_gen_W = Q_therm_Sew_W
+        if Q_heat_unmet_W >= Q_therm_Sew_W * master_to_slave_vars.HPSew_share:
+            Q_HPSew_gen_W = Q_therm_Sew_W * master_to_slave_vars.HPSew_share
+            mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:
-            Q_therm_Sew_gen_W = float(Q_heat_unmet_W)
-            mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers)
+            Q_HPSew_gen_W = Q_heat_unmet_W
+            mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        cost_HPSew_USD, C_HPSew_per_kWh_th_pure, \
-        Q_coldsource_HPSew_W, Q_HPSew_gen_W, \
-        E_HPSew_req_W = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
-                                      tdhsup_K, tdhret_req_K,
-                                      TretsewArray_K, lca, Q_therm_Sew_gen_W, hour)
+        cost_HPSew_USD, E_HPSew_req_W, Q_coldsource_HPSew_W, Q_HPSew_gen_W  = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
+                                      tdhsup_K,
+                                      tdhret_req_K,
+                                      TretsewArray_K,
+                                      lca,
+                                      Q_HPSew_gen_W,
+                                      hour)
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPSew_gen_W
 
-    if (master_to_slave_vars.HP_Lake_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
+    if (master_to_slave_vars.HPLake_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_HP_Lake = 1
-        if Q_heat_unmet_W > master_to_slave_vars.HPLake_maxSize_W:  # Scale down Load, 100% load achieved
-            Q_HPLake_gen_W = master_to_slave_vars.HPLake_maxSize_W
+        if Q_heat_unmet_W > Q_therm_Lake_W * master_to_slave_vars.HPLake_share:  # Scale down Load, 100% load achieved
+            Q_HPLake_gen_W = Q_therm_Lake_W
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
                     HEAT_CAPACITY_OF_WATER_JPERKGK * (
                     tdhsup_K - tdhret_req_K))
@@ -154,30 +158,30 @@ def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_
             mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
         cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers,
-                                                                                               tdhsup_K, tdhret_req_K,
-                                                                                               T_LAKE, lca, hour)
+                                                                                               tdhsup_K,
+                                                                                               tdhret_req_K,
+                                                                                               TretLakeArray_K,
+                                                                                               lca,
+                                                                                               hour)
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
-    if (master_to_slave_vars.GHP_on) == 1 and \
-            hour >= master_to_slave_vars.GHP_SEASON_ON and\
-            hour <= master_to_slave_vars.GHP_SEASON_OFF and \
-            Q_heat_unmet_W > 0 and not np.isclose(
-            tdhsup_K, tdhret_req_K):
+    if (master_to_slave_vars.GHP_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_GHP = 1
-        # activating GHP plant if possible
-        Q_max_GHP_W = master_to_slave_vars.GHP_maxSize_W
-        _, GHP_COP = GHP_Op_max(Q_max_GHP_W, tdhsup_K, T_ground_K,)
-
-        if Q_heat_unmet_W >= master_to_slave_vars.GHP_maxSize_W:
-            Q_therm_GHP_W = master_to_slave_vars.GHP_maxSize_W
+        if Q_heat_unmet_W >= Q_therm_GHP_W * master_to_slave_vars.GHP_share:
+            Q_therm_GHP_W = Q_therm_GHP_W * master_to_slave_vars.GHP_share
             mdot_DH_to_GHP_kgpers = Q_therm_GHP_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:  # regular operation possible, demand is covered
-            Q_therm_GHP_W = float(Q_heat_unmet_W)
+            Q_therm_GHP_W = Q_heat_unmet_W
             mdot_DH_to_GHP_kgpers = Q_therm_GHP_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        cost_GHP_USD, E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K,
-                                                                                 tdhret_req_K, GHP_COP, lca, hour)
+        cost_GHP_USD, E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers,
+                                                                                 tdhsup_K,
+                                                                                 tdhret_req_K,
+                                                                                 TretGHPArray_K,
+                                                                                 lca,
+                                                                                 Q_GHP_gen_W,
+                                                                                 hour)
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_GHP_gen_W
 

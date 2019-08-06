@@ -101,19 +101,39 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     Q_PVT_gen_W = storage_dispatch["Q_PVT_gen_W"]
     Q_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
 
+    Q_Storage_gen_W = storage_dispatch["Q_Storage_gen_W"]
+
     # HEATING PLANT
     # Import Temperatures from Network Summary:
     mdot_DH_kgpers, tdhret_K, tdhsup_K = calc_network_summary_DHN(locator, master_to_slave_vars)
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage
-    if master_to_slave_vars.HP_Sew_on == 1:
+    if master_to_slave_vars.HPSew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
         Q_therm_Sew_W = np.array(HPSew_Data['Qsw_kW']) * 1E3
         TretsewArray_K = np.array(HPSew_Data['ts_C']) + 273
     else:
         Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
         TretsewArray_K = np.zeros(HOURS_IN_YEAR)
+
+    # Import Data - sewage heat
+    if master_to_slave_vars.HPLake_on == 1:
+        HPlake_Data = pd.read_csv(locator.get_lake_potential())
+        Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
+        TretLakeArray_K = np.array(HPlake_Data['Ts_C']) + 273
+    else:
+        Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
+        TretLakeArray_K = np.zeros(HOURS_IN_YEAR)
+
+    # Import Data - geothermal (shallow)
+    if master_to_slave_vars.GHP_on == 1:
+        HPGHP_Data = pd.read_csv(locator.get_geothermal_potential())
+        Q_therm_GHP_W = np.array(HPGHP_Data['QGHP_kW']) * 1E3
+        TretGHPArray_K = np.array(HPlake_Data['Ts_C']) + 273
+    else:
+        Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
+        TretGHPArray_K = np.zeros(HOURS_IN_YEAR)
 
     # Initiation of the variables
     Opex_var_HP_Sewage_USDhr = np.zeros(HOURS_IN_YEAR)
@@ -172,7 +192,10 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         opex_output, source_output, \
         Q_output, E_output, Gas_output, \
         Biomass_output = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
-                                                  mdot_DH_kgpers[hour],
+                                                  Q_therm_GHP_W[hour],
+                                                  TretGHPArray_K[hour],
+                                                  TretLakeArray_K[hour],
+                                                  Q_therm_Lake_W[hour],
                                                   Q_therm_Sew_W[hour], TretsewArray_K[hour],
                                                   tdhsup_K[hour], tdhret_K[hour],
                                                   prices, lca, ground_temp_K[hour])
@@ -327,6 +350,9 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_W,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
         "Q_HP_Server_storage_W": Q_HP_Server_to_storage_W,
+
+        #this is what is generated out of all the technologies sent to the storage
+        "Q_Storage_gen_W":Q_Storage_gen_W,
 
         "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
