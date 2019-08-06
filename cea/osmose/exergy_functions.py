@@ -55,7 +55,8 @@ def calc_exergy_moist_air_2(T_air_C, w_air_gperkg, T_ref_C, w_ref_gperkg):
     ..[Ren,C. et al.2002] Discussion Regarding the Principles of Exergy Analysis Applied to HVAC Systems. Journal of
     Asian Architecture and Building Engineering, 137-141.
     """
-    if T_air_C > 0:
+
+    if T_air_C > 0.0:
         T_ref_K = T_ref_C + 273.15
         T_air_K = T_air_C + 273.15
         w_air_kgperkg = w_air_gperkg / 1000
@@ -76,6 +77,7 @@ def calc_exergy_moist_air_2(T_air_C, w_air_gperkg, T_ref_C, w_ref_gperkg):
         ex_air_kJperkg = ex_ph + ex_ch
     else:
         ex_air_kJperkg = np.nan
+
     return ex_air_kJperkg
 
 
