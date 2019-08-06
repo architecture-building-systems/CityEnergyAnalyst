@@ -104,10 +104,10 @@ def calc_RAU_process_Ex(T_ref_C, ex_air_int, results, rh_ref, w_RA_gperkg, w_ref
     rau_T_SA = 10.27
     rau_w_SA = aux.calc_w_ss_from_T(rau_T_SA)
     rau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(rau_T_SA, rau_w_SA, T_ref_C, w_ref_sat_gperkg)
-    m_RAU_kgpers = results['w_lcu'] * 1000 / (w_RA_gperkg - rau_w_SA)
-    rau_EX_air_kWh = np.nan_to_num((m_RAU_kgpers * (rau_ex_air_in - ex_air_int)).values)
+    m_RAU_kgpers = results['w_lcu'].values * 1000 / (w_RA_gperkg - rau_w_SA)
+    rau_EX_air_kWh = np.nan_to_num(m_RAU_kgpers * (rau_ex_air_in - ex_air_int))
     rau_ex_w_cond_kJperkg = np.nan_to_num(np.vectorize(calc_Ex.calc_exergy_liquid_water)(rau_T_SA, T_ref_C, rh_ref))
-    rau_Ex_w_kWh = (results['w_lcu'] * rau_ex_w_cond_kJperkg).values
+    rau_Ex_w_kWh = results['w_lcu'].values * rau_ex_w_cond_kJperkg
     return rau_EX_air_kWh, rau_Ex_w_kWh
 
 
@@ -116,16 +116,17 @@ def calc_OAU_process_Ex(T_ref_C, air_flow_df, ex_air_ext, operation_df, results,
     oau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(operation_df['T_SA'], operation_df['w_SA'], T_ref_C,
                                                                   w_ref_sat_gperkg)
     oau_ex_air_RA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_RA'], 10.29, T_ref_C, w_ref_sat_gperkg)
-    oau_ex_air_EA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['OAU_T_EA'], results['OAU_w_EA'], T_ref_C,
-                                                                  w_ref_sat_gperkg)
+    oau_ex_air_EA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['OAU_T_EA'].values,
+                                                                  results['OAU_w_EA'].values,
+                                                                  T_ref_C, w_ref_sat_gperkg)
     # Ex of air
     oau_Ex_air_kWh = np.nan_to_num((air_flow_df['OAU_in'] * (oau_ex_air_in - ex_air_ext)).values)
     oau_Ex_air_exhaust_kWh = np.nan_to_num((results['m_oau_out'] * (oau_ex_air_EA - oau_ex_air_RA)).values)
     # ex of water
     oau_ex_w_cond_kJperkg = np.nan_to_num(
-        np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_chw'], T_ref_C, rh_ref))
+        np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_chw'].values, T_ref_C, rh_ref))
     oau_ex_w_RA_kJperkg = np.nan_to_num(
-        np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_RA'], T_ref_C, rh_ref))
+        np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_RA'].values, T_ref_C, rh_ref))
     oau_Ex_w_removed_kWh_dict = {}
     for i in range(results.filter(like='T_w_removed').columns.size):
         oau_ex_w_removed = np.nan_to_num(np.vectorize(calc_Ex.calc_exergy_liquid_water)(results['T_w_removed_'+str(i+1)], T_ref_C, rh_ref))
