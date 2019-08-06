@@ -15,12 +15,12 @@ import cea.osmose.compare_el_usages as compare_el
 TECHS = settings.TECHS
 specified_buildings = settings.specified_buildings
 timesteps = settings.timesteps
-start_t = settings.start_t
 osmose_project_path = settings.osmose_project_path
 ampl_lic_path = settings.ampl_lic_path
 result_destination = settings.result_destination
 new_calculation = settings.new_calculation
 season = settings.season
+cases = settings.cases
 
 
 def main(case):
@@ -139,12 +139,6 @@ def exec_osmose(tech, osmose_project_path):
 
 
 if __name__ == '__main__':
-    # cases= ['WTP_CBD_m_WP1_RET']
-    cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_HOT']
-    # cases = ['ABU_CBD_m_WP1_OFF','ABU_CBD_m_WP1_HOT','ABU_CBD_m_WP1_RET']
-    # cases = ['ABU_CBD_m_WP1_OFF']
-    # cases = ['MDL_CBD_m_WP1_OFF','MDL_CBD_m_WP1_RET','MDL_CBD_m_WP1_HOT']
-    # cases = ['HKG_CBD_m_WP1_OFF', 'HKG_CBD_m_WP1_HOT', 'HKG_CBD_m_WP1_RET']
     for case in cases:
         main(case)
     # stop ampl license
