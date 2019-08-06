@@ -23,7 +23,7 @@ __status__ = "Production"
 def heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
                              Q_therm_GHP_W, TretGHPArray_K,
                              TretLakeArray_K, Q_therm_Lake_W, Q_therm_Sew_W, TretsewArray_K, tdhsup_K, tdhret_req_K,
-                             prices, lca, T_ground_K):
+                             prices, lca):
     """
     :param Q_therm_req_W:
     :param hour:

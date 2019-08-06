@@ -247,12 +247,12 @@ def calc_generation_costs_heating(locator,
             Capex_PeakBoiler_NG_USD = Capex_Boiler_peak_USD
 
     # HEATPUMP LAKE
-    if master_to_slave_vars.HP_Lake_on == 1:
+    if master_to_slave_vars.HPLake_on == 1:
         HP_Size_W = heating_dispatch['Q_HP_Lake_gen_directload_W'].max()
         Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
 
     # HEATPUMP_SEWAGE
-    if master_to_slave_vars.HP_Sew_on == 1:
+    if master_to_slave_vars.HPSew_on == 1:
         HP_Size_W = heating_dispatch['Q_HP_Sew_gen_directload_W'].max()
         Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
                                                                                       'HP2')
