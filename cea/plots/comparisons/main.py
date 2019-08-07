@@ -48,7 +48,6 @@ def plots_main(config):
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
     scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
-    network_type = config.plots_scenario_comparisons.network_type
 
     generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/')) > 1 else "none"
     individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/')) > 1 else "none"
@@ -66,6 +65,7 @@ def plots_main(config):
     generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [
         scenario_base_path] + scenarios_path)  # initialize class
     category = "comparisons"
+
     plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
                   generation_pointers, individual_pointers, network_type, config)
 
