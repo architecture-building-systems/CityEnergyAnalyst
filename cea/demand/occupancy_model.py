@@ -407,6 +407,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
 
     current_schedule = np.zeros(HOURS_IN_YEAR)
     normalizing_value = 0.0
+    area_represented = 0.0  # summing up the fraction of area that is represented by the different non-zero uses
     for num in range(len(list_uses)):
         if archetype_values[num] != 0:  # do not consider when the value is 0
             if occupancy[list_uses[num]] > 0:
@@ -420,14 +421,14 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
                     share_time_occupancy_density = archetype_values[num] * current_share_of_use
 
                 normalizing_value += share_time_occupancy_density
-
+                area_represented += current_share_of_use # summing up the fraction of area that is represented by the different non-zero uses
                 current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
                                                               share_time_occupancy_density)
 
     if normalizing_value == 0:
         return current_schedule * 0
     else:
-        return current_schedule / normalizing_value
+        return current_schedule / normalizing_value * area_represented  # normalizing the schedules by taking into account the total fraction of area that they represent
 
 
 def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, current_share_of_use, reference_area,
