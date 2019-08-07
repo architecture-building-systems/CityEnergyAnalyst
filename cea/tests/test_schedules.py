@@ -160,7 +160,7 @@ def create_data():
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
+    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy
     calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                           stochastic_occupancy)
