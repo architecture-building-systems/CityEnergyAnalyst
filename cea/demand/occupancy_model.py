@@ -736,10 +736,10 @@ def get_building_schedules(locator, bpr, date_range, config):
     building_name = bpr.name
 
     # first the script checks if pre-defined schedules for the building exist
-    schedules_csv = locator.get_building_schedules(building_name)
-    if os.path.isfile(schedules_csv):
+
+    if os.path.isfile(locator.get_building_schedules_predefined(building_name)):
         print("Schedules for building {} detected. Using these schedules.".format(building_name))
-        building_schedules = read_schedules_from_file(schedules_csv)
+        building_schedules = read_schedules_from_file(locator.get_building_schedules_predefined(building_name))
     else:
         print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
         # get list of uses in building
