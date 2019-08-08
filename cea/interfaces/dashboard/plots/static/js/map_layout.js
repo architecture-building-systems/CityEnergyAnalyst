@@ -10,7 +10,7 @@ $(document).ready(function () {
         district = data;
     });
 
-    $.when(getZone, getDistrict).done(function () {
+    $.when(getZone, getDistrict).always(function () {
         let map = new MapClass('map-div');
         map.init({
             data:{
