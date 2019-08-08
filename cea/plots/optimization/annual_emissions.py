@@ -54,7 +54,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
             y = data[field].values
             flag_for_unused_technologies = all(v == 0 for v in y)
             if not flag_for_unused_technologies:
-                trace = go.Bar(x=data['individual_name'], y=y, name=NAMING[field], text=data['individual_name'],
+                trace = go.Bar(x=data['individual_name'], y=y, name=NAMING[field],
                                marker=dict(color=COLOR[field]))
                 graph.append(trace)
 

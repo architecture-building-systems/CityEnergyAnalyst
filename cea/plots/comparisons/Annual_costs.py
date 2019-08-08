@@ -6,9 +6,9 @@ import plotly.graph_objs as go
 import cea.plots.comparisons
 from cea.plots.variable_naming import NAMING, COLOR
 
-__author__ = "Daren Thomas"
+__author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -39,6 +39,7 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
                                                                                    self.energy_system_scenarios_generation, \
                                                                                    self.energy_system_scenarios_individual))
 
+    @property
     def layout(self):
         return go.Layout(barmode='relative',
                          yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
@@ -48,10 +49,9 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
-            x = data.index.values
             flag_for_unused_technologies = all(v == 0 for v in y)
             if not flag_for_unused_technologies:
-                trace = go.Bar(x=data['scenario_name'], y=y, name=NAMING[field], text=data['scenario_name'],
+                trace = go.Bar(x=data['scenario_name'], y=y, name=NAMING[field],
                                marker=dict(color=COLOR[field]))
                 graph.append(trace)
 
@@ -64,10 +64,9 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
     ComparisonsAnnualCostsPlot(config.project,
-                               {'urban-energy-system-scenarios':config.plots_scenario_comparisons.urban_energy_system_scenarios},
+                               {
+                                   'urban-energy-system-scenarios': config.plots_scenario_comparisons.urban_energy_system_scenarios},
                                cache).plot(auto_open=True)
 
 

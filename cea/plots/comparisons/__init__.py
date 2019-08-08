@@ -82,3 +82,8 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
 
         return data_processed
 
+    @property
+    def locator(self):
+        #there is no need of a locator here as there are many scenarios to compare from
+        return cea.inputlocator.InputLocator(os.path.join(self.project, self.urban_scenarios[0]))
+
