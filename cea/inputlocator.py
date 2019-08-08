@@ -692,8 +692,18 @@ class InputLocator(object):
         This file contains overrides to the building properties input files. They are applied after reading
         those files and are matched by column name.
         """
-        return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
+        return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
+
+    def get_building_schedules_predefined(self, building_name):
+        """
+        scenario/inputs/building-properties/{building_name}_schedules.csv
+        This file contains schedules of occupancy, appliance use, etc of each building.
+        Schedules are 8760 values per year
+        :param building_name:
+        :return:
+        """
+        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
 
     def get_building_schedules(self, building_name):
         """
@@ -703,7 +713,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
+        return os.path.join(self.get_demand_results_folder(), '{}_schedules.csv'.format(building_name))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
