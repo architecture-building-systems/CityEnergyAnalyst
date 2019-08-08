@@ -35,6 +35,7 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
                                 "Qcs_sys_kWh",
                                 'Qcdata_sys_kWh',
                                 'Qcre_sys_kWh']
+        self.timeframe = self.parameters['timeframe']
 
     @property
     def layout(self):
@@ -53,7 +54,7 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
         return "%s for District (%s)" % (self.name, self.timeframe)
 
     def calc_graph(self):
-        data = self._calculate_hourly_loads()
+        data = self.calculate_hourly_loads()
         traces = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:
@@ -65,6 +66,7 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
         data_T = self.calculate_external_temperature()
         for field in ["T_ext_C"]:
             y = data_T[field].values
+            name = NAMING[field]
             trace = go.Scatter(x=data_T.index, y=y, name=name, yaxis='y2', opacity=0.2)
             traces.append(trace)
         return traces

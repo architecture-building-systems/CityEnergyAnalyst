@@ -24,6 +24,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         self.analysis_fields = ["DH_hs_kWh", "DH_ww_kWh", 'SOLAR_ww_kWh', 'SOLAR_hs_kWh', "DC_cs_kWh", 'DC_cdata_kWh',
                                 'DC_cre_kWh', 'GRID_kWh', 'PV_kWh', 'NG_hs_kWh', 'COAL_hs_kWh', 'OIL_hs_kWh',
                                 'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh']
+        self.timeframe = self.parameters['timeframe']
 
     @property
     def layout(self):
@@ -41,7 +42,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         return "%s for District (%s)" % (self.name, self.timeframe)
 
     def calc_graph(self):
-        data = self._calculate_hourly_loads()
+        data = self.calculate_hourly_loads()
         traces = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:
@@ -53,6 +54,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         data_T = self.calculate_external_temperature()
         for field in ["T_ext_C"]:
             y = data_T[field].values
+            name = NAMING[field]
             trace = go.Scatter(x=data_T.index, y=y, name=name, yaxis='y2', opacity=0.2)
             traces.append(trace)
         return traces
