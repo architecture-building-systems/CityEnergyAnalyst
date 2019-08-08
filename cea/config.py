@@ -544,7 +544,6 @@ class ListParameter(Parameter):
     def decode(self, value):
         return parse_string_to_list(value)
 
-
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
     typename = 'SubfoldersParameter'
@@ -797,7 +796,6 @@ def parse_string_to_list(line):
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
     return [field.strip() for field in line.split(',') if field.strip()]
-
 
 def main():
     """Run some tests on the configuration module"""

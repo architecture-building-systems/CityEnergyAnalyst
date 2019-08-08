@@ -1,11 +1,10 @@
 from __future__ import division
 from __future__ import print_function
 
-from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
-import cea.plots.demand
 
+import cea.plots.demand
+from cea.plots.variable_naming import COLOR, NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -19,83 +18,77 @@ __status__ = "Production"
 
 class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
     name = "Load Curve"
+    expected_parameters = {
+        'buildings': 'plots:buildings',
+        'scenario-name': 'general:scenario-name',
+        'timeframe': 'plots:timeframe',
+    }
 
     def __init__(self, project, parameters, cache):
         super(LoadCurvePlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["E_sys_kWh",
-                                "Qhs_sys_kWh", "Qww_sys_kWh",
-                                "Qcs_sys_kWh", 'Qcdata_sys_kWh', 'Qcre_sys_kWh']
+        self.analysis_fields = ["Eal_kWh",
+                                "Edata_kWh",
+                                "Epro_kWh",
+                                "Eaux_kWh",
+                                "Qhs_sys_kWh",
+                                "Qww_sys_kWh",
+                                "Qcs_sys_kWh",
+                                'Qcdata_sys_kWh',
+                                'Qcre_sys_kWh']
+        self.timeframe = self.parameters['timeframe']
 
     @property
     def layout(self):
         # computing this instead of initializing, because it's dependent on self.data...
-        return dict(yaxis=dict(title='Load [kW]'),
-                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(
-                rangeselector=dict(buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
-                                                 dict(count=1, label='1w', step='week', stepmode='backward'),
-                                                 dict(count=1, label='1m', step='month', stepmode='backward'),
-                                                 dict(count=6, label='6m', step='month', stepmode='backward'),
-                                                 dict(count=1, label='1y', step='year', stepmode='backward'),
-                                                 dict(step='all')])), rangeslider=dict(), type='date',
-                range=[self.data.index[0], self.data.index[168]], fixedrange=False))
+        return dict(yaxis=dict(title='End-Use Energy Demand [MWh]'),
+                    yaxis2=dict(title='Outdoor Temperature [C]', overlaying='y', side='right'))
 
     @property
-    def data(self):
-        return self.hourly_loads
+    def title(self):
+        """Override the version in PlotBase"""
+        if set(self.buildings) != set(self.locator.get_zone_building_names()):
+            if len(self.buildings) == 1:
+                return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
+            else:
+                return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
+        return "%s for District (%s)" % (self.name, self.timeframe)
 
     def calc_graph(self):
+        data = self.calculate_hourly_loads()
         traces = []
-        for field in self.analysis_fields:
-            y = self.data[field].values
+        analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
+        for field in analysis_fields:
+            y = data[field].values / 1E3  # to MW
             name = NAMING[field]
-            if field in ["T_int_C", "T_ext_C"]:
-                trace = go.Scatter(x=self.data.index, y=y, name=name, yaxis='y2', opacity=0.2)
-            else:
-                trace = go.Scatter(x=self.data.index, y=y, name=name,
-                                   marker=dict(color=COLOR[field]))
+            trace = go.Scatter(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
+            traces.append(trace)
+
+        data_T = self.calculate_external_temperature()
+        for field in ["T_ext_C"]:
+            y = data_T[field].values
+            name = NAMING[field]
+            trace = go.Scatter(x=data_T.index, y=y, name=name, yaxis='y2', opacity=0.2)
             traces.append(trace)
         return traces
 
 
-def load_curve(data_frame, analysis_fields, title, output_path):
-
-    traces = []
-    for field in analysis_fields:
-        y = data_frame[field].values
-        name = NAMING[field]
-        if field in ["T_int_C", "T_ext_C"]:
-            trace = go.Scatter(x=data_frame.index, y= y, name = name, yaxis='y2', opacity = 0.2)
-        else:
-            trace = go.Scatter(x=data_frame.index, y= y, name = name,
-                               marker=dict(color=COLOR[field]))
-
-        traces.append(trace)
-
-    # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, yaxis=dict(title='Load [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
-                   side='right'),xaxis=dict(rangeselector=dict(buttons=list([
-                    dict(count=1,label='1d',step='day',stepmode='backward'),
-                    dict(count=1,label='1w',step='week',stepmode='backward'),
-                    dict(count=1,label='1m',step='month',stepmode='backward'),
-                    dict(count=6,label='6m',step='month', stepmode='backward'),
-                    dict(count=1,label='1y',step='year',stepmode='backward'),
-                    dict(step='all')])),rangeslider=dict(),type='date',range= [data_frame.index[0],
-                                                                                 data_frame.index[168]],
-                                                                          fixedrange=False))
-
-    fig = dict(data=traces, layout=layout)
-    plot(fig,  auto_open=False, filename=output_path)
-
-    return {'data': traces, 'layout': layout}
-
-
 if __name__ == '__main__':
     import cea.config
+    import cea.plots.cache
     import cea.inputlocator
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    cache = cea.plots.cache.NullPlotCache()
 
-    LoadCurvePlot(config, locator, locator.get_zone_building_names()).plot(auto_open=True)
-    LoadCurvePlot(config, locator, locator.get_zone_building_names()[0:2]).plot(auto_open=True)
-    LoadCurvePlot(config, locator, [locator.get_zone_building_names()[0]]).plot(auto_open=True)
+    LoadCurvePlot(config.project,
+                  {'buildings': locator.get_zone_building_names(),
+                   'scenario-name': config.scenario_name,
+                   'timeframe': config.plots.timeframe},
+                  cache).plot(auto_open=True)
+
+    LoadCurvePlot(config.project,
+                  {'buildings': locator.get_zone_building_names()[1:2],
+                   'scenario-name': config.scenario_name,
+                   'timeframe': config.plots.timeframe},
+                  cache).plot(auto_open=True)

@@ -40,8 +40,8 @@ __status__ = "Production"
 
 # technical model
 
-def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_features, prices, lca, config,
-                                         reduced_timesteps_flag, district_heating_network):
+def district_cooling_network(locator, master_to_slave_vars, network_features, prices, lca, config,
+                             reduced_timesteps_flag, district_heating_network):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -124,16 +124,13 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
     ############# Output results
     network_costs_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count(
         '1') / master_to_slave_vars.num_total_buildings
-    network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
-            (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
-    costs_a_USD = network_costs_a_USD
-    GHG_tonCO2 = 0
-    prim_MJoil = 0
+    network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE *\
+                          (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
+                                  (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
 
-    nBuild = int(np.shape(arrayData)[0])
     if reduced_timesteps_flag == False:
         start_t = 0
-        stop_t = int(np.shape(DCN_operation_parameters)[0])
+        stop_t = int(HOURS_IN_YEAR)
     else:
         # timesteps in May
         start_t = 2880
@@ -441,6 +438,7 @@ def cooling_calculations_of_DC_buildings(locator, master_to_slave_vars, network_
         "ACH_Status": ACH_Status,
         "VCC_Status": VCC_Status,
         "VCC_Backup_Status": VCC_Backup_Status}
+
     return performance, cooling_dispatch
 
 

@@ -151,6 +151,11 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Opex_var.csv' % locals())
 
+    def get_optimization_slave_electricity_requirements_data(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Electricity_Requirements_Pattern.csv' % locals())
+
     def get_optimization_slave_electricity_activation_pattern(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
@@ -328,7 +333,7 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "network")
 
-    def get_thermal_network_data_folder(self, network_data_file):
+    def get_optimization_thermal_network_data_file(self, network_data_file):
         """scenario/outputs/data/optimization/network
         Network summary results
         """
@@ -447,7 +452,7 @@ class InputLocator(object):
         Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
-    def get_optimization_substations_results_file(self, building_name, network_type_code,district_network_barcode):
+    def get_optimization_substations_results_file(self, building_name, network_type_code ,district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
         return os.path.join(self.get_optimization_substations_folder(), "%(district_network_barcode)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
 

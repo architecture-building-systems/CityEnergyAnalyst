@@ -11,8 +11,6 @@ from cea.optimization.master.validation import validation_main
 
 def mutation_main(individual, indpb,
                   column_names,
-                  heating_unit_names,
-                  cooling_unit_names,
                   heating_unit_names_share,
                   cooling_unit_names_share,
                   column_names_buildings_heating,
@@ -24,20 +22,13 @@ def mutation_main(individual, indpb,
     individual_with_name_dict = dict(zip(column_names, individual))
 
     if district_heating_network:
+
         # MUTATE BUILDINGS CONNECTED
         buildings_heating = [individual_with_name_dict[column] for column in column_names_buildings_heating]
         # apply mutations
         buildings_heating_mutated = tools.mutFlipBit(buildings_heating, indpb)[0]
-        # takeback to teh individual
+        # take back to the individual
         for column, mutated_value in zip(column_names_buildings_heating, buildings_heating_mutated):
-            individual_with_name_dict[column] = mutated_value
-
-        # MUTATE SUPPLY SYSTEM UNITS
-        heating_units = [individual_with_name_dict[column] for column in heating_unit_names]
-        # apply mutations
-        heating_units_mutated = tools.mutFlipBit(heating_units, indpb)[0]
-        # takeback to teh individual
-        for column, mutated_value in zip(heating_unit_names, heating_units_mutated):
             individual_with_name_dict[column] = mutated_value
 
         # MUTATE SUPPLY SYSTEM UNITS SHARE
@@ -58,14 +49,6 @@ def mutation_main(individual, indpb,
         for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
             individual_with_name_dict[column] = mutated_value
 
-        # MUTATE SUPPLY SYSTEM UNITS
-        cooling_units = [individual_with_name_dict[column] for column in cooling_unit_names]
-        # apply mutations
-        cooling_units_mutated = tools.mutFlipBit(cooling_units, indpb)[0]
-        # takeback to teh individual
-        for column, mutated_value in zip(cooling_unit_names, cooling_units_mutated):
-            individual_with_name_dict[column] = mutated_value
-
         # MUTATE SUPPLY SYSTEM UNITS SHARE
         cooling_units_share = [individual_with_name_dict[column] for column in cooling_unit_names_share]
         # apply mutations
@@ -76,10 +59,6 @@ def mutation_main(individual, indpb,
 
     # now validate individual
     individual_with_name_dict = validation_main(individual_with_name_dict,
-                                                heating_unit_names,
-                                                cooling_unit_names,
-                                                heating_unit_names_share,
-                                                cooling_unit_names_share,
                                                 column_names_buildings_heating,
                                                 column_names_buildings_cooling,
                                                 district_heating_network,

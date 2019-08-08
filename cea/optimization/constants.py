@@ -17,50 +17,35 @@ __status__ = "Production"
 # this is the firts part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
 
-DH_CONVERSION_TECHNOLOGIES_CAPACITY = [["CHP/Furnace", [0, 4]],
-                                       ["BaseBoiler", [0, 2]],
-                                       ["PeakBoiler", [0, 2]],
-                                       ["HPLake", [0, 1]],
-                                       ["HPSewage", [0, 1]],
-                                       ["GHP", [0, 1]],
-                                       ["HPServer", [0, 1]],
-                                       ["PVT", [0, 1]],
-                                       ["SC_ET", [0, 1]],
-                                       ["SC_FP", [0, 1]],
-                                       ["PV", [0, 1]]]
 
 DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
 
-DH_CONVERSION_TECHNOLOGIES_SHARE = [["CHP/Furnace Share", [0.0, 1.0]],
-                                    ["BaseBoiler Share", [0.0, 1.0]],
-                                    ["PeakBoiler Share", [0.0, 1.0]],
-                                    ["HPLake Share", [0.0, 1.0]],
-                                    ["HPSewage Share", [0.0, 1.0]],
-                                    ["GHP Share", [0.0, 1.0]],
-                                    ["HPServer Share", [0.0, 1.0]],
-                                    ["PVT Share", [0.0, 1.0]],
-                                    ["SC_ET Share", [0.0, 1.0]],
-                                    ["SC_FP Share", [0.0, 1.0]],
-                                    ["PV Share", [0.0, 1.0]]]
+DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "BG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "WB_Furnace": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "DB_Furnace": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "NG_BaseBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "BG_BaseBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "NG_PeakBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "BG_PeakBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "HPLake": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "HPSewage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "GHP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "HPServer": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "PVT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
+                                    "SC_ET": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
+                                    "SC_FP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
+                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}, }
 
-DC_CONVERSION_TECHNOLOGIES_CAPACITIES = [["FLake", [0, 1]],
-                                         ["VCC", [0, 1]],
-                                         ["ACH", [0, 1]],
-                                         ["Storage", [0, 1]]]
-
-DC_CONVERSION_TECHNOLOGIES_SHARE = [["FLake Share", [0.0, 1.0]],
-                                    ["VCC Share", [0.0, 1.0]],
-                                    ["ACH Share", [0.0, 1.0]],
-                                    ["Storage Share", [0.0, 1.0]]]
-
+DC_CONVERSION_TECHNOLOGIES_SHARE = {"FLake": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "VCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "ACH": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2}
+                                    }
 DC_TECHNOLOGIES_SHARING_SPACE = []
 
 DH_ACRONYM = "DH"
 DC_ACRONYM = "DC"
-
-
-
-
 
 # Losses and margins
 DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)

@@ -124,9 +124,9 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, lca, Q_therm_GHP_W, hour):
     """
-    Operation cost of GSHP supplying DHN
+    Operation cost of sewage water HP supplying DHN
 
     :type mdot_kgpers : float
     :param mdot_kgpers: supply mass flow rate to the DHN
@@ -134,13 +134,13 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
     :param t_re_K: return temeprature from the DHN (cold)
-    :type COP: float
-    :param COP: coefficient of performance of GSHP
-    :rtype C_GHP_el: float
-    :returns C_GHP_el: electricity cost of GSHP operation
+    :type t_sup_GHP_K : float
+    :param t_sup_GHP_K: sewage supply temperature
+    :rtype C_HPSew_el_pure: float
+    :returns C_HPSew_el_pure: electricity cost of sewage water HP operation
 
-    :rtype wdot: float
-    :returns wdot: electricty required for GSHP operation
+    :rtype C_HPSew_per_kWh_th_pure: float
+    :returns C_HPSew_per_kWh_th_pure: electricity cost per kWh thermal energy produced from sewage water HP
 
     :rtype qcoldot: float
     :returns qcoldot: cold power requirement
@@ -148,15 +148,35 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     :rtype q_therm: float
     :returns q_therm: thermal energy supplied to DHN
 
+    :rtype wdot: float
+    :returns wdot: electricty required for sewage water HP operation
+
+    ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
+    a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
+    Energy.
+
     """
 
-    q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K) # Thermal Energy generated
-    qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
-    E_GHP_req_W = q_therm_W / COP
+    if (t_sup_K + HP_DELTA_T_COND) == t_sup_GHP_K:
+        COP = 1
+    else:
+        COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_GHP_K)
 
-    C_GHP_el_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
+    if t_sup_K == t_re_K:
+        q_therm_W = 0
+        qcoldot_W = 0
+        E_GHP_req_W = 0
+        cost_GHP_USD = 0
+    else:
+        q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
+        if q_therm_W > Q_therm_GHP_W:
+            q_therm_W = Q_therm_GHP_W
+        qcoldot_W = q_therm_W * (1 - (1 / COP))
+        E_GHP_req_W = q_therm_W / COP
+        cost_GHP_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
 
-    return C_GHP_el_USD, E_GHP_req_W, qcoldot_W, q_therm_W
+    return cost_GHP_USD, E_GHP_req_W, qcoldot_W, q_therm_W
+
 
 def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
     """
@@ -299,22 +319,20 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     else:
         COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_sew_K)
 
-    if t_sup_K == t_re_K:
-        q_therm_W = 0
-        qcoldot_W = 0
-        wdot_W = 0
-        C_HPSew_el_pure_USD = 0
-        C_HPSew_per_kWh_th_pure_USD = 0
+    if t_sup_sew_K >= t_sup_K + HP_DELTA_T_COND:
+        q_therm_W = Q_therm_Sew_W
+        qcoldot_W = Q_therm_Sew_W
+        E_HPSew_req_W = 0.0
+        cost_HPSew_USD = 0.0
     else:
         q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         if q_therm_W > Q_therm_Sew_W:
             q_therm_W = Q_therm_Sew_W
         qcoldot_W = q_therm_W * (1 - (1 / COP))
-        wdot_W = q_therm_W / COP
-        C_HPSew_el_pure_USD = wdot_W * lca.ELEC_PRICE[hour]
-        C_HPSew_per_kWh_th_pure_USD = C_HPSew_el_pure_USD / (q_therm_W)
+        E_HPSew_req_W = q_therm_W / COP
+        cost_HPSew_USD = E_HPSew_req_W * lca.ELEC_PRICE[hour]
 
-    return C_HPSew_el_pure_USD, C_HPSew_per_kWh_th_pure_USD, qcoldot_W, q_therm_W, wdot_W
+    return cost_HPSew_USD, qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
 def calc_Cinv_HP(HP_Size, locator, config, technology_type):

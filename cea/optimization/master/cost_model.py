@@ -5,7 +5,6 @@ Extra costs to an individual
 """
 from __future__ import division
 
-import numpy as np
 import pandas as pd
 
 import cea.technologies.boiler as boiler
@@ -16,7 +15,6 @@ import cea.technologies.heatpumps as hp
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 from cea.optimization.constants import N_PVT
-from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +26,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def add_disconnected_costs(buildList, locator, master_to_slave_vars):
+def add_disconnected_costs(column_names_buildings_heating,
+                           column_names_buildings_cooling, locator, master_to_slave_vars):
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -37,42 +36,37 @@ def add_disconnected_costs(buildList, locator, master_to_slave_vars):
     TAC_heating_disconnected_USD, Opex_a_heating_disconnected_USD, \
     PEN_heating_disconnected_MJoil, Capex_total_heating_disconnected_USD = calc_costs_emissions_decentralized_DH(
         DHN_barcode,
-        buildList, locator)
+        column_names_buildings_heating, locator)
 
     # DISCONNECTED BUILDINGS - COOLING LOADS
     GHG_cooling_disconnected_tonCO2, Capex_a_cooling_disconnected_USD, \
     TAC_cooling_disconnected_USD, Opex_a_cooling_disconnected_USD, \
     PEN_cooling_disconnected_MJoil, Capex_total_cooling_disconnected_USD = calc_costs_emissions_decentralized_DC(
         DCN_barcode,
-        buildList, locator,
-        master_to_slave_vars)
-
-    Capex_a_disconnected_USD = Capex_a_cooling_disconnected_USD + Capex_a_heating_disconnected_USD
-    Capex_total_disconnected_USD = Capex_total_cooling_disconnected_USD + Capex_total_heating_disconnected_USD
-    Opex_a_disconnected_USD = Opex_a_cooling_disconnected_USD + Opex_a_heating_disconnected_USD
-    TAC_disconnected_USD = TAC_heating_disconnected_USD + TAC_cooling_disconnected_USD
-    GHG_disconnected_tonCO2 = (GHG_heating_disconnected_tonCO2 + GHG_cooling_disconnected_tonCO2)
-    PEN_disconnected_MJoil = PEN_heating_disconnected_MJoil + PEN_cooling_disconnected_MJoil
+        column_names_buildings_cooling, locator)
 
     performance = {
+        # COSTS
+
+        # heating
         "Capex_a_heating_disconnected_USD": Capex_a_heating_disconnected_USD,
         "Capex_total_heating_disconnected_USD": Capex_total_heating_disconnected_USD,
         "Opex_a_heating_disconnected_USD": Opex_a_heating_disconnected_USD,
         "TAC_heating_disconnected_USD": TAC_heating_disconnected_USD,
-        "GHG_heating_disconnected_tonCO2": GHG_heating_disconnected_tonCO2,
-        "PEN_heating_disconnected_MJoil": PEN_heating_disconnected_MJoil,
+        # cooling
         "Capex_a_cooling_disconnected_USD": Capex_a_cooling_disconnected_USD,
         "Capex_total_cooling_disconnected_USD": Capex_total_cooling_disconnected_USD,
         "Opex_a_cooling_disconnected_USD": Opex_a_cooling_disconnected_USD,
         "TAC_cooling_disconnected_USD": TAC_cooling_disconnected_USD,
+
+        # CO2 EMISSIONS
+        "GHG_heating_disconnected_tonCO2": GHG_heating_disconnected_tonCO2,
         "GHG_cooling_disconnected_tonCO2": GHG_cooling_disconnected_tonCO2,
-        "PEN_cooling_disconnected_MJoil": PEN_cooling_disconnected_MJoil,
-        "Capex_a_disconnected_USD": Capex_a_disconnected_USD,
-        "Capex_total_disconnected_USD": Capex_total_disconnected_USD,
-        "Opex_a_disconnected_USD": Opex_a_disconnected_USD,
-        "TAC_disconnected_USD": TAC_disconnected_USD,
-        "GHG_disconnected_tonCO2": GHG_disconnected_tonCO2,
-        "PEN_disconnected_MJoil": PEN_disconnected_MJoil}
+
+        # PRIMARY ENERGY (NON-RENEWABLE)
+        "PEN_heating_disconnected_MJoil": PEN_heating_disconnected_MJoil,
+        "PEN_cooling_disconnected_MJoil": PEN_cooling_disconnected_MJoil
+    }
 
     return performance
 
@@ -82,7 +76,6 @@ def calc_generation_costs_heating(locator,
                                   Q_uncovered_design_W,
                                   config,
                                   storage_activation_data,
-                                  solar_features,
                                   heating_dispatch,
                                   ):
     """
@@ -114,8 +107,8 @@ def calc_generation_costs_heating(locator,
     :rtype: tuple
     """
 
-    thermal_network = pd.read_csv(locator.get_thermal_network_data_folder(master_to_slave_vars.network_data_file_heating))
-
+    thermal_network = pd.read_csv(
+        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
 
     # START VVALUES
     Capex_a_HEX_SC_ET_USD = 0.0
@@ -254,12 +247,12 @@ def calc_generation_costs_heating(locator,
             Capex_PeakBoiler_NG_USD = Capex_Boiler_peak_USD
 
     # HEATPUMP LAKE
-    if master_to_slave_vars.HP_Lake_on == 1:
+    if master_to_slave_vars.HPLake_on == 1:
         HP_Size_W = heating_dispatch['Q_HP_Lake_gen_directload_W'].max()
         Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
 
     # HEATPUMP_SEWAGE
-    if master_to_slave_vars.HP_Sew_on == 1:
+    if master_to_slave_vars.HPSew_on == 1:
         HP_Size_W = heating_dispatch['Q_HP_Sew_gen_directload_W'].max()
         Capex_a_Sewage_USD, Opex_fixed_Sewage_USD, Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config,
                                                                                       'HP2')
@@ -292,7 +285,7 @@ def calc_generation_costs_heating(locator,
 
     # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        Q_HEX_max_Wh = thermal_network["Qcdata_netw_total_kWh"].max() * 1000 #convert to Wh
+        Q_HEX_max_Wh = thermal_network["Qcdata_netw_total_kWh"].max() * 1000  # convert to Wh
         Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
             Q_HEX_max_Wh, locator, config, 'HEX1')
 
@@ -302,17 +295,16 @@ def calc_generation_costs_heating(locator,
 
     # SOLAR TECHNOLOGIES
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
-    SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2
+    SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
     Capex_a_SC_ET_USD, Opex_fixed_SC_ET_USD, Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator,
                                                                                 'ET')
 
-    SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2
+    SC_FP_area_m2 = master_to_slave_vars.A_SC_FP_m2
     Capex_a_SC_FP_USD, Opex_fixed_SC_FP_USD, Capex_SC_FP_USD = stc.calc_Cinv_SC(SC_FP_area_m2, locator,
                                                                                 'FP')
 
-    PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT  # kW
+    PVT_peak_kW = master_to_slave_vars.A_PVT_m2 * N_PVT  # kW
     Capex_a_PVT_USD, Opex_fixed_PVT_USD, Capex_PVT_USD = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
-
 
     # HEATPUMP FOR SOLAR UPGRADE TO DISTRICT HEATING
     Q_HP_max_PVT_wh = storage_activation_data["Q_HP_PVT_W"].max()
@@ -329,17 +321,20 @@ def calc_generation_costs_heating(locator,
                                                                                         'HP2')
 
     # HEAT EXCHANGER FOR SOLAR COLLECTORS
-    Q_max_SC_ET_Wh = (storage_activation_data["Q_SC_ET_gen_directload_W"]+storage_activation_data["Q_SC_ET_gen_storage_W"]).max()
+    Q_max_SC_ET_Wh = (storage_activation_data["Q_SC_ET_gen_directload_W"] + storage_activation_data[
+        "Q_SC_ET_gen_storage_W"]).max()
     Capex_a_HEX_SC_ET_USD, Opex_fixed_HEX_SC_ET_USD, Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh,
                                                                                              locator,
                                                                                              config, 'HEX1')
 
-    Q_max_SC_FP_Wh = (storage_activation_data["Q_SC_FP_gen_directload_W"]+storage_activation_data["Q_SC_FP_gen_storage_W"]).max()
+    Q_max_SC_FP_Wh = (storage_activation_data["Q_SC_FP_gen_directload_W"] + storage_activation_data[
+        "Q_SC_FP_gen_storage_W"]).max()
     Capex_a_HEX_SC_FP_USD, Opex_fixed_HEX_SC_FP_USD, Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,
                                                                                              locator,
                                                                                              config, 'HEX1')
 
-    Q_max_PVT_Wh = (storage_activation_data["Q_PVT_gen_directload_W"]+storage_activation_data["Q_PVT_gen_storage_W"]).max()
+    Q_max_PVT_Wh = (storage_activation_data["Q_PVT_gen_directload_W"] + storage_activation_data[
+        "Q_PVT_gen_storage_W"]).max()
     Capex_a_HEX_PVT_USD, Opex_fixed_HEX_PVT_USD, Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh,
                                                                                        locator, config,
                                                                                        'HEX1')
@@ -406,65 +401,43 @@ def calc_generation_costs_heating(locator,
     return performance_costs
 
 
-def calc_costs_emissions_decentralized_DC(DCN_barcode, buildList, locator,
-                                          master_to_slave_vars):
-    PV_barcode = ''
+def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
+                                          ):
     CO2DiscBuild = 0.0
     Capex_Disconnected = 0.0
     CostDiscBuild = 0.0
     Opex_Disconnected = 0.0
     PrimDiscBuild = 0.0
     Capex_total_Disconnected = 0.0
-    total_demand = pd.read_csv(locator.get_total_demand())
-    buildings_names_with_cooling_load = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-    for (index, building_name) in zip(DCN_barcode, buildList):
+    for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
-            if building_name in buildings_names_with_cooling_load:
-                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name, configuration='AHU_ARU_SCU'))
-                dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
-                CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
-                to_PV = 1
-                if dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0] == 1:
-                    to_PV = 0
-                if dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0] == 1:
-                    to_PV = 0
-                if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
-                    to_PV = 0
-            else:
-                to_PV = 0
-        else:  # adding costs for buildings in which the centralized plant provides a part of the load requirements
-            if building_name in buildings_names_with_cooling_load:
-                DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
-                if DCN_unit_configuration == 7:  # corresponds to AHU + ARU + SCU from central plant
-                    to_PV = 1
-            else:
-                to_PV = 0
+            df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
+                                                                                                   configuration='AHU_ARU_SCU'))
+            dfBest = df[df["Best configuration"] == 1]
+            CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [CHF]
+            CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
+            PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
+            Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+            Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
+            Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
     return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild, Capex_total_Disconnected
 
 
-def calc_costs_emissions_decentralized_DH(DHN_barcode, buildList, locator):
+def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heating_load, locator):
     CO2DiscBuild = 0.0
     Capex_Disconnected = 0.0
     CostDiscBuild = 0.0
     Opex_Disconnected = 0.0
     PrimDiscBuild = 0.0
     Capex_total_Disconnected = 0.0
-    total_demand = pd.read_csv(locator.get_total_demand())
-    buildings_names_with_heating_load = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
-    for (index, building_name) in zip(DHN_barcode, buildList):
-        if building_name in buildings_names_with_heating_load:
-            if index == "0":
-                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
-                dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [USD]
-                CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-                PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
-                Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
-                Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
-                Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
+    for (index, building_name) in zip(DHN_barcode, buildings_names_with_heating_load):
+        if index == "0":
+            df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
+            dfBest = df[df["Best configuration"] == 1]
+            CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [USD]
+            CO2DiscBuild += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
+            PrimDiscBuild += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
+            Capex_total_Disconnected += dfBest["Capex_total_USD"].iloc[0]
+            Capex_Disconnected += dfBest["Capex_a_USD"].iloc[0]
+            Opex_Disconnected += dfBest["Opex_a_USD"].iloc[0]
     return CO2DiscBuild, Capex_Disconnected, CostDiscBuild, Opex_Disconnected, PrimDiscBuild, Capex_total_Disconnected

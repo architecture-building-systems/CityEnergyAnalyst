@@ -38,7 +38,6 @@ class DemandPlotBase(cea.plots.PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(DemandPlotBase, self).__init__(project, parameters, cache)
-
         self.category_path = os.path.join('new_basic', 'demand')
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
@@ -83,6 +82,7 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cre_kWh']
         self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
 
+
     @property
     def hourly_loads(self):
         """
@@ -92,14 +92,41 @@ class DemandPlotBase(cea.plots.PlotBase):
         return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
                                  plot=self, producer=self._calculate_hourly_loads)
 
+    def add_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        df1[self.demand_analysis_fields] = df2[self.demand_analysis_fields] + df1[self.demand_analysis_fields]
+        return df1
+
     def _calculate_hourly_loads(self):
-        def add_fields(df1, df2):
-            """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-            df1[self.demand_analysis_fields] += df2[self.demand_analysis_fields]
-            return df1
-        return functools.reduce(add_fields,
-                                (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
-                                 self.buildings)).set_index('DATE')
+        data_demand = functools.reduce(self.add_fields,(pd.read_csv(self.locator.get_demand_results_file(building))
+                                                   for building in self.buildings)).set_index('DATE')
+        return data_demand
+
+    def calculate_hourly_loads(self):
+        data_demand = self._calculate_hourly_loads()
+        if self.timeframe == "daily":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('M').sum()
+        return data_demand
+
+    def calculate_external_temperature(self):
+        data_weather = pd.read_csv(self.locator.get_demand_results_file(self.buildings[0])).set_index('DATE')
+        if self.timeframe == "daily":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('D').mean()
+        elif self.timeframe == "weekly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('W').mean()
+        elif self.timeframe == "monthly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('M').mean()
+        return data_weather
 
     @property
     def yearly_loads(self):
