@@ -180,8 +180,10 @@ class MapClass {
             points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
         }
         if (this.data.hasOwnProperty('district')) {
-            let bbox = this.data.district.bbox;
-            points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+            if (this.data.district) {
+                let bbox = this.data.district.bbox;
+                points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+            }
         }
         let bbox = turf.bbox(turf.multiPoint(points));
         this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(
