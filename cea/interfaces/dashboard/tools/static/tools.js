@@ -3,6 +3,7 @@
  */
 
 function cea_run(script) {
+    if(!$('#cea-tool-parameters').parsley().isValid()) return false;
     $('.cea-modal-close').attr('disabled', 'disabled').removeClass('btn-danger').removeClass('btn-success');
     $('#cea-console-output-body').text('');
     $('#cea-console-output').modal({'show': true, 'backdrop': 'static'});
@@ -12,6 +13,7 @@ function cea_run(script) {
 }
 
 function cea_save_config(script) {
+    if(!$('#cea-tool-parameters').parsley().isValid()) return false;
     $('#cea-save-config-modal').modal({'show': true, 'backdrop': 'static'});
     $.post('save-config/' + script, get_parameter_values(), null, 'json');
     $('#cea-save-config-modal').modal('hide');
