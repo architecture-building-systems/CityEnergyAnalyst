@@ -38,7 +38,6 @@ class DemandPlotBase(cea.plots.PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(DemandPlotBase, self).__init__(project, parameters, cache)
-        self.timeframe = self.parameters['timeframe']
         self.category_path = os.path.join('new_basic', 'demand')
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
@@ -93,13 +92,18 @@ class DemandPlotBase(cea.plots.PlotBase):
         return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
                                  plot=self, producer=self._calculate_hourly_loads)
 
+    def add_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        df1[self.demand_analysis_fields] = df2[self.demand_analysis_fields] + df1[self.demand_analysis_fields]
+        return df1
+
     def _calculate_hourly_loads(self):
-        def add_fields(df1, df2):
-            """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-            df1[self.demand_analysis_fields] = df2[self.demand_analysis_fields] + df1[self.demand_analysis_fields]
-            return df1
-        data_demand = functools.reduce(add_fields,(pd.read_csv(self.locator.get_demand_results_file(building))
+        data_demand = functools.reduce(self.add_fields,(pd.read_csv(self.locator.get_demand_results_file(building))
                                                    for building in self.buildings)).set_index('DATE')
+        return data_demand
+
+    def calculate_hourly_loads(self):
+        data_demand = self._calculate_hourly_loads()
         if self.timeframe == "daily":
             data_demand.index = pd.to_datetime(data_demand.index)
             data_demand = data_demand.resample('D').sum()
@@ -146,7 +150,6 @@ class DemandSingleBuildingPlotBase(DemandPlotBase):
         super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
         self.building = parameters['building']
         self.buildings = [self.building]  # some parts of DemandPlotBase require this
-        self.timeframe = self.parameters['timeframe']
 
 
 def main():
