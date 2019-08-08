@@ -67,6 +67,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
+        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
