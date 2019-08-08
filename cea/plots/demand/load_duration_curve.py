@@ -147,11 +147,14 @@ if __name__ == '__main__':
     # cache = cea.plots.cache.NullPlotCache()
 
     LoadDurationCurvePlot(config.project, {'buildings': None,
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)
     LoadDurationCurvePlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)
     LoadDurationCurvePlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)

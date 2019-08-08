@@ -59,9 +59,9 @@ def calc_sewage_heat_exchanger(locator, config):
                                                                               heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external)
 
     #save to disk
-    pd.DataFrame({"Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
+    pd.DataFrame({"Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : twaste_zone,
                   "mww_zone_kWperC":mcpwaste_total,
-                    "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
+                    "T_out_HP_C" : tout_e, "T_in_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
                                                                       index=False, float_format='%.3f')
 
 
@@ -166,7 +166,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
         tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
         Q_source = mcp_kWC_total * (tb1 - tb2)
         ta2 = ta1 + Q_source / mcpa
-        t_source = ( tb2 + tb1 )
+        t_source = ( tb2 + tb1 ) / 2
     else:
         tb1 = tin_C
         tb2 = tin_C

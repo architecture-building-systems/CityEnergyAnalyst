@@ -4,30 +4,21 @@ This is the dashboard of CEA
 from __future__ import division
 from __future__ import print_function
 
-import os
-
 import pandas as pd
-from cea.plots.comparisons.primary_energy_intensity import primary_energy_intensity
+from cea.plots.comparisons.old.primary_energy_intensity import primary_energy_intensity
 
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe
-from cea.plots.comparisons.emissions import emissions
-from cea.plots.comparisons.emissions_intensity import emissions_intensity
-from cea.plots.comparisons.energy_demand import energy_demand_district
-from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
-from cea.plots.comparisons.operation_costs import operation_costs_district
-from cea.plots.comparisons.primary_energy import primary_energy
-from cea.plots.comparisons.occupancy_types import occupancy_types_district
+from cea.plots.comparisons.old.emissions import emissions
+from cea.plots.comparisons.old.emissions_intensity import emissions_intensity
+from cea.plots.comparisons.old.energy_demand import energy_demand_district
+from cea.plots.comparisons.old.energy_use_intensity import energy_use_intensity
+from cea.plots.comparisons.old.operation_costs import operation_costs_district
+from cea.plots.comparisons.old.primary_energy import primary_energy
+from cea.plots.comparisons.old.occupancy_types import occupancy_types_district
+import numpy as np
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -39,35 +30,28 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def plots_main(config):
-    print(config.plots_scenario_comparisons.scenarios)
-    if not len(config.plots_scenario_comparisons.scenarios) > 1:
+
+    if not len(config.plots_scenario_comparisons.urban_energy_system_scenarios) >= 2:
         raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
 
     # local variables
-    # TODO: We need to create the plots and integrate the case when none generations/ individuals etc,
-    project = config.plots_scenario_comparisons.project
-    scenario_baseline = config.plots_scenario_comparisons.base_scenario
-    scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
-    network_type = config.plots_scenario_comparisons.network_type
-
-    generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/')) > 1 else "none"
-    individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/')) > 1 else "none"
-
-    scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
-    scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in
-                      config.plots_scenario_comparisons.scenarios]
-    # scenarios = [[scenario_baseline]+ config.plots_scenario_comparisons.scenarios]
-    generations = [generation_base] + [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
-                                       for scenario in config.plots_scenario_comparisons.scenarios]
-    individuals = [individual_base] + [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
-                                       for scenario in config.plots_scenario_comparisons.scenarios]
+    project = config.general.project
     categories = config.plots_scenario_comparisons.categories
-
-    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [
-        scenario_base_path] + scenarios_path)  # initialize class
+    urban_and_energy_scenarios = config.plots_scenario_comparisons.urban_energy_system_scenarios
     category = "comparisons"
-    plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
-                  generation_pointers, individual_pointers, network_type, config)
+
+    # EXTRACT PATHS FROM SCENARIOS:
+    #TODO: @Daren please convert this into a ListParameter in config, it is important that the dashboard can read the contents
+    urban_scenarios = []
+    energy_system_scenarios_generation = []
+    energy_system_scenarios_individual = []
+    for urban_and_energy_scenario in np.array(urban_and_energy_scenarios).reshape(3,3):
+        urban_scenarios.append(urban_and_energy_scenario[0])
+        energy_system_scenarios_generation.apppend(urban_and_energy_scenario[1])
+        energy_system_scenarios_individual.apppend(urban_and_energy_scenario[2])
+
+
+    plots = Plots(project, urban_scenarios, energy_system_scenarios_generation, energy_system_scenarios_individual, config)
 
     # create plots according to categories
     if "demand" in categories:
@@ -92,34 +76,13 @@ def plots_main(config):
         plots.occupancy_types_comparison(category)
 
 
-def pointers_all_scenarios(generations, individuals, scenarios_path):
-    generation_pointers = []
-    individual_pointers = []
-    for scenario_path, generation, individual in zip(scenarios_path, generations, individuals):
-        if generation == "none" or individual == "none":
-            pointer_gen = "none"
-            pointer_ind = "none"
-        else:
-            locator = cea.inputlocator.InputLocator(scenario_path)
-            pointer_gen, pointer_ind = get_pointers_to_correct_individual_generation(generation,
-                                                                                     individual, locator)
-        generation_pointers.append(pointer_gen)
-        individual_pointers.append(pointer_ind)
-    return generation_pointers, individual_pointers
-
-
 class Plots(object):
-    def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names,
-                 generation_pointers, individual_pointers, network_type, config):
-        self.scenarios = [scenario_base] + scenarios
-        self.locator = cea.inputlocator.InputLocator(scenario_base)  # where to store the results
-        self.generations = generations
-        self.individuals = individuals
+    def __init__(self, project, urban_scenarios, energy_system_scenarios_generation, energy_system_scenarios_individual, config):
+        self.project = project
+        self.urban_scenarios = urban_scenarios
+        self.energy_system_scenarios_generation = energy_system_scenarios_generation # where to store the results
+        self.energy_system_scenarios_individual = energy_system_scenarios_individual
         self.config = config
-        self.scenarios_names = scenarios_names
-        self.generation_pointers = generation_pointers
-        self.individual_pointers = individual_pointers
-        self.network_type = network_type
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
@@ -144,23 +107,10 @@ class Plots(object):
                                        "Eaux_MWhyr",
                                        "E_cdata_MWhyr",
                                        "E_cre_MWhyr"]
-        self.analysis_fields_costs = ['DC_cs_cost_yr',
-                                      'DC_cdata_cost_yr',
-                                      'DC_cre_cost_yr',
-                                      'DH_ww_cost_yr',
-                                      'DH_hs_cost_yr',
-                                      'SOLAR_ww_cost_yr',
-                                      'SOLAR_hs_cost_yr',
-                                      'GRID_cost_yr',
-                                      'PV_cost_yr',
-                                      'NG_hs_cost_yr',
-                                      'COAL_hs_cost_yr',
-                                      'OIL_hs_cost_yr',
-                                      'WOOD_hs_cost_yr',
-                                      'NG_ww_cost_yr',
-                                      'COAL_ww_cost_yr',
-                                      'OIL_ww_cost_yr',
-                                      'WOOD_ww_cost_yr'
+        self.analysis_fields_costs = ['Opex_a_sys_connected_USD',
+                                      'Opex_a_sys_disconnected_USD',
+                                      'Capex_a_sys_disconnected_USD',
+                                      'Capex_a_sys_connected_USD',
                                       ]
         self.analysis_fields_costs_m2 = ['DC_cs_cost_m2yr',
                                          'DC_cdata_cost_m2yr',
@@ -187,11 +137,11 @@ class Plots(object):
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
 
-        self.data_processed_demand = self.preprocessing_demand_scenarios()
-        self.data_processed_supply = self.preprocessing_supply_scenarios()
+        # self.data_processed_demand = self.preprocessing_demand_scenarios()
+        # self.data_processed_supply = self.preprocessing_supply_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
-        self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
-        self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
+        # self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
+        # self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
 
     def preprocessing_demand_scenarios(self):
         data_processed = pd.DataFrame()
@@ -242,52 +192,25 @@ class Plots(object):
         return data_processed
 
     def preprocessing_costs_scenarios(self):
-        data_processed = pd.DataFrame()
-        scenarios_clean = []
-        for i, scenario in enumerate(self.scenarios_names):
-            if scenario in scenarios_clean:
-                scenario = scenario + "_duplicated_" + str(i)
-            scenarios_clean.append(scenario)
+        # local variables
+        data_processed = {}
+        for urban_scenario_name, generation, individual in self.urban_scenarios,\
+                                                           self.energy_system_scenarios_generation, \
+                                                           self.energy_system_scenarios_individual:
+            #if there is no generation or individual indicated use the baseline
+            if generation == "none" or individual == "none": #use the original system
+                scenario_name = urban_scenario_name + " - System original"
+                locator = cea.inputlocator.InputLocator(urban_scenario_name)
+                data_raw_df = pd.read_csv(locator.get_costs_operation_file())
+            else: #if there is a geneartion and individual indicated
+                scenario_name = urban_scenario_name + " - System "+individual
+                data_raw_df = pd.read_csv(locator.get_optimization_slave_total_performance(individual, generation))
 
-        for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios,
-                                                                                             self.generations,
-                                                                                             self.individuals,
-                                                                                             self.generation_pointers,
-                                                                                             self.individual_pointers,
-                                                                                             scenarios_clean):
-            locator = cea.inputlocator.InputLocator(scenario)
-            if generation == "none" or individual == "none":
-                scenario_name = os.path.basename(scenario)
-                data_raw = (pd.read_csv(locator.get_costs_operation_file())[
-                                self.analysis_fields_costs + self.analysis_fields_costs_m2 + ["GFA_m2"]]).sum(axis=0)
-                data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
-                data_raw_df["Opex_Centralized"] = data_raw_df['DC_cs_cost_yr'] + data_raw_df['DC_cdata_cost_yr'] + \
-                                                  data_raw_df['DC_cre_cost_yr'] + data_raw_df['DH_ww_cost_yr'] + \
-                                                  data_raw_df['DH_hs_cost_yr']
-                data_raw_df["Opex_Decentralized"] = data_raw_df['SOLAR_ww_cost_yr'] + data_raw_df['SOLAR_hs_cost_yr'] + \
-                                                    data_raw_df['PV_cost_yr'] + data_raw_df['NG_hs_cost_yr'] + \
-                                                    data_raw_df['COAL_hs_cost_yr'] + data_raw_df['OIL_hs_cost_yr'] + \
-                                                    data_raw_df['WOOD_hs_cost_yr'] + data_raw_df['NG_ww_cost_yr'] + \
-                                                    data_raw_df['COAL_ww_cost_yr'] + data_raw_df['OIL_ww_cost_yr'] + \
-                                                    data_raw_df['WOOD_ww_cost_yr'] + data_raw_df['GRID_cost_yr']
-                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/data_raw_df["GFA_m2"]
-                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/data_raw_df["GFA_m2"]
-                data_raw_df["Capex_Centralized"] = 0.0 ##TODO: to calculate the capex annualized
-                data_raw_df["Capex_Decentralized"] = 0.0
-                data_raw_df["Capex_Centralized_m2"] = 0.0
-                data_raw_df["Capex_Decentralized_m2"] = 0.0
-            else:
-                area = (pd.read_csv(locator.get_costs_operation_file())[["GFA_m2"]]).sum(axis=0).values[0]
-                data_individual = preprocessing_generations_data(locator, generation)
-                data_raw = processing_mcda_data(self.config, data_individual['generation'], generation, gen_pointer, individual,
-                                                   ind_pointer, locator, self.network_type).iloc[0]
-                data_raw["Opex_Centralized_m2"] = data_raw["Opex_Centralized"]/area
-                data_raw["Capex_Centralized_m2"] = data_raw["Capex_Centralized"]/area
-                data_raw["Capex_Decentralized_m2"] = data_raw["Capex_Decentralized"]/area
-                data_raw["Opex_Decentralized_m2"] = data_raw["Opex_Decentralized"]/area
+            #add name of scenario
+            data_raw_df['scenario'] = scenario_name
+            data_raw_df.set_index('scenario', inplace=True
+            data_processed
 
-                data_raw_df = pd.DataFrame(data_raw.to_dict(), index=[scenario_name])
-            data_processed = data_processed.append(data_raw_df)
         return data_processed
 
     def preprocessing_lca_scenarios(self):

@@ -104,7 +104,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
         heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                                          'Boiler_Status': Boiler_Status,
-                                         'NG_Boiler_used_W': Qgas_to_Boiler_Wh}
+                                         'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
+                                         'E_hs_ww_req_W': np.zeros(8760)}
 
         ## 1: Boiler BG
         # add costs
@@ -115,7 +116,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
         heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                                'Boiler_Status': Boiler_Status,
-                               'BG_Boiler_used_W': Qgas_to_Boiler_Wh}
+                               'BG_Boiler_req_W': Qgas_to_Boiler_Wh,
+                               'E_hs_ww_req_W': np.zeros(8760)}
 
         ## 2: Fuel Cell
         (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
@@ -135,10 +137,11 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         # add activation
         resourcesRes[2][0] = sum(q_load_Wh)  # q from NG
         resourcesRes[2][2] = sum(el_from_FC_Wh)  # el for GHP # FIXME: el from FC
-        heating_dispatch[2] = {'Q_Fuelcell_to_directload_W': q_load_Wh,
+        heating_dispatch[2] = {'Q_Fuelcell_gen_directload_W': q_load_Wh,
                                'Fuelcell_Status': FC_Status,
-                               'Q_NG_FuelCell_used_W': Qgas_to_FC_Wh,
-                               'E_Fuelcell_gen_expoer_W': el_from_FC_Wh}
+                               'NG_FuelCell_req_W': Qgas_to_FC_Wh,
+                               'E_Fuelcell_gen_export_W': el_from_FC_Wh,
+                               'E_hs_ww_req_W': np.zeros(8760)}
 
         # 3-13: Boiler NG + GHP
         for i in range(10):
@@ -191,14 +194,14 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             resourcesRes[3 + i][3] = sum(q_from_GHP_Wh)
 
             heating_dispatch[3 + i] = {'Q_GHP_gen_directload_W': q_from_GHP_Wh,
-                                       'Q_GHPbackupBoiler_gen_directload_W': qhot_missing_Wh,
+                                       'Q_BackupBoiler_gen_directload_W': qhot_missing_Wh,
                                        'Q_Boiler_gen_directload_W': q_load_NG_Boiler_Wh,
                                        'GHP_Status': GHP_Status,
-                                       'GHPbackupBoiler_Status': GHPbackupBoiler_Status,
+                                       'BackupBoiler_Status': GHPbackupBoiler_Status,
                                        'Boiler_Status': Boiler_Status,
-                                       'Q_NG_GHPbackupBoiler_used_Wh': Qgas_to_GHPBoiler_Wh,
-                                       'Q_NG_Boiler_used_Wh': Qgas_to_Boiler_Wh,
-                                       'E_electricalnetwork_sys_req_W': el_GHP_Wh}
+                                       'NG_BackupBoiler_req_Wh': Qgas_to_GHPBoiler_Wh,
+                                       'NG_Boiler_req_Wh': Qgas_to_Boiler_Wh,
+                                       'E_hs_ww_req_W': el_GHP_Wh}
 
         # Add all costs
         # 0: Boiler NG

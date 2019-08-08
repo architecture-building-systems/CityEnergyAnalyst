@@ -27,7 +27,7 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 
-def disconnected_buildings_cooling_main(locator, building_names, config, prices, lca):
+def disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -57,9 +57,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
     """
 
     t0 = time.clock()
-    # get total demand
-    total_demand = pd.read_csv(locator.get_total_demand())
-
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SENSIBLE COOLING UNIT
@@ -85,13 +82,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         # Flate Plate Solar Collectors
         SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
         Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
-                                                                                          locator, config,
+                                                                                          locator,
                                                                                           panel_type="FP")
 
         # Evacuated Tube Solar Collectors
         SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
         Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
-                                                                                          locator, config,
+                                                                                          locator,
                                                                                           panel_type="ET")
 
 
@@ -125,8 +122,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         operation_results[0][9] += sum(el_DX_hourly_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ oil
         # activation
         cooling_dispatch[0] = {'Q_DX_gen_directload_W': q_DX_chw_Wh,
-                               'E_electricalnetwork_sys_req_W': el_DX_hourly_Wh,
-                               'DX_Status': DX_Status
+                               'E_DX_req_W': el_DX_hourly_Wh,
+                               'DX_Status': DX_Status,
+                               'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
                                }
 
         ## 1. VCC (AHU + ARU + SCU) + CT
@@ -146,7 +144,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
                                'E_VCC_req_W': el_VCC_Wh,
                                'E_CT_req_W': el_CT_Wh,
-                               'E_electricalnetwork_sys_req_W': el_total_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
                                'VCC_Status': VCC_Status
                                }
 
@@ -191,8 +189,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
                                'E_SC_FP_req_W': el_aux_SC_FP_Wh,
-                               'E_electricalnetwork_sys_req_W': el_total_Wh,
-                               'NG_Boiler_used': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
+                               'NG_Boiler_req': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
                                }
 
         # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
@@ -232,8 +230,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
                                'E_SC_FP_req_W': el_aux_SC_ET_Wh,
-                               'E_electricalnetwork_sys_req_W': el_total_Wh,
-                               'NG_Burner_used': q_gas_for_burner_Wh,
+                               'E_cs_cre_cdata_req_W': el_total_Wh,
+                               'NG_Burner_req': q_gas_for_burner_Wh,
                                }
 
         # these two configurations are only activated when SCU is in use
@@ -267,7 +265,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                    'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
                                    'E_VCC_HT_req_W': el_VCC_to_SCU_Wh,
                                    'E_CT_req_W': el_CT_Wh,
-                                   'E_electricalnetwork_sys_req_W': el_total_Wh
+                                   'E_cs_cre_cdata_req_W': el_total_Wh
                                    }
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
@@ -311,8 +309,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                    'E_ACH_HT_req_W': el_FP_ACH_to_SCU_Wh,
                                    'E_SC_FP_req_W': el_aux_SC_FP_Wh,
                                    'E_CT_req_W': el_CT_Wh,
-                                   'E_electricalnetwork_sys_req_W': el_total_Wh,
-                                   'NG_Boiler_used': q_gas_for_boiler_Wh,
+                                   'E_cs_cre_cdata_req_W': el_total_Wh,
+                                   'NG_Boiler_req': q_gas_for_boiler_Wh,
                                    }
 
         ## Calculate Capex/Opex
@@ -660,7 +658,7 @@ def main(config):
     building_names = total_demand.Name
     prices = Prices(locator, config)
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
-    disconnected_buildings_cooling_main(locator, building_names, config, prices, lca)
+    disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
     print 'test_decentralized_buildings_cooling() succeeded'
 
