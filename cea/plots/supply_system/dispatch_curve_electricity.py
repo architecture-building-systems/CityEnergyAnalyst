@@ -80,7 +80,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
         # data about exports
         analysis_fields_exports = self.remove_unused_fields(data, self.analysis_fields_exports)
         for field in analysis_fields_exports:
-            y = (data[field].values) / 1000  # into kW
+            y = (data[field].values) / 1E6  # into MWh
             trace = go.Bar(x=data.index, y=y, name=NAMING[field],
                            marker=dict(color=COLOR[field]))
 
