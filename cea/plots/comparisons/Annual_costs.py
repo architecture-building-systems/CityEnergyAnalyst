@@ -3,12 +3,12 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 
-import cea.plots.optimization
+import cea.plots.comparisons
 from cea.plots.variable_naming import NAMING, COLOR
 
-__author__ = "Daren Thomas"
+__author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -16,32 +16,28 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
+class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annual costs"
-    expected_parameters = {
-        'generation': 'plots-optimization:generation',
-        'scenario-name': 'general:scenario-name',
-    }
+    name = "Comparisons annual costs"
 
     def __init__(self, project, parameters, cache):
-        super(AnnualCostsPlot, self).__init__(project, parameters, cache)
+        super(ComparisonsAnnualCostsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Capex_a_sys_connected_USD",
                                 "Capex_a_sys_disconnected_USD",
                                 "Opex_a_sys_connected_USD",
                                 "Opex_a_sys_disconnected_USD"
                                 ]
-        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.input_files = []
 
     @property
     def title(self):
-        return "Annual Costs"
+        return "Comparison Annual Costs"
 
     @property
     def output_path(self):
-        return self.locator.get_timeseries_plots_file(
-            'gen{generation}_annualized_costs'.format(generation=self.generation),
-            self.category_name)
+        return self.locator.get_timeseries_plots_file('%s%s%s_annualized_costs' % (self.urban_scenarios, \
+                                                                                   self.energy_system_scenarios_generation, \
+                                                                                   self.energy_system_scenarios_individual))
 
     @property
     def layout(self):
@@ -49,14 +45,13 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
                          yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
 
     def calc_graph(self):
-        self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
-        data = self.process_generation_total_performance()
+        data = self.preprocessing_annual_costs_scenarios()
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
             flag_for_unused_technologies = all(v == 0 for v in y)
             if not flag_for_unused_technologies:
-                trace = go.Bar(x=data['individual_name'], y=y, name=NAMING[field],
+                trace = go.Bar(x=data['scenario_name'], y=y, name=NAMING[field],
                                marker=dict(color=COLOR[field]))
                 graph.append(trace)
 
@@ -69,13 +64,10 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
-    AnnualCostsPlot(config.project,
-                    {'buildings': None,
-                     'scenario-name': config.scenario_name,
-                     'generation': config.plots_optimization.generation},
-                    cache).plot(auto_open=True)
+    ComparisonsAnnualCostsPlot(config.project,
+                               {
+                                   'urban-energy-system-scenarios': config.plots_scenario_comparisons.urban_energy_system_scenarios},
+                               cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':

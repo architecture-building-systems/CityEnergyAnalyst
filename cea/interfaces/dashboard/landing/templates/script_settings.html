@@ -19,7 +19,8 @@
 
                 <!-- show the parameters for running -->
                 <div id="div-parameters-{{ script.name }}" class="d-block">
-                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left">
+                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left"
+                  data-parsley-validate>
                     {% for parameter in parameters %}
                     {{ input_macros.input(parameter, weather_dict) }}
                     {% endfor %}
@@ -51,11 +52,12 @@
     <script src="{{ url_for('tools_blueprint.static', filename='tools.js') }}"></script>
     <script>
         function save_config(script) {
-            $('#modal-prompt').text('Saving Configuration.')
+            if(!$('#cea-tool-parameters').parsley().isValid()) return false;
+            $('#modal-prompt').text('Saving Configuration.');
             $('#config-modal-prompt').modal({'show': true, 'backdrop': 'static'});
-            $.post('save-config/' + script, get_parameter_values(), null, 'json')
+            $.post('../tools/save-config/' + script, get_parameter_values(), null, 'json')
                 .done(function () {
-                    $('#modal-prompt').text('Configuration Saved!')
+                    $('#modal-prompt').text('Configuration Saved!');
                     setTimeout(function(){
                         $('#config-modal-prompt').modal('hide');
                         closeSettings();
@@ -64,7 +66,7 @@
 
         }
         function restore_defaults(script) {
-            $('#modal-prompt').text('Restoring Defaults.')
+            $('#modal-prompt').text('Restoring Defaults.');
             $('#config-modal-prompt').modal({'show': true, 'backdrop': 'static'});
             $.post('restore-defaults/' + script, get_parameter_values(), null, 'json')
                 .done(function () {

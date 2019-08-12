@@ -47,7 +47,6 @@ class GenerationPlotBase(cea.plots.PlotBase):
         super(GenerationPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
-        self.multi_criteria = self.parameters['multicriteria']
 
     @cea.plots.cache.cached
     def process_generation_total_performance(self):

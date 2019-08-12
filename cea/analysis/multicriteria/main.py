@@ -40,16 +40,16 @@ def rank_normalized_data(compiled_data_df, config):
     compiled_data_df['PEN_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)
     ## user defined mcda
     compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * \
-                                    config.multi_criteria.capextotal * \
-                                    config.multi_criteria.economicsustainability + \
+                                    config.multi_criteria.capex_total * \
+                                    config.multi_criteria.economic_sustainability + \
                                     compiled_data_df['normalized_Opex'] * \
-                                    config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                    config.multi_criteria.opex * config.multi_criteria.economic_sustainability + \
                                     compiled_data_df['normalized_TAC'] * \
-                                    config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                    config.multi_criteria.annualized_costs * config.multi_criteria.economic_sustainability + \
                                     compiled_data_df['normalized_emissions'] * \
-                                    config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                    config.multi_criteria.emissions * config.multi_criteria.environmental_sustainability + \
                                     compiled_data_df['normalized_prim'] * \
-                                    config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability
+                                    config.multi_criteria.primary_energy * config.multi_criteria.environmental_sustainability
     compiled_data_df['user_MCDA_rank'] = compiled_data_df['user_MCDA'].rank(ascending=True)
     return compiled_data_df
 

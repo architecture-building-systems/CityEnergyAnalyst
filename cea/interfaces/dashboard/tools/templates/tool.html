@@ -91,7 +91,8 @@
 
                 <!-- show the parameters for running -->
                 <div id="div-parameters-{{ script.name }}" class="d-block">
-                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left">
+                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left"
+                  data-parsley-validate>
                     {% for parameter in parameters %}
                     {{ input_macros.input(parameter, weather_dict) }}
                     {% endfor %}
@@ -146,6 +147,7 @@
 
 {% block javascripts %}
     {{ super() }}
+    <script src="{{ url_for('base_blueprint.static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
     <script src="{{ url_for('.static', filename='tools.js') }}"></script>
 {% endblock javascripts %}

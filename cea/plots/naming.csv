@@ -36,6 +36,18 @@ demand,Qww_sys_kWh,kWh,End-use hotwater demand,orange
 demand,Qww_sys_MWhyr,MWh/yr,End-use hotwater demand,orange
 demand,Qww_sys0_kW,kW,Nominal end-use hotwater demand,orange
 
+demand,Epro_kWh,kWh,End-use processes electricity demand,brown_lighter
+demand,Edata_kWh,kWh,End-use servers electricity demand,green_light
+demand,Eal_kWh,kWh,End-use appliances electricity demand,green
+demand,Eaux_kWh,kWh,End-use auxiliary electricity demand,yellow
+
+Requirements curve,Epro_req_W,W,End-use processes electricity demand,brown_lighter
+Requirements curve,Edata_req_W,W,End-use servers electricity demand,green_light
+Requirements curve,Eal_req_W,W,End-use appliances electricity demand,green
+Requirements curve,Eaux_req_W,W,End-use auxiliary electricity demand,yellow
+Requirements curve,E_hs_ww_req_W,W,Electricity due to decentralized heating,green
+Requirements curve,E_cs_cre_cdata_req_W,W,Electricity due to decentralized cooling,yellow
+
 demand,E_sys_kWh,kWh,End-use electricity demand,green
 demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
 demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
@@ -144,10 +156,10 @@ demand,SOLAR_hs0_kW,kW,Nominal solar thermal energy requirement for space heatin
 demand,Epro_MWhyr,MWh/yr,Electricity supplied to industrial processes,brown_lighter
 demand,Edata_MWhyr,MWh/yr,Electricity consumption for data centers,blue_lighter
 demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
+demand,Eaux_MWhyr,MWh/yr,Electricity consumption due to auxiliary equipment,yellow
 demand,E_cs_MWhyr,MWh/yr,Electricity consumption due to space cooling,blue_light
 demand,E_hs_MWhyr,MWh/yr,Electricity consumption due to space heating,green_light
 demand,E_ww_MWhyr,MWh/yr,Electricity consumption due to hot water,green_lighter
-demand,Eaux_MWhyr,MWh/yr,Electricity consumption due to auxiliary equipment,yellow
 demand,E_cdata_MWhyr,MWh/yr,Electricity consumption due to data center cooling,yellow_light
 demand,E_cre_MWhyr,MWh/yr,Electricity consumption due to refrigeration,yellow_lighter
 
@@ -198,12 +210,12 @@ Activation curve,Q_total_cooling_W,W,Total cooling demand,red_light
 Activation curve,Q_PVT_gen_directload_W,W,PVT generation (thermal) to direct load,purple
 Activation curve,Q_SC_ET_gen_directload_W,W,Solar collector (ET) generation to direct load,brown
 Activation curve,Q_SC_FP_gen_directload_W,W,Solar collector (FP) generation to direct load,orange
-Activation curve,Q_HP_Server_gen_directload_W,W,Heat recovery from data center to direct load,red
-Activation curve,Q_HP_Sew_gen_directload_W,W,Heating load provided by heat pump associated with sewage,blue_light
-Activation curve,Q_HP_Lake_gen_directload_W,W,Heating load provided by heat pump associated with lake,green
-Activation curve,Q_GHP_gen_directload_W,W,Heating load provided by geothermal heat pump,purple
-Activation curve,Q_CHP_gen_directload_W,W,CHP generation (thermal) to direct load,brown
-Activation curve,Q_Furnace_gen_directload_W,W,Heating load provided by CHP-furnace,green
+Activation curve,Q_HP_Server_gen_directload_W,W,Server-source_HP to direct load,red
+Activation curve,Q_HP_Sew_gen_directload_W,W,Sewage-source-HP generation to direct load,blue_light
+Activation curve,Q_HP_Lake_gen_directload_W,W,Water-source-HP generation to direct load,green
+Activation curve,Q_GHP_gen_directload_W,W,Ground-source-HP generation to direct load,purple
+Activation curve,Q_CHP_gen_directload_W,W,CHP-CCGT generation to direct load,brown
+Activation curve,Q_Furnace_gen_directload_W,W,CHP-furnace generation(thermal) to direct load,green
 Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
 Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
@@ -212,11 +224,11 @@ Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the distric
 
 Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
 Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red
-Activation curve,E_CHP_gen_directload_W,W,CHP district heating generation to direct load,purple
+Activation curve,E_CHP_gen_directload_W,W,CHP-CCGT generation to direct load,purple
 Activation curve,E_Furnace_gen_directload_W,W,CHP-furnace generation to direct load,blue_light
 Activation curve,E_CCGT_gen_directload_W,W,CCGT district cooling generation to direct load,blue_light
 Activation curve,E_GRID_directload_W,W,Electricity imports,red
-Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand of buildings connected to district,blue_light
+Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand in the system,blue_light
 Activation curve,E_PV_gen_export_W,W,PV generation exported,green_light
 Activation curve,E_PVT_gen_export_W,W,PVT generation exported,brown
 Activation curve,E_CHP_gen_export_W,W,CHP district heating generation exported,brown_light
@@ -242,14 +254,23 @@ Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot wate
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
 
+Activation curve,E_Pump_DHN_req_W,W,District heating network pumps,red
+Activation curve,E_Pump_DCN_req_W,W,District heating network pumps,blue
 
+Activation curve,E_Storage_charging_req_W,W,Charging of seasonal storage,red
+Activation curve,E_Storage_discharging_req_W,W,Discharging of seasonal sttorage,blue
 
+Activation curve,E_HP_SC_FP_req_W,W,Electricity demand of SC flat-plate heat-exchangers,purple_light
+Activation curve,E_HP_SC_ET_req_W,W,Electricity demand of SC evacuated-tube heat-exchangers,purple_light
+Activation curve,E_HP_PVT_req_W,W,Electricity demand of PVT heat-exchangers,green_light
+Activation curve,E_HP_Server_req_W,W,Electricity demand of server-source heat-pump,red_light
 Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
 Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
 Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange
 Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity for base boiler,orange_light
 Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey
-Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
+Activation curve,E_BackupBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
+
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity of thermal storage,green
 Activation curve,E_total_req_W,W,Electricity required by the district energy system,black
 Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the grid,grey

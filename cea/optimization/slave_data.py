@@ -34,6 +34,13 @@ class SlaveData(object):
         self.date = 0
         self.DHN_exists = False
         self.DCN_exists = False
+        self.individual_with_names_dict= {}
+        self.building_names_all = []
+        self.building_names_heating = []
+        self.building_names_cooling = []
+        self.building_names_electricity = []
+        self.buildings_connected_to_district_heating = "nan"
+        self.buildings_connected_to_district_cooling = "nan"
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
@@ -42,16 +49,19 @@ class SlaveData(object):
         # Heating Technologies
         # Geothermal Heat Pump,
         # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
-        self.GHP_number = 0.0  # number of probes
+        self.GHP_maxSize_W = 0.0  # number of probes
+        self.GHP_share = 0.0
         # self.GHP_max = self.GHP_number * self.GHP_max_i
         self.GHP_SEASON_ON = 0  # Hour in Year, when to switch on GHP
         self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
 
         # Sewage Heat Pump
         self.HPSew_maxSize_W = 0.0
+        self.HPSew_share = 0.0
 
         # Lake Heat Pump
         self.HPLake_maxSize_W = 0.0
+        self.HPLake_share = 0.0
 
         # Furnace
         self.Furnace_Q_max_W = 0.0
@@ -110,34 +120,36 @@ class SlaveData(object):
         self.T_ST_MIN = 10 + 273.0
 
         # Solar
-        self.SOLCOL_TYPE_PVT     = "PVT_total.csv" # file used as PVT type of collectors
-        self.SOLCOL_TYPE_SC_ET   = "SC_ET_total.csv"
-        self.SOLCOL_TYPE_SC_FP   = "SC_FP_total.csv"
-        self.SOLCOL_TYPE_PV      = "PV_total.csv"
-        self.SOLAR_PART_PVT      = 0.0  # [%] How much of the total area is available for PVT
-        self.SOLAR_PART_SC_ET    = 0.0  # How much of the total area is available for Solar Collectors
-        self.SOLAR_PART_SC_FP    = 0.0  # How much of the total area is available for Solar Collectors
-        self.SOLAR_PART_PV       = 0.0  # How much of the total area is available for PV (no thermal output, selling electricity)
-        self.nPVT_installations  = 2    # number of PVT installations, required for PVT average size, which goes into KEV remuneration
-        self.nPV_installations   = 2    # number of PVT installations, required for PVT average size, which goes into KEV remuneration
-        
+        self.PVT_on = 0 # if PVT is on
+        self.SC_ET_on   = 0
+        self.SC_FP_on   = 0
+        self.PV_on      = 0
+        self.PVT_share      = 0.0  # [%] How much of the total area is available for PVT
+        self.SC_ET_share    = 0.0  # How much of the total area is available for Solar Collectors
+        self.SC_FP_share    = 0.0  # How much of the total area is available for Solar Collectors
+        self.PV_share       = 0.0  # How much of the total area is available for PV (no thermal output, selling electricity)
+        self.A_PVT_m2 = 0.0  # [%] How much of the total area is available for PVT
+        self.A_SC_ET_m2 = 0.0  # How much of the total area is available for Solar Collectors
+        self.A_SC_FP_m2 = 0.0  # How much of the total area is available for Solar Collectors
+        self.A_PV_m2 = 0.0  # How much of the total area is available for PV (no thermal output, selling electricity)
+
         # declare, which power plants will be used : USED = 1  ; NOT USED = 0 
         self.Boiler_on = 0
         self.BoilerPeak_on = 0
         self.Furnace_on = 0
         self.GHP_on = 0
-        self.HP_Lake_on = 0
-        self.HP_Sew_on = 0
+        self.HPLake_on = 0
+        self.HPSew_on = 0
         self.CC_on = 0
         self.WasteServersHeatRecovery = 0  # server heat
         self.WasteCompressorHeatRecovery = 0
         self.storage_heating_on = 0
         self.DHN_temperature = 0.0  # Supply temperature of the DHN in degree C
-        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DHN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
 
         self.VCC_on = 0
         self.Absorption_Chiller_on = 0
         self.Lake_cooling_on = 0
         self.storage_cooling_on = 0
         self.DCN_temperature = 0.0  # Supply temperature of the DCN in degree C
-        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+        self.DCN_configuration = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
