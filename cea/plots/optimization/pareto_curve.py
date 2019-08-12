@@ -34,6 +34,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                 'Opex_a_sys_USD']
         self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'PEN_sys_MJoil']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.multi_criteria = self.parameters['multicriteria']
 
     @property
     def layout(self):
@@ -177,11 +178,8 @@ def calc_final_dataframe(individual_data):
 def main():
     """Test this plot"""
     import cea.config
-    import cea.inputlocator
     import cea.plots.cache
     config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
     ParetoCurveForOneGenerationPlot(config.project,
                                     {'buildings': None,

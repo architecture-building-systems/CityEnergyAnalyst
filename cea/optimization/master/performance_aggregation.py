@@ -4,7 +4,6 @@ from __future__ import print_function
 import numpy as np
 
 def summarize_results_individual(master_to_slave_vars,
-                                 performance_storage,
                                  performance_heating,
                                  performance_cooling,
                                  performance_disconnected,
@@ -71,21 +70,6 @@ def summarize_results_individual(master_to_slave_vars,
             GHG_sys_connected_tonCO2 += performance_electricity[column]
         if "PEN_" in column and "connected_MJoil" in column:
             PEN_sys_connected_MJoil += performance_electricity[column]
-
-    #FOR STORAGEBUILDINGS
-    for column in performance_storage.keys():
-        if "Capex_total_" in column and "connected_USD" in column:
-            Capex_total_sys_connected_USD += performance_storage[column]
-        if "Capex_a_" in column and "connected_USD" in column:
-            Capex_a_sys_connected_USD += performance_storage[column]
-            TAC_sys_connected_USD += performance_storage[column]
-        if "Opex_a_" in column and "connected_USD" in column:
-            TAC_sys_connected_USD += performance_storage[column]
-            Opex_a_sys_connected_USD += performance_storage[column]
-        if "GHG_" in column and "connected_tonCO2" in column:
-            GHG_sys_connected_tonCO2 += performance_storage[column]
-        if "PEN_" in column and "connected_MJoil" in column:
-            PEN_sys_connected_MJoil += performance_storage[column]
 
     #FOR DISCONNECTED BUILDINGS
     for column in performance_disconnected.keys():
