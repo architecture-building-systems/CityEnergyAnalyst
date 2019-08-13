@@ -1,0 +1,209 @@
+# describes the input databases
+zone:
+  pk: Name
+  type: shp  # shp or dbf
+  location: get_zone_geometry
+  fields:
+  - name: Name
+    type: str
+  - name: floors_bg
+    type: int
+  - name: floors_ag
+    type: int
+  - name: height_bg
+    type: float
+  - name: height_ag
+    type: float
+  - name: REFERENCE
+    type: str
+district:
+  pk: Name
+  type: shp  # shp or dbf
+  location: get_district_geometry
+  fields:
+  - name: Name
+    type: str
+  - name: floors_ag
+    type: int
+  - name: height_ag
+    type: float
+  - name: REFERENCE
+    type: str
+age:
+  pk: Name
+  type: dbf
+  location: get_building_age
+  fields:
+  - name: Name
+    type: str
+  - name: HVAC
+    type: year
+  - name: basement
+    type: year
+  - name: built
+    type: year
+  - name: envelope
+    type: year
+  - name: partitions
+    type: year
+  - name: roof
+    type: year
+  - name: windows
+    type: year
+  - name: REFERENCE
+    type: str
+occupancy:
+  pk: Name
+  type: dbf
+  location: get_building_occupancy
+  fields:
+  - name: Name
+    type: str
+  - name: SINGLE_RES
+    type: float
+  - name: MULTI_RES
+    type: float
+  - name: OFFICE
+    type: float
+  - name: RETAIL
+    type: float
+  - name: SCHOOL
+    type: float
+  - name: RESTAURANT
+    type: float
+  - name: FOODSTORE
+    type: float
+  - name: GYM
+    type: float
+  - name: HOSPITAL
+    type: float
+  - name: HOTEL
+    type: float
+  - name: INDUSTRIAL
+    type: float
+  - name: LIBRARY
+    type: float
+  - name: SWIMMING
+    type: float
+  - name: COOLROOM
+    type: float
+  - name: SERVERROOM
+    type: float
+  - name: PARKING
+    type: float
+  - name: REFERENCE
+    type: str
+internal-loads:
+  pk: Name
+  type: dbf
+  location: get_building_internal
+  fields:
+  - name: Name
+    type: str
+  - name: Qs_Wp
+    type: float
+  - name: X_ghp
+    type: float
+  - name: Ea_Wm2
+    type: float
+  - name: El_Wm2
+    type: float
+  - name: Epro_Wm2
+    type: float
+  - name: Qcre_Wm2
+    type: float
+  - name: Ed_Wm2
+    type: float
+  - name: Qhpro_Wm2
+    type: float
+  - name: Vww_lpd
+    type: float
+  - name: Vw_lpd
+    type: float
+supply-systems:
+  pk: Name
+  type: dbf
+  location: get_building_supply
+  fields:
+  - name: Name
+    type: str
+  - name: type_cs
+    type: str
+  - name: type_dhw
+    type: str
+  - name: type_el
+    type: str
+  - name: type_hs
+    type: str
+architecture:
+  pk: Name
+  type: dbf
+  location: get_building_architecture
+  fields:
+  - name: Name
+    type: str
+  - name: void_deck
+    type: float
+  - name: Hs
+    type: float
+  - name: wwr_north
+    type: float
+  - name: wwr_east
+    type: float
+  - name: wwr_south
+    type: float
+  - name: wwr_west
+    type: float
+  - name: type_cons
+    type: str
+  - name: type_leak
+    type: str
+  - name: type_roof
+    type: str
+  - name: type_shade
+    type: str
+  - name: type_wall
+    type: str
+  - name: type_win
+    type: str
+restrictions:
+  pk: Name
+  type: dbf
+  location: get_building_restrictions
+  fields:
+  - name: Name
+    type: str
+  - name: BIOGAS
+    type: int
+  - name: GEOTHERMAL
+    type: int
+  - name: NATURALGAS
+    type: int
+  - name: SOLAR
+    type: int
+  - name: WATERBODY
+    type: int
+indoor-comfort:
+  pk: Name
+  type: dbf
+  location: get_building_comfort
+  fields:
+  - name: Name
+    type: str
+  - name: Tcs_set_C
+    type: float
+  - name: Tcs_setb_C
+    type: float
+  - name: Ths_set_C
+    type: float
+  - name: Ths_setb_C
+    type: float
+  - name: Ve_lps
+    type: float
+  - name: rhum_max_pc
+    type: float
+  - name: rhum_min_pc
+    type: float
+
+
+
