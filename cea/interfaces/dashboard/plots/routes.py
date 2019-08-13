@@ -38,7 +38,7 @@ def route_dashboard(dashboard_index):
     layout = dashboard.layout
 
     # add new layouts here
-    if layout not in {"map", "row"}:
+    if layout not in {"map", "row", "grid"}:
         layout = "row"  # this is the default layout for Dashboards
 
     return render_template('layout/{}_layout.html'.format(layout), dashboard_index=dashboard_index, dashboards=dashboards,
