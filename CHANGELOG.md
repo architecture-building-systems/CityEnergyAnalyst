@@ -1,3 +1,11 @@
+2019-08-08 - 2.19 - #2216 Bugfix: Add script input validation for dashboard
+2019-08-08 - 2.19 - #2225 I2224 optimization heating
+2019-08-08 - 2.19 - #2230 fix occupancy
+2019-08-05 - 2.19 - #2228 Bugfix: Calculate and save projected coordinate system
+2019-08-05 - 2.19 - #2226 I2146 decentralized cooling @shanshanhsieh great! thanks!
+2019-08-02 - 2.19 - #2222 I2120 fixing optimization cooling
+2019-07-31 - 2.19 - #2160 2150 Feature: cea rename-building
+2019-07-29 - 2.19 - #2217 Release 2.19
 2019-07-29 - 2.18.1 - #2215 Minor Fix: Add tooltips to plot buttons
 2019-07-25 - 2.18.1 - #2209 Add "change plot" button to row layout
 2019-07-24 - 2.18.1 - #2191 I2182 read occupancy schedules
