@@ -356,7 +356,8 @@ def task_run_calibration():
 def task_run_thermal_network():
     """run the thermal_network for the included reference case"""
     def run_thermal_network():
-        import cea.technologies.thermal_network.thermal_network as tnm
+        import cea.technologies.thermal_network.thermal_network as thermal_network
+        import cea.technologies.network_layout.main as network_layout
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
@@ -364,8 +365,12 @@ def task_run_thermal_network():
         config.multiprocessing = True
         config.thermal_network.start_t = 100
         config.thermal_network.stop_t = 200
+        config.thermal_network.network_type = 'DH'
+        config.network_layout.network_type = 'DH'
 
-        tnm.main(config)
+        # first, create the network layout
+        network_layout.network_layout(config, locator, [])
+        thermal_network.main(config)
 
     return {
         'name': 'run_thermal_network',
