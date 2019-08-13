@@ -20,7 +20,7 @@ Prerequisites
 * Download and install `CMake`_.
 
   * (CMake is required for compiling DAYSIM)
-  * (this guide assumes you installed CMake to ``/Applications/CMake`` or have it in your PATH)
+  * (this guide assumes you installed CMake to ``/Applications/CMake`` and have it in your PATH)
 
 * Install DAYSIM version >= 4.0: Open Terminal and run the following commands
 
