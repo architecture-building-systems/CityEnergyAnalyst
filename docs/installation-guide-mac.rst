@@ -45,7 +45,7 @@ Excluding the above software, CEA installation requires approximately 13 GB of s
 #. Press Command+Shift+O (clone repository) and select the URL tab.
 #. Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Click Clone, this will take ~ 5-10 minutes (Size 900MB). (this guide assumes you cloned to the default
-  folder ``~/Documents/GitHub/CityEnergyAnalyst``).
+   folder ``~/Documents/GitHub/CityEnergyAnalyst``).
 #. Open the Terminal app.
 #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
 #. Type ``conda env create -f environment.osx.yml`` and press ENTER.
@@ -78,6 +78,6 @@ In order to access and work on the source code of CEA from PyCharm do:
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add Local.
 #. Point to the location of your conda environment. It should look something like 
    ``/usr/bin/pythonw``
-   IMPORTANT: You should use `pythonw`, **not** `python` in order to be able to work with libraries that require access to the graphics system such as matplotlib.
+   . IMPORTANT: You should use `pythonw`, **not** `python` in order to be able to work with libraries that require access to the graphics system such as matplotlib.
 #. Click apply changes.
 
