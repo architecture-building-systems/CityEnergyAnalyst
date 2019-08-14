@@ -5,10 +5,13 @@ from __future__ import division
 from __future__ import print_function
 
 import pandas as pd
+import geopandas
+import json
 
 import cea.inputlocator
 import cea.plots.supply_system
 from cea.technologies.network_layout.main import network_layout
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -48,23 +51,38 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                                       generation=self.generation),
             self.category_name)
 
-    def calc_graph(self):
+    def _plot_div_producer(self):
+        import os
+        import hashlib
+        from jinja2 import Template
+        template = os.path.join(os.path.dirname(__file__), "map_div.html")
+
         data = self.data_processing()
 
-        ###
-        ##
-        ##
-        # NOW, LET'S MAKE THE GRAPH!!.
-        ###
-        ###
-        ##
+        zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry())\
+            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
+        dc = self.get_newtork_json(data['path_output_edges_DC'], data['path_output_nodes_DC'])
+        dh = self.get_newtork_json(data['path_output_edges_DH'], data['path_output_nodes_DH'])
 
-        return
+        # Generate div id using hash of parameters
+        div = Template(open(template).read())\
+            .render(id=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), zone=zone, dc=dc, dh=dh)
+        return div
+
+    def get_newtork_json(self, edges, nodes):
+        if not edges or not nodes:
+            return {}
+        edges_df = geopandas.GeoDataFrame.from_file(edges)
+        nodes_df = geopandas.GeoDataFrame.from_file(nodes)
+        network_json = json.loads(edges_df.to_crs(get_geographic_coordinate_system()).to_json())
+        network_json['features']\
+            .extend(json.loads(nodes_df.to_crs(get_geographic_coordinate_system()).to_json())['features'])
+        return json.dumps(network_json)
 
     def data_processing(self):
         # get data from generation
-        building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity(self.generation,
-                                                                                                      self.individual))
+        building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity(self.individual,
+                                                                                                      self.generation))
 
         # FOR DISTRICT HEATING NETWORK
         if building_connectivity[
