@@ -1152,7 +1152,7 @@ def get_hourly_oau_operations(tech, results, composite_df):
             # oau states
             if tech == 'HCS_ER0':
                 m_w_cond_kgpers = calc_m_w_cond_results('w_OA1_h_', 'w_OA1_c_', chiller_used, i, results)
-                if t == 1:
+                if 'm_w_removed_1' not in results.columns.values:
                     # save the amount of water removed in the recovery
                     results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
                     results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
@@ -1440,10 +1440,10 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B006"]
+    buildings = ["B001"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    # tech = ["HCS_3for2"]
-    tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
+    tech = ["HCS_ER0"]
+    # tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
     #  tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT",
@@ -1451,9 +1451,9 @@ if __name__ == '__main__':
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    cases = ["WTP_CBD_m_WP1_OFF"]
+    cases = ["HKG_CBD_m_WP1_HOT"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results_0717"
+    result_path = "D:\\SH\\WP2\\HKG_Summer"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
