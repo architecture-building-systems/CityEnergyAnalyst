@@ -73,12 +73,11 @@ PyCharm
 In order to access and work on the source code of CEA from PyCharm do:
 
 #. Download and install PyCharm Community edition (64-bit) OR your own favorite editor.
-#. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CityEnergyAnalyst).
+#. Open PyCharm and open project CityEnergyAnalyst (stored where you downloaded CityEnergyAnalyst).
 #. Open ``Preferences>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter``.
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add Local.
-#. Click Conda Environment from the left hand list and select existing environment.
 #. Point to the location of your conda environment. It should look something like 
-   ``\Users\your_name\Miniconda2\envs\cea\bin\python``
-   where ‘your_name’ represents your user name on your Mac.
+   ``/usr/bin/pythonw``
+   IMPORTANT: You should use `pythonw`, **not** `python` in order to be able to work with libraries that require access to the graphics system such as matplotlib.
 #. Click apply changes.
 
