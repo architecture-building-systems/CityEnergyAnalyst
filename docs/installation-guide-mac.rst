@@ -78,6 +78,6 @@ In order to access and work on the source code of CEA from PyCharm do:
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add Local.
 #. Point to the location of your conda environment. It should look something like 
    ``/usr/bin/pythonw``
-   . IMPORTANT: You should use `pythonw`, **not** `python` in order to be able to work with libraries that require access to the graphics system such as matplotlib.
+   . IMPORTANT: You **should** use ``pythonw``, **not** ``python`` in order to be able to work with libraries that require access to the graphics system such as matplotlib.
 #. Click apply changes.
 
