@@ -79,7 +79,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                                                     network_type, network_name)
         else:
             connected_buildings_DH = []
-            disconnected_buildings_DH = building_connectivity['Name'].values
+            disconnected_buildings_DH = building_connectivity['Name'].values.tolist()
             path_output_edges_DH = None
             path_output_nodes_DH = None
 
@@ -97,7 +97,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                                                     network_type, network_name)
         else:
             connected_buildings_DC = []
-            disconnected_buildings_DC = building_connectivity['Name'].values
+            disconnected_buildings_DC = building_connectivity['Name'].values.tolist()
             path_output_edges_DC = None
             path_output_nodes_DC = None
 
