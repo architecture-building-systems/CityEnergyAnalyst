@@ -173,54 +173,55 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
     calfactor_total = 0
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
-        performance_indicators_output, \
-        Qc_supply_to_DCN, \
-        Qc_CT_W, Qh_CHP_ACH_W, \
-        cooling_resource_potentials, \
-        source_output = cooling_resource_activator(mdot_kgpers[hour],
-                                                   T_sup_K[hour],
-                                                   T_re_K[hour],
-                                                   storage_tank_properties,
-                                                   cooling_resource_potentials,
-                                                   T_ground_K[hour],
-                                                   technology_capacities,
-                                                   lca,
-                                                   master_to_slave_vars,
-                                                   Q_cooling_req_W[hour],
-                                                   hour,
-                                                   locator)
+        if Q_cooling_req_W[hour] > 0.0: #only if there is a cooling load!
+            performance_indicators_output, \
+            Qc_supply_to_DCN, \
+            Qc_CT_W, Qh_CHP_ACH_W, \
+            cooling_resource_potentials, \
+            source_output = cooling_resource_activator(mdot_kgpers[hour],
+                                                       T_sup_K[hour],
+                                                       T_re_K[hour],
+                                                       storage_tank_properties,
+                                                       cooling_resource_potentials,
+                                                       T_ground_K[hour],
+                                                       technology_capacities,
+                                                       lca,
+                                                       master_to_slave_vars,
+                                                       Q_cooling_req_W[hour],
+                                                       hour,
+                                                       locator)
 
-        # print (hour)
-        # save results for each time-step
-        opex_var_Lake_USDhr[hour] = performance_indicators_output['Opex_var_Lake_USD']
-        opex_var_VCC_USDhr[hour] = performance_indicators_output['Opex_var_VCC_USD']
-        opex_var_ACH_USDhr[hour] = performance_indicators_output['Opex_var_ACH_USD']
-        opex_var_VCC_backup_USDhr[hour] = performance_indicators_output['Opex_var_VCC_backup_USD']
-        E_used_Lake_W[hour] = performance_indicators_output['E_used_Lake_W']
-        E_used_VCC_W[hour] = performance_indicators_output['E_used_VCC_W']
-        E_used_VCC_backup_W[hour] = performance_indicators_output['E_used_VCC_backup_W']
-        E_used_ACH_W[hour] = performance_indicators_output['E_used_ACH_W']
-        GHG_Lake_tonCO2[hour] = performance_indicators_output['GHG_Lake_tonCO2']
-        GHG_VCC_tonCO2[hour] = performance_indicators_output['GHG_VCC_tonCO2']
-        GHG_ACH_tonCO2[hour] = performance_indicators_output['GHG_ACH_tonCO2']
-        GHG_VCC_backup_tonCO2[hour] = performance_indicators_output['GHG_VCC_backup_tonCO2']
-        prim_energy_Lake_MJoil[hour] = performance_indicators_output['GHG_Lake_MJoil']
-        prim_energy_VCC_MJoil[hour] = performance_indicators_output['GHG_VCC_MJoil']
-        prim_energy_ACH_MJoil[hour] = performance_indicators_output['GHG_ACH_MJoil']
-        prim_energy_VCC_backup_MJoil[hour] = performance_indicators_output['GHG_VCC_backup_MJoil']
-        Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
-        Qc_from_storage_tank_W[hour] = Qc_supply_to_DCN['Qc_from_Tank_W']
-        Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
-        Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
-        Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
-        Lake_Status[hour] = source_output["Lake_Status"]
-        ACH_Status[hour] = source_output["ACH_Status"]
-        VCC_Status[hour] = source_output["VCC_Status"]
-        VCC_Backup_Status[hour] = source_output["VCC_Backup_Status"]
-        deltaPmax[hour] = performance_indicators_output['deltaPmax']
+            # print (hour)
+            # save results for each time-step
+            opex_var_Lake_USDhr[hour] = performance_indicators_output['Opex_var_Lake_USD']
+            opex_var_VCC_USDhr[hour] = performance_indicators_output['Opex_var_VCC_USD']
+            opex_var_ACH_USDhr[hour] = performance_indicators_output['Opex_var_ACH_USD']
+            opex_var_VCC_backup_USDhr[hour] = performance_indicators_output['Opex_var_VCC_backup_USD']
+            E_used_Lake_W[hour] = performance_indicators_output['E_used_Lake_W']
+            E_used_VCC_W[hour] = performance_indicators_output['E_used_VCC_W']
+            E_used_VCC_backup_W[hour] = performance_indicators_output['E_used_VCC_backup_W']
+            E_used_ACH_W[hour] = performance_indicators_output['E_used_ACH_W']
+            GHG_Lake_tonCO2[hour] = performance_indicators_output['GHG_Lake_tonCO2']
+            GHG_VCC_tonCO2[hour] = performance_indicators_output['GHG_VCC_tonCO2']
+            GHG_ACH_tonCO2[hour] = performance_indicators_output['GHG_ACH_tonCO2']
+            GHG_VCC_backup_tonCO2[hour] = performance_indicators_output['GHG_VCC_backup_tonCO2']
+            prim_energy_Lake_MJoil[hour] = performance_indicators_output['PEN_Lake_MJoil']
+            prim_energy_VCC_MJoil[hour] = performance_indicators_output['PEN_VCC_MJoil']
+            prim_energy_ACH_MJoil[hour] = performance_indicators_output['PEN_ACH_MJoil']
+            prim_energy_VCC_backup_MJoil[hour] = performance_indicators_output['PEN_VCC_backup_MJoil']
+            Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
+            Qc_from_storage_tank_W[hour] = Qc_supply_to_DCN['Qc_from_Tank_W']
+            Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
+            Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
+            Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
+            Lake_Status[hour] = source_output["Lake_Status"]
+            ACH_Status[hour] = source_output["ACH_Status"]
+            VCC_Status[hour] = source_output["VCC_Status"]
+            VCC_Backup_Status[hour] = source_output["VCC_Backup_Status"]
+            deltaPmax[hour] = performance_indicators_output['deltaPmax']
 
-        Qc_req_from_CT_W[hour] = Qc_CT_W
-        Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
+            Qc_req_from_CT_W[hour] = Qc_CT_W
+            Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
     calfactor_total += np.sum(calfactor_buildings)
     TotalCool += np.sum(Qc_from_Lake_W) + \
