@@ -161,7 +161,15 @@ class PlotBase(object):
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
         fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=20, b=50), 'hovermode': 'closest'})
-        fig['layout']['updatemenus'] = [dict(buttons=[dict(label='ON',
+        fig['layout']['updatemenus'] = [dict(type= "buttons",
+                                             direction = "right",
+                                             pad={"r": 0, "t": 0},
+                                             showactive=True,
+                                             x=0.1,
+                                             xanchor="right",
+                                             y=1.1,
+                                             yanchor="top",
+                                             buttons=[dict(label='ON',
                                                            method='relayout',
                                                            args=['showlegend', True]),
                                                       dict(label='OFF',
