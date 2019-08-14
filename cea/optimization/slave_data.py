@@ -47,8 +47,7 @@ class SlaveData(object):
         # self.EL_TYPE = 'normal'  # type normal or green (=green power)
 
         # Heating Technologies
-        # Geothermal Heat Pump,
-        # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
+        # Geothermal Heat Pump
         self.GHP_maxSize_W = 0.0  # number of probes
         self.GHP_share = 0.0
         # self.GHP_max = self.GHP_number * self.GHP_max_i
