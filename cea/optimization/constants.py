@@ -19,6 +19,7 @@ __status__ = "Production"
 
 
 DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
+DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = []
 
 DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
                                     "BG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
@@ -40,7 +41,8 @@ DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_CCGT": {"liminf": 0.0, "limsup": 1.0, "m
 DC_CONVERSION_TECHNOLOGIES_SHARE = {"FLake": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
                                     "VCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
                                     "ACH": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2}
+                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}
                                     }
 DC_TECHNOLOGIES_SHARING_SPACE = []
 

@@ -22,7 +22,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, locator, hour):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, max_VCC_unit_size_W, hour):
+
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, max_VCC_unit_size_W)
     # unpack outputs
@@ -92,8 +93,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
 
     # unpack variables
     V_tank_m3 = storage_tank_properties['V_tank_m3']
-    Qc_tank_discharge_peak_W = storage_tank_properties['Qc_tank_discharge_peak_W']
-    Qc_tank_charge_max_W = storage_tank_properties['Qc_tank_charge_max_W']
+    Qc_tank_discharging_limit_W = storage_tank_properties['Qc_tank_discharging_limit_W']
+    Qc_tank_charging_limit_W = storage_tank_properties['Qc_tank_charging_limit_W']
     T_tank_fully_charged_C = storage_tank_properties['T_tank_fully_charged_K'] - 273.0
     T_ground_C = T_ground_K - 273.0
 
@@ -172,10 +173,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         Tank_discharging_limit_C = T_DCN_sup_K - DT_COOL - 273.0
         Tank_charging_limit_C = T_tank_fully_charged_C + DT_CHARGING_BUFFER
         if Qc_load_unmet_W > 0.0 and T_tank_C < Tank_discharging_limit_C:  # peak hour, discharge the storage
-            if Qc_load_unmet_W < Qc_tank_discharge_peak_W:
+            if Qc_load_unmet_W < Qc_tank_discharging_limit_W:
                 Qc_from_Tank_W = Qc_load_unmet_W
             else:
-                Qc_from_Tank_W = Qc_tank_discharge_peak_W
+                Qc_from_Tank_W = Qc_tank_discharging_limit_W
             Qc_to_tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                           V_tank_m3, 'cold_water')
@@ -186,7 +187,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         elif Qc_load_unmet_W <= 0.0 and T_tank_C > Tank_charging_limit_C:  # no-load, charge the storage
             Qc_to_tank_max_Wh = V_tank_m3 * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (
                     T_tank_C - T_tank_fully_charged_C) * J_TO_WH  # available to charge
-            Qc_to_tank_W = Qc_tank_charge_max_W if Qc_to_tank_max_Wh > Qc_tank_charge_max_W else Qc_to_tank_max_Wh
+            Qc_to_tank_W = Qc_tank_charging_limit_W if Qc_to_tank_max_Wh > Qc_tank_charging_limit_W else Qc_to_tank_max_Wh
             Qc_from_Tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                           V_tank_m3, 'cold_water')
@@ -237,7 +238,12 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         opex_var_VCC_USDperhr, \
         GHG_VCC_tonCO2perhr, \
         prim_energy_VCC_MJoilperhr, \
-        Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, locator, hour)
+        Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W,
+                                                       T_DCN_re_K,
+                                                       T_DCN_sup_K,
+                                                       lca,
+                                                       max_VCC_unit_size_W,
+                                                       hour)
         opex_var_VCC_USD.append(opex_var_VCC_USDperhr)
         GHG_VCC_tonCO2.append(GHG_VCC_tonCO2perhr)
         prim_energy_VCC_MJoil.append(prim_energy_VCC_MJoilperhr)
@@ -253,8 +259,12 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var_VCC_backup_USDperhr, GHG_VCC_backup_tonCO2perhr, \
         prim_energy_VCC_backup_MJoilperhr, Qc_CT_VCC_backup_W, \
-        E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
-                                                        T_DCN_sup_K, lca, max_VCC_unit_size_W, hour)
+        E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W,
+                                                        T_DCN_re_K,
+                                                        T_DCN_sup_K,
+                                                        lca,
+                                                        max_VCC_unit_size_W,
+                                                        hour)
         opex_var_VCC_backup_USD.append(opex_var_VCC_backup_USDperhr)
         GHG_VCC_backup_tonCO2.append(GHG_VCC_backup_tonCO2perhr)
         prim_energy_VCC_backup_MJoil.append(prim_energy_VCC_backup_MJoilperhr)
@@ -272,12 +282,22 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         T_chiller_out_K = (T_tank_fully_charged_C + 273.0) - DT_COOL
 
         if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0.0:  # activate VCC to charge the tank
-            if Qc_to_tank_W <= technology_capacities['Qc_VCC_max_W']:
+            if Qc_to_tank_W <= technology_capacities['Qc_VCC_nom_W']:
                 Qc_from_VCC_to_tank_W = Qc_to_tank_W
             else:
-                Qc_from_VCC_to_tank_W = technology_capacities['Qc_VCC_max_W']
-            opex_var_VCC_USDperhr, GHG_VCC_tonCO2perhr, prim_energy_VCC_MJoilperhr, Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(
-                Qc_from_VCC_to_tank_W, T_chiller_in_K, T_chiller_out_K, lca, locator, hour)
+                Qc_from_VCC_to_tank_W = technology_capacities['Qc_VCC_nom_W']
+
+            opex_var_VCC_USDperhr,\
+            GHG_VCC_tonCO2perhr, \
+            prim_energy_VCC_MJoilperhr,\
+            Qc_CT_VCC_W,\
+            E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W,
+                                              T_chiller_in_K,
+                                              T_chiller_out_K,
+                                              lca,
+                                              locator,
+                                              hour)
+
             opex_var_VCC_USD.append(opex_var_VCC_USDperhr)
             GHG_VCC_tonCO2.append(GHG_VCC_tonCO2perhr)
             prim_energy_VCC_MJoil.append(prim_energy_VCC_MJoilperhr)
@@ -285,10 +305,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
             Qc_to_tank_W -= Qc_from_VCC_to_tank_W
 
         if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0.0:  # activate ACH to charge the tank
-            if Qc_to_tank_W <= technology_capacities['Qc_ACH_max_W']:
+            if Qc_to_tank_W <= technology_capacities['Qc_ACH_nom_W']:
                 Qc_from_ACH_to_tank_W = Qc_to_tank_W
             else:
-                Qc_from_ACH_to_tank_W = technology_capacities['Qc_ACH_max_W']
+                Qc_from_ACH_to_tank_W = technology_capacities['Qc_ACH_nom_W']
             opex_var_ACH_USDperhr, \
             GHG_ACH_tonCO2perhr, \
             prim_energy_MJoilperhr, \
