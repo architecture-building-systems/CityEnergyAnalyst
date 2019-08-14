@@ -78,7 +78,7 @@ class CeaScript(object):
                 result.append(locator.get_zone_building_names()[0])
             else:
                 # expect an fqname for the config object
-                result.append(config.get(arg))
+                result.append(config.get(arg.replace('_', '-')))
         return result
 
 

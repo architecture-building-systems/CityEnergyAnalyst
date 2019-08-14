@@ -180,7 +180,10 @@ class Configuration(object):
     def get_parameter(self, fqname):
         """Given a string of the form "section:parameter", return the parameter object"""
         section, parameter = fqname.split(':')
-        return self.sections[section].parameters[parameter]
+        try:
+            return self.sections[section].parameters[parameter]
+        except KeyError:
+            raise KeyError(fqname)
 
 
 def parse_command_line_args(args):
