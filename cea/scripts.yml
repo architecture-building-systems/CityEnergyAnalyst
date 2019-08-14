@@ -269,7 +269,7 @@ Networks:
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
                  'thermal-network-optimization:use-representative-week-per-month']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network_type", "thermal-network:network_name"]
+      - [get_network_layout_nodes_shapefile, "thermal-network:network-type", "thermal-network:network-name"]
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
