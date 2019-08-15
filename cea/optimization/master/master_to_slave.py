@@ -91,7 +91,7 @@ def extract_loads_individual(locator,
         else:
             network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
             if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
-                total_demand = createTotalNtwCsv("DH", DHN_barcode, locator, column_names_buildings_heating)
+                total_demand = createTotalNtwCsv(DHN_barcode, locator, column_names_buildings_heating)
                 num_total_buildings = len(column_names_buildings_heating)
                 buildings_in_heating_network = total_demand.Name.values
                 # Run the substation and distribution routines
@@ -140,7 +140,7 @@ def extract_loads_individual(locator,
             network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
             if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
-                total_demand = createTotalNtwCsv("DC", DCN_barcode, locator, column_names_buildings_cooling)
+                total_demand = createTotalNtwCsv(DCN_barcode, locator, column_names_buildings_cooling)
                 num_total_buildings = len(column_names_buildings_cooling)
                 buildings_in_cooling_network = total_demand.Name.values
 
@@ -442,7 +442,7 @@ def master_to_slave_electrical_technologies(individual_with_names_dict,
     return master_to_slave_vars
 
 
-def createTotalNtwCsv(network_type, DHN_barcode, locator, building_names):
+def createTotalNtwCsv(barcode, locator, building_names):
     """
     Create and saves the total file for a specific DH or DC configuration
     to make the distribution routine possible
@@ -455,7 +455,7 @@ def createTotalNtwCsv(network_type, DHN_barcode, locator, building_names):
     """
     # obtain buildings which are in this network
     buildings_in_this_network_config = []
-    for index, name in zip(DHN_barcode, building_names):
+    for index, name in zip(barcode, building_names):
         if index == '1':
             buildings_in_this_network_config.append(name)
 

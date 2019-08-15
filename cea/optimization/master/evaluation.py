@@ -92,7 +92,8 @@ def evaluation_main(individual, building_names, locator, network_features, confi
         print("CALCULATING PERFORMANCE OF HEATING NETWORK CONNECTED BUILDINGS")
         performance_heating, heating_dispatch = heating_main.district_heating_network(locator,
                                                                                       master_to_slave_vars,
-                                                                                      config, prices,
+                                                                                      config,
+                                                                                      prices,
                                                                                       lca,
                                                                                       network_features,
                                                                                       )
@@ -100,15 +101,12 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     # DISTRICT COOLING NETWORK:
     if master_to_slave_vars.DCN_exists:
         print("CALCULATING PERFORMANCE OF COOLING NETWORK CONNECTED BUILDINGS")
-        reduced_timesteps_flag = False
         performance_cooling, cooling_dispatch = cooling_main.district_cooling_network(locator,
                                                                                       master_to_slave_vars,
-                                                                                      network_features,
+                                                                                      config,
                                                                                       prices,
                                                                                       lca,
-                                                                                      config,
-                                                                                      reduced_timesteps_flag,
-                                                                                      district_heating_network)
+                                                                                      network_features)
 
     # DISCONNECTED BUILDINGS
     print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
@@ -130,12 +128,6 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                                       performance_cooling,
                                                                                       heating_dispatch,
                                                                                       cooling_dispatch)
-
-    # NATURAL GAS
-    print("CALCULATING PERFORMANCE OF NATURAL GAS CONSUMPTION")
-    fuels_dispatch = natural_gas_main.fuel_imports(master_to_slave_vars, heating_dispatch,
-                                                   cooling_dispatch)
-
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
                                                                                                   performance_heating,
@@ -146,7 +138,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
-                 electricity_requirements, fuels_dispatch, performance_totals)
+                 electricity_requirements, performance_totals)
 
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
@@ -159,7 +151,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
                  electricity_requirements,
-                 fuels_dispatch, performance_totals):
+                 performance_totals):
     # put data inside a list, otherwise pandas cannot save it
     for column in performance_disconnected.keys():
         performance_disconnected[column] = [performance_disconnected[column]]
@@ -204,7 +196,6 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
     electricity_dispatch['DATE'] = DATE
     cooling_dispatch['DATE'] = DATE
     heating_dispatch['DATE'] = DATE
-    fuels_dispatch['DATE'] = DATE
     electricity_requirements['DATE'] = DATE
 
     pd.DataFrame(storage_dispatch).to_csv(locator.get_optimization_slave_storage_operation_data(
@@ -227,7 +218,3 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number),
         index=False)
-
-    pd.DataFrame(fuels_dispatch).to_csv(
-        locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number), index=False)

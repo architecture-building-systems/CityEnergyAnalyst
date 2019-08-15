@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.technologies.solar.photovoltaic as pv
 from cea.constants import HOURS_IN_YEAR
-from cea.constants import WH_TO_J
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -60,18 +60,12 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                         E_Furnace_wet_gen_W,
                                                         E_PVT_gen_W,
                                                         E_PV_gen_W, E_sys_req_W)
-    E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
-    E_CCGT_gen_directload_W = electricity_dispatch['E_CCGT_gen_directload_W']
     E_CCGT_gen_export_W = electricity_dispatch['E_CCGT_gen_export_W']
-    E_Furnace_dry_gen_directload_W = electricity_dispatch['E_Furnace_dry_gen_directload_W']
-    E_Furnace_wet_gen_directload_W = electricity_dispatch['E_Furnace_dry_gen_directload_W']
     E_Furnace_dry_gen_export_W = electricity_dispatch['E_Furnace_dry_gen_export_W']
     E_Furnace_wet_gen_export_W = electricity_dispatch['E_Furnace_wet_gen_export_W']
     E_GRID_directload_W = electricity_dispatch['E_GRID_directload_W']
-    E_PV_gen_directload_W = electricity_dispatch['E_PV_gen_directload_W']
     E_PV_gen_export_W = electricity_dispatch['E_PV_gen_export_W']
-    E_PVT_gen_directload_W = electricity_dispatch['E_PVT_gen_directload_W']
     E_PVT_gen_export_W = electricity_dispatch['E_PVT_gen_export_W']
 
     # UPDATE VARIABLE COSTS ACCORDING TO ACTIVATION CURVE FOR HEATING< COOLING AND SOLAR TECHNOLOGIES
@@ -110,7 +104,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
     Opex_a_GRID_connected_USD = performance_electricity_costs["Opex_a_GRID_connected_USD"]
     Opex_a_PV_connected_USD = performance_electricity_costs["Opex_a_PV_connected_USD"]
 
-    performance_electricity_emissions = calc_electricity_performance_emisisons(lca, E_PV_gen_export_W,
+    performance_electricity_emissions = calc_electricity_performance_emissions(lca, E_PV_gen_export_W,
                                                                                E_GRID_directload_W)
 
     GHG_PV_connected_tonCO2 = performance_electricity_emissions['GHG_PV_connected_tonCO2']
@@ -148,20 +142,20 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
     return performance_electricity, electricity_dispatch, electricity_requirements, performance_heating, performance_cooling,
 
 
-def calc_electricity_performance_emisisons(lca, E_PV_gen_export_W, E_GRID_directload_W):
+def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_directload_W):
     # SOlar technologies
-    GHG_PV_gen_export_tonCO2 = (sum(E_PV_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_PV_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_PV_gen_export_W), lca.EL_TO_CO2)
     GHG_PV_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
 
-    PEN_PV_gen_export_MJoil = (sum(E_PV_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_PV_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_PV_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_PV_gen_directload_MJoil = 0.0  # because the price of fuel is already included
 
     GHG_PV_connected_tonCO2 = GHG_PV_gen_directload_tonCO2 - GHG_PV_gen_export_tonCO2
     PEN_PV_connected_MJoil = PEN_PV_gen_directload_MJoil - PEN_PV_gen_export_MJoil
 
     # GRid
-    GHG_GRID_directload_tonCO2 = (sum(E_GRID_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
-    PEN_GRID_directload_MJoil = (sum(E_GRID_directload_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    GHG_GRID_directload_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_GRID_directload_W), lca.EL_TO_CO2)
+    PEN_GRID_directload_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_GRID_directload_W), lca.EL_TO_OIL_EQ)
 
     # calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
     # PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
@@ -231,7 +225,7 @@ def update_performance_emisisons_pen(performance_heating,
                                                                    E_Furnace_dry_gen_export_W,
                                                                    E_Furnace_wet_gen_export_W,
                                                                    E_PVT_gen_export_W, lca,
-                                                                   master_to_slave_vars, performance_heating)
+                                                                   performance_heating)
 
     if master_to_slave_vars.DCN_exists:
         performance_cooling = update_per_emissions_cooling(E_CCGT_gen_export_W, lca, performance_cooling)
@@ -241,48 +235,49 @@ def update_performance_emisisons_pen(performance_heating,
 
 def update_performance_emissions_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_export_W,
                                          E_Furnace_wet_gen_export_W, E_PVT_gen_export_W, lca,
-                                         master_to_slave_vars, performance_heating):
-    GHG_PVT_gen_export_tonCO2 = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+                                         performance_heating):
+    GHG_PVT_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_PVT_gen_export_W), lca.EL_TO_CO2)
     GHG_PVT_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    GHG_CHP_gen_export_tonCO2 = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_CHP_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_CHP_gen_export_W), lca.EL_TO_CO2)
     GHG_CHP_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    GHG_Furnace_dry_gen_export_tonCO2 = (sum(E_Furnace_dry_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_Furnace_dry_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_Furnace_dry_gen_export_W), lca.EL_TO_CO2)
     GHG_Furnace_dry_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    GHG_Furnace_wet_gen_export_tonCO2 = (sum(E_Furnace_wet_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_Furnace_wet_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_Furnace_wet_gen_export_W), lca.EL_TO_CO2)
     GHG_Furnace_wet_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    PEN_PVT_gen_export_MJoil = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+
+    PEN_PVT_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_PVT_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_PVT_gen_directload_MJoil = 0.0  # because the price of fuel is already included
-    PEN_CHP_gen_export_MJoil = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CHP_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_CHP_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_CHP_gen_directload_MJoil = 0.0  # because the price of fuel is already included
-    PEN_Furnace_dry_gen_export_MJoil = (sum(E_Furnace_dry_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_dry_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_Furnace_dry_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_Furnace_dry_gen_directload_MJoil = 0.0  # because the price of fuel is already included
-    PEN_Furnace_wet_gen_export_MJoil = (sum(E_Furnace_wet_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_wet_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_Furnace_wet_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_Furnace_wet_gen_directload_MJoil = 0.0  # because the price of fuel is already included
 
     # CHP for heating
     performance_heating['GHG_CHP_NG_connected_tonCO2'] = performance_heating['GHG_CHP_NG_connected_tonCO2'] + \
-                                                                   GHG_CHP_gen_directload_tonCO2 - \
-                                                                   GHG_CHP_gen_export_tonCO2
+                                                         GHG_CHP_gen_directload_tonCO2 - \
+                                                         GHG_CHP_gen_export_tonCO2
     performance_heating['PEN_CHP_NG_connected_MJoil'] = performance_heating['PEN_CHP_NG_connected_MJoil'] + \
-                                                                  PEN_CHP_gen_directload_MJoil - \
-                                                                  PEN_CHP_gen_export_MJoil
+                                                        PEN_CHP_gen_directload_MJoil - \
+                                                        PEN_CHP_gen_export_MJoil
     performance_heating['GHG_Furnace_dry_connected_tonCO2'] = performance_heating[
-                                                                           'GHG_Furnace_dry_connected_tonCO2'] + \
-                                                                       GHG_Furnace_dry_gen_directload_tonCO2 - \
-                                                                       GHG_Furnace_dry_gen_export_tonCO2
+                                                                  'GHG_Furnace_dry_connected_tonCO2'] + \
+                                                              GHG_Furnace_dry_gen_directload_tonCO2 - \
+                                                              GHG_Furnace_dry_gen_export_tonCO2
     performance_heating['PEN_Furnace_dry_connected_MJoil'] = performance_heating[
-                                                                          'PEN_Furnace_dry_connected_MJoil'] + \
-                                                                      PEN_Furnace_dry_gen_directload_MJoil - \
-                                                                      PEN_Furnace_dry_gen_export_MJoil
+                                                                 'PEN_Furnace_dry_connected_MJoil'] + \
+                                                             PEN_Furnace_dry_gen_directload_MJoil - \
+                                                             PEN_Furnace_dry_gen_export_MJoil
 
     performance_heating['GHG_Furnace_wet_connected_tonCO2'] = performance_heating[
-                                                                           'GHG_Furnace_wet_connected_tonCO2'] + \
-                                                                       GHG_Furnace_wet_gen_directload_tonCO2 - \
-                                                                       GHG_Furnace_wet_gen_export_tonCO2
+                                                                  'GHG_Furnace_wet_connected_tonCO2'] + \
+                                                              GHG_Furnace_wet_gen_directload_tonCO2 - \
+                                                              GHG_Furnace_wet_gen_export_tonCO2
     performance_heating['PEN_Furnace_wet_connected_MJoil'] = performance_heating[
-                                                                          'PEN_Furnace_wet_connected_MJoil'] + \
-                                                                      PEN_Furnace_wet_gen_directload_MJoil - \
-                                                                      PEN_Furnace_wet_gen_export_MJoil
+                                                                 'PEN_Furnace_wet_connected_MJoil'] + \
+                                                             PEN_Furnace_wet_gen_directload_MJoil - \
+                                                             PEN_Furnace_wet_gen_export_MJoil
 
     # PV and PVT
     performance_heating['GHG_PVT_connected_tonCO2'] = performance_heating['GHG_PVT_connected_tonCO2'] + \
@@ -296,10 +291,11 @@ def update_performance_emissions_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_e
 
 
 def update_per_emissions_cooling(E_CCGT_gen_export_W, lca, performance_cooling):
-    GHG_CCGT_gen_export_tonCO2 = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_CCGT_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_CCGT_gen_export_W), lca.EL_TO_CO2)
     GHG_CCGT_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    PEN_CCGT_gen_export_MJoil = (sum(E_CCGT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_CCGT_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_CCGT_gen_export_W), lca.EL_TO_OIL_EQ)
     PEN_CCGT_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+
     # UPDATE PARAMETERS (NET ERERGY COSTS)
     # CCGT for cooling
     performance_cooling['GHG_CCGT_connected_tonCO2'] = performance_cooling['GHG_CCGT_connected_tonCO2'] + \
