@@ -65,17 +65,21 @@ class Network_info(object):
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
+
 def thermal_network_optimization(config, gv, locator):
     # initialize timer
     start = time.time()
     # synchronize representative week method in network simulation
-    config.thermal_network.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
-    # read network type and ensure consistency in network layout and network_info
-    network_type = config.thermal_network.network_type
-    config.network_layout.network_type = network_type
+    with config.ignore_restrictions():
+        config.thermal_network.use_representative_week_per_month = (
+            config.thermal_network_optimization.use_representative_week_per_month
+        )
+        # read network type and ensure consistency in network layout and network_info
+        network_type = config.thermal_network.network_type
+        config.network_layout.network_type = network_type
     if network_type == 'DH':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
-    ## initialize object
+    # initialize object
     network_info = Network_info(locator, config, network_type, gv)
     # write buildings names to object
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -86,7 +90,7 @@ def thermal_network_optimization(config, gv, locator):
         # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
         config.thermal_network_optimization.possible_plant_sites = network_info.building_names
 
-    ## create initial population
+    # create initial population
     print 'Creating initial population.'
     newMutadedGen = generateInitialPopulation(network_info)
     # iterate through number of generations
