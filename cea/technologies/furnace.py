@@ -187,7 +187,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design_W, Q_annual_W, config, locator, technology_type):
+def calc_Cinv_furnace(Q_design_W, locator, technology_type):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 

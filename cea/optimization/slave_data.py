@@ -64,13 +64,12 @@ class SlaveData(object):
         self.HPLake_share = 0.0
 
         # Furnace
-        self.Furnace_Q_max_W = 0.0
-        self.Furn_Moist_type = "wet"  # set the moisture content of wood chips, either "dry" or "wet"
+        self.WBFurnace_Q_max_W = 0.0
+        self.DBFurnace_Q_max_W = 0.0
 
         # GAS TURBINE VARIABLES
         # self.gt_size = 1.0E6 # in Watt
-        self.CC_GT_SIZE_W = 0.0
-        self.gt_fuel = "NG"
+        self.CCGT_SIZE_W = 0.0
 
         # Boiler - Thermal output power!
 
@@ -78,9 +77,6 @@ class SlaveData(object):
         self.Boiler_Q_max_W = 0.0
         self.BoilerPeak_Q_max_W = 0.0
         self.BoilerBackup_Q_max_W = 0.0
-        self.BoilerType = "NG"  # Choose "NG" or "BG"
-        self.BoilerPeakType = "NG"  # Choose "NG" or "BG"
-        self.BoilerBackupType = "NG"  # Choose "NG" or "BG"
 
         # Cooling Technologies
         # Lake Cooling
@@ -136,7 +132,8 @@ class SlaveData(object):
         # declare, which power plants will be used : USED = 1  ; NOT USED = 0 
         self.Boiler_on = 0
         self.BoilerPeak_on = 0
-        self.Furnace_on = 0
+        self.Furnace_wet_on = 0
+        self.Furnace_dry_on = 0
         self.GHP_on = 0
         self.HPLake_on = 0
         self.HPSew_on = 0

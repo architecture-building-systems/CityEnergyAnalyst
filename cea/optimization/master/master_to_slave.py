@@ -352,45 +352,26 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
 
     if individual_with_names_dict['NG_CCGT'] >= mimimum_valuedh('NG_CCGT') and CC_ALLOWED == True:  # NG-fired CHPFurnace
         master_to_slave_vars.CC_on = 1
-        master_to_slave_vars.CC_GT_SIZE_W = individual_with_names_dict['NG_CCGT'] * Q_heating_nom_W
-        master_to_slave_vars.gt_fuel = "NG"
-
-    if individual_with_names_dict['BG_CCGT'] >= mimimum_valuedh('BG_CCGT') and CC_ALLOWED == True:  # Biogas-fired CHPFurnace
-        master_to_slave_vars.CC_on = 1
-        master_to_slave_vars.CC_GT_SIZE_W = individual_with_names_dict['BG_CCGT'] * Q_heating_nom_W
-        # 1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
-        master_to_slave_vars.gt_fuel = "BG"
+        master_to_slave_vars.CCGT_SIZE_W = individual_with_names_dict['NG_CCGT'] * Q_heating_nom_W
 
     if individual_with_names_dict['WB_Furnace'] >= mimimum_valuedh('WB_Furnace') and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
-        master_to_slave_vars.Furnace_on = 1
-        master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['WB_Furnace'] * Q_heating_nom_W
-        master_to_slave_vars.Furn_Moist_type = "wet"
+        master_to_slave_vars.Furnace_wet_on = 1
+        master_to_slave_vars.WBFurnace_Q_max_W = individual_with_names_dict['WB_Furnace'] * Q_heating_nom_W
 
     if individual_with_names_dict['DB_Furnace'] >= mimimum_valuedh('DB_Furnace') and FURNACE_ALLOWED == True:  # Dry-Biomass fired Furnace
-        master_to_slave_vars.Furnace_on = 1
-        master_to_slave_vars.Furnace_Q_max_W = individual_with_names_dict['DB_Furnace'] * Q_heating_nom_W
-        master_to_slave_vars.Furn_Moist_type = "dry"
+        master_to_slave_vars.Furnace_dry_on = 1
+        master_to_slave_vars.DBFurnace_Q_max_W = individual_with_names_dict['DB_Furnace'] * Q_heating_nom_W
 
     # Base boiler
     if individual_with_names_dict['NG_BaseBoiler'] >= mimimum_valuedh('NG_BaseBoiler'): # NG-fired boiler
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max_W = individual_with_names_dict['NG_BaseBoiler'] * Q_heating_nom_W
-        master_to_slave_vars.BoilerType = "NG"
 
-    if individual_with_names_dict['BG_BaseBoiler'] >= mimimum_valuedh('BG_BaseBoiler'):  # BG-fired boiler
-        master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max_W = individual_with_names_dict['BG_BaseBoiler'] * Q_heating_nom_W
-        master_to_slave_vars.BoilerType = "BG"
     # peak boiler
     if individual_with_names_dict['NG_PeakBoiler'] >= mimimum_valuedh('NG_PeakBoiler'):  # BG-fired boiler
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max_W = individual_with_names_dict['NG_PeakBoiler'] * Q_heating_nom_W
-        master_to_slave_vars.BoilerPeakType = "NG"
 
-    if individual_with_names_dict['BG_PeakBoiler'] >= mimimum_valuedh('BG_PeakBoiler'):  # BG-fired boiler
-        master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max_W = individual_with_names_dict['BG_PeakBoiler'] * Q_heating_nom_W
-        master_to_slave_vars.BoilerPeakType = "BG"
     # HPLake
     if individual_with_names_dict['HPLake'] >= mimimum_valuedh('HPLake') and HP_LAKE_ALLOWED == True:
         lake_potential = pd.read_csv(locator.get_lake_potential())
