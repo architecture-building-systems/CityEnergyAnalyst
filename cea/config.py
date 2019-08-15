@@ -822,7 +822,7 @@ def main():
     assert config.general.weather.endswith('Zurich.epw'), config.general.weather
     assert config.weather.endswith('Zurich.epw'), config.weather
     config.weather = 'Zug'
-    assert config.general.weather.endswith('Zug.epw')
+    assert config.general.weather.endswith('Zug-inducity_1990_2010_TMY.epw')
     print(config.general.weather)
     # test if pickling keeps state
     config.weather = 'Singapore'

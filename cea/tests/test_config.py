@@ -57,7 +57,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEquals(config.weather, config.general.weather)
         config.weather = 'Brussels'
         self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels.epw'), config.weather)
+        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'), config.weather)
 
     def test_setting_weather_pickling(self):
         config = cea.config.Configuration()
@@ -65,14 +65,14 @@ class TestConfiguration(unittest.TestCase):
         config.weather = 'Brussels'
         config = pickle.loads(pickle.dumps(config))
         self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels.epw'))
+        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
 
     def test_weather_apply_parameters(self):
         config = cea.config.Configuration()
         self.assertEquals(config.weather, config.general.weather)
         config.apply_command_line_args(['--weather', 'Brussels'], ['general'])
         self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels.epw'))
+        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
         config = pickle.loads(pickle.dumps(config))
         self.assertEquals(config.weather, config.general.weather)
 
@@ -82,7 +82,7 @@ class TestConfiguration(unittest.TestCase):
         config = pickle.loads(pickle.dumps(config))
         config.apply_command_line_args(['--weather', 'Brussels'], ['general'])
         self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels.epw'))
+        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
         self.assertEquals(config.weather, config.general.weather)
 
 if __name__ == "__main__":
