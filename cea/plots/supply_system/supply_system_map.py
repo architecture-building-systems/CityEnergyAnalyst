@@ -10,6 +10,7 @@ import json
 
 import cea.inputlocator
 import cea.plots.supply_system
+from cea.plots.variable_naming import COLORS_TO_RGB
 from cea.technologies.network_layout.main import network_layout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -21,6 +22,18 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_color(color):
+    return [int(x) for x in COLORS_TO_RGB[color].split('(')[1].split(')')[0].split(',')]
+
+
+# Colors for the networks in the map
+COLORS = {
+    'dh': get_color('red'),
+    'dc': get_color('blue'),
+    'disconnected': get_color('grey')
+}
 
 
 class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
@@ -66,7 +79,8 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         # Generate div id using hash of parameters
         div = Template(open(template).read())\
-            .render(id=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), zone=zone, dc=dc, dh=dh)
+            .render(id=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), colors=COLORS,
+                    zone=zone, dc=dc, dh=dh)
         return div
 
     def get_newtork_json(self, edges, nodes):
