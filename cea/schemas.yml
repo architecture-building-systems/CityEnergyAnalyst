@@ -5071,7 +5071,7 @@ get_weather:
     \ ``name``. This can either be one\n        of the pre-configured weather files\
     \ (see ``get_weather_names``) or a path to an existing weather file.\n       \
     \ Returns the default weather file if no other file can be resolved."
-  file_path: c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw
+  file_path: c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/Singapore-Changi_1990_2010_TMY.epw
   file_type: epw
   schema:
     Albedo (index = 32):
