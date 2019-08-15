@@ -10,6 +10,7 @@ import jinja2
 import plotly.graph_objs
 import plotly.offline
 import cea.inputlocator
+import cea.config
 from cea import MissingInputDataException
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
@@ -47,7 +48,12 @@ class PlotBase(object):
         self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
         for parameter_name in self.expected_parameters:
-            assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+            # Try to load missing parameters with default values
+            if parameter_name not in parameters:
+                try:
+                    self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get('plots:{}'.format(parameter_name))
+                except Exception:
+                    assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
