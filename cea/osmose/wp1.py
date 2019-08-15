@@ -29,15 +29,18 @@ def main(case):
     make_directory(path_to_case_folder, new_calculation)
 
     # extract demand outputs
-    building_names, Tamb = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season,
-                                                                                     specified_buildings)
+    building_names, \
+    Tamb, \
+    timesteps_calc, \
+    periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
 
     ## run osmose
     write_string_to_txt(path_to_case_folder, osmose_project_path, "path_to_case_folder.txt")  # osmose input
-    write_value_to_csv(timesteps, osmose_project_path, "timesteps.csv")  # osmose input
+    write_value_to_csv(timesteps_calc, osmose_project_path, "timesteps.csv")  # osmose input
+    write_value_to_csv(periods, osmose_project_path, "periods.csv")  # osmose input
     for building in building_names:
         print building, ' in ', case
         write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
@@ -52,16 +55,16 @@ def main(case):
             case_short = case.split('_')[4]
             old_name = run_folder
             if os.path.exists(os.path.join(result_path, old_name)):
-                new_name = old_name + '_' + case_short + '_' + building + '_' + str(timesteps)
-                os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
+                new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(timesteps)
+                # os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
             time_elapsed = time.clock() - t0
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
         # plot results
-        building_timestep_tag = building + "_" + str(timesteps)
+        building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         # building_result_path = os.path.join(building_result_path, "reduced")
-        plot_results.main(building, TECHS, building_result_path)
+        # plot_results.main(building, TECHS, building_result_path)
         # compare_el.main(building, building_result_path)
         # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
