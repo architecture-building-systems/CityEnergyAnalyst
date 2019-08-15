@@ -1479,4 +1479,4 @@ class ReferenceCaseOpenLocator(InputLocator):
 
     def get_default_weather(self):
         """The reference-case-open uses the Zug weather file..."""
-        return self.get_weather('Zug')
+        return self.get_weather('Zug-inducity_1990_2010_TMY')
