@@ -74,6 +74,7 @@
     const zone = {{ zone }};
     const dc = checkEmpty({{ dc }}, 'dc');
     const dh = checkEmpty({{ dh }}, 'dh');
+    const colors = {{ colors }};
 
     const connectedToggle = document.getElementById('connected-{{ id }}');
     const disconnectedToggle = document.getElementById('disconnected-{{ id }}');
@@ -154,7 +155,7 @@
             filled: true,
             visible: getNetworkVisibility('dc'),
 
-            getLineColor: [0, 255, 255],
+            getLineColor: colors.dc,
             getFillColor: f => nodeFillColor(f.properties['Type']),
             getLineWidth: 3,
             getRadius: 3,
@@ -173,7 +174,7 @@
             filled: true,
             visible: getNetworkVisibility('dh'),
 
-            getLineColor: [0, 255, 0],
+            getLineColor: colors.dh,
             getFillColor: f => nodeFillColor(f.properties['Type']),
             getLineWidth: 3,
             getRadius: 3,
@@ -188,9 +189,10 @@
     }
 
     function buildingColor(object) {
-        let connected = data.connected_buildings_DH;
-        if (connected.includes(object.properties.Name)) return [0, 255, 0];
-        return [0, 0, 255]
+        let type = document.querySelector('input[name="network-type-{{ id }}"]:checked').value;
+        let connected = data[`connected_buildings_${type.toUpperCase()}`];
+        if (connected.includes(object.properties.Name)) return colors[type];
+        return colors.disconnected
     }
 
     function nodeFillColor(type) {
