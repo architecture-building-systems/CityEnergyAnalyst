@@ -108,6 +108,7 @@ class Configuration(object):
                 self.old_restrictions = None
 
             def __enter__(self):
+                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
                 self.old_restrictions = self.config.restricted_to
                 self.config.restricted_to = None
 
