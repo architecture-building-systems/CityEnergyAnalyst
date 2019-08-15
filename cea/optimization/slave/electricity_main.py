@@ -37,7 +37,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
 
     # GET ENERGY GENERATION
     E_CHP_gen_W, \
-    E_Furnace_gen_W, \
+    E_Furnace_dry_gen_W, \
+    E_Furnace_wet_gen_W, \
     E_CCGT_gen_W, \
     E_PV_gen_W, \
     E_PVT_gen_W = calc_district_system_electricity_generated(locator, cooling_dispatch, heating_dispatch,
@@ -45,24 +46,28 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
 
     # GET ENERGY REQUIREMENTS
     electricity_requirements = calc_district_system_electricity_requirements(master_to_slave_vars,
-                                                                building_names,
-                                                                cooling_dispatch,
-                                                                heating_dispatch, locator,
-                                                                )
+                                                                             building_names,
+                                                                             cooling_dispatch,
+                                                                             heating_dispatch, locator,
+                                                                             )
 
     E_sys_req_W = electricity_requirements['E_electricalnetwork_sys_req_W']
 
     # GET ACTIVATION CURVE
     electricity_dispatch = electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch,
                                                         E_CCGT_gen_W, E_CHP_gen_W,
-                                                        E_Furnace_gen_W, E_PVT_gen_W,
+                                                        E_Furnace_dry_gen_W,
+                                                        E_Furnace_wet_gen_W,
+                                                        E_PVT_gen_W,
                                                         E_PV_gen_W, E_sys_req_W)
     E_CHP_gen_directload_W = electricity_dispatch['E_CHP_gen_directload_W']
     E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
     E_CCGT_gen_directload_W = electricity_dispatch['E_CCGT_gen_directload_W']
     E_CCGT_gen_export_W = electricity_dispatch['E_CCGT_gen_export_W']
-    E_Furnace_gen_directload_W = electricity_dispatch['E_Furnace_gen_directload_W']
-    E_Furnace_gen_export_W = electricity_dispatch['E_Furnace_gen_export_W']
+    E_Furnace_dry_gen_directload_W = electricity_dispatch['E_Furnace_dry_gen_directload_W']
+    E_Furnace_wet_gen_directload_W = electricity_dispatch['E_Furnace_dry_gen_directload_W']
+    E_Furnace_dry_gen_export_W = electricity_dispatch['E_Furnace_dry_gen_export_W']
+    E_Furnace_wet_gen_export_W = electricity_dispatch['E_Furnace_wet_gen_export_W']
     E_GRID_directload_W = electricity_dispatch['E_GRID_directload_W']
     E_PV_gen_directload_W = electricity_dispatch['E_PV_gen_directload_W']
     E_PV_gen_export_W = electricity_dispatch['E_PV_gen_export_W']
@@ -75,7 +80,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                                         master_to_slave_vars,
                                                                         E_CHP_gen_export_W,
                                                                         E_CCGT_gen_export_W,
-                                                                        E_Furnace_gen_export_W,
+                                                                        E_Furnace_dry_gen_export_W,
+                                                                        E_Furnace_wet_gen_export_W,
                                                                         E_PVT_gen_export_W,
                                                                         lca)
 
@@ -85,7 +91,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca
                                                                                 master_to_slave_vars,
                                                                                 E_CHP_gen_export_W,
                                                                                 E_CCGT_gen_export_W,
-                                                                                E_Furnace_gen_export_W,
+                                                                                E_Furnace_dry_gen_export_W,
+                                                                                E_Furnace_wet_gen_export_W,
                                                                                 E_PVT_gen_export_W,
                                                                                 lca)
 
@@ -212,12 +219,17 @@ def calc_electricity_performance_costs(locator, master_to_slave_vars,
 
 def update_performance_emisisons_pen(performance_heating,
                                      performance_cooling,
-                                     master_to_slave_vars, E_CHP_gen_export_W,
-                                     E_CCGT_gen_export_W, E_Furnace_gen_export_W,
+                                     master_to_slave_vars,
+                                     E_CHP_gen_export_W,
+                                     E_CCGT_gen_export_W,
+                                     E_Furnace_dry_gen_export_W,
+                                     E_Furnace_wet_gen_export_W,
                                      E_PVT_gen_export_W,
                                      lca):
     if master_to_slave_vars.DHN_exists:
-        performance_heating = update_performance_emissions_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
+        performance_heating = update_performance_emissions_heating(E_CHP_gen_export_W,
+                                                                   E_Furnace_dry_gen_export_W,
+                                                                   E_Furnace_wet_gen_export_W,
                                                                    E_PVT_gen_export_W, lca,
                                                                    master_to_slave_vars, performance_heating)
 
@@ -227,39 +239,51 @@ def update_performance_emisisons_pen(performance_heating,
     return performance_heating, performance_cooling
 
 
-def update_performance_emissions_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W, E_PVT_gen_export_W, lca,
+def update_performance_emissions_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_export_W,
+                                         E_Furnace_wet_gen_export_W, E_PVT_gen_export_W, lca,
                                          master_to_slave_vars, performance_heating):
     GHG_PVT_gen_export_tonCO2 = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
     GHG_PVT_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
     GHG_CHP_gen_export_tonCO2 = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
     GHG_CHP_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-    GHG_Furnace_gen_export_tonCO2 = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
-    GHG_Furnace_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+    GHG_Furnace_dry_gen_export_tonCO2 = (sum(E_Furnace_dry_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_Furnace_dry_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
+    GHG_Furnace_wet_gen_export_tonCO2 = (sum(E_Furnace_wet_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_CO2) / 1E3
+    GHG_Furnace_wet_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
     PEN_PVT_gen_export_MJoil = (sum(E_PVT_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
     PEN_PVT_gen_directload_MJoil = 0.0  # because the price of fuel is already included
     PEN_CHP_gen_export_MJoil = (sum(E_CHP_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
     PEN_CHP_gen_directload_MJoil = 0.0  # because the price of fuel is already included
-    PEN_Furnace_gen_export_MJoil = (sum(E_Furnace_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
-    PEN_Furnace_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+    PEN_Furnace_dry_gen_export_MJoil = (sum(E_Furnace_dry_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_dry_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+    PEN_Furnace_wet_gen_export_MJoil = (sum(E_Furnace_wet_gen_export_W) * WH_TO_J / 1.0E6) * (lca.EL_TO_OIL_EQ)
+    PEN_Furnace_wet_gen_directload_MJoil = 0.0  # because the price of fuel is already included
+
     # CHP for heating
-    fuel = master_to_slave_vars.gt_fuel
-    type = master_to_slave_vars.Furn_Moist_type
-    performance_heating['GHG_CHP_' + fuel + '_connected_tonCO2'] = performance_heating[
-                                                                       'GHG_CHP_' + fuel + '_connected_tonCO2'] + \
+    performance_heating['GHG_CHP_NG_connected_tonCO2'] = performance_heating['GHG_CHP_NG_connected_tonCO2'] + \
                                                                    GHG_CHP_gen_directload_tonCO2 - \
                                                                    GHG_CHP_gen_export_tonCO2
-    performance_heating['PEN_CHP_' + fuel + '_connected_MJoil'] = performance_heating[
-                                                                      'PEN_CHP_' + fuel + '_connected_MJoil'] + \
+    performance_heating['PEN_CHP_NG_connected_MJoil'] = performance_heating['PEN_CHP_NG_connected_MJoil'] + \
                                                                   PEN_CHP_gen_directload_MJoil - \
                                                                   PEN_CHP_gen_export_MJoil
-    performance_heating['GHG_Furnace_' + type + '_connected_tonCO2'] = performance_heating[
-                                                                           'GHG_Furnace_' + type + '_connected_tonCO2'] + \
-                                                                       GHG_Furnace_gen_directload_tonCO2 - \
-                                                                       GHG_Furnace_gen_export_tonCO2
-    performance_heating['PEN_Furnace_' + type + '_connected_MJoil'] = performance_heating[
-                                                                          'PEN_Furnace_' + type + '_connected_MJoil'] + \
-                                                                      PEN_Furnace_gen_directload_MJoil - \
-                                                                      PEN_Furnace_gen_export_MJoil
+    performance_heating['GHG_Furnace_dry_connected_tonCO2'] = performance_heating[
+                                                                           'GHG_Furnace_dry_connected_tonCO2'] + \
+                                                                       GHG_Furnace_dry_gen_directload_tonCO2 - \
+                                                                       GHG_Furnace_dry_gen_export_tonCO2
+    performance_heating['PEN_Furnace_dry_connected_MJoil'] = performance_heating[
+                                                                          'PEN_Furnace_dry_connected_MJoil'] + \
+                                                                      PEN_Furnace_dry_gen_directload_MJoil - \
+                                                                      PEN_Furnace_dry_gen_export_MJoil
+
+    performance_heating['GHG_Furnace_wet_connected_tonCO2'] = performance_heating[
+                                                                           'GHG_Furnace_wet_connected_tonCO2'] + \
+                                                                       GHG_Furnace_wet_gen_directload_tonCO2 - \
+                                                                       GHG_Furnace_wet_gen_export_tonCO2
+    performance_heating['PEN_Furnace_wet_connected_MJoil'] = performance_heating[
+                                                                          'PEN_Furnace_wet_connected_MJoil'] + \
+                                                                      PEN_Furnace_wet_gen_directload_MJoil - \
+                                                                      PEN_Furnace_wet_gen_export_MJoil
+
     # PV and PVT
     performance_heating['GHG_PVT_connected_tonCO2'] = performance_heating['GHG_PVT_connected_tonCO2'] + \
                                                       GHG_PVT_gen_directload_tonCO2 - \
@@ -292,13 +316,16 @@ def update_performance_costs(performance_heating, performance_cooling,
                              master_to_slave_vars,
                              E_CHP_gen_export_W,
                              E_CCGT_gen_export_W,
-                             E_Furnace_gen_export_W,
+                             E_Furnace_dry_gen_export_W,
+                             E_Furnace_wet_gen_export_W,
                              E_PVT_gen_export_W,
                              lca):
     if master_to_slave_vars.DHN_exists:
-        performance_heating = update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
+        performance_heating = update_performance_costs_heating(E_CHP_gen_export_W,
+                                                               E_Furnace_dry_gen_export_W,
+                                                               E_Furnace_wet_gen_export_W,
                                                                E_PVT_gen_export_W, lca,
-                                                               master_to_slave_vars, performance_heating)
+                                                               performance_heating)
 
     if master_to_slave_vars.DCN_exists:
         performance_cooling = update_performance_costs_cooling(E_CCGT_gen_export_W, lca, performance_cooling)
@@ -326,38 +353,49 @@ def update_performance_costs_cooling(E_CCGT_gen_export_W, lca, performance_cooli
                                                               performance_cooling['Opex_a_CCGT_connected_USD']
 
 
-def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W, E_PVT_gen_export_W, lca,
-                                     master_to_slave_vars, performance_heating):
+def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_export_W,
+                                     E_Furnace_wet_gen_export_W, E_PVT_gen_export_W,
+                                     lca,
+                                     performance_heating):
     # CALCULATE VARIABLES COSTS FOR UNITS WHICH SELL ENERGY (EXCEPT SOLAR - THAT IS WORKED OUT IN ANOTHER SCRIPT)
     Opex_var_CHP_export_USD = sum([energy * cost for energy, cost in zip(E_CHP_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_CHP_directload_USD = 0.0  # because the price of fuel is already included
-    Opex_var_Furnace_export_USD = sum(
-        [energy * cost for energy, cost in zip(E_Furnace_gen_export_W, lca.ELEC_PRICE_EXPORT)])
-    Opex_var_Furnace_directload_USD = 0.0  # because the price of fuel is already included
+    Opex_var_Furnace_dry_export_USD = sum(
+        [energy * cost for energy, cost in zip(E_Furnace_dry_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_Furnace_dry_directload_USD = 0.0  # because the price of fuel is already included
+    Opex_var_Furnace_wet_export_USD = sum(
+        [energy * cost for energy, cost in zip(E_Furnace_wet_gen_export_W, lca.ELEC_PRICE_EXPORT)])
+    Opex_var_Furnace_wet_directload_USD = 0.0  # because the price of fuel is already included
     Opex_var_PVT_export_USD = sum([energy * cost for energy, cost in zip(E_PVT_gen_export_W, lca.ELEC_PRICE_EXPORT)])
     Opex_var_PVT_directload_USD = 0.0  # because the price of fuel is already included
     # CHP for heating
-    fuel = master_to_slave_vars.gt_fuel
-    type = master_to_slave_vars.Furn_Moist_type
-    performance_heating['Opex_var_CHP_' + fuel + '_connected_USD'] = performance_heating[
-                                                                         'Opex_var_CHP_' + fuel + '_connected_USD'] + \
-                                                                     Opex_var_CHP_directload_USD - \
-                                                                     Opex_var_CHP_export_USD
-    performance_heating['Opex_a_CHP_' + fuel + '_connected_USD'] = performance_heating[
-                                                                       'Opex_fixed_CHP_' + fuel + '_connected_USD'] + \
-                                                                   performance_heating[
-                                                                       'Opex_var_CHP_' + fuel + '_connected_USD']
-    performance_heating['Opex_var_Furnace_' + type + '_connected_USD'] = performance_heating[
-                                                                             'Opex_var_Furnace_' + type + '_connected_USD'] + \
-                                                                         Opex_var_Furnace_directload_USD - \
-                                                                         Opex_var_Furnace_export_USD
-    performance_heating['Opex_a_Furnace_' + type + '_connected_USD'] = performance_heating[
-                                                                           'Opex_a_Furnace_' + type + '_connected_USD'] + \
-                                                                       performance_heating[
-                                                                           'Opex_var_Furnace_' + type + '_connected_USD']
+    performance_heating['Opex_var_CHP_NG_connected_USD'] = performance_heating['Opex_var_CHP_NG_connected_USD'] + \
+                                                           Opex_var_CHP_directload_USD - \
+                                                           Opex_var_CHP_export_USD
+
+    performance_heating['Opex_a_CHP_NG_connected_USD'] = performance_heating['Opex_fixed_CHP_NG_connected_USD'] + \
+                                                         performance_heating['Opex_var_CHP_NG_connected_USD']
+
+    performance_heating['Opex_var_Furnace_wet_connected_USD'] = performance_heating[
+                                                                    'Opex_var_Furnace_wet_connected_USD'] + \
+                                                                Opex_var_Furnace_wet_directload_USD - \
+                                                                Opex_var_Furnace_wet_export_USD
+
+    performance_heating['Opex_a_Furnace_wet_connected_USD'] = performance_heating['Opex_a_Furnace_wet_connected_USD'] + \
+                                                              performance_heating['Opex_var_Furnace_wet_connected_USD']
+
+    performance_heating['Opex_var_Furnace_dry_connected_USD'] = performance_heating[
+                                                                    'Opex_var_Furnace_dry_connected_USD'] + \
+                                                                Opex_var_Furnace_dry_directload_USD - \
+                                                                Opex_var_Furnace_dry_export_USD
+
+    performance_heating['Opex_a_Furnace_dry_connected_USD'] = performance_heating['Opex_a_Furnace_dry_connected_USD'] + \
+                                                              performance_heating['Opex_var_Furnace_dry_connected_USD']
+
     performance_heating['Opex_var_PVT_connected_USD'] = performance_heating['Opex_var_PVT_connected_USD'] + \
                                                         Opex_var_PVT_directload_USD - \
                                                         Opex_var_PVT_export_USD
+
     performance_heating['Opex_a_PVT_connected_USD'] = performance_heating['Opex_fixed_PVT_connected_USD'] + \
                                                       performance_heating['Opex_var_PVT_connected_USD']
 
@@ -365,15 +403,18 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_gen_export_W,
 
 
 def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W,
-                                 E_Furnace_gen_W,
+                                 E_Furnace_dry_gen_W,
+                                 E_Furnace_wet_gen_W,
                                  E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
     # ACTIVATION PATTERN OF ELECTRICITY
     E_CHP_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_CHP_gen_export_W = np.zeros(HOURS_IN_YEAR)
     E_CCGT_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_CCGT_gen_export_W = np.zeros(HOURS_IN_YEAR)
-    E_Furnace_gen_directload_W = np.zeros(HOURS_IN_YEAR)
-    E_Furnace_gen_export_W = np.zeros(HOURS_IN_YEAR)
+    E_Furnace_dry_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    E_Furnace_dry_gen_export_W = np.zeros(HOURS_IN_YEAR)
+    E_Furnace_wet_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    E_Furnace_wet_gen_export_W = np.zeros(HOURS_IN_YEAR)
     E_PV_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_PV_gen_export_W = np.zeros(HOURS_IN_YEAR)
     E_PVT_gen_directload_W = np.zeros(HOURS_IN_YEAR)
@@ -382,10 +423,12 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
 
     if master_to_slave_vars.DHN_exists:
         CHP_activation_flag = heating_dispatch['CHP_Status']
-        Furnace_activation_flag = heating_dispatch['Furnace_Status']
+        Furnace_dry_activation_flag = heating_dispatch['Furnace_dry_Status']
+        Furnace_wet_activation_flag = heating_dispatch['Furnace_dry_Status']
     else:
         CHP_activation_flag = np.zeros(HOURS_IN_YEAR)
-        Furnace_activation_flag = np.zeros(HOURS_IN_YEAR)
+        Furnace_dry_activation_flag = np.zeros(HOURS_IN_YEAR)
+        Furnace_wet_activation_flag = np.zeros(HOURS_IN_YEAR)
 
     if master_to_slave_vars.DCN_exists:
         CCGT_activation_flag = cooling_dispatch[
@@ -412,21 +455,37 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
             E_CHP_gen_export_W[hour] = E_CHP_gen_W[hour]
             E_CHP_gen_directload_W[hour] = 0.0
 
-        # FURNACE
-        if Furnace_activation_flag[hour] >= 1 and E_Furnace_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_Furnace_gen_W[hour] - E_req_hour_W
+        # FURNACE DRY
+        if Furnace_dry_activation_flag[hour] >= 1 and E_Furnace_dry_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
+            delta_E = E_Furnace_dry_gen_W[hour] - E_req_hour_W
             if delta_E >= 0.0:
-                E_Furnace_gen_export_W[hour] = delta_E
-                E_Furnace_gen_directload_W[hour] = E_req_hour_W
+                E_Furnace_dry_gen_export_W[hour] = delta_E
+                E_Furnace_dry_gen_directload_W[hour] = E_req_hour_W
                 E_req_hour_W = 0.0
             else:
-                E_Furnace_gen_export_W[hour] = 0.0
-                E_Furnace_gen_directload_W[hour] = E_Furnace_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_Furnace_gen_directload_W[hour]
+                E_Furnace_dry_gen_export_W[hour] = 0.0
+                E_Furnace_dry_gen_directload_W[hour] = E_Furnace_dry_gen_W[hour]
+                E_req_hour_W = E_req_hour_W - E_Furnace_dry_gen_directload_W[hour]
         else:
             # since we cannot store it is then exported
-            E_Furnace_gen_export_W[hour] = E_Furnace_gen_W[hour]
-            E_Furnace_gen_directload_W[hour] = 0.0
+            E_Furnace_dry_gen_export_W[hour] = E_Furnace_dry_gen_W[hour]
+            E_Furnace_dry_gen_directload_W[hour] = 0.0
+
+        # FURNACE WET
+        if Furnace_wet_activation_flag[hour] >= 1 and E_Furnace_wet_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
+            delta_E = E_Furnace_wet_gen_W[hour] - E_req_hour_W
+            if delta_E >= 0.0:
+                E_Furnace_wet_gen_export_W[hour] = delta_E
+                E_Furnace_wet_gen_directload_W[hour] = E_req_hour_W
+                E_req_hour_W = 0.0
+            else:
+                E_Furnace_wet_gen_export_W[hour] = 0.0
+                E_Furnace_wet_gen_directload_W[hour] = E_Furnace_wet_gen_W[hour]
+                E_req_hour_W = E_req_hour_W - E_Furnace_wet_gen_directload_W[hour]
+        else:
+            # since we cannot store it is then exported
+            E_Furnace_wet_gen_export_W[hour] = E_Furnace_wet_gen_W[hour]
+            E_Furnace_wet_gen_directload_W[hour] = 0.0
 
         # CCGT_cooling
         if CCGT_activation_flag[hour] >= 1 and E_CCGT_gen_W[hour] and E_req_hour_W > 0.0:
@@ -481,19 +540,20 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
             E_GRID_directload_W[hour] = E_req_hour_W
 
     # TOTAL EXPORTS:
-    electricity_dispatch = {
-        'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
-        'E_CHP_gen_export_W': E_CHP_gen_export_W,
-        'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
-        'E_CCGT_gen_export_W': E_CHP_gen_export_W,
-        'E_Furnace_gen_directload_W': E_Furnace_gen_directload_W,
-        'E_Furnace_gen_export_W': E_Furnace_gen_export_W,
-        'E_PV_gen_directload_W': E_PV_gen_directload_W,
-        'E_PV_gen_export_W': E_PV_gen_export_W,
-        'E_PVT_gen_directload_W': E_PVT_gen_directload_W,
-        'E_PVT_gen_export_W': E_PVT_gen_export_W,
-        'E_GRID_directload_W': E_GRID_directload_W
-    }
+    electricity_dispatch = {'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
+                            'E_CHP_gen_export_W': E_CHP_gen_export_W,
+                            'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
+                            'E_CCGT_gen_export_W': E_CHP_gen_export_W,
+                            'E_Furnace_dry_gen_directload_W': E_Furnace_dry_gen_directload_W,
+                            'E_Furnace_dry_gen_export_W': E_Furnace_dry_gen_export_W,
+                            'E_Furnace_wet_gen_directload_W': E_Furnace_wet_gen_directload_W,
+                            'E_Furnace_wet_gen_export_W': E_Furnace_wet_gen_export_W,
+                            'E_PV_gen_directload_W': E_PV_gen_directload_W,
+                            'E_PV_gen_export_W': E_PV_gen_export_W,
+                            'E_PVT_gen_directload_W': E_PVT_gen_directload_W,
+                            'E_PVT_gen_export_W': E_PVT_gen_export_W,
+                            'E_GRID_directload_W': E_GRID_directload_W
+                            }
     return electricity_dispatch
 
 
@@ -503,11 +563,13 @@ def calc_district_system_electricity_generated(locator, cooling_dispatch, heatin
     if master_to_slave_vars.DHN_exists:
         E_PVT_gen_W = heating_dispatch['E_PVT_gen_W']
         E_CHP_gen_W = heating_dispatch['E_CHP_gen_W']
-        E_Furnace_gen_W = heating_dispatch['E_Furnace_gen_W']
+        E_Furnace_dry_gen_W = heating_dispatch['E_Furnace_dry_gen_W']
+        E_Furnace_wet_gen_W = heating_dispatch['E_Furnace_wet_gen_W']
     else:
         E_PVT_gen_W = np.zeros(HOURS_IN_YEAR)
         E_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
-        E_Furnace_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_dry_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_wet_gen_W = np.zeros(HOURS_IN_YEAR)
 
     if master_to_slave_vars.DCN_exists:
         E_CCGT_gen_W = cooling_dispatch["E_gen_CCGT_associated_with_absorption_chillers_W"]
@@ -519,7 +581,8 @@ def calc_district_system_electricity_generated(locator, cooling_dispatch, heatin
                                               master_to_slave_vars.PV_share)
 
     return E_CHP_gen_W, \
-           E_Furnace_gen_W, \
+           E_Furnace_dry_gen_W, \
+           E_Furnace_wet_gen_W, \
            E_CCGT_gen_W, \
            E_PV_gen_W, \
            E_PVT_gen_W
@@ -558,7 +621,6 @@ def calc_district_system_electricity_requirements(master_to_slave_vars, building
 
     # now get all the requirements
     requirements_electricity["E_electricalnetwork_sys_req_W"] = E_sys_req_W
-
 
     return requirements_electricity
 
@@ -665,8 +727,8 @@ def extract_demand_buildings(master_to_slave_vars, building_names, locator):
     buildings_connected_to_district_cooling = master_to_slave_vars.buildings_connected_to_district_cooling
 
     # these are all the buildngs with heating and cooling demand
-    building_names_heating  = master_to_slave_vars.building_names_heating
-    building_names_cooling  = master_to_slave_vars.building_names_cooling
+    building_names_heating = master_to_slave_vars.building_names_heating
+    building_names_cooling = master_to_slave_vars.building_names_cooling
 
     # system requirements
     E_hs_ww_req_W = np.zeros(HOURS_IN_YEAR)
@@ -723,12 +785,12 @@ def extract_demand_buildings(master_to_slave_vars, building_names, locator):
                                          building_demand['E_cre_kWh'] +
                                          building_demand['E_cdata_kWh']) * 1000  # to W
             else:
-                #if not then get airconditioning loads of the baseline
+                # if not then get airconditioning loads of the baseline
                 E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
                                          building_demand['E_cre_kWh'] +
                                          building_demand['E_cdata_kWh']) * 1000  # to W
                 if name in building_names_heating:
-                    #if there is a decentralized heating use it.
+                    # if there is a decentralized heating use it.
                     building_dencentralized_system = pd.read_csv(
                         locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
                     E_hs_ww_req_W += building_dencentralized_system['E_hs_ww_req_W']
@@ -745,17 +807,16 @@ def extract_demand_buildings(master_to_slave_vars, building_names, locator):
                 E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
                 E_cs_cre_cdata_req_W += 0.0
             else:
-                #if not then get electric boilers etc form baseline.
+                # if not then get electric boilers etc form baseline.
                 E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
                 if name in building_names_cooling:
-                    #if there is a decentralized cooling use it.
+                    # if there is a decentralized cooling use it.
                     building_dencentralized_system = pd.read_csv(
                         locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
                     E_cs_cre_cdata_req_W += building_dencentralized_system['E_cs_cre_cdata_req_W']
                 else:
-                    #if not (cae of building with electric load and not cooling
+                    # if not (cae of building with electric load and not cooling
                     E_cs_cre_cdata_req_W += 0.0
-
 
     requirements_buildings = {
         # end-use demands
@@ -766,7 +827,7 @@ def extract_demand_buildings(master_to_slave_vars, building_names, locator):
 
         # system requirements (by decentralized units)
         'E_hs_ww_req_W': E_hs_ww_req_W,
-        'E_cs_cre_cdata_req_W':E_cs_cre_cdata_req_W,
+        'E_cs_cre_cdata_req_W': E_cs_cre_cdata_req_W,
     }
 
     return requirements_buildings
