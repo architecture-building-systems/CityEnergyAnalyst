@@ -63,6 +63,23 @@
   .layer-toggle-{{ id }} {
     padding: 0 10px;
   }
+  .mapboxgl-ctrl-3d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjNEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-2d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjJEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-recenter {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxUlEQVR42mNkwA/WQ+lAXAoYaWEAFxDnAnEUEGtBxa4B8TIgngzE3/AZoAjE24H4ARD3APEpqLgZEJcAsQIQewLxfWwGgGw+B8QrgLgBh4tB4hFAbARzCbIB5UDsCMQeUL4FEKdB2bOA+ASUvQOI9wNxJ7oBF4G4GIj3QDUfBGI2qNwvILaHGuICxL1ArA8zABbSPkAsDMSfgHgeECeiOX8+ECcBMR8QvwXiLVQzgGIvUC0QKY5GEKAoISG7hOykjA5onxsB4UA/bwmOYBwAAAAASUVORK5CYII=);
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .mapboxgl-ctrl-icon {
+    margin: auto;
+  }
 </style>
 
 <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
@@ -126,9 +143,12 @@
 
     centerCamera();
     checkFirstRadio();
+    setupButtons();
     redraw();
 
     function redraw() {
+        let extruded = document.getElementById('3d-button-{{ id }}').dataset.extruded === 'true';
+        console.log(extruded);
         // Add zone layer
         let layers = [new GeoJsonLayer({
             id: 'zone',
@@ -136,9 +156,13 @@
             opacity: 0.5,
             wireframe: true,
             filled: true,
+            extruded: extruded,
 
             getElevation: f => f.properties['height_ag'],
             getFillColor: f => buildingColor(f),
+            updateTriggers: {
+                getFillColor: document.querySelector('input[name="network-type-{{ id }}"]:checked').value
+            },
 
             pickable: true,
             autoHighlight: true,
@@ -210,17 +234,17 @@
             let bbox = zone.bbox;
             cameraOptions = deckgl.getMapboxMap().cameraForBounds(
                 [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-                {padding: 30, maxZoom: 18}
+                {maxZoom: 18}
             );
 
-            deckgl.setProps({
-                viewState: {
-                    ...currentViewState,
-                    zoom: cameraOptions.zoom,
-                    latitude: cameraOptions.center.lat,
-                    longitude: cameraOptions.center.lng
-                }
-            });
+            currentViewState = {
+                ...currentViewState,
+                zoom: cameraOptions.zoom,
+                latitude: cameraOptions.center.lat,
+                longitude: cameraOptions.center.lng
+            };
+
+            deckgl.setProps({viewState: currentViewState});
         }
     }
 
@@ -247,6 +271,171 @@
         }
         if (!connectedToggle.checked && !disconnectedToggle.checked) return [];
         return out;
+    }
+
+    function updateTooltip({x, y, object, layer}) {
+        const tooltip = document.getElementById('map-tooltip-{{ id }}');
+        if (object) {
+            tooltip.style.top = `${y}px`;
+            tooltip.style.left = `${x}px`;
+            let innerHTML = '';
+
+            if (layer.id === 'zone' || layer.id === 'district') {
+                $.each(object.properties, function (key, value)  {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+                let area = turf.area(object);
+                innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
+                    `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+            } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+                if (!object.properties.hasOwnProperty("Building")) {
+                    let length = turf.length(object) * 1000;
+                    innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                }
+            } else {
+                $.each(object.properties, function (key, value) {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+            }
+
+            tooltip.innerHTML = innerHTML;
+        } else {
+            tooltip.innerHTML = '';
+        }
+    }
+
+    function setupButtons() {
+        class dToggle {
+            constructor() {
+                this._extruded = false;
+            }
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = "3d-button-{{ id }}";
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-extruded", this._extruded);
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Toggle 3D");
+                this._btn.onclick = function () {
+                    this._extruded = !this._extruded;
+                    this.setAttribute("data-extruded", this._extruded);
+                    let pitch;
+                    let bearing;
+                    if (this._extruded) {
+                        pitch = 45;
+                    } else {
+                        pitch = 0;
+                        bearing = 0;
+                    }
+
+                    let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                    document.getElementById('3d-button-{{ id }}').setAttribute('class', className);
+                    deckgl.setProps({ controller: {dragRotate: this._extruded},
+                        viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
+                    redraw();
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        // class darkToggle {
+        //     constructor() {
+        //         this._dark = false;
+        //     }
+        //     onAdd(map) {
+        //         this._map = map;
+        //
+        //         this._btn = document.createElement("button");
+        //         this._btn.id = "dark-button";
+        //         this._btn.className = "mapboxgl-ctrl-icon";
+        //         this._btn.type = "button";
+        //         this._btn.setAttribute("data-toggle", "tooltip");
+        //         this._btn.setAttribute("data-placement", "right");
+        //         this._btn.setAttribute("title", "Toggle Dark map");
+        //         this._btn.onclick = function() {
+        //             this._dark = !this._dark;
+        //             if (this._dark) {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.dark);
+        //             } else {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
+        //             }
+        //         };
+        //         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
+        //
+        //         this._container = document.createElement("div");
+        //         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        //         this._container.appendChild(this._btn);
+        //
+        //         return this._container;
+        //     }
+        //
+        //     onRemove() {
+        //         this._container.parentNode.removeChild(this._container);
+        //         this._map = undefined;
+        //     }
+        // }
+
+        class recenterMap {
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = "recenter-button";
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Center to location");
+                this._btn.onclick = function () {
+                    deckgl.setProps({
+                        viewState:{
+                            ...currentViewState,
+                            zoom: cameraOptions.zoom,
+                            latitude: cameraOptions.center.lat,
+                            longitude: cameraOptions.center.lng,
+                            transitionDuration: 300
+                        }
+                    });
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+        // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+        deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+        deckgl.setProps({
+            onDragStart: (info, event) => {
+                let dToggleButton = document.getElementById('3d-button-{{ id }}');
+                if (event.rightButton && dToggleButton.dataset.extruded==='false') {
+                    dToggleButton.click();
+                }
+            }
+        });
     }
 
     function updateTooltip({x, y, object, layer}) {
