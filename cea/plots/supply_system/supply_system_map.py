@@ -104,9 +104,8 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         # FOR DISTRICT COOLING NETWORK
         if building_connectivity[
             'DC_connectivity'].sum() > 1:  # there are buildings connected and hence we can create the network
-            connected_buildings_DC = [x for x in building_connectivity['Name'].values if
-                                      building_connectivity.loc[building_connectivity['Name'] == x][
-                                          'DC_connectivity'] == 1]
+            connected_buildings_DC = [x for x, y in zip(building_connectivity['Name'].values,
+                                                        building_connectivity['DC_connectivity'].values) if y == 1]
             disconnected_buildings_DC = [x for x in building_connectivity['Name'].values if
                                          x not in connected_buildings_DC]
             network_type = "DC"
