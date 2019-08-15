@@ -14,13 +14,11 @@ import pandas as pd
 
 import cea.technologies.pumps as PumpModel
 from cea.constants import HOURS_IN_YEAR
-from cea.constants import WH_TO_J
 from cea.optimization.master import cost_model
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
-from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.boiler import cond_boiler_op_cost
-from cea.utilities import epwreader
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -108,7 +106,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     mdot_DH_kgpers, tdhret_K, tdhsup_K = calc_network_summary_DHN(locator, master_to_slave_vars)
 
     # FIXED ORDER ACTIVATION STARTS
-    # Import Data - Sewage
+    # Import Data - Sewage heat
     if master_to_slave_vars.HPSew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
         Q_therm_Sew_W = np.array(HPSew_Data['Qsw_kW']) * 1E3
@@ -117,7 +115,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
 
-    # Import Data - sewage heat
+    # Import Data - lake heat
     if master_to_slave_vars.HPLake_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
         Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
@@ -250,10 +248,10 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
             Opex_var_BackupBoiler_per_Wh_USD, \
             NG_BackupBoiler_req_W[hour], \
             E_BackupBoiler_req_W[hour] = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour],
-                                                         Q_uncovered_design_W,
-                                                         tdhret_req_K,
-                                                         "NG",
-                                                         prices, lca, hour)
+                                                             Q_uncovered_design_W,
+                                                             tdhret_req_K,
+                                                             "NG",
+                                                             prices, lca, hour)
 
     # SUMMARIZE ALL VARIABLE COSTS DATA
     Opex_var_HP_Server_USD = sum(Opex_var_HP_Server_USDhr)
@@ -303,8 +301,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
         "Q_HP_Server_storage_W": Q_HP_Server_to_storage_W,
 
-        #this is what is generated out of all the technologies sent to the storage
-        "Q_Storage_gen_W":Q_Storage_gen_W,
+        # this is what is generated out of all the technologies sent to the storage
+        "Q_Storage_gen_W": Q_Storage_gen_W,
 
         "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
@@ -491,7 +489,6 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "PEN_SubstationsHeating_MJoil": performance_emissions_pen['PEN_SubstationsHeating_MJoil']
     }
 
-
     return performance, heating_dispatch
 
 
@@ -525,14 +522,13 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
     Q_SC_ET_gen_Whyr = sum(Q_SC_ET_gen_W)
     Q_SC_FP_gen_Whyr = sum(Q_SC_FP_gen_W)
     Q_PVT_gen_Whyr = sum(Q_PVT_gen_W)
-    Q_Server_gen_Wyr  = sum(Q_Server_gen_W)
+    Q_Server_gen_Wyr = sum(Q_Server_gen_W)
     NG_CHP_req_Wyr = sum(NG_CHP_req_W)
     NG_BaseBoiler_req_Wyr = sum(NG_BaseBoiler_req_W)
     NG_PeakBoiler_req_Wyr = sum(NG_PeakBoiler_req_W)
     NG_BackupBoiler_req_Wyr = sum(NG_BackupBoiler_req_W)
     WetBiomass_Furnace_req_Wyr = sum(WetBiomass_Furnace_req_W)
     DryBiomass_Furnace_req_Wyr = sum(DryBiomass_Furnace_req_W)
-
 
     # calculate emissions hourly (to discount for exports and imports)
     GHG_SC_ET_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(Q_SC_ET_gen_Whyr, lca.SOLARCOLLECTORS_TO_CO2)
@@ -554,7 +550,6 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
     GHG_BackupBoiler_NG_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(NG_BackupBoiler_req_Wyr,
                                                                            lca.NG_BOILER_TO_CO2_STD)
 
-
     GHG_Furnace_wet_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(WetBiomass_Furnace_req_Wyr,
                                                                        lca.FURNACE_TO_CO2_STD)
     GHG_Furnace_dry_connected_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(DryBiomass_Furnace_req_Wyr,
@@ -574,7 +569,7 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
         "GHG_SC_ET_connected_tonCO2": GHG_SC_ET_connected_tonCO2,
         "GHG_SC_FP_connected_tonCO2": GHG_SC_FP_connected_tonCO2,
         "GHG_PVT_connected_tonCO2": GHG_PVT_connected_tonCO2,
-        "GHG_Server_connected_tonCO2":GHG_Server_connected_tonCO2,
+        "GHG_Server_connected_tonCO2": GHG_Server_connected_tonCO2,
         "GHG_BaseBoiler_NG_connected_tonCO2": GHG_BaseBoiler_NG_connected_tonCO2,
         "GHG_PeakBoiler_NG_connected_tonCO2": GHG_PeakBoiler_NG_connected_tonCO2,
         "GHG_BackupBoiler_NG_connected_tonCO2": GHG_BackupBoiler_NG_connected_tonCO2,
@@ -587,7 +582,7 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
         "PEN_SC_ET_connected_MJoil": PEN_SC_ET_connected_MJoil,
         "PEN_SC_FP_connected_MJoil": PEN_SC_FP_connected_MJoil,
         "PEN_PVT_connected_MJoil": PEN_PVT_connected_MJoil,
-        "PEN_Server_connected_MJoil":PEN_Server_connected_MJoil,
+        "PEN_Server_connected_MJoil": PEN_Server_connected_MJoil,
         "PEN_CHP_NG_connected_MJoil": PEN_CHP_NG_connected_MJoil,
         "PEN_BaseBoiler_NG_connected_MJoil": PEN_BaseBoiler_NG_connected_MJoil,
         "PEN_PeakBoiler_NG_connected_MJoil": PEN_PeakBoiler_NG_connected_MJoil,
@@ -598,14 +593,6 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
     }
 
     return performance_parameters
-
-
-def calc_emissions_Whyr_to_tonCO2yr(E_Wh_yr, factor_kgCO2_to_MJ):
-    return (E_Wh_yr * WH_TO_J / 1.0E6) * (factor_kgCO2_to_MJ / 1E3)
-
-
-def calc_pen_Whyr_to_MJoilyr(E_Wh_yr, factor_MJ_to_MJ):
-    return (E_Wh_yr * WH_TO_J / 1.0E6) * factor_MJ_to_MJ
 
 
 def calc_network_costs_heating(district_network_barcode, locator, master_to_slave_vars,

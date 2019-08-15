@@ -20,7 +20,6 @@ import cea.technologies.cooling_tower as CTModel
 import cea.technologies.pumps as PumpModel
 import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
-
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
@@ -41,8 +40,12 @@ __status__ = "Production"
 
 # technical model
 
-def district_cooling_network(locator, master_to_slave_vars, network_features, prices, lca, config,
-                             reduced_timesteps_flag, district_heating_network):
+def district_cooling_network(locator,
+                             master_to_slave_vars,
+                             config,
+                             prices,
+                             lca,
+                             network_features):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -69,17 +72,23 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     # local variables
-    t0 = time.time()
     DCN_barcode = master_to_slave_vars.DCN_barcode
     building_names = master_to_slave_vars.building_names_cooling
-
-    # Import Temperatures from Network Summary:
-    Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers = calc_network_summary_DCN(district_heating_network, locator,
-                                                                             master_to_slave_vars)
-
-    ### input parameters
     Qc_VCC_nom_W = master_to_slave_vars.VCC_cooling_size_W
     Qc_ACH_nom_W = master_to_slave_vars.Absorption_chiller_size_W
+
+    # Import Temperatures from Network Summary:
+    Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_vars)
+
+
+    # Import Data - potentials lake heat
+    if master_to_slave_vars.HPLake_on == 1:
+        HPlake_Data = pd.read_csv(locator.get_lake_potential())
+        Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
+        T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
+    else:
+        Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
+        T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     T_ground_K = calculate_ground_temperature(locator, config)
 
@@ -93,18 +102,19 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
         Qc_tank_charging_limit_W = 0
         V_tank_m3 = 0
 
-    storage_tank_properties = {'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
+    storage_tank_properties = {'V_tank_m3': V_tank_m3,
+                               'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
                                'Qc_tank_discharging_limit_W': Qc_tank_discharging_limit_W,
                                'Qc_tank_charging_limit_W': Qc_tank_charging_limit_W}
 
-    # SIZE CHILLERS (VCC, ACH, backup VCC)
-    Qc_VCC_nom_W = Qc_VCC_nom_W * (1 + SIZING_MARGIN)
-    Qc_ACH_nom_W = Qc_ACH_nom_W * (1 + SIZING_MARGIN)
-    Qc_peak_load_W = Q_cooling_req_W.max() * (1 + SIZING_MARGIN)
+
+    #SIZE CHILLERS (VCC, ACH, backup VCC)
+    Qc_peak_load_W = Q_cooling_req_W.max()
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharging_limit_W)
 
     max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator)
-    min_ACH_unit_size_W, max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
+    min_ACH_unit_size_W, \
+    max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
     technology_capacities = {'Qc_VCC_nom_W': Qc_VCC_nom_W,
                              'Qc_ACH_nom_W': Qc_ACH_nom_W,
@@ -114,11 +124,11 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
                              'min_ACH_unit_size_W': min_ACH_unit_size_W}
 
     ### input variables
-    lake_available_cooling = pd.read_csv(locator.get_lake_potential(), usecols=['QLake_kW']) * 1000  # to W
-    Qc_available_from_lake_W = np.sum(lake_available_cooling).values[0]
+    Qc_available_from_lake_Wyr = Q_therm_Lake_W
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
-                                   'Qc_avail_from_lake_W': Qc_available_from_lake_W,
+                                   'Qc_avail_from_lake_W': Qc_available_from_lake_Wyr,
+                                   'T_source_average_Lake_K':T_source_average_Lake_K,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
@@ -173,7 +183,7 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
     calfactor_total = 0
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
-        if Q_cooling_req_W[hour] > 0.0: #only if there is a cooling load!
+        if Q_cooling_req_W[hour] > 0.0:  # only if there is a cooling load!
             performance_indicators_output, \
             Qc_supply_to_DCN, \
             Qc_CT_W, Qh_CHP_ACH_W, \
@@ -445,7 +455,10 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
     return performance, cooling_dispatch
 
 
-def calc_network_summary_DCN(district_heating_network, locator, master_to_slave_vars):
+def calc_network_summary_DCN(locator, master_to_slave_vars):
+
+    #if there is a district heating network on site and there is server_heating
+    district_heating_network = master_to_slave_vars.district_heating_network
     if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
         df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
                                                                           master_to_slave_vars.network_data_file_cooling))
