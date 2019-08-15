@@ -12,7 +12,7 @@ from math import log
 import numpy as np
 import pandas as pd
 
-import cea.technologies.pumps as PumpModel
+from cea.optimization.master.cost_model import calc_network_costs
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.master import cost_model
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
@@ -270,8 +270,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
     Opex_var_DHN_USD, \
-    E_used_district_heating_network_W = calc_network_costs_heating(DHN_barcode, locator, master_to_slave_vars,
-                                                                   network_features, lca)
+    E_used_district_heating_network_W = calc_network_costs(DHN_barcode, locator, master_to_slave_vars,
+                                                           network_features, lca, "DH")
     Opex_a_DHN_connected_USD = Opex_var_DHN_USD + Opex_fixed_DHN_USD
 
     # HEATING SUBSTATIONS
@@ -593,34 +593,6 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
     }
 
     return performance_parameters
-
-
-def calc_network_costs_heating(district_network_barcode, locator, master_to_slave_vars,
-                               network_features, lca):
-    # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, "DH")
-
-    # Intitialize class
-    num_buildings_connected = district_network_barcode.count("1")
-    num_all_buildings = len(district_network_barcode)
-    ratio_connected = num_buildings_connected / num_all_buildings
-
-    # Capital costs
-    Inv_IR = 0.05
-    Inv_LT = 20
-    Inv_OM = 0.10
-    Capex_Network_USD = network_features.pipesCosts_DHN_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
-
-    # summarize
-    Capex_Network_USD += Capex_pump_USD
-    Capex_a_Network_USD += Capex_a_pump_USD
-    Opex_fixed_Network_USD += Opex_fixed_pump_USD
-    Opex_var_Network_USD = Opex_var_pump_USD
-
-    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD, P_motor_tot_W
 
 
 def calc_substations_costs_heating(building_names, district_network_barcode, locator):

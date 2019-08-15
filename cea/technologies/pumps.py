@@ -49,7 +49,8 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network_type):
+def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network_type
+                   ):
     """
     Computes the total pump investment cost
     :type master_to_slave_vars : class context

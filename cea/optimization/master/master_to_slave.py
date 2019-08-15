@@ -291,10 +291,12 @@ def master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W, indi
     if individual_with_names_dict['VCC'] >= mimimum_valuedc('VCC') and VCC_ALLOWED is True:
         master_to_slave_vars.VCC_on = 1
         master_to_slave_vars.VCC_cooling_size_W = individual_with_names_dict['VCC'] * Q_cooling_nom_W
+
     # Absorption Chiller Cooling
     if individual_with_names_dict['ACH'] >= mimimum_valuedc('ACH')and ABSORPTION_CHILLER_ALLOWED is True:
         master_to_slave_vars.Absorption_Chiller_on = 1
         master_to_slave_vars.Absorption_chiller_size_W = individual_with_names_dict['ACH'] * Q_cooling_nom_W
+
     # Storage Cooling
     if individual_with_names_dict['Storage'] >= mimimum_valuedc('Storage') and STORAGE_COOLING_ALLOWED is True:
         if (individual_with_names_dict['VCC'] >= mimimum_valuedc('VCC')  and VCC_ALLOWED is True) or \

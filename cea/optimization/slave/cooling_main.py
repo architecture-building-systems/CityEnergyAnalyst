@@ -7,7 +7,6 @@ If Lake exhausted, then use other supply technologies
 """
 from __future__ import division
 
-import time
 from math import log
 
 import numpy as np
@@ -15,6 +14,7 @@ import pandas as pd
 
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as VCCModel
+from cea.optimization.master.cost_model import calc_network_costs
 import cea.technologies.cogeneration as cogeneration
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.pumps as PumpModel
@@ -23,7 +23,7 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
-    T_TANK_FULLY_DISCHARGED_K, PIPEINTERESTRATE, PIPELIFETIME, PUMP_ETA, ACH_TYPE_SINGLE
+    T_TANK_FULLY_DISCHARGED_K, PUMP_ETA, ACH_TYPE_SINGLE
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -80,7 +80,6 @@ def district_cooling_network(locator,
     # Import Temperatures from Network Summary:
     Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_vars)
 
-
     # Import Data - potentials lake heat
     if master_to_slave_vars.HPLake_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
@@ -107,8 +106,7 @@ def district_cooling_network(locator,
                                'Qc_tank_discharging_limit_W': Qc_tank_discharging_limit_W,
                                'Qc_tank_charging_limit_W': Qc_tank_charging_limit_W}
 
-
-    #SIZE CHILLERS (VCC, ACH, backup VCC)
+    # SIZE CHILLERS (VCC, ACH, backup VCC)
     Qc_peak_load_W = Q_cooling_req_W.max()
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharging_limit_W)
 
@@ -128,15 +126,8 @@ def district_cooling_network(locator,
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_Wyr,
-                                   'T_source_average_Lake_K':T_source_average_Lake_K,
+                                   'T_source_average_Lake_K': T_source_average_Lake_K,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
-
-    ############# Output results
-    network_costs_USD = network_features.pipesCosts_DCN_USD * DCN_barcode.count(
-        '1') / master_to_slave_vars.num_total_buildings
-    network_costs_a_USD = network_costs_USD * PIPEINTERESTRATE * \
-                          (1 + PIPEINTERESTRATE) ** PIPELIFETIME / (
-                                  (1 + PIPEINTERESTRATE) ** PIPELIFETIME - 1)
 
     calfactor_buildings = np.zeros(HOURS_IN_YEAR)
     TotalCool = 0
@@ -335,8 +326,12 @@ def district_cooling_network(locator,
     Capex_a_DCN_USD, \
     Opex_fixed_DCN_USD, \
     Opex_var_DCN_USD, \
-    E_DCN_W = calc_network_costs_cooling(DCN_barcode, locator, master_to_slave_vars,
-                                         network_features, lca)
+    E_used_district_cooling_netowrk_W = calc_network_costs(DCN_barcode,
+                                                           locator,
+                                                           master_to_slave_vars,
+                                                           network_features,
+                                                           lca,
+                                                           "DC")
 
     # COOLING SUBSTATIONS
     Capex_Substations_USD, \
@@ -432,7 +427,7 @@ def district_cooling_network(locator,
     # PLOT ACTIVATION COURVE
     cooling_dispatch = {
         "Q_districtcooling_sys_req_W": Q_cooling_req_W,
-        "E_Pump_DCN_req_W": E_DCN_W,
+        "E_Pump_DCN_req_W": E_used_district_cooling_netowrk_W,
         "E_used_Lake_W": E_used_Lake_W,
         "E_used_VCC_W": E_used_VCC_W,
         "E_used_VCC_backup_W": E_used_VCC_backup_W,
@@ -456,8 +451,7 @@ def district_cooling_network(locator,
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
-
-    #if there is a district heating network on site and there is server_heating
+    # if there is a district heating network on site and there is server_heating
     district_heating_network = master_to_slave_vars.district_heating_network
     if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
         df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
@@ -479,7 +473,7 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
 
 
 def calc_network_costs_cooling(district_network_barcode, locator, master_to_slave_vars,
-                               network_features, lca):
+                               network_features, lca, network_type):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
         master_to_slave_vars, network_features, locator, lca, "DC")
