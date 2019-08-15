@@ -26,7 +26,7 @@ TSD_COLUMNS.extend(Q_GAIN_ENV)
 TSD_COLUMNS.extend(Q_GAIN_INT)
 
 H_WE_Jperkg = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
-floor_height_m = 2.5  # FIXME: read from CEA
+floor_height_m = 2.5  # TODO: read from CEA
 v_CO2_Lpers = 0.0048  # [L/s/person]
 rho_CO2_kgperm3 = 1.98  # [kg/m3]
 CO2_env_ppm = 400 / 1e6  # [m3 CO2/m3]
@@ -62,7 +62,36 @@ N_m_ve_max = 3
 
 
 def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings):
-    start_t = get_start_t(case, timesteps, season)
+
+    if type(timesteps) is int:
+        start_t = get_start_t(case, timesteps, season)
+        end_t = (start_t + timesteps)
+        op_time = np.ones(timesteps, dtype=int)
+        periods = 1
+        save_operatingcost(op_time, timesteps)
+    else:
+        cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(), sheet_name='number_of_clusters')
+        number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
+        print('number of clusters: ', number_of_clusters)
+        day_count_df = pd.read_csv(path_to_typical_days_files(case, 'day_count', number_of_clusters))
+        typical_day_profiles = pd.read_csv(path_to_typical_days_files(case, 'profiles', number_of_clusters))
+        number_of_typical_days = day_count_df.shape[0]
+        start_t, end_t = {}, {}
+        op_time = []
+        for d in range(number_of_typical_days):
+            day = day_count_df['day'][d]
+            T_day = typical_day_profiles['typ_1'][d*24:(d+1)*24]
+            T_md = (T_day.max() + T_day.min())/2 # ASHRAE method
+            if T_md > settings.T_b_CDD: # filter out CDD
+                print 'day', day, 'T_md', T_md
+                start_t[int(day)] = (int(day)-1)*24
+                end_t[int(day)] = start_t[int(day)] + 24
+                count = day_count_df['count'][d]
+                op_time.extend(np.ones(24, dtype=int)*count)
+        periods = len(op_time)/24
+        timesteps = len(op_time)
+        save_operatingcost(op_time, timesteps)
+
     RH_max, RH_min = get_rh(case)
 
     # read total demand
@@ -77,11 +106,22 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # demand_df = pd.read_csv(path_to_demand_output(name)['csv'], usecols=(BUILDINGS_DEMANDS_COLUMNS))
         tsd_df = pd.read_excel(path_to_demand_output(name, case)['xls'])
 
-        # reduce to 24 or 168 hours
-        end_t = (start_t + timesteps)
-        # reduced_demand_df = demand_df[start_t:end_t]
-        reduced_tsd_df = tsd_df[start_t:end_t]
-        reduced_tsd_df = reduced_tsd_df.reset_index()
+        # get reduced tsd
+        if type(start_t) is int:
+            reduced_tsd_df = tsd_df[start_t:end_t]
+            reduced_tsd_df = reduced_tsd_df.reset_index()
+        elif type(start_t) is dict:
+            list_of_df = []
+            for day in start_t.keys():
+                reduced_tsd_df = tsd_df[start_t[day]:end_t[day]]
+                # reduced_tsd_df = reduced_tsd_df.reset_index()
+                list_of_df.append(reduced_tsd_df)
+                print 'day', day, ', hour:', start_t[day]
+            reduced_tsd_df = pd.concat(list_of_df, ignore_index=True)
+            reduced_tsd_df = reduced_tsd_df.reset_index()
+        else:
+            raise ValueError('WRONG start_t: ', start_t)
+
         output_df = reduced_tsd_df
         output_df1 = pd.DataFrame()
         output_hcs = pd.DataFrame()
@@ -127,7 +167,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_hcs['v_CO2_in_infil_occupant_m3pers'] = reduced_tsd_df['v_CO2_infil_window_m3pers'] + reduced_tsd_df[
             'v_CO2_occupant_m3pers']
 
-        output_hcs['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile?
+        output_hcs['CO2_ext_ppm'] = CO2_env_ppm  # TODO: get actual profile
         output_hcs['CO2_max_ppm'] = CO2_room_max_ppm
         output_hcs['m_ve_req'] = reduced_tsd_df['m_ve_required']
         output_hcs['rho_air'] = np.vectorize(calc_rho_air)(reduced_tsd_df['T_ext'])
@@ -209,7 +249,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         print 'ambient average: ', Tamb_K
         Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
         print 'wetbulb average: ', Twb_K
-    return building_names, Tamb_K
+    return building_names, Tamb_K, int(timesteps), int(periods)
 
 
 def calc_CO2_gains(output_hcs, reduced_tsd_df):
@@ -365,9 +405,38 @@ def get_rh(case):
     return RH_max, RH_min
 
 
+def path_to_typical_days_files(case, name, cluster_numbers):
+    format = 'csv'
+    path_to_folder = os.path.join(settings.typical_days_path, case)
+    path_to_folder = os.path.join(path_to_folder, 'k_'+str(cluster_numbers))
+    path_to_file = os.path.join(path_to_folder, '%s.%s' % (name, format))
+    return path_to_file
+
+def path_to_number_of_k_file():
+    format = 'xlsx'
+    path_to_file = os.path.join(settings.typical_days_path, 'number_of_k.%s' % (format))
+    return path_to_file
+
+def path_to_osmose_project_op():
+    format = 'csv'
+    path_to_folder = settings.osmose_project_path
+    path_to_file = os.path.join(path_to_folder, 'operatingcost.%s' % (format))
+    return path_to_file
+
+
+def save_operatingcost(op_time, timesteps):
+    operating_cost_df = pd.DataFrame()
+    operating_cost_df['op_time'] = op_time
+    operating_cost_df['cost_elec_in'] = np.ones(timesteps, dtype=int)
+    operating_cost_df['cost_elec_out'] = np.ones(timesteps, dtype=int)
+    operating_costT_df = operating_cost_df.T
+    data = operating_costT_df.to_csv(None, header=False)
+    open(path_to_osmose_project_op(), 'w').write(data[:-1])
+    # operating_costT_df.to_csv(path_to_osmose_project_op(), header=False) # FIXME: remove the last line
+
 if __name__ == '__main__':
-    case = 'WTP_CBD_m_WP1_HOT'
+    case = 'HKG_CBD_m_WP1_OFF'
     timesteps = 168  # 168 (week)
-    specified_buildings = ["B001"]
+    specified_buildings = ["B010"]
     season = 'Summer'
     extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
