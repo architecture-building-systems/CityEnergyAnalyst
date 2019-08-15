@@ -498,7 +498,7 @@ class InputLocator(object):
     # DATABASES
     # FIXME: remove get_default_weather (use config instead)
     def get_default_weather(self):
-        """weather/Zug-2010.epw
+        """weather/Zug-inducity_2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
         import cea.config
         config = cea.config.Configuration()
