@@ -182,7 +182,7 @@ Energy potentials:
     description: Calculate electricity production from solar photovoltaic technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic
-    parameters: ['general:scenario', 'general:weather', 'solar:type-pvpanel',
+    parameters: ['general:scenario', 'solar:type-pvpanel',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice']
     input-files:
@@ -206,7 +206,7 @@ Energy potentials:
     description: Calculate heat production from solar collector technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.solar_collector
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings']
