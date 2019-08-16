@@ -240,7 +240,7 @@ def district_cooling_network(locator,
     Q_CT_nom_W = np.amax(Qc_req_from_CT_W)
     Qh_req_from_CCGT_max_W = np.amax(Qh_req_from_CCGT_W)  # the required heat output from CCGT at peak
 
-    mdot_Max_kgpers = np.amax(DCN_operation_parameters_array[:, 1])  # sizing of DCN network pumps
+    mdot_Max_kgpers = np.amax(mdot_kgpers)  # sizing of DCN network pumps
     Q_GT_nom_W = 0
 
     ## Operation of the cooling tower
@@ -301,32 +301,40 @@ def district_cooling_network(locator,
                                            ((E_gen_CCGT_W[hour] * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ)
             NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
 
-    ########## Add investment costs
-    # VCC
-    Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config, 'CH3')
-    Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD, Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(
-        Qc_VCC_backup_nom_W, locator, config, 'CH3')
 
-    master_to_slave_vars.VCC_backup_cooling_size_W = Qc_VCC_backup_nom_W
-    # ABSORPTION CHILLERS
-    Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,
-                                                                                          ACH_TYPE_DOUBLE)
-
-    # CCGT
-    Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    # COLD WATER STORAGE TANK
-    Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
-                                                                                              config, 'TES2')
-
-    # COOLING TOWERS
-    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, 'CT1')
-
-    # LAKE
-    if sum(E_used_Lake_W) > 0:  # there is lake cooling
+    # WATER-SOURCE VAPOR COMPRESION CHILLER
+    if master_to_slave_vars.Lake_cooling_on == 1:
         mdotnMax_kgpers = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'mdot_DCN_kgpers'].iloc[0]
         deltaPmax = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'deltaPmax'].iloc[0]
         Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                                                                locator, 'PU1')
+
+    # AIR_SOURCE VAPOR COMPRESSION CHILLER
+    if master_to_slave_vars.VCC_on == 1:
+        # VCC
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config, 'CH3')
+        Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD, Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(
+            Qc_VCC_backup_nom_W, locator, config, 'CH3')
+        # COOLING TOWERS
+        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, 'CT1')
+
+        master_to_slave_vars.VCC_backup_cooling_size_W = Qc_VCC_backup_nom_W
+
+    # TRIGENERATION
+    if master_to_slave_vars.Absorption_Chiller_on == 1:
+        # ACH
+        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,
+                                                                                              ACH_TYPE_DOUBLE)
+        # CCGT
+        Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
+
+
+    # COLD WATER STORAGE TANK
+    if master_to_slave_vars.storage_cooling_on == 1:
+        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
+                                                                                                  config, 'TES2')
+
+
 
     # COOLING NETWORK
     Capex_DCN_USD, \
@@ -348,7 +356,7 @@ def district_cooling_network(locator,
 
     # TODO: Create this file based on the configuration Line 361 master_main.py
 
-    # SUMMARIZE NUMBERS
+    # SUMMARIZE ALL VARIABLE COSTS
     Opex_var_Lake_connected_USD = sum(opex_var_Lake_USDhr),
     Opex_var_VCC_connected_USD = sum(opex_var_VCC_USDhr),
     Opex_var_ACH_connected_USD = sum(opex_var_ACH_USDhr),

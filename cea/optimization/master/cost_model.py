@@ -110,7 +110,6 @@ def calc_generation_costs_heating(locator,
                                   Q_uncovered_design_W,
                                   config,
                                   storage_activation_data,
-                                  heating_dispatch,
                                   ):
     """
     Computes costs / GHG emisions / primary energy needs
@@ -199,7 +198,7 @@ def calc_generation_costs_heating(locator,
 
     # HEATPUMP LAKE
     if master_to_slave_vars.HPLake_on == 1:
-        HP_Size_W = heating_dispatch['Q_HP_Lake_gen_directload_W'].max()
+        HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
         Capex_a_Lake_USD, \
         Opex_fixed_Lake_USD, \
         Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
@@ -210,7 +209,7 @@ def calc_generation_costs_heating(locator,
 
     # HEATPUMP_SEWAGE
     if master_to_slave_vars.HPSew_on == 1:
-        HP_Size_W = heating_dispatch['Q_HP_Sew_gen_directload_W'].max()
+        HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
         Capex_a_Sewage_USD, \
         Opex_fixed_Sewage_USD, \
         Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
@@ -221,7 +220,7 @@ def calc_generation_costs_heating(locator,
 
     # GROUND HEAT PUMP
     if master_to_slave_vars.GHP_on == 1:
-        GHP_Enom_W = heating_dispatch['Q_GHP_gen_directload_W'].max()
+        GHP_Enom_W = master_to_slave_vars.GHP_maxSize_W
         Capex_a_GHP_USD, \
         Opex_fixed_GHP_USD, \
         Capex_GHP_USD = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
@@ -236,7 +235,7 @@ def calc_generation_costs_heating(locator,
     Opex_fixed_BackupBoiler_NG_USD, \
     Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Q_backup_W, locator, config, 'BO1')
 
-    # HEATPUMP AND HEX FOR HEAT RECOVERY (DATA CENTRE)
+    # DATA CENTRE SOURCE HEAT PUMP
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
         Q_HEX_max_Wh = thermal_network["Qcdata_netw_total_kWh"].max() * 1000  # convert to Wh
         Capex_a_wasteserver_HEX_USD, Opex_fixed_wasteserver_HEX_USD, Capex_wasteserver_HEX_USD = hex.calc_Cinv_HEX(
