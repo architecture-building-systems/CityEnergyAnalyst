@@ -82,9 +82,10 @@ def district_cooling_network(locator,
     Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_vars)
 
     # Import Data - potentials lake heat
-    if master_to_slave_vars.HPLake_on == 1:
+    if master_to_slave_vars.Lake_cooling_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
-        Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
+        Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
+        Q_therm_Lake_W = [x if x < master_to_slave_vars.Lake_cooling_size_W else master_to_slave_vars.Lake_cooling_size_W for x in Q_therm_Lake]
         T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
     else:
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
