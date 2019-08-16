@@ -23,8 +23,15 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type,
-                      min_chiller_size_W, max_chiller_size_W):
+def calc_chiller_main(mdot_chw_kgpers,
+                      T_chw_sup_K,
+                      T_chw_re_K,
+                      T_hw_in_C,
+                      T_ground_K,
+                      locator,
+                      ACH_type,
+                      min_chiller_size_W,
+                      max_chiller_size_W):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
