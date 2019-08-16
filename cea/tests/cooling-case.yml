@@ -35,11 +35,11 @@
   parameters:
     network-type: DC
     use-representative-week-per-month: true
-#- script: thermal-network-optimization
-#  parameters:
-#    network-type: DC
-#    use-representative-week-per-month: true
-#    yearly-cost-calculations: true
+- script: thermal-network-optimization
+  parameters:
+    network-type: DC
+    use-representative-week-per-month: true
+    yearly-cost-calculations: true
 - script: decentralized
 - script: optimization
   parameters:
