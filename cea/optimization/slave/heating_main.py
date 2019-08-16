@@ -241,7 +241,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         WetBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_Furnace_dry_req_W']
         DryBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_Furnace_wet_req_W']
 
-    # save data
+
+    #BACK-UP BOILER
     Q_uncovered_design_W = np.amax(Q_AddBoiler_gen_W)
     if Q_uncovered_design_W != 0:
         for hour in range(HOURS_IN_YEAR):
@@ -256,15 +257,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
                                                              "NG",
                                                              prices, lca, hour)
 
-    # SUMMARIZE ALL VARIABLE COSTS DATA
-    Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
-    Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
-    Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
-    Opex_var_BaseBoiler_NG_USD = sum(Opex_var_BaseBoiler_NG_USDhr)
-    Opex_var_PeakBoiler_NG_USD = sum(Opex_var_PeakBoiler_NG_USDhr)
-    Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
-
-    # HEATING NETWORK
+    # CAPEX AND OPEX OF HEATING NETWORK
     Capex_DHN_USD, \
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
@@ -272,12 +265,39 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_vars,
                                                            network_features, lca, "DH")
 
-    # HEATING SUBSTATIONS
+    # CAPEX AND OPEX OF HEATING SUBSTATIONS
     Capex_SubstationsHeating_USD, \
     Capex_a_SubstationsHeating_USD, \
     Opex_fixed_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
-                                                                     locator)
+                                                                       locator)
 
+    # CAPEX AND FIXED OPEX GENERATION UNITS
+    performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
+                                                                 config, storage_dispatch,
+                                                                 )
+
+    # OPEX VAR GENERATION UNITS
+    Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
+    Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
+    Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
+    Opex_var_BaseBoiler_NG_USD = sum(Opex_var_BaseBoiler_NG_USDhr)
+    Opex_var_PeakBoiler_NG_USD = sum(Opex_var_PeakBoiler_NG_USDhr)
+    Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
+
+    # EMISSIONS OF RENEWABLES AND FUELS
+    performance_emissions_pen = calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
+                                                            Q_SC_FP_gen_W,
+                                                            Q_PVT_gen_W,
+                                                            Q_Server_gen_W,
+                                                            NG_CHP_req_W,
+                                                            NG_BaseBoiler_req_W,
+                                                            NG_PeakBoiler_req_W,
+                                                            NG_BackupBoiler_req_W,
+                                                            WetBiomass_Furnace_req_W,
+                                                            DryBiomass_Furnace_req_W,
+                                                            lca,
+                                                            )
+    # save data
     heating_dispatch = {
 
         # demand of the network:
@@ -345,26 +365,6 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "WetBiomass_Furnace_req_W": WetBiomass_Furnace_req_W,
         "DryBiomass_Furnace_req_W": DryBiomass_Furnace_req_W,
     }
-
-    # CAPEX AND FIXED OPEX GENERATION UNITS
-    performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                                                 config, storage_dispatch,
-                                                                 heating_dispatch,
-                                                                 )
-
-    # THIS CALCULATES EMISSIONS
-    performance_emissions_pen = calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
-                                                            Q_SC_FP_gen_W,
-                                                            Q_PVT_gen_W,
-                                                            Q_Server_gen_W,
-                                                            NG_CHP_req_W,
-                                                            NG_BaseBoiler_req_W,
-                                                            NG_PeakBoiler_req_W,
-                                                            NG_BackupBoiler_req_W,
-                                                            WetBiomass_Furnace_req_W,
-                                                            DryBiomass_Furnace_req_W,
-                                                            lca,
-                                                            )
 
     # SAVE PERFORMANCE METRICS TO DISK
     performance = {

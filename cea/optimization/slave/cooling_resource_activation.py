@@ -226,10 +226,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
         Source_Absorption_Chiller = 1
 
         # activate ACH
-        if Qc_load_unmet_W <= technology_capacities['Qc_ACH_max_W']:
+        if Qc_load_unmet_W <= technology_capacities['Qc_ACH_nom_W']:
             Qc_from_ACH_W = Qc_load_unmet_W
         else:
-            Qc_from_ACH_W = technology_capacities['Qc_ACH_max_W']
+            Qc_from_ACH_W = technology_capacities['Qc_ACH_nom_W']
         opex_var_ACH_USDperhr, \
         GHG_ACH_tonCO2perhr, \
         prim_energy_ACH_MJoilperhr, \
@@ -251,10 +251,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
         Source_Vapor_compression_chiller = 1
 
         # activate VCC
-        if Qc_load_unmet_W <= technology_capacities['Qc_VCC_max_W']:
+        if Qc_load_unmet_W <= technology_capacities['Qc_VCC_nom_W']:
             Qc_from_VCC_W = Qc_load_unmet_W
         else:
-            Qc_from_VCC_W = technology_capacities['Qc_VCC_max_W']
+            Qc_from_VCC_W = technology_capacities['Qc_VCC_nom_W']
 
         opex_var_VCC_USDperhr, \
         GHG_VCC_tonCO2perhr, \
@@ -368,8 +368,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
                                      'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
                                      'E_used_ACH_W': np.sum(E_used_ACH_W),
                                      'E_used_Lake_W': np.sum(E_used_lake_VCC_W),
-                                     'mdot_DCN_kgpers': mdot_DCN_kgpers,
-                                     'deltaPmax': deltaP_Pa}
+                                     'mdot_DCN_kgpers': mdot_DCN_kgpers}
 
     Qc_supply_to_DCN = {'Q_lake_VCC_gen_W': Q_lake_VCC_gen_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
