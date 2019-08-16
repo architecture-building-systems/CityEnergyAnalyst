@@ -100,6 +100,19 @@ class ToolSave(Resource):
         return 'Success'
 
 
+@api.route('/<string:tool_name>/save-config')
+class ToolSave(Resource):
+    def post(self, tool_name):
+        """Save the configuration for this tool to the configuration file"""
+        config = cea.config.Configuration()
+        for parameter in parameters_for_script(tool_name, config):
+            payload = api.payload[parameter.name]
+            print('%s: %s' % (parameter.name, payload))
+            parameter.set(payload)
+        config.save()
+        return 'Success'
+
+
 def parameters_for_script(script_name, config):
     """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
     import cea.scripts
