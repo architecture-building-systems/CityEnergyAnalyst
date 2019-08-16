@@ -52,7 +52,7 @@ Analysis:
     description: Simulate demand for sensitivity analysis samples
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
                  'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
                  'sensitivity-demand:sample-index', 'demand']
@@ -119,7 +119,7 @@ Demand forecasting:
     description: Calculate the Demand
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.demand_main
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', demand, 'general:debug']
     input-files:
       - [get_envelope_systems]
@@ -236,14 +236,14 @@ Optimization:
     description: Optimize network design variables (plant locations, layout,...)
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network_optimization
-    parameters: ['general:scenario', 'general:weather', thermal-network-optimization]
+    parameters: ['general:scenario', thermal-network-optimization]
 
   - name: optimization
     label: Central supply system
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'general:weather', 'thermal-network:network-type', 'thermal-network:network-names',
+    parameters: ['general:scenario', 'thermal-network:network-type', 'thermal-network:network-names',
                  'optimization', 'decentralized', 'general:multiprocessing']
 
   - name: decentralized
@@ -251,7 +251,7 @@ Optimization:
     description: Run decentralized building optimization
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'general:weather', 'decentralized']
+    parameters: ['general:scenario', 'decentralized']
 
 Networks:
 
@@ -271,7 +271,7 @@ Networks:
     description: Solve the thermal hydraulic network
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
                  'thermal-network-optimization:use-representative-week-per-month']
     input-files:
@@ -313,7 +313,7 @@ default:
     description: Create plots for the default energy system of an urban scenario
     interfaces: [cli, arcgis]
     module: cea.plots.plots_main
-    parameters: ['general:scenario', 'general:weather', plots]
+    parameters: ['general:scenario', plots]
 #
 #  - name: plots-scenario-comparisons
 #    label: Plots comparison
