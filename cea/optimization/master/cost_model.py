@@ -72,21 +72,21 @@ def add_disconnected_costs(column_names_buildings_heating,
     return performance
 
 
-def calc_network_costs(district_network_barcode, locator, master_to_slave_vars,
-                       network_features, lca, network_type):
+def calc_network_costs(locator, master_to_slave_vars, network_features, lca, network_type):
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
         master_to_slave_vars, network_features, locator, lca, network_type)
 
     # Intitialize class
-    num_buildings_connected = district_network_barcode.count("1")
-    num_all_buildings = len(district_network_barcode)
-    ratio_connected = num_buildings_connected / num_all_buildings
-
     if network_type == "DH":
         pipesCosts_USD = network_features.pipesCosts_DHN_USD
+        num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
     else:
         pipesCosts_USD = network_features.pipesCosts_DCN_USD
+        num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
+
+    num_all_buildings = master_to_slave_vars.num_total_buildings
+    ratio_connected = num_buildings_connected / num_all_buildings
 
     # Capital costs
     Inv_IR = 0.05
