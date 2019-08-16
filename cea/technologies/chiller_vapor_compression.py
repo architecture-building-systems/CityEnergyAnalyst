@@ -67,7 +67,7 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_
             q_chw_per_chiller_Wh = max_VCC_unit_size_W
 
         # calculate chiller COP from chw load of each chiller
-        COP = calc_COP(T_cw_in_K, T_chw_re_K, q_chw_per_chiller_Wh)
+        COP = calc_COP(T_cw_in_K, T_chw_sup_K, q_chw_per_chiller_Wh)
         if COP < 0:
             print ('Negative COP: ', COP, mdot_kgpers, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 

@@ -280,27 +280,24 @@ def master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W, indi
                                                   master_to_slave_vars):
     # COOLING SYSTEMS
     # Lake Cooling
-    if individual_with_names_dict['FLake'] >= mimimum_valuedc('FLake') and LAKE_COOLING_ALLOWED is True:
-        lake_potential = pd.read_csv(locator.get_lake_potential())
-        Q_max_lake = (lake_potential['QLake_kW'] * 1000).max()
+    if individual_with_names_dict['WS_HP'] >= mimimum_valuedc('WS_HP') and LAKE_COOLING_ALLOWED is True:
         master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size_W = min(individual_with_names_dict['FLake'] * Q_max_lake,
-                                                       individual_with_names_dict['FLake'] * Q_cooling_nom_W)
+        master_to_slave_vars.Lake_cooling_size_W = individual_with_names_dict['WS_HP'] * Q_cooling_nom_W
 
     # VCC Cooling
-    if individual_with_names_dict['VCC'] >= mimimum_valuedc('VCC') and VCC_ALLOWED is True:
+    if individual_with_names_dict['AS_HP'] >= mimimum_valuedc('AS_HP') and VCC_ALLOWED is True:
         master_to_slave_vars.VCC_on = 1
-        master_to_slave_vars.VCC_cooling_size_W = individual_with_names_dict['VCC'] * Q_cooling_nom_W
+        master_to_slave_vars.VCC_cooling_size_W = individual_with_names_dict['AS_HP'] * Q_cooling_nom_W
 
     # Absorption Chiller Cooling
-    if individual_with_names_dict['ACH'] >= mimimum_valuedc('ACH')and ABSORPTION_CHILLER_ALLOWED is True:
+    if individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen')and ABSORPTION_CHILLER_ALLOWED is True:
         master_to_slave_vars.Absorption_Chiller_on = 1
-        master_to_slave_vars.Absorption_chiller_size_W = individual_with_names_dict['ACH'] * Q_cooling_nom_W
+        master_to_slave_vars.Absorption_chiller_size_W = individual_with_names_dict['NG_Trigen'] * Q_cooling_nom_W
 
     # Storage Cooling
     if individual_with_names_dict['Storage'] >= mimimum_valuedc('Storage') and STORAGE_COOLING_ALLOWED is True:
-        if (individual_with_names_dict['VCC'] >= mimimum_valuedc('VCC')  and VCC_ALLOWED is True) or \
-                (individual_with_names_dict['ACH'] >= mimimum_valuedc('ACH')and ABSORPTION_CHILLER_ALLOWED is True):
+        if (individual_with_names_dict['AS_HP'] >= mimimum_valuedc('AS_HP')  and VCC_ALLOWED is True) or \
+                (individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen')and ABSORPTION_CHILLER_ALLOWED is True):
             master_to_slave_vars.storage_cooling_on = 1
             master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
             if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
@@ -352,17 +349,17 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
                                                   locator,
                                                   master_to_slave_vars):
 
-    if individual_with_names_dict['NG_CCGT'] >= mimimum_valuedh('NG_CCGT') and CC_ALLOWED == True:  # NG-fired CHPFurnace
+    if individual_with_names_dict['NG_Cogen'] >= mimimum_valuedh('NG_Cogen') and CC_ALLOWED == True:  # NG-fired CHPFurnace
         master_to_slave_vars.CC_on = 1
-        master_to_slave_vars.CCGT_SIZE_W = individual_with_names_dict['NG_CCGT'] * Q_heating_nom_W
+        master_to_slave_vars.CCGT_SIZE_W = individual_with_names_dict['NG_Cogen'] * Q_heating_nom_W
 
-    if individual_with_names_dict['WB_Furnace'] >= mimimum_valuedh('WB_Furnace') and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
+    if individual_with_names_dict['WB_Cogen'] >= mimimum_valuedh('WB_Cogen') and FURNACE_ALLOWED == True:  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_wet_on = 1
-        master_to_slave_vars.WBFurnace_Q_max_W = individual_with_names_dict['WB_Furnace'] * Q_heating_nom_W
+        master_to_slave_vars.WBFurnace_Q_max_W = individual_with_names_dict['WB_Cogen'] * Q_heating_nom_W
 
-    if individual_with_names_dict['DB_Furnace'] >= mimimum_valuedh('DB_Furnace') and FURNACE_ALLOWED == True:  # Dry-Biomass fired Furnace
+    if individual_with_names_dict['DB_Cogen'] >= mimimum_valuedh('DB_Cogen') and FURNACE_ALLOWED == True:  # Dry-Biomass fired Furnace
         master_to_slave_vars.Furnace_dry_on = 1
-        master_to_slave_vars.DBFurnace_Q_max_W = individual_with_names_dict['DB_Furnace'] * Q_heating_nom_W
+        master_to_slave_vars.DBFurnace_Q_max_W = individual_with_names_dict['DB_Cogen'] * Q_heating_nom_W
 
     # Base boiler
     if individual_with_names_dict['NG_BaseBoiler'] >= mimimum_valuedh('NG_BaseBoiler'): # NG-fired boiler
@@ -375,24 +372,24 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
         master_to_slave_vars.BoilerPeak_Q_max_W = individual_with_names_dict['NG_PeakBoiler'] * Q_heating_nom_W
 
     # HPLake
-    if individual_with_names_dict['HPLake'] >= mimimum_valuedh('HPLake') and HP_LAKE_ALLOWED == True:
+    if individual_with_names_dict['WS_HP'] >= mimimum_valuedh('WS_HP') and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HPLake_on = 1
-        master_to_slave_vars.HPLake_share = individual_with_names_dict['HPLake']
-        master_to_slave_vars.HPLake_maxSize_W = individual_with_names_dict['HPLake'] * Q_heating_nom_W
+        master_to_slave_vars.HPLake_share = individual_with_names_dict['WS_HP']
+        master_to_slave_vars.HPLake_maxSize_W = individual_with_names_dict['WS_HP'] * Q_heating_nom_W
     # HPSewage
-    if individual_with_names_dict['HPSewage'] >= mimimum_valuedh('HPSewage') and HP_SEW_ALLOWED == True:
+    if individual_with_names_dict['SS_HP'] >= mimimum_valuedh('SS_HP') and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HPSew_on = 1
-        master_to_slave_vars.HPSew_share = individual_with_names_dict['HPSewage']
-        master_to_slave_vars.HPSew_maxSize_W = individual_with_names_dict['HPSewage'] * Q_heating_nom_W
+        master_to_slave_vars.HPSew_share = individual_with_names_dict['SS_HP']
+        master_to_slave_vars.HPSew_maxSize_W = individual_with_names_dict['SS_HP'] * Q_heating_nom_W
     # GHP
-    if individual_with_names_dict['GHP'] >= mimimum_valuedh('GHP') and GHP_ALLOWED == True:
+    if individual_with_names_dict['GS_HP'] >= mimimum_valuedh('GS_HP') and GHP_ALLOWED == True:
         master_to_slave_vars.GHP_on = 1
-        master_to_slave_vars.GHP_share = individual_with_names_dict['GHP']
-        master_to_slave_vars.GHP_maxSize_W = individual_with_names_dict['GHP'] * Q_heating_nom_W
+        master_to_slave_vars.GHP_share = individual_with_names_dict['GS_HP']
+        master_to_slave_vars.GHP_maxSize_W = individual_with_names_dict['GS_HP'] * Q_heating_nom_W
     # HPServer
-    if individual_with_names_dict['HPServer'] >= mimimum_valuedh('HPServer') and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
+    if individual_with_names_dict['DS_HP'] >= mimimum_valuedh('DS_HP') and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1
-        master_to_slave_vars.HPServer_maxSize_W = individual_with_names_dict['HPServer'] * Q_heating_nom_W
+        master_to_slave_vars.HPServer_maxSize_W = individual_with_names_dict['DS_HP'] * Q_heating_nom_W
 
     # SOLAR TECHNOLOGIES
     if individual_with_names_dict['PVT'] > 0.0: #different in this case, because solar technologies can have shares close to 0.0

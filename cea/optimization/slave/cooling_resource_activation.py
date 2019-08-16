@@ -167,12 +167,12 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
                                                                  lca,
                                                                  max_VCC_unit_size_W,
                                                                  hour)
-
         Qc_load_unmet_W = Qc_load_unmet_W - Q_lake_VCC_gen_W
     else:
-        Source_Free_cooling = 0
-        opex_var_lake_VCC_USDperhr = 0.0
+        Source_Lake = 0
+        opex_var_Lake_USD = 0.0
         prim_energy_lake_VCC_MJoilperhr = 0.0
+        GHG_lake_VCC_tonCO2perhr = 0.0
         Q_lake_VCC_gen_W = 0.0
         E_used_lake_VCC_W = 0.0
 
@@ -356,18 +356,18 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
                                      'Opex_var_VCC_USD': np.sum(opex_var_VCC_USD),
                                      'Opex_var_ACH_USD': np.sum(opex_var_ACH_USD),
                                      'Opex_var_VCC_backup_USD': np.sum(opex_var_VCC_backup_USD),
-                                     'GHG_Lake_tonCO2': GHG_output_Lake_tonCO2,
+                                     'GHG_Lake_tonCO2': GHG_lake_VCC_tonCO2perhr,
                                      'GHG_VCC_tonCO2': np.sum(GHG_VCC_tonCO2),
                                      'GHG_ACH_tonCO2': np.sum(GHG_ACH_tonCO2),
                                      'GHG_VCC_backup_tonCO2': np.sum(GHG_VCC_backup_tonCO2),
-                                     'PEN_Lake_MJoil': prim_output_Lake_MJoil,
+                                     'PEN_Lake_MJoil': prim_energy_lake_VCC_MJoilperhr,
                                      'PEN_VCC_MJoil': np.sum(prim_energy_VCC_MJoil),
                                      'PEN_ACH_MJoil': np.sum(prim_energy_ACH_MJoil),
                                      'PEN_VCC_backup_MJoil': np.sum(prim_energy_VCC_backup_MJoil),
                                      'E_used_VCC_W': np.sum(E_used_VCC_W),
                                      'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
                                      'E_used_ACH_W': np.sum(E_used_ACH_W),
-                                     'E_used_Lake_W': np.sum(E_used_Lake_W),
+                                     'E_used_Lake_W': np.sum(E_used_lake_VCC_W),
                                      'mdot_DCN_kgpers': mdot_DCN_kgpers,
                                      'deltaPmax': deltaP_Pa}
 
@@ -382,9 +382,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
                      "VCC_Status": Source_Vapor_compression_chiller,
                      "VCC_Backup_Status": Source_back_up_Vapor_compression_chiller}
 
-    cooling_resource_potentials_output = {'T_tank_K': T_tank_C + 273.0,
-                                          'Qc_avail_from_lake_W': Q_therm_Lake_W,
-                                          'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
+    cooling_resource_potentials_output = {'T_tank_K': T_tank_C + 273.0}
 
     Qc_CT_tot_W = sum(Qc_CT_W)
 
