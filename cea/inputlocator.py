@@ -495,31 +495,25 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/retrofit.csv"""
         return os.path.join(self.get_potentials_retrofit_folder(), "potential_" + name_retrofit + ".csv")
 
-    # DATABASES
-    # FIXME: remove get_default_weather (use config instead)
-    def get_default_weather(self):
-        """weather/Zug-2010.epw
-        path to database of archetypes file Archetypes_properties.xlsx"""
-        import cea.config
-        config = cea.config.Configuration()
-        if not os.path.exists(config.weather):
-            if config.weather in self.get_weather_names():
-                return self.get_weather(config.weather)
-            else:
-                return self.get_weather(self.get_weather_names()[0])
-        return config.weather
+    def get_weather_file(self):
+        """inputs/weather/weather.epw
+        path to the weather file to use for simulation - run weather-helper to set this"""
+        return os.path.join(self.get_weather_folder(), "weather.epw")
 
-    def get_weather(self, name):
+    # DATABASES
+    def get_weather(self, name=None):
         """weather/{name}.epw Returns the path to a weather file with the name ``name``. This can either be one
         of the pre-configured weather files (see ``get_weather_names``) or a path to an existing weather file.
-        Returns the default weather file if no other file can be resolved."""
+        Returns the default weather file if no other file can be resolved.
+        ..note: scripts should not use this, instead, use ``get_weather_file()`` - see the ``weather-helper`` script."""
+        default_weather_name = self.get_weather_names()[0]
         if not name:
-            return self.get_default_weather()
+            name = default_weather_name
         if os.path.exists(name) and name.endswith('.epw'):
             return name
         weather_file = os.path.join(self.weather_path, name + '.epw')
         if not os.path.exists(weather_file):
-            return self.get_default_weather()
+            return os.path.join(self.weather_path, default_weather_name + '.epw')
         return weather_file
 
     def get_weather_names(self):

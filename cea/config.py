@@ -418,6 +418,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
+
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
         self._extensions = ['epw']
@@ -428,9 +429,7 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
-                weather_path=value))
-            weather_path = self.locator.get_weather('Zug')
+            weather_path = self.locator.get_weather(self.locator.get_weather_names()[0])
         return weather_path
 
 

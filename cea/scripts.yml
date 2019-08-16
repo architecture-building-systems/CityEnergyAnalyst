@@ -105,6 +105,13 @@ Data Management:
       - [get_building_age]
       - [get_building_occupancy]
 
+  - name: weather-helper
+    label: Weather helper
+    description: Sets the weather file to use for simulation for a scenario
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.weather_helper
+    parameters: ['general:scenario', weather-helper]
+
 Demand forecasting:
 
   - name: demand
@@ -154,7 +161,6 @@ Energy potentials:
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
-                 'general:weather',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'solar:buildings',
