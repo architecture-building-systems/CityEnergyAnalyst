@@ -215,12 +215,11 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(Qc_tank_discharge_peak_W):
-
+def calc_storage_tank_properties(Qc_tank_capacity_Wh, T_tank_fully_charged_K, T_tank_fully_discharged_K):
     # calculate tank volume
-    Q_tank_capacity_J = Qc_tank_discharge_peak_W * WH_TO_J
+    Q_tank_capacity_J = Qc_tank_capacity_Wh * WH_TO_J
     m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK *
-                                     (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
+                                     (T_tank_fully_discharged_K - T_tank_fully_charged_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
     return V_tank_m3
