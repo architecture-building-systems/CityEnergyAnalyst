@@ -257,10 +257,6 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
                                                              prices, lca, hour)
 
     # SUMMARIZE ALL VARIABLE COSTS DATA
-    Opex_var_HP_Server_USD = sum(Opex_var_HP_Server_USDhr)
-    Opex_var_HP_Sewage_USD = sum(Opex_var_HP_Sewage_USDhr)
-    Opex_var_HP_Lake_USD = sum(Opex_var_HP_Lake_USDhr)
-    Opex_var_GHP_USD = sum(Opex_var_GHP_USDhr)
     Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
     Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
     Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
@@ -275,13 +271,11 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     Opex_var_DHN_USD, \
     E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_vars,
                                                            network_features, lca, "DH")
-    Opex_a_DHN_connected_USD = Opex_var_DHN_USD + Opex_fixed_DHN_USD
 
     # HEATING SUBSTATIONS
     Capex_SubstationsHeating_USD, \
     Capex_a_SubstationsHeating_USD, \
-    Opex_fixed_SubstationsHeating_USD, \
-    Opex_var_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
+    Opex_fixed_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
                                                                      locator)
 
     heating_dispatch = {
@@ -426,33 +420,32 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
         # opex variable
-        # opex var  9# opex of electricity gen unites will be updated in electricity_main
+        # opex variable of soalar technologies is allocated to charging and discharging of storage
+        # opex variable of technologies using electricity is calculated in electricity network eg. HP_sewage, HP_Lake
         "Opex_var_SC_ET_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
         "Opex_var_SC_FP_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
         "Opex_var_PVT_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
-        "Opex_var_HP_Server_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
-        "Opex_var_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD,
-        "Opex_var_HP_Lake_connected_USD": Opex_var_HP_Lake_USD,
-        "Opex_var_GHP_connected_USD": Opex_var_GHP_USD,
+        "Opex_var_HP_Server_connected_USD": 0.0,  # costs taken into account in the electricity network
+        "Opex_var_HP_Sewage_connected_USD": 0.0, # costs taken into account in the electricity network
+        "Opex_var_HP_Lake_connected_USD": 0.0,# costs taken into account in the electricity network
+        "Opex_var_GHP_connected_USD": 0.0 ,# costs taken into account in the electricity network
         "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
         "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
         "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
         "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
         "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
         "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-        "Opex_var_DHN_connected_USD": Opex_var_DHN_USD,
-        "Opex_var_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD,
 
         # opex annual
+        # opex variable of soalr technologies is allocated to charging and discharging of storage
+        # opex variable of technologies using electricity is calculated in electricity network eg. HP_sewage, HP_Lake
         "Opex_a_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
         "Opex_a_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
         "Opex_a_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-        "Opex_a_HP_Server_connected_USD": Opex_var_HP_Server_USD + performance_costs[
-            'Opex_fixed_HP_Server_connected_USD'],
-        "Opex_a_HP_Sewage_connected_USD": Opex_var_HP_Sewage_USD + performance_costs[
-            'Opex_fixed_HP_Sewage_connected_USD'],
-        "Opex_a_HP_Lake_connected_USD": Opex_var_HP_Lake_USD + performance_costs['Opex_fixed_HP_Lake_connected_USD'],
-        "Opex_a_GHP_connected_USD": Opex_var_GHP_USD + performance_costs['Opex_fixed_GHP_connected_USD'],
+        "Opex_a_HP_Server_connected_USD":  performance_costs['Opex_fixed_HP_Server_connected_USD'],
+        "Opex_a_HP_Sewage_connected_USD":  performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
+        "Opex_a_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
+        "Opex_a_GHP_connected_USD":  performance_costs['Opex_fixed_GHP_connected_USD'],
         "Opex_a_CHP_NG_connected_USD": Opex_var_CHP_NG_USD + performance_costs['Opex_fixed_CHP_NG_connected_USD'],
         "Opex_a_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD + performance_costs[
             'Opex_fixed_Furnace_wet_connected_USD'],
@@ -464,10 +457,11 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
             'Opex_fixed_PeakBoiler_NG_connected_USD'],
         "Opex_a_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD + performance_costs[
             'Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_a_DHN_connected_USD": Opex_a_DHN_connected_USD,
-        "Opex_a_SubstationsHeating_USD": Opex_var_SubstationsHeating_USD + Opex_fixed_SubstationsHeating_USD,
+        "Opex_a_DHN_connected_USD": Opex_fixed_DHN_USD,
+        "Opex_a_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
 
         # emissions
+        # emissions of technologies depending on electricity are calculated in electricity main e.g., HP_sewage
         "GHG_SC_ET_connected_tonCO2": performance_emissions_pen['GHG_SC_ET_connected_tonCO2'],
         "GHG_SC_FP_connected_tonCO2": performance_emissions_pen['GHG_SC_FP_connected_tonCO2'],
         "GHG_PVT_connected_tonCO2": performance_emissions_pen['GHG_PVT_connected_tonCO2'],
@@ -477,9 +471,9 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "GHG_BaseBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_NG_connected_tonCO2'],
         "GHG_PeakBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_NG_connected_tonCO2'],
         "GHG_BackupBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_NG_connected_tonCO2'],
-        "GHG_SubstationsHeating_tonCO2": performance_emissions_pen['GHG_SubstationsHeating_tonCO2'],
 
         # primary energy
+        # emissions of technologies depending on electricity are accounted in electricity main e.g., HP_sewage
         "PEN_SC_ET_connected_MJoil": performance_emissions_pen['PEN_SC_ET_connected_MJoil'],
         "PEN_SC_FP_connected_MJoil": performance_emissions_pen['PEN_SC_FP_connected_MJoil'],
         "PEN_PVT_connected_MJoil": performance_emissions_pen['PEN_PVT_connected_MJoil'],
@@ -489,7 +483,6 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "PEN_BaseBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_NG_connected_MJoil'],
         "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_connected_MJoil'],
         "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_connected_MJoil'],
-        "PEN_SubstationsHeating_MJoil": performance_emissions_pen['PEN_SubstationsHeating_MJoil']
     }
 
     return performance, heating_dispatch
@@ -637,4 +630,4 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
             Capex_a_Substations_USD += Capex_a_USD
             Opex_fixed_Substations_USD += Opex_fixed_USD
 
-    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
+    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD
