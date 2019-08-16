@@ -7,7 +7,7 @@ from math import log, ceil
 import numpy as np
 import cea.config
 from cea.utilities import epwreader
-from cea.optimization.constants import VCC_T_COOL_IN
+
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
@@ -25,7 +25,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W):
+def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_W):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -50,7 +50,6 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W):
     else:
         # required cooling at the chiller evaporator
         q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
-        T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
         # calculate chw load of each chiller
         if q_chw_load_Wh <= max_VCC_unit_size_W:

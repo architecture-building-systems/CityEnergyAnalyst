@@ -376,28 +376,19 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
 
     # HPLake
     if individual_with_names_dict['HPLake'] >= mimimum_valuedh('HPLake') and HP_LAKE_ALLOWED == True:
-        lake_potential = pd.read_csv(locator.get_lake_potential())
-        Q_max_lake = (lake_potential['QLake_kW'] * 1000).max()
         master_to_slave_vars.HPLake_on = 1
         master_to_slave_vars.HPLake_share = individual_with_names_dict['HPLake']
-        master_to_slave_vars.HPLake_maxSize_W = min(individual_with_names_dict['HPLake'] * Q_max_lake,
-                                                    individual_with_names_dict['HPLake'] * Q_heating_nom_W)
+        master_to_slave_vars.HPLake_maxSize_W = individual_with_names_dict['HPLake'] * Q_heating_nom_W
     # HPSewage
     if individual_with_names_dict['HPSewage'] >= mimimum_valuedh('HPSewage') and HP_SEW_ALLOWED == True:
-        sewage_potential = pd.read_csv(locator.get_sewage_heat_potential())
-        Q_max_sewage = (sewage_potential['Qsw_kW'] * 1000).max()
         master_to_slave_vars.HPSew_on = 1
         master_to_slave_vars.HPSew_share = individual_with_names_dict['HPSewage']
-        master_to_slave_vars.HPSew_maxSize_W = min(individual_with_names_dict['HPSewage'] * Q_max_sewage,
-                                                   individual_with_names_dict['HPSewage'] * Q_heating_nom_W)
+        master_to_slave_vars.HPSew_maxSize_W = individual_with_names_dict['HPSewage'] * Q_heating_nom_W
     # GHP
     if individual_with_names_dict['GHP'] >= mimimum_valuedh('GHP') and GHP_ALLOWED == True:
-        ghp_potential = pd.read_csv(locator.get_geothermal_potential())
-        Q_max_ghp = (ghp_potential['QGHP_kW'] * 1000).max()
         master_to_slave_vars.GHP_on = 1
         master_to_slave_vars.GHP_share = individual_with_names_dict['GHP']
-        master_to_slave_vars.GHP_maxSize_W = min(individual_with_names_dict['GHP'] * Q_max_ghp,
-                                                 individual_with_names_dict['GHP'] * Q_heating_nom_W)
+        master_to_slave_vars.GHP_maxSize_W = individual_with_names_dict['GHP'] * Q_heating_nom_W
     # HPServer
     if individual_with_names_dict['HPServer'] >= mimimum_valuedh('HPServer') and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
         master_to_slave_vars.WasteServersHeatRecovery = 1

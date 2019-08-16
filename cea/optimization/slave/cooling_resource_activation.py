@@ -2,15 +2,13 @@ from __future__ import division
 
 import numpy as np
 
-import cea.config
-import cea.globalvar
-import cea.inputlocator
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.storage_tank as storage_tank
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, J_TO_WH, WH_TO_J
-from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
+from cea.optimization.constants import ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
 from cea.technologies.constants import DT_COOL
+from cea.optimization.constants import VCC_T_COOL_IN
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,10 +20,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, max_VCC_unit_size_W, hour):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, max_VCC_unit_size_W, hour):
 
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, max_VCC_unit_size_W)
+    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, T_source_K, max_VCC_unit_size_W)
+
     # unpack outputs
     opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_VCC_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
@@ -35,9 +34,9 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, lca, max_VCC_unit
     return opex_var_VCC_USD, GHG_VCC_tonCO2perhr, prim_energy_VCC_MJoilperhr, Qc_CT_VCC_W, E_used_VCC_W
 
 
-def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, lca, max_VCC_unit_size_W, hour):
+def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, max_VCC_unit_size_W, hour):
     mdot_VCC_kgpers = Qc_from_VCC_backup_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, max_VCC_unit_size_W)
+    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, T_source_K, max_VCC_unit_size_W)
     # unpack outputs
     opex_var_VCC_backup_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_VCC_backup_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
@@ -57,7 +56,6 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         mdot_ACH_kgpers = Qc_from_ACH_W / (
                 (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
 
-
     ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
                                                          ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, locator,
                                                          min_chiller_size_W, max_chiller_size_W)
@@ -72,14 +70,17 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
     return opex_var_ACH_USD, GHG_ACH_tonCO2perhr, prim_energy_ACH_MJoilperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W
 
 
-def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_properties, cooling_resource_potentials,
+def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
+                               Q_therm_Lake_W,
+                               T_source_average_Lake_K,
+                               storage_tank_properties, cooling_resource_potentials,
                                T_ground_K, technology_capacities, lca, master_to_slave_variables,
                                Q_cooling_req, hour, locator):
     """
 
     :param DCN_cooling:
-    :param Qc_available_from_lake_W:
-    :type Qc_available_from_lake_W: float
+    :param Q_therm_Lake_W:
+    :type Q_therm_Lake_W: float
     :param Qc_from_lake_cumulative_W:
     :type Qc_from_lake_cumulative_W: float
     :param prices:
@@ -88,8 +89,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
 
     # unpack variables
     T_tank_C = cooling_resource_potentials['T_tank_K'] - 273.0
-    Qc_available_from_lake_W = cooling_resource_potentials['Qc_avail_from_lake_W']
-    Qc_from_lake_cumulative_W = cooling_resource_potentials['Qc_from_lake_cumulative_W']
 
     # unpack variables
     V_tank_m3 = storage_tank_properties['V_tank_m3']
@@ -123,15 +122,15 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
     GHG_ACH_tonCO2 = []
     prim_energy_ACH_MJoil = []
 
-    calfactor_output = 0
-
-    Qc_from_Lake_W = 0
-    Qc_from_VCC_W = 0
-    Qc_from_ACH_W = 0
-    Qc_from_Tank_W = 0
-    Qc_from_backup_VCC_W = 0
-    Qc_from_VCC_to_tank_W = 0
-    Qc_to_tank_W = 0
+    # calfactor_output = 0
+    #
+    # Q_lake_VCC_gen_W = 0
+    # Qc_from_VCC_W = 0
+    # Qc_from_ACH_W = 0
+    # Qc_from_Tank_W = 0
+    # Qc_from_backup_VCC_W = 0
+    # Qc_from_VCC_to_tank_W = 0
+    # Qc_to_tank_W = 0
 
     Qh_CHP_W = []
     Qc_CT_W = []
@@ -141,7 +140,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
     E_used_ACH_W = []
     E_used_Lake_W = []
 
-    Source_Lake = 0
     Source_Absorption_Chiller = 0
     Source_Vapor_compression_chiller = 0
     Source_back_up_Vapor_compression_chiller = 0
@@ -149,24 +147,33 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
     ## initializing unmet cooling load
     Qc_load_unmet_W = Q_cooling_req
 
-    # LAKE COOLING (FREE COOLING)
-    if Qc_load_unmet_W <= ( Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0.0:
+    # lake-source - vapour compresion chiller
+    if master_to_slave_variables.Lake_cooling_on == 1 and Qc_load_unmet_W > 0.0:
         # Free cooling possible from the lake
-
         Source_Lake = 1
+        if Qc_load_unmet_W > Q_therm_Lake_W:
+            Q_lake_VCC_gen_W = Q_therm_Lake_W
+        else:
+            Q_lake_VCC_gen_W = Qc_load_unmet_W
 
-        Qc_from_Lake_W = Qc_load_unmet_W
-        Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Lake_W
-        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_from_Lake_W
+        opex_var_lake_VCC_USDperhr, \
+        GHG_lake_VCC_tonCO2perhr, \
+        prim_energy_lake_VCC_MJoilperhr, \
+        Q_lake_VCC_gen_W, E_used_lake_VCC_W = calc_vcc_operation(Q_lake_VCC_gen_W,
+                                                                 T_DCN_re_K,
+                                                                 T_DCN_sup_K,
+                                                                 T_source_average_Lake_K,
+                                                                 lca,
+                                                                 max_VCC_unit_size_W,
+                                                                 hour)
 
-        # Delta P from linearization after distribution optimization
-        deltaP_Pa = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
-        Pump_electricity_W = deltaP_Pa * (mdot_DCN_kgpers / P_WATER_KGPERM3) / PUMP_ETA
-        opex_var_Lake_USD = Pump_electricity_W * lca.ELEC_PRICE[hour]  # ELEC_PRICE is in USD/W
-
-        GHG_output_Lake_tonCO2 = (Pump_electricity_W * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
-        prim_output_Lake_MJoil = (Pump_electricity_W * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
-        E_used_Lake_W = Pump_electricity_W
+        Qc_load_unmet_W = Qc_load_unmet_W - Q_lake_VCC_gen_W
+    else:
+        Source_Free_cooling = 0
+        opex_var_lake_VCC_USDperhr = 0.0
+        prim_energy_lake_VCC_MJoilperhr = 0.0
+        Q_lake_VCC_gen_W = 0.0
+        E_used_lake_VCC_W = 0.0
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
@@ -235,12 +242,14 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
             Qc_from_VCC_W = Qc_load_unmet_W
         else:
             Qc_from_VCC_W = technology_capacities['Qc_VCC_max_W']
+
         opex_var_VCC_USDperhr, \
         GHG_VCC_tonCO2perhr, \
         prim_energy_VCC_MJoilperhr, \
         Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W,
                                                        T_DCN_re_K,
                                                        T_DCN_sup_K,
+                                                       VCC_T_COOL_IN,
                                                        lca,
                                                        max_VCC_unit_size_W,
                                                        hour)
@@ -252,7 +261,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_VCC_W
 
     if Qc_load_unmet_W > 0:
-
         Source_back_up_Vapor_compression_chiller = 1
 
         # activate back-up VCC
@@ -262,6 +270,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
         E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W,
                                                         T_DCN_re_K,
                                                         T_DCN_sup_K,
+                                                        VCC_T_COOL_IN,
                                                         lca,
                                                         max_VCC_unit_size_W,
                                                         hour)
@@ -287,13 +296,14 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
             else:
                 Qc_from_VCC_to_tank_W = technology_capacities['Qc_VCC_nom_W']
 
-            opex_var_VCC_USDperhr,\
+            opex_var_VCC_USDperhr, \
             GHG_VCC_tonCO2perhr, \
-            prim_energy_VCC_MJoilperhr,\
-            Qc_CT_VCC_W,\
+            prim_energy_VCC_MJoilperhr, \
+            Qc_CT_VCC_W, \
             E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W,
                                               T_chiller_in_K,
                                               T_chiller_out_K,
+                                              VCC_T_COOL_IN,
                                               lca,
                                               locator,
                                               hour)
@@ -348,7 +358,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
                                      'mdot_DCN_kgpers': mdot_DCN_kgpers,
                                      'deltaPmax': deltaP_Pa}
 
-    Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
+    Qc_supply_to_DCN = {'Q_lake_VCC_gen_W': Q_lake_VCC_gen_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
                         'Qc_from_ACH_W': Qc_from_ACH_W,
                         'Qc_from_Tank_W': Qc_from_Tank_W,
@@ -357,10 +367,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, storage_tank_proper
     source_output = {"Lake_Status": Source_Lake,
                      "ACH_Status": Source_Absorption_Chiller,
                      "VCC_Status": Source_Vapor_compression_chiller,
-                     "VCC_Backup_Status":Source_back_up_Vapor_compression_chiller}
+                     "VCC_Backup_Status": Source_back_up_Vapor_compression_chiller}
 
     cooling_resource_potentials_output = {'T_tank_K': T_tank_C + 273.0,
-                                          'Qc_avail_from_lake_W': Qc_available_from_lake_W,
+                                          'Qc_avail_from_lake_W': Q_therm_Lake_W,
                                           'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     Qc_CT_tot_W = sum(Qc_CT_W)

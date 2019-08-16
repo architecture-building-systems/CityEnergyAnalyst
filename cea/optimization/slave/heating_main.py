@@ -109,7 +109,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     # Import Data - Sewage heat
     if master_to_slave_vars.HPSew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
-        Q_therm_Sew_W = np.array(HPSew_Data['Qsw_kW']) * 1E3
+        Q_therm_Sew = np.array(HPSew_Data['Qsw_kW']) * 1E3
+        Q_therm_Sew_W = [x if x < master_to_slave_vars.HPSew_maxSize_W else master_to_slave_vars.HPSew_maxSize_W for x in Q_therm_Sew]
         T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
     else:
         Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
@@ -118,7 +119,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     # Import Data - lake heat
     if master_to_slave_vars.HPLake_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
-        Q_therm_Lake_W = np.array(HPlake_Data['QLake_kW']) * 1E3
+        Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
+        Q_therm_Lake_W = [x if x < master_to_slave_vars.HPLake_maxSize_W else master_to_slave_vars.HPLake_maxSize_W for x in Q_therm_Lake]
         T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
     else:
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
@@ -127,7 +129,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     # Import Data - geothermal (shallow)
     if master_to_slave_vars.GHP_on == 1:
         GHP_Data = pd.read_csv(locator.get_geothermal_potential())
-        Q_therm_GHP_W = np.array(GHP_Data['QGHP_kW']) * 1E3
+        Q_therm_GHP = np.array(GHP_Data['QGHP_kW']) * 1E3
+        Q_therm_GHP_W = [x if x < master_to_slave_vars.GHP_maxSize_W else master_to_slave_vars.GHP_maxSize_W for x in Q_therm_GHP]
         T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
     else:
         Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
