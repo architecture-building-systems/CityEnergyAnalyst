@@ -200,7 +200,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
+def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, lca, hour):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -225,6 +225,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
     :returns Q_therm: thermal energy supplied to DHN
 
     """
+    mdot_kgpers = Q_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K))
 
     E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake)
 

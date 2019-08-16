@@ -122,12 +122,8 @@ def district_cooling_network(locator,
                              'min_ACH_unit_size_W': min_ACH_unit_size_W}
 
     ### input variables
-    Qc_available_from_lake_Wyr = Q_therm_Lake_W
-    Qc_from_lake_cumulative_W = 0
-    cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
-                                   'Qc_avail_from_lake_W': Qc_available_from_lake_Wyr,
-                                   'T_source_average_Lake_K': T_source_average_Lake_K,
-                                   'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
+    cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K}
+
 
     calfactor_buildings = np.zeros(HOURS_IN_YEAR)
     TotalCool = 0
@@ -182,6 +178,8 @@ def district_cooling_network(locator,
             source_output = cooling_resource_activator(mdot_kgpers[hour],
                                                        T_sup_K[hour],
                                                        T_re_K[hour],
+                                                       Q_therm_Lake_W[hour],
+                                                       T_source_average_Lake_K[hour],
                                                        storage_tank_properties,
                                                        cooling_resource_potentials,
                                                        T_ground_K[hour],
@@ -451,7 +449,7 @@ def district_cooling_network(locator,
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
     # if there is a district heating network on site and there is server_heating
-    district_heating_network = master_to_slave_vars.district_heating_network
+    district_heating_network = master_to_slave_vars.DHN_exists
     if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
         df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
                                                                           master_to_slave_vars.network_data_file_cooling))
@@ -469,34 +467,6 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
         mdot_kgpers = df['mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers'].values
         Q_cooling_req_W = df['Q_DCNf_space_cooling_data_center_and_refrigeration_W'].values
     return Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers
-
-
-def calc_network_costs_cooling(district_network_barcode, locator, master_to_slave_vars,
-                               network_features, lca, network_type):
-    # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, "DC")
-
-    # Intitialize class
-    num_buildings_connected = district_network_barcode.count("1")
-    num_all_buildings = len(district_network_barcode)
-    ratio_connected = num_buildings_connected / num_all_buildings
-
-    # Capital costs
-    Inv_IR = 0.05
-    Inv_LT = 20
-    Inv_OM = 0.10
-    Capex_Network_USD = network_features.pipesCosts_DCN_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
-
-    # summarize
-    Capex_Network_USD += Capex_pump_USD
-    Capex_a_Network_USD += Capex_a_pump_USD
-    Opex_fixed_Network_USD += Opex_fixed_pump_USD
-    Opex_var_Network_USD = Opex_var_pump_USD
-
-    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD, P_motor_tot_W
 
 
 def calc_substations_costs_cooling(building_names, df_current_individual, district_network_barcode, locator):

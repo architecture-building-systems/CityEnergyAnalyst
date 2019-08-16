@@ -171,11 +171,11 @@ def heating_source_activator(Q_therm_req_W,
         cost_Furnace_dry_USD = 0.0
 
 
-    if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):  # activate if its available
+    if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):  # activate if its available
 
         source_HP_Sewage = 1
-        if Q_heat_unmet_W >= Q_therm_Sew_W * master_to_slave_vars.HPSew_share:
-            Q_HPSew_gen_W = Q_therm_Sew_W * master_to_slave_vars.HPSew_share
+        if Q_heat_unmet_W > Q_therm_Sew_W:
+            Q_HPSew_gen_W = Q_therm_Sew_W
             mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:
             Q_HPSew_gen_W = Q_heat_unmet_W
@@ -198,25 +198,19 @@ def heating_source_activator(Q_therm_req_W,
         Q_HPSew_gen_W = 0.0
 
 
-    if (master_to_slave_vars.HPLake_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
+    if (master_to_slave_vars.HPLake_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_HP_Lake = 1
-        if Q_heat_unmet_W > Q_therm_Lake_W * master_to_slave_vars.HPLake_share:  # Scale down Load, 100% load achieved
+        if Q_heat_unmet_W > Q_therm_Lake_W:  # Scale down Load, 100% load achieved
             Q_HPLake_gen_W = Q_therm_Lake_W
-            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (
-                    HEAT_CAPACITY_OF_WATER_JPERKGK * (
-                    tdhsup_K - tdhret_req_K))
-            # scale down the mass flow if the thermal demand is lowered
         else:  # regular operation possible
             Q_HPLake_gen_W = Q_heat_unmet_W
-            mdot_DH_to_Lake_kgpers = Q_HPLake_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(mdot_DH_to_Lake_kgpers,
+        cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(Q_HPLake_gen_W,
                                                                                                tdhsup_K,
                                                                                                tdhret_req_K,
                                                                                                TretLakeArray_K,
                                                                                                lca,
                                                                                                hour)
-
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
     else:
@@ -226,10 +220,10 @@ def heating_source_activator(Q_therm_req_W,
         Q_HPLake_gen_W = 0.0
 
 
-    if (master_to_slave_vars.GHP_on) == 1 and Q_heat_unmet_W > 0 and not np.isclose(tdhsup_K, tdhret_req_K):
+    if (master_to_slave_vars.GHP_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_GHP = 1
-        if Q_heat_unmet_W >= Q_therm_GHP_W * master_to_slave_vars.GHP_share:
-            Q_GHP_gen_W = Q_therm_GHP_W * master_to_slave_vars.GHP_share
+        if Q_heat_unmet_W > Q_therm_GHP_W:
+            Q_GHP_gen_W = Q_therm_GHP_W
             mdot_DH_to_GHP_kgpers = Q_GHP_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
         else:  # regular operation possible, demand is covered
             Q_GHP_gen_W = Q_heat_unmet_W
