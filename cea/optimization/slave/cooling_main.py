@@ -22,6 +22,7 @@ import cea.technologies.storage_tank as storage_tank
 import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
+from cea.technologies.constants import DT_COOL
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
     T_TANK_FULLY_DISCHARGED_K, PUMP_ETA, ACH_TYPE_SINGLE
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
@@ -92,18 +93,25 @@ def district_cooling_network(locator,
     T_ground_K = calculate_ground_temperature(locator, config)
 
     # SIZE THE COLD STORAGE TANK
+    # calculate the highest/lowest tank temperatures for sizing 
+    T_tank_fully_charged_K = min(T_sup_K) - DT_COOL # the lowest temperature that is able to provide cooling to DC
+    T_tank_fully_discharged_K = max(T_sup_K) - DT_COOL  # the highest temperature that is able to provide cooling to DC
     if master_to_slave_vars.Storage_cooling_size_W > 0.0:
-        Qc_tank_discharging_limit_W = master_to_slave_vars.Storage_cooling_size_W
+        Qc_tank_discharging_limit_W = master_to_slave_vars.Storage_cooling_size_W # FIXME: change to Qc_tank_capacity_Wh, and use this to sizing
+        # FIXME: Qc_tank_capacity_Wh could be a portion of the Qc required in the peak day (yesterday's discussion)
         Qc_tank_charging_limit_W = (Qc_VCC_nom_W + Qc_ACH_nom_W) * 0.8  # assume reduced capacity when Tsup is lower
-        V_tank_m3 = storage_tank.calc_storage_tank_properties(Qc_tank_discharging_limit_W)
+        V_tank_m3 = storage_tank.calc_storage_tank_properties(Qc_tank_discharging_limit_W,
+                                                              T_tank_fully_charged_K,
+                                                              T_tank_fully_discharged_K)
     else:
         Qc_tank_discharging_limit_W = 0
         Qc_tank_charging_limit_W = 0
         V_tank_m3 = 0
 
     storage_tank_properties = {'V_tank_m3': V_tank_m3,
-                               'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
-                               'Qc_tank_discharging_limit_W': Qc_tank_discharging_limit_W,
+                               'T_tank_fully_charged_K': T_tank_fully_charged_K,
+                               'T_tank_fully_discharged_K': T_tank_fully_discharged_K,
+                               'Qc_tank_discharging_limit_W': Qc_tank_discharging_limit_W, # TODO: redundant, because this should be calculated hourly
                                'Qc_tank_charging_limit_W': Qc_tank_charging_limit_W}
 
     # SIZE CHILLERS (VCC, ACH, backup VCC)
