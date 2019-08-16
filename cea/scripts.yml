@@ -122,6 +122,7 @@ Demand forecasting:
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', demand, 'general:debug']
     input-files:
+      - [get_weather_file]
       - [get_envelope_systems]
       - [get_building_comfort]
       - [get_archetypes_system_controls]
@@ -176,6 +177,7 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: photovoltaic
     label: Photovoltaic panels
@@ -190,6 +192,7 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: sewage-potential
     label: Sewage heat potential
@@ -215,6 +218,7 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: radiation-daysim
     label: Solar radiation
@@ -228,6 +232,7 @@ Energy potentials:
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
+      - [get_weather_file]
 
 Optimization:
 
@@ -279,6 +284,7 @@ Networks:
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
+      - [get_weather_file]
 
 Utilities:
 
