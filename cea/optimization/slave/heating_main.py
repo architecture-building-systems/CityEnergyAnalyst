@@ -313,6 +313,8 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "BoilerBase_Status": source_BaseBoiler,
         "BoilerPeak_Status": source_PeakBoiler,
 
+        #ENERGY GENERATION
+        #heating
         "Q_PVT_gen_storage_W": Q_PVT_to_storage_W,
         "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_W,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
@@ -335,7 +337,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
         "Q_PeakBoiler_gen_directload_W": Q_PeakBoiler_gen_W,
         "Q_AddBoiler_gen_directload_W": Q_AddBoiler_gen_W,
 
-        # electricity generated
+        #electricity
         "E_CHP_gen_W": E_CHP_gen_W,
         "E_PVT_gen_W": E_PVT_gen_W,
         "E_Furnace_dry_gen_W": E_Furnace_dry_gen_W,

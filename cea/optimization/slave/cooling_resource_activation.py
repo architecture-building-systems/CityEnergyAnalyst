@@ -56,9 +56,15 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         mdot_ACH_kgpers = Qc_from_ACH_W / (
                 (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
 
-    ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
-                                                         ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, locator,
-                                                         min_chiller_size_W, max_chiller_size_W)
+    ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers,
+                                                         T_DCN_sup_K,
+                                                         T_DCN_re_K,
+                                                         ACH_T_IN_FROM_CHP,
+                                                         T_ground_K,
+                                                         locator,
+                                                         ACH_type,
+                                                         min_chiller_size_W,
+                                                         max_chiller_size_W)
 
     opex_var_ACH_USD = ACH_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_ACH_tonCO2perhr = ACH_operation['wdot_W'] * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3

@@ -561,7 +561,8 @@ def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, locato
                                                                                     T_chw_re_K,
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
-                                                                                    locator, ACH_type,
+                                                                                    locator,
+                                                                                    ACH_type,
                                                                                     min_chiller_size_W,
                                                                                     max_chiller_size_W)
 
