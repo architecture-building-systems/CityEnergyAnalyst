@@ -109,364 +109,345 @@
 
     const colors = {{ colors }};
 
-    class MapHash {
-        constructor() {
-            this.data = {{ data }};
-            this.zone = {{ zone }};
-            this.dc = this.checkEmpty({{ dc }}, 'dc');
-            this.dh = this.checkEmpty({{ dh }}, 'dh');
+    render({{ data }}, {{ zone }}, {{ dc }}, {{ dh }}, "{{ hash }}")
 
-            this.connectedToggle = document.getElementById('connected-{{ hash }}');
-            this.disconnectedToggle = document.getElementById('disconnected-{{ hash }}');
-            this.networkToggle = document.getElementById('network-{{ hash }}');
-            this.currentViewState = {
-                latitude: 0,
-                longitude: 0,
-                zoom: 0, bearing: 0, pitch: 0
-            };
-
-            this.cameraOptions = {};
-
-            this.filtered = {dc:{}, dh:{}};
-
-            this.deckgl = new DeckGL({
-                container: '{{ hash }}',
-                mapStyle: lightMap,
-                viewState: this.currentViewState,
-                layers: [],
-                onViewStateChange: ({viewState}) => {
-                    this.currentViewState = viewState;
-                    this.deckgl.setProps({viewState: this.currentViewState});
-                }
-            });
-        }
-
-        redraw() {
-            let extruded = document.getElementById('3d-button-{{ hash }}').dataset.extruded === 'true';
-            // Add zone layer
-            let layers = [new GeoJsonLayer({
-                id: 'zone',
-                data: this.filterBuildings(this.zone),
-                opacity: 0.5,
-                wireframe: true,
-                filled: true,
-                extruded: extruded,
-
-                getElevation: f => f.properties['height_ag'],
-                getFillColor: f => this.buildingColor(f),
-                updateTriggers: {
-                    getFillColor: document.querySelector('input[name="network-type-{{ hash }}"]:checked').value
-                },
-
-                pickable: true,
-                autoHighlight: true,
-                highlightColor: [255, 255, 0, 128],
-
-                onHover: this.updateTooltip
-            })];
-
-            // Add DC network layer
-            if (this.dc) layers.push(new GeoJsonLayer({
-                id:'dc',
-                data: this.dc,
-                stroked: false,
-                filled: true,
-                visible: this.getNetworkVisibility('dc'),
-
-                getLineColor: colors.dc,
-                getFillColor: f => this.nodeFillColor(f.properties['Type']),
-                getLineWidth: 3,
-                getRadius: 3,
-
-                pickable: true,
-                autoHighlight: true,
-
-                onHover: this.updateTooltip
-            }));
-
-            // Add DH network layer
-            if (this.dh) layers.push(new GeoJsonLayer({
-                id:'dh',
-                data: this.dh,
-                stroked: false,
-                filled: true,
-                visible: this.getNetworkVisibility('dh'),
-
-                getLineColor: colors.dh,
-                getFillColor: f => this.nodeFillColor(f.properties['Type']),
-                getLineWidth: 3,
-                getRadius: 3,
-
-                pickable: true,
-                autoHighlight: true,
-
-                onHover: this.updateTooltip
-            }));
-
-            this.deckgl.setProps({layers})
-        }
-
-        buildingColor(object) {
-            let type = document.querySelector('input[name="network-type-{{ hash }}"]:checked').value;
-            let connected = this.data[`connected_buildings_${type.toUpperCase()}`];
-            if (connected.includes(object.properties.Name)) return colors[type];
-            return colors.disconnected
-        }
-
-        nodeFillColor(type) {
-            if (type === 'NONE') {
-                return [100, 100, 100]
-            } else if (type === 'CONSUMER') {
-                return [255, 255, 255]
-            } else if (type === 'PLANT') {
-                return [0, 0, 0]
+    function render(data, zone, _dc, _dh, hash) {
+        const dc = checkEmpty(_dc, `dc-${hash}`);
+        const dh = checkEmpty(_dh, `$dh-${hash}`);
+        const connectedToggle = document.getElementById(`connected-${ hash }`);
+        const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
+        const networkToggle = document.getElementById(`network-${ hash }`);
+        let currentViewState = {
+            latitude: 0,
+            longitude: 0,
+            zoom: 0, bearing: 0, pitch: 0
+        };
+        let filtered = {dc:{}, dh:{}};
+        const deckgl = new DeckGL({
+            container: hash,
+            mapStyle: lightMap,
+            viewState: currentViewState,
+            layers: [],
+            onViewStateChange: ({viewState}) => {
+                currentViewState = viewState;
+                deckgl.setProps({viewState: currentViewState});
             }
-        }
+        });
 
-        centerCamera() {
-            if (this.zone) {
-                let bbox = this.zone.bbox;
-                this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(
-                    [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-                    {maxZoom: 18}
-                );
+        // Center Camera
+        let bbox = zone.bbox;
+        let cameraOptions = deckgl.getMapboxMap().cameraForBounds(
+            [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+            {maxZoom: 18}
+        );
+        currentViewState = {
+            ...currentViewState,
+            zoom: cameraOptions.zoom,
+            latitude: cameraOptions.center.lat,
+            longitude: cameraOptions.center.lng
+        };
+        deckgl.setProps({viewState: currentViewState});
 
-                this.currentViewState = {
-                    ...this.currentViewState,
-                    zoom: this.cameraOptions.zoom,
-                    latitude: this.cameraOptions.center.lat,
-                    longitude: this.cameraOptions.center.lng
-                };
+        // Check first radio
+        document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
 
-                this.deckgl.setProps({viewState: this.currentViewState});
-            }
-        }
-
-        filterBuildings(out) {
-            let type = document.querySelector('input[name="network-type-{{ hash }}"]:checked').value;
-            let features;
-            if (this.connectedToggle.checked && !this.disconnectedToggle.checked) {
-                if (typeof(this.filtered[type].connected) === 'undefined') {
-                    features = out.features.filter(feature => {
-                        return this.data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
-                    });
-                    this.filtered[type].connected = features;
-                }
-                return this.filtered[type].connected;
-            }
-            if (!this.connectedToggle.checked && this.disconnectedToggle.checked) {
-                if (typeof(this.filtered[type].disconnected) === 'undefined') {
-                    features = out.features.filter(feature => {
-                        return this.data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
-                    });
-                    this.filtered[type].disconnected = features;
-                }
-                return this.filtered[type].disconnected;
-            }
-            if (!this.connectedToggle.checked && !this.disconnectedToggle.checked) return [];
-            return out;
-        }
-
-        setupButtons() {
-            const _this = this;
-            class dToggle {
-                constructor() {
-                    this._extruded = false;
-                }
-                onAdd(map) {
-                    this._map = map;
-
-                    this._btn = document.createElement("button");
-                    this._btn.id = "3d-button-{{ hash }}";
-                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
-                    this._btn.type = "button";
-                    this._btn.setAttribute("data-extruded", this._extruded);
-                    this._btn.setAttribute("data-toggle", "tooltip");
-                    this._btn.setAttribute("data-placement", "right");
-                    this._btn.setAttribute("title", "Toggle 3D");
-                    this._btn.onclick = function () {
-                        this._extruded = !this._extruded;
-                        this.setAttribute("data-extruded", this._extruded);
-                        let pitch;
-                        let bearing;
-                        if (this._extruded) {
-                            pitch = 45;
-                        } else {
-                            pitch = 0;
-                            bearing = 0;
-                        }
-
-                        let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
-                        document.getElementById('3d-button-{{ hash }}').setAttribute('class', className);
-                        _this.deckgl.setProps({ controller: {dragRotate: this._extruded},
-                            viewState:{..._this.currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
-                        _this.redraw();
-                    };
-
-                    this._container = document.createElement("div");
-                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-                    this._container.appendChild(this._btn);
-
-                    return this._container;
-                }
-
-                onRemove() {
-                    this._container.parentNode.removeChild(this._container);
-                    this._map = undefined;
-                }
-            }
-
-            // class darkToggle {
-            //     constructor() {
-            //         this._dark = false;
-            //     }
-            //     onAdd(map) {
-            //         this._map = map;
-            //
-            //         this._btn = document.createElement("button");
-            //         this._btn.id = "dark-button";
-            //         this._btn.className = "mapboxgl-ctrl-icon";
-            //         this._btn.type = "button";
-            //         this._btn.setAttribute("data-toggle", "tooltip");
-            //         this._btn.setAttribute("data-placement", "right");
-            //         this._btn.setAttribute("title", "Toggle Dark map");
-            //         this._btn.onclick = function() {
-            //             this._dark = !this._dark;
-            //             if (this._dark) {
-            //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.dark);
-            //             } else {
-            //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
-            //             }
-            //         };
-            //         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
-            //
-            //         this._container = document.createElement("div");
-            //         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-            //         this._container.appendChild(this._btn);
-            //
-            //         return this._container;
-            //     }
-            //
-            //     onRemove() {
-            //         this._container.parentNode.removeChild(this._container);
-            //         this._map = undefined;
-            //     }
-            // }
-
-            class recenterMap {
-                onAdd(map) {
-                    this._map = map;
-
-                    this._btn = document.createElement("button");
-                    this._btn.id = "recenter-button";
-                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
-                    this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
-                    this._btn.setAttribute("data-placement", "right");
-                    this._btn.setAttribute("title", "Center to location");
-                    this._btn.onclick = function () {
-                        _this.deckgl.setProps({
-                            viewState:{
-                                ..._this.currentViewState,
-                                zoom: _this.cameraOptions.zoom,
-                                latitude: _this.cameraOptions.center.lat,
-                                longitude: _this.cameraOptions.center.lng,
-                                transitionDuration: 300
-                            }
-                        });
-                    };
-
-                    this._container = document.createElement("div");
-                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-                    this._container.appendChild(this._btn);
-
-                    return this._container;
-                }
-
-                onRemove() {
-                    this._container.parentNode.removeChild(this._container);
-                    this._map = undefined;
-                }
-            }
-
-            _this.deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
-            // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
-            _this.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
-            _this.deckgl.setProps({
-                onDragStart: (info, event) => {
-                    let dToggleButton = document.getElementById('3d-button-{{ hash }}');
-                    if (event.rightButton && dToggleButton.dataset.extruded==='false') {
-                        dToggleButton.click();
-                    }
-                }
-            });
-        }
-
-        updateTooltip({x, y, object, layer}) {
-            const tooltip = document.getElementById('map-tooltip-{{ hash }}');
-            if (object) {
-                tooltip.style.top = `${y}px`;
-                tooltip.style.left = `${x}px`;
-                let innerHTML = '';
-
-                if (layer.id === 'zone' || layer.id === 'district') {
-                    $.each(object.properties, function (key, value)  {
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
-                    });
-                    let area = turf.area(object);
-                    innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
-                        `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
-                } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
-                    if (!object.properties.hasOwnProperty("Building")) {
-                        let length = turf.length(object) * 1000;
-                        innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
-                    }
-                } else {
-                    $.each(object.properties, function (key, value) {
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
-                    });
-                }
-
-                tooltip.innerHTML = innerHTML;
-            } else {
-                tooltip.innerHTML = '';
-            }
-        }
-
-        checkEmpty(json, type) {
-            let empty = !Object.keys(json).length;
-            if (empty) {
-                document.getElementById(`${type}-{{ hash }}-label`).remove();
-            }
-            return empty ? null : json
-        }
-
-        checkFirstRadio() {
-            document.getElementsByName("network-type-{{ hash }}")[0].checked = true;
-        }
-
-        getNetworkVisibility(type) {
-            return document.getElementById(`${type}-{{ hash }}`).checked
-                && this.networkToggle.checked
-        }
-
-        init() {
-            let _this = this;
-            this.centerCamera();
-            this.checkFirstRadio();
-            this.setupButtons();
-            this.redraw();
-            document.getElementsByName("network-type-{{ hash }}").forEach(function (element) {
-                element.onclick = _this.redraw.bind(_this)
-            });
-            document.getElementsByName("layer-toggle-{{ hash }}").forEach(function (element) {
-                element.onclick = _this.redraw.bind(_this)
-            })
-        }
-
+        init({deckgl, data, zone, dc, dh, hash, cameraOptions, currentViewState, connectedToggle, disconnectedToggle, networkToggle, filtered});
     }
 
-    const mapHash = new MapHash();
-    mapHash.init();
+    function redraw(obj) {
+        let extruded = document.getElementById(`3d-button-${ obj.hash }`).dataset.extruded === 'true';
+        // Add zone layer
+        let layers = [new GeoJsonLayer({
+            id: 'zone',
+            data: filterBuildings(obj),
+            opacity: 0.5,
+            wireframe: true,
+            filled: true,
+            extruded: extruded,
+
+            getElevation: f => f.properties['height_ag'],
+            getFillColor: f => buildingColor(f, obj),
+            updateTriggers: {
+                getFillColor: document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value
+            },
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [255, 255, 0, 128],
+
+            onHover: f => updateTooltip(f, obj)
+        })];
+
+        // Add DC network layer
+        if (obj.dc) layers.push(new GeoJsonLayer({
+            id:'dc',
+            data: obj.dc,
+            stroked: false,
+            filled: true,
+            visible: getNetworkVisibility('dc', obj),
+
+            getLineColor: colors.dc,
+            getFillColor: f => nodeFillColor(f.properties['Type']),
+            getLineWidth: 3,
+            getRadius: 3,
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: f => updateTooltip(f, obj)
+        }));
+
+        // Add DH network layer
+        if (obj.dh) layers.push(new GeoJsonLayer({
+            id:'dh',
+            data: obj.dh,
+            stroked: false,
+            filled: true,
+            visible: getNetworkVisibility('dh', obj),
+
+            getLineColor: colors.dh,
+            getFillColor: f => nodeFillColor(f.properties['Type']),
+            getLineWidth: 3,
+            getRadius: 3,
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: f => updateTooltip(f, obj)
+        }));
+
+        obj.deckgl.setProps({layers})
+    }
+
+    function buildingColor(object, obj) {
+        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
+        let connected = obj.data[`connected_buildings_${type.toUpperCase()}`];
+        if (connected.includes(object.properties.Name)) return colors[type];
+        return colors.disconnected
+    }
+
+    function nodeFillColor(type) {
+        if (type === 'NONE') {
+            return [100, 100, 100]
+        } else if (type === 'CONSUMER') {
+            return [255, 255, 255]
+        } else if (type === 'PLANT') {
+            return [0, 0, 0]
+        }
+    }
+
+    function filterBuildings(obj) {
+        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
+        let features;
+        if (obj.connectedToggle.checked && !obj.disconnectedToggle.checked) {
+            if (typeof(obj.filtered[type].connected) === 'undefined') {
+                features = obj.zone.features.filter(feature => {
+                    return obj.data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                });
+                obj.filtered[type].connected = features;
+            }
+            return obj.filtered[type].connected;
+        }
+        if (!obj.connectedToggle.checked && obj.disconnectedToggle.checked) {
+            if (typeof(obj.filtered[type].disconnected) === 'undefined') {
+                features = obj.zone.features.filter(feature => {
+                    return obj.data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                });
+                obj.filtered[type].disconnected = features;
+            }
+            return obj.filtered[type].disconnected;
+        }
+        if (!obj.connectedToggle.checked && !obj.disconnectedToggle.checked) return [];
+        return obj.zone;
+    }
+
+    function setupButtons(obj) {
+        class dToggle {
+            constructor() {
+                this._extruded = false;
+            }
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = `3d-button-${ obj.hash }`;
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-extruded", this._extruded);
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Toggle 3D");
+                this._btn.onclick = function () {
+                    this._extruded = !this._extruded;
+                    this.setAttribute("data-extruded", this._extruded);
+                    let pitch;
+                    let bearing;
+                    if (this._extruded) {
+                        pitch = 45;
+                    } else {
+                        pitch = 0;
+                        bearing = 0;
+                    }
+
+                    let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                    document.getElementById('3d-button-{{ hash }}').setAttribute('class', className);
+                    obj.deckgl.setProps({ controller: {dragRotate: this._extruded},
+                        viewState:{...obj.currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
+                    redraw(obj);
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        // class darkToggle {
+        //     constructor() {
+        //         this._dark = false;
+        //     }
+        //     onAdd(map) {
+        //         this._map = map;
+        //
+        //         this._btn = document.createElement("button");
+        //         this._btn.id = "dark-button";
+        //         this._btn.className = "mapboxgl-ctrl-icon";
+        //         this._btn.type = "button";
+        //         this._btn.setAttribute("data-toggle", "tooltip");
+        //         this._btn.setAttribute("data-placement", "right");
+        //         this._btn.setAttribute("title", "Toggle Dark map");
+        //         this._btn.onclick = function() {
+        //             this._dark = !this._dark;
+        //             if (this._dark) {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.dark);
+        //             } else {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
+        //             }
+        //         };
+        //         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
+        //
+        //         this._container = document.createElement("div");
+        //         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        //         this._container.appendChild(this._btn);
+        //
+        //         return this._container;
+        //     }
+        //
+        //     onRemove() {
+        //         this._container.parentNode.removeChild(this._container);
+        //         this._map = undefined;
+        //     }
+        // }
+
+        class recenterMap {
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = `recenter-button-${ obj.hash }`;
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Center to location");
+                this._btn.onclick = function () {
+                    obj.deckgl.setProps({
+                        viewState:{
+                            ...obj.currentViewState,
+                            zoom: obj.cameraOptions.zoom,
+                            latitude: obj.cameraOptions.center.lat,
+                            longitude: obj.cameraOptions.center.lng,
+                            transitionDuration: 300
+                        }
+                    });
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        obj.deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+        // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+        obj.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+        obj.deckgl.setProps({
+            onDragStart: (info, event) => {
+                let dToggleButton = document.getElementById(`3d-button-${ obj.hash }`);
+                if (event.rightButton && dToggleButton.dataset.extruded==='false') {
+                    dToggleButton.click();
+                }
+            }
+        });
+    }
+
+    function updateTooltip({x, y, object, layer}, obj) {
+        const tooltip = document.getElementById(`map-tooltip-${ obj.hash }`);
+        if (object) {
+            tooltip.style.top = `${y}px`;
+            tooltip.style.left = `${x}px`;
+            let innerHTML = '';
+
+            if (layer.id === 'zone' || layer.id === 'district') {
+                $.each(object.properties, function (key, value)  {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+                let area = turf.area(object);
+                innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
+                    `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+            } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+                if (!object.properties.hasOwnProperty("Building")) {
+                    let length = turf.length(object) * 1000;
+                    innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                }
+            } else {
+                $.each(object.properties, function (key, value) {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+            }
+
+            tooltip.innerHTML = innerHTML;
+        } else {
+            tooltip.innerHTML = '';
+        }
+    }
+
+    function checkEmpty(json, type) {
+        let empty = !Object.keys(json).length;
+        if (empty) {
+            document.getElementById(`${type}-label`).remove();
+        }
+        return empty ? null : json
+    }
+
+    function getNetworkVisibility(type, obj) {
+        return document.getElementById(`${type}-${ obj.hash }`).checked
+            && obj.networkToggle.checked
+    }
+
+    function init(obj) {
+        setupButtons(obj);
+        redraw(obj);
+        document.getElementsByName(`network-type-${ obj.hash }`).forEach(function (element) {
+            element.onclick = () => redraw({...obj})
+        });
+        document.getElementsByName(`layer-toggle-${ obj.hash }`).forEach(function (element) {
+            element.onclick = () => redraw({...obj})
+        })
+    }
 
 </script>
