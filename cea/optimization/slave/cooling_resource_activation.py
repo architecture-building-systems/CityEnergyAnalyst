@@ -92,9 +92,10 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
 
     # unpack variables
     V_tank_m3 = storage_tank_properties['V_tank_m3']
-    Qc_tank_discharging_limit_W = storage_tank_properties['Qc_tank_discharging_limit_W']
+    # Qc_tank_discharging_limit_W = storage_tank_properties['Qc_tank_discharging_limit_W'] # TODO: redundant
     Qc_tank_charging_limit_W = storage_tank_properties['Qc_tank_charging_limit_W']
     T_tank_fully_charged_C = storage_tank_properties['T_tank_fully_charged_K'] - 273.0
+    T_tank_fully_discharged_C = storage_tank_properties['T_tank_fully_discharged_K'] - 273.0
     T_ground_C = T_ground_K - 273.0
 
     # unpack variables
@@ -177,12 +178,19 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
-        Tank_discharging_limit_C = T_DCN_sup_K - DT_COOL - 273.0
-        Tank_charging_limit_C = T_tank_fully_charged_C + DT_CHARGING_BUFFER
-        if Qc_load_unmet_W > 0.0 and T_tank_C < Tank_discharging_limit_C:  # peak hour, discharge the storage
+        Tank_discharging_limit_C = T_DCN_sup_K - DT_COOL - 273.0  # Temperature required to cool the network at that timestep
+        # Tank_charging_limit_C = T_tank_fully_charged_C + DT_CHARGING_BUFFER # todo: redundant
+
+        # Discharge when T_tank_C is low enough to cool the network
+        if Qc_load_unmet_W > 0.0 and T_tank_C < Tank_discharging_limit_C:
+            # Calculate the maximum Qc available to fully discharge the tank
+            Qc_tank_discharging_limit_W = V_tank_m3 * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (
+                    T_tank_fully_discharged_C - T_tank_C) * J_TO_WH
             if Qc_load_unmet_W < Qc_tank_discharging_limit_W:
+                # Supply all Qc_load_unmet_W
                 Qc_from_Tank_W = Qc_load_unmet_W
             else:
+                # Supply Qc to the tank limit
                 Qc_from_Tank_W = Qc_tank_discharging_limit_W
             Qc_to_tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
@@ -191,9 +199,13 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
             # update unmet cooling load
             Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
 
-        elif Qc_load_unmet_W <= 0.0 and T_tank_C > Tank_charging_limit_C:  # no-load, charge the storage
+        # Charging when T_tank_C is high and the tank is not discharging
+        # FIXME: (Qc_load_unmet_W <= 0.0) should be removed, because charging is possible when the tank is not discharging
+        elif Qc_load_unmet_W <= 0.0 and T_tank_C > T_tank_fully_charged_C:  # no-load, charge the storage
+            # calculate the maximum Qc required to fully charge the tank
             Qc_to_tank_max_Wh = V_tank_m3 * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (
                     T_tank_C - T_tank_fully_charged_C) * J_TO_WH  # available to charge
+            # calculate the actual charging level
             Qc_to_tank_W = Qc_tank_charging_limit_W if Qc_to_tank_max_Wh > Qc_tank_charging_limit_W else Qc_to_tank_max_Wh
             Qc_from_Tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
@@ -206,6 +218,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                           V_tank_m3, 'cold_water')
             # print ('no action', T_tank_C)
+            # TODO: [NOTE] Qc_to_tank_W is being supplied in line 290, another way is to add it directly to Qc_load_unmet_W
 
     ## activate ACH and VCC to satify the remaining cooling loads
     if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:
