@@ -17,7 +17,7 @@ api = Namespace('Inputs', description='Input data for CEA')
 def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
     inputs = yaml.load(
-        open(os.path.join(os.path.dirname(__file__), '../resources/inputs.yml')).read())
+        open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
     types = {
         'int': int,
         'float': float,
