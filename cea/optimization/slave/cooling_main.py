@@ -14,7 +14,6 @@ import pandas as pd
 
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as VCCModel
-from cea.optimization.master.cost_model import calc_network_costs
 import cea.technologies.cogeneration as cogeneration
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.pumps as PumpModel
@@ -24,6 +23,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, \
     T_TANK_FULLY_DISCHARGED_K, PUMP_ETA, ACH_TYPE_SINGLE
+from cea.optimization.master.cost_model import calc_network_costs
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -326,8 +326,7 @@ def district_cooling_network(locator,
     Capex_a_DCN_USD, \
     Opex_fixed_DCN_USD, \
     Opex_var_DCN_USD, \
-    E_used_district_cooling_netowrk_W = calc_network_costs(DCN_barcode,
-                                                           locator,
+    E_used_district_cooling_netowrk_W = calc_network_costs(locator,
                                                            master_to_slave_vars,
                                                            network_features,
                                                            lca,

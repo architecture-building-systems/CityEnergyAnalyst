@@ -270,7 +270,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
     Opex_var_DHN_USD, \
-    E_used_district_heating_network_W = calc_network_costs(DHN_barcode, locator, master_to_slave_vars,
+    E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_vars,
                                                            network_features, lca, "DH")
     Opex_a_DHN_connected_USD = Opex_var_DHN_USD + Opex_fixed_DHN_USD
 
