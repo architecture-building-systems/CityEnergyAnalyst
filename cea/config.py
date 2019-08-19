@@ -635,7 +635,7 @@ class ChoiceParameter(Parameter):
     typename = 'ChoiceParameter'
 
     def initialize(self, parser):
-        # when called for the first time, make sure there is a `.choices` parameter
+        # when called for the first time, make sure there is a `._choices` parameter
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
@@ -652,6 +652,49 @@ class ChoiceParameter(Parameter):
         else:
             assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
             return self._choices[0]
+
+
+class RegionParameter(ChoiceParameter):
+    """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
+    folder that has the same structure."""
+    typename = "RegionParameter"
+
+    def initialize(self, parser):
+        self.locator = cea.inputlocator.InputLocator(None)
+
+    @property
+    def _choices(self):
+        """List the technology database template names available"""
+        return [region for region in os.listdir(self.locator.db_path)
+                if os.path.isdir(os.path.join(self.locator.db_path, region))
+                and not region == "weather"]
+
+    def encode(self, value):
+        """Make sure to use the friendly shorthands (e.g. CH and SG) if possible"""
+        if value in self._choices:
+            return value
+        for region in self._choices:
+            if self.locator.are_equal(value, os.path.join(self.locator.db_path, region)):
+                return region
+        if not os.path.exists(value):
+            # return the default value
+            print("Region template path does not exist, using default region. (Not found: {region})".format(
+                region=value))
+            return self.config.default_config.get(self.section.name, self.name)
+        return value
+
+    def decode(self, value):
+        """Return either built-in region name (e.g. CH or SG) OR a full path to the user-supplied template folder"""
+        if value in self._choices:
+            return value
+
+        if os.path.exists(value) and os.path.isdir(value):
+            return value
+        else:
+            print('Region template path does not exist, using default region. (Not found: {region})'.format(
+                region=value))
+            return self.default
+
 
 
 class PlantNodeParameter(ChoiceParameter):
