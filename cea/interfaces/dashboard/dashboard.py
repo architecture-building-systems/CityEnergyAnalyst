@@ -116,13 +116,13 @@ def main(config):
     import plots.routes
     import inputs.routes
     import landing.routes
-    import server.routes
+    from server import blueprint as server_blueprint
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(landing.routes.blueprint)
-    app.register_blueprint(server.routes.blueprint)
+    app.register_blueprint(server_blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config
