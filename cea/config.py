@@ -689,12 +689,36 @@ class RegionParameter(ChoiceParameter):
             return value
 
         if os.path.exists(value) and os.path.isdir(value):
-            return value
+            if self.is_valid_template(value):
+                return value
+            else:
+                print('Invalid region template path, using default region instead. (bad template: {region})'.format(
+                    region=value))
+                return self.default
         else:
             print('Region template path does not exist, using default region. (Not found: {region})'.format(
                 region=value))
             return self.default
 
+    def is_valid_template(self, path):
+        """True, if the path is a valid template path - containing the same excel files as the standard regions."""
+        default_template = os.path.join(self.locator.db_path, self.default)
+        for folder in os.listdir(default_template):
+            if not os.path.isdir(os.path.join(default_template, folder)):
+                continue
+            for file in os.listdir(os.path.join(default_template, folder)):
+                default_file_path = os.path.join(default_template, folder, file)
+                if not os.path.isfile(default_file_path):
+                    continue
+                if not os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                    # we're only interested in the excel files
+                    continue
+                template_file_path = os.path.join(path, folder, file)
+                if not os.path.exists(template_file_path):
+                    print("Invalid user-specified region template - file not found: {template_file_path}".format(
+                        template_file_path=template_file_path))
+                    return False
+        return True
 
 
 class PlantNodeParameter(ChoiceParameter):
