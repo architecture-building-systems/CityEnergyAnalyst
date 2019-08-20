@@ -14,11 +14,11 @@ from __future__ import print_function
 
 import sys
 import requests
-import logging
 import Queue
 import threading
 import cea.config
 import cea.scripts
+from cea import suppres_3rd_party_debug_loggers
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -29,11 +29,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# set logging level to WARN for fiona and shapely and others
-loggers_to_silence = ["shapely", "Fiona", "fiona", "urllib3.connectionpool"]
-for log_name in loggers_to_silence:
-    log = logging.getLogger(log_name)
-    log.setLevel(logging.WARNING)
+suppres_3rd_party_debug_loggers()
 
 
 def consume_nowait(queue, msg):
