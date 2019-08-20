@@ -1,4 +1,19 @@
+"""
+jobs: maintain a list of jobs to be simulated.
+"""
+from __future__ import division
+from __future__ import print_function
+
 from flask_restplus import Namespace, Resource, fields
+
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 api = Namespace('Jobs', description='A job server for cea-worker processes')
 
