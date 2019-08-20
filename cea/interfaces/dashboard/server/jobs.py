@@ -42,9 +42,8 @@ class JobInfo(object):
 
 
 jobs = {
-    1: JobInfo(id=1, script="demand", parameters={
+    1: JobInfo(id=1, script="data-helper", parameters={
         "scenario": r"c:\Users\darthoma\Documents\CityEnergyAnalyst\projects\reference-case-open\baseline",
-        "multiprocessing": False,
     }),
 }
 
