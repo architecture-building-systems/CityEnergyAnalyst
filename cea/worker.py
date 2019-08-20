@@ -12,8 +12,11 @@ as an URL for locating the /server/jobs api.
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import requests
 import logging
+import Queue
+import threading
 import cea.config
 import cea.scripts
 
@@ -35,6 +38,46 @@ fiona_log = logging.getLogger('fiona')
 fiona_log.setLevel(logging.WARN)
 
 
+def stream_poster(jobid, server, queue):
+    """Post items from queue until a sentinel (the EOFError class object) is read."""
+    msg = queue.get(block=True, timeout=None)  # block until first message
+    while not msg is EOFError:
+        requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
+        msg = queue.get(block=True, timeout=None)  # block until next message
+
+
+class JobServerStream(object):
+    """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
+    def __init__(self, jobid, server, stdout):
+        self.jobid = jobid
+        self.server = server
+        self.stdout = stdout  # keep the original STDOUT around for debugging purposes
+        self.queue = Queue.Queue()
+        self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
+        self.stream_poster.start()
+
+    def close(self):
+        """Send sentinel that we're done writing"""
+        self.queue.put(EOFError)
+        self.stream_poster.join()
+
+    def write(self, str):
+        self.queue.put_nowait(str)
+        print(str, end='', file=self.stdout)
+
+    def isatty(self):
+        return False
+
+    def flush(self):
+        pass
+
+
+def configure_streams(jobid, server):
+    """Capture STDOUT and STDERR writes and post them to the /server/"""
+    sys.stdout = JobServerStream(jobid, server, sys.stdout)
+    sys.stderr = JobServerStream(jobid, server, sys.stderr)
+
+
 def fetch_job(jobid, server):
     response = requests.get("{server}/jobs/{jobid}".format(**locals()))
     job = response.json()
@@ -52,13 +95,14 @@ def post_success(job, server):
 
 
 def post_error(ex, job, server):
-    pass
+    print(ex)
 
 
 def worker(config, jobid, server):
     print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
     job = fetch_job(jobid, server)
     try:
+        configure_streams(jobid, server)
         run_job(config, job, server)
         post_success(job, server)
     except Exception as ex:

@@ -8,6 +8,7 @@ from __future__ import division
 from flask import Blueprint
 from flask_restplus import Api
 from .jobs import api as jobs
+from .streams import api as streams
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -24,3 +25,4 @@ api = Api(blueprint)
 
 # there might potentially be more namespaces added in the future, e.g. a method for locating files etc.
 api.add_namespace(jobs, path='/jobs')
+api.add_namespace(streams, path='/streams')
