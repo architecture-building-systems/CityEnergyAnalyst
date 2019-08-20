@@ -2,7 +2,7 @@
 cea-worker: a worker-process that uses the /server/jobs/ api to figure out what needs to be loaded to
 complete a job. All output is wired through the /server/streams/ api.
 
-In the future, file reading / writing will happen through a /server/data api.
+In the future, (Dataframe-) file reading / writing will happen through a /server/data api.
 
 This script is _not_ part of the ``scripts.yml``, because it's a _consumer_ of that file: It is installed
 with it's own distutils entry-point (``cea-worker``) with it's own semantics for argument processing: A single
@@ -29,29 +29,50 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# set logging level to WARN for fiona and shapely
-shapely_log = logging.getLogger('shapely')
-shapely_log.setLevel(logging.WARN)
-fiona_log = logging.getLogger('Fiona')
-fiona_log.setLevel(logging.WARN)
-fiona_log = logging.getLogger('fiona')
-fiona_log.setLevel(logging.WARN)
+# set logging level to WARN for fiona and shapely and others
+loggers_to_silence = ["shapely", "Fiona", "fiona", "urllib3.connectionpool"]
+for log_name in loggers_to_silence:
+    log = logging.getLogger(log_name)
+    log.setLevel(logging.WARNING)
+
+
+def consume_nowait(queue, msg):
+    """
+    Read from queue as much as possible and concatenate the results to ``msg``, returning that.
+    If an ``EOFError`` is read from the queue, put it back and return the ``msg`` so far.
+    """
+    if not queue.empty():
+        messages = [msg]
+        try:
+            msg = queue.get_nowait()
+            while not msg is EOFError:
+                messages.append(msg)
+                msg = queue.get_nowait()
+            # msg is now EOFError, put it back
+            queue.put(EOFError)
+        except Queue.Empty:
+            # we have read all there is in the queue for now
+            pass
+        finally:
+            msg = ''.join(messages)
+    return msg
 
 
 def stream_poster(jobid, server, queue):
     """Post items from queue until a sentinel (the EOFError class object) is read."""
     msg = queue.get(block=True, timeout=None)  # block until first message
     while not msg is EOFError:
+        msg = consume_nowait(queue, msg)
         requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
 class JobServerStream(object):
     """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
-    def __init__(self, jobid, server, stdout):
+    def __init__(self, jobid, server, stream):
         self.jobid = jobid
         self.server = server
-        self.stdout = stdout  # keep the original STDOUT around for debugging purposes
+        self.stream = stream  # keep the original STDOUT around for debugging purposes
         self.queue = Queue.Queue()
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
@@ -63,7 +84,7 @@ class JobServerStream(object):
 
     def write(self, str):
         self.queue.put_nowait(str)
-        print(str, end='', file=self.stdout)
+        print(str, end='', file=self.stream)
 
     def isatty(self):
         return False
@@ -85,9 +106,25 @@ def fetch_job(jobid, server):
 
 
 def run_job(config, job, server):
+    parameters = read_parameters(job)
+    script = read_script(job)
+    script(config=config, **parameters)
+
+
+def read_script(job):
+    """Locate the script defined by the job dictionary in the ``cea.api`` module, take care of dashes"""
     import cea.api
-    script_method = getattr(cea.api, job["script"])
-    script_method(config=config, **job["parameters"])
+    script_name = job["script"]
+    py_script_name = script_name.replace("-", "_")
+    script_method = getattr(cea.api, py_script_name)
+    return script_method
+
+
+def read_parameters(job):
+    """Return the parameters of the job in a format that is valid for using as ``**kwargs``"""
+    parameters = job["parameters"]
+    py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
+    return py_parameters
 
 
 def post_success(job, server):
@@ -107,6 +144,9 @@ def worker(config, jobid, server):
         post_success(job, server)
     except Exception as ex:
         post_error(ex, job, server)
+    finally:
+        sys.stdout.close()
+        sys.stderr.close()
 
 
 def main(config=None):
