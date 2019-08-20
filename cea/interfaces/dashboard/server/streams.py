@@ -6,6 +6,7 @@ FIXME: when does this data get cleared?
 from __future__ import division
 from __future__ import print_function
 
+from flask import request
 from flask_restplus import Namespace, Resource, fields
 
 __author__ = "Daren Thomas"
@@ -25,4 +26,4 @@ streams = {}
 @api.route("/write/<int:jobid>")
 class WriteStream(Resource):
     def put(self, jobid):
-        print("Inside put")
+        print("Inside put", request.data)
