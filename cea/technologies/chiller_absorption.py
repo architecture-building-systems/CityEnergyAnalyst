@@ -72,7 +72,7 @@ def calc_chiller_main(mdot_chw_kgpers,
         EER = 0.0
         input_conditions['q_chw_W'] = 0.0
     else:
-        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller") #TODO: move out from this function to save time
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         # get chiller properties and input conditions according to load
         if q_chw_total_W < min_chiller_size_W:
