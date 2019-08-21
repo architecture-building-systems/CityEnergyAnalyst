@@ -23,6 +23,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'doit==0.29.0',
                     'flask-restplus',
                     'geopandas',
+                    'gevent',
                     'ipython',
                     'jupyter',
                     'mock',
@@ -35,6 +36,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'requests',
                     'seaborn',
                     'setuptools',
+                    'flask-socketio',
                     'staticmap',
                     'sphinx',
                     'timezonefinder==3.4.2',  # last version to work with python2

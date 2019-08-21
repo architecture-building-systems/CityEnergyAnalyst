@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_socketio import SocketIO, emit
 
 import cea.config
 import cea.plots
@@ -9,6 +10,7 @@ import threading
 import os
 import sys
 
+socketio = None
 
 def list_tools():
     """List the tools known to the CEA. The result is grouped by category.
@@ -52,6 +54,9 @@ def main(config):
     plot_cache = cea.plots.cache.PlotCache(config.project)
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'SECRET_KEY': 'secret'})
+
+    global socketio
+    socketio = SocketIO(app)
 
     # provide the list of tools
     @app.context_processor
@@ -133,8 +138,12 @@ def main(config):
     app.workers = {}  # script-name -> (Process, Connection)
 
     # FIXME: this needs to be replaced with a better solution
+    print("starting webbrowser timer")
     threading.Timer(0.5, lambda: webbrowser.open('http://localhost:5050')).start()
-    app.run(host='localhost', port=5050, threaded=False, debug=config.debug)
+    print("started webbrowser timer")
+    print("start socketio.run")
+    socketio.run(app, host='localhost', port=5050)
+    print("done socketio.run")
 
 
 if __name__ == '__main__':
