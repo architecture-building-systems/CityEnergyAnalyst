@@ -7,8 +7,13 @@ function cea_run(script) {
     $('.cea-modal-close').attr('disabled', 'disabled').removeClass('btn-danger').removeClass('btn-success');
     $('#cea-console-output-body').text('');
     $('#cea-console-output').modal({'show': true, 'backdrop': 'static'});
-    $.post('start/' + script, get_parameter_values(), function(data) {
-        setTimeout(update_output, 1000, script);
+    $.post('/server/jobs/new', {"script": script, "parameters": get_parameter_values()}, function(job_info) {
+        $.post(`start/${job_info.id}`, function(job_info) {
+            let socket = io.connect(`http://${document.domain}:${location.port}`);
+            socket.on("cea-worker-message", function(data){
+                $('#cea-console-output-body').append(data.message);
+            });
+        });
     }, 'json');
 }
 

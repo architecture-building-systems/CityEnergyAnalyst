@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, current_app, jsonify, request, redirect, url_for
-from . import worker
+import subprocess
 
 import cea.scripts
 import cea.inputlocator
@@ -20,18 +20,12 @@ def index():
     return render_template('index.html')
 
 
-@blueprint.route('/start/<script>', methods=['POST'])
-def route_start(script):
-    """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
-    (this can be the process id)"""
-    kwargs = {}
-    print('/start/%s' % script)
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        kwargs[parameter.py_name] = parameter.decode(request.form.get(parameter.name))
-    print('/tools/start: kwargs=%s' % kwargs)
-    current_app.workers[script] = worker.main(script, **kwargs)
-    return jsonify(script)
+@blueprint.route('/start/<jobid>', methods=['POST'])
+def route_start(jobid):
+    """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+    print("tools/route_start: {jobid}".format(**locals()))
+    subprocess.call(["cea-worker", jobid])
+    return jsonify(jobid)
 
 
 @blueprint.route('/save-config/<script>', methods=['POST'])
