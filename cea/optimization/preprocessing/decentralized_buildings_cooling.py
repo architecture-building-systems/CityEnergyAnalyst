@@ -131,7 +131,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         print 'Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'
         # VCC operation
         el_VCC_Wh, q_VCC_cw_Wh, q_VCC_chw_Wh = calc_VCC_operation(T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                                  mdot_AHU_ARU_SCU_kgpers, max_VCC_unit_size_W)
+                                                                  mdot_AHU_ARU_SCU_kgpers)
         VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
         # CT operation
         q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
@@ -241,12 +241,12 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             # VCC (AHU + ARU) operation
             el_VCC_to_AHU_ARU_Wh, \
             q_cw_VCC_to_AHU_ARU_Wh,\
-            q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers, max_VCC_unit_size_W)
+            q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers)
             VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
             # VCC(SCU) operation
             el_VCC_to_SCU_Wh, \
             q_cw_VCC_to_SCU_Wh,\
-            q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers, max_VCC_unit_size_W)
+            q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers)
             VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
             # CT operation
             q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
@@ -427,13 +427,14 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
 
 
-def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, max_VCC_unit_size_W):
+def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
     from cea.optimization.constants import VCC_T_COOL_IN
+    from cea.technologies.constants import G_VALUE_DECENTRALIZED
     VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_kgpers,
                                                                      T_chw_sup_K,
                                                                      T_chw_re_K,
                                                                      VCC_T_COOL_IN,
-                                                                     max_VCC_unit_size_W)
+                                                                     G_VALUE_DECENTRALIZED)
     q_chw_Wh = np.asarray([x['q_chw_W'] for x in VCC_operation])
     q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_operation])
     el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_operation])
