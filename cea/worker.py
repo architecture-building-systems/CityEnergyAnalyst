@@ -125,11 +125,11 @@ def read_parameters(job):
 
 
 def post_success(jobid, server):
-    requests.put("{server}/jobs/success/{jobid}".format(**locals()))
+    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
 
 
 def post_error(ex, job, server):
-    requests.put("{server}/jobs/success/{jobid}".format(**locals()))
+    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
 
 
 def worker(config, jobid, server):
