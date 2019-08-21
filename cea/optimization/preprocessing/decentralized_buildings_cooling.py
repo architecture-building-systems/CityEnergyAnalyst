@@ -97,7 +97,6 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                   config)  # FIXME: change to outlet temperature from the cooling towers
 
         ## Get maximum unit size of technologies
-        max_CT_unit_size_W = cooling_tower.get_CT_max_size(locator)
         min_ACH_unit_size_W, max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
         ## Initialize table to save results
@@ -134,7 +133,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
         # CT operation
         q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
-        Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh, max_CT_unit_size_W)
+        Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
         # add costs
         el_total_Wh = el_VCC_Wh + el_CT_Wh
         operation_results[1][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
@@ -161,8 +160,8 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
         # CT operation
         q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = q_cw_single_ACH_Wh
-        Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
-                                                                                 max_CT_unit_size_W)
+        Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(
+            q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh)
         # boiler operation
         q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh, \
         Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, \
@@ -204,8 +203,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                  min_ACH_unit_size_W, max_ACH_unit_size_W)
         # CT operation
         q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
-        Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W,
-                                                                                 max_CT_unit_size_W)
+        Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
         # burner operation
         q_gas_for_burner_Wh, \
         Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W,\
@@ -249,8 +247,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
             # CT operation
             q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
-            Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W,
-                                                                                   max_CT_unit_size_W)
+            Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
             # add el costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
             operation_results[4][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
@@ -286,7 +283,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             # CT operation
             q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
-            el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh, max_CT_unit_size_W)
+            el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh)
 
             # add electricity costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
@@ -440,9 +437,9 @@ def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
     return el_VCC_Wh, q_cw_Wh, q_chw_Wh
 
 
-def calc_CT_operation(q_CT_load_Wh, max_CT_unit_size_W):
+def calc_CT_operation(q_CT_load_Wh):
     Q_nom_CT_W = np.max(q_CT_load_Wh) * (1 + SIZING_MARGIN)
-    el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_nom_CT_W, max_CT_unit_size_W)
+    el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_nom_CT_W)
     return Q_nom_CT_W, el_CT_Wh
 
 

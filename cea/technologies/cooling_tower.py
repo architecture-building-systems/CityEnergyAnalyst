@@ -17,7 +17,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(q_hot_Wh, Q_nom_W, max_CT_unit_size_W):
+def calc_CT(q_hot_Wh, Q_nom_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
@@ -145,19 +145,11 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
-def get_CT_max_size(locator, CT_code='CT1'):
-    CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
-    CT_cost_data = CT_cost_data[CT_cost_data['code'] == CT_code]
-    max_CT_unit_size_W = max(CT_cost_data['cap_max'].values)
-    return max_CT_unit_size_W
-
-
 def main():
     import numpy as np
     q_hot_Wh = np.arange(0.0, 1E3, 100)
     Q_nom_W = 1E3
-    max_CT_unit_size_W = 1E7
-    wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W, max_CT_unit_size_W)
+    wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
     print wdot_W
 
 
