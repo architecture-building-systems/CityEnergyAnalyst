@@ -30,16 +30,19 @@ def calc_CT(q_hot_Wh, Q_nom_W):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
+    if (Q_nom_W > 0.0 and q_hot_Wh > 0.0):
+        # calculate CT operation at part load
+        q_partload_ratio = q_hot_Wh / Q_nom_W
+        w_partload_factor = calc_CT_partload_factor(q_partload_ratio)
 
-    # calculate CT operation at part load
-    q_partload_ratio = q_hot_Wh / Q_nom_W
-    w_partload_factor = calc_CT_partload_factor(q_partload_ratio)
+        # calculate nominal fan power
+        w_nom_fan = 0.011 * Q_nom_W
 
-    # calculate fan power
-    w_nom_fan = 0.011 * Q_nom_W
+        # calculate total electricity consumption
+        el_W = w_partload_factor * w_nom_fan
 
-    # calculate total electricity consumption
-    el_W = w_partload_factor * w_nom_fan
+    else:
+        el_W = 0
 
     return el_W
 
@@ -145,12 +148,13 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
-def main():
+def main(locator):
     import numpy as np
     q_hot_Wh = np.arange(0.0, 1E3, 100)
     Q_nom_W = 1E3
     wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
     print wdot_W
+
 
 
 if __name__ == '__main__':
