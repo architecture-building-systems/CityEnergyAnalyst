@@ -23,7 +23,7 @@ __status__ = "Production"
 def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
     from cea.technologies.constants import G_VALUE_CENTRALIZED # this is where to differentiate chiller performances
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, T_source_K, G_VALUE_CENTRALIZED)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, G_VALUE_CENTRALIZED)
 
     # unpack outputs
     opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
@@ -37,7 +37,7 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, 
 def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     mdot_VCC_kgpers = Qc_from_VCC_backup_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
-    VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, T_source_K, G_VALUE_CENTRALIZED)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_backup_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, G_VALUE_CENTRALIZED)
     # unpack outputs
     opex_var_VCC_backup_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
     GHG_VCC_backup_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
