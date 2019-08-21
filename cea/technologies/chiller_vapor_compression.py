@@ -202,12 +202,13 @@ def get_max_VCC_unit_size(locator, VCC_code):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    Qc_W = 3.5
+    Qc_W = 5E5
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
+    T_cw_in_K = 273.15 + 28
     mdot_chw_kgpers = Qc_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K))
     max_VCC_unit_size_W = get_max_VCC_unit_size(locator, 'CH1')
-    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W)
+    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_W)
     print chiller_operation
 
 
