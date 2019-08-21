@@ -255,8 +255,10 @@ def main(config):
     building_name = 'B01'
     Q_installed_size_W = 80000
     ACH_type = 'single'
-    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type,
-                                          locator, config)
+    min_chiller_size_W = 0
+    max_chiller_size_W = 1176000
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K,
+                                          locator, ACH_type, min_chiller_size_W, max_chiller_size_W)
     print(chiller_operation)
 
     print('test_decentralized_buildings_cooling() succeeded')
