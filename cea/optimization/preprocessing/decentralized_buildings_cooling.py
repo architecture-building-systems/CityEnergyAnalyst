@@ -452,6 +452,7 @@ def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh,
         Q_gas_for_boiler_Wh = np.divide(q_boiler_load_Wh, boiler_eff,
                                         out=np.zeros_like(q_boiler_load_Wh), where=boiler_eff != 0.0)
     else:
+        q_boiler_load_Wh = 0.0
         Q_nom_Boilers_W = 0.0
         Q_gas_for_boiler_Wh = np.zeros(len(q_hw_single_ACH_Wh))
     return Q_gas_for_boiler_Wh, Q_nom_Boilers_W, q_boiler_load_Wh
@@ -465,6 +466,7 @@ def calc_burner_operation(Q_ACH_size_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh):
         q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)
     else:
+        q_burner_load_Wh = 0.0
         Q_nom_Burners_W = 0.0
         q_gas_for_burber_Wh = np.zeros(len(q_hw_single_ACH_Wh))
 
