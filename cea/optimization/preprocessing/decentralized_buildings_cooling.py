@@ -97,7 +97,6 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                   config)  # FIXME: change to outlet temperature from the cooling towers
 
         ## Get maximum unit size of technologies
-        max_VCC_unit_size_W = chiller_vapor_compression.get_max_VCC_unit_size(locator, VCC_CODE_DECENTRALIZED)
         max_CT_unit_size_W = cooling_tower.get_CT_max_size(locator)
         min_ACH_unit_size_W, max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
