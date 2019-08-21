@@ -7,6 +7,8 @@ from __future__ import print_function
 from flask_restplus import Namespace, Resource, fields, reqparse
 from flask import request
 
+from cea.interfaces.dashboard.dashboard import socketio
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
@@ -96,6 +98,7 @@ class JobSuccess(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_SUCCESS
         job.error = None
+        socketio.emit("cea-worker-success", {"jobid": jobid})
         return job
 
 
@@ -106,4 +109,5 @@ class JobError(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
         job.error = request.data
+        socketio.emit("cea-worker-error", {"jobid": jobid, "error": job.error})
         return job
