@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 from flask_restplus import Namespace, Resource, fields, reqparse
+from flask import request
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -90,11 +91,19 @@ class ListJobs(Resource):
 
 @api.route("/success/<int:jobid>")
 class JobSuccess(Resource):
+    @api.marshal_with(job_info_model)
     def post(self, jobid):
-        jobs[jobid].state = JOB_STATE_SUCCESS
+        job = jobs[jobid]
+        job.state = JOB_STATE_SUCCESS
+        job.error = None
+        return job
 
 
 @api.route("/error/<int:jobid>")
 class JobError(Resource):
+    @api.marshal_with(job_info_model)
     def post(self, jobid):
-        jobs[jobid].state = JOB_STATE_ERROR
+        job = jobs[jobid]
+        job.state = JOB_STATE_ERROR
+        job.error = request.data
+        return job
