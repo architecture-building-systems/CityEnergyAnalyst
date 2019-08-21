@@ -81,6 +81,7 @@ class NewJob(Resource):
         args = job_info_request_parser.parse_args()
         job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
         jobs[job.id] = job
+        print("NewJob: args={args}, job={job}".format(**locals()))
         return job
 
 
