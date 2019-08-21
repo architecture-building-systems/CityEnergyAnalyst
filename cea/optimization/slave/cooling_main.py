@@ -21,7 +21,7 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_DISCHARGED_K, \
-    PUMP_ETA, ACH_TYPE_SINGLE
+    PUMP_ETA, ACH_TYPE_SINGLE, VCC_CODE_CENTRALIZED
 from cea.optimization.master.cost_model import calc_network_costs
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.constants import DT_COOL
@@ -121,7 +121,7 @@ def district_cooling_network(locator,
     Qc_peak_load_W = Q_cooling_req_W.max()
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharging_limit_W)
 
-    max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator)
+    max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator, VCC_CODE_CENTRALIZED)
     min_ACH_unit_size_W, \
     max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 

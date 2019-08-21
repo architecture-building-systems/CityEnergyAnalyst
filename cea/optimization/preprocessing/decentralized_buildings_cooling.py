@@ -22,7 +22,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
-    Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE
+    Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
@@ -97,7 +97,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                   config)  # FIXME: change to outlet temperature from the cooling towers
 
         ## Get maximum unit size of technologies
-        max_VCC_unit_size_W = chiller_vapor_compression.get_max_VCC_unit_size(locator)
+        max_VCC_unit_size_W = chiller_vapor_compression.get_max_VCC_unit_size(locator, VCC_CODE_DECENTRALIZED)
         max_CT_unit_size_W = cooling_tower.get_CT_max_size(locator)
         min_ACH_unit_size_W, max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
