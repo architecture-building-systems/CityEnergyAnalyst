@@ -429,12 +429,12 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
     from cea.optimization.constants import VCC_T_COOL_IN
     from cea.technologies.constants import G_VALUE_DECENTRALIZED
-    VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(mdot_kgpers,
+    q_chw_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
+    VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(q_chw_Wh,
                                                                      T_chw_sup_K,
                                                                      T_chw_re_K,
                                                                      VCC_T_COOL_IN,
                                                                      G_VALUE_DECENTRALIZED)
-    q_chw_Wh = np.asarray([x['q_chw_W'] for x in VCC_operation])
     q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_operation])
     el_VCC_Wh = np.asarray([x['wdot_W'] for x in VCC_operation])
     return el_VCC_Wh, q_cw_Wh, q_chw_Wh

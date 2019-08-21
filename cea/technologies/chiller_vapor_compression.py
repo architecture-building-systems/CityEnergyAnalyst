@@ -25,7 +25,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
+def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -42,23 +42,20 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
     vapor-compression liquid chillers. Applied Thermal Engineering.
     """
 
-    if mdot_kgpers == 0.0:
+    if q_chw_load_Wh == 0.0:
         wdot_W = 0.0
         q_cw_W = 0.0
-        q_chw_load_Wh = 0.0
 
-    else:
-        # required cooling at the chiller evaporator
-        q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
-
-        # calculate chiller COP from chw load of each chiller
+    elif q_chw_load_Wh > 0.0:
         COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, g_value)
-        if COP < 0:
-            print ('Negative COP: ', COP, mdot_kgpers, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
+        if COP < 0.0:
+            print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
         # calculate chiller outputs
         wdot_W = q_chw_load_Wh / COP
         q_cw_W = wdot_W + q_chw_load_Wh  # heat rejected to the cold water (cw) loop
+    else:
+        raise ValueError('negative cooling load to VCC: ', q_chw_load_Wh)
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_chw_W': q_chw_load_Wh}
 
@@ -182,15 +179,14 @@ def calc_Cinv_VCC(Q_nom_W, locator, config, technology_type):
 
 
 def main():
-    Qc_W = 1
+    Qc_W = 10
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
-    mdot_chw_kgpers = Qc_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K))
     g_value = G_VALUE_CENTRALIZED
-    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value)
+    chiller_operation = calc_VCC(Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value)
     print chiller_operation
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main()
