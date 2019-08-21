@@ -14,6 +14,7 @@ from __future__ import print_function
 
 import sys
 import requests
+import traceback
 import Queue
 import threading
 import cea.config
@@ -123,12 +124,12 @@ def read_parameters(job):
     return py_parameters
 
 
-def post_success(job, server):
-    pass
+def post_success(jobid, server):
+    requests.put("{server}/jobs/success/{jobid}".format(**locals()))
 
 
 def post_error(ex, job, server):
-    print(ex)
+    requests.put("{server}/jobs/success/{jobid}".format(**locals()))
 
 
 def worker(config, jobid, server):
@@ -137,7 +138,7 @@ def worker(config, jobid, server):
     try:
         configure_streams(jobid, server)
         run_job(config, job, server)
-        post_success(job, server)
+        post_success(jobid, server)
     except Exception as ex:
         post_error(ex, job, server)
     finally:

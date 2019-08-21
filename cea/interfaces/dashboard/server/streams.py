@@ -26,4 +26,5 @@ streams = {}
 @api.route("/write/<int:jobid>")
 class WriteStream(Resource):
     def put(self, jobid):
-        print("Inside put", request.data)
+        # FIXME: this output needs to bubble up to the user interface...
+        print(request.data, end='')
