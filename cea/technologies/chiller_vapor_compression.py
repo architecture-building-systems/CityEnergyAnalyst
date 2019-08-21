@@ -72,6 +72,48 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     COP = 1 / ((1 + C) / (B - A) - 1)
     return COP
 
+def calc_VCC_COP(config, load_types, centralized=True):
+    """
+    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
+    auxiliary power demand for centralized and decentralized systems.
+    This approximation only works in tropical climates
+
+    Clark D (CUNDALL). Chiller energy efficiency 2013.
+
+    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
+    :param centralized:
+    :return:
+    """
+    if centralized == True:
+        g_value = G_VALUE_CENTRALIZED
+    else:
+        g_value = G_VALUE_DECENTRALIZED
+    T_evap_K = 10000000  # some high enough value
+    for load_type in load_types:  # find minimum evap temperature of supplied loads
+        if load_type == 'ahu':
+            T_evap_K = min(T_evap_K, T_EVAP_AHU)
+        elif load_type == 'aru':
+            T_evap_K = min(T_evap_K, T_EVAP_ARU)
+        elif load_type == 'scu':
+            T_evap_K = min(T_evap_K, T_EVAP_SCU)
+        else:
+            print 'Undefined cooling load_type for chiller COP calculation.'
+    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
+    # read weather data for condenser temperature calculation
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
+    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
+    T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+    cop_chiller = calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value)
+    # calculate system COP with pumping power of auxiliaries
+    if centralized == True:
+        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
+    else:
+        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
+
+    return cop_system, cop_chiller
+
 def calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value):
     cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
     return cop_chiller
@@ -137,48 +179,6 @@ def calc_Cinv_VCC(Q_nom_W, locator, config, technology_type):
                 Capex_VCC_USD = Capex_VCC_USD + InvC
 
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
-
-def calc_VCC_COP(config, load_types, centralized=True):
-    """
-    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
-    auxiliary power demand for centralized and decentralized systems.
-    This approximation only works in tropical climates
-
-    Clark D (CUNDALL). Chiller energy efficiency 2013.
-
-    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
-    :param centralized:
-    :return:
-    """
-    if centralized == True:
-        g_value = G_VALUE_CENTRALIZED
-    else:
-        g_value = G_VALUE_DECENTRALIZED
-    T_evap_K = 10000000  # some high enough value
-    for load_type in load_types:  # find minimum evap temperature of supplied loads
-        if load_type == 'ahu':
-            T_evap_K = min(T_evap_K, T_EVAP_AHU)
-        elif load_type == 'aru':
-            T_evap_K = min(T_evap_K, T_EVAP_ARU)
-        elif load_type == 'scu':
-            T_evap_K = min(T_evap_K, T_EVAP_SCU)
-        else:
-            print 'Undefined cooling load_type for chiller COP calculation.'
-    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
-        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
-        T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
-    # read weather data for condeser temperature calculation
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
-    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
-    T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
-    cop_chiller = calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value)
-    # calculate system COP with pumping power of auxiliaries
-    if centralized == True:
-        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
-    else:
-        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
-
-    return cop_system, cop_chiller
 
 def get_max_VCC_unit_size(locator, VCC_code):
     VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
