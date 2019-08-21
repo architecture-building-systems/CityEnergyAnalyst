@@ -128,19 +128,22 @@ def post_success(jobid, server):
     requests.post("{server}/jobs/success/{jobid}".format(**locals()))
 
 
-def post_error(ex, job, server):
-    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
+def post_error(exc, jobid, server):
+    requests.post("{server}/jobs/error/{jobid}".format(**locals()), data=exc)
 
 
 def worker(config, jobid, server):
+    """This is the main logic of the cea-worker."""
     print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
     job = fetch_job(jobid, server)
     try:
         configure_streams(jobid, server)
         run_job(config, job, server)
         post_success(jobid, server)
-    except Exception as ex:
-        post_error(ex, job, server)
+    except Exception:
+        exc = traceback.format_exc()
+        print(exc, file=sys.stderr)
+        post_error(exc, jobid, server)
     finally:
         sys.stdout.close()
         sys.stderr.close()
