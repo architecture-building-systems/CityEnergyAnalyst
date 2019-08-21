@@ -106,8 +106,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K,
     T_ground_C = T_ground_K - 273.0
 
     # unpack variables
-    max_VCC_unit_size_W = technology_capacities['max_VCC_unit_size_W']
-    min_ACH_unit_size_W = technology_capacities['max_VCC_unit_size_W']
+    min_ACH_unit_size_W = technology_capacities['min_ACH_unit_size_W']
     max_ACH_unit_size_W = technology_capacities['max_ACH_unit_size_W']
 
     T_DCN_sup_K = T_sup_K

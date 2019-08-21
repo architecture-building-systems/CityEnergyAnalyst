@@ -180,14 +180,8 @@ def calc_Cinv_VCC(Q_nom_W, locator, config, technology_type):
 
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
 
-def get_max_VCC_unit_size(locator, VCC_code):
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
-    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
-    max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
-    return max_VCC_unit_size_W
 
-
-def main(config):
+def main():
     Qc_W = 1
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11

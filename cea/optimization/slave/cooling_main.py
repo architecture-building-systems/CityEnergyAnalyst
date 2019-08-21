@@ -121,14 +121,12 @@ def district_cooling_network(locator,
     Qc_peak_load_W = Q_cooling_req_W.max()
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharging_limit_W)
 
-    max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator, VCC_CODE_CENTRALIZED)
     min_ACH_unit_size_W, \
     max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
     technology_capacities = {'Qc_VCC_nom_W': Qc_VCC_nom_W,
                              'Qc_ACH_nom_W': Qc_ACH_nom_W,
                              'Qc_VCC_backup_nom_W': Qc_VCC_backup_nom_W,
-                             'max_VCC_unit_size_W': max_VCC_unit_size_W,
                              'max_ACH_unit_size_W': max_ACH_unit_size_W,
                              'min_ACH_unit_size_W': min_ACH_unit_size_W}
 
