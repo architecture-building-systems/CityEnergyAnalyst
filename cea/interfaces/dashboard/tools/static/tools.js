@@ -188,8 +188,3 @@ function save_folder_name(target_id, folder_path) {
     $('#' + target_id).val(folder_path).trigger("input").trigger("change");
     console.log(target_id)
 }
-
-/**
- * Some parameters need special treatment...
- */
-$(document)
