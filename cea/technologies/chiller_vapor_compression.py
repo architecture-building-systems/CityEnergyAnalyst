@@ -25,7 +25,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_W):
+def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -51,28 +51,13 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_
         # required cooling at the chiller evaporator
         q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
 
-        # calculate chw load of each chiller
-        if q_chw_load_Wh <= max_VCC_unit_size_W:
-            # Tim Change:
-            # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
-            #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
-            #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
-
-            # operate one chiller at the cooling load
-            number_of_VCC_activated = 1.0
-            q_chw_per_chiller_Wh = q_chw_load_Wh
-        else:
-            # operate chillers at maximum load
-            number_of_VCC_activated = q_chw_load_Wh / max_VCC_unit_size_W
-            q_chw_per_chiller_Wh = max_VCC_unit_size_W
-
         # calculate chiller COP from chw load of each chiller
-        COP = calc_COP(T_cw_in_K, T_chw_sup_K, q_chw_per_chiller_Wh)
+        COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, g_value)
         if COP < 0:
             print ('Negative COP: ', COP, mdot_kgpers, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
         # calculate chiller outputs
-        wdot_W = (q_chw_per_chiller_Wh / COP) * number_of_VCC_activated
+        wdot_W = q_chw_load_Wh / COP
         q_cw_W = wdot_W + q_chw_load_Wh  # heat rejected to the cold water (cw) loop
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_chw_W': q_chw_load_Wh}
@@ -87,6 +72,9 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     COP = 1 / ((1 + C) / (B - A) - 1)
     return COP
 
+def calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value):
+    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
+    return cop_chiller
 
 # Investment costs
 
@@ -183,8 +171,7 @@ def calc_VCC_COP(config, load_types, centralized=True):
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
     # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
     T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
-    # calculate chiller COP
-    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
+    cop_chiller = calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value)
     # calculate system COP with pumping power of auxiliaries
     if centralized == True:
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
@@ -201,14 +188,13 @@ def get_max_VCC_unit_size(locator, VCC_code):
 
 
 def main(config):
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    Qc_W = 5E5
+    Qc_W = 1
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
     mdot_chw_kgpers = Qc_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K))
-    max_VCC_unit_size_W = get_max_VCC_unit_size(locator, 'CH1')
-    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_W)
+    g_value = G_VALUE_CENTRALIZED
+    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value)
     print chiller_operation
 
 
