@@ -534,12 +534,14 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
-    def get_region_specific_db_file(self, region):
-        """get path to CEA databases according to the region"""
-        technology_folder = os.path.join(self.db_path, region)
-        if not os.path.exists(technology_folder):
-            raise Exception("you are trying to get the technology database from a location that cea does not support")
-        return technology_folder
+    def get_technology_template_for_region(self, region):
+        """get path to technology database for the region as shipped by the CEA or return the region path, assuming
+        it's a user-supplied technology folder"""
+        if region in os.listdir(self.db_path):
+            return os.path.join(self.db_path, region)
+        if not os.path.exists(region):
+            raise ValueError("You are trying to get the technology database for an unsupported region.")
+        return region
 
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
