@@ -194,7 +194,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         for field in COLUMNS_ZONE_RESTRICTIONS:
             new_names_df[field] = 0
         dataframe_to_dbf(new_names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
-    raise Exception("just kidding...")
+
 
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)

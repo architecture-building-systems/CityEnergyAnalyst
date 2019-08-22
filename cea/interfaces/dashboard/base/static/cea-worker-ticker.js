@@ -14,8 +14,9 @@ $(document).ready(function(){
         $ticker.text(`${data.jobid}: completed`);
     });
 
-    socket.on('cea-worker-error', function(data) {
-        alert(data.error);
-        $ticker.text(`${data.jobid}: error`);
+    socket.on('cea-worker-error', function(job_info) {
+        console.log("cea-worker-error: job_info:", job_info);
+        alert(`ERROR running ${job_info.script} (${job_info.id})\n\n${job_info.error}`);
+        $ticker.text(`${job_info.id}: error`);
     });
 });

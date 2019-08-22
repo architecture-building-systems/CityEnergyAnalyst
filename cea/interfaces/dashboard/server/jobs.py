@@ -114,5 +114,5 @@ class JobError(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
         job.error = request.data
-        socketio.emit("cea-worker-error", {"jobid": jobid, "error": job.error})
+        socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
         return job
