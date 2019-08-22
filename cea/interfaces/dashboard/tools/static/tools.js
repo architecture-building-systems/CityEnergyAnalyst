@@ -20,6 +20,7 @@ function cea_run(script) {
             };
             socket.on("cea-worker-message", message_appender);
             socket.on('cea-worker-success', function() {
+                $cea_modal_close.removeAttr("disabled");
                 $cea_modal_close.addClass("btn-success");
                 socket.removeListener("cea-worker-message", message_appender);
             });
