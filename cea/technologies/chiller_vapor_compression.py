@@ -25,7 +25,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_W):
+def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -42,38 +42,20 @@ def calc_VCC(mdot_kgpers, T_chw_sup_K, T_chw_re_K, T_cw_in_K, max_VCC_unit_size_
     vapor-compression liquid chillers. Applied Thermal Engineering.
     """
 
-    if mdot_kgpers == 0.0:
+    if q_chw_load_Wh == 0.0:
         wdot_W = 0.0
         q_cw_W = 0.0
-        q_chw_load_Wh = 0.0
 
-    else:
-        # required cooling at the chiller evaporator
-        q_chw_load_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
-
-        # calculate chw load of each chiller
-        if q_chw_load_Wh <= max_VCC_unit_size_W:
-            # Tim Change:
-            # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
-            #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
-            #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
-
-            # operate one chiller at the cooling load
-            number_of_VCC_activated = 1.0
-            q_chw_per_chiller_Wh = q_chw_load_Wh
-        else:
-            # operate chillers at maximum load
-            number_of_VCC_activated = q_chw_load_Wh / max_VCC_unit_size_W
-            q_chw_per_chiller_Wh = max_VCC_unit_size_W
-
-        # calculate chiller COP from chw load of each chiller
-        COP = calc_COP(T_cw_in_K, T_chw_sup_K, q_chw_per_chiller_Wh)
-        if COP < 0:
-            print ('Negative COP: ', COP, mdot_kgpers, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
+    elif q_chw_load_Wh > 0.0:
+        COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, g_value)
+        if COP < 0.0:
+            print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
         # calculate chiller outputs
-        wdot_W = (q_chw_per_chiller_Wh / COP) * number_of_VCC_activated
+        wdot_W = q_chw_load_Wh / COP
         q_cw_W = wdot_W + q_chw_load_Wh  # heat rejected to the cold water (cw) loop
+    else:
+        raise ValueError('negative cooling load to VCC: ', q_chw_load_Wh)
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_chw_W': q_chw_load_Wh}
 
@@ -87,6 +69,51 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     COP = 1 / ((1 + C) / (B - A) - 1)
     return COP
 
+def calc_VCC_COP(config, load_types, centralized=True):
+    """
+    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
+    auxiliary power demand for centralized and decentralized systems.
+    This approximation only works in tropical climates
+
+    Clark D (CUNDALL). Chiller energy efficiency 2013.
+
+    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
+    :param centralized:
+    :return:
+    """
+    if centralized == True:
+        g_value = G_VALUE_CENTRALIZED
+    else:
+        g_value = G_VALUE_DECENTRALIZED
+    T_evap_K = 10000000  # some high enough value
+    for load_type in load_types:  # find minimum evap temperature of supplied loads
+        if load_type == 'ahu':
+            T_evap_K = min(T_evap_K, T_EVAP_AHU)
+        elif load_type == 'aru':
+            T_evap_K = min(T_evap_K, T_EVAP_ARU)
+        elif load_type == 'scu':
+            T_evap_K = min(T_evap_K, T_EVAP_SCU)
+        else:
+            print 'Undefined cooling load_type for chiller COP calculation.'
+    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+        T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
+    # read weather data for condenser temperature calculation
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
+    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
+    T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+    cop_chiller = calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value)
+    # calculate system COP with pumping power of auxiliaries
+    if centralized == True:
+        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
+    else:
+        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
+
+    return cop_system, cop_chiller
+
+def calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value):
+    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
+    return cop_chiller
 
 # Investment costs
 
@@ -150,66 +177,16 @@ def calc_Cinv_VCC(Q_nom_W, locator, config, technology_type):
 
     return Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD
 
-def calc_VCC_COP(config, load_types, centralized=True):
-    """
-    Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
-    auxiliary power demand for centralized and decentralized systems.
-    This approximation only works in tropical climates
 
-    Clark D (CUNDALL). Chiller energy efficiency 2013.
-
-    :param load_types: a list containing the systems (aru, ahu, scu) that the chiller is supplying for
-    :param centralized:
-    :return:
-    """
-    if centralized == True:
-        g_value = G_VALUE_CENTRALIZED
-    else:
-        g_value = G_VALUE_DECENTRALIZED
-    T_evap_K = 10000000  # some high enough value
-    for load_type in load_types:  # find minimum evap temperature of supplied loads
-        if load_type == 'ahu':
-            T_evap_K = min(T_evap_K, T_EVAP_AHU)
-        elif load_type == 'aru':
-            T_evap_K = min(T_evap_K, T_EVAP_ARU)
-        elif load_type == 'scu':
-            T_evap_K = min(T_evap_K, T_EVAP_SCU)
-        else:
-            print 'Undefined cooling load_type for chiller COP calculation.'
-    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
-        # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
-        T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
-    # read weather data for condeser temperature calculation
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
-    # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
-    T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
-    # calculate chiller COP
-    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
-    # calculate system COP with pumping power of auxiliaries
-    if centralized == True:
-        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
-    else:
-        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
-
-    return cop_system, cop_chiller
-
-def get_max_VCC_unit_size(locator, VCC_code='CH3'):
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Chiller")
-    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
-    max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
-    return max_VCC_unit_size_W
-
-
-def main(config):
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    Qc_W = 3.5
+def main():
+    Qc_W = 10
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
-    mdot_chw_kgpers = Qc_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K))
-    max_VCC_unit_size_W = get_max_VCC_unit_size(locator)
-    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, max_VCC_unit_size_W)
+    T_cw_in_K = 273.15 + 28
+    g_value = G_VALUE_CENTRALIZED
+    chiller_operation = calc_VCC(Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value)
     print chiller_operation
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main()

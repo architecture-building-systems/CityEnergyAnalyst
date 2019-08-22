@@ -152,6 +152,8 @@ STORAGE_COOLING_ALLOWED = True
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
+VCC_CODE_CENTRALIZED = 'CH1'
+VCC_CODE_DECENTRALIZED = 'CH3'
 
 # Absorption chiller
 ACH_T_IN_FROM_CHP = 150 + 273.0  # hot water from CHP to the generator of ACH
