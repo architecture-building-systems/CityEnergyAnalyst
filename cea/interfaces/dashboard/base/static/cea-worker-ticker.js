@@ -11,7 +11,6 @@ $(document).ready(function(){
     });
     
     socket.on('cea-worker-success', function(data) {
-        alert(`${data.jobid}: completed`);
         $ticker.text(`${data.jobid}: completed`);
     });
 
