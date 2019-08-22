@@ -57,6 +57,9 @@ class JobInfo(object):
         self.state = JOB_STATE_PENDING
         self.error = None
 
+    def __repr__(self):
+        return "<JobInfo(id={id}, script={script}, state={state}>".format(**self.__dict__)
+
 
 jobs = {
     1: JobInfo(id=1, script="data-helper", parameters={
@@ -79,6 +82,7 @@ class NewJob(Resource):
     def post(self):
         """Post a new job to the list of jobs to complete"""
         args = job_info_request_parser.parse_args()
+        print("NewJob: args={args}".format(**locals()))
         job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
         jobs[job.id] = job
         print("NewJob: args={args}, job={job}".format(**locals()))

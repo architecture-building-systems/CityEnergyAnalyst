@@ -71,6 +71,7 @@ class JobServerStream(object):
         self.server = server
         self.stream = stream  # keep the original STDOUT around for debugging purposes
         self.queue = Queue.Queue()
+        print("Starting stream_poster for {jobid}, {server}, {stream}".format(**locals()))
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
 
@@ -81,7 +82,7 @@ class JobServerStream(object):
 
     def write(self, str):
         self.queue.put_nowait(str)
-        print(str, end='', file=self.stream)
+        print("cea-worker: {str}".format(**locals()), end='', file=self.stream)
 
     def isatty(self):
         return False
@@ -119,7 +120,7 @@ def read_script(job):
 
 def read_parameters(job):
     """Return the parameters of the job in a format that is valid for using as ``**kwargs``"""
-    parameters = job["parameters"]
+    parameters = job["parameters"] or {}
     py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
     return py_parameters
 
@@ -136,10 +137,15 @@ def worker(config, jobid, server):
     """This is the main logic of the cea-worker."""
     print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
     job = fetch_job(jobid, server)
+    print("job: {job}".format(**locals()))
     try:
         configure_streams(jobid, server)
+        print("Configured streams.")
+        print("Starting job.")
         run_job(config, job, server)
+        print("Completed job.")
         post_success(jobid, server)
+        print("Posted success.")
     except Exception:
         exc = traceback.format_exc()
         print(exc, file=sys.stderr)
