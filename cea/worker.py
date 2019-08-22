@@ -71,7 +71,6 @@ class JobServerStream(object):
         self.server = server
         self.stream = stream  # keep the original STDOUT around for debugging purposes
         self.queue = Queue.Queue()
-        print("Starting stream_poster for {jobid}, {server}, {stream}".format(**locals()))
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
 
@@ -137,15 +136,10 @@ def worker(config, jobid, server):
     """This is the main logic of the cea-worker."""
     print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
     job = fetch_job(jobid, server)
-    print("job: {job}".format(**locals()))
     try:
         configure_streams(jobid, server)
-        print("Configured streams.")
-        print("Starting job.")
         run_job(config, job, server)
-        print("Completed job.")
         post_success(jobid, server)
-        print("Posted success.")
     except Exception:
         exc = traceback.format_exc()
         print(exc, file=sys.stderr)

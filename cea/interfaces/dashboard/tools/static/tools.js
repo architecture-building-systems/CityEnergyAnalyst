@@ -12,12 +12,22 @@ function cea_run(script) {
     console.log("new_job_info", new_job_info);
     $.post('/server/jobs/new', new_job_info, function(job_info) {
         console.log("About to run job_info", job_info);
-        $.post(`start/${job_info.id}`, function(job_info) {
-            /*socket.on("cea-worker-message", function(data){
+        $.post(`start/${job_info.id}`, function() {
+            let socket = io.connect(`http://${document.domain}:${location.port}`);
+            let $cea_modal_close = $(".cea-modal-close");
+            socket.on("cea-worker-message", function(data){
                 $('#cea-console-output-body').append(data.message);
-            });*/
+            });
+            socket.on('cea-worker-success', function() {
+                $cea_modal_close.removeAttr("disabled");
+                $cea_modal_close.addClass("btn-success");
+            });
+            socket.on('cea-worker-error', function() {
+                $cea_modal_close.removeAttr("disabled");
+                $(".cea-modal-close").addClass("btn-danger");
+            });
         });
-    }, 'json');
+    }, "json");
 }
 
 function cea_save_config(script) {
