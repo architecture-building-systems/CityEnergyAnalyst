@@ -301,7 +301,6 @@ def heating_source_activator(Q_therm_req_W,
         E_PeakBoiler_req_W = 0.0
 
     if Q_heat_unmet_W > 1.0E-3:
-        print("The algorithm is not working, the heating load of the network was not met")
         Q_uncovered_W = Q_heat_unmet_W # this will become the back-up boiler
     else:
         Q_uncovered_W = 0.0
