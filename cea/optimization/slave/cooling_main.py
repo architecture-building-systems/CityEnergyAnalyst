@@ -21,7 +21,7 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
 from cea.constants import WH_TO_J
 from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_DISCHARGED_K, \
-    PUMP_ETA, ACH_TYPE_SINGLE
+    PUMP_ETA, ACH_TYPE_SINGLE, VCC_CODE_CENTRALIZED
 from cea.optimization.master.cost_model import calc_network_costs
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.constants import DT_COOL
@@ -121,14 +121,12 @@ def district_cooling_network(locator,
     Qc_peak_load_W = Q_cooling_req_W.max()
     Qc_VCC_backup_nom_W = (Qc_peak_load_W - Qc_ACH_nom_W - Qc_VCC_nom_W - Qc_tank_discharging_limit_W)
 
-    max_VCC_unit_size_W = VCCModel.get_max_VCC_unit_size(locator)
     min_ACH_unit_size_W, \
     max_ACH_unit_size_W = chiller_absorption.get_min_max_ACH_unit_size(locator, ACH_TYPE_SINGLE)
 
     technology_capacities = {'Qc_VCC_nom_W': Qc_VCC_nom_W,
                              'Qc_ACH_nom_W': Qc_ACH_nom_W,
                              'Qc_VCC_backup_nom_W': Qc_VCC_backup_nom_W,
-                             'max_VCC_unit_size_W': max_VCC_unit_size_W,
                              'max_ACH_unit_size_W': max_ACH_unit_size_W,
                              'min_ACH_unit_size_W': min_ACH_unit_size_W}
 
@@ -246,10 +244,9 @@ def district_cooling_network(locator,
 
     ## Operation of the cooling tower
     # TODO: so this can be vectorized. split between costs and emissions
-    max_CT_unit_size_W = CTModel.get_CT_max_size(locator)
     if Q_CT_nom_W > 0:
         for hour in range(HOURS_IN_YEAR):
-            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W, max_CT_unit_size_W)
+            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
             opex_var_CT_USDhr[hour] = (wdot_CT_Wh) * lca.ELEC_PRICE[hour]
             GHG_CT_tonCO2[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
             prim_energy_CT_MJoil[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
