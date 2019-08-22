@@ -35,4 +35,4 @@ class WriteStream(Resource):
 
         # emit the message using socket.io
         socketio.emit('cea-worker-message', {"message": msg, "jobid": jobid})
-        print(msg, end='')
+        print("\n/server/streams/write/<{jobid}>: {msg}".format(**locals()), end='')

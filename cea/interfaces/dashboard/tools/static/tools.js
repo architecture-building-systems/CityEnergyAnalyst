@@ -7,12 +7,15 @@ function cea_run(script) {
     $('.cea-modal-close').attr('disabled', 'disabled').removeClass('btn-danger').removeClass('btn-success');
     $('#cea-console-output-body').text('');
     $('#cea-console-output').modal({'show': true, 'backdrop': 'static'});
-    $.post('/server/jobs/new', {"script": script, "parameters": get_parameter_values()}, function(job_info) {
+
+    let new_job_info = {"script": script, "parameters": get_parameter_values()};
+    console.log("new_job_info", new_job_info);
+    $.post('/server/jobs/new', new_job_info, function(job_info) {
+        console.log("About to run job_info", job_info);
         $.post(`start/${job_info.id}`, function(job_info) {
-            let socket = io.connect(`http://${document.domain}:${location.port}`);
-            socket.on("cea-worker-message", function(data){
+            /*socket.on("cea-worker-message", function(data){
                 $('#cea-console-output-body').append(data.message);
-            });
+            });*/
         });
     }, 'json');
 }
