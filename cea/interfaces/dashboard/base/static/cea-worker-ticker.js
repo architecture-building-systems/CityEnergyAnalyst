@@ -4,7 +4,7 @@ $(document).ready(function(){
     let $ticker = $("#cea-worker-ticker");
     // this is a callback that triggers when the "my response" event is emitted by the server.
     socket.on('cea-worker-message', function(data) {
-        let lines = data.message.split(/\r?\n/);
+        let lines = data.message.split(/\r?\n/).map(x => x.trim()).filter(x => x.length > 0);
         let last_line = lines[lines.length - 1];
 
         $ticker.text(`${data.jobid}: ${last_line.substr(0, 80)}`);
