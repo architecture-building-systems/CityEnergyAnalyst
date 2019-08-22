@@ -50,7 +50,7 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qhpro_sys',
+                              'Qcs_dis_ls', 'Qhpro_sys', 'Qcpro_sys',
                               'QH_sys', 'QC_sys']
 
         else:
