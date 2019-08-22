@@ -335,10 +335,7 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, 
 
         Q_from_storage_req_W = 0
         mdot_DH_missing_kgpers = 0
-
-
-    else: #discharging the storage
-        # #elif Q_in_storage_old > 0: #and T_storage_old > gv.T_storage_min: # de-charging the storage is possible
+    else:  # discharging the storage
         if Q_in_storage_old_W > 0.0:  # Start de-Charging
             E_aux_dech_W, Q_from_storage_req_W, Q_in_storage_new_W, T_storage_new_K, COP = \
                 Storage_DeCharger(T_storage_old_K, Q_from_storage_W, T_DH_sup_K, Q_in_storage_old_W,
@@ -357,10 +354,6 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, 
                 # if storage is almost empty after the discharge calculation, only discharge the amount that is possible
                 # to not go below 10 degC
                 Q_from_storage_poss = Q_in_storage_old_W
-                # T_storage_new = gv.T_storage_min
-                # Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * HEAT_CAPACITY_OF_WATER_JPERKGK * DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * 1/WH_TO_J) * (T_storage_old - T_storage_new))
-                # Q_from_storage_poss = min(Q_from_storage_1, Q_from_storage_2)
-                # print Q_from_storage_poss, "taken from storage as max"
                 E_aux_dech_W, Q_from_storage_req_W, Q_in_storage_new_W, T_storage_new_K, COP = \
                     Storage_DeCharger(T_storage_old_K, Q_from_storage_poss, T_DH_sup_K, Q_in_storage_old_W,
                                       STORAGE_SIZE_m3, context)
@@ -370,14 +363,6 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, 
                                                     Q_SC_ET_to_directload_W +
                                                     Q_SC_FP_to_directload_W +
                                                     Q_server_to_directload_W) - Q_from_storage_req_W
-
-                """
-                # CURRENTLY NOT USED
-                if T_storage_new < gv.T_storage_min:
-                    print "error at limited decharging"
-                    print T_storage_old -273, "T_storage_old"
-                    Q_from_storage_used = 0 
-                """
 
                 Q_in_storage_new_W = Q_in_storage_old_W - Q_loss_W - Q_from_storage_req_W
                 T_storage_new_K -= T_loss_K

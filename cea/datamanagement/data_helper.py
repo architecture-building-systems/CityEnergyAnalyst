@@ -28,25 +28,29 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def get_technology_related_databases(locator, region):
-    technology_database_cea = locator.get_region_specific_db_file(region)
+    technology_database_template = locator.get_technology_template_for_region(region)
+    print("Copying technology databases from {source}".format(source=technology_database_template))
     output_directory = locator.get_technology_folder()
 
     from distutils.dir_util import copy_tree
-    copy_tree(technology_database_cea, output_directory)
+    copy_tree(technology_database_template, output_directory)
 
-def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag,
-                prop_supply_systems_flag, prop_restrictions_flag, technology_flag):
+
+def data_helper(locator, region, overwrite_technology_folder,
+                update_architecture_dbf, update_technical_systems_dbf, update_indoor_comfort_dbf,
+                update_internal_loads_dbf, update_supply_systems_dbf, update_restrictions_dbf):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
     model of Fonseca et al. 2015. Appl. energy.
 
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
-    :param boolean prop_architecture_flag: if True, get properties about the construction and architecture.
-    :param boolean prop_comfort_flag: if True, get properties about thermal comfort.
-    :param boolean prop_hvac_flag: if True, get properties about types of HVAC systems, otherwise False.
-    :param boolean prop_internal_loads_flag: if True, get properties about internal loads, otherwise False.
+    :param boolean update_architecture_dbf: if True, update the construction and architecture properties.
+    :param boolean update_indoor_comfort_dbf: if True, get properties about thermal comfort.
+    :param boolean update_technical_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
+    :param boolean update_internal_loads_dbf: if True, get properties about internal loads, otherwise False.
 
     The following files are created by this script, depending on which flags were set:
 
@@ -62,9 +66,12 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     - indoor_comfort.shp
         describes the queried thermal properties of buildings
     """
+    # get technology database
+    if overwrite_technology_folder:
+        # copy all the region-specific archetypes to the scenario's technology folder
+        get_technology_related_databases(locator, region)
 
     # get occupancy and age files
-    region_database = config.data_helper.region
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     columns = building_occupancy_df.columns
 
@@ -82,9 +89,6 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
-    #get technology database
-    if technology_flag:
-        get_technology_related_databases(locator, region_database)
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
@@ -106,7 +110,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
     categories_df = building_occupancy_df.merge(building_age_df, on='Name')
 
     # get properties about the construction and architecture
-    if prop_architecture_flag:
+    if update_architecture_dbf:
         architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                             x['year_end'], x['standard']), axis=1)
@@ -126,7 +130,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
-    if prop_hvac_flag:
+    if update_technical_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                             x['year_end'], x['standard']), axis=1)
@@ -141,7 +145,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
         dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
-    if prop_comfort_flag:
+    if update_indoor_comfort_dbf:
         comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
 
         # define comfort
@@ -155,7 +159,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
                   'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
-    if prop_internal_loads_flag:
+    if update_internal_loads_dbf:
         internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
 
         # define comfort
@@ -169,7 +173,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
                   'Qhpro_Wm2']
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
-    if prop_supply_systems_flag:
+    if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
         supply_DB['Code'] = supply_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
@@ -184,7 +188,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
-    if prop_restrictions_flag:
+    if update_restrictions_dbf:
         new_names_df = names_df.copy() #this to avoid that the dataframe is reused
         COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
         for field in COLUMNS_ZONE_RESTRICTIONS:
@@ -403,22 +407,25 @@ def main(config):
     print('Running data-helper with scenario = %s' % config.scenario)
     print('Running data-helper with archetypes = %s' % config.data_helper.databases)
 
-    prop_architecture_flag = 'architecture' in config.data_helper.databases
-    prop_hvac_flag = 'HVAC' in config.data_helper.databases
-    prop_comfort_flag = 'comfort' in config.data_helper.databases
-    prop_internal_loads_flag = 'internal-loads' in config.data_helper.databases
-    prop_supply_systems_flag = 'supply' in config.data_helper.databases
-    prop_restrictions_flag = 'restrictions' in config.data_helper.databases
-    technology_flag = 'technology' in config.data_helper.databases
+    update_architecture_dbf = 'architecture' in config.data_helper.databases
+    update_technical_systems_dbf = 'HVAC' in config.data_helper.databases
+    update_indoor_comfort_dbf = 'comfort' in config.data_helper.databases
+    update_internal_loads_dbf = 'internal-loads' in config.data_helper.databases
+    update_supply_systems_dbf = 'supply' in config.data_helper.databases
+    update_restrictions_dbf = 'restrictions' in config.data_helper.databases
+
+    overwrite_technology_folder = config.data_helper.overwrite_technology_folder
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator, config=config, prop_architecture_flag=prop_architecture_flag,
-                prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
-                prop_internal_loads_flag=prop_internal_loads_flag,
-                prop_supply_systems_flag=prop_supply_systems_flag,
-                prop_restrictions_flag=prop_restrictions_flag,
-                technology_flag=technology_flag)
+    data_helper(locator=locator, region=config.data_helper.region,
+                overwrite_technology_folder=overwrite_technology_folder,
+                update_architecture_dbf=update_architecture_dbf,
+                update_technical_systems_dbf=update_technical_systems_dbf,
+                update_indoor_comfort_dbf=update_indoor_comfort_dbf,
+                update_internal_loads_dbf=update_internal_loads_dbf,
+                update_supply_systems_dbf=update_supply_systems_dbf,
+                update_restrictions_dbf=update_restrictions_dbf)
 
 
 if __name__ == '__main__':
