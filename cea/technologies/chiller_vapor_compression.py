@@ -6,6 +6,7 @@ import pandas as pd
 from math import log, ceil
 import numpy as np
 import cea.config
+import cea.inputlocator
 from cea.utilities import epwreader
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
@@ -181,7 +182,9 @@ def calc_VCC_COP(config, load_types, centralized=True):
         # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
     # read weather data for condeser temperature calculation
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C']]
     # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
     T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
     # calculate chiller COP
