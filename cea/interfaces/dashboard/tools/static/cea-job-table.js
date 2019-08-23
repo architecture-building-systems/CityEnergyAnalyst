@@ -1,14 +1,31 @@
 /*jslint browser:true */
 /*global $, Tabulator, io, console */
 
+const JOB_STATES = ["pending", "started", "success", "error"];
+const URL_LIST_JOBS = "../server/jobs/list";
+
+let cea_job_table = null;
+
+function update_job_state(job) {
+    "use strict";
+
+    console.log("updating job state for job", job);
+    $.getJSON(URL_LIST_JOBS, null, function (jobs) {
+        cea_job_table.replaceData(jobs);
+    });
+}
+
+function show_job_output(job) {
+    "use strict";
+
+    console.log(job);
+}
+
 $(document).ready(function () {
     "use strict";
 
-    const JOB_STATES = ["pending", "started", "success", "error"];
-    const URL_LIST_JOBS = "../server/jobs/list";
-
     $.getJSON(URL_LIST_JOBS, null, function (jobs) {
-        let cea_job_table = new Tabulator("#cea-job-table", {
+        cea_job_table = new Tabulator("#cea-job-table", {
             data: jobs,           //load row data from array
             layout: "fitColumns",      //fit columns to width of table
             responsiveLayout: "hide",  //hide columns that dont fit on the table
@@ -25,17 +42,12 @@ $(document).ready(function () {
                 {title: "Script", field: "script"},
                 {title: "State", field: "state", formatter: (cell) => JOB_STATES[cell.getValue()]},
                 {title: "Parameters", field: "parameters"}
-            ]
+            ],
+            rowClick: (e, row) => show_job_output(row.getData())
         });
 
         // handle state changes in worker
         let socket = io.connect(`http://${document.domain}:${location.port}`);
-        let update_job_state = function (job) {
-            console.log("updating job state for job", job);
-            $.getJSON(URL_LIST_JOBS, null, function (jobs) {
-                cea_job_table.replaceData(jobs);
-            });
-        };
         socket.on("cea-worker-success", update_job_state);
         socket.on("cea-worker-error", update_job_state);
         socket.on("cea-worker-started", update_job_state);
