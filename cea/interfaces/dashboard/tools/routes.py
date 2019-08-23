@@ -17,7 +17,7 @@ blueprint = Blueprint(
 
 @blueprint.route("/")
 def route_index():
-    return render_template("list_jobs.html")
+    return render_template("job_table.html")
 
 
 @blueprint.route('/start/<jobid>', methods=['POST'])

@@ -26,10 +26,18 @@ api = Namespace('Streams', description='A collection of output from cea-worker p
 streams = {}
 
 
+@api.route("/read/<int:jobid>")
+class ReadStream(Resource):
+    def get(self, jobid):
+        try:
+            return ''.join(streams[jobid])
+        except KeyError:
+            return ''
+
+
 @api.route("/write/<int:jobid>")
 class WriteStream(Resource):
     def put(self, jobid):
-        # FIXME: this output needs to bubble up to the user interface...
         msg = request.data
         streams.setdefault(jobid, []).append(msg)
 

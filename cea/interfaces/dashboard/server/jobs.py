@@ -44,8 +44,11 @@ job_info_request_parser.add_argument("parameters", type=dict, location="json")
 
 def next_id():
     """FIXME: replace with better solution"""
-    return max(jobs.keys()) + 1
-
+    try:
+        return max(jobs.keys()) + 1
+    except ValueError:
+        # this is the first job...
+        return 1
 
 # FIXME: replace with database or similar solution
 class JobInfo(object):
