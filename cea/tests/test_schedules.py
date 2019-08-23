@@ -91,7 +91,8 @@ class TestScheduleCreation(unittest.TestCase):
         stochastic_occupancy = config.demand.use_stochastic_occupancy
 
         # get year from weather file
-        weather_data = epwreader.epw_reader(config.weather)[['year']]
+        weather_path = locator.get_weather_file()
+        weather_data = epwreader.epw_reader(weather_path)[['year']]
         year = weather_data['year'][0]
         date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
@@ -156,7 +157,8 @@ def create_data():
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     # get year from weather file
-    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year']]
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
