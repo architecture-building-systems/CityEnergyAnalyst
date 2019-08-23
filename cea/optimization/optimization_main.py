@@ -106,7 +106,7 @@ def main(config):
     run the whole optimization routine
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_file = config.weather
+    weather_file = locator.get_weather_file()
 
     try:
         check_input_files(config, locator)
