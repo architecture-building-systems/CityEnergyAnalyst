@@ -3,6 +3,7 @@
 
 const JOB_STATES = ["pending", "started", "success", "error"];
 const URL_LIST_JOBS = "../server/jobs/list";
+const url_read_stream = (jobid) => `../server/streams/read/${jobid}`;
 
 let cea_job_table = null;
 
@@ -19,6 +20,25 @@ function show_job_output(job) {
     "use strict";
 
     console.log(job);
+    $.getJSON(url_read_stream(job.id), null, function (stdout) {
+        $("#cea-console-output-body").html(stdout);
+
+        let message_appender = function (data) {
+            if (data.jobid === job.id) {
+                $("#cea-console-output-body").append(data.message);
+            }
+        };
+
+        // append new data
+        let socket = io.connect(`http://${document.domain}:${location.port}`);
+        socket.on("cea-worker-message", message_appender);
+
+        const $cea_console_output = $("#cea-console-output");
+        $cea_console_output.on("hidden.bs.modal", function (e) {
+            socket.removeListener("cea-worker-message", message_appender);
+        });
+        $cea_console_output.modal({"show": true, "backdrop": "static"});
+    });
 }
 
 $(document).ready(function () {
