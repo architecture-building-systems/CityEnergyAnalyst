@@ -35,11 +35,11 @@ job_info_model = api.model('JobInfo', {
 })
 
 job_info_request_parser = reqparse.RequestParser()
-job_info_request_parser.add_argument('id', type=int)
-job_info_request_parser.add_argument('script', required=True)
-job_info_request_parser.add_argument('state', )
-job_info_request_parser.add_argument('error')
-job_info_request_parser.add_argument('parameters', type=dict)
+job_info_request_parser.add_argument("id", type=int, location="json")
+job_info_request_parser.add_argument("script", type=str, required=True, location="json")
+job_info_request_parser.add_argument("state", location="json")
+job_info_request_parser.add_argument("error", location="json")
+job_info_request_parser.add_argument("parameters", type=dict, location="json")
 
 
 def next_id():
@@ -62,9 +62,7 @@ class JobInfo(object):
 
 
 jobs = {
-    1: JobInfo(id=1, script="data-helper", parameters={
-        "scenario": r"c:\Users\darthoma\Documents\CityEnergyAnalyst\projects\reference-case-open\baseline",
-    }),
+    # jobid -> JobInfo
 }
 
 
@@ -85,7 +83,6 @@ class NewJob(Resource):
         print("NewJob: args={args}".format(**locals()))
         job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
         jobs[job.id] = job
-        print("NewJob: args={args}, job={job}".format(**locals()))
         return job
 
 

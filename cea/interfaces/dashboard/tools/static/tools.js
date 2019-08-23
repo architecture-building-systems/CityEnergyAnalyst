@@ -1,6 +1,65 @@
+/*jslint browser:true */
+/*global $, Tabulator, io, console */
+
 /**
  * Functions to run a tool from the tools page.
  */
+
+/**
+ * Read out the value of the parameter as defined by the form input - this depends on the parameter_type.
+ */
+function read_value(element) {
+    "use strict";
+    let value = null;
+    switch (element.dataset.ceaParameterTypename) {
+    case "ChoiceParameter":
+    case "ScenarioNameParameter":
+        value = $(element)[0].value;
+        break;
+    case "WeatherPathParameter":
+        value = $(element)[0].value;
+        break;
+    case "BooleanParameter":
+        value = $(element)[0].checked;
+        break;
+    case "PathParameter":
+        value = $(element)[0].value;
+        break;
+    case "MultiChoiceParameter":
+    case "BuildingsParameter":
+        value = $(element).val();
+        if (value) {
+            value = value.join();
+        } else {
+            value = [];
+        }
+        break;
+    case "SubfoldersParameter":
+        value = $(element).val();
+        break;
+    case "JsonParameter":
+        value = JSON.parse($(element).val());
+        break;
+    default:
+        // handle the default case
+        value = $(element)[0].value;
+    }
+    return value;
+}
+
+/**
+ * Read the values of all the parameters.
+ */
+function get_parameter_values() {
+    "use strict";
+    let result = {};
+    $(".cea-parameter").not("bootstrap-select").each(function (index, element) {
+        console.log(`Reading parameter: ${element.id}`);
+        result[element.id] = read_value(element);
+    });
+    console.log("get_parameter_values(): result=", result);
+    return result;
+}
 
 function cea_run(script) {
     "use strict";
@@ -12,28 +71,33 @@ function cea_run(script) {
     $("#cea-console-output").modal({"show": true, "backdrop": "static"});
 
     let new_job_info = {"script": script, "parameters": get_parameter_values()};
-    console.log("new_job_info", new_job_info);
-    $.post("/server/jobs/new", new_job_info, function (job_info) {
-        console.log("About to run job_info", job_info);
-        $.post(`start/${job_info.id}`, function () {
-            let socket = io.connect(`http://${document.domain}:${location.port}`);
-            let $cea_modal_close = $(".cea-modal-close");
-            let message_appender = function (data) {
-                $("#cea-console-output-body").append(data.message);
-            };
-            socket.on("cea-worker-message", message_appender);
-            socket.on("cea-worker-success", function () {
-                $cea_modal_close.removeAttr("disabled");
-                $cea_modal_close.addClass("btn-success");
-                socket.removeListener("cea-worker-message", message_appender);
+    $.ajax({
+        type: "post",
+        url: "/server/jobs/new",
+        data: JSON.stringify(new_job_info),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (job_info) {
+            $.post(`start/${job_info.id}`, function () {
+                let socket = io.connect(`http://${document.domain}:${location.port}`);
+                let $cea_modal_close = $(".cea-modal-close");
+                let message_appender = function (data) {
+                    $("#cea-console-output-body").append(data.message);
+                };
+                socket.on("cea-worker-message", message_appender);
+                socket.on("cea-worker-success", function () {
+                    $cea_modal_close.removeAttr("disabled");
+                    $cea_modal_close.addClass("btn-success");
+                    socket.removeListener("cea-worker-message", message_appender);
+                });
+                socket.on("cea-worker-error", function () {
+                    $cea_modal_close.removeAttr("disabled");
+                    $(".cea-modal-close").addClass("btn-danger");
+                    socket.removeListener("cea-worker-message", message_appender);
+                });
             });
-            socket.on("cea-worker-error", function () {
-                $cea_modal_close.removeAttr("disabled");
-                $(".cea-modal-close").addClass("btn-danger");
-                socket.removeListener("cea-worker-message", message_appender);
-            });
-        });
-    }, "json");
+        }
+    });
 }
 
 function cea_save_config(script) {
@@ -47,20 +111,6 @@ function cea_save_config(script) {
     $cea_save_config_modal.modal("hide");
 }
 
-
-/**
- * Read the values of all the parameters.
- */
-function get_parameter_values() {
-    "use strict";
-    let result = {};
-    $(".cea-parameter").not("bootstrap-select").each((index, element) => {
-        console.log(`Reading parameter: ${element.id}`);
-        result[element.id] = read_value(element);
-    });
-    console.log(result);
-    return result;
-}
 
 /**
  * Update the div#cea-console-output-body with the output of the script until it is done.
@@ -93,52 +143,6 @@ function update_output(script) {
     });
 }
 
-/**
- * Read out the value of the parameter as defined by the form input - this depends on the parameter_type.
- *
- * @param script
- * @param parameter_name
- * @param parameter_type
- */
-function read_value(element) {
-    "use strict";
-    let value = null;
-    switch (element.dataset.ceaParameterTypename) {
-        case "ChoiceParameter":
-        case "ScenarioNameParameter":
-            value = $(element)[0].value;
-            break;
-        case "WeatherPathParameter":
-            value = $(element)[0].value;
-            break;
-        case "BooleanParameter":
-            value = $(element)[0].checked;
-            break;
-        case "PathParameter":
-            value = $(element)[0].value;
-            break;
-        case "MultiChoiceParameter":
-        case "BuildingsParameter":
-            value = $(element).val();
-            if (value) {
-                value = value.join();
-            }
-            else {
-                value = [];
-            }
-            break;
-        case "SubfoldersParameter":
-            value = $(element).val();
-            break;
-        case "JsonParameter":
-            value = JSON.parse($(element).val());
-            break;
-        default:
-            // handle the default case
-            value = $(element)[0].value;
-    }
-    return value;
-}
 
 /**
  * Show an open file dialog for a cea FileParameter and update the contents of the
