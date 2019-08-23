@@ -52,39 +52,6 @@ class TestConfiguration(unittest.TestCase):
         config = pickle.loads(pickle.dumps(config))
         self.assertEquals(config.scenario, config.general.scenario)
 
-    def test_setting_weather(self):
-        config = cea.config.Configuration()
-        self.assertEquals(config.weather, config.general.weather)
-        config.weather = 'Brussels_1990_2010_TMY'
-        self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'), config.weather)
-
-    def test_setting_weather_pickling(self):
-        config = cea.config.Configuration()
-        self.assertEquals(config.weather, config.general.weather)
-        config.weather = 'Brussels_1990_2010_TMY'
-        config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
-
-    def test_weather_apply_parameters(self):
-        config = cea.config.Configuration()
-        self.assertEquals(config.weather, config.general.weather)
-        config.apply_command_line_args(['--weather', 'Brussels_1990_2010_TMY'], ['general'])
-        self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
-        config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.weather, config.general.weather)
-
-    def test_weather_apply_parameters_pickle_first(self):
-        config = cea.config.Configuration()
-        self.assertEquals(config.weather, config.general.weather)
-        config = pickle.loads(pickle.dumps(config))
-        config.apply_command_line_args(['--weather', 'Brussels_1990_2010_TMY'], ['general'])
-        self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels_1990_2010_TMY.epw'))
-        self.assertEquals(config.weather, config.general.weather)
-
 
 if __name__ == "__main__":
     unittest.main()

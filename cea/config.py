@@ -96,6 +96,27 @@ class Configuration(object):
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
+    def ignore_restrictions(self):
+        """Create a ``with`` block where the config file restrictions are not kept. Usage::
+
+            with config.ignore_restrictions():
+                config.my_section.my_property = value
+        """
+        class RestrictionsIgnorer(object):
+            def __init__(self, config):
+                self.config = config
+                self.old_restrictions = None
+
+            def __enter__(self):
+                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
+                self.old_restrictions = self.config.restricted_to
+                self.config.restricted_to = None
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self.config.restricted_to = self.old_restrictions
+
+        return RestrictionsIgnorer(self)
+
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
@@ -180,7 +201,10 @@ class Configuration(object):
     def get_parameter(self, fqname):
         """Given a string of the form "section:parameter", return the parameter object"""
         section, parameter = fqname.split(':')
-        return self.sections[section].parameters[parameter]
+        try:
+            return self.sections[section].parameters[parameter]
+        except KeyError:
+            raise KeyError(fqname)
 
 
 def parse_command_line_args(args):
@@ -418,6 +442,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
+
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
         self._extensions = ['epw']
@@ -428,9 +453,7 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
-                weather_path=value))
-            weather_path = self.locator.get_weather('Zug-inducity_1990_2010_TMY')
+            weather_path = self.locator.get_weather(self.locator.get_weather_names()[0])
         return weather_path
 
 
@@ -635,7 +658,7 @@ class ChoiceParameter(Parameter):
     typename = 'ChoiceParameter'
 
     def initialize(self, parser):
-        # when called for the first time, make sure there is a `.choices` parameter
+        # when called for the first time, make sure there is a `._choices` parameter
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
@@ -652,6 +675,73 @@ class ChoiceParameter(Parameter):
         else:
             assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
             return self._choices[0]
+
+
+class RegionParameter(ChoiceParameter):
+    """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
+    folder that has the same structure."""
+    typename = "RegionParameter"
+
+    def initialize(self, parser):
+        self.locator = cea.inputlocator.InputLocator(None)
+
+    @property
+    def _choices(self):
+        """List the technology database template names available"""
+        return [region for region in os.listdir(self.locator.db_path)
+                if os.path.isdir(os.path.join(self.locator.db_path, region))
+                and not region == "weather"]
+
+    def encode(self, value):
+        """Make sure to use the friendly shorthands (e.g. CH and SG) if possible"""
+        if value in self._choices:
+            return value
+        for region in self._choices:
+            if self.locator.are_equal(value, os.path.join(self.locator.db_path, region)):
+                return region
+        if not os.path.exists(value):
+            # return the default value
+            print("Region template path does not exist, using default region. (Not found: {region})".format(
+                region=value))
+            return self.config.default_config.get(self.section.name, self.name)
+        return value
+
+    def decode(self, value):
+        """Return either built-in region name (e.g. CH or SG) OR a full path to the user-supplied template folder"""
+        if value in self._choices:
+            return value
+
+        if os.path.exists(value) and os.path.isdir(value):
+            if self.is_valid_template(value):
+                return value
+            else:
+                print('Invalid region template path, using default region instead. (bad template: {region})'.format(
+                    region=value))
+                return self.default
+        else:
+            print('Region template path does not exist, using default region. (Not found: {region})'.format(
+                region=value))
+            return self.default
+
+    def is_valid_template(self, path):
+        """True, if the path is a valid template path - containing the same excel files as the standard regions."""
+        default_template = os.path.join(self.locator.db_path, self.default)
+        for folder in os.listdir(default_template):
+            if not os.path.isdir(os.path.join(default_template, folder)):
+                continue
+            for file in os.listdir(os.path.join(default_template, folder)):
+                default_file_path = os.path.join(default_template, folder, file)
+                if not os.path.isfile(default_file_path):
+                    continue
+                if not os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                    # we're only interested in the excel files
+                    continue
+                template_file_path = os.path.join(path, folder, file)
+                if not os.path.exists(template_file_path):
+                    print("Invalid user-specified region template - file not found: {template_file_path}".format(
+                        template_file_path=template_file_path))
+                    return False
+        return True
 
 
 class PlantNodeParameter(ChoiceParameter):

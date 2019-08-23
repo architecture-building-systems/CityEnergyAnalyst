@@ -5065,13 +5065,10 @@ get_total_demand:
       sample_data: 5665.0
       types_found: [float]
   used_by: [sewage-potential, emissions, operation-costs, network-layout]
-get_weather:
-  created_by: []
-  description: "weather/{name}.epw Returns the path to a weather file with the name\
-    \ ``name``. This can either be one\n        of the pre-configured weather files\
-    \ (see ``get_weather_names``) or a path to an existing weather file.\n       \
-    \ Returns the default weather file if no other file can be resolved."
-  file_path: c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/Singapore-Changi_1990_2010_TMY.epw
+get_weather_file:
+  created_by: [weather-helper]
+  description: "weather/weather.epw Returns the path to a weather file to use for simulations"
+  file_path: "{general:scenario}/inpusts/weather/weather.epw"
   file_type: epw
   schema:
     Albedo (index = 32):

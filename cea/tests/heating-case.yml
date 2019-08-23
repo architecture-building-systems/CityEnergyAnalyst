@@ -16,7 +16,7 @@
 - script: network-layout
   parameters:
     network-type: DH
-- script: lake-potential
+- script: water-body-potential
 - script: sewage-potential
 - script: photovoltaic
 - script: solar-collector
