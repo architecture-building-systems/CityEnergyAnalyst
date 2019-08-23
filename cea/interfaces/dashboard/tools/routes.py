@@ -15,6 +15,11 @@ blueprint = Blueprint(
 )
 
 
+@blueprint.route("/")
+def route_index():
+    return render_template("list_jobs.html")
+
+
 @blueprint.route('/start/<jobid>', methods=['POST'])
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""

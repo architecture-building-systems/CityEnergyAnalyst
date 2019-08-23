@@ -96,6 +96,16 @@ class ListJobs(Resource):
         return jobs.values()
 
 
+@api.route("/started/<int:jobid>")
+class JobStarted(Resource):
+    @api.marshal_with(job_info_model)
+    def post(self, jobid):
+        job = jobs[jobid]
+        job.state = JOB_STATE_STARTED
+        socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
+        return job
+
+
 @api.route("/success/<int:jobid>")
 class JobSuccess(Resource):
     @api.marshal_with(job_info_model)
@@ -103,7 +113,7 @@ class JobSuccess(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_SUCCESS
         job.error = None
-        socketio.emit("cea-worker-success", {"jobid": jobid})
+        socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
         return job
 
 
