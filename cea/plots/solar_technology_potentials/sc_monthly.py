@@ -188,31 +188,32 @@ def main():
     # cache = cea.plots.cache.NullPlotCache()
 
     # panel_type=ET
+    weather_path = locator.get_weather_file()
     SolarCollectorEvacuatedTubeMonthlyPlot(config.project, {'buildings': None,
                                                             'scenario-name': config.scenario_name,
-                                                            'weather': config.weather},
+                                                            'weather': weather_path},
                                            cache).plot(auto_open=True)
     SolarCollectorEvacuatedTubeMonthlyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                                             'scenario-name': config.scenario_name,
-                                                            'weather': config.weather},
+                                                            'weather': weather_path},
                                            cache).plot(auto_open=True)
     SolarCollectorEvacuatedTubeMonthlyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                                             'scenario-name': config.scenario_name,
-                                                            'weather': config.weather},
+                                                            'weather': weather_path},
                                            cache).plot(auto_open=True)
 
     # panel_type=FP
     SolarCollectorFlatPlateMonthlyPlot(config.project, {'buildings': None,
                                                         'scenario-name': config.scenario_name,
-                                                        'weather': config.weather},
+                                                        'weather': weather_path},
                                        cache).plot(auto_open=True)
     SolarCollectorFlatPlateMonthlyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                                         'scenario-name': config.scenario_name,
-                                                        'weather': config.weather},
+                                                        'weather': weather_path},
                                        cache).plot(auto_open=True)
     SolarCollectorFlatPlateMonthlyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                                         'scenario-name': config.scenario_name,
-                                                        'weather': config.weather},
+                                                        'weather': weather_path},
                                        cache).plot(auto_open=True)
 
 

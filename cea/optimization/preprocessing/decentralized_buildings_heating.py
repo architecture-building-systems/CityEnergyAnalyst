@@ -44,7 +44,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
     geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
         'Area']
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)

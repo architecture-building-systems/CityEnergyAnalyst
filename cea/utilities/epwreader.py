@@ -57,8 +57,7 @@ def calc_wetbulb(Tdrybulb, RH):
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    weather_path = locator.get_default_weather()
-    epw_reader(weather_path=weather_path)
+    epw_reader(weather_path=(locator.get_weather()))
 
 
 if __name__ == '__main__':

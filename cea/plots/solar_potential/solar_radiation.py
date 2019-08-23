@@ -125,17 +125,18 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
     # cache = cea.plots.cache.NullPlotCache()
+    weather_path = locator.get_weather_file()
     SolarRadiationPlot(config.project, {'buildings': None,
                                         'scenario-name': config.scenario_name,
-                                        'weather': config.weather},
+                                        'weather': weather_path},
                        cache).plot(auto_open=True)
     SolarRadiationPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                         'scenario-name': config.scenario_name,
-                                        'weather': config.weather},
+                                        'weather': weather_path},
                        cache).plot(auto_open=True)
     SolarRadiationPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                         'scenario-name': config.scenario_name,
-                                        'weather': config.weather},
+                                        'weather': weather_path},
                        cache).plot(auto_open=True)
 
 

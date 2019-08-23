@@ -96,6 +96,27 @@ class Configuration(object):
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
+    def ignore_restrictions(self):
+        """Create a ``with`` block where the config file restrictions are not kept. Usage::
+
+            with config.ignore_restrictions():
+                config.my_section.my_property = value
+        """
+        class RestrictionsIgnorer(object):
+            def __init__(self, config):
+                self.config = config
+                self.old_restrictions = None
+
+            def __enter__(self):
+                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
+                self.old_restrictions = self.config.restricted_to
+                self.config.restricted_to = None
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self.config.restricted_to = self.old_restrictions
+
+        return RestrictionsIgnorer(self)
+
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
@@ -180,7 +201,10 @@ class Configuration(object):
     def get_parameter(self, fqname):
         """Given a string of the form "section:parameter", return the parameter object"""
         section, parameter = fqname.split(':')
-        return self.sections[section].parameters[parameter]
+        try:
+            return self.sections[section].parameters[parameter]
+        except KeyError:
+            raise KeyError(fqname)
 
 
 def parse_command_line_args(args):
@@ -418,6 +442,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
+
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
         self._extensions = ['epw']
@@ -428,9 +453,7 @@ class WeatherPathParameter(Parameter):
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
         else:
-            print('Weather path does not exist, using default weather file. (Not found: {weather_path})'.format(
-                weather_path=value))
-            weather_path = self.locator.get_weather('Zug')
+            weather_path = self.locator.get_weather(self.locator.get_weather_names()[0])
         return weather_path
 
 
@@ -863,48 +886,3 @@ def parse_string_to_list(line):
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
     return [field.strip() for field in line.split(',') if field.strip()]
-
-def main():
-    """Run some tests on the configuration module"""
-    config = Configuration()
-    print(config.general.multiprocessing)
-    # print(config.demand.heating_season_start)
-    print(config.scenario)
-    print(config.weather)
-    print(config.sensitivity_demand.samples_folder)
-    # make sure the config can be pickled (for multiprocessing)
-    config.scenario = r'C:\reference-case-open'
-    print(config.project, config.scenario_name, config.scenario)
-    import pickle
-    config = pickle.loads(pickle.dumps(config))
-    print(config.scenario)
-    assert config.scenario == r'C:\reference-case-open'
-    print('reference case: %s' % config.scenario)
-    # config = pickle.loads(pickle.dumps(config))
-    # test overriding
-    args = ['--weather', 'Zurich',
-            '--scenario', 'C:\\reference-case-test\\baseline']
-    config.apply_command_line_args(args, ['general', 'sensitivity-demand'])
-    # make sure the WeatherPathParameter resolves weather names...
-    assert config.general.weather.endswith('Zurich.epw'), config.general.weather
-    assert config.weather.endswith('Zurich.epw'), config.weather
-    config.weather = 'Zug'
-    assert config.general.weather.endswith('Zug.epw')
-    print(config.general.weather)
-    # test if pickling keeps state
-    config.weather = 'Singapore'
-    print(config.weather)
-    config = pickle.loads(pickle.dumps(config))
-    print(config.weather)
-    # test changing scenario (and resulting RelativePathParameters)
-    config.scenario = r'C:\reference-case-open\baseline'
-    args = ['--reference-cases', 'zurich/baseline']
-    config.apply_command_line_args(args, ['test'])
-    print(config.test.reference_cases)
-    print(config.scenario_plots.scenarios)
-    print(config.get('plots:buildings'))
-    print(config.get_parameter('general:scenario-name')._choices)
-
-
-if __name__ == '__main__':
-    main()
