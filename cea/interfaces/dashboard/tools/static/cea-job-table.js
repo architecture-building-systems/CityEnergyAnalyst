@@ -21,6 +21,7 @@ function show_job_output(job) {
 
     console.log(job);
     $.getJSON(url_read_stream(job.id), null, function (stdout) {
+        $("#cea-console-title").html(`Job ${job.id} - Output for ${job.script}`);
         $("#cea-console-output-body").html(stdout);
 
         let message_appender = function (data) {
