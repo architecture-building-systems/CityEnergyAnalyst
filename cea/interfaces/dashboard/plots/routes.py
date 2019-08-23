@@ -25,6 +25,11 @@ def index():
     return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
 
 
+@blueprint.route('/dashboard/react')
+def route_react_dashboard():
+    return render_template('react_dashboard.html')
+
+
 @blueprint.route('/dashboard/<int:dashboard_index>')
 def route_dashboard(dashboard_index):
     """
