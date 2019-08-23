@@ -3,28 +3,31 @@
  */
 
 function cea_run(script) {
-    if(!$('#cea-tool-parameters').parsley().isValid()) return false;
-    $('.cea-modal-close').attr('disabled', 'disabled').removeClass('btn-danger').removeClass('btn-success');
-    $('#cea-console-output-body').text('');
-    $('#cea-console-output').modal({'show': true, 'backdrop': 'static'});
+    "use strict";
+    if (!$("#cea-tool-parameters").parsley().isValid()) {
+        return false;
+    }
+    $(".cea-modal-close").attr("disabled", "disabled").removeClass("btn-danger").removeClass("btn-success");
+    $("#cea-console-output-body").text("");
+    $("#cea-console-output").modal({"show": true, "backdrop": "static"});
 
     let new_job_info = {"script": script, "parameters": get_parameter_values()};
     console.log("new_job_info", new_job_info);
-    $.post('/server/jobs/new', new_job_info, function(job_info) {
+    $.post("/server/jobs/new", new_job_info, function (job_info) {
         console.log("About to run job_info", job_info);
-        $.post(`start/${job_info.id}`, function() {
+        $.post(`start/${job_info.id}`, function () {
             let socket = io.connect(`http://${document.domain}:${location.port}`);
             let $cea_modal_close = $(".cea-modal-close");
-            let message_appender = function(data){
-                $('#cea-console-output-body').append(data.message);
+            let message_appender = function (data) {
+                $("#cea-console-output-body").append(data.message);
             };
             socket.on("cea-worker-message", message_appender);
-            socket.on('cea-worker-success', function() {
+            socket.on("cea-worker-success", function () {
                 $cea_modal_close.removeAttr("disabled");
                 $cea_modal_close.addClass("btn-success");
                 socket.removeListener("cea-worker-message", message_appender);
             });
-            socket.on('cea-worker-error', function() {
+            socket.on("cea-worker-error", function () {
                 $cea_modal_close.removeAttr("disabled");
                 $(".cea-modal-close").addClass("btn-danger");
                 socket.removeListener("cea-worker-message", message_appender);
@@ -34,10 +37,14 @@ function cea_run(script) {
 }
 
 function cea_save_config(script) {
-    if(!$('#cea-tool-parameters').parsley().isValid()) return false;
-    $('#cea-save-config-modal').modal({'show': true, 'backdrop': 'static'});
-    $.post('save-config/' + script, get_parameter_values(), null, 'json');
-    $('#cea-save-config-modal').modal('hide');
+    "use strict";
+    if (!$("#cea-tool-parameters").parsley().isValid()) {
+        return false;
+    }
+    let $cea_save_config_modal = $("#cea-save-config-modal");
+    $cea_save_config_modal.modal({"show": true, "backdrop": "static"});
+    $.post(`save-config/${script}`, get_parameter_values(), null, "json");
+    $cea_save_config_modal.modal("hide");
 }
 
 
@@ -45,9 +52,10 @@ function cea_save_config(script) {
  * Read the values of all the parameters.
  */
 function get_parameter_values() {
-    var result = {};
-    $('.cea-parameter').not('bootstrap-select').each((index, element) => {
-        console.log('Reading parameter: ' + element.id);
+    "use strict";
+    let result = {};
+    $(".cea-parameter").not("bootstrap-select").each((index, element) => {
+        console.log(`Reading parameter: ${element.id}`);
         result[element.id] = read_value(element);
     });
     console.log(result);
@@ -59,28 +67,29 @@ function get_parameter_values() {
  * @param script
  */
 function update_output(script) {
-    $.getJSON('read/' + script, {}, function(msg) {
-       if (msg === null) {
-           $.getJSON('is-alive/' + script, {}, function(msg) {
-               if (msg) {
-                   setTimeout(update_output, 1000, script);
-               } else {
-                   $('.cea-modal-close').removeAttr('disabled');
-                   $.getJSON('exitcode/' + script, {}, function(msg){
-                      if (msg === 0) {
-                          $('.cea-modal-close').addClass('btn-success');
-                      } else {
-                          $('.cea-modal-close').addClass('btn-danger');
-                      }
-                   });
-               }
-           });
+    "use strict";
+    $.getJSON(`read/${script}`, {}, function (msg) {
+        if (msg === null) {
+            $.getJSON(`is-alive/${script}`, {}, function (msg) {
+                if (msg) {
+                    setTimeout(update_output, 1000, script);
+                } else {
+                    $('.cea-modal-close').removeAttr('disabled');
+                    $.getJSON('exitcode/' + script, {}, function (msg) {
+                        if (msg === 0) {
+                            $('.cea-modal-close').addClass('btn-success');
+                        } else {
+                            $('.cea-modal-close').addClass('btn-danger');
+                        }
+                    });
+                }
+            });
 
-       }
-       else {
-           $('#cea-console-output-body').append(msg.message);
-           setTimeout(update_output, 1000, script);
-       }
+        }
+        else {
+            $('#cea-console-output-body').append(msg.message);
+            setTimeout(update_output, 1000, script);
+        }
     });
 }
 
@@ -92,6 +101,7 @@ function update_output(script) {
  * @param parameter_type
  */
 function read_value(element) {
+    "use strict";
     let value = null;
     switch (element.dataset.ceaParameterTypename) {
         case "ChoiceParameter":
@@ -136,10 +146,11 @@ function read_value(element) {
  *
  * @param parameter_name
  */
-function show_open_file_dialog(parameter_fqname,) {
-    $.get('open-file-dialog/' + parameter_fqname, {}, function(html) {
-        $('#cea-file-dialog .modal-content').html(html);
-        $('#cea-file-dialog').modal({'show': true, 'backdrop': 'static'});
+function show_open_file_dialog(parameter_fqname) {
+    "use strict";
+    $.get(`open-file-dialog/${parameter_fqname}`, {}, function (html) {
+        $("#cea-file-dialog .modal-content").html(html);
+        $("#cea-file-dialog").modal({"show": true, "backdrop": "static"});
     });
 }
 
@@ -148,8 +159,9 @@ function show_open_file_dialog(parameter_fqname,) {
  * @param parameter_fqname
  */
 function file_dialog_navigate_to(parameter_fqname, current_folder, folder) {
-    $.get('open-file-dialog/' + parameter_fqname, {current_folder: current_folder, folder: folder}, function(html) {
-        $('#cea-file-dialog .modal-content').html(html);
+    "use strict";
+    $.get("open-file-dialog/" + parameter_fqname, {current_folder: current_folder, folder: folder}, function (html) {
+        $("#cea-file-dialog .modal-content").html(html);
     });
 }
 
@@ -159,9 +171,10 @@ function file_dialog_navigate_to(parameter_fqname, current_folder, folder) {
  * @param file
  */
 function select_file(link) {
-    $('.cea-file-listing a').removeClass('bg-primary');
-    $(link).addClass('bg-primary');
-    $('#cea-file-dialog-select-button').prop('disabled', false);
+    "use strict";
+    $(".cea-file-listing a").removeClass("bg-primary");
+    $(link).addClass("bg-primary");
+    $("#cea-file-dialog-select-button").prop("disabled", false);
 }
 
 /**
@@ -169,9 +182,10 @@ function select_file(link) {
  * @param target_id
  */
 function save_file_name(target_id) {
+    "use strict";
     // figure out file path
-    var file_path = $('.cea-file-listing a.bg-primary').data('save-file-path');
-    $('#' + target_id).val(file_path);
+    let file_path = $(".cea-file-listing a.bg-primary").data("save-file-path");
+    $(`#${target_id}`).val(file_path);
 }
 
 /**
@@ -180,10 +194,11 @@ function save_file_name(target_id) {
  *
  * @param parameter_name
  */
-function show_open_folder_dialog(parameter_fqname,) {
-    $.get('open-folder-dialog/' + parameter_fqname, {}, function(html) {
-        $('#cea-folder-dialog .modal-content').html(html);
-        $('#cea-folder-dialog').modal({'show': true, 'backdrop': 'static'});
+function show_open_folder_dialog(parameter_fqname) {
+    "use strict";
+    $.get(`open-folder-dialog/${parameter_fqname}`, {}, function (html) {
+        $("#cea-folder-dialog .modal-content").html(html);
+        $("#cea-folder-dialog").modal({"show": true, "backdrop": "static"});
     });
 }
 
@@ -194,8 +209,8 @@ function show_open_folder_dialog(parameter_fqname,) {
  * @param folder
  */
 function folder_dialog_navigate_to(parameter_fqname, current_folder, folder) {
-    $.get('open-folder-dialog/' + parameter_fqname, {current_folder: current_folder, folder: folder}, function(html) {
-        $('#cea-folder-dialog .modal-content').html(html);
+    $.get(`open-folder-dialog/${parameter_fqname}`, {current_folder: current_folder, folder: folder}, function (html) {
+        $("#cea-folder-dialog .modal-content").html(html);
     });
 }
 
@@ -206,6 +221,6 @@ function folder_dialog_navigate_to(parameter_fqname, current_folder, folder) {
  */
 function save_folder_name(target_id, folder_path) {
     // figure out folder path
-    $('#' + target_id).val(folder_path).trigger("input").trigger("change");
-    console.log(target_id)
+    $(`#${target_id}`).val(folder_path).trigger("input").trigger("change");
+    console.log(target_id);
 }

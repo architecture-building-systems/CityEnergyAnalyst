@@ -124,6 +124,10 @@ def read_parameters(job):
     return py_parameters
 
 
+def post_started(jobid, server):
+    requests.post("{server}/jobs/started/{jobid}".format(**locals()))
+
+
 def post_success(jobid, server):
     requests.post("{server}/jobs/success/{jobid}".format(**locals()))
 
@@ -138,6 +142,7 @@ def worker(config, jobid, server):
     job = fetch_job(jobid, server)
     try:
         configure_streams(jobid, server)
+        post_started(jobid, server)
         run_job(config, job, server)
         post_success(jobid, server)
     except Exception:
