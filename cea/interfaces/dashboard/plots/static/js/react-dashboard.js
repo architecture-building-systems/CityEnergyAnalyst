@@ -30,7 +30,7 @@ function Dashboard() {
     <div>
       <input type="text" value={dashIndex} onChange={handleChange} />
       {plots.map(index => (
-        <Plot key={index} id={index} dashIndex={dashIndex} />
+        <Plot key={`${dashIndex}-${index}`} id={index} dashIndex={dashIndex} />
       ))}
     </div>
   );
@@ -53,7 +53,7 @@ function Plot({ id, dashIndex }) {
           HTMLReactParser(response.data, {
             replace: function(domNode) {
               if (domNode.type === "script") {
-                // setScript(domNode.children[0].data);
+                setScript(domNode.children[0].data);
               }
             }
           })
