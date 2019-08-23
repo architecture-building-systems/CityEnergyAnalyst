@@ -96,6 +96,27 @@ class Configuration(object):
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
+    def ignore_restrictions(self):
+        """Create a ``with`` block where the config file restrictions are not kept. Usage::
+
+            with config.ignore_restrictions():
+                config.my_section.my_property = value
+        """
+        class RestrictionsIgnorer(object):
+            def __init__(self, config):
+                self.config = config
+                self.old_restrictions = None
+
+            def __enter__(self):
+                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
+                self.old_restrictions = self.config.restricted_to
+                self.config.restricted_to = None
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self.config.restricted_to = self.old_restrictions
+
+        return RestrictionsIgnorer(self)
+
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
@@ -180,7 +201,10 @@ class Configuration(object):
     def get_parameter(self, fqname):
         """Given a string of the form "section:parameter", return the parameter object"""
         section, parameter = fqname.split(':')
-        return self.sections[section].parameters[parameter]
+        try:
+            return self.sections[section].parameters[parameter]
+        except KeyError:
+            raise KeyError(fqname)
 
 
 def parse_command_line_args(args):
