@@ -108,8 +108,8 @@ def ss_calibrator(number_samples_scaler,locator,list_building_names):
 def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(locator.get_weather_file())[['year', 'drybulb_C', 'wetbulb_C',
+                                                                     'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     settings = config.demand
     building_properties, schedules_dict, date = properties_and_schedule(locator, year)
