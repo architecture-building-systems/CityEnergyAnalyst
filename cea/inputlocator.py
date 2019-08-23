@@ -738,7 +738,7 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_layout_nodes_shapefile(self, network_type, network_name):
+    def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         self.check_cpg(shapefile_path)
