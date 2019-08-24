@@ -9,7 +9,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-# index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
 
@@ -17,7 +16,6 @@ class DemandWriter(object):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
     Subclasses are expected to:
-    - set the `gv` field to a `cea.globalvar.GlobalVariables` instance in the constructor
     - set the `vars_to_print` field in the constructor (FIXME: describe the `vars_to_print` structure.
     - implement the `write_to_csv` method
     """

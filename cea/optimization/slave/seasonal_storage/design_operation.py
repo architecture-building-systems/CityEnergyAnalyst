@@ -15,7 +15,6 @@ import os
 import numpy as np
 import pandas as pd
 
-import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import *
@@ -24,8 +23,8 @@ from cea.technologies.constants import DT_HEAT
 from cea.utilities import epwreader
 
 
-def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, master_to_slave_vars, P_HP_max_W, config):
+def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
+                   STORAGE_SIZE_m3, solar_technologies_data, master_to_slave_vars, P_HP_max_W, config):
     """
 
     :param CSV_NAME:
@@ -60,9 +59,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     mdot_heat_netw_total_kgpers = read_data_from_Network_summary(CSV_NAME, locator)
 
     # Get ground temperatures
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
-                                                         'windspd_ms', 'skytemp_C']]
-    T_ground_K = calc_ground_temperature(locator, config, weather_data['drybulb_C'], depth_m=10)
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
+                                                       'windspd_ms', 'skytemp_C']]
+    T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     # Calculate DH operation with on-site energy sources and storage
     T_amb_K = weather_data['drybulb_C'] + 273.15  # K
@@ -70,14 +70,13 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_disc_seasonstart_W = [0]
 
     # Get installation and production data of all types of solar technologies for every hour of the year
-    E_PVT_gen_Whr, \
-    Q_PVT_gen_Whr, \
-    Q_SC_ET_gen_Whr, \
-    Q_SC_FP_gen_Whr, \
-    Solar_E_aux_Wh, \
-    Solar_Tscr_th_PVT_K_hour, \
-    Solar_Tscr_th_SC_ET_K_hour, \
-    Solar_Tscr_th_SC_FP_K_hour = read_solar_technologies_data(locator, master_to_slave_vars)
+    E_PVT_gen_Whr = solar_technologies_data['E_PVT_gen_W']
+    Q_PVT_gen_Whr = solar_technologies_data['Q_PVT_gen_W']
+    Q_SC_ET_gen_Whr = solar_technologies_data['Q_SC_ET_gen_W']
+    Q_SC_FP_gen_Whr = solar_technologies_data['Q_SC_FP_gen_W']
+    Solar_Tscr_th_PVT_K_hour = solar_technologies_data['Tscr_th_PVT_K']
+    Solar_Tscr_th_SC_ET_K_hour = solar_technologies_data['Tscr_th_SC_ET_K']
+    Solar_Tscr_th_SC_FP_K_hour = solar_technologies_data['Tscr_th_SC_FP_K']
 
     # Initialize variables
     Q_storage_content_final_Whr = np.zeros(HOURS_IN_YEAR)
@@ -108,7 +107,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_HP_SC_FP_Whr = np.zeros(HOURS_IN_YEAR)
     Q_loss_Whr = np.zeros(HOURS_IN_YEAR)
 
-    for HOUR in range(HOURS_IN_YEAR): #no idea why, but if we try a for loop it does not work
+    for HOUR in range(HOURS_IN_YEAR):  # no idea why, but if we try a for loop it does not work
         # Get network temperatures and capacity flow rates
         T_DH_sup_K = T_DH_supply_array_K[HOUR]
         T_DH_return_K = T_DH_return_array_K[HOUR]
@@ -228,7 +227,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
                                            Q_server_to_directload_W
 
         # heating demand required from heating plant
-        Q_missing_final_Whr[HOUR] = Q_network_demand_W - Q_uncontrollable_final_Whr[HOUR] - Q_from_storage_final_Whr[HOUR]
+        Q_missing_final_Whr[HOUR] = Q_network_demand_W - Q_uncontrollable_final_Whr[HOUR] - Q_from_storage_final_Whr[
+            HOUR]
 
         # amount of heat required from heating plants
         mdot_DH_final_kgpers[HOUR] = mdot_DH_missing_kgpers
@@ -236,7 +236,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         if T_storage_new_K <= T_storage_min_K:
             T_storage_min_K = T_storage_new_K
             Q_disc_seasonstart_W[0] += Q_from_storage_req_W
-
 
     storage_dispatch = {
 
@@ -261,16 +260,16 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_Whr,
         "Q_HP_Server_gen_storage_W": Q_server_to_storage_Whr,
 
-         # ENERGY COMMING FROM THE STORAGE
+        # ENERGY COMMING FROM THE STORAGE
         "Q_Storage_gen_W": Q_from_storage_final_Whr,
 
         # AUXILIARY LOADS NEEDED TO CHARGE/DISCHARGE THE STORAGE
-        "E_Storage_req_charging_W": E_aux_ch_final_Whr,
-        "E_Storage_req_discharging_W": E_aux_dech_final_Whr,
-        "E_HP_SC_FP_req_W": E_HPSC_FP_final_req_Whr, #this is included in charging the storage
-        "E_HP_SC_ET_req_W": E_HPSC_ET_final_req_Whr, #this is included in charging the storage
-        "E_HP_PVT_req_W": E_HPPVT_final_req_Whr, #this is included in charging the storage
-        "E_HP_Server_req_W": E_HPServer_final_req_Whr, #this is included in charging the storage
+        "E_Storage_charging_req_W": E_aux_ch_final_Whr,
+        "E_Storage_discharging_req_W": E_aux_dech_final_Whr,
+        "E_HP_SC_FP_req_W": E_HPSC_FP_final_req_Whr,  # this is included in charging the storage
+        "E_HP_SC_ET_req_W": E_HPSC_ET_final_req_Whr,  # this is included in charging the storage
+        "E_HP_PVT_req_W": E_HPPVT_final_req_Whr,  # this is included in charging the storage
+        "E_HP_Server_req_W": E_HPServer_final_req_Whr,  # this is included in charging the storage
 
         # ENERGY THAT NEEDS TO BE SUPPLIED (NEXT)
         "Q_req_after_storage_W": Q_missing_final_Whr,
@@ -280,7 +279,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         "E_PVT_gen_W": E_PVT_gen_Whr,  # useful later on for the electricity dispatch curve
         "Storage_Size_m3": STORAGE_SIZE_m3,
         "Q_storage_content_W": Q_storage_content_final_Whr,
-        "Q_DH_networkload_W":Q_DH_networkload_Wh,
+        "Q_DH_networkload_W": Q_DH_networkload_Wh,
 
         # this helps to know the peak (thermal) of the heatpumps
         "Q_HP_Server_W": Q_HP_PVT_Whr,
@@ -390,66 +389,10 @@ def get_heating_provided_by_onsite_energy_sources(Q_PVT_gen_W,
            Q_HP_SC_FP_W
 
 
-def read_solar_technologies_data(locator, master_to_slave_vars):
-    # Initialize solar data
-    # Import Solar Data
-    os.chdir(locator.get_potentials_solar_folder())
-    fNameArray = [master_to_slave_vars.SOLCOL_TYPE_PVT, master_to_slave_vars.SOLCOL_TYPE_SC_ET,
-                  master_to_slave_vars.SOLCOL_TYPE_SC_FP, master_to_slave_vars.SOLCOL_TYPE_PV]
-    for solartype in range(len(fNameArray)):
-        fName = fNameArray[solartype]
-        # SC_ET
-        if master_to_slave_vars.SOLCOL_TYPE_SC_ET != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_ET:
-            Solar_Area_SC_ET_m2, Solar_E_aux_SC_ET_req_kWh, Solar_Q_th_SC_ET_kWh, Solar_Tscs_th_SC_ET, \
-            Solar_mcp_SC_ET_kWperC, SC_ET_kWh, Solar_Tscr_th_SC_ET_K \
-                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_SC_ET)
-        else:
-            Solar_E_aux_SC_ET_req_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Q_th_SC_ET_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Tscr_th_SC_ET_K = np.zeros(HOURS_IN_YEAR)
-
-        # SC_FP
-        if master_to_slave_vars.SOLCOL_TYPE_SC_FP != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_SC_FP:
-            Solar_Area_SC_FP_m2, Solar_E_aux_SC_FP_req_kWh, Solar_Q_th_SC_FP_kWh, Solar_Tscs_th_SC_FP, \
-            Solar_mcp_SC_FP_kWperC, SC_FP_kWh, Solar_Tscr_th_SC_FP_K \
-                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_SC_FP)
-        else:
-            Solar_E_aux_SC_FP_req_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Q_th_SC_FP_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Tscr_th_SC_FP_K = np.zeros(HOURS_IN_YEAR)
-        # PVT
-        if master_to_slave_vars.SOLCOL_TYPE_PVT != "NONE" and fName == master_to_slave_vars.SOLCOL_TYPE_PVT:
-            Solar_Area_PVT_m2, Solar_E_aux_PVT_kWh, Solar_Q_th_PVT_kWh, Solar_Tscs_th_PVT, \
-            Solar_mcp_PVT_kWperC, PVT_kWh, Solar_Tscr_th_PVT_K \
-                = fn.import_solar_thermal_data(master_to_slave_vars.SOLCOL_TYPE_PVT)
-        else:
-            Solar_E_aux_PVT_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Q_th_PVT_kWh = np.zeros(HOURS_IN_YEAR)
-            PVT_kWh = np.zeros(HOURS_IN_YEAR)
-            Solar_Tscr_th_PVT_K = np.zeros(HOURS_IN_YEAR)
-
-    # Recover Solar Data
-    Solar_E_aux_Wh = np.ravel(Solar_E_aux_SC_ET_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_ET) + \
-                     np.ravel(Solar_E_aux_SC_FP_req_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP) + \
-                     np.ravel(Solar_E_aux_PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT)
-    Q_SC_ET_gen_Wh = Solar_Q_th_SC_ET_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_ET
-    Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * master_to_slave_vars.SOLAR_PART_SC_FP
-    Q_PVT_gen_Wh = Solar_Q_th_PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PVT
-    E_PVT_gen_Wh = PVT_kWh * 1000 * master_to_slave_vars.SOLAR_PART_PV
-
-    return E_PVT_gen_Wh, \
-           Q_PVT_gen_Wh, \
-           Q_SC_ET_gen_Wh, \
-           Q_SC_FP_gen_Wh, \
-           Solar_E_aux_Wh, \
-           Solar_Tscr_th_PVT_K, \
-           Solar_Tscr_th_SC_ET_K, \
-           Solar_Tscr_th_SC_FP_K
-
 
 def read_data_from_Network_summary(CSV_NAME, locator):
     # Import Network Data
-    Network_Data = pd.read_csv(locator.get_thermal_network_data_folder(CSV_NAME))
+    Network_Data = pd.read_csv(locator.get_optimization_thermal_network_data_file(CSV_NAME))
     # recover Network Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
     Q_DH_networkload_W = Network_Data['Q_DHNf_W'].values

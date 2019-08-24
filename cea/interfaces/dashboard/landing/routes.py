@@ -203,6 +203,8 @@ def route_create_scenario_save():
                     cea.api.streets_helper(cea_config)
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
+                elif tool == 'weather-helper':
+                    cea.api.weather_helper(cea_config)
 
     return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
@@ -291,8 +293,10 @@ def route_get_images(scenario):
 def route_script_settings(script_name):
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_dict = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
     script = cea.scripts.by_name(script_name)
-    return render_template('script_settings.html', script=script, parameters=parameters_for_script(script_name, config))
+    return render_template('script_settings.html', script=script, weather_dict=weather_dict,
+                           parameters=parameters_for_script(script_name, config))
 
 
 def parameters_for_script(script_name, config):
@@ -301,25 +305,14 @@ def parameters_for_script(script_name, config):
     return parameters
 
 
-@blueprint.route('/save-config/<script>', methods=['POST'])
-def route_save_config(script):
-    """Save the configuration for this tool to the configuration file"""
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        parameter.set(parameter.decode(request.form.get(parameter.name)))
-    current_app.cea_config.save()
-    return jsonify(True)
-
-
 @blueprint.route('/restore-defaults/<script_name>', methods=['POST'])
 def route_restore_defaults(script_name):
     """Restore the default configuration values for the CEA"""
     config = current_app.cea_config
-    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
         if parameter.name != 'scenario':
-            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+            parameter.set(parameter.default)
     config.save()
     return jsonify(True)
 

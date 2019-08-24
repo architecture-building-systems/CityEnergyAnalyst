@@ -22,22 +22,30 @@ __status__ = "Production"
 class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
     name = "Dispatch curve heating"
+    expected_parameters = {
+        'generation': 'plots-supply-system:generation',
+        'individual': 'plots-supply-system:individual',
+        'timeframe': 'plots-supply-system:timeframe',
+        'scenario-name': 'general:scenario-name',
+    }
 
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictHeatingPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Q_HP_Server_gen_directload_W",
-                                "Q_PVT_gen_directload_W",
-                                "Q_SC_ET_gen_directload_W",
-                                "Q_SC_FP_gen_directload_W",
-                                "Q_Storage_gen_W",
-                                "Q_CHP_gen_directload_W",
-                                "Q_Furnace_gen_directload_W",
-                                "Q_HP_Sew_gen_directload_W",
-                                "Q_HP_Lake_gen_directload_W",
-                                "Q_GHP_gen_directload_W",
-                                "Q_BaseBoiler_gen_directload_W",
-                                "Q_PeakBoiler_gen_directload_W",
-                                "Q_AddBoiler_gen_directload_W"]
+        self.analysis_fields = [
+            "Q_Storage_gen_W",
+            "Q_HP_Server_gen_directload_W",
+            "Q_PVT_gen_directload_W",
+            "Q_SC_ET_gen_directload_W",
+            "Q_SC_FP_gen_directload_W",
+            "Q_CHP_gen_directload_W",
+            "Q_Furnace_gen_directload_W",
+            "Q_HP_Sew_gen_directload_W",
+            "Q_HP_Lake_gen_directload_W",
+            "Q_GHP_gen_directload_W",
+            "Q_BaseBoiler_gen_directload_W",
+            "Q_PeakBoiler_gen_directload_W",
+            "Q_AddBoiler_gen_directload_W",
+        ]
 
         self.analysis_field_demand = ['Q_districtheating_sys_req_W']
         self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
@@ -45,7 +53,7 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     @property
     def title(self):
-        return "Dispatch curve for heating network Option {individual}".format(individual=self.individual)
+        return "Dispatch curve for heating system #%s (%s)" % (self.individual, self.timeframe)
 
     @property
     def output_path(self):
@@ -56,9 +64,7 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     @property
     def layout(self):
-        data_frame = self.process_individual_dispatch_curve_heating()
-        return dict(barmode='relative', yaxis=dict(title='Energy Generation [kW]'),
-                    xaxis=dict(type='date', range=[data_frame.index[0], data_frame.index[168]], fixedrange=False))
+        return dict(barmode='relative', yaxis=dict(title='Energy Generation [MWh]'))
 
     def calc_graph(self):
         # main data about technologies
@@ -66,14 +72,14 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
         graph = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:
-            y = (data[field].values) / 1000  # into kW
+            y = (data[field].values) / 1E6  # into MW
             trace = go.Bar(x=data.index, y=y, name=NAMING[field],
                            marker=dict(color=COLOR[field]))
             graph.append(trace)
 
         # data about demand
         for field in self.analysis_field_demand:
-            y = (data[field].values) / 1000  # into kW
+            y = (data[field].values) / 1E6  # into MW
             trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
                                line=dict(width=1, color=COLOR[field]))
 
@@ -91,7 +97,8 @@ def main():
     DispatchCurveDistrictHeatingPlot(config.project,
                                      {'scenario-name': config.scenario_name,
                                       'generation': config.plots_supply_system.generation,
-                                      'individual': config.plots_supply_system.individual},
+                                      'individual': config.plots_supply_system.individual,
+                                      'timeframe': config.plots_supply_system.timeframe},
                                      cache).plot(auto_open=True)
 
 

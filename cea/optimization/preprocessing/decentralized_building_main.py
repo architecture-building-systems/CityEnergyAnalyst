@@ -29,17 +29,21 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     """
 
     # local variables
+    #TODO: This will do it in Singapore too, so watch-out...
     buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
     buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
 
     # calculate substations
 
-    if buildings_name_with_heating != []:
-        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand, buildings_name_with_heating,
+    if (buildings_name_with_heating != [] and config.data_helper.region != 'SG'): #FIXME: temporal fix to avoid heating calculation in SG
+        decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand,
+                                                                            buildings_name_with_heating,
                                                                             config, prices, lca)
 
     if buildings_name_with_cooling != []:
-        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator, total_demand, buildings_name_with_cooling,
+        decentralized_buildings_cooling.disconnected_buildings_cooling_main(locator,
+                                                                            buildings_name_with_cooling,
+                                                                            total_demand,
                                                                             config, prices, lca)
     print "Run decentralized model for buildings"
 
@@ -48,7 +52,6 @@ def main(config):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
     prices = Prices(locator, config)
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
     lca = LcaCalculations(locator, detailed_electricity_pricing)

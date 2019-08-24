@@ -204,7 +204,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
 
     print("Running sensitivity-demand-simulate for scenario = %s" % config.scenario)
-    print("Running sensitivity-demand-simulate with weather = %s" % config.weather)
     print("Running sensitivity-demand-simulate with sample-index = %s" % config.sensitivity_demand.sample_index)
     print("Running sensitivity-demand-simulate with number-of-simulations = %s" %
           config.sensitivity_demand.number_of_simulations)

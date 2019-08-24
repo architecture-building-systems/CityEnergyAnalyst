@@ -87,11 +87,13 @@ class MapClass {
 
     init({data = {}, urls = {}, extrude = false} = {}) {
         let _this = this;
-        if (data.hasOwnProperty('zone') || this.data.hasOwnProperty('zone')) {
+        try {
             this.data.zone = data.zone;
             $.each(data, function (layer) {
                 console.log(layer, data[layer]);
-                _this.addLayer(layer, data[layer]);
+                if (data[layer]) {
+                    _this.addLayer(layer, data[layer]);
+                }
             });
 
             this.calculateCamera();
@@ -112,11 +114,12 @@ class MapClass {
                         extrude && $('#3d-button').trigger('click')
                     }
                 });
+                $('.mapboxgl-ctrl-icon[data-toggle="tooltip"]').tooltip();
             });
 
             let _jsonURLs = jsonURLs;
             if (Object.keys(urls).length) {
-                _jsonURLs =  urls;
+                _jsonURLs = urls;
             }
             $.each(_jsonURLs, function (key, value) {
                 $.getJSON(value, function (json) {
@@ -126,9 +129,8 @@ class MapClass {
                     console.log(`Get ${key} failed.`);
                 });
             });
-
-        } else {
-            console.error('Please enter a zone geojson file')
+        } catch (e) {
+            console.error('Init method requires a zone geojson\n', e)
         }
     }
 
@@ -179,8 +181,10 @@ class MapClass {
             points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
         }
         if (this.data.hasOwnProperty('district')) {
-            let bbox = this.data.district.bbox;
-            points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+            if (this.data.district) {
+                let bbox = this.data.district.bbox;
+                points.push([bbox[0],bbox[1]],[bbox[2],bbox[3]])
+            }
         }
         let bbox = turf.bbox(turf.multiPoint(points));
         this.cameraOptions = this.deckgl.getMapboxMap().cameraForBounds(

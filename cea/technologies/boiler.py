@@ -7,6 +7,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
+import numpy as np
 from cea.technologies.constants import BOILER_P_AUX
 
 __author__ = "Thuy-An Nguyen"
@@ -117,7 +118,7 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     return Opex_var_Boiler_USD, Opex_var_Boiler_per_Wh_USD, Q_primary_W, E_aux_Boiler_req_W
 
 
-def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
+def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
     """
     This function calculates efficiency for operation of condensing Boilers based on LHV.
     This efficiency accounts for boiler efficiency only (not plant efficiency!)
@@ -126,11 +127,11 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
         http://www.greenshootscontrols.net/?p=153
 
 
-    :param Q_load_W: Load of time step
-    :type Q_load_W: float
+    :param q_load_Wh: Load of time step
+    :type q_load_Wh: float
 
-    :type Q_design_W: float
-    :param Q_design_W: Design Load of Boiler
+    :type Q_nom_W: float
+    :param Q_nom_W: Design Load of Boiler
 
     :type T_return_to_boiler_K : float
     :param T_return_to_boiler_K: Return Temperature of the network to the boiler [K]
@@ -140,26 +141,26 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
     """
 
-    # Implement Curves provided by http://www.greenshootscontrols.net/?p=153
-    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100, 150, 200]  # Return Temperature Dependency
-    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8, 85.7, 85.6]  # Return Temperature Dependency
-    x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0]  # Load Point dependency
-    y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8]  # Load Point Dependency
+    if (Q_nom_W > 0.0 and q_load_Wh > 0.0):
 
-    # do the interpolation
-    eff_of_T_return = interp1d(x, y, kind='linear')
-    eff_of_phi = interp1d(x1, y1, kind='cubic')
+        # Implement Curves provided by http://www.greenshootscontrols.net/?p=153
+        x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100, 150,
+             200]  # Return Temperature Dependency
+        y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8, 85.7,
+             85.6]  # Return Temperature Dependency
+        x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0]  # Load Point dependency
+        y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8]  # Load Point Dependency
+        # do the interpolation
+        eff_of_T_return = interp1d(x, y, kind='linear')
+        eff_of_phi = interp1d(x1, y1, kind='cubic')
 
-    # get input variables
-    if Q_design_W > 0:
-        phi = float(Q_load_W) / float(Q_design_W)
-
+        # calculate efficiency according to partload
+        phi = float(q_load_Wh) / float(Q_nom_W)
+        T_return_C = np.float(T_return_to_boiler_K - 273.15)
+        eff_score = eff_of_phi(phi) / eff_of_phi(1)
+        boiler_eff = (eff_score * eff_of_T_return([T_return_C]))[0] / 100.0
     else:
-        phi = 0
-
-    T_return_C = T_return_to_boiler_K - 273
-    eff_score = eff_of_phi(phi) / eff_of_phi(1)
-    boiler_eff = (eff_score * eff_of_T_return(T_return_C)) / 100.0
+        boiler_eff = 0.0
 
     return boiler_eff
 

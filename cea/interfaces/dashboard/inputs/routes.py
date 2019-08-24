@@ -8,6 +8,8 @@ import os
 import json
 import pandas
 
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+
 
 blueprint = Blueprint(
     'inputs_blueprint',
@@ -75,7 +77,7 @@ def route_get_building_properties():
     import cea.glossary
 
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems', 'indoor-comfort', 'district','restrictions']
+    tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'technical-systems',  'supply-systems', 'district','restrictions']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}
@@ -86,7 +88,11 @@ def route_get_building_properties():
         try:
             if db_info['type'] == 'shp':
                 table_df = geopandas.GeoDataFrame.from_file(location)
-                store['crs'][db] = table_df.crs
+
+                # save projected coordinate system
+                lat, lon = get_lat_lon_projected_shapefile(table_df)
+                store['crs'][db] = get_projected_coordinate_system(lat, lon)
+
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                 store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 

@@ -4,14 +4,18 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 """
 from __future__ import division
 from __future__ import print_function
+
 import os
 import re
+
 import jinja2
 import plotly.graph_objs
 import plotly.offline
+
+import cea.config
 import cea.inputlocator
 from cea import MissingInputDataException
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import COLOR, NAMING
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -47,7 +51,13 @@ class PlotBase(object):
         self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
         for parameter_name in self.expected_parameters:
-            assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+            # Try to load missing parameters with default values
+            if parameter_name not in parameters:
+                try:
+                    self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get(
+                        'plots:{}'.format(parameter_name))
+                except Exception:
+                    assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
@@ -150,6 +160,21 @@ class PlotBase(object):
 
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
+        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=20, b=50), 'hovermode': 'closest'})
+        fig['layout']['updatemenus'] = [dict(direction="down",
+                                             showactive=True,
+                                             x=0,
+                                             xanchor="right",
+                                             y=1,
+                                             yanchor="bottom",
+                                             buttons=[dict(label='ON',
+                                                           method='relayout',
+                                                           args=['showlegend', True]),
+                                                      dict(label='OFF',
+                                                           method='relayout',
+                                                           args=['showlegend', False])
+                                                      ])]
+        fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 

@@ -1,3 +1,29 @@
+2019-08-08 - 2.19 - #2216 Bugfix: Add script input validation for dashboard
+2019-08-08 - 2.19 - #2225 I2224 optimization heating
+2019-08-08 - 2.19 - #2230 fix occupancy
+2019-08-05 - 2.19 - #2228 Bugfix: Calculate and save projected coordinate system
+2019-08-05 - 2.19 - #2226 I2146 decentralized cooling @shanshanhsieh great! thanks!
+2019-08-02 - 2.19 - #2222 I2120 fixing optimization cooling
+2019-07-31 - 2.19 - #2160 2150 Feature: cea rename-building
+2019-07-29 - 2.19 - #2217 Release 2.19
+2019-07-29 - 2.18.1 - #2215 Minor Fix: Add tooltips to plot buttons
+2019-07-25 - 2.18.1 - #2209 Add "change plot" button to row layout
+2019-07-24 - 2.18.1 - #2191 I2182 read occupancy schedules
+2019-07-24 - 2.18.1 - #2203 Closes #2202
+2019-07-24 - 2.18.1 - #2199 Heating case workflow
+2019-07-23 - 2.18.1 - #2193 2143 document and proof default config
+2019-07-23 - 2.18.1 - #2196 I2195 fix vectorized setpoint
+2019-07-23 - 2.18.1 - #2161 don't create the inputs folder when opening a project + scenario
+2019-07-23 - 2.18.1 - #2194 Fixed typos in error message
+2019-07-22 - 2.18.1 - #2159 added more uses to reference-case-cooling
+2019-07-22 - 2.18.1 - #2166 I2120 re(making)factor optimization
+2019-07-19 - 2.18.1 - #2178 Fix: Dashboard popup tables
+2019-07-19 - 2.18.1 - #2181 adding comfort to dashboard
+2019-07-18 - 2.18.1 - #2162 FEATURE: New Map Dashboard layout
+2019-07-17 - 2.18.1 - #2164 2095 FIXED "ArcGIS interface installation does not work anymore"
+2019-07-17 - 2.18.1 - #2090 1870 dashboard settings not working for capex vs opex
+2019-07-13 - 2.18.1 - #2158 Thanks @Jack-Hawthorne!
+2019-07-12 - 2.18 - #2157 Release 2.18
 2019-07-09 - 2.17.1 - #2137 Bugfix for input editor
 2019-07-08 - 2.17.1 - #2145 remove faulty input requests
 2019-07-05 - 2.17.1 - #2085 1971 check input files

@@ -709,7 +709,8 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
     df_building_schedules.to_csv(schedules_csv_file, index=False)
-    print("Saving schedules for building {} to inputs/building-properties directory.".format(building_name))
+    print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
+    print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
 
 
 def get_building_schedules(locator, bpr, date_range, config):
@@ -736,10 +737,10 @@ def get_building_schedules(locator, bpr, date_range, config):
     building_name = bpr.name
 
     # first the script checks if pre-defined schedules for the building exist
-    schedules_csv = locator.get_building_schedules(building_name)
-    if os.path.isfile(schedules_csv):
+
+    if os.path.isfile(locator.get_building_schedules_predefined(building_name)):
         print("Schedules for building {} detected. Using these schedules.".format(building_name))
-        building_schedules = read_schedules_from_file(schedules_csv)
+        building_schedules = read_schedules_from_file(locator.get_building_schedules_predefined(building_name))
     else:
         print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
         # get list of uses in building
@@ -759,8 +760,9 @@ def get_building_schedules(locator, bpr, date_range, config):
 
 def main(config):
     from cea.demand.building_properties import BuildingProperties
-
-    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year']]
     year = weather_data['year'][0]
     dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)

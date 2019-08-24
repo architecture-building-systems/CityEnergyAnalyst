@@ -1,12 +1,12 @@
 - config: default
   "general:multiprocessing": on
-  "general:project": "${cea_general_project}/../reference-case-open"
   "radiation-daysim:daysim-bin-directory": "${cea_radiation-daysim_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
     case: cooling
 - config: .
+  "general:project": "${cea_general_project}/../reference-case-cooling"
   "general:scenario-name": baseline
 - script: data-helper
 - script: radiation-daysim
@@ -16,7 +16,7 @@
 - script: network-layout
   parameters:
     network-type: DC
-- script: lake-potential
+- script: water-body-potential
 - script: sewage-potential
 - script: photovoltaic
 - script: solar-collector
