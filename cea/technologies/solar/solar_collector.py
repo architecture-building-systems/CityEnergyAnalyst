@@ -913,13 +913,13 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 
 # investment and maintenance costs
-def calc_Cinv_SC(Area_m2, locator, config, technology):
+def calc_Cinv_SC(Area_m2, locator, panel_type):
     """
     Lifetime 35 years
     """
     if Area_m2 > 0.0:
         SC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="SC")
-        SC_cost_data = SC_cost_data[SC_cost_data['type'] == technology]
+        SC_cost_data = SC_cost_data[SC_cost_data['type'] == panel_type]
         cap_min = SC_cost_data['cap_min'].values[0]
         cap_max = SC_cost_data['cap_max'].values[0]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -970,7 +970,7 @@ def main(config):
     panel_type = panel_properties['type']
 
     # weather data
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 

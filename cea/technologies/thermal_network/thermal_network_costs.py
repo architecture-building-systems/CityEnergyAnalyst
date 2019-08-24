@@ -193,8 +193,7 @@ def calc_Ctot_cooling_plants(network_info):
 
             Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                       network_info.config, 'CH1')
-            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
-                                               network_info.config, 'CT1')
+            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator, 'CT1')
         # sum over all plants
         Capex_a_chiller += Capex_a_chiller_USD
         Capex_a_CT += Capex_a_CT_USD
@@ -289,7 +288,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                                                               network_info.locator,
                                                               network_info.config, 'CH3')
                     Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                       network_info.config, 'CT1')
+                                                                            'CT1')
                     # sum up costs
                     dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                     dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -415,8 +414,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                 Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
                                                                              network_info.locator,
                                                                              network_info.config, 'CH3')
-                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                                 network_info.config, 'CT1')
+                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator, 'CT1')
                 # sum up costs
                 dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                 dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -556,7 +554,6 @@ def main(config):
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
-    print('Running thermal network cost calculation with weather file %s' % config.weather)
     print('Network costs of %s:' % network_type)
 
 

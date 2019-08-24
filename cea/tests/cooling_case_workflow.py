@@ -34,7 +34,7 @@ def main(config):
         config.weather = 'Singapore'
         # local variables
         config.optimization.district_cooling_network = True
-        config.supply_system_simulation.district_cooling_network = True
+        config.config.supply_system_simulation.district_cooling_network = True
         config.thermal_network.network_type = 'DC'
         config.data_helper.region = 'SG'
     else:
@@ -64,8 +64,9 @@ def main(config):
         ('emissions', {}),  # last=3
         ('operation-costs', {}),  # last=4
         ('network-layout', {'network_type': 'DC'}),  # last=5
-        ('lake-potential', {}),  # last=6
+        ('water-body-potential', {}),  # last=6
         ('sewage-potential', {}),  # last=7
+        ('shallow-geothermal-potential', {}),  # last=7
         ('photovoltaic', {}),  # last=8
         ('solar-collector', {'type_scpanel': 'FP'}),  # last=9
         ('solar-collector', {'type_scpanel': 'ET'}),  # last=10
@@ -75,11 +76,13 @@ def main(config):
         ('thermal-network-optimization', {'network_type': 'DC', 'use_representative_week_per_month': True,
                                           'yearly_cost_calculations': True}),  # last=14
         ('decentralized', {}),  # last=15
-        ('optimization', {'initialind': 2, 'ngen': 2, 'halloffame': 5, 'random-seed': 1234}),  # last=16
-        ('multi-criteria-analysis', {'generations': 2}),  # last=17
-        ('plots', {'network_type': 'DC', 'generations': 2}),  # last=18
-        # ('plots-supply-system', {'network_type': 'DC'}), #TODO: add this line back when the script is working
-        ('plots-optimization', {'network_type': 'DC', 'generation': 2}),  # last=19
+        ('optimization', {'district-heating-network': False,
+                          'district-cooling-network' : True,
+                          'population-size': 2,
+                          'number-of-generations': 2,
+                          'random-seed': 1234}),  # last=16
+        ('multi-criteria-analysis', {'generation': 2}),  # last=17
+        ('plots-optimization', {'multicriteria': True, 'generations': 2}),  # last=18
     ]
 
     # skip steps already performed

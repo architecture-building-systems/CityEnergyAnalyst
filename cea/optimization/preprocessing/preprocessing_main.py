@@ -5,21 +5,17 @@ Pre-processing algorithm
 
 from __future__ import division
 
-import os
+import pandas as pd
+
 import cea.config
 import cea.globalvar
 import cea.inputlocator
-import pandas as pd
-import numpy as np
-
-from cea.optimization.master import summarize_network
-from cea.technologies import substation
-
-from cea.resources.geothermal import calc_ground_temperature
 from cea.optimization.constants import Z0
+from cea.optimization.master import summarize_network
+from cea.resources.geothermal import calc_ground_temperature
+from cea.technologies import substation
 from cea.utilities import epwreader
-import cea.optimization.preprocessing.processheat as process_heat
-from cea.optimization.preprocessing import electricity
+from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -31,7 +27,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, weather_file, config):
+def preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,
+                   weather_file, district_heating_network, district_cooling_network):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -61,44 +58,31 @@ def preproccessing(locator, total_demand, weather_file, config):
 
     # local variables
     network_depth_m = Z0
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
 
     print("PRE-PROCESSING 1/2: weather properties")
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    ground_temp = calc_ground_temperature(locator, config, T_ambient, depth_m=network_depth_m)
+    ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
 
     print("PRE-PROCESSING 2/2: thermal networks")  # at first estimate a distribution with all the buildings connected
     if district_heating_network:
-        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
-        if len(buildings_names_connected) <= 1:
-            raise Exception(
-                "There is just one or zero buildings with heating load, a district heating network will not work,"
-                "CEA can not continue")
-        num_tot_buildings = len(buildings_names_connected)
+        num_tot_buildings = len(buildings_heating_demand)
+        DHN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
+        substation.substation_main_heating(locator, total_demand, buildings_heating_demand,
+                                           DHN_barcode=DHN_barcode)
 
-        substation.substation_main_heating(locator, total_demand, buildings_names_connected,
-                                           DHN_barcode = "all")
-
-        summarize_network.network_main(locator, buildings_names_connected,
-                                       ground_temp, num_tot_buildings, "DH",
-                                       "all", "all")  # "_all" key for all buildings
+        summarize_network.network_main(locator, buildings_heating_demand, ground_temp, num_tot_buildings, "DH", DHN_barcode)
+        # "_all" key for all buildings
     if district_cooling_network:
-        buildings_names_connected = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        if len(buildings_names_connected) <= 1:
-            raise Exception(
-                "There is just one or zero buildings with a cooling load, a district coooling network will not work,"
-                "CEA can not continue")
+        num_tot_buildings = len(buildings_cooling_demand)
+        DCN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
+        substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
-        num_tot_buildings = len(buildings_names_connected)
-        substation.substation_main_cooling(locator, total_demand, buildings_names_connected,
-                                           DCN_barcode = "all")
+        summarize_network.network_main(locator, buildings_cooling_demand,
+                                       ground_temp, num_tot_buildings, "DC", DCN_barcode)  # "_all" key for all buildings
 
-        summarize_network.network_main(locator, buildings_names_connected,
-                                       ground_temp, num_tot_buildings, "DC", "all", "all")  # "_all" key for all buildings
+    network_features = NetworkOptimizationFeatures(district_heating_network, district_cooling_network, locator)
 
-
-    return
+    return network_features
 
 
 def get_building_names_with_load(total_demand, load_name):
@@ -109,8 +93,6 @@ def get_building_names_with_load(total_demand, load_name):
         if demand > 0.0:
             buildings_names_connected.append(building)
     return buildings_names_connected
-
-
 
 
 # ============================
@@ -126,8 +108,9 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = locator.get_building_names()
-    weather_file = config.weather
-    preproccessing(locator, total_demand, building_names, weather_file, gv, config)
+    weather_file = locator.get_weather_file()
+    # FIXME: replace this with a working call!
+    # preproccessing(locator, total_demand, building_names, weather_file, gv, config)
 
     print 'test_preprocessing_main() succeeded'
 

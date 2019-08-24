@@ -81,7 +81,8 @@ def demand_calculation(locator, config):
     override_variables = config.demand.override_variables
     write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     # create date range for the calculation year
@@ -180,7 +181,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
-    print('Running demand calculation with weather file %s' % config.weather)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)

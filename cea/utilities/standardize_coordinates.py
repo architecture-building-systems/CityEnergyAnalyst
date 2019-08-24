@@ -46,8 +46,10 @@ def raster_to_WSG_and_UTM(raster_path, lat, lon):
                                           gdal.GRA_NearestNeighbour)
     return new_raster
 
+
 def get_geographic_coordinate_system():
     return "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
 
 def get_projected_coordinate_system(lat, lon):
     utm_data = utm.from_latlon(lat, lon)
@@ -56,6 +58,7 @@ def get_projected_coordinate_system(lat, lon):
     code_projection = "+proj=utm +zone=" + str(zone) + south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
     #"+proj=merc +a=6378137.0 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +ellps=WGS84 +datum=WGS84 +units=m +nadgrids=@null +wktext  +no_defs"
     return code_projection
+
 
 def get_lat_lon_projected_shapefile(data):
     data = data.to_crs(get_geographic_coordinate_system())

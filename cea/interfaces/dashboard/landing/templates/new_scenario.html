@@ -11,6 +11,9 @@
   <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
           integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
           crossorigin=""></script>
+  <style>
+    a:hover {cursor: pointer}
+  </style>
 {% endblock stylesheets %}
 
 {% block body %}
@@ -108,7 +111,7 @@
                             Zone
                           </label>
                           <i class="fa fa-info-circle" data-toggle="tooltip" title="Query zone geometry from Open Street Maps"></i>
-                          <a href="#"><i class="fa fa-cog" onclick="openSettings('zone-helper')"></i></a>
+                          <a><i class="fa fa-cog" onclick="openSettings('zone-helper')"></i></a>
                         </div>
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="tools" value="district-helper" id="district-helper">
@@ -116,7 +119,7 @@
                           District
                         </label>
                         <i class="fa fa-info-circle" data-toggle="tooltip" title="Query district geometry from Open Street Maps. Requires zone file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('district-helper')"></i></a>
+                        <a><i class="fa fa-cog" onclick="openSettings('district-helper')"></i></a>
                       </div>
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="tools" value="streets-helper" id="streets-helper">
@@ -124,7 +127,7 @@
                           Streets
                         </label>
                         <i class="fa fa-info-circle" data-toggle="tooltip" title="Query streets geometry from Open Street Maps. Requires zone and district file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('streets-helper')"></i></a>
+                        <a><i class="fa fa-cog" onclick="openSettings('streets-helper')"></i></a>
                       </div>
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="tools" value="terrain-helper" id="terrain-helper">
@@ -132,7 +135,15 @@
                           Terrain
                         </label>
                         <i class="fa fa-info-circle" data-toggle="tooltip" title="Creates a fixed elevation terrain file. Requires zone and district file."></i>
-                        <a href="#"><i class="fa fa-cog" onclick="openSettings('terrain-helper')"></i></a>
+                        <a><i class="fa fa-cog" onclick="openSettings('terrain-helper')"></i></a>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tools" value="weather-helper" id="weather-helper">
+                        <label class="form-check-label" for="terrain">
+                          Weather
+                        </label>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Set the weather file for the scenario."></i>
+                        <a><i class="fa fa-cog" onclick="openSettings('weather-helper')"></i></a>
                       </div>
                     </div>
                 </div>
@@ -314,6 +325,7 @@
                 $('#cea-script-settings .modal-body').html(html);
                 $('#cea-script-settings').modal({'show': true, 'backdrop': 'static'});
                 $('#cea-script-settings #script-title').text(script);
+                $('#cea-tool-parameters').parsley();
             });
         }
 
@@ -338,7 +350,8 @@
 
             $('#new-scenario').on("submit", function(){
                 if($('#zone-helper').prop('checked') || $('#district-helper').prop('checked')
-                    || $('#streets-helper').prop('checked') || $('#terrain-helper').prop('checked')) {
+                    || $('#streets-helper').prop('checked') || $('#terrain-helper').prop('checked')
+                    || $('#weather-helper').prop('checked')) {
                     $('#cea-loading').modal({'show': true, 'backdrop': 'static'});
                 }
             });
