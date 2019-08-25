@@ -67,7 +67,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         traces_graph.extend(traces_relative_humidity)
 
         # add text for winter / summer comfort zones
-        trace_layout = go.Scatter(
+        trace_layout = go.Scattergl(
             x=[23, 26.5],
             y=[3, 3],
             text=['Winter comfort zone',
