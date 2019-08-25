@@ -6,6 +6,7 @@
   {{ super() }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.22.0/antd.css">
   <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('.static', filename='css/react-dashboard.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -13,7 +14,7 @@
       <div class="">
         <div class="row">
           <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel cea-plot" id="cea-dashboard">
+            <div class="x_panel cea-plot" id="cea-dashboard" style="min-height: 800px">
               <!-- Container for react components -->
             </div>
           </div>
@@ -31,7 +32,9 @@
   <script src="https://unpkg.com/html-react-parser@latest/dist/html-react-parser.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/3.22.0/antd.min.js"></script>
+  <script src="https://unpkg.com/html-react-parser@latest/dist/html-react-parser.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
   <script src="{{ url_for('.static', filename='js/react-dashboard.js') }}" type="text/babel"></script>
 {% endblock javascripts %}
 
