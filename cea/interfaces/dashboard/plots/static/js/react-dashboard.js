@@ -10,13 +10,17 @@ const {
   Modal,
   Result
 } = antd;
-const { useState, useEffect } = React;
+const { useState, useEffect, useCallback, useMemo } = React;
 
 const INITIAL_DASHBOARD = 0;
 
 const Dashboard = () => {
   const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
+
+  const handleClick = useCallback(index => {
+    setDashIndex(index);
+  }, []);
 
   useEffect(() => {
     axios
@@ -31,7 +35,7 @@ const Dashboard = () => {
   return (
     <div id="cea-dashboard-content" style={{ minHeight: "100%" }}>
       <div id="cea-dashboard-content-title" style={{ margin: 10 }}>
-        <DashSelect setDashIndex={setDashIndex} dashboards={dashboards} />
+        <DashSelect setDashIndex={handleClick} dashboards={dashboards} />
       </div>
       <div id="cea-dashboard-layout">
         {layout === "row" ? (
@@ -45,6 +49,16 @@ const Dashboard = () => {
 };
 
 const DashSelect = ({ setDashIndex, dashboards }) => {
+  const dashList = useMemo(
+    () =>
+      dashboards.map((dashboard, index) => (
+        <option key={index} value={index}>
+          {dashboard.name}
+        </option>
+      )),
+    [dashboards]
+  );
+
   return (
     <Affix offsetTop={30}>
       <Select
@@ -52,11 +66,7 @@ const DashSelect = ({ setDashIndex, dashboards }) => {
         style={{ width: 200 }}
         onChange={value => setDashIndex(value)}
       >
-        {dashboards.map((dashboard, index) => (
-          <option key={index} value={index}>
-            {dashboard.name}
-          </option>
-        ))}
+        {dashList}
       </Select>
     </Affix>
   );
