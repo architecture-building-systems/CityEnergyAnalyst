@@ -44,9 +44,9 @@ class SolarRadiationCurvePlot(cea.plots.solar_potential.SolarPotentialPlotBase):
             y = data_frame[field].values
             name = NAMING[field]
             if field == "T_ext_C":
-                trace = go.Scatter(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
+                trace = go.Scattergl(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
             else:
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -82,9 +82,9 @@ def calc_graph(analysis_fields, data_frame):
         y = data_frame[field].values
         name = NAMING[field]
         if field == "T_ext_C":
-            trace = go.Scatter(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
+            trace = go.Scattergl(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
         else:
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph
