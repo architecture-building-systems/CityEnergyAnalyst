@@ -203,6 +203,8 @@ def route_create_scenario_save():
                     cea.api.streets_helper(cea_config)
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
+                elif tool == 'weather-helper':
+                    cea.api.weather_helper(cea_config)
 
     return redirect(url_for('inputs_blueprint.route_get_building_properties'))
 
@@ -291,8 +293,10 @@ def route_get_images(scenario):
 def route_script_settings(script_name):
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_dict = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
     script = cea.scripts.by_name(script_name)
-    return render_template('script_settings.html', script=script, parameters=parameters_for_script(script_name, config))
+    return render_template('script_settings.html', script=script, weather_dict=weather_dict,
+                           parameters=parameters_for_script(script_name, config))
 
 
 def parameters_for_script(script_name, config):

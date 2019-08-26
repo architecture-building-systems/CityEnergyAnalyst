@@ -554,7 +554,6 @@ def main(config):
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
-    print('Running thermal network cost calculation with weather file %s' % config.weather)
     print('Network costs of %s:' % network_type)
 
 

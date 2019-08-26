@@ -760,8 +760,9 @@ def get_building_schedules(locator, bpr, date_range, config):
 
 def main(config):
     from cea.demand.building_properties import BuildingProperties
-
-    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year']]
     year = weather_data['year'][0]
     dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
