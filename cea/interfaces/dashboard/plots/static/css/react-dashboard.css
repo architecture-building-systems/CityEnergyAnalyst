@@ -12,3 +12,6 @@
 .plot-widget {
   min-width: 500px;
 }
+.ant-card-body a{
+  color: #1890ff;
+}
