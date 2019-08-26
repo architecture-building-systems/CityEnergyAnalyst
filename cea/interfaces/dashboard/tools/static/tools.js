@@ -153,11 +153,6 @@ function save_file_name(target_id) {
     $('#' + target_id).val(file_path);
 }
 
-function select_weather_file(target_id, selected_element) {
-    var weather_file_path = $(selected_element).data('save-file-path');
-    $('#' + target_id).val(weather_file_path);
-}
-
 /**
  * Show an open folder dialog for a cea PathParameter and update the contents of the
  * input field.
@@ -193,8 +188,3 @@ function save_folder_name(target_id, folder_path) {
     $('#' + target_id).val(folder_path).trigger("input").trigger("change");
     console.log(target_id)
 }
-
-/**
- * Some parameters need special treatment...
- */
-$(document)

@@ -127,4 +127,5 @@ def summarize_results_individual(master_to_slave_vars,
     GHG_sys_tonCO2 = np.float64(GHG_sys_tonCO2)
     PEN_sys_MJoil = np.float64(PEN_sys_MJoil)
 
+
     return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals

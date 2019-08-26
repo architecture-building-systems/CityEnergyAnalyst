@@ -31,7 +31,7 @@ __status__ = "Production"
 def operation(locator, config):
     # local variables
     scenario_name = config.scenario_name  # scenario_name
-    weather_path = config.weather
+    weather_path = locator.get_weather_file()
     threads = config.get_number_of_processes()
 
     time_start = config.mpc_building.time_start

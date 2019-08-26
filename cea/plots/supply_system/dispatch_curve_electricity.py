@@ -41,6 +41,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
                                         "E_PVT_gen_export_W",
                                         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
+        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_electricity_activation_pattern,
                              [self.individual, self.generation])]
 

@@ -25,7 +25,7 @@ def calc_geothermal_potential(locator, config):
     "A very simplified calculation based on the area available"
 
     #local variables
-    weather_file = config.weather
+    weather_file = locator.get_weather_file()
     buildings = config.shallow_geothermal.buildings_available
     extra_area = config.shallow_geothermal.extra_area_available
     depth_m = config.shallow_geothermal.average_probe_depth

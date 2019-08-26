@@ -766,11 +766,12 @@ def main(config):
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    weather_path = locator.get_weather_file()
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata,
-                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
+                latitude=latitude, longitude=longitude, weather_path=weather_path, building_name=building)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}

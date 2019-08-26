@@ -137,6 +137,14 @@
                         <i class="fa fa-info-circle" data-toggle="tooltip" title="Creates a fixed elevation terrain file. Requires zone and district file."></i>
                         <a><i class="fa fa-cog" onclick="openSettings('terrain-helper')"></i></a>
                       </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tools" value="weather-helper" id="weather-helper">
+                        <label class="form-check-label" for="terrain">
+                          Weather
+                        </label>
+                        <i class="fa fa-info-circle" data-toggle="tooltip" title="Set the weather file for the scenario."></i>
+                        <a><i class="fa fa-cog" onclick="openSettings('weather-helper')"></i></a>
+                      </div>
                     </div>
                 </div>
 
@@ -342,7 +350,8 @@
 
             $('#new-scenario').on("submit", function(){
                 if($('#zone-helper').prop('checked') || $('#district-helper').prop('checked')
-                    || $('#streets-helper').prop('checked') || $('#terrain-helper').prop('checked')) {
+                    || $('#streets-helper').prop('checked') || $('#terrain-helper').prop('checked')
+                    || $('#weather-helper').prop('checked')) {
                     $('#cea-loading').modal({'show': true, 'backdrop': 'static'});
                 }
             });

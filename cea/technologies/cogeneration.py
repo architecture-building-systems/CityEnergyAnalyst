@@ -312,19 +312,6 @@ def calc_ST_operation(m_exhaust_GT_kgpers, T_exhaust_GT_K, T_sup_K, fuel_type):
     delta_h_evap_Jperkg = (-2.4967 * (T_cond_0_K - 273) + 2507) * 1E3
     q_output_ST_W = (mdotHP_kgpers + mdotLP_kgpers) * delta_h_evap_Jperkg  # thermal output of ST
 
-    # temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-    # qdot = (mdotHP + mdotLP) * (HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_c - T_cond_0_K) + delta_h_evap_Jperkg)
-    # presSTexit = pres0 + gV.ST_deltaP
-    # wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
-    #         (mdotHP * 534.5 * ( (6/48.2) ** (0.4/1.4) - 1 )\
-    #         + (mdotLP + mdotHP) * temp_i * ( (presSTexit/6E5) ** (0.4/1.4) - 1 ) )
-    #
-    # temp1 = (((6E5/pres0) ** (0.4/1.4) - 1) / 0.87 + 1) * T_cond_0_K
-    # wdotcomp = 0.87 / 18E-3 * 1.4 / 0.4 * 8.31 * \
-    #           (mdotHP * temp1 * ( (48.2/6) ** (0.4/1.4) - 1 )\
-    #           + (mdotHP + mdotLP) * T_cond_0_K * ( (6E5/pres0) ** (0.4/1.4) - 1 ))
-
-
     # calculate electricity output
     h_HP_Jperkg = (2.5081 * (T_exhaust_GT_K - ST_DELTA_T - 273) + 2122.7) * 1E3  # J/kg
     h_LP_Jperkg = (2.3153 * (temp_i_K - 273) + 2314.7) * 1E3  # J/kg
