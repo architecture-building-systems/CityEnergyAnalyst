@@ -42,7 +42,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         self.category_path = os.path.join('testing', 'supply-system-overview')
         self.generation = self.parameters['generation']
         self.individual = self.parameters['individual']
-        self.timeframe = self.parameters['timeframe']
+        self.input_files = []
 
     @cea.plots.cache.cached
     def process_individual_dispatch_curve_heating(self):
