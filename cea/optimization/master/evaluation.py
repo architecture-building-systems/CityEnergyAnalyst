@@ -20,7 +20,7 @@ from cea.optimization.slave import natural_gas_main
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, network_features, config, prices, lca,
+def evaluation_main(individual, building_names_all, locator, network_features, config, prices, lca,
                     ind_num, gen, column_names_individual,
                     column_names_buildings_heating,
                     column_names_buildings_cooling,
@@ -57,10 +57,13 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     """
 
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
-    DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                column_names_individual,
-                                                                                column_names_buildings_heating,
-                                                                                column_names_buildings_cooling)
+    DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict = individual_to_barcode(individual,
+                                                                                                            building_names_all,
+                                                                                                            building_names_heating,
+                                                                                                            building_names_cooling,
+                                                                                                            column_names_individual,
+                                                                                                            column_names_buildings_heating,
+                                                                                                            column_names_buildings_cooling)
 
     print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
     print(individual_with_name_dict)
@@ -72,7 +75,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
                                                                        gen,
                                                                        ind_num,
                                                                        individual_with_name_dict,
-                                                                       building_names,
+                                                                       building_names_all,
                                                                        building_names_heating,
                                                                        building_names_cooling,
                                                                        building_names_electricity,
@@ -146,7 +149,7 @@ def evaluation_main(individual, building_names, locator, network_features, confi
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
-                 electricity_requirements, fuels_dispatch, performance_totals)
+                 electricity_requirements, fuels_dispatch, performance_totals, building_connectivity_dict)
 
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
@@ -159,7 +162,16 @@ def evaluation_main(individual, building_names, locator, network_features, confi
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
                  performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
                  electricity_requirements,
-                 fuels_dispatch, performance_totals):
+                 fuels_dispatch, performance_totals, building_connectivity_dict):
+
+    # SAVE BUILDING CONNECTIVITY
+    pd.DataFrame(building_connectivity_dict).to_csv(
+        locator.get_optimization_slave_building_connectivity(master_to_slave_vars.individual_number,
+                                                                master_to_slave_vars.generation_number),
+        index=False)
+
+    # SAVE PERFORMANCE RELATED FILES
+
     # put data inside a list, otherwise pandas cannot save it
     for column in performance_disconnected.keys():
         performance_disconnected[column] = [performance_disconnected[column]]

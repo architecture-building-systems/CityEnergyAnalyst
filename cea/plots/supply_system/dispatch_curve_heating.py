@@ -48,6 +48,7 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
         ]
 
         self.analysis_field_demand = ['Q_districtheating_sys_req_W']
+        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_heating_activation_pattern,
                              [self.individual, self.generation])]
 

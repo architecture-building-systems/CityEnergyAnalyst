@@ -1,0 +1,453 @@
+<div id="{{ hash }}" style="height: 500px; position: relative;" oncontextmenu="return false;">
+  <div id="layers-group-{{ hash }}">
+    <span class="layer-toggle-{{ hash }}">
+      <label>
+        <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected' checked>
+        Connected Buildings
+      </label>
+    </span>
+    <span class="layer-toggle-{{ hash }}">
+      <label>
+        <input id='disconnected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='disconnected' checked>
+        Disconnected Buildings
+      </label>
+    </span>
+    <span class="layer-toggle-{{ hash }}">
+      <label>
+        <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network' checked>
+        Network
+      </label>
+    </span>
+  </div>
+  <div style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
+    <h4>Network Type: </h4>
+    <label id="dc-{{ hash }}-label" style="display: block">
+      <input type="radio" id="dc-{{ hash }}" name="network-type-{{ hash }}" value="dc">
+      District Cooling
+    </label>
+    <label id="dh-{{ hash }}-label" style="display: block">
+      <input type="radio" id="dh-{{ hash }}" name="network-type-{{ hash }}" value="dh">
+      District Heating
+    </label>
+  </div>
+</div>
+<div id="map-tooltip-{{ hash }}"></div>
+
+<style>
+  #map-tooltip-{{ hash }}:empty {display: none;}
+  #map-tooltip-{{ hash }} {
+    font-family: Helvetica, Arial, sans-serif;
+    position: absolute;
+    padding: 4px;
+    margin: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    max-width: 300px;
+    font-size: 10px;
+    z-index: 9;
+    pointer-events: none;
+  }
+  #layers-group-{{ hash }} {
+    display: inline-block;
+    text-align: center;
+    position: absolute;
+    left: 50%;
+    top: 15px;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: rgba(255,255,255,0.9);
+  }
+  .layer-toggle-{{ hash }} {
+    padding: 0 10px;
+  }
+  .mapboxgl-ctrl-3d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjNEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-2d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjJEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-recenter {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxUlEQVR42mNkwA/WQ+lAXAoYaWEAFxDnAnEUEGtBxa4B8TIgngzE3/AZoAjE24H4ARD3APEpqLgZEJcAsQIQewLxfWwGgGw+B8QrgLgBh4tB4hFAbARzCbIB5UDsCMQeUL4FEKdB2bOA+ASUvQOI9wNxJ7oBF4G4GIj3QDUfBGI2qNwvILaHGuICxL1ArA8zABbSPkAsDMSfgHgeECeiOX8+ECcBMR8QvwXiLVQzgGIvUC0QKY5GEKAoISG7hOykjA5onxsB4UA/bwmOYBwAAAAASUVORK5CYII=);
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .mapboxgl-ctrl-icon {
+    margin: auto;
+  }
+</style>
+
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+<script>
+    const lightMap = {
+        "version": 8,
+        "sources": {
+            "osm-tiles": {
+                "type": "raster",
+                "tiles": [
+                    "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                ],
+                "tileSize": 256,
+                "attribution": "Map data \u00A9 OpenStreetMap contributors"
+            }
+        },
+        "layers": [{
+            "id": "osm-tiles",
+            "type": "raster",
+            "source": "osm-tiles",
+            "minzoom": 0,
+            "maxzoom": 22
+        }]
+    };
+
+    const colors = {{ colors }};
+
+    render({{ data }}, {{ zone }}, {{ dc }}, {{ dh }}, "{{ hash }}")
+
+    function render(data, zone, _dc, _dh, hash) {
+        const dc = checkEmpty(_dc, `dc-${hash}`);
+        const dh = checkEmpty(_dh, `$dh-${hash}`);
+        const connectedToggle = document.getElementById(`connected-${ hash }`);
+        const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
+        const networkToggle = document.getElementById(`network-${ hash }`);
+        let currentViewState = {
+            latitude: 0,
+            longitude: 0,
+            zoom: 0, bearing: 0, pitch: 0
+        };
+        let filtered = {dc:{}, dh:{}};
+        const deckgl = new DeckGL({
+            container: hash,
+            mapStyle: lightMap,
+            viewState: currentViewState,
+            layers: [],
+            onViewStateChange: ({viewState}) => {
+                currentViewState = viewState;
+                deckgl.setProps({viewState: currentViewState});
+            }
+        });
+
+        // Center Camera
+        let bbox = zone.bbox;
+        let cameraOptions = deckgl.getMapboxMap().cameraForBounds(
+            [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+            {maxZoom: 18}
+        );
+        currentViewState = {
+            ...currentViewState,
+            zoom: cameraOptions.zoom,
+            latitude: cameraOptions.center.lat,
+            longitude: cameraOptions.center.lng
+        };
+        deckgl.setProps({viewState: currentViewState});
+
+        // Check first radio
+        document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
+
+        init({deckgl, data, zone, dc, dh, hash, cameraOptions, currentViewState, connectedToggle, disconnectedToggle, networkToggle, filtered});
+    }
+
+    function redraw(obj) {
+        let extruded = document.getElementById(`3d-button-${ obj.hash }`).dataset.extruded === 'true';
+        // Add zone layer
+        let layers = [new GeoJsonLayer({
+            id: 'zone',
+            data: filterBuildings(obj),
+            opacity: 0.5,
+            wireframe: true,
+            filled: true,
+            extruded: extruded,
+
+            getElevation: f => f.properties['height_ag'],
+            getFillColor: f => buildingColor(f, obj),
+            updateTriggers: {
+                getFillColor: document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value
+            },
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [255, 255, 0, 128],
+
+            onHover: f => updateTooltip(f, obj)
+        })];
+
+        // Add DC network layer
+        if (obj.dc) layers.push(new GeoJsonLayer({
+            id:'dc',
+            data: obj.dc,
+            stroked: false,
+            filled: true,
+            visible: getNetworkVisibility('dc', obj),
+
+            getLineColor: colors.dc,
+            getFillColor: f => nodeFillColor(f.properties['Type']),
+            getLineWidth: 3,
+            getRadius: 3,
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: f => updateTooltip(f, obj)
+        }));
+
+        // Add DH network layer
+        if (obj.dh) layers.push(new GeoJsonLayer({
+            id:'dh',
+            data: obj.dh,
+            stroked: false,
+            filled: true,
+            visible: getNetworkVisibility('dh', obj),
+
+            getLineColor: colors.dh,
+            getFillColor: f => nodeFillColor(f.properties['Type']),
+            getLineWidth: 3,
+            getRadius: 3,
+
+            pickable: true,
+            autoHighlight: true,
+
+            onHover: f => updateTooltip(f, obj)
+        }));
+
+        obj.deckgl.setProps({layers})
+    }
+
+    function buildingColor(object, obj) {
+        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
+        let connected = obj.data[`connected_buildings_${type.toUpperCase()}`];
+        if (connected.includes(object.properties.Name)) return colors[type];
+        return colors.disconnected
+    }
+
+    function nodeFillColor(type) {
+        if (type === 'NONE') {
+            return [100, 100, 100]
+        } else if (type === 'CONSUMER') {
+            return [255, 255, 255]
+        } else if (type === 'PLANT') {
+            return [0, 0, 0]
+        }
+    }
+
+    function filterBuildings(obj) {
+        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
+        let features;
+        if (obj.connectedToggle.checked && !obj.disconnectedToggle.checked) {
+            if (typeof(obj.filtered[type].connected) === 'undefined') {
+                features = obj.zone.features.filter(feature => {
+                    return obj.data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                });
+                obj.filtered[type].connected = features;
+            }
+            return obj.filtered[type].connected;
+        }
+        if (!obj.connectedToggle.checked && obj.disconnectedToggle.checked) {
+            if (typeof(obj.filtered[type].disconnected) === 'undefined') {
+                features = obj.zone.features.filter(feature => {
+                    return obj.data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                });
+                obj.filtered[type].disconnected = features;
+            }
+            return obj.filtered[type].disconnected;
+        }
+        if (!obj.connectedToggle.checked && !obj.disconnectedToggle.checked) return [];
+        return obj.zone;
+    }
+
+    function setupButtons(obj) {
+        class dToggle {
+            constructor() {
+                this._extruded = false;
+            }
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = `3d-button-${ obj.hash }`;
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-extruded", this._extruded);
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Toggle 3D");
+                this._btn.onclick = function () {
+                    this._extruded = !this._extruded;
+                    this.setAttribute("data-extruded", this._extruded);
+                    let pitch;
+                    let bearing;
+                    if (this._extruded) {
+                        pitch = 45;
+                    } else {
+                        pitch = 0;
+                        bearing = 0;
+                    }
+
+                    let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                    document.getElementById('3d-button-{{ hash }}').setAttribute('class', className);
+                    obj.deckgl.setProps({ controller: {dragRotate: this._extruded},
+                        viewState:{...obj.currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
+                    redraw(obj);
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        // class darkToggle {
+        //     constructor() {
+        //         this._dark = false;
+        //     }
+        //     onAdd(map) {
+        //         this._map = map;
+        //
+        //         this._btn = document.createElement("button");
+        //         this._btn.id = "dark-button";
+        //         this._btn.className = "mapboxgl-ctrl-icon";
+        //         this._btn.type = "button";
+        //         this._btn.setAttribute("data-toggle", "tooltip");
+        //         this._btn.setAttribute("data-placement", "right");
+        //         this._btn.setAttribute("title", "Toggle Dark map");
+        //         this._btn.onclick = function() {
+        //             this._dark = !this._dark;
+        //             if (this._dark) {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.dark);
+        //             } else {
+        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
+        //             }
+        //         };
+        //         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
+        //
+        //         this._container = document.createElement("div");
+        //         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        //         this._container.appendChild(this._btn);
+        //
+        //         return this._container;
+        //     }
+        //
+        //     onRemove() {
+        //         this._container.parentNode.removeChild(this._container);
+        //         this._map = undefined;
+        //     }
+        // }
+
+        class recenterMap {
+            onAdd(map) {
+                this._map = map;
+
+                this._btn = document.createElement("button");
+                this._btn.id = `recenter-button-${ obj.hash }`;
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+                this._btn.type = "button";
+                this._btn.setAttribute("data-toggle", "tooltip");
+                this._btn.setAttribute("data-placement", "right");
+                this._btn.setAttribute("title", "Center to location");
+                this._btn.onclick = function () {
+                    obj.deckgl.setProps({
+                        viewState:{
+                            ...obj.currentViewState,
+                            zoom: obj.cameraOptions.zoom,
+                            latitude: obj.cameraOptions.center.lat,
+                            longitude: obj.cameraOptions.center.lng,
+                            transitionDuration: 300
+                        }
+                    });
+                };
+
+                this._container = document.createElement("div");
+                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                this._container.appendChild(this._btn);
+
+                return this._container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        obj.deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+        // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+        obj.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+        obj.deckgl.setProps({
+            onDragStart: (info, event) => {
+                let dToggleButton = document.getElementById(`3d-button-${ obj.hash }`);
+                if (event.rightButton && dToggleButton.dataset.extruded==='false') {
+                    dToggleButton.click();
+                }
+            }
+        });
+    }
+
+    function updateTooltip({x, y, object, layer}, obj) {
+        const tooltip = document.getElementById(`map-tooltip-${ obj.hash }`);
+        if (object) {
+            tooltip.style.top = `${y}px`;
+            tooltip.style.left = `${x}px`;
+            let innerHTML = '';
+
+            if (layer.id === 'zone' || layer.id === 'district') {
+                $.each(object.properties, function (key, value)  {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+                let area = turf.area(object);
+                innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
+                    `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+            } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+                if (!object.properties.hasOwnProperty("Building")) {
+                    let length = turf.length(object) * 1000;
+                    innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                }
+            } else {
+                $.each(object.properties, function (key, value) {
+                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                });
+            }
+
+            tooltip.innerHTML = innerHTML;
+        } else {
+            tooltip.innerHTML = '';
+        }
+    }
+
+    function checkEmpty(json, type) {
+        let empty = !Object.keys(json).length;
+        if (empty) {
+            document.getElementById(`${type}-label`).remove();
+        }
+        return empty ? null : json
+    }
+
+    function getNetworkVisibility(type, obj) {
+        return document.getElementById(`${type}-${ obj.hash }`).checked
+            && obj.networkToggle.checked
+    }
+
+    function init(obj) {
+        setupButtons(obj);
+        redraw(obj);
+        document.getElementsByName(`network-type-${ obj.hash }`).forEach(function (element) {
+            element.onclick = () => redraw({...obj})
+        });
+        document.getElementsByName(`layer-toggle-${ obj.hash }`).forEach(function (element) {
+            element.onclick = () => redraw({...obj})
+        })
+    }
+
+</script>
