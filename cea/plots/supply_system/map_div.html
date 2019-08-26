@@ -84,34 +84,35 @@
 <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
 <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 <script>
-    const lightMap = {
-        "version": 8,
-        "sources": {
-            "osm-tiles": {
-                "type": "raster",
-                "tiles": [
-                    "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                ],
-                "tileSize": 256,
-                "attribution": "Map data \u00A9 OpenStreetMap contributors"
-            }
-        },
-        "layers": [{
-            "id": "osm-tiles",
-            "type": "raster",
-            "source": "osm-tiles",
-            "minzoom": 0,
-            "maxzoom": 22
-        }]
-    };
 
-    const colors = {{ colors }};
 
     render({{ data }}, {{ zone }}, {{ dc }}, {{ dh }}, "{{ hash }}")
 
     function render(data, zone, _dc, _dh, hash) {
+        const lightMap = {
+            "version": 8,
+            "sources": {
+                "osm-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256,
+                    "attribution": "Map data \u00A9 OpenStreetMap contributors"
+                }
+            },
+            "layers": [{
+                "id": "osm-tiles",
+                "type": "raster",
+                "source": "osm-tiles",
+                "minzoom": 0,
+                "maxzoom": 22
+            }]
+        };
+        const colors = {{ colors }};
+
         const dc = checkEmpty(_dc, `dc-${hash}`);
         const dh = checkEmpty(_dh, `$dh-${hash}`);
         const connectedToggle = document.getElementById(`connected-${ hash }`);
@@ -151,7 +152,7 @@
         // Check first radio
         document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
 
-        init({deckgl, data, zone, dc, dh, hash, cameraOptions, currentViewState, connectedToggle, disconnectedToggle, networkToggle, filtered});
+        init({deckgl, data, zone, dc, dh, hash, cameraOptions, currentViewState, connectedToggle, disconnectedToggle, networkToggle, filtered, colors});
     }
 
     function redraw(obj) {
@@ -186,7 +187,7 @@
             filled: true,
             visible: getNetworkVisibility('dc', obj),
 
-            getLineColor: colors.dc,
+            getLineColor: obj.colors.dc,
             getFillColor: f => nodeFillColor(f.properties['Type']),
             getLineWidth: 3,
             getRadius: 3,
@@ -205,7 +206,7 @@
             filled: true,
             visible: getNetworkVisibility('dh', obj),
 
-            getLineColor: colors.dh,
+            getLineColor: obj.colors.dh,
             getFillColor: f => nodeFillColor(f.properties['Type']),
             getLineWidth: 3,
             getRadius: 3,
@@ -222,8 +223,8 @@
     function buildingColor(object, obj) {
         let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
         let connected = obj.data[`connected_buildings_${type.toUpperCase()}`];
-        if (connected.includes(object.properties.Name)) return colors[type];
-        return colors.disconnected
+        if (connected.includes(object.properties.Name)) return obj.colors[type];
+        return obj.colors.disconnected
     }
 
     function nodeFillColor(type) {
