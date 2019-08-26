@@ -3,12 +3,11 @@ from __future__ import division
 import numpy as np
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import T_LAKE, CC_ALLOWED
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.constants import FURNACE_MIN_LOAD, BOILER_MIN
 from cea.technologies.furnace import furnace_op_cost
-from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
+from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -88,7 +87,6 @@ def heating_source_activator(Q_therm_req_W,
         E_CHP_gen_W = 0.0
         Q_CHP_gen_W = 0.0
         opex_var_CHP_USD = 0.0
-
 
     # WET FURNACE
     if master_to_slave_vars.Furnace_wet_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
@@ -173,8 +171,8 @@ def heating_source_activator(Q_therm_req_W,
         Q_Furnace_dry_gen_W = 0.0
         opex_var_Furnace_dry_USD = 0.0
 
-
-    if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):  # activate if its available
+    if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K,
+                                                                                        tdhret_req_K):  # activate if its available
 
         source_HP_Sewage = 1
         if Q_heat_unmet_W > Q_therm_Sew_W:
@@ -184,7 +182,10 @@ def heating_source_activator(Q_therm_req_W,
             Q_HPSew_gen_W = Q_heat_unmet_W
             mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        opex_var_HPSew_USD, E_HPSew_req_W, Q_coldsource_HPSew_W, Q_HPSew_gen_W  = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
+        opex_var_HPSew_USD, \
+        E_HPSew_req_W, \
+        Q_coldsource_HPSew_W, \
+        Q_HPSew_gen_W = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
                                       tdhsup_K,
                                       tdhret_req_K,
                                       TretsewArray_K,
@@ -200,7 +201,6 @@ def heating_source_activator(Q_therm_req_W,
         E_HPSew_req_W = 0.0
         Q_HPSew_gen_W = 0.0
 
-
     if (master_to_slave_vars.HPLake_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_HP_Lake = 1
         if Q_heat_unmet_W > Q_therm_Lake_W:  # Scale down Load, 100% load achieved
@@ -209,11 +209,11 @@ def heating_source_activator(Q_therm_req_W,
             Q_HPLake_gen_W = Q_heat_unmet_W
 
         opex_var_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(Q_HPLake_gen_W,
-                                                                                               tdhsup_K,
-                                                                                               tdhret_req_K,
-                                                                                               TretLakeArray_K,
-                                                                                               lca,
-                                                                                               hour)
+                                                                                                    tdhsup_K,
+                                                                                                    tdhret_req_K,
+                                                                                                    TretLakeArray_K,
+                                                                                                    lca,
+                                                                                                    hour)
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
     else:
@@ -221,7 +221,6 @@ def heating_source_activator(Q_therm_req_W,
         opex_var_HPLake_USD = 0.0
         E_HPLake_req_W = 0.0
         Q_HPLake_gen_W = 0.0
-
 
     if (master_to_slave_vars.GHP_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
         source_GHP = 1
@@ -233,12 +232,12 @@ def heating_source_activator(Q_therm_req_W,
             mdot_DH_to_GHP_kgpers = Q_GHP_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
         opex_var_GHP_USD, E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers,
-                                                                                 tdhsup_K,
-                                                                                 tdhret_req_K,
-                                                                                 TretGHPArray_K,
-                                                                                 lca,
-                                                                                 Q_GHP_gen_W,
-                                                                                 hour)
+                                                                                     tdhsup_K,
+                                                                                     tdhret_req_K,
+                                                                                     TretGHPArray_K,
+                                                                                     lca,
+                                                                                     Q_GHP_gen_W,
+                                                                                     hour)
         Q_heat_unmet_W = Q_heat_unmet_W - Q_GHP_gen_W
 
     else:
@@ -246,7 +245,6 @@ def heating_source_activator(Q_therm_req_W,
         opex_var_GHP_USD = 0.0
         E_GHP_req_W = 0.0
         Q_GHP_gen_W = 0.0
-
 
     if (master_to_slave_vars.Boiler_on) == 1 and Q_heat_unmet_W > 0:
         source_BaseBoiler = 1
@@ -303,7 +301,7 @@ def heating_source_activator(Q_therm_req_W,
         E_PeakBoiler_req_W = 0.0
 
     if Q_heat_unmet_W > 1.0E-3:
-        Q_uncovered_W = Q_heat_unmet_W # this will become the back-up boiler
+        Q_uncovered_W = Q_heat_unmet_W  # this will become the back-up boiler
     else:
         Q_uncovered_W = 0.0
 
@@ -343,13 +341,12 @@ def heating_source_activator(Q_therm_req_W,
                 'E_CHP_gen_W': E_CHP_gen_W,
                 'E_Furnace_dry_gen_W': E_Furnace_dry_gen_W,
                 'E_Furnace_wet_gen_W': E_Furnace_wet_gen_W,
-}
+                }
     Gas_output = {'Gas_CHP_req_W': Gas_used_CHP_W,
                   'Gas_BaseBoiler_req_W': Gas_used_BaseBoiler_W,
                   'Gas_PeakBoiler_req_W': Gas_used_PeakBoiler_W}
 
     Biomass_output = {'Biomass_Furnace_dry_req_W': Biomass_used_Furnace_dry_W,
                       'Biomass_Furnace_wet_req_W': Biomass_used_Furnace_wet_W}
-
 
     return opex_output, source_output, Q_output, E_output, Gas_output, Biomass_output

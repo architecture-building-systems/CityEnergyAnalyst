@@ -201,7 +201,7 @@ def calc_generation_costs_heating(locator,
         HP_Size_W = master_to_slave_vars.HPLake_maxSize_W
         Capex_a_Lake_USD, \
         Opex_fixed_Lake_USD, \
-        Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+        Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, 'HP2')
     else:
         Capex_a_Lake_USD = 0.0
         Opex_fixed_Lake_USD = 0.0
@@ -212,7 +212,7 @@ def calc_generation_costs_heating(locator,
         HP_Size_W = master_to_slave_vars.HPSew_maxSize_W
         Capex_a_Sewage_USD, \
         Opex_fixed_Sewage_USD, \
-        Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
+        Capex_Sewage_USD = hp.calc_Cinv_HP(HP_Size_W, locator, 'HP2')
     else:
         Capex_a_Sewage_USD = 0.0
         Opex_fixed_Sewage_USD = 0.0
@@ -243,7 +243,7 @@ def calc_generation_costs_heating(locator,
 
         Q_HP_max_Wh = storage_activation_data["Q_HP_Server_W"].max()
         Capex_a_wasteserver_HP_USD, Opex_fixed_wasteserver_HP_USD, Capex_wasteserver_HP_USD = hp.calc_Cinv_HP(
-            Q_HP_max_Wh, locator, config, 'HP2')
+            Q_HP_max_Wh, locator, 'HP2')
     else:
         Capex_a_wasteserver_HEX_USD = 0.0
         Opex_fixed_wasteserver_HEX_USD = 0.0
@@ -275,18 +275,18 @@ def calc_generation_costs_heating(locator,
     Q_HP_max_PVT_wh = storage_activation_data["Q_HP_PVT_W"].max()
     Capex_a_HP_PVT_USD, \
     Opex_fixed_HP_PVT_USD, \
-    Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config, 'HP2')
+    Capex_HP_PVT_USD = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, 'HP2')
 
     # hack split into two technologies
     Q_HP_max_SC_ET_Wh = storage_activation_data["Q_HP_SC_ET_W"].max()
     Capex_a_HP_SC_ET_USD, \
     Opex_fixed_HP_SC_ET_USD, \
-    Capex_HP_SC_ET_USD = hp.calc_Cinv_HP(Q_HP_max_SC_ET_Wh, locator, config, 'HP2')
+    Capex_HP_SC_ET_USD = hp.calc_Cinv_HP(Q_HP_max_SC_ET_Wh, locator, 'HP2')
 
     Q_HP_max_SC_FP_Wh = storage_activation_data["Q_HP_SC_FP_W"].max()
     Capex_a_HP_SC_FP_USD, \
     Opex_fixed_HP_SC_FP_USD, \
-    Capex_HP_SC_FP_USD = hp.calc_Cinv_HP(Q_HP_max_SC_FP_Wh, locator, config, 'HP2')
+    Capex_HP_SC_FP_USD = hp.calc_Cinv_HP(Q_HP_max_SC_FP_Wh, locator, 'HP2')
 
     # HEAT EXCHANGER FOR SOLAR COLLECTORS
     Q_max_SC_ET_Wh = (storage_activation_data["Q_SC_ET_gen_directload_W"] +
