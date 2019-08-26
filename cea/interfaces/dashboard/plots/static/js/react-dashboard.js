@@ -211,20 +211,30 @@ const Plot = ({ index, dashIndex, data, style }) => {
         {div ? (
           div.content
         ) : error ? (
-          <Result
-            status="error"
-            icon="Something went wrong!"
-            title={error.status}
-            subTitle={error.statusText}
-          >
-            <pre style={{ height: 200, overflow: "auto" }}>{error.data}</pre>
-          </Result>
+          <ErrorPlot error={error} />
         ) : (
           <div style={{ height: plotStyle.height }} />
         )}
       </Spin>
     </Card>
   );
+};
+
+const ErrorPlot = ({ error }) => {
+  console.log(error.status)
+  if (error.status === 404) return HTMLReactParser(error.data);
+  if (error.status === 500)
+    return (
+      <Result
+        status="error"
+        icon="Something went wrong!"
+        title={error.status}
+        subTitle={error.statusText}
+      >
+        <pre style={{ height: 200, overflow: "auto" }}>{error.data}</pre>
+      </Result>
+    );
+  return null
 };
 
 const EmptyPlot = () => {
