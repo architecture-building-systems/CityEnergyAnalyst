@@ -46,6 +46,8 @@ def heating_source_activator(Q_therm_req_W,
 
     ## initializing unmet heating load
     Q_heat_unmet_W = Q_therm_req_W
+
+    # ACTIVATE THE COGEN
     if master_to_slave_vars.CC_on == 1 and Q_heat_unmet_W > 0.0:
 
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CCGT_SIZE_W,
@@ -61,31 +63,31 @@ def heating_source_activator(Q_therm_req_W,
         if Q_heat_unmet_W >= q_output_CC_min_W:
             source_CHP = 1
             # operation Possible if above minimal load
-            if Q_heat_unmet_W < Q_output_CC_max_W:  # Normal operation Possible within partload regime
+            if Q_heat_unmet_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = Q_heat_unmet_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
                 E_CHP_gen_W = np.float(eta_elec_interpol(Gas_used_CHP_W)) * Gas_used_CHP_W
-                cost_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
+                opex_var_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
             else:  # Only part of the demand can be delivered as 100% load achieved
                 Q_CHP_gen_W = Q_output_CC_max_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
                 E_CHP_gen_W = np.float(eta_elec_interpol(Q_output_CC_max_W)) * Gas_used_CHP_W
-                cost_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
+                opex_var_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
         else:
             source_CHP = 0
             Gas_used_CHP_W = 0.0
             E_CHP_gen_W = 0.0
             Q_CHP_gen_W = 0.0
-            cost_CHP_USD = 0.0
+            opex_var_CHP_USD = 0.0
         Q_heat_unmet_W = Q_heat_unmet_W - Q_CHP_gen_W
     else:
         source_CHP = 0
         Gas_used_CHP_W = 0.0
         E_CHP_gen_W = 0.0
         Q_CHP_gen_W = 0.0
-        cost_CHP_USD = 0.0
+        opex_var_CHP_USD = 0.0
 
 
     # WET FURNACE
@@ -100,7 +102,7 @@ def heating_source_activator(Q_therm_req_W,
                                                     master_to_slave_vars.WBFurnace_Q_max_W, tdhret_req_K,
                                                     "wet", lca, hour)
 
-                cost_Furnace_wet_USD = Furnace_Cost_Data[0]
+                opex_var_Furnace_wet_USD = Furnace_Cost_Data[0]
                 Biomass_used_Furnace_wet_W = Furnace_Cost_Data[2]
                 E_Furnace_wet_gen_W = Furnace_Cost_Data[4]
 
@@ -112,14 +114,14 @@ def heating_source_activator(Q_therm_req_W,
                                                     "wet", lca, hour)
 
                 Biomass_used_Furnace_wet_W = Furnace_Cost_Data[2]
-                cost_Furnace_wet_USD = Furnace_Cost_Data[0]
+                opex_var_Furnace_wet_USD = Furnace_Cost_Data[0]
                 E_Furnace_wet_gen_W = Furnace_Cost_Data[4]
         else:
             source_Furnace_wet = 0
             E_Furnace_wet_gen_W = 0.0
             Biomass_used_Furnace_wet_W = 0.0
             Q_Furnace_wet_gen_W = 0.0
-            cost_Furnace_wet_USD = 0.0
+            opex_var_Furnace_wet_USD = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_wet_gen_W
 
@@ -128,7 +130,7 @@ def heating_source_activator(Q_therm_req_W,
         E_Furnace_wet_gen_W = 0.0
         Biomass_used_Furnace_wet_W = 0.0
         Q_Furnace_wet_gen_W = 0.0
-        cost_Furnace_wet_USD = 0.0
+        opex_var_Furnace_wet_USD = 0.0
 
     # DRY FURNACE
     if master_to_slave_vars.Furnace_dry_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
@@ -142,7 +144,7 @@ def heating_source_activator(Q_therm_req_W,
                                                     master_to_slave_vars.DBFurnace_Q_max_W, tdhret_req_K,
                                                     "dry", lca, hour)
 
-                cost_Furnace_dry_USD = Furnace_Cost_Data[0]
+                opex_var_Furnace_dry_USD = Furnace_Cost_Data[0]
                 Biomass_used_Furnace_dry_W = Furnace_Cost_Data[2]
                 E_Furnace_dry_gen_W = Furnace_Cost_Data[4]
 
@@ -153,7 +155,7 @@ def heating_source_activator(Q_therm_req_W,
                                                     "dry", lca, hour)
 
                 Biomass_used_Furnace_dry_W = Furnace_Cost_Data[2]
-                cost_Furnace_dry_USD = Furnace_Cost_Data[0]
+                opex_var_Furnace_dry_USD = Furnace_Cost_Data[0]
                 Q_Furnace_dry_gen_W = Q_heat_unmet_W
                 E_Furnace_dry_gen_W = Furnace_Cost_Data[4]
         else:
@@ -161,7 +163,7 @@ def heating_source_activator(Q_therm_req_W,
             E_Furnace_dry_gen_W = 0.0
             Biomass_used_Furnace_dry_W = 0.0
             Q_Furnace_dry_gen_W = 0.0
-            cost_Furnace_dry_USD = 0.0
+            opex_var_Furnace_dry_USD = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_dry_gen_W
     else:
@@ -169,7 +171,7 @@ def heating_source_activator(Q_therm_req_W,
         E_Furnace_dry_gen_W = 0.0
         Biomass_used_Furnace_dry_W = 0.0
         Q_Furnace_dry_gen_W = 0.0
-        cost_Furnace_dry_USD = 0.0
+        opex_var_Furnace_dry_USD = 0.0
 
 
     if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):  # activate if its available
@@ -182,7 +184,7 @@ def heating_source_activator(Q_therm_req_W,
             Q_HPSew_gen_W = Q_heat_unmet_W
             mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        cost_HPSew_USD, E_HPSew_req_W, Q_coldsource_HPSew_W, Q_HPSew_gen_W  = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
+        opex_var_HPSew_USD, E_HPSew_req_W, Q_coldsource_HPSew_W, Q_HPSew_gen_W  = HPSew_op_cost(mdot_DH_to_Sew_kgpers,
                                       tdhsup_K,
                                       tdhret_req_K,
                                       TretsewArray_K,
@@ -194,7 +196,7 @@ def heating_source_activator(Q_therm_req_W,
 
     else:
         source_HP_Sewage = 0
-        cost_HPSew_USD = 0.0
+        opex_var_HPSew_USD = 0.0
         E_HPSew_req_W = 0.0
         Q_HPSew_gen_W = 0.0
 
@@ -206,7 +208,7 @@ def heating_source_activator(Q_therm_req_W,
         else:  # regular operation possible
             Q_HPLake_gen_W = Q_heat_unmet_W
 
-        cost_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(Q_HPLake_gen_W,
+        opex_var_HPLake_USD, E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(Q_HPLake_gen_W,
                                                                                                tdhsup_K,
                                                                                                tdhret_req_K,
                                                                                                TretLakeArray_K,
@@ -216,7 +218,7 @@ def heating_source_activator(Q_therm_req_W,
 
     else:
         source_HP_Lake = 0
-        cost_HPLake_USD = 0.0
+        opex_var_HPLake_USD = 0.0
         E_HPLake_req_W = 0.0
         Q_HPLake_gen_W = 0.0
 
@@ -230,7 +232,7 @@ def heating_source_activator(Q_therm_req_W,
             Q_GHP_gen_W = Q_heat_unmet_W
             mdot_DH_to_GHP_kgpers = Q_GHP_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
-        cost_GHP_USD, E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers,
+        opex_var_GHP_USD, E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers,
                                                                                  tdhsup_K,
                                                                                  tdhret_req_K,
                                                                                  TretGHPArray_K,
@@ -241,7 +243,7 @@ def heating_source_activator(Q_therm_req_W,
 
     else:
         source_GHP = 0
-        cost_GHP_USD = 0.0
+        opex_var_GHP_USD = 0.0
         E_GHP_req_W = 0.0
         Q_GHP_gen_W = 0.0
 
@@ -254,13 +256,13 @@ def heating_source_activator(Q_therm_req_W,
             else:
                 Q_BaseBoiler_gen_W = Q_heat_unmet_W
 
-            cost_BaseBoiler_USD, C_boil_per_Wh, Gas_used_BaseBoiler_W, E_BaseBoiler_req_W = cond_boiler_op_cost(
+            opex_var_BaseBoiler_USD, C_boil_per_Wh, Gas_used_BaseBoiler_W, E_BaseBoiler_req_W = cond_boiler_op_cost(
                 Q_BaseBoiler_gen_W, master_to_slave_vars.Boiler_Q_max_W, tdhret_req_K, "NG",
                 prices, lca, hour)
         else:
             source_BaseBoiler = 0
             Q_BaseBoiler_gen_W = 0.0
-            cost_BaseBoiler_USD = 0.0
+            opex_var_BaseBoiler_USD = 0.0
             Gas_used_BaseBoiler_W = 0.0
             E_BaseBoiler_req_W = 0.0
 
@@ -269,7 +271,7 @@ def heating_source_activator(Q_therm_req_W,
     else:
         source_BaseBoiler = 0
         Q_BaseBoiler_gen_W = 0.0
-        cost_BaseBoiler_USD = 0.0
+        opex_var_BaseBoiler_USD = 0.0
         Gas_used_BaseBoiler_W = 0.0
         E_BaseBoiler_req_W = 0.0
 
@@ -281,12 +283,12 @@ def heating_source_activator(Q_therm_req_W,
             else:
                 Q_PeakBoiler_gen_W = Q_heat_unmet_W
 
-            cost_PeakBoiler_USD, C_boil_per_WhP, Gas_used_PeakBoiler_W, E_PeakBoiler_req_W = cond_boiler_op_cost(
+            opex_var_PeakBoiler_USD, C_boil_per_WhP, Gas_used_PeakBoiler_W, E_PeakBoiler_req_W = cond_boiler_op_cost(
                 Q_PeakBoiler_gen_W, master_to_slave_vars.BoilerPeak_Q_max_W, tdhret_req_K,
                 "NG", prices, lca, hour)
         else:
             source_PeakBoiler = 0
-            cost_PeakBoiler_USD = 0.0
+            opex_var_PeakBoiler_USD = 0.0
             Q_PeakBoiler_gen_W = 0.0
             Gas_used_PeakBoiler_W = 0
             E_PeakBoiler_req_W = 0.0
@@ -295,7 +297,7 @@ def heating_source_activator(Q_therm_req_W,
 
     else:
         source_PeakBoiler = 0
-        cost_PeakBoiler_USD = 0.0
+        opex_var_PeakBoiler_USD = 0.0
         Q_PeakBoiler_gen_W = 0.0
         Gas_used_PeakBoiler_W = 0
         E_PeakBoiler_req_W = 0.0
@@ -305,14 +307,14 @@ def heating_source_activator(Q_therm_req_W,
     else:
         Q_uncovered_W = 0.0
 
-    opex_output = {'Opex_var_HP_Sewage_USDhr': cost_HPSew_USD,
-                   'Opex_var_HP_Lake_USDhr': cost_HPLake_USD,
-                   'Opex_var_GHP_USDhr': cost_GHP_USD,
-                   'Opex_var_CHP_USDhr': cost_CHP_USD,
-                   'Opex_var_Furnace_dry_USDhr': cost_Furnace_dry_USD,
-                   'Opex_var_Furnace_wet_USDhr': cost_Furnace_wet_USD,
-                   'Opex_var_BaseBoiler_USDhr': cost_BaseBoiler_USD,
-                   'Opex_var_PeakBoiler_USDhr': cost_PeakBoiler_USD}
+    opex_output = {'Opex_var_HP_Sewage_USDhr': opex_var_HPSew_USD,
+                   'Opex_var_HP_Lake_USDhr': opex_var_HPLake_USD,
+                   'Opex_var_GHP_USDhr': opex_var_GHP_USD,
+                   'Opex_var_CHP_USDhr': opex_var_CHP_USD,
+                   'Opex_var_Furnace_dry_USDhr': opex_var_Furnace_dry_USD,
+                   'Opex_var_Furnace_wet_USDhr': opex_var_Furnace_wet_USD,
+                   'Opex_var_BaseBoiler_USDhr': opex_var_BaseBoiler_USD,
+                   'Opex_var_PeakBoiler_USDhr': opex_var_PeakBoiler_USD}
 
     source_output = {'Source_HP_Sewage': source_HP_Sewage,
                      'Source_HP_Lake': source_HP_Lake,

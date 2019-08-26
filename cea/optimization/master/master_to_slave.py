@@ -279,29 +279,40 @@ def calc_master_to_slave_variables(locator, gen,
 def master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W, individual_with_names_dict,
                                                   master_to_slave_vars):
     # COOLING SYSTEMS
-    # Lake Cooling
-    if individual_with_names_dict['WS_HP'] >= mimimum_valuedc('WS_HP') and LAKE_COOLING_ALLOWED is True:
-        master_to_slave_vars.Lake_cooling_on = 1
-        master_to_slave_vars.Lake_cooling_size_W = individual_with_names_dict['WS_HP'] * Q_cooling_nom_W
-
-    # VCC Cooling
-    if individual_with_names_dict['AS_HP'] >= mimimum_valuedc('AS_HP') and VCC_ALLOWED is True:
-        master_to_slave_vars.VCC_on = 1
-        master_to_slave_vars.VCC_cooling_size_W = individual_with_names_dict['AS_HP'] * Q_cooling_nom_W
-
-    # Absorption Chiller Cooling
+    # NG-Fired Trigen with Absorption Chiller
     if individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen')and ABSORPTION_CHILLER_ALLOWED is True:
-        master_to_slave_vars.Absorption_Chiller_on = 1
-        master_to_slave_vars.Absorption_chiller_size_W = individual_with_names_dict['NG_Trigen'] * Q_cooling_nom_W
+        master_to_slave_vars.NG_Trigen_on = 1
+        master_to_slave_vars.NG_Trigen_size_W = individual_with_names_dict['NG_Trigen'] * Q_cooling_nom_W
+
+    # Water source base vapor compression chiller
+    if individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc('WS_BaseVCC') and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.WS_BaseVCC_on = 1
+        master_to_slave_vars.WS_BaseVCC_size_W = individual_with_names_dict['WS_BaseVCC'] * Q_cooling_nom_W
+
+    # Water source peak vapor compression chiller
+    if individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc('WS_PeakVCC') and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.WS_PeakVCC_on = 1
+        master_to_slave_vars.WS_PeakVCC_size_W = individual_with_names_dict['WS_PeakVCC'] * Q_cooling_nom_W
+
+    # Air source (Cooling Tower) base vapor compression chiller
+    if individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc('AS_BaseVCC') and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.AS_BaseVCC_on = 1
+        master_to_slave_vars.AS_BaseVCC_size_W = individual_with_names_dict['WS_BaseVCC'] * Q_cooling_nom_W
+
+    # Air source (Cooling Tower) peak vapor compression chiller
+    if individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc('AS_PeakVCC') and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.AS_PeakVCC_on = 1
+        master_to_slave_vars.AS_PeakVCC_size_W = individual_with_names_dict['AS_PeakVCC'] * Q_cooling_nom_W
 
     # Storage Cooling
     if individual_with_names_dict['Storage'] >= mimimum_valuedc('Storage') and STORAGE_COOLING_ALLOWED is True:
-        if (individual_with_names_dict['AS_HP'] >= mimimum_valuedc('AS_HP')  and VCC_ALLOWED is True) or \
-                (individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen')and ABSORPTION_CHILLER_ALLOWED is True):
-            master_to_slave_vars.storage_cooling_on = 1
+        if (individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc('WS_BaseVCC') and VCC_ALLOWED is True) or \
+            (individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc('WS_PeakVCC') and VCC_ALLOWED is True) or \
+            (individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc('AS_BaseVCC') and VCC_ALLOWED is True) or \
+            (individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc('AS_PeakVCC') and VCC_ALLOWED is True) or \
+            (individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen') and ABSORPTION_CHILLER_ALLOWED is True):
+            master_to_slave_vars.Storage_cooling_on = 1
             master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
-            if master_to_slave_vars.Storage_cooling_size_W > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
-                master_to_slave_vars.Storage_cooling_size_W = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     return master_to_slave_vars
 
@@ -374,17 +385,14 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
     # HPLake
     if individual_with_names_dict['WS_HP'] >= mimimum_valuedh('WS_HP') and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HPLake_on = 1
-        master_to_slave_vars.HPLake_share = individual_with_names_dict['WS_HP']
         master_to_slave_vars.HPLake_maxSize_W = individual_with_names_dict['WS_HP'] * Q_heating_nom_W
     # HPSewage
     if individual_with_names_dict['SS_HP'] >= mimimum_valuedh('SS_HP') and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HPSew_on = 1
-        master_to_slave_vars.HPSew_share = individual_with_names_dict['SS_HP']
         master_to_slave_vars.HPSew_maxSize_W = individual_with_names_dict['SS_HP'] * Q_heating_nom_W
     # GHP
     if individual_with_names_dict['GS_HP'] >= mimimum_valuedh('GS_HP') and GHP_ALLOWED == True:
         master_to_slave_vars.GHP_on = 1
-        master_to_slave_vars.GHP_share = individual_with_names_dict['GS_HP']
         master_to_slave_vars.GHP_maxSize_W = individual_with_names_dict['GS_HP'] * Q_heating_nom_W
     # HPServer
     if individual_with_names_dict['DS_HP'] >= mimimum_valuedh('DS_HP') and DATACENTER_HEAT_RECOVERY_ALLOWED == True:
