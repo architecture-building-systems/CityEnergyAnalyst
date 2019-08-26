@@ -13,6 +13,7 @@ const {
 const { useState, useEffect, useCallback, useMemo } = React;
 
 const INITIAL_DASHBOARD = 0;
+const defaultPlotStyle = { height: 350, margin: 5 };
 
 const Dashboard = () => {
   const [dashboards, setDashboards] = useState([]);
@@ -140,8 +141,7 @@ const Plot = ({ index, dashIndex, data, style }) => {
   const [error, setError] = useState(null);
   const [hasIntersected, setIntersected] = useState(false);
 
-  const defaultStyle = { height: 500, margin: 10 };
-  const plotStyle = { ...defaultStyle, ...style };
+  const plotStyle = { ...defaultPlotStyle, ...style };
 
   // TODO: Maybe find a better solution
   const hash = `cea-react-${dashIndex}-${index}`;
