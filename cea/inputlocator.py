@@ -500,31 +500,25 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/retrofit.csv"""
         return os.path.join(self.get_potentials_retrofit_folder(), "potential_" + name_retrofit + ".csv")
 
-    # DATABASES
-    # FIXME: remove get_default_weather (use config instead)
-    def get_default_weather(self):
-        """weather/Zug-2010.epw
-        path to database of archetypes file Archetypes_properties.xlsx"""
-        import cea.config
-        config = cea.config.Configuration()
-        if not os.path.exists(config.weather):
-            if config.weather in self.get_weather_names():
-                return self.get_weather(config.weather)
-            else:
-                return self.get_weather(self.get_weather_names()[0])
-        return config.weather
+    def get_weather_file(self):
+        """inputs/weather/weather.epw
+        path to the weather file to use for simulation - run weather-helper to set this"""
+        return os.path.join(self.get_weather_folder(), "weather.epw")
 
-    def get_weather(self, name):
+    # DATABASES
+    def get_weather(self, name=None):
         """weather/{name}.epw Returns the path to a weather file with the name ``name``. This can either be one
         of the pre-configured weather files (see ``get_weather_names``) or a path to an existing weather file.
-        Returns the default weather file if no other file can be resolved."""
+        Returns the default weather file if no other file can be resolved.
+        ..note: scripts should not use this, instead, use ``get_weather_file()`` - see the ``weather-helper`` script."""
+        default_weather_name = self.get_weather_names()[0]
         if not name:
-            return self.get_default_weather()
+            name = default_weather_name
         if os.path.exists(name) and name.endswith('.epw'):
             return name
         weather_file = os.path.join(self.weather_path, name + '.epw')
         if not os.path.exists(weather_file):
-            return self.get_default_weather()
+            return os.path.join(self.weather_path, default_weather_name + '.epw')
         return weather_file
 
     def get_weather_names(self):
@@ -539,12 +533,14 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
-    def get_region_specific_db_file(self, region):
-        """get path to CEA databases according to the region"""
-        technology_folder = os.path.join(self.db_path, region)
-        if not os.path.exists(technology_folder):
-            raise Exception("you are trying to get the technology database from a location that cea does not support")
-        return technology_folder
+    def get_technology_template_for_region(self, region):
+        """get path to technology database for the region as shipped by the CEA or return the region path, assuming
+        it's a user-supplied technology folder"""
+        if region in os.listdir(self.db_path):
+            return os.path.join(self.db_path, region)
+        if not os.path.exists(region):
+            raise ValueError("You are trying to get the technology database for an unsupported region.")
+        return region
 
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
@@ -741,7 +737,7 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_layout_nodes_shapefile(self, network_type, network_name):
+    def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         self.check_cpg(shapefile_path)
