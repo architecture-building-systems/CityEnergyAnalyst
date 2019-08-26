@@ -336,7 +336,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     return cost_HPSew_USD, qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology_type):
+def calc_Cinv_HP(HP_Size, locator, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 

@@ -29,11 +29,10 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, 
 
     # unpack outputs
     opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
-    GHG_VCC_tonCO2perhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_CO2 / 1E3
-    prim_energy_VCC_MJoilperhr = (VCC_operation['wdot_W'] * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
     E_used_VCC_W = opex_var_VCC_USD / lca.ELEC_PRICE[hour]
-    return opex_var_VCC_USD, GHG_VCC_tonCO2perhr, prim_energy_VCC_MJoilperhr, Qc_CT_VCC_W, E_used_VCC_W
+
+    return opex_var_VCC_USD, Qc_CT_VCC_W, E_used_VCC_W
 
 
 def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
@@ -103,7 +102,6 @@ def cooling_resource_activator(Q_thermal_req,
 
     ## ACTIVATE THE TRIGEN
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0:
-        source_Trigen_NG = 1
         if Q_cooling_unmet_W <= master_to_slave_variables.NG_Trigen_size:
             Qc_Trigen_gen_W = Q_cooling_unmet_W
         else:
@@ -151,6 +149,7 @@ def cooling_resource_activator(Q_thermal_req,
             NG_Trigen_req_W = 0.0
             E_Trigen_NG_req_W = 0.0
             cost_Trigen_USD = 0.0
+
         # update unmet cooling load
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_Trigen_gen_W
 
@@ -171,17 +170,17 @@ def cooling_resource_activator(Q_thermal_req,
             Q_lake_VCC_gen_W = Q_cooling_unmet_W
 
         opex_var_lake_VCC_USDperhr, \
-        GHG_lake_VCC_tonCO2perhr, \
-        prim_energy_lake_VCC_MJoilperhr, \
-        Q_lake_VCC_gen_W, E_used_lake_VCC_W = calc_vcc_operation(Q_lake_VCC_gen_W, T_district_cooling_return_K,
-                                                                 T_district_cooling_supply_K,
-                                                                 T_source_average_Lake_K, lca, hour)
+        Q_lake_VCC_gen_W, \
+        E_used_lake_VCC_W = calc_vcc_operation(Q_lake_VCC_gen_W,
+                                               T_district_cooling_return_K,
+                                               T_district_cooling_supply_K,
+                                               T_source_average_Lake_K,
+                                               lca,
+                                               hour)
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_lake_VCC_gen_W
     else:
         Source_Lake = 0
         opex_var_Lake_USD = 0.0
-        prim_energy_lake_VCC_MJoilperhr = 0.0
-        GHG_lake_VCC_tonCO2perhr = 0.0
         Q_lake_VCC_gen_W = 0.0
         E_used_lake_VCC_W = 0.0
 
@@ -240,13 +239,9 @@ def cooling_resource_activator(Q_thermal_req,
             Qc_from_VCC_W = technology_capacities['Qc_VCC_nom_W']
 
         opex_var_VCC_USDperhr, \
-        GHG_VCC_tonCO2perhr, \
-        prim_energy_VCC_MJoilperhr, \
-        Qc_CT_VCC_W, E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, VCC_T_COOL_IN, lca, hour)
-        opex_var_VCC_USD.append(opex_var_VCC_USDperhr)
-        GHG_VCC_tonCO2.append(GHG_VCC_tonCO2perhr)
-        prim_energy_VCC_MJoil.append(prim_energy_VCC_MJoilperhr)
-        Qc_CT_W.append(Qc_CT_VCC_W)
+        Qc_CT_VCC_W, \
+        E_used_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, VCC_T_COOL_IN, lca, hour)
+
         # update unmet cooling load
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_VCC_W
 
@@ -259,10 +254,6 @@ def cooling_resource_activator(Q_thermal_req,
         prim_energy_VCC_backup_MJoilperhr, Qc_CT_VCC_backup_W, \
         E_used_VCC_backup_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K, T_DCN_sup_K, VCC_T_COOL_IN,
                                                         lca, hour)
-        opex_var_VCC_backup_USD.append(opex_var_VCC_backup_USDperhr)
-        GHG_VCC_backup_tonCO2.append(GHG_VCC_backup_tonCO2perhr)
-        prim_energy_VCC_backup_MJoil.append(prim_energy_VCC_backup_MJoilperhr)
-        Qc_CT_W.append(Qc_CT_VCC_backup_W)
         # update unmet cooling load
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_backup_VCC_W
 
