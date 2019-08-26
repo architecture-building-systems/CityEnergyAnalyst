@@ -1,19 +1,19 @@
 <div id="{{ hash }}" style="height: 100%; position: relative;">
-  <div id="layers-group-{{ hash }}">
+  <div id="layers-group-{{ hash }}" style="visibility: hidden;">
     <span class="layer-toggle-{{ hash }}">
-      <label>
+      <label class="map-plot-label">
         <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected'>
         Connected Buildings
       </label>
     </span>
     <span class="layer-toggle-{{ hash }}">
-      <label>
+      <label class="map-plot-label">
         <input id='disconnected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='disconnected'>
         Disconnected Buildings
       </label>
     </span>
     <span class="layer-toggle-{{ hash }}">
-      <label>
+      <label class="map-plot-label">
         <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network'>
         Network
       </label>
@@ -21,11 +21,11 @@
   </div>
   <div style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
     <span>Network Type:</span>
-    <label id="dc-{{ hash }}-label" style="display: block">
+    <label class="map-plot-label" id="dc-{{ hash }}-label" style="display: block">
       <input type="radio" id="dc-{{ hash }}" name="network-type-{{ hash }}" value="dc">
       District Cooling
     </label>
-    <label id="dh-{{ hash }}-label" style="display: block">
+    <label class="map-plot-label" id="dh-{{ hash }}-label" style="display: block">
       <input type="radio" id="dh-{{ hash }}" name="network-type-{{ hash }}" value="dh">
       District Heating
     </label>
@@ -293,6 +293,9 @@
             }
 
             class showLayerToggle {
+                constructor() {
+                    this._show = false;
+                }
                 onAdd(map) {
                     this._map = map;
 
@@ -302,18 +305,17 @@
                     this._btn.type = "button";
                     this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "right");
-                    this._btn.setAttribute("title", "Center to location");
+                    this._btn.setAttribute("title", "Show layer toggle");
                     this._btn.onclick = function () {
-                        deckgl.setProps({
-                            viewState:{
-                                ...currentViewState,
-                                zoom: cameraOptions.zoom,
-                                latitude: cameraOptions.center.lat,
-                                longitude: cameraOptions.center.lng,
-                                transitionDuration: 300
-                            }
-                        });
+                        this._show = !this._show;
+                        if (this._show) {
+                            document.getElementById(`layers-group-${ hash }`).style.visibility = "visible";
+                        } else {
+                            document.getElementById(`layers-group-${ hash }`).style.visibility = "hidden";
+                        }
                     };
+
+                    this._btn.innerHTML = '<i class="fa fa-list"></i>';
 
                     this._container = document.createElement("div");
                     this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -331,6 +333,7 @@
             deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
             // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
             deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+            deckgl.getMapboxMap().addControl(new showLayerToggle(), 'top-right');
             deckgl.setProps({
                 onDragStart: (info, event) => {
                     let dToggleButton = document.getElementById(`3d-button-${ hash }`);
