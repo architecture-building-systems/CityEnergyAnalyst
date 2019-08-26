@@ -23,7 +23,6 @@ __status__ = "Production"
 
 def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
-    mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
 
@@ -160,29 +159,64 @@ def cooling_resource_activator(Q_thermal_req,
         E_Trigen_NG_req_W = 0.0
         cost_Trigen_USD = 0.0
 
-    # lake-source - vapour compresion chiller
-    if master_to_slave_variables.Lake_cooling_on == 1 and Q_cooling_unmet_W > 0.0:
+    # Base VCC water-source
+    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
         # Free cooling possible from the lake
-        Source_Lake = 1
+        source_BaseVCC_WS = 1
         if Q_cooling_unmet_W > Q_therm_Lake_W:
-            Q_lake_VCC_gen_W = Q_therm_Lake_W
+            Q_BaseVCC_WS_gen_W = Q_therm_Lake_W
+            Q_therm_Lake_W =- Q_therm_Lake_W #discount availability
         else:
-            Q_lake_VCC_gen_W = Q_cooling_unmet_W
+            Q_BaseVCC_WS_gen_W = Q_cooling_unmet_W
 
-        opex_var_lake_VCC_USDperhr, \
-        Q_lake_VCC_gen_W, \
-        E_used_lake_VCC_W = calc_vcc_operation(Q_lake_VCC_gen_W,
-                                               T_district_cooling_return_K,
-                                               T_district_cooling_supply_K,
-                                               T_source_average_Lake_K,
-                                               lca,
-                                               hour)
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_lake_VCC_gen_W
+        if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
+            opex_BaseVCC_WS_USDperhr, \
+            Q_BaseVCC_WS_gen_W, \
+            E_BaseVCC_WS_req_W = calc_vcc_operation(Q_BaseVCC_WS_gen_W,
+                                                   T_district_cooling_return_K,
+                                                   T_district_cooling_supply_K,
+                                                   T_source_average_Lake_K,
+                                                   lca,
+                                                   hour)
+        else: # bypass, do not use chiller
+            opex_BaseVCC_WS_USDperhr = 0.0
+            E_BaseVCC_WS_req_W = 0.0
+
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_WS_gen_W
     else:
-        Source_Lake = 0
-        opex_var_Lake_USD = 0.0
-        Q_lake_VCC_gen_W = 0.0
-        E_used_lake_VCC_W = 0.0
+        source_BaseVCC_WS = 0
+        opex_BaseVCC_WS_USDperhr = 0.0
+        Q_BaseVCC_WS_gen_W = 0.0
+        E_BaseVCC_WS_req_W = 0.0
+
+    # Peak VCC water-source
+    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+        # Free cooling possible from the lake
+        source_PeakVCC_WS = 1
+        if Q_cooling_unmet_W > Q_therm_Lake_W:
+            Q_PeakVCC_WS_gen_W = Q_therm_Lake_W
+        else:
+            Q_PeakVCC_WS_gen_W = Q_cooling_unmet_W
+
+        if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
+            opex_PeakVCC_WS_USDperhr, \
+            Q_PeakVCC_WS_gen_W, \
+            E_PeakVCC_WS_req_W = calc_vcc_operation(Q_PeakVCC_WS_gen_W,
+                                                   T_district_cooling_return_K,
+                                                   T_district_cooling_supply_K,
+                                                   T_source_average_Lake_K,
+                                                   lca,
+                                                   hour)
+        else: # bypass, do not use chiller
+            opex_PeakVCC_WS_USDperhr = 0.0
+            E_PeakVCC_WS_req_W = 0.0
+
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_WS_gen_W
+    else:
+        source_PeakVCC_WS = 0
+        opex_PeakVCC_WS_USDperhr = 0.0
+        Q_PeakVCC_WS_gen_W = 0.0
+        E_PeakVCC_WS_req_W = 0.0
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
@@ -320,7 +354,8 @@ def cooling_resource_activator(Q_thermal_req,
     }
 
     opex_output = {
-        'Opex_var_Lake_USD': opex_var_Lake_USD,
+        'opex_BaseVCC_WS_USDperhr': opex_BaseVCC_WS_USDperhr,
+        'opex_PeakVCC_WS_USDperhr': opex_PeakVCC_WS_USDperhr,
         'Opex_var_VCC_USD': np.sum(opex_var_VCC_USD),
         'opex_var_Trigen_NG_USDhr': cost_Trigen_USD,
         'Opex_var_VCC_backup_USD': np.sum(opex_var_VCC_backup_USD),
@@ -330,12 +365,14 @@ def cooling_resource_activator(Q_thermal_req,
         'E_used_VCC_W': np.sum(E_used_VCC_W),
         'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
         'E_Trigen_NG_req_W': E_Trigen_NG_req_W,
-        'E_used_Lake_W': np.sum(E_used_lake_VCC_W),
+        'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
+        'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
         'mdot_DCN_kgpers': mdot_DCN_kgpers
     }
 
     thermal_output = {
-        'Q_lake_VCC_gen_W': Q_lake_VCC_gen_W,
+        'Q_BaseVCC_WS_gen_W': Q_BaseVCC_WS_gen_W,
+        'Q_PeakVCC_WS_gen_W': Q_PeakVCC_WS_gen_W,
         'Qc_from_VCC_W': Qc_from_VCC_W,
         'Qc_Trigen_gen_W': Qc_Trigen_gen_W,
         'Qc_from_Tank_W': Qc_from_Tank_W,
@@ -343,7 +380,8 @@ def cooling_resource_activator(Q_thermal_req,
     }
 
     activation_output = {
-        "Lake_Status": Source_Lake,
+        "source_BaseVCC_WS": source_BaseVCC_WS,
+        "source_PeakVCC_WS": source_PeakVCC_WS,
         "source_Trigen_NG": source_Trigen_NG,
         "VCC_Status": Source_Vapor_compression_chiller,
         "VCC_Backup_Status": Source_back_up_Vapor_compression_chiller
