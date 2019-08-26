@@ -101,14 +101,9 @@ const RowLayout = ({ dashIndex, plots }) => {
     <React.Fragment>
       <ModalAddPlot visible={modalAdd} setVisible={setModelAdd} />
       {plots.map((data, index) => (
-        <Row>
+        <Row key={`${dashIndex}-${index}-${data.scenario}`}>
           <Col>
-            <Plot
-              key={`${dashIndex}-${index}-${data.scenario}`}
-              index={index}
-              dashIndex={dashIndex}
-              data={data}
-            />
+            <Plot index={index} dashIndex={dashIndex} data={data} />
           </Col>
         </Row>
       ))}
@@ -128,13 +123,11 @@ const GridLayout = ({ dashIndex, plots }) => {
     <React.Fragment>
       <div class="row display-flex">
         {plots.map((data, index) => (
-          <div class="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget">
-            <Plot
-              key={`${dashIndex}-${index}-${data.scenario}`}
-              index={index}
-              dashIndex={dashIndex}
-              data={data}
-            />
+          <div
+            className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
+            key={`${dashIndex}-${index}-${data.scenario}`}
+          >
+            <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
         ))}
       </div>
@@ -145,6 +138,7 @@ const GridLayout = ({ dashIndex, plots }) => {
 const Plot = ({ index, dashIndex, data, style }) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
+  const [hasIntersected, setIntersected] = useState(false);
 
   const defaultStyle = { height: 500, margin: 10 };
   const plotStyle = { ...defaultStyle, ...style };
