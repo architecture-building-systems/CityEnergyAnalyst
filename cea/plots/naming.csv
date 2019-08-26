@@ -214,8 +214,9 @@ Activation curve,Q_HP_Server_gen_directload_W,W,Server-source_HP to direct load,
 Activation curve,Q_HP_Sew_gen_directload_W,W,Sewage-source-HP generation to direct load,blue_light
 Activation curve,Q_HP_Lake_gen_directload_W,W,Water-source-HP generation to direct load,green
 Activation curve,Q_GHP_gen_directload_W,W,Ground-source-HP generation to direct load,purple
-Activation curve,Q_CHP_gen_directload_W,W,CHP-CCGT generation to direct load,brown
-Activation curve,Q_Furnace_gen_directload_W,W,CHP-furnace generation(thermal) to direct load,green
+Activation curve,Q_CHP_gen_directload_W,W,NG-fired cogeneration to direct load,brown
+Activation curve,Q_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to direct load,green
+Activation curve,Q_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to direct load,green_light
 Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
 Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
@@ -223,9 +224,10 @@ Activation curve,Q_Storage_gen_W,W,Thermal storage to direct load,red_light
 Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
 
 Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
-Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red
-Activation curve,E_CHP_gen_directload_W,W,CHP-CCGT generation to direct load,purple
-Activation curve,E_Furnace_gen_directload_W,W,CHP-furnace generation to direct load,blue_light
+Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red_light
+Activation curve,E_CHP_gen_directload_W,W,NG-fired cogeneration to direct load,purple
+Activation curve,E_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to direct load,blue_light
+Activation curve,E_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to direct load,blue
 Activation curve,E_CCGT_gen_directload_W,W,CCGT district cooling generation to direct load,blue_light
 Activation curve,E_GRID_directload_W,W,Electricity imports,red
 Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand in the system,blue_light
@@ -233,7 +235,10 @@ Activation curve,E_PV_gen_export_W,W,PV generation exported,green_light
 Activation curve,E_PVT_gen_export_W,W,PVT generation exported,brown
 Activation curve,E_CHP_gen_export_W,W,CHP district heating generation exported,brown_light
 Activation curve,E_CCGT_gen_export_W,W,CCGT district cooling generation exported,brown_light
-Activation curve,E_Furnace_gen_export_W,W,CHP-furnace generation exported,black
+Activation curve,E_Furnace_dry_gen_export_W,W,Dry biomass generation exported,black
+Activation curve,E_Furnace_wet_gen_export_W,W,Wet biomass cogeneration exported,grey
+Activation curve,E_GRID_ramping_W,W,Likelihood of Ramp-up (+) / Ramp-down (-),red
+
 
 Activation curve,Q_PVT_to_storage_W,W,Heating load provided from photovoltaic-thermal to storage tank,grey_light
 Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tube collector to storage tank,blue_light
