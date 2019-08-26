@@ -162,7 +162,6 @@ def load_plot(project, plot_definition, cache):
 def main(config):
     """Test the dashboard functionality. Run it twice, because the dashboard.yml might have been created as a result"""
     print(read_dashboards(config))
-    print(read_dashboards(config))
 
 
 if __name__ == '__main__':
