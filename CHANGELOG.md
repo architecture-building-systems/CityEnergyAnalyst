@@ -1,3 +1,13 @@
+2019-08-26 - 2.20.3 - #2253 Feature: Supply system map plot @daren-thomas merging as we need it to plan for the 30 sec video for Arno
+2019-08-23 - 2.20.3 - #2258 2117 weather as input file
+2019-08-23 - 2.20.3 - #2257 FEATURE: lazy loading of cea.api module
+2019-08-23 - 2.20.3 - #2252 Fix: Add alert when user changes occupancy @reyery thanks for this!
+2019-08-22 - 2.20.3 - #2250 753 global variables removal 2.21
+2019-08-22 - 2.20.3 - #2248 Add legend toggle drop down to plots
+2019-08-21 - 2.20.3 - #2265 FEATURE: allow user-specified region databases for the data-helper
+2019-08-13 - 2.20.1 - #2241 updating version, changelog and credits for v2.20
+2019-08-13 - 2.19 - #2239 Bugfix: Map not initializing if district data does not exist
+2019-08-13 - 2.19 - #2238 Feature: Grid Layout for Dashboard
 2019-08-08 - 2.19 - #2216 Bugfix: Add script input validation for dashboard
 2019-08-08 - 2.19 - #2225 I2224 optimization heating
 2019-08-08 - 2.19 - #2230 fix occupancy
