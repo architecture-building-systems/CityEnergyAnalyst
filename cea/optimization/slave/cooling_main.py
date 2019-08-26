@@ -96,7 +96,7 @@ def district_cooling_network(locator,
         T_tank_fully_charged_K = 0
         T_tank_fully_discharged_K = 0
 
-    storage_tank_properties_previous_timestep = {
+    storage_tank_properties_this_timestep = {
         "V_tank_m3": V_tank_m3,
         "T_tank_K": T_TANK_FULLY_DISCHARGED_K,
         "Qc_tank_charging_limit_W": Qc_tank_charging_limit_W,
@@ -162,6 +162,7 @@ def district_cooling_network(locator,
     VCC_Backup_Status = np.zeros(HOURS_IN_YEAR)
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
+        storage_tank_properties_previous_timestep = storage_tank_properties_this_timestep
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
 
             storage_tank_properties_this_timestep, \
@@ -203,11 +204,7 @@ def district_cooling_network(locator,
             Qc_PeakVCC_AS_gen_W[hour] = thermal_output['Qc_PeakVCC_AS_gen_W']
 
             Qc_from_storage_tank_W[hour] = thermal_output['Qc_from_Tank_W']
-
             Qc_from_VCC_backup_W[hour] = thermal_output['Qc_from_backup_VCC_W']
-
-            Qc_req_from_CT_W[hour] = Qc_CT_W
-            Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
             E_Trigen_NG_req_W[hour] = electricity_output['E_Trigen_NG_req_W']
             E_BaseVCC_WS_req_W[hour] = electricity_output['E_BaseVCC_WS_req_W']
@@ -218,12 +215,21 @@ def district_cooling_network(locator,
 
             NG_Trigen_req_W = gas_output['NG_Trigen_req_W']
 
-        storage_tank_properties_previous_timestep = storage_tank_properties_this_timestep
+    # BACK-UPP VCC - AIR SOURCE
+    Q_uncovered_design_W = np.amax(Qc_from_VCC_backup_W)
+    if Q_uncovered_design_W != 0:
+        # TODO the backup unit
 
-    ## Operation of the cooling tower
-
-
-
+    # CAPEX AND OPEX OF COOLING NETWORK
+    Capex_DCN_USD, \
+    Capex_a_DCN_USD, \
+    Opex_fixed_DCN_USD, \
+    Opex_var_DCN_USD, \
+    E_used_district_cooling_netowrk_W = calc_network_costs(locator,
+                                                           master_to_slave_vars,
+                                                           network_features,
+                                                           lca,
+                                                           "DC")
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
     performance_costs = calc_generation_costs_cooling(E_BaseVCC_WS_req_W,
@@ -246,16 +252,7 @@ def district_cooling_network(locator,
     Opex_var_CT_connected_USD = sum(opex_var_CT_USDhr),
     Opex_var_CCGT_connected_USD = sum(opex_var_CCGT_USDhr),
 
-    # COOLING NETWORK
-    Capex_DCN_USD, \
-    Capex_a_DCN_USD, \
-    Opex_fixed_DCN_USD, \
-    Opex_var_DCN_USD, \
-    E_used_district_cooling_netowrk_W = calc_network_costs(locator,
-                                                           master_to_slave_vars,
-                                                           network_features,
-                                                           lca,
-                                                           "DC")
+
     # COOLING SUBSTATIONS
     Capex_Substations_USD, \
     Capex_a_Substations_USD, \
