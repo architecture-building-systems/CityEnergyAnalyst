@@ -121,7 +121,7 @@ const GridLayout = ({ dashIndex, plots }) => {
 
   return (
     <React.Fragment>
-      <div class="row display-flex">
+      <div className="row display-flex">
         {plots.map((data, index) => (
           <div
             className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
