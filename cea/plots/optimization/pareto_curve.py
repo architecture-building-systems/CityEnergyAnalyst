@@ -52,9 +52,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                       [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
 
         return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
-                         xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]', domain=[0, 1],
+                         xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]',
                                     range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title='GHG emissions [kton CO2-eq]', domain=[0.3, 1.0],
+                         yaxis=dict(title='GHG emissions [kton CO2-eq]',
                                     range=ranges_some_room_for_graph[1]))
 
 
@@ -66,26 +66,6 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
     def output_path(self):
         return self.locator.get_timeseries_plots_file('gen{generation}_pareto_curve'.format(generation=self.generation),
                                                       self.category_name)
-
-    @property
-    def layout(self):
-        data = self.process_generation_total_performance()
-        xs = data[self.objectives[0]].values
-        ys = data[self.objectives[1]].values
-        zs = data[self.objectives[2]].values
-        xmin = min(xs)
-        ymin = min(ys)
-        zmin = min(zs)
-        xmax = max(xs)
-        ymax = max(ys)
-        zmax = max(zs)
-        ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
-                                      [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
-        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7),
-                         xaxis=dict(title='Total annualized costs [USD$(2015)/yr]', domain=[0, 1],
-                                    range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
-                                    range=ranges_some_room_for_graph[1]))
 
     def calc_graph(self):
         data = self.process_generation_total_performance()

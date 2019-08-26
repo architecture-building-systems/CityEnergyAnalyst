@@ -41,8 +41,8 @@ class SolarCollectorEvacuatedTubeMonthlyPlot(cea.plots.solar_technology_potentia
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack', yaxis=dict(title='SC Heat Production [MWh]',
-                                                                       domain=[0.35, 1]))
+        return go.Layout(barmode='stack', yaxis=dict(title='SC Heat Production [MWh]',
+                                                                       ))
 
     def calc_graph(self):
         # calculate graph
