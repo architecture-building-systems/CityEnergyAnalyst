@@ -5,8 +5,13 @@
 {% block stylesheets %}
   {{ super() }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.22.0/antd.css">
-  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('.static', filename='css/react-dashboard.css') }}">
+
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 {% endblock stylesheets %}
 
 {% block content %}
