@@ -155,7 +155,7 @@ const Plot = ({ index, dashIndex, data, style }) => {
           let script = null;
           let content = HTMLReactParser(response.data, {
             replace: function(domNode) {
-              if (domNode.type === "script") {
+              if (domNode.type === "script" && domNode.children[0]) {
                 script = domNode.children[0].data;
               }
             }
@@ -187,10 +187,15 @@ const Plot = ({ index, dashIndex, data, style }) => {
   return (
     <Card
       title={
-        <React.Fragment>
-          <h3 style={{ float: "left" }}>{data.title}</h3>
-          <small>{data.scenario}</small>
-        </React.Fragment>
+        <div>
+          <span style={{ fontWeight: "bold" }}>{data.title}</span>
+          {data.scenario && (
+            <React.Fragment>
+              <span> - </span>
+              <small>{data.scenario}</small>
+            </React.Fragment>
+          )}
+        </div>
       }
       extra="Test"
       style={{ ...plotStyle, height: "" }}
