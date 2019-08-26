@@ -23,8 +23,8 @@ class LoadDurationCurveSupplyPlot(cea.plots.demand.load_duration_curve.LoadDurat
 
     @property
     def layout(self):
-        return go.Layout(xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                         yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]), showlegend=True)
+        return go.Layout(xaxis=dict(title='Duration Normalized [%]'),
+                         yaxis=dict(title='Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         graph = []
