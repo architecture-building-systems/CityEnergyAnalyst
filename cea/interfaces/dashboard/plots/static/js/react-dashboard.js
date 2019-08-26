@@ -197,25 +197,30 @@ const Plot = ({ index, dashIndex, data, style }) => {
       bodyStyle={{ height: plotStyle.height }}
       size="small"
     >
-      <Spin
-        spinning={!div && !error}
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-        tip="Loading Plot..."
-      >
-        {div ? (
-          div.content
-        ) : error ? (
-          <ErrorPlot error={error} />
-        ) : (
-          <div style={{ height: plotStyle.height }} />
-        )}
-      </Spin>
+      {div ? (
+        div.content
+      ) : error ? (
+        <ErrorPlot error={error} />
+      ) : (
+        <LoadingPlot plotStyle={plotStyle} />
+      )}
     </Card>
   );
 };
 
+const LoadingPlot = ({ plotStyle }) => {
+  return (
+    <Spin
+      indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+      tip="Loading Plot..."
+    >
+      <div style={{ height: plotStyle.height }} />
+    </Spin>
+  );
+};
+
 const ErrorPlot = ({ error }) => {
-  console.log(error.status)
+  console.log(error.status);
   if (error.status === 404) return HTMLReactParser(error.data);
   if (error.status === 500)
     return (
@@ -228,7 +233,7 @@ const ErrorPlot = ({ error }) => {
         <pre style={{ height: 200, overflow: "auto" }}>{error.data}</pre>
       </Result>
     );
-  return null
+  return null;
 };
 
 const EmptyPlot = () => {
