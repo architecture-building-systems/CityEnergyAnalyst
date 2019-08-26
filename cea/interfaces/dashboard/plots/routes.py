@@ -27,7 +27,8 @@ def index():
 
 @blueprint.route('/dashboard/react')
 def route_react_dashboard():
-    return render_template('react_dashboard.html')
+    debug = current_app.cea_config.get('general:debug')
+    return render_template('react_dashboard.html', debug=debug)
 
 
 @blueprint.route('/dashboard/<int:dashboard_index>')
