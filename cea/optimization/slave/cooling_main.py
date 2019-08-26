@@ -221,14 +221,7 @@ def district_cooling_network(locator,
         storage_tank_properties_previous_timestep = storage_tank_properties_this_timestep
 
     ## Operation of the cooling tower
-    # TODO: so this can be vectorized. split between costs and emissions
-    if Q_CT_nom_W > 0:
-        for hour in range(HOURS_IN_YEAR):
-            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT_USDhr[hour] = (wdot_CT_Wh) * lca.ELEC_PRICE[hour]
-            GHG_CT_tonCO2[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
-            prim_energy_CT_MJoil[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
-            E_used_CT_W[hour] = wdot_CT_Wh
+
 
 
 

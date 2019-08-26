@@ -218,6 +218,24 @@ def cooling_resource_activator(Q_thermal_req,
         Q_PeakVCC_WS_gen_W = 0.0
         E_PeakVCC_WS_req_W = 0.0
 
+
+    # TODO NOW THE AIR SOURCE IF EXISTING.....
+    if Q_CT_nom_W > 0:
+        for hour in range(HOURS_IN_YEAR):
+            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
+            opex_var_CT_USDhr[hour] = (wdot_CT_Wh) * lca.ELEC_PRICE[hour]
+            GHG_CT_tonCO2[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * (lca.EL_TO_CO2 / 1E3)
+            prim_energy_CT_MJoil[hour] = (wdot_CT_Wh * WH_TO_J / 1E6) * lca.EL_TO_OIL_EQ
+            E_used_CT_W[hour] = wdot_CT_Wh
+
+
+
+
+
+
+
+
+
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
         Tank_discharging_limit_C = T_district_cooling_supply_K - DT_COOL - 273.0  # Temperature required to cool the network at that timestep
