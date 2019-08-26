@@ -13,7 +13,8 @@ from deap import algorithms
 from deap import tools, creator, base
 
 from cea.optimization.constants import CXPB, MUTPB
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE,  DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, DC_ACRONYM
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
+    DC_ACRONYM
 from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
@@ -271,23 +272,16 @@ def non_dominated_sorting_genetic_algorithm(locator,
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
-        DCN_network_list_selected = []
-        DHN_network_list_selected = []
-        for individual in pop:
-            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                        column_names,
-                                                                                        column_names_buildings_heating,
-                                                                                        column_names_buildings_cooling)
-            DCN_network_list_selected.append(DCN_barcode)
-            DHN_network_list_selected.append(DHN_barcode)
-
         DHN_network_list_tested = []
         DCN_network_list_tested = []
         for individual in invalid_ind:
-            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                        column_names,
-                                                                                        column_names_buildings_heating,
-                                                                                        column_names_buildings_cooling)
+            DHN_barcode, DCN_barcode, individual_with_name_dict, _ = individual_to_barcode(individual,
+                                                                                           building_names_all,
+                                                                                           building_names_heating,
+                                                                                           building_names_cooling,
+                                                                                           column_names,
+                                                                                           column_names_buildings_heating,
+                                                                                           column_names_buildings_cooling)
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
@@ -304,8 +298,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
                       all_population_DCN_network_barcode=DCN_network_list,
                       tested_population_DHN_network_barcode=DHN_network_list_tested,
                       tested_population_DCN_network_barcode=DCN_network_list_tested,
-                      selected_population_DHN_network_barcode=DHN_network_list_selected,
-                      selected_population_DCN_network_barcode=DCN_network_list_selected,
                       tested_population=invalid_ind,
                       tested_population_fitness=fitnesses,
                       epsIndicator=epsInd,
@@ -494,8 +486,8 @@ def get_column_names_individual(district_heating_network,
     # 3 cases are possible
     if district_heating_network and district_cooling_network:
         # local variables
-        heating_unit_names_share = [x for x,y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
-        cooling_unit_names_share = [x for x,y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        heating_unit_names_share = [x for x, y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        cooling_unit_names_share = [x for x, y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         # combine both strings and calculate the ranges of each part of the individual
@@ -506,7 +498,7 @@ def get_column_names_individual(district_heating_network,
 
     elif district_heating_network:
         # local variables
-        heating_unit_names_share = [x for x,y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        heating_unit_names_share = [x for x, y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names_share = []
         column_names_buildings_cooling = []
@@ -514,7 +506,7 @@ def get_column_names_individual(district_heating_network,
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x for x,y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        cooling_unit_names_share = [x for x, y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names_share = []
         column_names_buildings_heating = []

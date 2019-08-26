@@ -970,7 +970,7 @@ def main(config):
     panel_type = panel_properties['type']
 
     # weather data
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 

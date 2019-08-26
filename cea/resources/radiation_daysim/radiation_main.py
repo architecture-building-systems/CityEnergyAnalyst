@@ -148,7 +148,7 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings):
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     if settings.buildings == []:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
@@ -162,7 +162,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, set
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, weather_path, settings)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings)
 
 def main(config):
     """
@@ -211,7 +211,7 @@ def main(config):
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, settings)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 

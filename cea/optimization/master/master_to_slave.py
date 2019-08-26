@@ -73,7 +73,7 @@ def extract_loads_individual(locator,
                              column_names_buildings_heating,
                              column_names_buildings_cooling):
     # local variables
-    weather_file = config.weather
+    weather_file = locator.get_weather_file()
     network_depth_m = Z0
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     ground_temp = calc_ground_temperature(locator, T_ambient, depth_m=network_depth_m)
