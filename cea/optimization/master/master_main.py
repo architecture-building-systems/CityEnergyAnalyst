@@ -39,7 +39,7 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 def objective_function(individual,
                        individual_number,
                        generation,
-                       building_names,
+                       building_names_all,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
                        building_names_heating,
@@ -63,7 +63,7 @@ def objective_function(individual,
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.number_of_generations))
     costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
-                                                             building_names,
+                                                             building_names_all,
                                                              locator,
                                                              network_features,
                                                              config,

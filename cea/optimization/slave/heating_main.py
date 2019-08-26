@@ -34,7 +34,11 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
+def district_heating_network(locator,
+                             master_to_slave_vars,
+                             config,
+                             prices,
+                             lca,
                              network_features):
     """
     Computes the parameters for the heating of the complete DHN
@@ -71,7 +75,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
                                                                               config)
     # Import data from storage optimization
     Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
-    Q_req_after_storage_W = np.array(storage_dispatch['Q_req_after_storage_W'])
+    Q_thermal_req_W = np.array(storage_dispatch['Q_thermal_req_W'])
 
     E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
 
@@ -103,7 +107,7 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
 
     # HEATING PLANT
     # Import Temperatures from Network Summary:
-    mdot_DH_kgpers, tdhret_K, tdhsup_K = calc_network_summary_DHN(locator, master_to_slave_vars)
+    mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator, master_to_slave_vars)
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage heat
@@ -186,68 +190,74 @@ def district_heating_network(locator, master_to_slave_vars, config, prices, lca,
     DryBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
 
     for hour in range(HOURS_IN_YEAR):
-        Q_therm_req_W = Q_req_after_storage_W[hour]
-        opex_output, source_output, \
-        Q_output, E_output, Gas_output, \
-        Biomass_output = heating_source_activator(Q_therm_req_W, hour, master_to_slave_vars,
-                                                  Q_therm_GHP_W[hour],
-                                                  T_source_average_GHP_W[hour],
-                                                  T_source_average_Lake_K[hour],
-                                                  Q_therm_Lake_W[hour],
-                                                  Q_therm_Sew_W[hour], T_source_average_sewage_K[hour],
-                                                  tdhsup_K[hour], tdhret_K[hour],
-                                                  prices, lca)
+        if Q_thermal_req_W[hour] > 0.0:
+            opex_output, \
+            activation_output, \
+            thermal_output, \
+            electricity_output, \
+            gas_output, \
+            biomass_output = heating_source_activator(Q_thermal_req_W[hour],
+                                                      hour,
+                                                      master_to_slave_vars,
+                                                      Q_therm_GHP_W[hour],
+                                                      T_source_average_GHP_W[hour],
+                                                      T_source_average_Lake_K[hour],
+                                                      Q_therm_Lake_W[hour],
+                                                      Q_therm_Sew_W[hour],
+                                                      T_source_average_sewage_K[hour],
+                                                      T_district_heating_supply_K[hour],
+                                                      T_district_heating_return_K[hour],
+                                                      prices,
+                                                      lca)
 
-        Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
-        Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
-        Opex_var_GHP_USDhr[hour] = opex_output['Opex_var_GHP_USDhr']
-        Opex_var_CHP_NG_USDhr[hour] = opex_output['Opex_var_CHP_USDhr']
-        Opex_var_Furnace_dry_USDhr[hour] = opex_output['Opex_var_Furnace_dry_USDhr']
-        Opex_var_Furnace_wet_USDhr[hour] = opex_output['Opex_var_Furnace_wet_USDhr']
-        Opex_var_BaseBoiler_NG_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USDhr']
-        Opex_var_PeakBoiler_NG_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USDhr']
+            Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
+            Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
+            Opex_var_GHP_USDhr[hour] = opex_output['Opex_var_GHP_USDhr']
+            Opex_var_CHP_NG_USDhr[hour] = opex_output['Opex_var_CHP_USDhr']
+            Opex_var_Furnace_dry_USDhr[hour] = opex_output['Opex_var_Furnace_dry_USDhr']
+            Opex_var_Furnace_wet_USDhr[hour] = opex_output['Opex_var_Furnace_wet_USDhr']
+            Opex_var_BaseBoiler_NG_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USDhr']
+            Opex_var_PeakBoiler_NG_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USDhr']
 
-        source_HP_Sewage[hour] = source_output['Source_HP_Sewage']
-        source_HP_Lake[hour] = source_output['Source_HP_Lake']
-        source_GHP[hour] = source_output['Source_GHP']
-        source_CHP[hour] = source_output['Source_CHP']
-        source_Furnace_dry[hour] = source_output['Source_Furnace_dry']
-        source_Furnace_wet[hour] = source_output['Source_Furnace_wet']
-        source_BaseBoiler[hour] = source_output['Source_BaseBoiler']
-        source_PeakBoiler[hour] = source_output['Source_PeakBoiler']
+            source_HP_Sewage[hour] = activation_output['Source_HP_Sewage']
+            source_HP_Lake[hour] = activation_output['Source_HP_Lake']
+            source_GHP[hour] = activation_output['Source_GHP']
+            source_CHP[hour] = activation_output['Source_CHP']
+            source_Furnace_dry[hour] = activation_output['Source_Furnace_dry']
+            source_Furnace_wet[hour] = activation_output['Source_Furnace_wet']
+            source_BaseBoiler[hour] = activation_output['Source_BaseBoiler']
+            source_PeakBoiler[hour] = activation_output['Source_PeakBoiler']
 
-        Q_HPSew_gen_W[hour] = Q_output['Q_HPSew_gen_W']
-        Q_HPLake_gen_W[hour] = Q_output['Q_HPLake_gen_W']
-        Q_GHP_gen_W[hour] = Q_output['Q_GHP_gen_W']
-        Q_CHP_gen_W[hour] = Q_output['Q_CHP_gen_W']
-        Q_Furnace_dry_gen_W[hour] = Q_output['Q_Furnace_dry_gen_W']
-        Q_Furnace_wet_gen_W[hour] = Q_output['Q_Furnace_wet_gen_W']
-        Q_BaseBoiler_gen_W[hour] = Q_output['Q_BaseBoiler_gen_W']
-        Q_PeakBoiler_gen_W[hour] = Q_output['Q_PeakBoiler_gen_W']
-        Q_AddBoiler_gen_W[hour] = Q_output['Q_AddBoiler_gen_W']
+            Q_HPSew_gen_W[hour] = thermal_output['Q_HPSew_gen_W']
+            Q_HPLake_gen_W[hour] = thermal_output['Q_HPLake_gen_W']
+            Q_GHP_gen_W[hour] = thermal_output['Q_GHP_gen_W']
+            Q_CHP_gen_W[hour] = thermal_output['Q_CHP_gen_W']
+            Q_Furnace_dry_gen_W[hour] = thermal_output['Q_Furnace_dry_gen_W']
+            Q_Furnace_wet_gen_W[hour] = thermal_output['Q_Furnace_wet_gen_W']
+            Q_BaseBoiler_gen_W[hour] = thermal_output['Q_BaseBoiler_gen_W']
+            Q_PeakBoiler_gen_W[hour] = thermal_output['Q_PeakBoiler_gen_W']
+            Q_AddBoiler_gen_W[hour] = thermal_output['Q_AddBoiler_gen_W']
 
-        E_HPSew_req_W[hour] = E_output['E_HPSew_req_W']
-        E_HPLake_req_W[hour] = E_output['E_HPLake_req_W']
-        E_GHP_req_W[hour] = E_output['E_GHP_req_W']
-        E_CHP_gen_W[hour] = E_output['E_CHP_gen_W']
-        E_Furnace_dry_gen_W[hour] = E_output['E_Furnace_dry_gen_W']
-        E_Furnace_wet_gen_W[hour] = E_output['E_Furnace_wet_gen_W']
-        E_BaseBoiler_req_W[hour] = E_output['E_BaseBoiler_req_W']
-        E_PeakBoiler_req_W[hour] = E_output['E_PeakBoiler_req_W']
+            E_HPSew_req_W[hour] = electricity_output['E_HPSew_req_W']
+            E_HPLake_req_W[hour] = electricity_output['E_HPLake_req_W']
+            E_GHP_req_W[hour] = electricity_output['E_GHP_req_W']
+            E_CHP_gen_W[hour] = electricity_output['E_CHP_gen_W']
+            E_Furnace_dry_gen_W[hour] = electricity_output['E_Furnace_dry_gen_W']
+            E_Furnace_wet_gen_W[hour] = electricity_output['E_Furnace_wet_gen_W']
+            E_BaseBoiler_req_W[hour] = electricity_output['E_BaseBoiler_req_W']
+            E_PeakBoiler_req_W[hour] = electricity_output['E_PeakBoiler_req_W']
 
-        NG_CHP_req_W[hour] = Gas_output['Gas_CHP_req_W']
-        NG_BaseBoiler_req_W[hour] = Gas_output['Gas_BaseBoiler_req_W']
-        NG_PeakBoiler_req_W[hour] = Gas_output['Gas_PeakBoiler_req_W']
-        WetBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_Furnace_dry_req_W']
-        DryBiomass_Furnace_req_W[hour] = Biomass_output['Biomass_Furnace_wet_req_W']
-
+            NG_CHP_req_W[hour] = gas_output['Gas_CHP_req_W']
+            NG_BaseBoiler_req_W[hour] = gas_output['Gas_BaseBoiler_req_W']
+            NG_PeakBoiler_req_W[hour] = gas_output['Gas_PeakBoiler_req_W']
+            WetBiomass_Furnace_req_W[hour] = biomass_output['Biomass_Furnace_dry_req_W']
+            DryBiomass_Furnace_req_W[hour] = biomass_output['Biomass_Furnace_wet_req_W']
 
     #BACK-UP BOILER
     Q_uncovered_design_W = np.amax(Q_AddBoiler_gen_W)
     if Q_uncovered_design_W != 0:
         for hour in range(HOURS_IN_YEAR):
-            tdhret_req_K = tdhret_K[hour]
-
+            tdhret_req_K = T_district_heating_return_K[hour]
             Opex_var_BackupBoiler_NG_USDhr[hour], \
             Opex_var_BackupBoiler_per_Wh_USD, \
             NG_BackupBoiler_req_W[hour], \
