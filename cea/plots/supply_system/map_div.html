@@ -14,6 +14,12 @@
     </span>
     <span class="layer-toggle-{{ hash }}">
       <label class="map-plot-label">
+        <input id='district-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='district'>
+        District
+      </label>
+    </span>
+    <span class="layer-toggle-{{ hash }}">
+      <label class="map-plot-label">
         <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network'>
         Network
       </label>
@@ -101,9 +107,9 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script>
-    render({{ data }}, {{ zone }}, {{ dc }}, {{ dh }}, "{{ hash }}")
+    render({{ data }}, {{ zone }}, {{ district }}, {{ dc }}, {{ dh }}, "{{ hash }}")
 
-    function render(data, zone, _dc, _dh, hash) {
+    function render(data, zone, district, _dc, _dh, hash) {
         const lightMap = {
             "version": 8,
             "sources": {
@@ -156,6 +162,7 @@
         const dh = checkEmpty(_dh, `$dh-${hash}`);
         const connectedToggle = document.getElementById(`connected-${ hash }`);
         const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
+        const districtToggle = document.getElementById(`district-${ hash }`);
         const networkToggle = document.getElementById(`network-${ hash }`);
         let currentViewState = {
             latitude: 0,
@@ -411,13 +418,31 @@
                 onHover: updateTooltip
             })];
 
+            if (district) layers.push(new GeoJsonLayer({
+                id: 'district',
+                data: district,
+                wireframe: true,
+                filled: true,
+                extruded: extruded,
+                visible: districtToggle.checked,
+
+                getElevation: f => f.properties['height_ag'],
+                getFillColor: colors.district.push(255),
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+
+                onHover: updateTooltip
+            }));
+
             // Add DC network layer
             if (dc) layers.push(new GeoJsonLayer({
                 id:'dc',
                 data: dc,
                 stroked: false,
                 filled: true,
-                visible: getNetworkVisibility('dc', ),
+                visible: getNetworkVisibility('dc'),
 
                 getLineColor: colors.dc,
                 getFillColor: f => nodeFillColor(f.properties['Type']),

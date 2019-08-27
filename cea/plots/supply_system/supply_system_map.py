@@ -29,6 +29,7 @@ __status__ = "Production"
 
 # Colors for the networks in the map
 COLORS = {
+    'district': get_color_array('white'),
     'dh': get_color_array('red'),
     'dc': get_color_array('blue'),
     'disconnected': get_color_array('grey')
@@ -74,13 +75,15 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry())\
             .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()) \
+            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
         dc = self.get_newtork_json(data['path_output_edges_DC'], data['path_output_nodes_DC'])
         dh = self.get_newtork_json(data['path_output_edges_DH'], data['path_output_nodes_DH'])
 
         # Generate div id using hash of parameters
         div = Template(open(template).read())\
             .render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), colors=COLORS,
-                    zone=zone, dc=dc, dh=dh)
+                    zone=zone, district=district, dc=dc, dh=dh)
         return div
 
     def get_newtork_json(self, edges, nodes):
