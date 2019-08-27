@@ -137,16 +137,6 @@ def district_heating_network(locator,
         T_source_average_GHP_W = np.zeros(HOURS_IN_YEAR)
 
     # Initiation of the variables
-    Opex_var_HP_Sewage_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_HP_Server_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_HP_Lake_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_GHP_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_CHP_NG_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_Furnace_dry_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_Furnace_wet_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_BaseBoiler_NG_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_PeakBoiler_NG_USDhr = np.zeros(HOURS_IN_YEAR)
-    Opex_var_BackupBoiler_NG_USDhr = np.zeros(HOURS_IN_YEAR)
 
     source_HP_Sewage = np.zeros(HOURS_IN_YEAR)
     source_HP_Lake = np.zeros(HOURS_IN_YEAR)
@@ -187,7 +177,6 @@ def district_heating_network(locator,
 
     for hour in range(HOURS_IN_YEAR):
         if Q_thermal_req_W[hour] > 0.0:
-            opex_output, \
             activation_output, \
             thermal_output, \
             electricity_output, \
@@ -205,15 +194,6 @@ def district_heating_network(locator,
                                                       T_district_heating_return_K[hour],
                                                       prices,
                                                       lca)
-
-            Opex_var_HP_Sewage_USDhr[hour] = opex_output['Opex_var_HP_Sewage_USDhr']
-            Opex_var_HP_Lake_USDhr[hour] = opex_output['Opex_var_HP_Lake_USDhr']
-            Opex_var_GHP_USDhr[hour] = opex_output['Opex_var_GHP_USDhr']
-            Opex_var_CHP_NG_USDhr[hour] = opex_output['Opex_var_CHP_USDhr']
-            Opex_var_Furnace_dry_USDhr[hour] = opex_output['Opex_var_Furnace_dry_USDhr']
-            Opex_var_Furnace_wet_USDhr[hour] = opex_output['Opex_var_Furnace_wet_USDhr']
-            Opex_var_BaseBoiler_NG_USDhr[hour] = opex_output['Opex_var_BaseBoiler_USDhr']
-            Opex_var_PeakBoiler_NG_USDhr[hour] = opex_output['Opex_var_PeakBoiler_USDhr']
 
             source_HP_Sewage[hour] = activation_output['Source_HP_Sewage']
             source_HP_Lake[hour] = activation_output['Source_HP_Lake']
@@ -256,8 +236,8 @@ def district_heating_network(locator,
         master_to_slave_variables.BackupBoiler_on = 1
         for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = T_district_heating_return_K[hour]
-            Opex_var_BackupBoiler_NG_USDhr[hour], \
-            Opex_var_BackupBoiler_per_Wh_USD, \
+            _, \
+            _, \
             NG_BackupBoiler_req_W[hour], \
             E_BackupBoiler_req_W[hour] = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour],
                                                              master_to_slave_variables.BackupBoiler_size_W,
@@ -270,12 +250,6 @@ def district_heating_network(locator,
                                                                             master_to_slave_variables,
                                                                             config,
                                                                             storage_dispatch,
-                                                                            sum(Opex_var_CHP_NG_USDhr),
-                                                                            sum(Opex_var_Furnace_wet_USDhr),
-                                                                            sum(Opex_var_Furnace_dry_USDhr),
-                                                                            sum(Opex_var_BaseBoiler_NG_USDhr),
-                                                                            sum(Opex_var_PeakBoiler_NG_USDhr),
-                                                                            sum(Opex_var_BackupBoiler_NG_USDhr)
                                                                             )
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
@@ -286,26 +260,12 @@ def district_heating_network(locator,
                                                                               lca,
                                                                               "DH")
 
-    # EMISSIONS OF RENEWABLES AND FUELS
-    performance_emissions_pen = calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
-                                                            Q_SC_FP_gen_W,
-                                                            Q_PVT_gen_W,
-                                                            Q_Server_gen_W,
-                                                            NG_CHP_req_W,
-                                                            NG_BaseBoiler_req_W,
-                                                            NG_PeakBoiler_req_W,
-                                                            NG_BackupBoiler_req_W,
-                                                            WetBiomass_Furnace_req_W,
-                                                            DryBiomass_Furnace_req_W,
-                                                            lca,
-                                                            )
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
-    performance = dict(performance_costs_generation, **performance_costs_network)
-    performance = dict(performance, **performance_emissions_pen)
+    district_heating_costs = dict(performance_costs_generation, **performance_costs_network)
 
     # save data
-    heating_dispatch = {
+    district_heating_generation_dispatch = {
 
         # demand of the network:
         "Q_districtheating_sys_req_W": Q_DH_networkload_W,
@@ -329,7 +289,7 @@ def district_heating_network(locator,
 
         # this is what is generated out of all the technologies sent to the storage
         "Q_Storage_gen_directload_W": Q_Storage_gen_W,
-
+        # heating
         "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
         "Q_SC_FP_gen_directload_W": Q_SC_FP_to_directload_W,
@@ -349,12 +309,14 @@ def district_heating_network(locator,
         "E_PVT_gen_W": E_PVT_gen_W,
         "E_Furnace_dry_gen_W": E_Furnace_dry_gen_W,
         "E_Furnace_wet_gen_W": E_Furnace_wet_gen_W,
+    }
 
+    district_heating_electricity_requirements_dispatch = {
         # ENERGY REQUIREMENTS
         # Electricity
         "E_Storage_charging_req_W": E_Storage_req_charging_W,
         "E_Storage_discharging_req_W": E_Storage_req_discharging_W,
-        "E_Pump_DHN_req_W": E_used_district_heating_network_W,
+        "E_DHN_req_W": E_used_district_heating_network_W,
         "E_HP_SC_FP_req_W": E_HP_SC_FP_req_W,
         "E_HP_SC_ET_req_W": E_HP_SC_ET_req_W,
         "E_HP_PVT_req_W": E_HP_PVT_req_W,
@@ -365,17 +327,21 @@ def district_heating_network(locator,
         "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
         "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
         "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
-
+    }
+    district_heating_fuel_requirements_dispatch = {
         # FUEL REQUIREMENTS
         "NG_CHP_req_W": NG_CHP_req_W,
         "NG_BaseBoiler_req_W": NG_BaseBoiler_req_W,
         "NG_PeakBoiler_req_W": NG_PeakBoiler_req_W,
         "NG_BackupBoiler_req_W": NG_BackupBoiler_req_W,
-        "WetBiomass_Furnace_req_W": WetBiomass_Furnace_req_W,
-        "DryBiomass_Furnace_req_W": DryBiomass_Furnace_req_W,
+        "WB_Furnace_req_W": WetBiomass_Furnace_req_W,
+        "DB_Furnace_req_W": DryBiomass_Furnace_req_W,
     }
 
-    return performance, heating_dispatch
+    return district_heating_costs, \
+           district_heating_generation_dispatch, \
+           district_heating_electricity_requirements_dispatch,\
+           district_heating_fuel_requirements_dispatch
 
 
 def calc_network_summary_DHN(locator, master_to_slave_vars):

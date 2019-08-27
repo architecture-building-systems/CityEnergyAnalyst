@@ -305,15 +305,6 @@ def heating_source_activator(Q_therm_req_W,
     else:
         Q_uncovered_W = 0.0
 
-    opex_output = {'Opex_var_HP_Sewage_USDhr': opex_var_HPSew_USD,
-                   'Opex_var_HP_Lake_USDhr': opex_var_HPLake_USD,
-                   'Opex_var_GHP_USDhr': opex_var_GHP_USD,
-                   'Opex_var_CHP_USDhr': opex_var_CHP_USD,
-                   'Opex_var_Furnace_dry_USDhr': opex_var_Furnace_dry_USD,
-                   'Opex_var_Furnace_wet_USDhr': opex_var_Furnace_wet_USD,
-                   'Opex_var_BaseBoiler_USDhr': opex_var_BaseBoiler_USD,
-                   'Opex_var_PeakBoiler_USDhr': opex_var_PeakBoiler_USD}
-
     source_output = {'Source_HP_Sewage': source_HP_Sewage,
                      'Source_HP_Lake': source_HP_Lake,
                      'Source_GHP': source_GHP,
@@ -349,4 +340,4 @@ def heating_source_activator(Q_therm_req_W,
     Biomass_output = {'Biomass_Furnace_dry_req_W': Biomass_used_Furnace_dry_W,
                       'Biomass_Furnace_wet_req_W': Biomass_used_Furnace_wet_W}
 
-    return opex_output, source_output, Q_output, E_output, Gas_output, Biomass_output
+    return source_output, Q_output, E_output, Gas_output, Biomass_output

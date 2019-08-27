@@ -27,119 +27,43 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def electricity_calculations_of_all_buildings(locator, master_to_slave_vars, lca,
-                                              performance_heating,
-                                              performance_cooling,
-                                              heating_dispatch, cooling_dispatch
+def electricity_calculations_of_all_buildings(locator,
+                                              master_to_slave_vars,
+                                              district_heating_generation_dispatch,
+                                              districy_heating_electricity_requirements_dispatch,
+                                              district_cooling_generation_dispatch,
+                                              districy_cooling_electricity_requirements_dispatch
                                               ):
     # local variables
     building_names = master_to_slave_vars.building_names_electricity
 
-    # GET ENERGY GENERATION
-    E_CHP_gen_W, \
-    E_Furnace_dry_gen_W, \
-    E_Furnace_wet_gen_W, \
-    E_CCGT_gen_W, \
-    E_PV_gen_W, \
-    E_PVT_gen_W = calc_district_system_electricity_generated(locator, cooling_dispatch, heating_dispatch,
-                                                             master_to_slave_vars)
+    # GET ENERGY GENERATION OF THE ELECTRICAL GRID
+    district_microgrid_generation_dispatch = calc_district_system_electricity_generated(locator,
+                                                                                   master_to_slave_vars)
 
     # GET ENERGY REQUIREMENTS
-    electricity_requirements = calc_district_system_electricity_requirements(master_to_slave_vars,
-                                                                             building_names,
-                                                                             cooling_dispatch,
-                                                                             heating_dispatch, locator,
-                                                                             )
-
-    E_sys_req_W = electricity_requirements['E_electricalnetwork_sys_req_W']
+    district_electricity_demands, \
+    E_sys_req_W = calc_district_system_electricity_requirements(master_to_slave_vars,
+                                                                building_names,
+                                                                locator,
+                                                                districy_heating_electricity_requirements_dispatch,
+                                                                districy_cooling_electricity_requirements_dispatch
+                                                                )
 
     # GET ACTIVATION CURVE
-    electricity_dispatch = electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch,
-                                                        E_CCGT_gen_W, E_CHP_gen_W,
-                                                        E_Furnace_dry_gen_W,
-                                                        E_Furnace_wet_gen_W,
-                                                        E_PVT_gen_W,
-                                                        E_PV_gen_W, E_sys_req_W)
-    E_CHP_gen_export_W = electricity_dispatch['E_CHP_gen_export_W']
-    E_CCGT_gen_export_W = electricity_dispatch['E_CCGT_gen_export_W']
-    E_Furnace_dry_gen_export_W = electricity_dispatch['E_Furnace_dry_gen_export_W']
-    E_Furnace_wet_gen_export_W = electricity_dispatch['E_Furnace_wet_gen_export_W']
-    E_GRID_directload_W = electricity_dispatch['E_GRID_directload_W']
-    E_PV_gen_export_W = electricity_dispatch['E_PV_gen_export_W']
-    E_PVT_gen_export_W = electricity_dispatch['E_PVT_gen_export_W']
+    district_electricity_requirements_dispatch = electricity_activation_curve(district_microgrid_generation_dispatch,
+                                                                              district_heating_generation_dispatch,
+                                                                              district_cooling_generation_dispatch,
+                                                                              E_sys_req_W)
 
-    # UPDATE VARIABLE COSTS ACCORDING TO ACTIVATION CURVE FOR HEATING< COOLING AND SOLAR TECHNOLOGIES
-    performance_heating, performance_cooling = update_performance_costs(performance_heating,
-                                                                        performance_cooling,
-                                                                        master_to_slave_vars,
-                                                                        E_CHP_gen_export_W,
-                                                                        E_CCGT_gen_export_W,
-                                                                        E_Furnace_dry_gen_export_W,
-                                                                        E_Furnace_wet_gen_export_W,
-                                                                        E_PVT_gen_export_W,
-                                                                        lca)
 
-    # UPDATE EMISSIONS AND PRIMARY ENERGY ACCORDING TO ACTIVATION CURVE
-    performance_heating, performance_cooling = update_performance_emisisons_pen(performance_heating,
-                                                                                performance_cooling,
-                                                                                master_to_slave_vars,
-                                                                                E_CHP_gen_export_W,
-                                                                                E_CCGT_gen_export_W,
-                                                                                E_Furnace_dry_gen_export_W,
-                                                                                E_Furnace_wet_gen_export_W,
-                                                                                E_PVT_gen_export_W,
-                                                                                lca)
+    # CALC COSTS
+    district_microgrid_costs = calc_electricity_performance_costs(locator, master_to_slave_vars)
 
-    # FINALLY CLACULATE THE EMISSIONS, COSTS AND PRIMARY ENERGY OF ELECTRICITY FROM THE GRID AND SOLAR TECHNOLOGIES
-    performance_electricity_costs = calc_electricity_performance_costs(locator, master_to_slave_vars,
-                                                                       E_PV_gen_export_W, E_GRID_directload_W,
-                                                                       lca)
 
-    Capex_a_PV_connected_USD = performance_electricity_costs["Capex_a_PV_connected_USD"]
-    Capex_total_PV_connected_USD = performance_electricity_costs["Capex_total_PV_connected_USD"]
-    Opex_fixed_PV_connected_USD = performance_electricity_costs["Opex_fixed_PV_connected_USD"]
-    Opex_var_PV_connected_export_USD = performance_electricity_costs['Opex_var_PV_connected_export_USD']
-    Opex_var_PV_connected_USD = performance_electricity_costs["Opex_var_PV_connected_USD"]
-    Opex_var_GRID_connected_USD = performance_electricity_costs["Opex_var_GRID_connected_USD"]
-    Opex_a_GRID_connected_USD = performance_electricity_costs["Opex_a_GRID_connected_USD"]
-    Opex_a_PV_connected_USD = performance_electricity_costs["Opex_a_PV_connected_USD"]
-
-    performance_electricity_emissions = calc_electricity_performance_emissions(lca, E_PV_gen_export_W,
-                                                                               E_GRID_directload_W)
-
-    GHG_PV_connected_tonCO2 = performance_electricity_emissions['GHG_PV_connected_tonCO2']
-    PEN_PV_connected_MJoil = performance_electricity_emissions['PEN_PV_connected_MJoil']
-    GHG_GRID_connected_tonCO2 = performance_electricity_emissions['GHG_GRID_connected_tonCO2']
-    PEN_GRID_connected_MJoil = performance_electricity_emissions['PEN_GRID_connected_MJoil']
-
-    performance_electricity = {
-        # annualized capex
-        "Capex_a_PV_connected_USD": Capex_a_PV_connected_USD,
-
-        # total_capex
-        "Capex_total_PV_connected_USD": Capex_total_PV_connected_USD,
-
-        # opex fixed costs
-        "Opex_fixed_PV_connected_USD": Opex_fixed_PV_connected_USD,
-
-        # opex variable costs (These costs will be updated according to the activation pattern of electricity
-        "Opex_var_PV_connected_export_USD": Opex_var_PV_connected_export_USD,
-        "Opex_var_PV_connected_USD": Opex_var_PV_connected_USD,
-        "Opex_var_GRID_connected_USD": Opex_var_GRID_connected_USD,
-
-        # opex annual costs
-        "Opex_a_PV_connected_USD": Opex_a_PV_connected_USD,
-        "Opex_a_GRID_connected_USD": Opex_a_GRID_connected_USD,
-
-        # emissions
-        "GHG_PV_connected_tonCO2": GHG_PV_connected_tonCO2,
-        "GHG_GRID_connected_tonCO2": GHG_GRID_connected_tonCO2,
-
-        # primary energy
-        "PEN_PV_connected_MJoil": PEN_PV_connected_MJoil,
-        "PEN_GRID_connected_MJoil": PEN_GRID_connected_MJoil
-    }
-    return performance_electricity, electricity_dispatch, electricity_requirements, performance_heating, performance_cooling,
+    return district_microgrid_costs, \
+           district_electricity_requirements_dispatch, \
+           district_electricity_demands
 
 
 def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_directload_W):
@@ -174,39 +98,24 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
     return performance_electricity
 
 
-def calc_electricity_performance_costs(locator, master_to_slave_vars,
-                                       E_PV_gen_export_W, E_GRID_directload_W,
-                                       lca):
+def calc_electricity_performance_costs(locator, master_to_slave_vars):
+
     # PV COSTS
     PV_installed_area_m2 = master_to_slave_vars.A_PV_m2  # kW
     Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
-    Opex_var_PV_gen_export_USD = sum([energy * cost for energy, cost in zip(E_PV_gen_export_W, lca.ELEC_PRICE_EXPORT)])
-    Opex_var_PV_gen_directload_US = 0.0
-    Opex_var_PV_connected_USD = Opex_var_PV_gen_directload_US - Opex_var_PV_gen_export_USD
-
-    # GRID COSTS
-    Opex_var_GRID_directload_USD = sum([energy * cost for energy, cost in zip(E_GRID_directload_W, lca.ELEC_PRICE)])
-    Opex_fixed_GRID_directload_USD = 0.0  # we do not have info about the connection
 
     performance_electricity_costs = {
-        # annualized capex
         "Capex_a_PV_connected_USD": Capex_a_PV_USD,
+        "Capex_a_GRID_connected_USD": 0.0,
 
         # total_capex
         "Capex_total_PV_connected_USD": Capex_PV_USD,
+        "Capex_total_GRID_connected_USD": 0.0,
 
         # opex fixed costs
         "Opex_fixed_PV_connected_USD": Opex_fixed_PV_USD,
-        "Opex_fixed_GRID_connected_USD": Opex_fixed_GRID_directload_USD,
+        "Opex_fixed_GRID_connected_USD": 0.0,
 
-        # opex variable costs
-        'Opex_var_PV_connected_export_USD': Opex_var_PV_gen_export_USD,
-        "Opex_var_PV_connected_USD": Opex_var_PV_connected_USD,
-        "Opex_var_GRID_connected_USD": Opex_var_GRID_directload_USD,
-
-        # opex annual costs
-        "Opex_a_PV_connected_USD": Opex_fixed_PV_USD + Opex_var_PV_connected_USD,
-        "Opex_a_GRID_connected_USD": Opex_fixed_GRID_directload_USD + Opex_var_GRID_directload_USD
     }
     return performance_electricity_costs
 
@@ -398,10 +307,11 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_expor
     return performance_heating
 
 
-def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling_dispatch, E_CCGT_gen_W, E_CHP_gen_W,
-                                 E_Furnace_dry_gen_W,
-                                 E_Furnace_wet_gen_W,
-                                 E_PVT_gen_W, E_PV_gen_W, E_sys_req_W):
+def electricity_activation_curve(district_grid_generation_dispatch,
+                                 district_heating_generation_dispatch,
+                                 district_cooling_generation_dispatch,
+                                 E_sys_req_W
+                                 ):
     # ACTIVATION PATTERN OF ELECTRICITY
     E_CHP_gen_directload_W = np.zeros(HOURS_IN_YEAR)
     E_CHP_gen_export_W = np.zeros(HOURS_IN_YEAR)
@@ -417,129 +327,122 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
     E_PVT_gen_export_W = np.zeros(HOURS_IN_YEAR)
     E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
-    if master_to_slave_vars.DHN_exists:
-        CHP_activation_flag = heating_dispatch['CHP_Status']
-        Furnace_dry_activation_flag = heating_dispatch['Furnace_dry_Status']
-        Furnace_wet_activation_flag = heating_dispatch['Furnace_dry_Status']
-    else:
-        CHP_activation_flag = np.zeros(HOURS_IN_YEAR)
-        Furnace_dry_activation_flag = np.zeros(HOURS_IN_YEAR)
-        Furnace_wet_activation_flag = np.zeros(HOURS_IN_YEAR)
-
-    if master_to_slave_vars.DCN_exists:
-        CCGT_activation_flag = cooling_dispatch[
-            'ACH_Status']  # TODO: when absorption chiller then CCGT is activated. this is bananas
-    else:
-        CCGT_activation_flag = np.zeros(HOURS_IN_YEAR)
+    # INITIALIZE VARIABLES:
+    E_CHP_gen_W = district_heating_generation_dispatch['E_CHP_gen_W']
+    E_PVT_gen_W = district_heating_generation_dispatch['E_PVT_gen_W']
+    E_Furnace_dry_gen_W = district_heating_generation_dispatch['E_Furnace_dry_gen_W']
+    E_Furnace_wet_gen_W = district_heating_generation_dispatch['E_Furnace_wet_gen_W']
+    E_Trigen_NG_gen_W = district_cooling_generation_dispatch['E_Trigen_NG_gen_W']
+    E_PV_gen_W = district_grid_generation_dispatch['E_PV_gen_W']
 
     for hour in range(HOURS_IN_YEAR):
         E_req_hour_W = E_sys_req_W[hour]
-
-        # CHP
-        if CHP_activation_flag[hour] >= 1 and E_CHP_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_CHP_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_CHP_gen_export_W[hour] = delta_E
-                E_CHP_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_CHP_gen_export_W[hour] = 0.0
-                E_CHP_gen_directload_W[hour] = E_CHP_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_CHP_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_CHP_gen_export_W[hour] = E_CHP_gen_W[hour]
-            E_CHP_gen_directload_W[hour] = 0.0
-
-        # FURNACE DRY
-        if Furnace_dry_activation_flag[hour] >= 1 and E_Furnace_dry_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_Furnace_dry_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_Furnace_dry_gen_export_W[hour] = delta_E
-                E_Furnace_dry_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_Furnace_dry_gen_export_W[hour] = 0.0
-                E_Furnace_dry_gen_directload_W[hour] = E_Furnace_dry_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_Furnace_dry_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_Furnace_dry_gen_export_W[hour] = E_Furnace_dry_gen_W[hour]
-            E_Furnace_dry_gen_directload_W[hour] = 0.0
-
-        # FURNACE WET
-        if Furnace_wet_activation_flag[hour] >= 1 and E_Furnace_wet_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_Furnace_wet_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_Furnace_wet_gen_export_W[hour] = delta_E
-                E_Furnace_wet_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_Furnace_wet_gen_export_W[hour] = 0.0
-                E_Furnace_wet_gen_directload_W[hour] = E_Furnace_wet_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_Furnace_wet_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_Furnace_wet_gen_export_W[hour] = E_Furnace_wet_gen_W[hour]
-            E_Furnace_wet_gen_directload_W[hour] = 0.0
-
-        # CCGT_cooling
-        if CCGT_activation_flag[hour] >= 1 and E_CCGT_gen_W[hour] and E_req_hour_W > 0.0:
-            delta_E = E_CCGT_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_CCGT_gen_export_W[hour] = delta_E
-                E_CCGT_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_CCGT_gen_export_W[hour] = 0.0
-                E_CCGT_gen_directload_W[hour] = E_CCGT_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_CCGT_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_CCGT_gen_export_W[hour] = E_CCGT_gen_W[hour]
-            E_CCGT_gen_directload_W[hour] = 0.0
-
-        # PV
-        if E_PV_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_PV_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_PV_gen_export_W[hour] = delta_E
-                E_PV_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_PV_gen_export_W[hour] = 0.0
-                E_PV_gen_directload_W[hour] = E_PV_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_PV_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_PV_gen_export_W[hour] = E_PV_gen_W[hour]
-            E_PV_gen_directload_W[hour] = 0.0
-
-        # PVT
-        if E_PVT_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
-            delta_E = E_PVT_gen_W[hour] - E_req_hour_W
-            if delta_E >= 0.0:
-                E_PVT_gen_export_W[hour] = delta_E
-                E_PVT_gen_directload_W[hour] = E_req_hour_W
-                E_req_hour_W = 0.0
-            else:
-                E_PVT_gen_export_W[hour] = 0.0
-                E_PVT_gen_directload_W[hour] = E_PVT_gen_W[hour]
-                E_req_hour_W = E_req_hour_W - E_PVT_gen_directload_W[hour]
-        else:
-            # since we cannot store it is then exported
-            E_PVT_gen_export_W[hour] = E_PVT_gen_W[hour]
-            E_PVT_gen_directload_W[hour] = 0.0
-
-        # COVERED BY THE GRID (IMPORTS)
         if E_req_hour_W > 0.0:
-            E_GRID_directload_W[hour] = E_req_hour_W
+            # CHP
+            if E_CHP_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
+                delta_E = E_CHP_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_CHP_gen_export_W[hour] = delta_E
+                    E_CHP_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_CHP_gen_export_W[hour] = 0.0
+                    E_CHP_gen_directload_W[hour] = E_CHP_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_CHP_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_CHP_gen_export_W[hour] = E_CHP_gen_W[hour]
+                E_CHP_gen_directload_W[hour] = 0.0
+
+            # FURNACE DRY
+            if E_Furnace_dry_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
+                delta_E = E_Furnace_dry_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_Furnace_dry_gen_export_W[hour] = delta_E
+                    E_Furnace_dry_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_Furnace_dry_gen_export_W[hour] = 0.0
+                    E_Furnace_dry_gen_directload_W[hour] = E_Furnace_dry_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_Furnace_dry_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_Furnace_dry_gen_export_W[hour] = E_Furnace_dry_gen_W[hour]
+                E_Furnace_dry_gen_directload_W[hour] = 0.0
+
+            # FURNACE WET
+            if E_Furnace_wet_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
+                delta_E = E_Furnace_wet_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_Furnace_wet_gen_export_W[hour] = delta_E
+                    E_Furnace_wet_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_Furnace_wet_gen_export_W[hour] = 0.0
+                    E_Furnace_wet_gen_directload_W[hour] = E_Furnace_wet_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_Furnace_wet_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_Furnace_wet_gen_export_W[hour] = E_Furnace_wet_gen_W[hour]
+                E_Furnace_wet_gen_directload_W[hour] = 0.0
+
+            # CCGT_cooling
+            if E_Trigen_NG_gen_W[hour] and E_req_hour_W > 0.0:
+                delta_E = E_Trigen_NG_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_CCGT_gen_export_W[hour] = delta_E
+                    E_CCGT_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_CCGT_gen_export_W[hour] = 0.0
+                    E_CCGT_gen_directload_W[hour] = E_Trigen_NG_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_CCGT_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_CCGT_gen_export_W[hour] = E_Trigen_NG_gen_W[hour]
+                E_CCGT_gen_directload_W[hour] = 0.0
+
+            # PV
+            if E_PV_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
+                delta_E = E_PV_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_PV_gen_export_W[hour] = delta_E
+                    E_PV_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_PV_gen_export_W[hour] = 0.0
+                    E_PV_gen_directload_W[hour] = E_PV_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_PV_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_PV_gen_export_W[hour] = E_PV_gen_W[hour]
+                E_PV_gen_directload_W[hour] = 0.0
+
+            # PVT
+            if E_PVT_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
+                delta_E = E_PVT_gen_W[hour] - E_req_hour_W
+                if delta_E >= 0.0:
+                    E_PVT_gen_export_W[hour] = delta_E
+                    E_PVT_gen_directload_W[hour] = E_req_hour_W
+                    E_req_hour_W = 0.0
+                else:
+                    E_PVT_gen_export_W[hour] = 0.0
+                    E_PVT_gen_directload_W[hour] = E_PVT_gen_W[hour]
+                    E_req_hour_W = E_req_hour_W - E_PVT_gen_directload_W[hour]
+            else:
+                # since we cannot store it is then exported
+                E_PVT_gen_export_W[hour] = E_PVT_gen_W[hour]
+                E_PVT_gen_directload_W[hour] = 0.0
+
+            # COVERED BY THE GRID (IMPORTS)
+            if E_req_hour_W > 0.0:
+                E_GRID_directload_W[hour] = E_req_hour_W
 
     # TOTAL EXPORTS:
     electricity_dispatch = {'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
                             'E_CHP_gen_export_W': E_CHP_gen_export_W,
-                            'E_CCGT_gen_directload_W': E_CCGT_gen_directload_W,
-                            'E_CCGT_gen_export_W': E_CHP_gen_export_W,
+                            'E_Trigen_gen_directload_W': E_CCGT_gen_directload_W,
+                            'E_Trigen_gen_export_W': E_CHP_gen_export_W,
                             'E_Furnace_dry_gen_directload_W': E_Furnace_dry_gen_directload_W,
                             'E_Furnace_dry_gen_export_W': E_Furnace_dry_gen_export_W,
                             'E_Furnace_wet_gen_directload_W': E_Furnace_wet_gen_directload_W,
@@ -553,35 +456,17 @@ def electricity_activation_curve(master_to_slave_vars, heating_dispatch, cooling
     return electricity_dispatch
 
 
-def calc_district_system_electricity_generated(locator, cooling_dispatch, heating_dispatch,
+def calc_district_system_electricity_generated(locator,
                                                master_to_slave_vars):
-    # Technologies that are only used if District heating network
-    if master_to_slave_vars.DHN_exists:
-        E_PVT_gen_W = heating_dispatch['E_PVT_gen_W']
-        E_CHP_gen_W = heating_dispatch['E_CHP_gen_W']
-        E_Furnace_dry_gen_W = heating_dispatch['E_Furnace_dry_gen_W']
-        E_Furnace_wet_gen_W = heating_dispatch['E_Furnace_wet_gen_W']
-    else:
-        E_PVT_gen_W = np.zeros(HOURS_IN_YEAR)
-        E_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
-        E_Furnace_dry_gen_W = np.zeros(HOURS_IN_YEAR)
-        E_Furnace_wet_gen_W = np.zeros(HOURS_IN_YEAR)
-
-    if master_to_slave_vars.DCN_exists:
-        E_CCGT_gen_W = cooling_dispatch["E_gen_CCGT_associated_with_absorption_chillers_W"]
-    else:
-        E_CCGT_gen_W = np.zeros(HOURS_IN_YEAR)
-
     # TECHNOLOGEIS THAT ONLY GENERATE ELECTRICITY
     E_PV_gen_W = calc_available_generation_PV(locator, master_to_slave_vars.building_names_all,
                                               master_to_slave_vars.PV_share)
 
-    return E_CHP_gen_W, \
-           E_Furnace_dry_gen_W, \
-           E_Furnace_wet_gen_W, \
-           E_CCGT_gen_W, \
-           E_PV_gen_W, \
-           E_PVT_gen_W
+    district_electricity_generation_dispatch = {
+        'E_PV_gen_W': E_PV_gen_W
+    }
+
+    return district_electricity_generation_dispatch
 
 
 def calc_available_generation_PV(locator, buildings, share_allowed):
@@ -594,127 +479,23 @@ def calc_available_generation_PV(locator, buildings, share_allowed):
     return E_PVT_gen_Wh
 
 
-def calc_district_system_electricity_requirements(master_to_slave_vars, building_names, cooling_activation_data,
-                                                  heating_activation_data, locator):
+def calc_district_system_electricity_requirements(master_to_slave_vars,
+                                                  building_names,
+                                                  locator,
+                                                  DH_electricity_requirements,
+                                                  DC_electricity_requirements):
     # by buildings
     requirements_buildings = extract_demand_buildings(master_to_slave_vars, building_names, locator)
 
-    # by generation units
-    requirements_generation = extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data,
-                                                                    heating_activation_data)
-
-    requirements_storage = extract_requirements_storage(heating_activation_data, master_to_slave_vars)
-
-    # by networks
-    requirements_networks = extract_requirements_networks(master_to_slave_vars, cooling_activation_data,
-                                                          heating_activation_data)
-
-    # total system requirements
-    join1 = dict(requirements_buildings, **requirements_generation)
-    join2 = dict(join1, **requirements_storage)
-    requirements_electricity = dict(join2, **requirements_networks)
+    # add those due to district heating and district cooling systems
+    join1 = dict(requirements_buildings, **DH_electricity_requirements)
+    requirements_electricity = dict(join1, **DC_electricity_requirements)
     E_sys_req_W = sum(requirements_electricity.itervalues())
 
     # now get all the requirements
     requirements_electricity["E_electricalnetwork_sys_req_W"] = E_sys_req_W
 
-    return requirements_electricity
-
-
-def extract_requirements_storage(heating_activation_data, master_to_slave_vars):
-    if master_to_slave_vars.DHN_exists:
-        # by storage system
-        E_Storage_charging_req_W = heating_activation_data['E_Storage_charging_req_W']
-        E_Storage_discharging_req_W = heating_activation_data['E_Storage_discharging_req_W']
-
-    else:
-        E_Storage_charging_req_W = np.zeros(HOURS_IN_YEAR)
-        E_Storage_discharging_req_W = np.zeros(HOURS_IN_YEAR)
-
-    requirements_storage = {
-        "E_Storage_charging_req_W": E_Storage_charging_req_W,
-        "E_Storage_discharging_req_W": E_Storage_discharging_req_W,
-    }
-    return requirements_storage
-
-
-def extract_requirements_networks(master_to_slave_vars, cooling_activation_data, heating_activation_data):
-    if master_to_slave_vars.DHN_exists:
-        E_Pump_DHN_req_W = heating_activation_data['E_Pump_DHN_req_W']
-    else:
-        E_Pump_DHN_req_W = np.zeros(HOURS_IN_YEAR)
-
-    if master_to_slave_vars.DCN_exists:
-        E_Pump_DCN_req_W = cooling_activation_data['E_Pump_DCN_req_W']
-    else:
-        E_Pump_DCN_req_W = np.zeros(HOURS_IN_YEAR)
-
-    requirements_networks = {
-        "E_Pump_DHN_req_W": E_Pump_DHN_req_W,
-        "E_Pump_DCN_req_W": E_Pump_DCN_req_W,
-    }
-    return requirements_networks
-
-
-def extract_requirements_generation_units(master_to_slave_vars, cooling_activation_data, heating_activation_data):
-    # by auxiliary and heat recovery
-
-    if master_to_slave_vars.DHN_exists:
-        E_HP_SC_FP_req_W = heating_activation_data['E_HP_SC_FP_req_W']
-        E_HP_SC_ET_req_W = heating_activation_data['E_HP_SC_ET_req_W']
-        E_HP_PVT_req_W = heating_activation_data['E_HP_Server_req_W']
-        E_HP_Server_req_W = heating_activation_data['E_HP_PVT_req_W']
-        E_HPSew_req_W = heating_activation_data["E_HP_Sew_req_W"]
-        E_HPLake_req_W = heating_activation_data["E_HP_Lake_req_W"]
-        E_GHP_req_W = heating_activation_data["E_GHP_req_W"]
-        E_BaseBoiler_req_W = heating_activation_data["E_BaseBoiler_req_W"]
-        E_PeakBoiler_req_W = heating_activation_data["E_PeakBoiler_req_W"]
-        E_BackupBoiler_req_W = heating_activation_data["E_BackupBoiler_req_W"]
-
-    else:
-        E_HP_SC_FP_req_W = np.zeros(HOURS_IN_YEAR)
-        E_HP_SC_ET_req_W = np.zeros(HOURS_IN_YEAR)
-        E_HP_PVT_req_W = np.zeros(HOURS_IN_YEAR)
-        E_HP_Server_req_W = np.zeros(HOURS_IN_YEAR)
-        E_HPSew_req_W = np.zeros(HOURS_IN_YEAR)
-        E_HPLake_req_W = np.zeros(HOURS_IN_YEAR)
-        E_GHP_req_W = np.zeros(HOURS_IN_YEAR)
-        E_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
-        E_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
-        E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
-
-    if master_to_slave_vars.DCN_exists:
-        E_FreeCooling_req_W = cooling_activation_data['E_used_Lake_W']
-        E_VCC_req_W = cooling_activation_data['E_used_VCC_W']
-        E_VCC_backup_req_W = cooling_activation_data['E_used_VCC_backup_W']
-        E_ACH_req_W = cooling_activation_data['E_used_ACH_W']
-        E_CT_req_W = cooling_activation_data['E_used_CT_W']
-    else:
-        E_FreeCooling_req_W = np.zeros(HOURS_IN_YEAR)
-        E_VCC_req_W = np.zeros(HOURS_IN_YEAR)
-        E_VCC_backup_req_W = np.zeros(HOURS_IN_YEAR)
-        E_ACH_req_W = np.zeros(HOURS_IN_YEAR)
-        E_CT_req_W = np.zeros(HOURS_IN_YEAR)
-
-    requirements_generation = {
-        'E_HP_SC_FP_req_W': E_HP_SC_FP_req_W,
-        'E_HP_SC_ET_req_W': E_HP_SC_ET_req_W,
-        'E_HP_PVT_req_W': E_HP_PVT_req_W,
-        'E_HP_Server_req_W': E_HP_Server_req_W,
-        'E_HPSew_req_W': E_HPSew_req_W,
-        'E_HPLake_req_W': E_HPLake_req_W,
-        'E_GHP_req_W': E_GHP_req_W,
-        'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
-        'E_PeakBoiler_req_W': E_PeakBoiler_req_W,
-        'E_BackupBoiler_req_W': E_BackupBoiler_req_W,
-        'E_FreeCooling_req_W': E_FreeCooling_req_W,
-        'E_VCC_req_W': E_VCC_req_W,
-        'E_VCC_backup_req_W': E_VCC_backup_req_W,
-        'E_ACH_req_W': E_ACH_req_W,
-        'E_CT_req_W': E_CT_req_W,
-    }
-
-    return requirements_generation
+    return requirements_electricity, E_sys_req_W
 
 
 def extract_demand_buildings(master_to_slave_vars, building_names, locator):
