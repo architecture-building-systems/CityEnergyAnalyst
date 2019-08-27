@@ -311,14 +311,6 @@ def cooling_resource_activator(Q_thermal_req,
 
     ## writing outputs
 
-    opex_output = {
-        'opex_var_Trigen_NG_USDhr': cost_Trigen_USD,
-        'opex_var_BaseVCC_WS_USDperhr': opex_BaseVCC_WS_USDperhr,
-        'opex_var_PeakVCC_WS_USDperhr': opex_PeakVCC_WS_USDperhr,
-        'opex_var_BaseVCC_AS_USDperhr': opex_BaseVCC_AS_USDperhr,
-        'opex_var_PeakVCC_AS_USDperhr': opex_PeakVCC_AS_USDperhr,
-    }
-
     electricity_output = {
         'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
@@ -348,4 +340,4 @@ def cooling_resource_activator(Q_thermal_req,
 
     gas_output = {'NG_Trigen_req_W': NG_Trigen_req_W}
 
-    return daily_storage_class, opex_output, activation_output, thermal_output, electricity_output, gas_output
+    return daily_storage_class, activation_output, thermal_output, electricity_output, gas_output

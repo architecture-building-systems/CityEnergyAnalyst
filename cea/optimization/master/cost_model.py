@@ -5,6 +5,8 @@ Extra costs to an individual
 """
 from __future__ import division
 
+from math import log
+
 import numpy as np
 import pandas as pd
 
@@ -21,6 +23,7 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
+from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import ACH_TYPE_DOUBLE
 from cea.optimization.constants import N_PVT
 
@@ -34,8 +37,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def add_disconnected_costs(column_names_buildings_heating,
-                           column_names_buildings_cooling, locator, master_to_slave_vars):
+def disconnected_costs_and_emissions(column_names_buildings_heating,
+                                     column_names_buildings_cooling, locator, master_to_slave_vars):
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -53,9 +56,7 @@ def add_disconnected_costs(column_names_buildings_heating,
         DCN_barcode,
         column_names_buildings_cooling, locator)
 
-    performance = {
-        # COSTS
-
+    disconnected_costs = {
         # heating
         "Capex_a_heating_disconnected_USD": Capex_a_heating_disconnected_USD,
         "Capex_total_heating_disconnected_USD": Capex_total_heating_disconnected_USD,
@@ -66,7 +67,9 @@ def add_disconnected_costs(column_names_buildings_heating,
         "Capex_total_cooling_disconnected_USD": Capex_total_cooling_disconnected_USD,
         "Opex_a_cooling_disconnected_USD": Opex_a_cooling_disconnected_USD,
         "TAC_cooling_disconnected_USD": TAC_cooling_disconnected_USD,
+    }
 
+    disconnected_emissions = {
         # CO2 EMISSIONS
         "GHG_heating_disconnected_tonCO2": GHG_heating_disconnected_tonCO2,
         "GHG_cooling_disconnected_tonCO2": GHG_cooling_disconnected_tonCO2,
@@ -76,7 +79,7 @@ def add_disconnected_costs(column_names_buildings_heating,
         "PEN_cooling_disconnected_MJoil": PEN_cooling_disconnected_MJoil
     }
 
-    return performance
+    return disconnected_costs, disconnected_emissions
 
 
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, lca, network_type):
@@ -122,13 +125,6 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
 
         "Opex_fixed_DHN_connected_USD": Opex_fixed_Network_USD,
         "Opex_fixed_SubstationsHeating_connected_USD": Opex_fixed_SubstationsHeating_USD,
-
-        'Opex_var_DHN_connected_USD': Opex_var_Network_USD,
-        "Opex_var_SubstationsHeating_connected_USD": 0.0
-
-        "Opex_a_DHN_connected_USD": Opex_var_Network_USD + Opex_fixed_Network_USD,
-        "Opex_a_SubstationsHeating_connected_USD": Opex_fixed_SubstationsHeating_USD + 0.0,
-
     }
     return performance, P_motor_tot_W
 
@@ -175,6 +171,69 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
     return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD
 
 
+def calc_variable_costs_connected_buildings(district_microgrid_requirements_dispatch,
+                                            district_heating_fuel_requirements_dispatch,
+                                            district_cooling_fuel_requirements_dispatch,
+                                            lca):
+    # join in one dictionary to facilitate the iteration
+    join1 = dict(district_microgrid_requirements_dispatch, **district_heating_fuel_requirements_dispatch)
+    joined_dict = dict(join1, **district_cooling_fuel_requirements_dispatch)
+
+    # Iterate over all the files
+    sum_natural_gas_imports_W = np.zeros(HOURS_IN_YEAR)
+    sum_wet_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
+    sum_dry_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
+    sum_electricity_imports_W = np.zeros(HOURS_IN_YEAR)
+    sum_electricity_exports_W = np.zeros(HOURS_IN_YEAR)
+
+    for key, value in joined_dict:
+        if "NG" in key and "req" in key:
+            sum_natural_gas_imports_W = sum_natural_gas_imports_W + value
+        elif "WB" in key and "req" in key:
+            sum_wet_biomass_imports_W = sum_wet_biomass_imports_W + value
+        elif "DB" in key and "req" in key:
+            sum_dry_biomass_imports_W = sum_dry_biomass_imports_W + value
+        elif "E" in key and "GRID" in key and "directload" in key:
+            sum_electricity_imports_W = sum_electricity_imports_W + value
+        elif "E" in key and "export" in key:
+            sum_electricity_exports_W = sum_electricity_exports_W + value
+
+    Opex_var_NG_sys_connected_USD = sum([x * y for x, y in zip(sum_natural_gas_imports_W, lca.ELEC_PRICE)])
+    Opex_var_WB_sys_connected_USD = sum([x * y for x, y in zip(sum_wet_biomass_imports_W, lca.ELEC_PRICE)])
+    Opex_var_DB_sys_connected_USD = sum([x * y for x, y in zip(sum_dry_biomass_imports_W, lca.ELEC_PRICE)])
+    Opex_var_GRID_buy_sys_connected_USD = sum([x * y for x, y in zip(sum_natural_gas_imports_W, lca.ELEC_PRICE)])
+    Opex_var_GRID_sell_sys_connected_USD = - sum([x * y for x, y in zip(sum_electricity_exports_W, lca.ELEC_PRICE)])
+
+    district_variable_costs = {
+        "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
+        "Opex_var_WB_connected_USD": Opex_var_WB_sys_connected_USD,
+        "Opex_var_DB_sconnected_USD": Opex_var_DB_sys_connected_USD,
+        "Opex_var_GRID_buy_connected_USD": Opex_var_GRID_buy_sys_connected_USD,
+        "Opex_var_GRID_sell_connected_USD": Opex_var_GRID_sell_sys_connected_USD
+    }
+
+    return district_variable_costs
+
+
+def calc_costs_district_energy_system(district_heating_costs,
+                                      district_cooling_costs,
+                                      district_microgrid_costs,
+                                      district_microgrid_requirements_dispatch,
+                                      district_heating_fuel_requirements_dispatch,
+                                      district_cooling_fuel_requirements_dispatch
+                                      ):
+    district_variable_costs = calc_variable_costs_connected_buildings(district_microgrid_requirements_dispatch,
+                                                                      district_heating_fuel_requirements_dispatch,
+                                                                      district_cooling_fuel_requirements_dispatch)
+    # join all the costs
+
+    join1 = dict(district_heating_costs, **district_cooling_costs)
+    join2 = dict(join1, **district_microgrid_costs)
+    district_energy_system_costs = dict(join2, **district_variable_costs)
+
+    return district_energy_system_costs
+
+
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, lca, network_type):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
@@ -217,17 +276,12 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
         "Capex_total_DCN_connected_USD": Capex_Network_USD,
         "Capex_total_SubstationsCooling_connected_USD": Capex_Substations_USD,
 
-        'Opex_var_DCN_connected_USD': Opex_var_Network_USD,
-        "Opex_var_SubstationsCooling_connected_USD": Opex_var_Substations_USD,
-
         "Opex_fixed_DCN_connected_USD": Opex_fixed_Network_USD,
         "Opex_fixed_SubstationsCooling_connected_USD": Opex_fixed_Substations_USD,
 
-        "Opex_a_DCN_connected_USD": Opex_fixed_Network_USD + Opex_var_Network_USD,
-        "Opex_a_SubstationsCooling_connected_USD": Opex_fixed_Substations_USD + 0.0,
-
     }
     return performance, P_motor_tot_W
+
 
 def calc_substations_costs_cooling(building_names, master_to_slave_vars, district_network_barcode, locator):
     Capex_Substations_USD = 0.0
@@ -276,6 +330,7 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
 
     return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
 
+
 def calc_generation_costs_cooling_storage(locator,
                                           master_to_slave_variables,
                                           config,
@@ -300,13 +355,6 @@ def calc_generation_costs_cooling_storage(locator,
 
         # opex fixed
         "Opex_fixed_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD,
-
-        # opex annual
-        "Opex_var_DailyStorage_WS_connected_USD": 0.0,
-
-        # opex annual
-        "Opex_a_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD + 0.0,
-
     }
 
     return performance
@@ -315,12 +363,6 @@ def calc_generation_costs_cooling_storage(locator,
 def calc_generation_costs_cooling(locator,
                                   master_to_slave_variables,
                                   config,
-                                  opex_var_Trigen_NG_USD,
-                                  opex_var_BaseVCC_WS_USD,
-                                  opex_var_PeakVCC_WS_USD,
-                                  opex_var_BaseVCC_AS_USD,
-                                  opex_var_PeakVCC_AS_USD,
-                                  opex_var_BackupVCC_AS_USD
                                   ):
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
@@ -450,23 +492,6 @@ def calc_generation_costs_cooling(locator,
         "Opex_fixed_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD,
         "Opex_fixed_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD,
         "Opex_fixed_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD,
-
-        # opex var
-        "Opex_var_Trigen_NG_connected_USD": opex_var_Trigen_NG_USD,
-        "Opex_var_BaseVCC_WS_connected_USD": opex_var_BaseVCC_WS_USD,
-        "Opex_var_PeakVCC_WS_connected_USD": opex_var_PeakVCC_WS_USD,
-        "Opex_var_BaseVCC_AS_connected_USD": opex_var_BaseVCC_AS_USD,
-        "Opex_var_PeakVCC_AS_connected_USD": opex_var_PeakVCC_AS_USD,
-        "Opex_var_BackupVCC_AS_connected_USD": opex_var_BackupVCC_AS_USD,
-
-        # opex annual
-        "Opex_a_Trigen_NG_connected_USD": Opex_fixed_Trigen_NG_USD + opex_var_Trigen_NG_USD,
-        "Opex_a_BaseVCC_WS_connected_USD": Opex_fixed_BaseVCC_WS_USD + opex_var_BaseVCC_WS_USD,
-        "Opex_a_PeakVCC_WS_connected_USD": Opex_fixed_PeakVCC_WS_USD + opex_var_PeakVCC_WS_USD,
-        "Opex_a_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD + opex_var_BaseVCC_AS_USD,
-        "Opex_a_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD + opex_var_PeakVCC_AS_USD,
-        "Opex_a_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD + opex_var_BackupVCC_AS_USD,
-
     }
 
     return performance
@@ -476,12 +501,6 @@ def calc_generation_costs_heating(locator,
                                   master_to_slave_vars,
                                   config,
                                   storage_activation_data,
-                                  Opex_var_CHP_NG_USD,
-                                  Opex_var_Furnace_wet_USD,
-                                  Opex_var_Furnace_dry_USD,
-                                  Opex_var_BaseBoiler_NG_USD,
-                                  Opex_var_PeakBoiler_NG_USD,
-                                  Opex_var_BackupBoiler_NG_USD
                                   ):
     """
     Computes costs / GHG emisions / primary energy needs
@@ -728,36 +747,6 @@ def calc_generation_costs_heating(locator,
         "Opex_fixed_BaseBoiler_NG_connected_USD": Opex_fixed_BaseBoiler_NG_USD,
         "Opex_fixed_PeakBoiler_NG_connected_USD": Opex_fixed_PeakBoiler_NG_USD,
         "Opex_fixed_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD,
-
-        # Opex var
-        "Opex_var_SC_ET_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_SC_FP_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_PVT_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_HP_Server_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_HP_Sewage_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_HP_Lake_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_GHP_connected_USD": 0.0,  # costs are allocated to  storage
-        "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
-        "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
-        "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
-        "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
-        "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
-        "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-
-        # Opex annualized
-        "Opex_a_SC_ET_connected_USD": Opex_fixed_SC_ET_USD,
-        "Opex_a_SC_FP_connected_USD": Opex_fixed_SC_FP_USD,
-        "Opex_a_PVT_connected_USD": Opex_fixed_PVT_USD,
-        "Opex_a_HP_Server_connected_USD": Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD,
-        "Opex_a_HP_Sewage_connected_USD": Opex_fixed_Sewage_USD,
-        "Opex_a_HP_Lake_connected_USD": Opex_fixed_Lake_USD,
-        "Opex_a_GHP_connected_USD": Opex_fixed_GHP_USD,
-        "Opex_a_CHP_NG_connected_USD": Opex_fixed_CHP_NG_USD + Opex_var_CHP_NG_USD,
-        "Opex_a_Furnace_wet_connected_USD": Opex_fixed_furnace_wet_USD + Opex_var_Furnace_wet_USD,
-        "Opex_a_Furnace_dry_connected_USD": Opex_fixed_furnace_dry_USD + Opex_var_Furnace_dry_USD,
-        "Opex_a_BaseBoiler_NG_connected_USD": Opex_fixed_BaseBoiler_NG_USD + Opex_var_BaseBoiler_NG_USD,
-        "Opex_a_PeakBoiler_NG_connected_USD": Opex_fixed_PeakBoiler_NG_USD + Opex_var_PeakBoiler_NG_USD,
-        "Opex_a_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD + Opex_var_BackupBoiler_NG_USD,
     }
 
     return performance_costs

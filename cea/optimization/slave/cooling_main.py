@@ -7,7 +7,7 @@ If Lake exhausted, then use other supply technologies
 """
 from __future__ import division
 
-from math import log
+
 
 import numpy as np
 import pandas as pd
@@ -70,7 +70,7 @@ def district_cooling_network(locator,
                                              )
 
     # Import Data - potentials lake heat
-    if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1 or:
+    if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
         total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
@@ -113,7 +113,6 @@ def district_cooling_network(locator,
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
-            opex_output, \
             activation_output, \
             thermal_output, \
             electricity_output, \
@@ -129,13 +128,6 @@ def district_cooling_network(locator,
                                                     hour,
                                                     prices,
                                                     locator)
-
-            opex_var_Trigen_NG_USDhr[hour] = opex_output['opex_var_Trigen_NG_USDhr']
-            opex_var_BaseVCC_WS_USDhr[hour] = opex_output['opex_var_BaseVCC_WS_USDhr']
-            opex_var_PeakVCC_WS_USDhr[hour] = opex_output['opex_var_PeakVCC_WS_USDhr']
-            opex_var_BaseVCC_AS_USDhr[hour] = opex_output['opex_var_BaseVCC_AS_USDhr']
-            opex_var_PeakVCC_AS_USDhr[hour] = opex_output['opex_var_PeakVCC_AS_USDhr']
-            opex_var_BackupVCC_AS_USDhr[hour] = opex_output['opex_var_BackupVCC_AS_USDhr']
 
             source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
             source_BaseVCC_WS[hour] = activation_output["source_BaseVCC_WS"]
@@ -176,13 +168,7 @@ def district_cooling_network(locator,
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
                                                                             master_to_slave_variables,
-                                                                            config,
-                                                                            sum(opex_var_Trigen_NG_USDhr),
-                                                                            sum(opex_var_BaseVCC_WS_USDhr),
-                                                                            sum(opex_var_PeakVCC_WS_USDhr),
-                                                                            sum(opex_var_BaseVCC_AS_USDhr),
-                                                                            sum(opex_var_PeakVCC_AS_USDhr),
-                                                                            sum(opex_var_BackupVCC_AS_USDhr)
+                                                                            config
                                                                             )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
     performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
@@ -202,10 +188,10 @@ def district_cooling_network(locator,
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
     performance = dict(performance_costs_generation, **performance_costs_storage)
-    performance = dict(performance, **performance_costs_network)
+    district_cooling_costs = dict(performance, **performance_costs_network)
 
     # SAVE
-    cooling_dispatch = {
+    district_cooling_generation_dispatch = {
         # demand of the network
         "Q_districtcooling_sys_req_W": Q_thermal_req_W,
 
@@ -217,6 +203,7 @@ def district_cooling_network(locator,
         "PeakVCC_AS_Status": source_PeakVCC_AS,
 
         # ENERGY GENERATION
+        # from storage
         "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_W,
         # cooling
         "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_W,
@@ -225,25 +212,33 @@ def district_cooling_network(locator,
         "Q_BaseVCC_AS_gen_directload_W": Q_BaseVCC_AS_gen_W,
         "Q_PeakVCC_AS_gen_directload_W": Q_PeakVCC_AS_gen_W,
         "Q_BackupVCC_AS_directload_W": Q_BackupVCC_AS_gen_W,
-
         # electricity
-        "E_Trigen_NG_gen_W": E_Trigen_NG_gen_W,
+        "E_Trigen_NG_gen_W": E_Trigen_NG_gen_W
+    }
 
+    district_cooling_electricity_requirements_dispatch = {
         # ENERGY REQUIREMENTS
         # Electricity
+        "E_DCN_req_W": E_used_district_cooling_network_W,
         "E_BaseVCC_WS_req_W": E_BaseVCC_WS_req_W,
         "E_PeakVCC_WS_req_W": E_PeakVCC_WS_req_W,
         "E_BaseVCC_AS_req_W": E_BaseVCC_AS_req_W,
         "E_PeakVCC_AS_req_W": E_PeakVCC_AS_req_W,
         "E_BackupVCC_AS_req_W": E_BackupVCC_AS_req_W,
+    }
 
+    district_cooling_fuel_requirements_dispatch = {
         # fuels
         "NG_Trigen_req_W": NG_Trigen_req_W
     }
 
     # PLOT RESULTS
 
-    return performance, cooling_dispatch
+    return district_cooling_costs, \
+           district_cooling_generation_dispatch, \
+           district_cooling_electricity_requirements_dispatch,\
+           district_cooling_fuel_requirements_dispatch
+
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
