@@ -10,6 +10,7 @@ from cea.optimization.constants import ACH_T_IN_FROM_CHP
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.constants import DT_COOL
+import cea.technologies.cooling_tower as CTModel
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -27,11 +28,33 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, 
                                                        G_VALUE_CENTRALIZED)
 
     # unpack outputs
-    opex_var_VCC_USD = VCC_operation['wdot_W'] * lca.ELEC_PRICE[hour]
-    Qc_CT_VCC_W = VCC_operation['q_cw_W']
-    E_used_VCC_W = opex_var_VCC_USD / lca.ELEC_PRICE[hour]
+    Qc_VCC_W = VCC_operation['q_chw_W']
+    E_used_VCC_W = VCC_operation['wdot_W']
 
-    return opex_var_VCC_USD, Qc_CT_VCC_W, E_used_VCC_W
+    # calculate variable costs
+    opex_var_VCC_USD = E_used_VCC_W * lca.ELEC_PRICE[hour]
+
+    return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
+
+
+def calc_vcc_CT_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
+    from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
+                                                       G_VALUE_CENTRALIZED)
+
+    # unpack outputs
+    Qc_CT_VCC_W = VCC_operation['q_cw_W']
+    Qc_VCC_W = VCC_operation['q_chw_W']
+
+    # calculate cooling tower
+    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, Q_CT_nom_W)
+
+    #calcualte energy consumption and variable costs
+    E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
+    opex_var_VCC_USD = E_used_VCC_W* lca.ELEC_PRICE[hour]
+
+
+    return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
 
 
 def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
@@ -165,7 +188,7 @@ def cooling_resource_activator(Q_thermal_req,
         source_BaseVCC_WS = 1
         if Q_cooling_unmet_W > Q_therm_Lake_W:
             Q_BaseVCC_WS_gen_W = Q_therm_Lake_W
-            Q_therm_Lake_W =- Q_therm_Lake_W #discount availability
+            Q_therm_Lake_W = - Q_therm_Lake_W  # discount availability
         else:
             Q_BaseVCC_WS_gen_W = Q_cooling_unmet_W
 
@@ -173,12 +196,12 @@ def cooling_resource_activator(Q_thermal_req,
             opex_BaseVCC_WS_USDperhr, \
             Q_BaseVCC_WS_gen_W, \
             E_BaseVCC_WS_req_W = calc_vcc_operation(Q_BaseVCC_WS_gen_W,
-                                                   T_district_cooling_return_K,
-                                                   T_district_cooling_supply_K,
-                                                   T_source_average_Lake_K,
-                                                   lca,
-                                                   hour)
-        else: # bypass, do not use chiller
+                                                    T_district_cooling_return_K,
+                                                    T_district_cooling_supply_K,
+                                                    T_source_average_Lake_K,
+                                                    lca,
+                                                    hour)
+        else:  # bypass, do not use chiller
             opex_BaseVCC_WS_USDperhr = 0.0
             E_BaseVCC_WS_req_W = 0.0
 
@@ -202,12 +225,12 @@ def cooling_resource_activator(Q_thermal_req,
             opex_PeakVCC_WS_USDperhr, \
             Q_PeakVCC_WS_gen_W, \
             E_PeakVCC_WS_req_W = calc_vcc_operation(Q_PeakVCC_WS_gen_W,
-                                                   T_district_cooling_return_K,
-                                                   T_district_cooling_supply_K,
-                                                   T_source_average_Lake_K,
-                                                   lca,
-                                                   hour)
-        else: # bypass, do not use chiller
+                                                    T_district_cooling_return_K,
+                                                    T_district_cooling_supply_K,
+                                                    T_source_average_Lake_K,
+                                                    lca,
+                                                    hour)
+        else:  # bypass, do not use chiller
             opex_PeakVCC_WS_USDperhr = 0.0
             E_PeakVCC_WS_req_W = 0.0
 
@@ -218,20 +241,26 @@ def cooling_resource_activator(Q_thermal_req,
         Q_PeakVCC_WS_gen_W = 0.0
         E_PeakVCC_WS_req_W = 0.0
 
+    # Peak VCC air-source with a cooling tower
+    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+        source_BaseVCC_AS = 1
+        if Q_cooling_unmet_W > master_to_slave_variables.AS_BaseVCC_size_W:
+            Q_BaseVCC_AS_gen_W = master_to_slave_variables.AS_BaseVCC_size_W
+        else:
+            Q_BaseVCC_AS_gen_W = Q_cooling_unmet_W
 
-    # TODO NOW THE AIR SOURCE IF EXISTING.....
-    if Q_CT_nom_W > 0:
-        for hour in range(HOURS_IN_YEAR):
-            wdot_CT_Wh = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
-            opex_var_CT_USDhr[hour] = (wdot_CT_Wh) * lca.ELEC_PRICE[hour]
-            E_used_CT_W[hour] = wdot_CT_Wh
-
-
-
-
-
-
-
+        opex_BaseVCC_AS_USDperhr, \
+        Q_BaseVCC_AS_gen_W, \
+        E_BaseVCC_AS_req_W = calc_vcc_CT_operation(Q_BaseVCC_AS_gen_W,
+                                                   T_district_cooling_return_K,
+                                                   T_district_cooling_supply_K,
+                                                   VCC_T_COOL_IN,
+                                                   lca)
+    else:
+        source_BaseVCC_AS = 0
+        opex_BaseVCC_AS_USDperhr = 0.0
+        Q_BaseVCC_AS_gen_W = 0.0
+        E_BaseVCC_AS_req_W = 0.0
 
 
     ## activate cold thermal storage (fully mixed water tank)
@@ -360,7 +389,6 @@ def cooling_resource_activator(Q_thermal_req,
                 'There are no vapor compression chiller nor absorption chiller installed to charge the storage!')
 
     ## writing outputs
-
     storage_tank_properties_this_timestep = {
         "V_tank_m3": V_tank_m3,
         "T_tank_K": T_tank_C + 273.0,
@@ -370,37 +398,34 @@ def cooling_resource_activator(Q_thermal_req,
     }
 
     opex_output = {
-        'opex_BaseVCC_WS_USDperhr': opex_BaseVCC_WS_USDperhr,
-        'opex_PeakVCC_WS_USDperhr': opex_PeakVCC_WS_USDperhr,
-        'Opex_var_VCC_USD': np.sum(opex_var_VCC_USD),
         'opex_var_Trigen_NG_USDhr': cost_Trigen_USD,
-        'Opex_var_VCC_backup_USD': np.sum(opex_var_VCC_backup_USD),
+        'opex_var_BaseVCC_WS_USDperhr': opex_BaseVCC_WS_USDperhr,
+        'opex_var_PeakVCC_WS_USDperhr': opex_PeakVCC_WS_USDperhr,
+        'opex_var_BaseVCC_AS_USDperhr':opex_BaseVCC_AS_USDperhr,
     }
 
     electricity_output = {
-        'E_used_VCC_W': np.sum(E_used_VCC_W),
-        'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
         'E_Trigen_NG_req_W': E_Trigen_NG_req_W,
         'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
-        'mdot_DCN_kgpers': mdot_DCN_kgpers
+        'E_BaseVCC_AS_req_W': E_BaseVCC_AS_req_W,
     }
 
     thermal_output = {
+        'Qc_Trigen_gen_W': Qc_Trigen_gen_W,
         'Q_BaseVCC_WS_gen_W': Q_BaseVCC_WS_gen_W,
         'Q_PeakVCC_WS_gen_W': Q_PeakVCC_WS_gen_W,
-        'Qc_from_VCC_W': Qc_from_VCC_W,
-        'Qc_Trigen_gen_W': Qc_Trigen_gen_W,
+        'Q_BaseVCC_AS_gen_W':Q_BaseVCC_AS_gen_W,
+
         'Qc_from_Tank_W': Qc_from_Tank_W,
-        'Qc_from_backup_VCC_W': Qc_from_backup_VCC_W
+
     }
 
     activation_output = {
+        "source_Trigen_NG": source_Trigen_NG,
         "source_BaseVCC_WS": source_BaseVCC_WS,
         "source_PeakVCC_WS": source_PeakVCC_WS,
-        "source_Trigen_NG": source_Trigen_NG,
-        "VCC_Status": Source_Vapor_compression_chiller,
-        "VCC_Backup_Status": Source_back_up_Vapor_compression_chiller
+        "source_BaseVCC_AS":source_BaseVCC_AS,
     }
 
     gas_output = {'NG_Trigen_req_W': NG_Trigen_req_W}
