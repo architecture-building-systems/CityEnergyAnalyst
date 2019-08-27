@@ -8,7 +8,8 @@ const {
   Card,
   Affix,
   Modal,
-  Result
+  Result,
+  Empty
 } = antd;
 const { useState, useEffect, useCallback, useMemo } = React;
 
@@ -48,12 +49,17 @@ const Dashboard = () => {
             >
               New Dashboard
             </Button>
+            <Button type="primary" icon="edit" size="small">
+              Set Scenario
+            </Button>
           </div>
         </div>
         <div id="cea-dashboard-layout">
           {layout === "row" ? (
             <RowLayout dashIndex={dashIndex} plots={plots} />
-          ) : (
+          ) : layout === "map" ? (
+            <MapLayout dashIndex={dashIndex} plots={plots} />
+          ) :(
             <GridLayout dashIndex={dashIndex} plots={plots} />
           )}
         </div>
@@ -134,14 +140,23 @@ const RowLayout = ({ dashIndex, plots }) => {
 
   return (
     <React.Fragment>
-      {plots.map((data, index) => (
-        <Row key={`${dashIndex}-${index}-${data.scenario}`}>
       <ModalAddPlot visible={showModalAdd} setVisible={setShowModalAdd} />
+      {plots.length ? (
+        plots.map((data, index) => (
+          <Row key={`${dashIndex}-${index}`}>
+            <Col>
+              <Plot index={index} dashIndex={dashIndex} data={data} />
+            </Col>
+          </Row>
+        ))
+      ) : (
+        <Row>
           <Col>
-            <Plot index={index} dashIndex={dashIndex} data={data} />
+            <EmptyPlot />
           </Col>
         </Row>
-      ))}
+      )}
+
       <Affix offsetBottom={100}>
         <Button
           type="primary"
@@ -165,7 +180,26 @@ const GridLayout = ({ dashIndex, plots }) => {
         {plots.map((data, index) => (
           <div
             className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
-            key={`${dashIndex}-${index}-${data.scenario}`}
+            key={`${dashIndex}-${index}`}
+          >
+            <Plot index={index} dashIndex={dashIndex} data={data} />
+          </div>
+        ))}
+      </div>
+    </React.Fragment>
+  );
+};
+
+const MapLayout = ({ dashIndex, plots }) => {
+  if (!plots.length) return <h1>No plots found</h1>;
+
+  return (
+    <React.Fragment>
+      <div className="row display-flex">
+        {plots.map((data, index) => (
+          <div
+            className={`col-lg-${index === 0 ? 8 : 4} col-md-12 col-sm-12 col-xs-12 plot-widget`}
+            key={`${dashIndex}-${index}`}
           >
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
@@ -187,27 +221,36 @@ const Plot = ({ index, dashIndex, data, style }) => {
 
   // Get plot div
   useEffect(() => {
+    let mounted = true;
+    const source = axios.CancelToken.source();
     axios
-      .get(`http://localhost:5050/plots/div/${dashIndex}/${index}`)
+      .get(`http://localhost:5050/plots/div/${dashIndex}/${index}`, {
+        cancelToken: source.token
+      })
       .then(response => {
-        setDiv(() => {
-          let script = null;
-          let content = HTMLReactParser(response.data, {
-            replace: function(domNode) {
-              if (domNode.type === "script" && domNode.children[0]) {
-                script = domNode.children[0].data;
+        if (mounted)
+          setDiv(() => {
+            let script = null;
+            let content = HTMLReactParser(response.data, {
+              replace: function(domNode) {
+                if (domNode.type === "script" && domNode.children[0]) {
+                  script = domNode.children[0].data;
+                }
               }
-            }
+            });
+            return { content, script };
           });
-          return { content, script };
-        });
       })
       .catch(_error => {
         setError(_error.response);
       });
 
-    // Clean up script nodes on unmount
     return () => {
+      // Cancel the request if it is not completed
+      mounted = false;
+      source.cancel();
+
+      // Clean up script node if it is mounted
       let script = document.querySelector(`script[data-id=script-${hash}]`);
       if (script) script.remove();
     };
@@ -236,7 +279,7 @@ const Plot = ({ index, dashIndex, data, style }) => {
           )}
         </div>
       }
-      extra="Test"
+      extra={null}
       style={{ ...plotStyle, height: "" }}
       bodyStyle={{ height: plotStyle.height }}
       size="small"
@@ -268,20 +311,32 @@ const ErrorPlot = ({ error }) => {
   if (error.status === 404) return HTMLReactParser(error.data);
   if (error.status === 500)
     return (
-      <Result
-        status="error"
-        icon="Something went wrong!"
-        title={error.status}
-        subTitle={error.statusText}
-      >
-        <pre style={{ height: 200, overflow: "auto" }}>{error.data}</pre>
-      </Result>
+      <React.Fragment>
+        <div style={{ textAlign: "center" }}>
+          <h3>Something went wrong!</h3>
+        </div>
+        <pre style={{ height: 200, fontSize: 10, overflow: "auto" }}>
+          {error.data}
+        </pre>
+      </React.Fragment>
     );
   return null;
 };
 
-const EmptyPlot = () => {
-  return <div>EmptyPlot</div>;
+const EmptyPlot = ({ style }) => {
+  const plotStyle = { ...defaultPlotStyle, ...style };
+  return (
+    <Card
+      title="Empty Plot"
+      style={{ ...plotStyle, height: "" }}
+      bodyStyle={{ height: plotStyle.height }}
+      size="small"
+    >
+      <Empty>
+        <Button type="primary">Add plot</Button>
+      </Empty>
+    </Card>
+  );
 };
 
 ReactDOM.render(
