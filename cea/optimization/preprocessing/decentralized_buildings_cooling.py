@@ -93,8 +93,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
 
         ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
-        T_ground_K = calculate_ground_temperature(locator,
-                                                  config)  # FIXME: change to outlet temperature from the cooling towers
+        T_ground_K = calculate_ground_temperature(locator)  # FIXME: change to outlet temperature from the cooling towers
 
         ## Get maximum unit size of technologies
         max_VCC_unit_size_W = chiller_vapor_compression.get_max_VCC_unit_size(locator)
