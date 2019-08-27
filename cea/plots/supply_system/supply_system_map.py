@@ -10,7 +10,7 @@ import json
 
 import cea.inputlocator
 import cea.plots.supply_system
-from cea.plots.variable_naming import COLORS_TO_RGB
+from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import network_layout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -24,15 +24,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_color(color):
-    return [int(x) for x in COLORS_TO_RGB[color].split('(')[1].split(')')[0].split(',')]
+
 
 
 # Colors for the networks in the map
 COLORS = {
-    'dh': get_color('red'),
-    'dc': get_color('blue'),
-    'disconnected': get_color('grey')
+    'dh': get_color_array('red'),
+    'dc': get_color_array('blue'),
+    'disconnected': get_color_array('grey')
 }
 
 
