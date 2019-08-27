@@ -18,8 +18,9 @@ const defaultPlotStyle = { height: 350, margin: 5 };
 const Dashboard = () => {
   const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
+  const [showModalNew, setShowModalNew] = useState(false);
 
-  const handleClick = useCallback(index => {
+  const handleSelect = useCallback(index => {
     setDashIndex(index);
   }, []);
 
@@ -34,18 +35,31 @@ const Dashboard = () => {
   const { layout, plots } = dashboards[dashIndex];
 
   return (
-    <div id="cea-dashboard-content" style={{ minHeight: "100%" }}>
-      <div id="cea-dashboard-content-title" style={{ margin: 10 }}>
-        <DashSelect setDashIndex={handleClick} dashboards={dashboards} />
+    <React.Fragment>
+      <div id="cea-dashboard-content" style={{ minHeight: "100%" }}>
+        <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
+          <DashSelect setDashIndex={handleSelect} dashboards={dashboards} />
+          <div style={{ position: "absolute", left: 250, top: 18 }}>
+            <Button
+              type="primary"
+              icon="plus"
+              size="small"
+              onClick={setShowModalNew}
+            >
+              New Dashboard
+            </Button>
+          </div>
+        </div>
+        <div id="cea-dashboard-layout">
+          {layout === "row" ? (
+            <RowLayout dashIndex={dashIndex} plots={plots} />
+          ) : (
+            <GridLayout dashIndex={dashIndex} plots={plots} />
+          )}
+        </div>
       </div>
-      <div id="cea-dashboard-layout">
-        {layout === "row" ? (
-          <RowLayout dashIndex={dashIndex} plots={plots} />
-        ) : (
-          <GridLayout dashIndex={dashIndex} plots={plots} />
-        )}
-      </div>
-    </div>
+      <ModalNewDashboard visible={showModalNew} setVisible={setShowModalNew} />
+    </React.Fragment>
   );
 };
 
@@ -94,23 +108,48 @@ const ModalAddPlot = ({ visible, setVisible }) => {
   );
 };
 
+const ModalNewDashboard = ({ visible, setVisible }) => {
+  const handleOk = e => {
+    setVisible(false);
+  };
+
+  const handleCancel = e => {
+    setVisible(false);
+  };
+
+  return (
+    <Modal
+      title="New Dashboard"
+      visible={visible}
+      onOk={handleOk}
+      onCancel={handleCancel}
+    >
+      <p>Some contents...</p>
+    </Modal>
+  );
+};
+
 const RowLayout = ({ dashIndex, plots }) => {
-  if (!plots.length) return <h1>No plots found</h1>;
-  const [modalAdd, setModelAdd] = useState(false);
+  const [showModalAdd, setShowModalAdd] = useState(false);
 
   return (
     <React.Fragment>
-      <ModalAddPlot visible={modalAdd} setVisible={setModelAdd} />
       {plots.map((data, index) => (
         <Row key={`${dashIndex}-${index}-${data.scenario}`}>
+      <ModalAddPlot visible={showModalAdd} setVisible={setShowModalAdd} />
           <Col>
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </Col>
         </Row>
       ))}
       <Affix offsetBottom={100}>
-        <Button type="primary" style={{ float: "right" }} onClick={setModelAdd}>
-          + Add plot
+        <Button
+          type="primary"
+          icon="plus"
+          style={{ float: "right" }}
+          onClick={setShowModalAdd}
+        >
+          Add plot
         </Button>
       </Affix>
     </React.Fragment>
