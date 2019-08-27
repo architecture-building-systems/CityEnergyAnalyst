@@ -80,7 +80,7 @@ def district_cooling_network(locator, master_to_slave_vars, network_features, pr
     Qc_VCC_nom_W = master_to_slave_vars.VCC_cooling_size_W
     Qc_ACH_nom_W = master_to_slave_vars.Absorption_chiller_size_W
 
-    T_ground_K = calculate_ground_temperature(locator, config)
+    T_ground_K = calculate_ground_temperature(locator)
 
     # SIZE THE COLD STORAGE TANK
     if master_to_slave_vars.Storage_cooling_size_W > 0.0:
