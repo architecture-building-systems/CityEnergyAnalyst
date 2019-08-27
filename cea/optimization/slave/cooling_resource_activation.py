@@ -4,13 +4,13 @@ import numpy as np
 
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
+import cea.technologies.cooling_tower as CTModel
 import cea.technologies.storage_tank as storage_tank
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, J_TO_WH, WH_TO_J
 from cea.optimization.constants import ACH_T_IN_FROM_CHP
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.constants import DT_COOL
-import cea.technologies.cooling_tower as CTModel
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -49,10 +49,9 @@ def calc_vcc_CT_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lc
     # calculate cooling tower
     wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, Q_CT_nom_W)
 
-    #calcualte energy consumption and variable costs
+    # calcualte energy consumption and variable costs
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
-    opex_var_VCC_USD = E_used_VCC_W* lca.ELEC_PRICE[hour]
-
+    opex_var_VCC_USD = E_used_VCC_W * lca.ELEC_PRICE[hour]
 
     return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
 
@@ -241,7 +240,7 @@ def cooling_resource_activator(Q_thermal_req,
         Q_PeakVCC_WS_gen_W = 0.0
         E_PeakVCC_WS_req_W = 0.0
 
-    # Peak VCC air-source with a cooling tower
+    # Base VCC air-source with a cooling tower
     if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
         source_BaseVCC_AS = 1
         if Q_cooling_unmet_W > master_to_slave_variables.AS_BaseVCC_size_W:
@@ -262,6 +261,26 @@ def cooling_resource_activator(Q_thermal_req,
         Q_BaseVCC_AS_gen_W = 0.0
         E_BaseVCC_AS_req_W = 0.0
 
+    # Peak VCC air-source with a cooling tower
+    if master_to_slave_variables.AS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+        source_PeakVCC_AS = 1
+        if Q_cooling_unmet_W > master_to_slave_variables.AS_PeakVCC_size_W:
+            Q_PeakVCC_AS_gen_W = master_to_slave_variables.AS_PeakVCC_size_W
+        else:
+            Q_PeakVCC_AS_gen_W = Q_cooling_unmet_W
+
+        opex_PeakVCC_AS_USDperhr, \
+        Q_PeakVCC_AS_gen_W, \
+        E_PeakVCC_AS_req_W = calc_vcc_CT_operation(Q_PeakVCC_AS_gen_W,
+                                                   T_district_cooling_return_K,
+                                                   T_district_cooling_supply_K,
+                                                   VCC_T_COOL_IN,
+                                                   lca)
+    else:
+        source_PeakVCC_AS = 0
+        opex_PeakVCC_AS_USDperhr = 0.0
+        Q_PeakVCC_AS_gen_W = 0.0
+        E_PeakVCC_AS_req_W = 0.0
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
@@ -389,6 +408,7 @@ def cooling_resource_activator(Q_thermal_req,
                 'There are no vapor compression chiller nor absorption chiller installed to charge the storage!')
 
     ## writing outputs
+
     storage_tank_properties_this_timestep = {
         "V_tank_m3": V_tank_m3,
         "T_tank_K": T_tank_C + 273.0,
@@ -401,7 +421,8 @@ def cooling_resource_activator(Q_thermal_req,
         'opex_var_Trigen_NG_USDhr': cost_Trigen_USD,
         'opex_var_BaseVCC_WS_USDperhr': opex_BaseVCC_WS_USDperhr,
         'opex_var_PeakVCC_WS_USDperhr': opex_PeakVCC_WS_USDperhr,
-        'opex_var_BaseVCC_AS_USDperhr':opex_BaseVCC_AS_USDperhr,
+        'opex_var_BaseVCC_AS_USDperhr': opex_BaseVCC_AS_USDperhr,
+        'opex_var_PeakVCC_AS_USDperhr': opex_PeakVCC_AS_USDperhr,
     }
 
     electricity_output = {
@@ -409,14 +430,15 @@ def cooling_resource_activator(Q_thermal_req,
         'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
         'E_BaseVCC_AS_req_W': E_BaseVCC_AS_req_W,
+        'E_PeakVCC_AS_req_W': E_PeakVCC_AS_req_W
     }
 
     thermal_output = {
         'Qc_Trigen_gen_W': Qc_Trigen_gen_W,
         'Q_BaseVCC_WS_gen_W': Q_BaseVCC_WS_gen_W,
         'Q_PeakVCC_WS_gen_W': Q_PeakVCC_WS_gen_W,
-        'Q_BaseVCC_AS_gen_W':Q_BaseVCC_AS_gen_W,
-
+        'Q_BaseVCC_AS_gen_W': Q_BaseVCC_AS_gen_W,
+        'Q_PeakVCC_AS_gen_W': Q_PeakVCC_AS_gen_W,
         'Qc_from_Tank_W': Qc_from_Tank_W,
 
     }
@@ -425,7 +447,9 @@ def cooling_resource_activator(Q_thermal_req,
         "source_Trigen_NG": source_Trigen_NG,
         "source_BaseVCC_WS": source_BaseVCC_WS,
         "source_PeakVCC_WS": source_PeakVCC_WS,
-        "source_BaseVCC_AS":source_BaseVCC_AS,
+        "source_BaseVCC_AS": source_BaseVCC_AS,
+        'source_PeakVCC_AS': source_PeakVCC_AS,
+
     }
 
     gas_output = {'NG_Trigen_req_W': NG_Trigen_req_W}
