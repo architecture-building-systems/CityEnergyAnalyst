@@ -17,20 +17,20 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def layout_network(config, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
+def layout_network(network_layout, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
                    optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
 
-    type_mat_default = config.network_layout.type_mat
-    pipe_diameter_default = config.network_layout.pipe_diameter
-    type_network = config.network_layout.network_type
-    create_plant = config.network_layout.create_plant
-    connected_buildings = config.network_layout.connected_buildings
-    consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
-    disconnected_buildings = config.network_layout.disconnected_buildings
+    type_mat_default = network_layout.type_mat
+    pipe_diameter_default = network_layout.pipe_diameter
+    type_network = network_layout.network_type
+    create_plant = network_layout.create_plant
+    connected_buildings = network_layout.connected_buildings
+    consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
+    disconnected_buildings = network_layout.disconnected_buildings
 
     if input_path_name == 'streets':  # point to default location of streets file
         path_streets_shp = locator.get_street_network()  # shapefile with the stations
@@ -57,7 +57,7 @@ def layout_network(config, locator, plant_building_names=[], input_path_name='st
     calc_steiner_spanning_tree(crs_projected, path_potential_network, output_network_folder, output_substations_shp,
                                output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
                                type_network, total_demand_location, create_plant,
-                               config.network_layout.allow_looped_networks, optimization_flag, plant_building_names,
+                               network_layout.allow_looped_networks, optimization_flag, plant_building_names,
                                disconnected_buildings)
 
 
@@ -87,7 +87,8 @@ class NetworkLayout(object):
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    layout_network(config, locator)
+    network_layout = NetworkLayout(network_layout=config.network_layout)
+    layout_network(network_layout, locator)
 
 
 if __name__ == '__main__':
