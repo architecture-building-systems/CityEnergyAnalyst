@@ -6,15 +6,11 @@ USING PRESET ORDER
 
 from __future__ import division
 
-import time
-from math import log
-
 import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.master import cost_model
-from cea.optimization.master.cost_model import calc_network_costs
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
@@ -61,12 +57,6 @@ def district_heating_network(locator,
     :rtype: float, float, float, array
 
     """
-    t = time.time()
-
-    # local variables:
-    DHN_barcode = master_to_slave_variables.DHN_barcode
-    building_names = master_to_slave_variables.building_names_heating
-
     # THERMAL STORAGE + NETWORK
     print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
     performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
@@ -248,10 +238,11 @@ def district_heating_network(locator,
             E_HPLake_req_W[hour] = electricity_output['E_HPLake_req_W']
             E_GHP_req_W[hour] = electricity_output['E_GHP_req_W']
             E_CHP_gen_W[hour] = electricity_output['E_CHP_gen_W']
-            E_Furnace_dry_gen_W[hour] = electricity_output['E_Furnace_dry_gen_W']
-            E_Furnace_wet_gen_W[hour] = electricity_output['E_Furnace_wet_gen_W']
             E_BaseBoiler_req_W[hour] = electricity_output['E_BaseBoiler_req_W']
             E_PeakBoiler_req_W[hour] = electricity_output['E_PeakBoiler_req_W']
+
+            E_Furnace_dry_gen_W[hour] = electricity_output['E_Furnace_dry_gen_W']
+            E_Furnace_wet_gen_W[hour] = electricity_output['E_Furnace_wet_gen_W']
 
             NG_CHP_req_W[hour] = gas_output['Gas_CHP_req_W']
             NG_BaseBoiler_req_W[hour] = gas_output['Gas_BaseBoiler_req_W']
@@ -274,34 +265,26 @@ def district_heating_network(locator,
                                                              "NG",
                                                              prices, lca, hour)
 
-    # CAPEX AND OPEX OF HEATING NETWORK
-    Capex_DHN_USD, \
-    Capex_a_DHN_USD, \
-    Opex_fixed_DHN_USD, \
-    Opex_var_DHN_USD, \
-    E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_variables,
-                                                           network_features, lca, "DH")
+    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
+    performance_costs_generation = cost_model.calc_generation_costs_heating(locator,
+                                                                            master_to_slave_variables,
+                                                                            config,
+                                                                            storage_dispatch,
+                                                                            sum(Opex_var_CHP_NG_USDhr),
+                                                                            sum(Opex_var_Furnace_wet_USDhr),
+                                                                            sum(Opex_var_Furnace_dry_USDhr),
+                                                                            sum(Opex_var_BaseBoiler_NG_USDhr),
+                                                                            sum(Opex_var_PeakBoiler_NG_USDhr),
+                                                                            sum(Opex_var_BackupBoiler_NG_USDhr)
+                                                                            )
 
-    # CAPEX AND OPEX OF HEATING SUBSTATIONS
-    Capex_SubstationsHeating_USD, \
-    Capex_a_SubstationsHeating_USD, \
-    Opex_fixed_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
-                                                                       locator)
-
-    # CAPEX AND FIXED OPEX GENERATION UNITS
-    performance_costs = cost_model.calc_generation_costs_heating(locator,
-                                                                 master_to_slave_variables,
-                                                                 config,
-                                                                 storage_dispatch
-                                                                 )
-
-    # OPEX VAR GENERATION UNITS
-    Opex_var_CHP_NG_USD = sum(Opex_var_CHP_NG_USDhr)
-    Opex_var_Furnace_wet_USD = sum(Opex_var_Furnace_wet_USDhr)
-    Opex_var_Furnace_dry_USD = sum(Opex_var_Furnace_dry_USDhr)
-    Opex_var_BaseBoiler_NG_USD = sum(Opex_var_BaseBoiler_NG_USDhr)
-    Opex_var_PeakBoiler_NG_USD = sum(Opex_var_PeakBoiler_NG_USDhr)
-    Opex_var_BackupBoiler_NG_USD = sum(Opex_var_BackupBoiler_NG_USDhr)
+    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
+    performance_costs_network, \
+    E_used_district_heating_network_W = cost_model.calc_network_costs_heating(locator,
+                                                                              master_to_slave_variables,
+                                                                              network_features,
+                                                                              lca,
+                                                                              "DH")
 
     # EMISSIONS OF RENEWABLES AND FUELS
     performance_emissions_pen = calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
@@ -316,6 +299,11 @@ def district_heating_network(locator,
                                                             DryBiomass_Furnace_req_W,
                                                             lca,
                                                             )
+
+    # MERGE COSTS AND EMISSIONS IN ONE FILE
+    performance = dict(performance_costs_generation, **performance_costs_network)
+    performance = dict(performance, **performance_emissions_pen)
+
     # save data
     heating_dispatch = {
 
@@ -340,7 +328,7 @@ def district_heating_network(locator,
         "Q_HP_Server_storage_W": Q_HP_Server_to_storage_W,
 
         # this is what is generated out of all the technologies sent to the storage
-        "Q_Storage_gen_W": Q_Storage_gen_W,
+        "Q_Storage_gen_directload_W": Q_Storage_gen_W,
 
         "Q_PVT_gen_directload_W": Q_PVT_to_directload_W,
         "Q_SC_ET_gen_directload_W": Q_SC_ET_to_directload_W,
@@ -354,7 +342,7 @@ def district_heating_network(locator,
         "Q_Furnace_wet_gen_directload_W": Q_Furnace_wet_gen_W,
         "Q_BaseBoiler_gen_directload_W": Q_BaseBoiler_gen_W,
         "Q_PeakBoiler_gen_directload_W": Q_PeakBoiler_gen_W,
-        "Q_AddBoiler_gen_directload_W": Q_AddBoiler_gen_W,
+        "Q_BackupBoiler_gen_directload_W": Q_AddBoiler_gen_W,
 
         # electricity
         "E_CHP_gen_W": E_CHP_gen_W,
@@ -385,125 +373,6 @@ def district_heating_network(locator,
         "NG_BackupBoiler_req_W": NG_BackupBoiler_req_W,
         "WetBiomass_Furnace_req_W": WetBiomass_Furnace_req_W,
         "DryBiomass_Furnace_req_W": DryBiomass_Furnace_req_W,
-    }
-
-    # SAVE PERFORMANCE METRICS TO DISK
-    performance = {
-        # annualized capex
-        "Capex_a_SC_ET_connected_USD": performance_costs['Capex_a_SC_ET_connected_USD'],
-        "Capex_a_SC_FP_connected_USD": performance_costs['Capex_a_SC_FP_connected_USD'],
-        "Capex_a_PVT_connected_USD": performance_costs['Capex_a_PVT_connected_USD'],
-        "Capex_a_HP_Server_connected_USD": performance_costs['Capex_a_HP_Server_connected_USD'],
-        "Capex_a_HP_Sewage_connected_USD": performance_costs['Capex_a_HP_Sewage_connected_USD'],
-        "Capex_a_HP_Lake_connected_USD": performance_costs['Capex_a_HP_Lake_connected_USD'],
-        "Capex_a_GHP_connected_USD": performance_costs['Capex_a_GHP_connected_USD'],
-        "Capex_a_CHP_NG_connected_USD": performance_costs['Capex_a_CHP_NG_connected_USD'],
-        "Capex_a_Furnace_wet_connected_USD": performance_costs['Capex_a_Furnace_wet_connected_USD'],
-        "Capex_a_Furnace_dry_connected_USD": performance_costs['Capex_a_Furnace_dry_connected_USD'],
-        "Capex_a_BaseBoiler_NG_connected_USD": performance_costs['Capex_a_BaseBoiler_NG_connected_USD'],
-        "Capex_a_PeakBoiler_NG_connected_USD": performance_costs['Capex_a_PeakBoiler_NG_connected_USD'],
-        "Capex_a_BackupBoiler_NG_connected_USD": performance_costs['Capex_a_BackupBoiler_NG_connected_USD'],
-        "Capex_a_DHN_connected_USD": Capex_a_DHN_USD,
-        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
-
-        # total capex
-        "Capex_total_SC_ET_connected_USD": performance_costs['Capex_total_SC_ET_connected_USD'],
-        "Capex_total_SC_FP_connected_USD": performance_costs['Capex_total_SC_FP_connected_USD'],
-        "Capex_total_PVT_connected_USD": performance_costs['Capex_total_PVT_connected_USD'],
-        "Capex_total_HP_Server_connected_USD": performance_costs['Capex_total_HP_Server_connected_USD'],
-        "Capex_total_HP_Sewage_connected_USD": performance_costs['Capex_total_HP_Sewage_connected_USD'],
-        "Capex_total_HP_Lake_connected_USD": performance_costs['Capex_total_HP_Lake_connected_USD'],
-        "Capex_total_GHP_connected_USD": performance_costs['Capex_total_GHP_connected_USD'],
-        "Capex_total_CHP_NG_connected_USD": performance_costs['Capex_total_CHP_NG_connected_USD'],
-        "Capex_total_Furnace_wet_connected_USD": performance_costs['Capex_total_Furnace_wet_connected_USD'],
-        "Capex_total_Furnace_dry_connected_USD": performance_costs['Capex_total_Furnace_dry_connected_USD'],
-        "Capex_total_BaseBoiler_NG_connected_USD": performance_costs['Capex_total_BaseBoiler_NG_connected_USD'],
-        "Capex_total_PeakBoiler_NG_connected_USD": performance_costs['Capex_total_PeakBoiler_NG_connected_USD'],
-        "Capex_total_BackupBoiler_NG_connected_USD": performance_costs['Capex_total_BackupBoiler_NG_connected_USD'],
-        "Capex_total_DHN_connected_USD": Capex_DHN_USD,
-        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
-
-        # opex fixed
-        "Opex_fixed_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
-        "Opex_fixed_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
-        "Opex_fixed_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-        "Opex_fixed_HP_Server_connected_USD": performance_costs['Opex_fixed_HP_Server_connected_USD'],
-        "Opex_fixed_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
-        "Opex_fixed_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
-        "Opex_fixed_GHP_connected_USD": performance_costs['Opex_fixed_GHP_connected_USD'],
-        "Opex_fixed_CHP_NG_connected_USD": performance_costs['Opex_fixed_CHP_NG_connected_USD'],
-        "Opex_fixed_Furnace_wet_connected_USD": performance_costs['Opex_fixed_Furnace_wet_connected_USD'],
-        "Opex_fixed_Furnace_dry_connected_USD": performance_costs['Opex_fixed_Furnace_dry_connected_USD'],
-        "Opex_fixed_BaseBoiler_NG_connected_USD": performance_costs['Opex_fixed_BaseBoiler_NG_connected_USD'],
-        "Opex_fixed_PeakBoiler_NG_connected_USD": performance_costs['Opex_fixed_PeakBoiler_NG_connected_USD'],
-        "Opex_fixed_BackupBoiler_NG_connected_USD": performance_costs['Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_fixed_DHN_connected_USD": Opex_fixed_DHN_USD,
-        "Opex_fixed_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
-
-        # opex variable
-        # opex variable of soalar technologies is allocated to charging and discharging of storage
-        # opex variable of technologies using electricity is calculated in electricity network eg. HP_sewage, HP_Lake
-        "Opex_var_SC_ET_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
-        "Opex_var_SC_FP_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
-        "Opex_var_PVT_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
-        "Opex_var_HP_Server_connected_USD": 0.0,  # costs taken into account in the electricity network
-        "Opex_var_HP_Sewage_connected_USD": 0.0,  # costs taken into account in the electricity network
-        "Opex_var_HP_Lake_connected_USD": 0.0,  # costs taken into account in the electricity network
-        "Opex_var_GHP_connected_USD": 0.0,  # costs taken into account in the electricity network
-        "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
-        "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
-        "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
-        "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
-        "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
-        "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
-
-        # opex annual
-        # opex variable of soalr technologies is allocated to charging and discharging of storage
-        # opex variable of technologies using electricity is calculated in electricity network eg. HP_sewage, HP_Lake
-        "Opex_a_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
-        "Opex_a_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
-        "Opex_a_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-        "Opex_a_HP_Server_connected_USD": performance_costs['Opex_fixed_HP_Server_connected_USD'],
-        "Opex_a_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
-        "Opex_a_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
-        "Opex_a_GHP_connected_USD": performance_costs['Opex_fixed_GHP_connected_USD'],
-        "Opex_a_CHP_NG_connected_USD": Opex_var_CHP_NG_USD + performance_costs['Opex_fixed_CHP_NG_connected_USD'],
-        "Opex_a_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD + performance_costs[
-            'Opex_fixed_Furnace_wet_connected_USD'],
-        "Opex_a_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD + performance_costs[
-            'Opex_fixed_Furnace_dry_connected_USD'],
-        "Opex_a_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD + performance_costs[
-            'Opex_fixed_BaseBoiler_NG_connected_USD'],
-        "Opex_a_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD + performance_costs[
-            'Opex_fixed_PeakBoiler_NG_connected_USD'],
-        "Opex_a_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD + performance_costs[
-            'Opex_fixed_BackupBoiler_NG_connected_USD'],
-        "Opex_a_DHN_connected_USD": Opex_fixed_DHN_USD,
-        "Opex_a_SubstationsHeating_USD": Opex_fixed_SubstationsHeating_USD,
-
-        # emissions
-        # emissions of technologies depending on electricity are calculated in electricity main e.g., HP_sewage
-        "GHG_SC_ET_connected_tonCO2": performance_emissions_pen['GHG_SC_ET_connected_tonCO2'],
-        "GHG_SC_FP_connected_tonCO2": performance_emissions_pen['GHG_SC_FP_connected_tonCO2'],
-        "GHG_PVT_connected_tonCO2": performance_emissions_pen['GHG_PVT_connected_tonCO2'],
-        "GHG_CHP_NG_connected_tonCO2": performance_emissions_pen['GHG_CHP_NG_connected_tonCO2'],
-        "GHG_Furnace_wet_connected_tonCO2": performance_emissions_pen['GHG_Furnace_wet_connected_tonCO2'],
-        "GHG_Furnace_dry_connected_tonCO2": performance_emissions_pen['GHG_Furnace_dry_connected_tonCO2'],
-        "GHG_BaseBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BaseBoiler_NG_connected_tonCO2'],
-        "GHG_PeakBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_PeakBoiler_NG_connected_tonCO2'],
-        "GHG_BackupBoiler_NG_connected_tonCO2": performance_emissions_pen['GHG_BackupBoiler_NG_connected_tonCO2'],
-
-        # primary energy
-        # emissions of technologies depending on electricity are accounted in electricity main e.g., HP_sewage
-        "PEN_SC_ET_connected_MJoil": performance_emissions_pen['PEN_SC_ET_connected_MJoil'],
-        "PEN_SC_FP_connected_MJoil": performance_emissions_pen['PEN_SC_FP_connected_MJoil'],
-        "PEN_PVT_connected_MJoil": performance_emissions_pen['PEN_PVT_connected_MJoil'],
-        "PEN_CHP_NG_connected_MJoil": performance_emissions_pen['PEN_CHP_NG_connected_MJoil'],
-        "PEN_Furnace_wet_connected_MJoil": performance_emissions_pen['PEN_Furnace_wet_connected_MJoil'],
-        "PEN_Furnace_dry_connected_MJoil": performance_emissions_pen['PEN_Furnace_dry_connected_MJoil'],
-        "PEN_BaseBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BaseBoiler_NG_connected_MJoil'],
-        "PEN_PeakBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_PeakBoiler_NG_connected_MJoil'],
-        "PEN_BackupBoiler_NG_connected_MJoil": performance_emissions_pen['PEN_BackupBoiler_NG_connected_MJoil'],
     }
 
     return performance, heating_dispatch
@@ -610,45 +479,3 @@ def calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
     }
 
     return performance_parameters
-
-
-def calc_substations_costs_heating(building_names, district_network_barcode, locator):
-    Capex_Substations_USD = 0.0
-    Capex_a_Substations_USD = 0.0
-    Opex_fixed_Substations_USD = 0.0
-    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
-    for (index, building_name) in zip(district_network_barcode, building_names):
-        if index == "1":
-            df = pd.read_csv(
-                locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode),
-                usecols=["Q_dhw_W", "Q_heating_W"])
-
-            subsArray = np.array(df)
-            Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-            HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
-            HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
-            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-            # capacity for the corresponding technology from the database
-            if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
-                Q_max_W = HEX_cost_data.iloc[0]['cap_min']
-            HEX_cost_data = HEX_cost_data[
-                (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
-
-            Inv_a = HEX_cost_data.iloc[0]['a']
-            Inv_b = HEX_cost_data.iloc[0]['b']
-            Inv_c = HEX_cost_data.iloc[0]['c']
-            Inv_d = HEX_cost_data.iloc[0]['d']
-            Inv_e = HEX_cost_data.iloc[0]['e']
-            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
-            Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
-            Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
-
-            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_USD = InvC_USD * Inv_OM
-
-            Capex_Substations_USD += InvC_USD
-            Capex_a_Substations_USD += Capex_a_USD
-            Opex_fixed_Substations_USD += Opex_fixed_USD
-
-    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD

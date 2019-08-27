@@ -5,25 +5,24 @@ Extra costs to an individual
 """
 from __future__ import division
 
+import numpy as np
 import pandas as pd
 
 import cea.technologies.boiler as boiler
-import cea.technologies.pumps as PumpModel
+import cea.technologies.chiller_absorption as chiller_absorption
+import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cogeneration as chp
+import cea.technologies.cogeneration as cogeneration
+import cea.technologies.cooling_tower as CTModel
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex
 import cea.technologies.heatpumps as hp
+import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
-from cea.optimization.constants import N_PVT
-import cea.technologies.chiller_absorption as chiller_absorption
-import cea.technologies.chiller_vapor_compression as VCCModel
-import cea.technologies.cogeneration as cogeneration
-import cea.technologies.cooling_tower as CTModel
 import cea.technologies.thermal_storage as thermal_storage
-from cea.optimization.constants import ACH_TYPE_DOUBLE, T_TANK_FULLY_DISCHARGED_K, \
-    PUMP_ETA
-from cea.technologies.pumps import calc_Cinv_pump
+from cea.optimization.constants import ACH_TYPE_DOUBLE
+from cea.optimization.constants import N_PVT
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -80,18 +79,10 @@ def add_disconnected_costs(column_names_buildings_heating,
     return performance
 
 
-def calc_network_costs(locator, master_to_slave_vars, network_features, lca, network_type):
-    # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, network_type)
-
+def calc_network_costs_heating(locator, master_to_slave_vars, network_features, lca, network_type):
     # Intitialize class
-    if network_type == "DH":
-        pipesCosts_USD = network_features.pipesCosts_DHN_USD
-        num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
-    else:
-        pipesCosts_USD = network_features.pipesCosts_DCN_USD
-        num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
+    pipesCosts_USD = network_features.pipesCosts_DHN_USD
+    num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
 
     num_all_buildings = master_to_slave_vars.num_total_buildings
     ratio_connected = num_buildings_connected / num_all_buildings
@@ -104,20 +95,233 @@ def calc_network_costs(locator, master_to_slave_vars, network_features, lca, net
     Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
+    # costs of pumps
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
+        master_to_slave_vars, network_features, locator, lca, network_type)
+
     # summarize
     Capex_Network_USD += Capex_pump_USD
     Capex_a_Network_USD += Capex_a_pump_USD
     Opex_fixed_Network_USD += Opex_fixed_pump_USD
     Opex_var_Network_USD = Opex_var_pump_USD
 
-    return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD, P_motor_tot_W
+    # CAPEX AND OPEX OF HEATING SUBSTATIONS
+    DHN_barcode = master_to_slave_vars.DHN_barcode
+    building_names = master_to_slave_vars.building_names_heating
+    Capex_SubstationsHeating_USD, \
+    Capex_a_SubstationsHeating_USD, \
+    Opex_fixed_SubstationsHeating_USD = calc_substations_costs_heating(building_names, DHN_barcode,
+                                                                       locator)
+
+    performance = {
+        'Capex_a_DHN_connected_USD': Capex_a_Network_USD,
+        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
+
+        "Capex_total_DHN_connected_USD": Capex_Network_USD,
+        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
+
+        "Opex_fixed_DHN_connected_USD": Opex_fixed_Network_USD,
+        "Opex_fixed_SubstationsHeating_connected_USD": Opex_fixed_SubstationsHeating_USD,
+
+        'Opex_var_DHN_connected_USD': Opex_var_Network_USD,
+        "Opex_var_SubstationsHeating_connected_USD": 0.0
+
+        "Opex_a_DHN_connected_USD": Opex_var_Network_USD + Opex_fixed_Network_USD,
+        "Opex_a_SubstationsHeating_connected_USD": Opex_fixed_SubstationsHeating_USD + 0.0,
+
+    }
+    return performance, P_motor_tot_W
+
+
+def calc_substations_costs_heating(building_names, district_network_barcode, locator):
+    Capex_Substations_USD = 0.0
+    Capex_a_Substations_USD = 0.0
+    Opex_fixed_Substations_USD = 0.0
+    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
+    for (index, building_name) in zip(district_network_barcode, building_names):
+        if index == "1":
+            df = pd.read_csv(
+                locator.get_optimization_substations_results_file(building_name, "DH", district_network_barcode),
+                usecols=["Q_dhw_W", "Q_heating_W"])
+
+            subsArray = np.array(df)
+            Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
+            HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
+            HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
+                Q_max_W = HEX_cost_data.iloc[0]['cap_min']
+            HEX_cost_data = HEX_cost_data[
+                (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
+
+            Inv_a = HEX_cost_data.iloc[0]['a']
+            Inv_b = HEX_cost_data.iloc[0]['b']
+            Inv_c = HEX_cost_data.iloc[0]['c']
+            Inv_d = HEX_cost_data.iloc[0]['d']
+            Inv_e = HEX_cost_data.iloc[0]['e']
+            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
+            Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_USD = InvC_USD * Inv_OM
+
+            Capex_Substations_USD += InvC_USD
+            Capex_a_Substations_USD += Capex_a_USD
+            Opex_fixed_Substations_USD += Opex_fixed_USD
+
+    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD
+
+
+def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, lca, network_type):
+    # Intitialize class
+    pipesCosts_USD = network_features.pipesCosts_DCN_USD
+    num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
+
+    num_all_buildings = master_to_slave_vars.num_total_buildings
+    ratio_connected = num_buildings_connected / num_all_buildings
+
+    # Capital costs
+    Inv_IR = 0.05
+    Inv_LT = 20
+    Inv_OM = 0.10
+    Capex_Network_USD = pipesCosts_USD * ratio_connected
+    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
+
+    # costs of pumps
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
+        master_to_slave_vars, network_features, locator, lca, network_type)
+
+    # COOLING SUBSTATIONS
+    DCN_barcode = master_to_slave_vars.DCN_barcode
+    building_names = master_to_slave_vars.building_names_cooling
+    Capex_Substations_USD, \
+    Capex_a_Substations_USD, \
+    Opex_fixed_Substations_USD, \
+    Opex_var_Substations_USD = calc_substations_costs_cooling(building_names, master_to_slave_vars, DCN_barcode,
+                                                              locator)
+
+    # summarize
+    Capex_Network_USD += Capex_pump_USD
+    Capex_a_Network_USD += Capex_a_pump_USD
+    Opex_fixed_Network_USD += Opex_fixed_pump_USD
+    Opex_var_Network_USD = Opex_var_pump_USD
+
+    performance = {
+        'Capex_a_DCN_connected_USD': Capex_a_Network_USD,
+        "Capex_a_SubstationsCooling_connected_USD": Capex_a_Substations_USD,
+
+        "Capex_total_DCN_connected_USD": Capex_Network_USD,
+        "Capex_total_SubstationsCooling_connected_USD": Capex_Substations_USD,
+
+        'Opex_var_DCN_connected_USD': Opex_var_Network_USD,
+        "Opex_var_SubstationsCooling_connected_USD": Opex_var_Substations_USD,
+
+        "Opex_fixed_DCN_connected_USD": Opex_fixed_Network_USD,
+        "Opex_fixed_SubstationsCooling_connected_USD": Opex_fixed_Substations_USD,
+
+        "Opex_a_DCN_connected_USD": Opex_fixed_Network_USD + Opex_var_Network_USD,
+        "Opex_a_SubstationsCooling_connected_USD": Opex_fixed_Substations_USD + 0.0,
+
+    }
+    return performance, P_motor_tot_W
+
+def calc_substations_costs_cooling(building_names, master_to_slave_vars, district_network_barcode, locator):
+    Capex_Substations_USD = 0.0
+    Capex_a_Substations_USD = 0.0
+    Opex_fixed_Substations_USD = 0.0
+    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
+    for (index, building_name) in zip(district_network_barcode, building_names):
+        if index == "1":
+            district_heating_network = master_to_slave_vars.DHN_exists
+            if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
+                df = pd.read_csv(
+                    locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
+                    usecols=["Q_space_cooling_and_refrigeration_W"])
+            else:
+                df = pd.read_csv(
+                    locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
+                    usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
+
+            subsArray = np.array(df)
+            Q_max_W = np.amax(subsArray)
+            HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
+            HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
+                Q_max_W = HEX_cost_data.iloc[0]['cap_min']
+            HEX_cost_data = HEX_cost_data[
+                (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
+
+            Inv_a = HEX_cost_data.iloc[0]['a']
+            Inv_b = HEX_cost_data.iloc[0]['b']
+            Inv_c = HEX_cost_data.iloc[0]['c']
+            Inv_d = HEX_cost_data.iloc[0]['d']
+            Inv_e = HEX_cost_data.iloc[0]['e']
+            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
+            Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed_USD = InvC_USD * Inv_OM
+
+            Capex_Substations_USD += InvC_USD
+            Capex_a_Substations_USD += Capex_a_USD
+            Opex_fixed_Substations_USD += Opex_fixed_USD
+
+    return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
+
+def calc_generation_costs_cooling_storage(locator,
+                                          master_to_slave_variables,
+                                          config,
+                                          daily_storage):
+    # STORAGE TANK
+    if master_to_slave_variables.Storage_cooling_on == 1:
+        V_tank_m3 = daily_storage.V_tank_M3
+        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
+                                                                                                  config, 'TES2')
+    else:
+        Capex_a_Tank_USD = 0.0
+        Opex_fixed_Tank_USD = 0.0
+        Capex_Tank_USD = 0.0
+
+    # PLOT RESULTS
+    performance = {
+        # annualized capex
+        "Capex_a_DailyStorage_WS_connected_USD": Capex_a_Tank_USD,
+
+        # total capex
+        "Capex_total_DailyStorage_WS_connected_USD": Capex_Tank_USD,
+
+        # opex fixed
+        "Opex_fixed_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD,
+
+        # opex annual
+        "Opex_var_DailyStorage_WS_connected_USD": 0.0,
+
+        # opex annual
+        "Opex_a_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD + 0.0,
+
+    }
+
+    return performance
 
 
 def calc_generation_costs_cooling(locator,
                                   master_to_slave_variables,
                                   config,
-                                  daily_storage):
-
+                                  opex_var_Trigen_NG_USD,
+                                  opex_var_BaseVCC_WS_USD,
+                                  opex_var_PeakVCC_WS_USD,
+                                  opex_var_BaseVCC_AS_USD,
+                                  opex_var_PeakVCC_AS_USD,
+                                  opex_var_BackupVCC_AS_USD
+                                  ):
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
         Qc_ACH_nom_W = master_to_slave_variables.NG_Trigen_ACH_size
@@ -131,7 +335,7 @@ def calc_generation_costs_cooling(locator,
 
         Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
         Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
-        Capex_Trigen_NG_USD =  Capex_ACH_USD + Capex_CCGT_USD
+        Capex_Trigen_NG_USD = Capex_ACH_USD + Capex_CCGT_USD
     else:
         Capex_a_Trigen_NG_USD = 0.0
         Opex_fixed_Trigen_NG_USD = 0.0
@@ -141,8 +345,10 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.WS_BaseVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.WS_BaseVCC_size_W
         # VCC
-        Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
+        Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
+                                                                                                         locator,
+                                                                                                         config,
+                                                                                                         'CH3')
     else:
         Capex_a_BaseVCC_WS_USD = 0.0
         Opex_fixed_BaseVCC_WS_USD = 0.0
@@ -152,13 +358,14 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.WS_PeakVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.WS_PeakVCC_size_W
         # VCC
-        Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
+        Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
+                                                                                                         locator,
+                                                                                                         config,
+                                                                                                         'CH3')
     else:
         Capex_a_PeakVCC_WS_USD = 0.0
         Opex_fixed_PeakVCC_WS_USD = 0.0
         Capex_PeakVCC_WS_USD = 0.0
-
 
     # AIR-SOURCE VAPOR COMPRESION CHILLER BASE
     if master_to_slave_variables.AS_BaseVCC_on == 1:
@@ -169,7 +376,6 @@ def calc_generation_costs_cooling(locator,
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
-
 
         Capex_a_BaseVCC_AS_USD = Capex_a_VCC_USD + Capex_a_CT_USD
         Opex_fixed_BaseVCC_AS_USD = Opex_fixed_VCC_USD + Opex_fixed_CT_USD
@@ -184,7 +390,7 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.AS_PeakVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD  = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
                                                                                     'CH3')
 
         # COOLING TOWER
@@ -219,17 +425,6 @@ def calc_generation_costs_cooling(locator,
         Opex_fixed_BackupVCC_AS_USD = 0.0
         Capex_BackupVCC_AS_USD = 0.0
 
-    #STORAGE
-    if master_to_slave_variables.Storage_cooling_on == 1:
-        V_tank_m3 = daily_storage.V_tank_M3
-        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
-                                                                                                  config, 'TES2')
-    else:
-        Capex_a_Tank_USD = 0.0
-        Opex_fixed_Tank_USD = 0.0
-        Capex_Tank_USD = 0.0
-
-
     # PLOT RESULTS
     performance = {
         # annualized capex
@@ -239,7 +434,6 @@ def calc_generation_costs_cooling(locator,
         "Capex_a_BaseVCC_AS_connected_USD": Capex_a_BaseVCC_AS_USD,
         "Capex_a_PeakVCC_AS_connected_USD": Capex_a_PeakVCC_AS_USD,
         "Capex_a_BackupVCC_AS_connected_USD": Capex_a_BackupVCC_AS_USD,
-        "Capex_a_DailyStorage_WS_connected_USD": Capex_a_Tank_USD,
 
         # total capex
         "Capex_total_Trigen_NG_connected_USD": Capex_Trigen_NG_USD,
@@ -248,7 +442,6 @@ def calc_generation_costs_cooling(locator,
         "Capex_total_BaseVCC_AS_connected_USD": Capex_BaseVCC_AS_USD,
         "Capex_total_PeakVCC_AS_connected_USD": Capex_PeakVCC_AS_USD,
         "Capex_total_BackupVCC_AS_connected_USD": Capex_BackupVCC_AS_USD,
-        "Capex_total_DailyStorage_WS_connected_USD": Capex_Tank_USD,
 
         # opex fixed
         "Opex_fixed_Trigen_NG_connected_USD": Opex_fixed_Trigen_NG_USD,
@@ -257,7 +450,22 @@ def calc_generation_costs_cooling(locator,
         "Opex_fixed_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD,
         "Opex_fixed_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD,
         "Opex_fixed_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD,
-        "Opex_fixed_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD,
+
+        # opex var
+        "Opex_var_Trigen_NG_connected_USD": opex_var_Trigen_NG_USD,
+        "Opex_var_BaseVCC_WS_connected_USD": opex_var_BaseVCC_WS_USD,
+        "Opex_var_PeakVCC_WS_connected_USD": opex_var_PeakVCC_WS_USD,
+        "Opex_var_BaseVCC_AS_connected_USD": opex_var_BaseVCC_AS_USD,
+        "Opex_var_PeakVCC_AS_connected_USD": opex_var_PeakVCC_AS_USD,
+        "Opex_var_BackupVCC_AS_connected_USD": opex_var_BackupVCC_AS_USD,
+
+        # opex annual
+        "Opex_a_Trigen_NG_connected_USD": Opex_fixed_Trigen_NG_USD + opex_var_Trigen_NG_USD,
+        "Opex_a_BaseVCC_WS_connected_USD": Opex_fixed_BaseVCC_WS_USD + opex_var_BaseVCC_WS_USD,
+        "Opex_a_PeakVCC_WS_connected_USD": Opex_fixed_PeakVCC_WS_USD + opex_var_PeakVCC_WS_USD,
+        "Opex_a_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD + opex_var_BaseVCC_AS_USD,
+        "Opex_a_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD + opex_var_PeakVCC_AS_USD,
+        "Opex_a_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD + opex_var_BackupVCC_AS_USD,
 
     }
 
@@ -268,6 +476,12 @@ def calc_generation_costs_heating(locator,
                                   master_to_slave_vars,
                                   config,
                                   storage_activation_data,
+                                  Opex_var_CHP_NG_USD,
+                                  Opex_var_Furnace_wet_USD,
+                                  Opex_var_Furnace_dry_USD,
+                                  Opex_var_BaseBoiler_NG_USD,
+                                  Opex_var_PeakBoiler_NG_USD,
+                                  Opex_var_BackupBoiler_NG_USD
                                   ):
     """
     Computes costs / GHG emisions / primary energy needs
@@ -456,22 +670,21 @@ def calc_generation_costs_heating(locator,
                       storage_activation_data["Q_SC_ET_gen_storage_W"]).max()
     Capex_a_HEX_SC_ET_USD, \
     Opex_fixed_HEX_SC_ET_USD, \
-    Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator,config, 'HEX1')
+    Capex_HEX_SC_ET_USD = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config, 'HEX1')
 
     Q_max_SC_FP_Wh = (storage_activation_data["Q_SC_FP_gen_directload_W"] +
                       storage_activation_data["Q_SC_FP_gen_storage_W"]).max()
     Capex_a_HEX_SC_FP_USD, \
     Opex_fixed_HEX_SC_FP_USD, \
-    Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh,locator, config, 'HEX1')
+    Capex_HEX_SC_FP_USD = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config, 'HEX1')
 
     Q_max_PVT_Wh = (storage_activation_data["Q_PVT_gen_directload_W"] +
                     storage_activation_data["Q_PVT_gen_storage_W"]).max()
     Capex_a_HEX_PVT_USD, \
     Opex_fixed_HEX_PVT_USD, \
-    Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config,  'HEX1')
+    Capex_HEX_PVT_USD = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config, 'HEX1')
 
     performance_costs = {
-        # annualized capex
         "Capex_a_SC_ET_connected_USD": Capex_a_SC_ET_USD + Capex_a_HP_SC_ET_USD + Capex_a_HEX_SC_ET_USD,
         "Capex_a_SC_FP_connected_USD": Capex_a_SC_FP_USD + Capex_a_HP_SC_FP_USD + Capex_a_HEX_SC_FP_USD,
         "Capex_a_PVT_connected_USD": Capex_a_PVT_USD + Capex_a_HP_PVT_USD + Capex_a_HEX_PVT_USD,
@@ -514,7 +727,37 @@ def calc_generation_costs_heating(locator,
         "Opex_fixed_Furnace_dry_connected_USD": Opex_fixed_furnace_dry_USD,
         "Opex_fixed_BaseBoiler_NG_connected_USD": Opex_fixed_BaseBoiler_NG_USD,
         "Opex_fixed_PeakBoiler_NG_connected_USD": Opex_fixed_PeakBoiler_NG_USD,
-        "Opex_fixed_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD
+        "Opex_fixed_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD,
+
+        # Opex var
+        "Opex_var_SC_ET_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_SC_FP_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_PVT_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_HP_Server_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_HP_Sewage_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_HP_Lake_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_GHP_connected_USD": 0.0,  # costs are allocated to  storage
+        "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
+        "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
+        "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
+        "Opex_var_BaseBoiler_NG_connected_USD": Opex_var_BaseBoiler_NG_USD,
+        "Opex_var_PeakBoiler_NG_connected_USD": Opex_var_PeakBoiler_NG_USD,
+        "Opex_var_BackupBoiler_NG_connected_USD": Opex_var_BackupBoiler_NG_USD,
+
+        # Opex annualized
+        "Opex_a_SC_ET_connected_USD": Opex_fixed_SC_ET_USD,
+        "Opex_a_SC_FP_connected_USD": Opex_fixed_SC_FP_USD,
+        "Opex_a_PVT_connected_USD": Opex_fixed_PVT_USD,
+        "Opex_a_HP_Server_connected_USD": Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD,
+        "Opex_a_HP_Sewage_connected_USD": Opex_fixed_Sewage_USD,
+        "Opex_a_HP_Lake_connected_USD": Opex_fixed_Lake_USD,
+        "Opex_a_GHP_connected_USD": Opex_fixed_GHP_USD,
+        "Opex_a_CHP_NG_connected_USD": Opex_fixed_CHP_NG_USD + Opex_var_CHP_NG_USD,
+        "Opex_a_Furnace_wet_connected_USD": Opex_fixed_furnace_wet_USD + Opex_var_Furnace_wet_USD,
+        "Opex_a_Furnace_dry_connected_USD": Opex_fixed_furnace_dry_USD + Opex_var_Furnace_dry_USD,
+        "Opex_a_BaseBoiler_NG_connected_USD": Opex_fixed_BaseBoiler_NG_USD + Opex_var_BaseBoiler_NG_USD,
+        "Opex_a_PeakBoiler_NG_connected_USD": Opex_fixed_PeakBoiler_NG_USD + Opex_var_PeakBoiler_NG_USD,
+        "Opex_a_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD + Opex_var_BackupBoiler_NG_USD,
     }
 
     return performance_costs
