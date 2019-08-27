@@ -7,7 +7,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
-from cea.technologies.thermal_network import thermal_network as thermal_network
+from cea.technologies.thermal_network.thermal_network import ThermalNetwork, thermal_network_main
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
@@ -34,7 +34,7 @@ class NetworkInfo(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, gv):
+    def __init__(self, locator, config):
         # store key variables
         self.locator = locator
         self.config = config
@@ -67,12 +67,12 @@ class NetworkInfo(object):
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
 
-def thermal_network_optimization(config, gv, locator):
+def thermal_network_optimization(config, locator):
     # initialize timer
     start = time.time()
 
     # initialize object
-    network_info = NetworkInfo(locator, config, gv)
+    network_info = NetworkInfo(locator, config)
     network_layout = NetworkLayout()
     network_layout.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
     network_layout.network_type = config.thermal_network_optimization.network_type
@@ -153,6 +153,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
 
     # iterate through all individuals
     for individual in newMutadedGen:
+        thermal_network = ThermalNetwork(network_info.locator, "", network_info)
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(network_layout.network_type, individual)):
             # initialize a dataframe for this individual
@@ -170,10 +171,11 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
             print 'population performance', population_performance
 
             # list supplied loads
-            if network_info.config.thermal_network.network_type == 'DH':
-                list_of_supplied_loads = network_info.config.thermal_network.substation_heating_systems
+            # FIXME: @shanshanhsieh make sure that this is being optimized for!
+            if network_info.network_type == 'DH':
+                list_of_supplied_loads = thermal_network.substation_heating_systems
             else:
-                list_of_supplied_loads = network_info.config.thermal_network.substation_cooling_systems
+                list_of_supplied_loads = thermal_network.substation_cooling_systems
 
             # store values
             individual_outputs_df['total'] = total_cost
@@ -264,7 +266,7 @@ def translate_individual(network_info, individual):
         # supplied demands
         heating_systems = []
         cooling_systems = []
-        if network_info.config.thermal_network.network_type == 'DH':
+        if network_info.network_type == 'DH':
             heating_systems = network_info.config.thermal_network.substation_heating_systems  # placeholder until DH disconnected is available
         #    for index in range(5):
         #        if individual[int(index)] == 1:
@@ -285,6 +287,7 @@ def objective_function(network_info, network_layout):
     :param network_info: Object storing network information.
     :return: total cost, opex and capex of the given individual
     """
+
     # convert indices into building names of plant buildings and disconnected buildings
     plant_building_names = []
     disconnected_building_names = []
@@ -307,23 +310,27 @@ def objective_function(network_info, network_layout):
         # But no buildings are connected so this will make problems.
         # So we fake that buildings are connected but no loads are supplied to make 0 costs
         # save originals so that we can revert this later
-        original_heating_systems = network_info.config.thermal_network.substation_heating_systems
-        original_cooling_systems = network_info.config.thermal_network.substation_cooling_systems
+        original_heating_systems = thermal_network.substation_heating_systems
+        original_cooling_systems = thermal_network.substation_cooling_systems
         # set all loads to 0 to make sure that we have no cost for the network
-        network_info.config.thermal_network.substation_heating_systems = []
-        network_info.config.thermal_network.substation_cooling_systems = []
+        thermal_network.substation_heating_systems = []
+        thermal_network.substation_cooling_systems = []
         # generate a network with all buildings connected but no loads
         network_layout = NetworkLayout(network_info)
         layout_network(network_layout, network_info.locator, network_info.building_names, optimization_flag=True)
+
+
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
-        thermal_network.main(network_info.config)
+        #thermal_network = ThermalNetwork(network_info.locator, "", )
+        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=True)
+
         # set all buildings to disconnected
         network_layout.disconnected_buildings = network_info.building_names
         # set all indexes as disconnected
         network_info.disconnected_buildings_index = [i for i in range(len(network_info.building_names))]
         # revert cooling and heating systems to original
-        network_info.config.thermal_network.substation_heating_systems = original_heating_systems
-        network_info.config.thermal_network.substation_cooling_systems = original_cooling_systems
+        thermal_network.substation_heating_systems = original_heating_systems
+        thermal_network.substation_cooling_systems = original_cooling_systems
     else:
         print 'We have at least one connected building.'
         # create the network specified by the individual
@@ -332,6 +339,7 @@ def objective_function(network_info, network_layout):
         network_layout.disconnected_buildings = disconnected_building_names
         layout_network(network_layout, network_info.locator, plant_building_names, optimization_flag=True)
         # run the thermal_network simulation with the generated network
+        thermal_network.thermal_network_main()
         thermal_network.main(network_info.config)
 
     ## Cost calculations
@@ -860,12 +868,12 @@ def main(config):
 
     ## initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
 
     ## start optimization
-    thermal_network_optimization(config, gv, locator)
+    thermal_network_optimization(config, locator)
 
     return np.nan
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
