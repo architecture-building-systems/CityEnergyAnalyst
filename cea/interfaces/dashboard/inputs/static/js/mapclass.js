@@ -91,7 +91,7 @@ class MapClass {
 
         $(`#${container}`).attr('oncontextmenu', 'return false;')
             .append('<div id="map-tooltip"></div>')
-            .append('<div id="layers-group" style="color: black" visibility="hidden"></div>');
+            .append('<div id="layers-group" style="color: black; visibility: hidden;"></div>');
     }
 
     init({data = {}, urls = {}, extrude = false} = {}) {
