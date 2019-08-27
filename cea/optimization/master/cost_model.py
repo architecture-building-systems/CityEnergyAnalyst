@@ -16,6 +16,14 @@ import cea.technologies.heatpumps as hp
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 from cea.optimization.constants import N_PVT
+import cea.technologies.chiller_absorption as chiller_absorption
+import cea.technologies.chiller_vapor_compression as VCCModel
+import cea.technologies.cogeneration as cogeneration
+import cea.technologies.cooling_tower as CTModel
+import cea.technologies.thermal_storage as thermal_storage
+from cea.optimization.constants import ACH_TYPE_DOUBLE, T_TANK_FULLY_DISCHARGED_K, \
+    PUMP_ETA
+from cea.technologies.pumps import calc_Cinv_pump
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -105,9 +113,159 @@ def calc_network_costs(locator, master_to_slave_vars, network_features, lca, net
     return Capex_Network_USD, Capex_a_Network_USD, Opex_fixed_Network_USD, Opex_var_Network_USD, P_motor_tot_W
 
 
+def calc_generation_costs_cooling(locator,
+                                  master_to_slave_variables,
+                                  config,
+                                  daily_storage):
+
+    # TRIGENERATION
+    if master_to_slave_variables.NG_Trigen_on == 1:
+        Qc_ACH_nom_W = master_to_slave_variables.NG_Trigen_ACH_size
+        Q_GT_nom_W = master_to_slave_variables.NG_Trigen_CCGT_size
+
+        # ACH
+        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,
+                                                                                              ACH_TYPE_DOUBLE)
+        # CCGT
+        Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
+
+        Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
+        Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
+        Capex_Trigen_NG_USD =  Capex_ACH_USD + Capex_CCGT_USD
+    else:
+        Capex_a_Trigen_NG_USD = 0.0
+        Opex_fixed_Trigen_NG_USD = 0.0
+        Capex_Trigen_NG_USD = 0.0
+
+    # WATER-SOURCE VAPOR COMPRESION CHILLER BASE
+    if master_to_slave_variables.WS_BaseVCC_on == 1:
+        Qc_VCC_nom_W = master_to_slave_variables.WS_BaseVCC_size_W
+        # VCC
+        Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+                                                                                    'CH3')
+    else:
+        Capex_a_BaseVCC_WS_USD = 0.0
+        Opex_fixed_BaseVCC_WS_USD = 0.0
+        Capex_BaseVCC_WS_USD = 0.0
+
+    # WATER-SOURCE VAPOR COMPRESION CHILLER PEAK
+    if master_to_slave_variables.WS_PeakVCC_on == 1:
+        Qc_VCC_nom_W = master_to_slave_variables.WS_PeakVCC_size_W
+        # VCC
+        Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+                                                                                    'CH3')
+    else:
+        Capex_a_PeakVCC_WS_USD = 0.0
+        Opex_fixed_PeakVCC_WS_USD = 0.0
+        Capex_PeakVCC_WS_USD = 0.0
+
+
+    # AIR-SOURCE VAPOR COMPRESION CHILLER BASE
+    if master_to_slave_variables.AS_BaseVCC_on == 1:
+        Qc_VCC_nom_W = master_to_slave_variables.AS_BaseVCC_size_W
+        # VCC
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+                                                                                    'CH3')
+
+        # COOLING TOWER
+        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
+
+
+        Capex_a_BaseVCC_AS_USD = Capex_a_VCC_USD + Capex_a_CT_USD
+        Opex_fixed_BaseVCC_AS_USD = Opex_fixed_VCC_USD + Opex_fixed_CT_USD
+        Capex_BaseVCC_AS_USD = Capex_VCC_USD + Capex_CT_USD
+
+    else:
+        Capex_a_BaseVCC_AS_USD = 0.0
+        Opex_fixed_BaseVCC_AS_USD = 0.0
+        Capex_BaseVCC_AS_USD = 0.0
+
+    # AIR-SOURCE VAPOR COMPRESION CHILLER PEAK
+    if master_to_slave_variables.AS_PeakVCC_on == 1:
+        Qc_VCC_nom_W = master_to_slave_variables.AS_PeakVCC_size_W
+        # VCC
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD  = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+                                                                                    'CH3')
+
+        # COOLING TOWER
+        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
+
+        Capex_a_PeakVCC_AS_USD = Capex_a_VCC_USD + Capex_a_CT_USD
+        Opex_fixed_PeakVCC_AS_USD = Opex_fixed_VCC_USD + Opex_fixed_CT_USD
+        Capex_PeakVCC_AS_USD = Capex_VCC_USD + Capex_CT_USD
+
+
+    else:
+        Capex_a_PeakVCC_AS_USD = 0.0
+        Opex_fixed_PeakVCC_AS_USD = 0.0
+        Capex_PeakVCC_AS_USD = 0.0
+
+    # AIR-SOURCE VCC BACK-UP
+    if master_to_slave_variables.AS_BackupVCC_on == 1:
+        Qc_VCC_nom_W = master_to_slave_variables.AS_BackupVCC_size_W
+        # VCC
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
+                                                                                    'CH3')
+
+        # COOLING TOWER
+        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
+
+        Capex_a_BackupVCC_AS_USD = Capex_a_VCC_USD + Capex_a_CT_USD
+        Opex_fixed_BackupVCC_AS_USD = Opex_fixed_VCC_USD + Opex_fixed_CT_USD
+        Capex_BackupVCC_AS_USD = Capex_VCC_USD + Capex_CT_USD
+
+    else:
+        Capex_a_BackupVCC_AS_USD = 0.0
+        Opex_fixed_BackupVCC_AS_USD = 0.0
+        Capex_BackupVCC_AS_USD = 0.0
+
+    #STORAGE
+    if master_to_slave_variables.Storage_cooling_on == 1:
+        V_tank_m3 = daily_storage.V_tank_M3
+        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
+                                                                                                  config, 'TES2')
+    else:
+        Capex_a_Tank_USD = 0.0
+        Opex_fixed_Tank_USD = 0.0
+        Capex_Tank_USD = 0.0
+
+
+    # PLOT RESULTS
+    performance = {
+        # annualized capex
+        "Capex_a_Trigen_NG_connected_USD": Capex_a_Trigen_NG_USD,
+        "Capex_a_BaseVCC_WS_connected_USD": Capex_a_BaseVCC_WS_USD,
+        "Capex_a_PeakVCC_WS_connected_USD": Capex_a_PeakVCC_WS_USD,
+        "Capex_a_BaseVCC_AS_connected_USD": Capex_a_BaseVCC_AS_USD,
+        "Capex_a_PeakVCC_AS_connected_USD": Capex_a_PeakVCC_AS_USD,
+        "Capex_a_BackupVCC_AS_connected_USD": Capex_a_BackupVCC_AS_USD,
+        "Capex_a_DailyStorage_WS_connected_USD": Capex_a_Tank_USD,
+
+        # total capex
+        "Capex_total_Trigen_NG_connected_USD": Capex_Trigen_NG_USD,
+        "Capex_total_BaseVCC_WS_connected_USD": Capex_BaseVCC_WS_USD,
+        "Capex_total_PeakVCC_WS_connected_USD": Capex_PeakVCC_WS_USD,
+        "Capex_total_BaseVCC_AS_connected_USD": Capex_BaseVCC_AS_USD,
+        "Capex_total_PeakVCC_AS_connected_USD": Capex_PeakVCC_AS_USD,
+        "Capex_total_BackupVCC_AS_connected_USD": Capex_BackupVCC_AS_USD,
+        "Capex_total_DailyStorage_WS_connected_USD": Capex_Tank_USD,
+
+        # opex fixed
+        "Opex_fixed_Trigen_NG_connected_USD": Opex_fixed_Trigen_NG_USD,
+        "Opex_fixed_BaseVCC_WS_connected_USD": Opex_fixed_BaseVCC_WS_USD,
+        "Opex_fixed_PeakVCC_WS_connected_USD": Opex_fixed_PeakVCC_WS_USD,
+        "Opex_fixed_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD,
+        "Opex_fixed_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD,
+        "Opex_fixed_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD,
+        "Opex_fixed_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD,
+
+    }
+
+    return performance
+
+
 def calc_generation_costs_heating(locator,
                                   master_to_slave_vars,
-                                  Q_uncovered_design_W,
                                   config,
                                   storage_activation_data,
                                   ):
@@ -230,10 +388,15 @@ def calc_generation_costs_heating(locator,
         Capex_GHP_USD = 0.0
 
     # BACK-UP BOILER
-    Q_backup_W = master_to_slave_vars.BoilerBackup_Q_max_W = Q_uncovered_design_W
-    Capex_a_BackupBoiler_NG_USD, \
-    Opex_fixed_BackupBoiler_NG_USD, \
-    Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Q_backup_W, locator, config, 'BO1')
+    if master_to_slave_vars.BackupBoiler_on != 0:
+        Q_backup_W = master_to_slave_vars.BackupBoiler_size_W
+        Capex_a_BackupBoiler_NG_USD, \
+        Opex_fixed_BackupBoiler_NG_USD, \
+        Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Q_backup_W, locator, config, 'BO1')
+    else:
+        Capex_a_BackupBoiler_NG_USD = 0.0
+        Opex_fixed_BackupBoiler_NG_USD = 0.0
+        Capex_BackupBoiler_NG_USD = 0.0
 
     # DATA CENTRE SOURCE HEAT PUMP
     if master_to_slave_vars.WasteServersHeatRecovery == 1:

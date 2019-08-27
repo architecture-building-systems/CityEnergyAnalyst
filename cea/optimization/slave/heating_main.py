@@ -12,9 +12,9 @@ from math import log
 import numpy as np
 import pandas as pd
 
-from cea.optimization.master.cost_model import calc_network_costs
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.master import cost_model
+from cea.optimization.master.cost_model import calc_network_costs
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
@@ -35,7 +35,7 @@ __status__ = "Production"
 # ==============================
 
 def district_heating_network(locator,
-                             master_to_slave_vars,
+                             master_to_slave_variables,
                              config,
                              prices,
                              lca,
@@ -44,12 +44,12 @@ def district_heating_network(locator,
     Computes the parameters for the heating of the complete DHN
 
     :param locator: locator class
-    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the
+    :param master_to_slave_variables: class MastertoSlaveVars containing the value of variables to be passed to the
         slave optimization for each individual
     :param solar_features: solar features class
     :param gv: global variables class
     :type locator: class
-    :type master_to_slave_vars: class
+    :type master_to_slave_variables: class
     :type solar_features: class
     :type gv: class
     :return:
@@ -64,13 +64,13 @@ def district_heating_network(locator,
     t = time.time()
 
     # local variables:
-    DHN_barcode = master_to_slave_vars.DHN_barcode
-    building_names = master_to_slave_vars.building_names_heating
+    DHN_barcode = master_to_slave_variables.DHN_barcode
+    building_names = master_to_slave_variables.building_names_heating
 
     # THERMAL STORAGE + NETWORK
     print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
     performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
-                                                                              master_to_slave_vars,
+                                                                              master_to_slave_variables,
                                                                               lca, prices,
                                                                               config)
     # Import data from storage optimization
@@ -107,34 +107,40 @@ def district_heating_network(locator,
 
     # HEATING PLANT
     # Import Temperatures from Network Summary:
-    mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator, master_to_slave_vars)
+    mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator,
+                                                                                                        master_to_slave_variables)
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage heat
-    if master_to_slave_vars.HPSew_on == 1:
+    if master_to_slave_variables.HPSew_on == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
         Q_therm_Sew = np.array(HPSew_Data['Qsw_kW']) * 1E3
-        Q_therm_Sew_W = [x if x < master_to_slave_vars.HPSew_maxSize_W else master_to_slave_vars.HPSew_maxSize_W for x in Q_therm_Sew]
+        Q_therm_Sew_W = [
+            x if x < master_to_slave_variables.HPSew_maxSize_W else master_to_slave_variables.HPSew_maxSize_W for x in
+            Q_therm_Sew]
         T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
     else:
         Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
 
     # Import Data - lake heat
-    if master_to_slave_vars.HPLake_on == 1:
+    if master_to_slave_variables.HPLake_on == 1:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
-        Q_therm_Lake_W = [x if x < master_to_slave_vars.HPLake_maxSize_W else master_to_slave_vars.HPLake_maxSize_W for x in Q_therm_Lake]
+        Q_therm_Lake_W = [
+            x if x < master_to_slave_variables.HPLake_maxSize_W else master_to_slave_variables.HPLake_maxSize_W for x in
+            Q_therm_Lake]
         T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
     else:
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     # Import Data - geothermal (shallow)
-    if master_to_slave_vars.GHP_on == 1:
+    if master_to_slave_variables.GHP_on == 1:
         GHP_Data = pd.read_csv(locator.get_geothermal_potential())
         Q_therm_GHP = np.array(GHP_Data['QGHP_kW']) * 1E3
-        Q_therm_GHP_W = [x if x < master_to_slave_vars.GHP_maxSize_W else master_to_slave_vars.GHP_maxSize_W for x in Q_therm_GHP]
+        Q_therm_GHP_W = [x if x < master_to_slave_variables.GHP_maxSize_W else master_to_slave_variables.GHP_maxSize_W
+                         for x in Q_therm_GHP]
         T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
     else:
         Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
@@ -198,7 +204,7 @@ def district_heating_network(locator,
             gas_output, \
             biomass_output = heating_source_activator(Q_thermal_req_W[hour],
                                                       hour,
-                                                      master_to_slave_vars,
+                                                      master_to_slave_variables,
                                                       Q_therm_GHP_W[hour],
                                                       T_source_average_GHP_W[hour],
                                                       T_source_average_Lake_K[hour],
@@ -253,16 +259,17 @@ def district_heating_network(locator,
             WetBiomass_Furnace_req_W[hour] = biomass_output['Biomass_Furnace_dry_req_W']
             DryBiomass_Furnace_req_W[hour] = biomass_output['Biomass_Furnace_wet_req_W']
 
-    #BACK-UP BOILER
-    Q_uncovered_design_W = np.amax(Q_AddBoiler_gen_W)
-    if Q_uncovered_design_W != 0:
+    # BACK-UP BOILER
+    master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_AddBoiler_gen_W)
+    if master_to_slave_variables.BackupBoiler_size_W != 0:
+        master_to_slave_variables.BackupBoiler_on = 1
         for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = T_district_heating_return_K[hour]
             Opex_var_BackupBoiler_NG_USDhr[hour], \
             Opex_var_BackupBoiler_per_Wh_USD, \
             NG_BackupBoiler_req_W[hour], \
             E_BackupBoiler_req_W[hour] = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour],
-                                                             Q_uncovered_design_W,
+                                                             master_to_slave_variables.BackupBoiler_size_W,
                                                              tdhret_req_K,
                                                              "NG",
                                                              prices, lca, hour)
@@ -272,7 +279,7 @@ def district_heating_network(locator,
     Capex_a_DHN_USD, \
     Opex_fixed_DHN_USD, \
     Opex_var_DHN_USD, \
-    E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_vars,
+    E_used_district_heating_network_W = calc_network_costs(locator, master_to_slave_variables,
                                                            network_features, lca, "DH")
 
     # CAPEX AND OPEX OF HEATING SUBSTATIONS
@@ -282,8 +289,10 @@ def district_heating_network(locator,
                                                                        locator)
 
     # CAPEX AND FIXED OPEX GENERATION UNITS
-    performance_costs = cost_model.calc_generation_costs_heating(locator, master_to_slave_vars, Q_uncovered_design_W,
-                                                                 config, storage_dispatch,
+    performance_costs = cost_model.calc_generation_costs_heating(locator,
+                                                                 master_to_slave_variables,
+                                                                 config,
+                                                                 storage_dispatch
                                                                  )
 
     # OPEX VAR GENERATION UNITS
@@ -323,8 +332,8 @@ def district_heating_network(locator,
         "BoilerBase_Status": source_BaseBoiler,
         "BoilerPeak_Status": source_PeakBoiler,
 
-        #ENERGY GENERATION
-        #heating
+        # ENERGY GENERATION
+        # heating
         "Q_PVT_gen_storage_W": Q_PVT_to_storage_W,
         "Q_SC_ET_gen_storage_W": Q_SC_ET_to_storage_W,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_W,
@@ -347,7 +356,7 @@ def district_heating_network(locator,
         "Q_PeakBoiler_gen_directload_W": Q_PeakBoiler_gen_W,
         "Q_AddBoiler_gen_directload_W": Q_AddBoiler_gen_W,
 
-        #electricity
+        # electricity
         "E_CHP_gen_W": E_CHP_gen_W,
         "E_PVT_gen_W": E_PVT_gen_W,
         "E_Furnace_dry_gen_W": E_Furnace_dry_gen_W,
@@ -438,9 +447,9 @@ def district_heating_network(locator,
         "Opex_var_SC_FP_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
         "Opex_var_PVT_connected_USD": 0.0,  # costs are allocated the charging and decharging of the storage
         "Opex_var_HP_Server_connected_USD": 0.0,  # costs taken into account in the electricity network
-        "Opex_var_HP_Sewage_connected_USD": 0.0, # costs taken into account in the electricity network
-        "Opex_var_HP_Lake_connected_USD": 0.0,# costs taken into account in the electricity network
-        "Opex_var_GHP_connected_USD": 0.0 ,# costs taken into account in the electricity network
+        "Opex_var_HP_Sewage_connected_USD": 0.0,  # costs taken into account in the electricity network
+        "Opex_var_HP_Lake_connected_USD": 0.0,  # costs taken into account in the electricity network
+        "Opex_var_GHP_connected_USD": 0.0,  # costs taken into account in the electricity network
         "Opex_var_CHP_NG_connected_USD": Opex_var_CHP_NG_USD,
         "Opex_var_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD,
         "Opex_var_Furnace_dry_connected_USD": Opex_var_Furnace_dry_USD,
@@ -454,10 +463,10 @@ def district_heating_network(locator,
         "Opex_a_SC_ET_connected_USD": performance_costs['Opex_fixed_SC_ET_connected_USD'],
         "Opex_a_SC_FP_connected_USD": performance_costs['Opex_fixed_SC_FP_connected_USD'],
         "Opex_a_PVT_connected_USD": performance_costs['Opex_fixed_PVT_connected_USD'],
-        "Opex_a_HP_Server_connected_USD":  performance_costs['Opex_fixed_HP_Server_connected_USD'],
-        "Opex_a_HP_Sewage_connected_USD":  performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
+        "Opex_a_HP_Server_connected_USD": performance_costs['Opex_fixed_HP_Server_connected_USD'],
+        "Opex_a_HP_Sewage_connected_USD": performance_costs['Opex_fixed_HP_Sewage_connected_USD'],
         "Opex_a_HP_Lake_connected_USD": performance_costs['Opex_fixed_HP_Lake_connected_USD'],
-        "Opex_a_GHP_connected_USD":  performance_costs['Opex_fixed_GHP_connected_USD'],
+        "Opex_a_GHP_connected_USD": performance_costs['Opex_fixed_GHP_connected_USD'],
         "Opex_a_CHP_NG_connected_USD": Opex_var_CHP_NG_USD + performance_costs['Opex_fixed_CHP_NG_connected_USD'],
         "Opex_a_Furnace_wet_connected_USD": Opex_var_Furnace_wet_USD + performance_costs[
             'Opex_fixed_Furnace_wet_connected_USD'],

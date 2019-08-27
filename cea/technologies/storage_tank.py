@@ -28,7 +28,7 @@ __status__ = "Production"
 U_DHWTANK = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
 
 
-def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, tank_type):
+def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, Area_tank_surface_m2, tank_type):
     """
     Temporary inputs:
     T_start_C = 6 degree C
@@ -46,7 +46,6 @@ def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V
     :param V_tank_m3: tank volume
     :return:
     """
-    Area_tank_surface_m2 = calc_tank_surface_area(V_tank_m3)
     q_loss_W = calc_cold_tank_heat_loss(Area_tank_surface_m2, T_start_C, T_ambient_C)
     T_tank_C = calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3, tank_type)
     return T_tank_C
@@ -215,11 +214,12 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(Qc_tank_capacity_Wh, T_tank_fully_charged_K, T_tank_fully_discharged_K):
+def calc_storage_tank_volume(Qc_tank_capacity_Wh,
+                             T_tank_fully_charged_K,
+                             T_tank_fully_discharged_K):
     # calculate tank volume
     Q_tank_capacity_J = Qc_tank_capacity_Wh * WH_TO_J
-    m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK *
-                                     (T_tank_fully_discharged_K - T_tank_fully_charged_K))
+    m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK *(T_tank_fully_discharged_K - T_tank_fully_charged_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
     return V_tank_m3
