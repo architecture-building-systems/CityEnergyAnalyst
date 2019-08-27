@@ -12,20 +12,15 @@ from math import log
 import numpy as np
 import pandas as pd
 
-import cea.technologies.chiller_absorption as chiller_absorption
-import cea.technologies.chiller_vapor_compression as VCCModel
-import cea.technologies.cogeneration as cogeneration
-import cea.technologies.cooling_tower as CTModel
-import cea.technologies.storage_tank as storage_tank
-import cea.technologies.thermal_storage as thermal_storage
 from cea.constants import HOURS_IN_YEAR
-from cea.constants import WH_TO_J
-from cea.optimization.constants import SIZING_MARGIN, ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_DISCHARGED_K, \
-    PUMP_ETA
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K
+from cea.optimization.constants import VCC_T_COOL_IN
+from cea.optimization.master import cost_model
 from cea.optimization.master.cost_model import calc_network_costs
+from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
+from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
 from cea.technologies.constants import DT_COOL
-from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -41,7 +36,7 @@ __status__ = "Production"
 # technical model
 
 def district_cooling_network(locator,
-                             master_to_slave_vars,
+                             master_to_slave_variables,
                              config,
                              prices,
                              lca,
@@ -59,92 +54,55 @@ def district_cooling_network(locator,
     :rtype: tuple
     """
 
-    ############# Recover the cooling needs
-    # Cooling demands in a neighborhood are divided into three categories currently. They are
-    # 1. Space Cooling in buildings
-    # 2. Data center Cooling
-    # 3. Refrigeration Needs
-    # Data center cooling can also be done by recovering the heat and heating other demands during the same time
-    # whereas Space cooling and refrigeration needs are to be provided by District Cooling Network or decentralized cooling
-    # Currently, all the buildings are assumed to be connected to DCN
-    # In the following code, the cooling demands of Space cooling and refrigeration are first satisfied by using Lake and VCC
-    # This is then followed by checking of the Heat recovery from Data Centre, if it is allowed, then the corresponding
-    # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
-
     # local variables
-    DCN_barcode = master_to_slave_vars.DCN_barcode
-    building_names = master_to_slave_vars.building_names_cooling
+    DCN_barcode = master_to_slave_variables.DCN_barcode
+    building_names = master_to_slave_variables.building_names_cooling
 
     # THERMAL STORAGE + NETWORK
     # Import Temperatures from Network Summary:
     Q_thermal_req_W, T_district_cooling_return_K, T_district_cooling_supply_K, mdot_kgpers = calc_network_summary_DCN(
-        locator, master_to_slave_vars)
+        locator, master_to_slave_variables)
 
     print("CALCULATING ECOLOGICAL COSTS OF DAILY COOLING STORAGE - DUE TO OPERATION (IF ANY)")
-    if master_to_slave_vars.Storage_cooling_on == 1:
-        T_tank_fully_charged_K = min(
-            T_district_cooling_supply_K) - DT_COOL  # the lowest temperature that is able to provide cooling
-        T_tank_fully_discharged_K = max(
-            T_district_cooling_return_K) - DT_COOL  # the highest temperature that is able to provide cooling
-        Qc_tank_charging_limit_W = master_to_slave_vars.Storage_cooling_size_W
-        V_tank_m3 = storage_tank.calc_storage_tank_properties(Qc_tank_charging_limit_W,
-                                                              T_tank_fully_charged_K,
-                                                              T_tank_fully_discharged_K)
-    else:
-        Qc_tank_charging_limit_W = 0
-        V_tank_m3 = 0
-        T_tank_fully_charged_K = 0
-        T_tank_fully_discharged_K = 0
-
-    storage_tank_properties_this_timestep = {
-        "V_tank_m3": V_tank_m3,
-        "T_tank_K": T_TANK_FULLY_DISCHARGED_K,
-        "Qc_tank_charging_limit_W": Qc_tank_charging_limit_W,
-        "T_tank_fully_charged_K": T_tank_fully_charged_K,
-        "T_tank_fully_discharged_K": T_tank_fully_discharged_K,
-    }
+    # Initialize daily storage calss
+    T_ground_K = calculate_ground_temperature(locator, config)
+    daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
+                                             master_to_slave_variables.Storage_cooling_size_W,
+                                             min(T_district_cooling_supply_K) - DT_COOL,
+                                             max(T_district_cooling_return_K) - DT_COOL,
+                                             T_TANK_FULLY_DISCHARGED_K,
+                                             np.mean(T_ground_K)
+                                             )
 
     # Import Data - potentials lake heat
-    if master_to_slave_vars.WS_BaseVCC_on == 1 or master_to_slave_vars.WS_PeakVCC_on == 1 or:
+    if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1 or:
         HPlake_Data = pd.read_csv(locator.get_lake_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
-        total_WS_VCC_installed = master_to_slave_vars.WS_BaseVCC_size_W + master_to_slave_vars.WS_PeakVCC_size_W
+        total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
         Q_therm_Lake_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_Lake]
         T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
     else:
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
-    T_ground_K = calculate_ground_temperature(locator, config)
-
-
-    Qc_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
-    Qc_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Qc_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Qc_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Qc_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_BackupVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_DailyStorage_gen_W = np.zeros(HOURS_IN_YEAR)
 
     Qc_from_storage_tank_W = np.zeros(HOURS_IN_YEAR)
-    Qc_from_VCC_backup_W = np.zeros(HOURS_IN_YEAR)
-
-    Qc_req_from_CT_W = np.zeros(HOURS_IN_YEAR)
-    Qh_req_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
-    Qh_from_CCGT_W = np.zeros(HOURS_IN_YEAR)
-    E_gen_CCGT_W = np.zeros(HOURS_IN_YEAR)
 
     opex_var_Trigen_NG_USDhr = np.zeros(HOURS_IN_YEAR)
     opex_var_BaseVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
     opex_var_PeakVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
     opex_var_BaseVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
     opex_var_PeakVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-
     opex_var_BackupVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_CCGT_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_CT_USDhr = np.zeros(HOURS_IN_YEAR)
 
-    deltaPmax = np.zeros(HOURS_IN_YEAR)
-
-    E_Trigen_NG_req_W = np.zeros(HOURS_IN_YEAR)
+    E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     E_BaseVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
@@ -162,23 +120,21 @@ def district_cooling_network(locator,
     VCC_Backup_Status = np.zeros(HOURS_IN_YEAR)
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
-        storage_tank_properties_previous_timestep = storage_tank_properties_this_timestep
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
-            storage_tank_properties_this_timestep, \
+            daily_storage, \
             opex_output, \
             activation_output, \
             thermal_output, \
             electricity_output, \
             gas_output = cooling_resource_activator(Q_thermal_req_W[hour],
-                                                    mdot_kgpers[hour],
                                                     T_district_cooling_supply_K[hour],
                                                     T_district_cooling_return_K[hour],
                                                     Q_therm_Lake_W[hour],
                                                     T_source_average_Lake_K[hour],
-                                                    storage_tank_properties_previous_timestep,
+                                                    daily_storage,
                                                     T_ground_K[hour],
                                                     lca,
-                                                    master_to_slave_vars,
+                                                    master_to_slave_variables,
                                                     hour,
                                                     prices,
                                                     locator)
@@ -196,61 +152,60 @@ def district_cooling_network(locator,
             source_BaseVCC_AS[hour] = activation_output["source_BaseVCC_AS"]
             source_PeakVCC_AS[hour] = activation_output["source_PeakVCC_AS"]
 
-            Qc_Trigen_NG_gen_W[hour] = thermal_output['Qc_Trigen_NG_gen_W']
-            Qc_BaseVCC_WS_gen_W[hour] = thermal_output['Qc_BaseVCC_WS_gen_W']
-            Qc_PeakVCC_WS_gen_W[hour] = thermal_output['Qc_PeakVCC_WS_gen_W']
-            Qc_BaseVCC_AS_gen_W[hour] = thermal_output['Qc_BaseVCC_AS_gen_W']
-            Qc_PeakVCC_AS_gen_W[hour] = thermal_output['Qc_PeakVCC_AS_gen_W']
+            Q_Trigen_NG_gen_W[hour] = thermal_output['Q_Trigen_NG_gen_W']
+            Q_BaseVCC_WS_gen_W[hour] = thermal_output['Q_BaseVCC_WS_gen_W']
+            Q_PeakVCC_WS_gen_W[hour] = thermal_output['Q_PeakVCC_WS_gen_W']
+            Q_BaseVCC_AS_gen_W[hour] = thermal_output['Q_BaseVCC_AS_gen_W']
+            Q_PeakVCC_AS_gen_W[hour] = thermal_output['Q_PeakVCC_AS_gen_W']
+            Q_BackupVCC_AS_gen_W[hour] = thermal_output['Q_BackupVCC_AS_gen_W']
+            Q_DailyStorage_gen_W[hour] = thermal_output['Q_DailyStorage_WS_gen_W']
 
-            Qc_from_storage_tank_W[hour] = thermal_output['Qc_from_Tank_W']
-            Qc_from_VCC_backup_W[hour] = thermal_output['Qc_from_backup_VCC_W']
-
-            E_Trigen_NG_req_W[hour] = electricity_output['E_Trigen_NG_req_W']
             E_BaseVCC_WS_req_W[hour] = electricity_output['E_BaseVCC_WS_req_W']
             E_PeakVCC_WS_req_W[hour] = electricity_output['E_PeakVCC_WS_req_W']
             E_BaseVCC_AS_req_W[hour] = electricity_output['E_BaseVCC_AS_req_W']
             E_PeakVCC_AS_req_W[hour] = electricity_output['E_PeakVCC_AS_req_W']
             E_BackupVCC_AS_req_W[hour] = electricity_output['E_BackupVCC_AS_req_W']
+            E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
             NG_Trigen_req_W = gas_output['NG_Trigen_req_W']
 
     # BACK-UPP VCC - AIR SOURCE
-    Q_uncovered_design_W = np.amax(Qc_from_VCC_backup_W)
-    if Q_uncovered_design_W != 0:
-        # TODO the backup unit
+    master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
+    if master_to_slave_variables.AS_BackupVCC_size_W != 0:
+        master_to_slave_variables.AS_BackupVCC_on = 1
+        for hour in range(HOURS_IN_YEAR):
+            opex_var_BackupVCC_AS_USDhr[hour], \
+            Q_BackupVCC_AS_gen_W[hour], \
+            E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
+                                                               T_district_cooling_return_K[hour],
+                                                               T_district_cooling_supply_K[hour],
+                                                               VCC_T_COOL_IN,
+                                                               lca)
 
     # CAPEX AND OPEX OF COOLING NETWORK
     Capex_DCN_USD, \
     Capex_a_DCN_USD, \
     Opex_fixed_DCN_USD, \
     Opex_var_DCN_USD, \
-    E_used_district_cooling_netowrk_W = calc_network_costs(locator,
-                                                           master_to_slave_vars,
+    E_used_district_cooling_network_W = calc_network_costs(locator,
+                                                           master_to_slave_variables,
                                                            network_features,
                                                            lca,
                                                            "DC")
-
     # CAPEX AND FIXED OPEX GENERATION UNITS
-    performance_costs = calc_generation_costs_cooling(E_BaseVCC_WS_req_W,
-                                                      Q_CT_nom_W,
-                                                      Q_GT_nom_W,
-                                                      Qc_ACH_nom_W,
-                                                      Qc_VCC_backup_nom_W,
-                                                      Qc_VCC_nom_W,
-                                                      V_tank_m3,
-                                                      config,
-                                                      locator,
-                                                      master_to_slave_vars
-                                                      )
+    performance_costs = cost_model.calc_generation_costs_cooling(locator,
+                                                                 master_to_slave_variables,
+                                                                 config,
+                                                                 daily_storage
+                                                                 )
 
     # CAPEX VAR GENERATION UNITS
-    Opex_var_Lake_connected_USD = sum(opex_var_BaseVCC_WS_USDhr),
-    Opex_var_VCC_connected_USD = sum(opex_var_BaseVCC_AS_USDhr),
-    Opex_var_ACH_connected_USD = sum(opex_var_Trigen_NG_USDhr),
-    Opex_var_VCC_backup_connected_USD = sum(opex_var_BackupVCC_AS_USDhr),
-    Opex_var_CT_connected_USD = sum(opex_var_CT_USDhr),
-    Opex_var_CCGT_connected_USD = sum(opex_var_CCGT_USDhr),
-
+    opex_var_Trigen_NG_USD = sum(opex_var_Trigen_NG_USDhr)
+    opex_var_BaseVCC_WS_USD = sum(opex_var_BaseVCC_WS_USDhr)
+    opex_var_PeakVCC_WS_USD = sum(opex_var_PeakVCC_WS_USDhr)
+    opex_var_BaseVCC_AS_USD = sum(opex_var_BaseVCC_AS_USDhr)
+    opex_var_PeakVCC_AS_USD = sum(opex_var_PeakVCC_AS_USDhr)
+    opex_var_BackupVCC_AS_USD = sum(opex_var_BackupVCC_AS_USDhr)
 
     # COOLING SUBSTATIONS
     Capex_Substations_USD, \
@@ -272,14 +227,14 @@ def district_cooling_network(locator,
 
         # ENERGY GENERATION
         # cooling
-        "Q_VCC_WS_W": Qc_BaseVCC_WS_gen_W,
-        "Q_VCC_AS_W": Qc_BaseVCC_AS_gen_W,
-        "Q_VCC_backup_AS_W": Qc_from_VCC_backup_W,
-        "Q_Trigen_NG_W": Qc_Trigen_NG_gen_W,
-        "Q_Storage_gen_W": Qc_from_storage_tank_W,
+        "Q_VCC_WS_W": Q_BaseVCC_WS_gen_W,
+        "Q_VCC_AS_W": Q_BaseVCC_AS_gen_W,
+        "Q_VCC_backup_AS_W": Q_BackupVCC_AS_gen_W,
+        "Q_Trigen_NG_W": Q_Trigen_NG_gen_W,
+        "Q_DailyStorage_gen_W": Q_DailyStorage_gen_W,
 
         # electricity
-        "E_Trigen_NG_gen_W": E_gen_CCGT_W,
+        "E_Trigen_NG_gen_W": E_Trigen_NG_gen_W,
 
         # ENERGY REQUIREMENTS
         # Electricity
@@ -367,80 +322,6 @@ def district_cooling_network(locator,
     }
 
     return performance, cooling_dispatch
-
-
-def calc_generation_costs_cooling(E_used_Lake_W,
-                                  Q_CT_nom_W,
-                                  Q_GT_nom_W,
-                                  Qc_ACH_nom_W,
-                                  Qc_VCC_backup_nom_W,
-                                  Qc_VCC_nom_W,
-                                  V_tank_m3,
-                                  config,
-                                  locator,
-                                  master_to_slave_vars):
-    # WATER-SOURCE VAPOR COMPRESION CHILLER
-    if master_to_slave_vars.Lake_cooling_on == 1:
-        mdotnMax_kgpers = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'mdot_DCN_kgpers'].iloc[0]
-        deltaPmax = df.loc[df['E_used_Lake_W'] == E_used_Lake_W.max(), 'deltaPmax'].iloc[0]
-        Capex_a_Lake_USD, Opex_fixed_Lake_USD, Capex_Lake_USD = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
-                                                                               locator, 'PU1')
-    # AIR_SOURCE VAPOR COMPRESSION CHILLER
-    if master_to_slave_vars.VCC_on == 1:
-        # VCC
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
-
-        # COOLING TOWER
-        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, 'CT1')
-    # TRIGENERATION
-    if master_to_slave_vars.Absorption_Chiller_on == 1:
-        # ACH
-        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,
-                                                                                              ACH_TYPE_DOUBLE)
-        # CCGT
-        Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    # COLD WATER STORAGE TANK
-    if master_to_slave_vars.Storage_cooling_on == 1:
-        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
-                                                                                                  config, 'TES2')
-    # BACK-UP VCC
-    master_to_slave_vars.VCC_backup_cooling_size_W = Qc_VCC_backup_nom_W
-    Capex_a_VCC_backup_USD, \
-    Opex_fixed_VCC_backup_USD, \
-    Capex_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_backup_nom_W, locator, config, 'CH3')
-
-    # PLOT RESULTS
-    performance = {
-        # annualized capex
-        "Capex_a_Lake_connected_USD": Capex_a_Lake_USD,
-        "Capex_a_VCC_connected_USD": Capex_a_VCC_USD,
-        "Capex_a_VCC_backup_connected_USD": Capex_a_VCC_backup_USD,
-        "Capex_a_ACH_connected_USD": Capex_a_ACH_USD,
-        "Capex_a_CCGT_connected_USD": Capex_a_CCGT_USD,
-        "Capex_a_Tank_connected_USD": Capex_a_Tank_USD,
-        "Capex_a_CT_connected_USD": Capex_a_CT_USD,
-
-        # total capex
-        "Capex_total_Lake_connected_USD": Capex_Lake_USD,
-        "Capex_total_VCC_connected_USD": Capex_VCC_USD,
-        "Capex_total_VCC_backup_connected_USD": Capex_VCC_backup_USD,
-        "Capex_total_ACH_connected_USD": Capex_ACH_USD,
-        "Capex_total_CCGT_connected_USD": Capex_CCGT_USD,
-        "Capex_total_Tank_connected_USD": Capex_Tank_USD,
-        "Capex_total_CT_connected_USD": Capex_CT_USD,
-
-        # opex fixed
-        "Opex_fixed_Lake_connected_USD": Opex_fixed_Lake_USD,
-        "Opex_fixed_VCC_connected_USD": Opex_fixed_VCC_USD,
-        "Opex_fixed_ACH_connected_USD": Opex_fixed_ACH_USD,
-        "Opex_fixed_VCC_backup_connected_USD": Opex_fixed_VCC_backup_USD,
-        "Opex_fixed_CCGT_connected_USD": Opex_fixed_CCGT_USD,
-        "Opex_fixed_Tank_connected_USD": Opex_fixed_Tank_USD,
-        "Opex_fixed_CT_connected_USD": Opex_fixed_CT_USD
-    }
-
-    return performance
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):

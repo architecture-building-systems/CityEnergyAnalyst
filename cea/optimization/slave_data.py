@@ -62,7 +62,8 @@ class SlaveData(object):
         self.BoilerPeak_on = 0
         self.BoilerPeak_Q_max_W = 0.0
 
-        self.BoilerBackup_Q_max_W = 0.0
+        self.BackupBoiler_on = 0
+        self.BackupBoiler_size_W = 0.0
 
         # water-source Heat Pump
         self.HPLake_on = 0
@@ -116,6 +117,9 @@ class SlaveData(object):
 
         self.AS_PeakVCC_on = 0
         self.AS_PeakVCC_size_W = 0.0
+
+        self.AS_BackupVCC_on = 0
+        self.AS_BackupVCC_size_W = 0.0
 
         # Storage Cooling
         self.Storage_cooling_on = 0
