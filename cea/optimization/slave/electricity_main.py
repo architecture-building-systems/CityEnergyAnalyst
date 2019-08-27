@@ -27,8 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def electricity_calculations_of_all_buildings(locator,
-                                              master_to_slave_vars,
+def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                               district_heating_generation_dispatch,
                                               districy_heating_electricity_requirements_dispatch,
                                               district_cooling_generation_dispatch,

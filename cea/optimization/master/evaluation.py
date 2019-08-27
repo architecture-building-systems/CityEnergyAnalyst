@@ -129,38 +129,24 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                               district_cooling_generation_dispatch,
                                                                                               district_cooling_electricity_requirements_dispatch)
 
+    print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
+    buildings_connected_costs,\
+    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_costs,
+                                                                                       district_cooling_costs,
+                                                                                       district_microgrid_costs,
+                                                                                       district_microgrid_requirements_dispatch,
+                                                                                       district_heating_fuel_requirements_dispatch,
+                                                                                       district_cooling_fuel_requirements_dispatch,
+                                                                                       lca)
 
+    print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
+    buildings_disconnected_costs, \
+    buildings_disconnected_emissions = cost_model.buildings_disconnected_costs_and_emissions(building_names_heating,
+                                                                                             building_names_cooling,
+                                                                                             locator,
+                                                                                             master_to_slave_vars)
 
-    print("DISTRICT ENERGY SYSTEM COSTS")
-    district_energy_system_costs = cost_model.calc_costs_district_energy_system(district_heating_costs,
-                                                                                district_cooling_costs,
-                                                                                district_microgrid_costs,
-                                                                                district_microgrid_requirements_dispatch,
-                                                                                district_heating_fuel_requirements_dispatch,
-                                                                                district_cooling_fuel_requirements_dispatch
-                                                                                )
-
-    # EMISSIONS OF RENEWABLES AND FUELS
-    performance_emissions_pen = calc_primary_energy_and_CO2(Q_SC_ET_gen_W,
-                                                            Q_SC_FP_gen_W,
-                                                            Q_PVT_gen_W,
-                                                            Q_Server_gen_W,
-                                                            NG_CHP_req_W,
-                                                            NG_BaseBoiler_req_W,
-                                                            NG_PeakBoiler_req_W,
-                                                            NG_BackupBoiler_req_W,
-                                                            WetBiomass_Furnace_req_W,
-                                                            DryBiomass_Furnace_req_W,
-                                                            lca,
-                                                            )
-
-    # DISCONNECTED BUILDINGS
-    print("CALCULATING PERFORMANCE OF DISCONNECTED BUILDNGS")
-    disconnected_costs, \
-    disconnected_emissions = cost_model.disconnected_costs_and_emissions(building_names_heating,
-                                                                         building_names_cooling,
-                                                                         locator,
-                                                                         master_to_slave_vars)
+    
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
