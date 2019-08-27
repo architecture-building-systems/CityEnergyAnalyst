@@ -34,12 +34,14 @@ class NetworkInfo(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, gv):
         # store key variables
         self.locator = locator
         self.config = config
-        self.network_type = network_type
+        self.network_type = config.thermal_network_optimization.network_type
         self.network_name = config.thermal_network_optimization.network_name
+        self.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
+        self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
         # initialize optimization storage variables and dictionaries
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
@@ -50,7 +52,6 @@ class NetworkInfo(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -69,21 +70,15 @@ class NetworkInfo(object):
 def thermal_network_optimization(config, gv, locator):
     # initialize timer
     start = time.time()
-    # synchronize representative week method in network simulation
-    with config.ignore_restrictions():
-        config.thermal_network.use_representative_week_per_month = (
-            config.thermal_network_optimization.use_representative_week_per_month
-        )
-        # read network type and ensure consistency in network layout and network_info
-        network_type = config.thermal_network.network_type
-        config.network_layout.network_type = network_type
-    if network_type == 'DH':
-        raise ValueError('This optimization procedure is not ready for district heating yet!')
+
     # initialize object
-    network_info = NetworkInfo(locator, config, network_type, gv)
+    network_info = NetworkInfo(locator, config, gv)
     network_layout = NetworkLayout()
     network_layout.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
     network_layout.network_type = config.thermal_network_optimization.network_type
+
+    if network_info.network_type == 'DH':
+        raise ValueError('This optimization procedure is not ready for district heating yet!')
 
     # write buildings names to object
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -264,7 +259,7 @@ def translate_individual(network_info, individual):
     else:
         network_info.has_loops = False
         print 'Network does not have loops.'
-    if network_info.config.thermal_network_optimization.optimize_network_loads:
+    if network_info.optimize_network_loads:
         # we are optimizing which loads to supply
         # supplied demands
         heating_systems = []
