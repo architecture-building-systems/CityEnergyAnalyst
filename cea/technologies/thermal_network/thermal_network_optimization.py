@@ -8,7 +8,7 @@ import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network as thermal_network
-from cea.technologies.network_layout.main import layout_network
+from cea.technologies.network_layout.main import layout_network, NetworkLayout
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
@@ -81,6 +81,10 @@ def thermal_network_optimization(config, gv, locator):
         raise ValueError('This optimization procedure is not ready for district heating yet!')
     # initialize object
     network_info = NetworkInfo(locator, config, network_type, gv)
+    network_layout = NetworkLayout()
+    network_layout.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
+    network_layout.network_type = config.thermal_network_optimization.network_type
+
     # write buildings names to object
     total_demand = pd.read_csv(locator.get_total_demand())
     network_info.building_names = total_demand.Name.values
@@ -92,12 +96,12 @@ def thermal_network_optimization(config, gv, locator):
 
     # create initial population
     print 'Creating initial population.'
-    newMutadedGen = generateInitialPopulation(network_info)
+    newMutadedGen = generateInitialPopulation(network_info, network_layout)
     # iterate through number of generations
     for generation_number in range(config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
         # calculate network cost for each individual and sort by increasing cost
-        sortedPop = network_cost_calculation(newMutadedGen, network_info, config)
+        sortedPop = network_cost_calculation(newMutadedGen, network_info, network_layout, config)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
         # setup next generation
         if generation_number < config.thermal_network_optimization.number_of_generations - 1:
@@ -138,7 +142,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     return np.nan
 
 
-def network_cost_calculation(newMutadedGen, network_info, config):
+def network_cost_calculation(newMutadedGen, network_info, network_layout, config):
     """
     Main function which calls the objective function and stores values
     :param newMutadedGen: List containing all individuals of this generation
@@ -161,7 +165,7 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
-            capex_total, opex_total, total_cost, cost_storage_df = objective_function(network_info)
+            capex_total, opex_total, total_cost, cost_storage_df = objective_function(network_info, network_layout)
 
             # calculate network total network_length_m and average diameter
             network_length_m, average_pipe_diameter_m = calc_network_size(network_info)
@@ -280,7 +284,7 @@ def translate_individual(network_info, individual):
     return building_plants, disconnected_buildings
 
 
-def objective_function(network_info):
+def objective_function(network_info, network_layout):
     """
     Calculates the cost of the given individual by generating a network and simulating it.
     :param network_info: Object storing network information.
@@ -297,13 +301,13 @@ def objective_function(network_info):
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
     if network_info.config.thermal_network_optimization.optimize_loop_branch:
         if network_info.has_loops:  # we have loops, so we need to tell the network generation script this
-            network_info.config.network_layout.allow_looped_networks = True
+            network_layout.allow_looped_networks = True
         else:  # we don't have loops, so we need to tell the network generation script this
-            network_info.config.network_layout.allow_looped_networks = False
+            network_layout.allow_looped_networks = False
 
     if len(disconnected_building_names) >= len(network_info.building_names) - 1:  # all buildings disconnected
         print 'All buildings disconnected'
-        network_info.config.network_layout.disconnected_buildings = []
+        network_layout.disconnected_buildings = []
         # we need to create a network and run the thermal network matrix to maintain the workflow.
         # But no buildings are connected so this will make problems.
         # So we fake that buildings are connected but no loads are supplied to make 0 costs
@@ -314,11 +318,12 @@ def objective_function(network_info):
         network_info.config.thermal_network.substation_heating_systems = []
         network_info.config.thermal_network.substation_cooling_systems = []
         # generate a network with all buildings connected but no loads
-        layout_network(network_info.config, network_info.locator, network_info.building_names, optimization_flag=True)
+        network_layout = NetworkLayout(network_info)
+        layout_network(network_layout, network_info.locator, network_info.building_names, optimization_flag=True)
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         thermal_network.main(network_info.config)
         # set all buildings to disconnected
-        network_info.config.network_layout.disconnected_buildings = network_info.building_names
+        network_layout.disconnected_buildings = network_info.building_names
         # set all indexes as disconnected
         network_info.disconnected_buildings_index = [i for i in range(len(network_info.building_names))]
         # revert cooling and heating systems to original
@@ -327,9 +332,10 @@ def objective_function(network_info):
     else:
         print 'We have at least one connected building.'
         # save which buildings are disconnected
-        network_info.config.network_layout.disconnected_buildings = disconnected_building_names
+        network_layout.disconnected_buildings = disconnected_building_names
         # create the network specified by the individual
-        layout_network(network_info.config, network_info.locator, plant_building_names, optimization_flag=True)
+        network_layout = NetworkLayout(network_info)
+        layout_network(network_layout, network_info.locator, plant_building_names, optimization_flag=True)
         # run the thermal_network simulation with the generated network
         thermal_network.main(network_info.config)
 
@@ -355,7 +361,7 @@ def selectFromPrevPop(sortedPrevPop, network_info):
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_Generation) < network_info.config.thermal_network_optimization.number_of_individuals:
-        lucky_individual = random.choice(generateInitialPopulation(network_info))
+        lucky_individual = random.choice(generateInitialPopulation(network_info, network_layout))
         # make sure we don't have duplicates
         if lucky_individual not in next_Generation:
             next_Generation.append(lucky_individual)
@@ -558,7 +564,7 @@ def admissible_plant_location(network_info):
     return random_index
 
 
-def generateInitialPopulation(network_info):
+def generateInitialPopulation(network_info, network_layout):
     """
     Generates the initial population for network optimization.
     :param network_info: Object storing network information
@@ -576,7 +582,7 @@ def generateInitialPopulation(network_info):
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
             new_plants = np.zeros(network_info.number_of_buildings_in_district)
             # read in the list of disconnected buildings from config file, if any are given
-            for building in network_info.config.network_layout.disconnected_buildings:
+            for building in network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
                     if str(building) == str(building_name):
                         new_plants[index] = 2.0
@@ -586,7 +592,7 @@ def generateInitialPopulation(network_info):
             # we are optimizing if we have a loop or not, set randomly to eithre 0 or 1
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
         else:  # we are not optimizing loops or not, so read from config file input
-            if network_info.config.network_layout.allow_looped_networks:  # allow loop networks is true
+            if network_layout.allow_looped_networks:  # allow loop networks is true
                 loop_no_loop_binary = 1.0  # we have a loop
             else:  # branched networks only
                 loop_no_loop_binary = 0.0

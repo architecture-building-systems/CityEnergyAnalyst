@@ -8,7 +8,7 @@ from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefil
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system
 import get_initial_network as gia
 
-from cea.technologies.network_layout.main import layout_network
+from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.technologies.network_layout.substations_location import calc_substation_location
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -299,4 +299,5 @@ def electrical_network_layout_to_shapefile(m, electrical_grid_file_name, thermal
 
 def thermal_network_layout_to_shapefile(config, input_path_name, locator):
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    layout_network(config, locator, connected_building_names, input_path_name)
+    network_layout = NetworkLayout(network_layout=config.network_layout)
+    layout_network(network_layout, locator, connected_building_names, input_path_name)
