@@ -8,7 +8,7 @@ import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network as thermal_network
-from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.main import layout_network
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
@@ -314,7 +314,7 @@ def objective_function(network_info):
         network_info.config.thermal_network.substation_heating_systems = []
         network_info.config.thermal_network.substation_cooling_systems = []
         # generate a network with all buildings connected but no loads
-        network_layout(network_info.config, network_info.locator, network_info.building_names, optimization_flag=True)
+        layout_network(network_info.config, network_info.locator, network_info.building_names, optimization_flag=True)
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         thermal_network.main(network_info.config)
         # set all buildings to disconnected
@@ -329,7 +329,7 @@ def objective_function(network_info):
         # save which buildings are disconnected
         network_info.config.network_layout.disconnected_buildings = disconnected_building_names
         # create the network specified by the individual
-        network_layout(network_info.config, network_info.locator, plant_building_names, optimization_flag=True)
+        layout_network(network_info.config, network_info.locator, plant_building_names, optimization_flag=True)
         # run the thermal_network simulation with the generated network
         thermal_network.main(network_info.config)
 

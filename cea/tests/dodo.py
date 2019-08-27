@@ -366,7 +366,7 @@ def task_run_thermal_network():
         config.network_layout.network_type = 'DH'
 
         # first, create the network layout
-        network_layout.network_layout(config, locator, [])
+        network_layout.layout_network(config, locator, [])
         thermal_network.main(config)
 
     return {

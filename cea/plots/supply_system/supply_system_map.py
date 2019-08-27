@@ -11,7 +11,7 @@ import json
 import cea.inputlocator
 import cea.plots.supply_system
 from cea.plots.variable_naming import COLORS_TO_RGB
-from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.main import layout_network
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -151,7 +151,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         # Modify config inputs for this function
         self.config.network_layout.network_type = network_type
         self.config.network_layout.connected_buildings = connected_buildings
-        network_layout(self.config, self.locator, output_name_network=network_name)
+        layout_network(self.config, self.locator, output_name_network=network_name)
 
         # Output paths
         path_output_edges = self.locator.get_network_layout_edges_shapefile(network_type, network_name)

@@ -17,7 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
+def layout_network(config, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
                    optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
@@ -87,7 +87,7 @@ class NetworkLayout(object):
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    network_layout(config, locator)
+    layout_network(config, locator)
 
 
 if __name__ == '__main__':
