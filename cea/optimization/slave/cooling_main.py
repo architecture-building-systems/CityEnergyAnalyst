@@ -164,7 +164,6 @@ def district_cooling_network(locator,
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         storage_tank_properties_previous_timestep = storage_tank_properties_this_timestep
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
-
             storage_tank_properties_this_timestep, \
             opex_output, \
             activation_output, \
