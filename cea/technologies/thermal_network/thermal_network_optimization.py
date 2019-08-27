@@ -29,13 +29,13 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class Network_info(object):
+class NetworkInfo(object):
     """
     Storage of information for the network currently being calculated.
     """
 
     def __init__(self, locator, config, network_type, gv):
-        # sotre key variables
+        # store key variables
         self.locator = locator
         self.config = config
         self.network_type = network_type
@@ -80,7 +80,7 @@ def thermal_network_optimization(config, gv, locator):
     if network_type == 'DH':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
     # initialize object
-    network_info = Network_info(locator, config, network_type, gv)
+    network_info = NetworkInfo(locator, config, network_type, gv)
     # write buildings names to object
     total_demand = pd.read_csv(locator.get_total_demand())
     network_info.building_names = total_demand.Name.values
