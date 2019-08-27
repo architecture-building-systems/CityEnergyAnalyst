@@ -355,6 +355,7 @@ def task_run_thermal_network():
     def run_thermal_network():
         import cea.technologies.thermal_network.thermal_network as thermal_network
         import cea.technologies.network_layout.main as network_layout
+        from cea.technologies.network_layout.main import NetworkLayout
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
@@ -366,7 +367,8 @@ def task_run_thermal_network():
         config.network_layout.network_type = 'DH'
 
         # first, create the network layout
-        network_layout.layout_network(config, locator, [])
+        network_layout = NetworkLayout(config.network_layout)
+        network_layout.layout_network(network_layout, locator, [])
         thermal_network.main(config)
 
     return {
