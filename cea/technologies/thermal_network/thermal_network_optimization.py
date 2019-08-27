@@ -159,7 +159,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
-        if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
+        if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(network_layout.network_type, individual)):
             # initialize a dataframe for this individual
             individual_outputs_df = pd.DataFrame(index=[0], columns=generation_outputs_df.columns)
             # translate barcode individual
@@ -331,10 +331,10 @@ def objective_function(network_info, network_layout):
         network_info.config.thermal_network.substation_cooling_systems = original_cooling_systems
     else:
         print 'We have at least one connected building.'
-        # save which buildings are disconnected
-        network_layout.disconnected_buildings = disconnected_building_names
         # create the network specified by the individual
         network_layout = NetworkLayout(network_info)
+        # save which buildings are disconnected
+        network_layout.disconnected_buildings = disconnected_building_names
         layout_network(network_layout, network_info.locator, plant_building_names, optimization_flag=True)
         # run the thermal_network simulation with the generated network
         thermal_network.main(network_info.config)

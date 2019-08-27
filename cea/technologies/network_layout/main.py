@@ -64,24 +64,21 @@ def layout_network(network_layout, locator, plant_building_names=[], input_path_
 class NetworkLayout(object):
     """Capture network layout information"""
     def __init__(self, network_layout=None):
-        if network_layout:
-            self.network_type = network_layout.network_type
-            self.connected_buildings = network_layout.connected_buildings
-            self.disconnected_buildings = network_layout.diconnected_buildings
-            self.pipe_diameter = network_layout.pipe_diameter
-            self.type_mat = network_layout.type_mat
-            self.create_plant = network_layout.create_plant
-            self.allow_looped_networks = network_layout.allow_looped_networks
-            self.consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
-        else:
-            self.network_type = "DC"
-            self.connected_buildings = []
-            self.disconnected_buildings = []
-            self.pipe_diameter = 150
-            self.type_mat = "T1"
-            self.create_plant = True
-            self.allow_looped_networks = False
-            self.consider_only_buildings_with_demand = False
+        self.network_type = "DC"
+        self.connected_buildings = []
+        self.disconnected_buildings = []
+        self.pipe_diameter = 150
+        self.type_mat = "T1"
+        self.create_plant = True
+        self.allow_looped_networks = False
+        self.consider_only_buildings_with_demand = False
+
+        attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
+                      "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings"]
+        for attr in attributes:
+            # copy any matching attributes in network_layout (because it could be an instance of NetworkInfo)
+            if hasattr(network_layout, attr):
+                setattr(self, attr, getattr(network_layout, attr))
 
 
 def main(config):
