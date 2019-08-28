@@ -43,6 +43,7 @@ class NetworkInfo(object):
         self.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
         self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
         self.possible_plant_sites = config.thermal_network_optimization.possible_plant_sites
+        self.number_of_individuals = config.thermal_network_optimization.number_of_individuals
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
@@ -158,7 +159,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
     population_performance = {}
     individual_number = 0
     # prepare data storage for generation_outputs_df
-    generation_outputs_df = pd.DataFrame(index=list(range(config.thermal_network_optimization.number_of_individuals)),
+    generation_outputs_df = pd.DataFrame(index=list(range(network_info.number_of_individuals)),
                                          columns=network_info.generation_info + network_info.cost_info)
 
     # iterate through all individuals
@@ -373,11 +374,11 @@ def selectFromPrevPop(sortedPrevPop, network_info):
     next_Generation = []
     # pick the individuals with the lowest cost
     for i in range(0,
-                   (network_info.config.thermal_network_optimization.number_of_individuals -
+                   (network_info.number_of_individuals -
                     network_info.config.thermal_network_optimization.lucky_few)):
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
-    while len(next_Generation) < network_info.config.thermal_network_optimization.number_of_individuals:
+    while len(next_Generation) < network_info.number_of_individuals:
         lucky_individual = random.choice(generateInitialPopulation(network_info, network_layout))
         # make sure we don't have duplicates
         if lucky_individual not in next_Generation:
@@ -400,7 +401,7 @@ def breedNewGeneration(selectedInd, network_info):
     """
     newGeneration = []
     # make sure we have the correct amount of individuals
-    while len(newGeneration) < network_info.config.thermal_network_optimization.number_of_individuals:
+    while len(newGeneration) < network_info.number_of_individuals:
         # choose random parents
         first_parent = random.choice(selectedInd)
         second_parent = random.choice(selectedInd)
@@ -584,13 +585,14 @@ def admissible_plant_location(network_info):
 def generateInitialPopulation(network_info, network_layout):
     """
     Generates the initial population for network optimization.
-    :param network_info: Object storing network information
+    :param NetworkInfo network_info: Object storing global network information (information about the whole
+                                     optimization)
+    :param NetworkLayout network_layout: Stores information about the specific network layout of an individual
     :return: returns list of individuals as initial population for genetic algorithm
     """
     # initialize list of initial population
     initialPop = []
-    while len(
-            initialPop) < network_info.config.thermal_network_optimization.number_of_individuals:  # assure we have the correct amount of individuals
+    while len(initialPop) < network_info.number_of_individuals:  # assure we have the correct amount of individuals
         # list of where our plants are
         if network_info.config.thermal_network_optimization.optimize_building_connections:
             # if this option is set, we are optimizing which buildings to connect, so we need to disconnect some buildings
