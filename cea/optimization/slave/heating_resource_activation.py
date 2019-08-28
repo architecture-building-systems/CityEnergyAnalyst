@@ -66,13 +66,13 @@ def heating_source_activator(Q_therm_req_W,
                 Q_CHP_gen_W = Q_heat_unmet_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(Q_CHP_gen_W)) * Gas_used_CHP_W
+                E_CHP_gen_W = np.float(eta_elec_interpol(Gas_used_CHP_W)) * Gas_used_CHP_W
                 opex_var_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
             else:  # Only part of the demand can be delivered as 100% load achieved
                 Q_CHP_gen_W = Q_output_CC_max_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(Q_CHP_gen_W)) * Gas_used_CHP_W
+                E_CHP_gen_W = np.float(eta_elec_interpol(Gas_used_CHP_W)) * Gas_used_CHP_W
                 opex_var_CHP_USD = cost_per_Wh_CC * Q_CHP_gen_W
         else:
             source_CHP = 0

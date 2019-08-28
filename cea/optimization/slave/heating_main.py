@@ -65,7 +65,7 @@ def district_heating_network(locator,
                                                                               config)
     # Import data from storage optimization
     Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
-    Q_thermal_req_W = np.array(storage_dispatch['Q_thermal_req_W'])
+    Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])
 
     E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
 

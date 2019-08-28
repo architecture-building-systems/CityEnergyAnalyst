@@ -140,14 +140,14 @@ def cooling_resource_activator(Q_thermal_req,
                 Q_CHP_gen_W = Qh_Trigen_req_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(Q_CHP_gen_W)) * NG_Trigen_req_W
+                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
                 cost_Trigen_USD = cost_per_Wh_CC * Q_CHP_gen_W
 
             else:  # Only part of the demand can be delivered as 100% load achieved
                 Q_CHP_gen_W = Q_output_CC_max_W
                 cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(Q_CHP_gen_W)) * NG_Trigen_req_W
+                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
                 cost_Trigen_USD = cost_per_Wh_CC * Q_CHP_gen_W
         else:
             source_Trigen_NG = 0
