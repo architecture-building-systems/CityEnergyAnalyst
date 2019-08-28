@@ -329,7 +329,7 @@ def save_generation_dataframes(generation,
                                DHN_network_list_selected):
 
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["Option " + str(x) for x in individual_list]
+    individual_name_list = ["System " + str(x) for x in individual_list]
     performance_disconnected = pd.DataFrame()
     performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
