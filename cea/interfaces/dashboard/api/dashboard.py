@@ -21,7 +21,11 @@ class Dashboard(Resource):
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
-        return [{'name': d.name, 'description': d.description, 'layout':  d.layout if d.layout in LAYOUTS else 'row',
-                 'plots': [{'title': plot.title, 'scenario':
-                            plot.parameters['scenario-name'] if 'scenario-name' in plot.parameters.keys() else None}
-                           for plot in d.plots]} for d in dashboards]
+        out = []
+        for d in dashboards:
+            dashboard = d.to_dict()
+            for i, plot in enumerate(dashboard['plots']):
+                dashboard['plots'][i]['title'] = d.plots[i].title
+            out.append(dashboard)
+
+        return out
