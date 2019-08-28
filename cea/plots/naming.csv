@@ -212,7 +212,7 @@ Activation curve,Q_SC_ET_gen_directload_W,W,Solar collector (ET) generation to d
 Activation curve,Q_SC_FP_gen_directload_W,W,Solar collector (FP) generation to direct load,orange
 Activation curve,Q_HP_Server_gen_directload_W,W,Server-source_HP to direct load,red
 Activation curve,Q_HP_Sew_gen_directload_W,W,Sewage-source-HP generation to direct load,blue_light
-Activation curve,Q_HP_Lake_gen_directload_W,W,Water-source-HP generation to direct load,green
+Activation curve,Q_HP_Lake_gen_directload_W,W,Water-source-HP generation to direct load,blue
 Activation curve,Q_GHP_gen_directload_W,W,Ground-source-HP generation to direct load,purple
 Activation curve,Q_CHP_gen_directload_W,W,NG-fired cogeneration to direct load,brown
 Activation curve,Q_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to direct load,green
@@ -220,7 +220,7 @@ Activation curve,Q_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to di
 Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
 Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
-Activation curve,Q_Storage_gen_W,W,Thermal storage to direct load,red_light
+Activation curve,Q_Storage_gen_directload_W,W,Thermal storage to direct load,red_light
 Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
 
 Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
