@@ -55,8 +55,10 @@ def district_cooling_network(locator,
 
     # THERMAL STORAGE + NETWORK
     # Import Temperatures from Network Summary:
-    Q_thermal_req_W, T_district_cooling_return_K, T_district_cooling_supply_K, mdot_kgpers = calc_network_summary_DCN(
-        locator, master_to_slave_variables)
+    Q_thermal_req_W, \
+    T_district_cooling_return_K, \
+    T_district_cooling_supply_K,\
+    mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_variables)
 
     print("CALCULATING ECOLOGICAL COSTS OF DAILY COOLING STORAGE - DUE TO OPERATION (IF ANY)")
     # Initialize daily storage calss
@@ -260,6 +262,7 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
         T_re_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_re_K'].values
         mdot_kgpers = df['mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers'].values
         Q_cooling_req_W = df['Q_DCNf_space_cooling_data_center_and_refrigeration_W'].values
+
     return Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers
 
 

@@ -101,7 +101,7 @@ def cooling_resource_activator(Q_thermal_req,
 
     ## ACTIVATE THE TRIGEN
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0:
-        size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size
+        size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size_W
         if Q_cooling_unmet_W > size_trigen_W:
             Qc_Trigen_gen_directload_W = size_trigen_W
             Qc_Trigen_gen_storage_W = 0.0
@@ -118,10 +118,11 @@ def cooling_resource_activator(Q_thermal_req,
         Qh_Trigen_req_W, \
         E_ACH_req_W = calc_chiller_absorption_operation(Q_Trigen_gen_W, T_district_cooling_return_K,
                                                         T_district_cooling_supply_K, T_ground_K,
-                                                        locator, min_ACH_unit_size_W, max_ACH_unit_size_W)
+                                                        locator, master_to_slave_variables.NG_Trigen_ACH_size_W,
+                                                        master_to_slave_variables.NG_Trigen_ACH_size_W)
 
         # operation of the CCGT
-        CC_op_cost_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size,
+        CC_op_cost_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W,
                                         ACH_T_IN_FROM_CHP,
                                         "NG",
                                         prices,

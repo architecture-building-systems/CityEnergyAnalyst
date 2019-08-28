@@ -102,7 +102,8 @@ class SlaveData(object):
         # COOLING TECHNOLOGIES
         # NG-fired trigen
         self.NG_Trigen_on = 0
-        self.NG_Trigen_size_W = 0.0
+        self.NG_Trigen_ACH_size_W = 0.0
+        self.NG_Trigen_CCGT_size_W = 0.0
 
         # Water-source vapour compression chillers
         self.WS_BaseVCC_on = 0
