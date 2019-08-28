@@ -42,6 +42,8 @@ class NetworkInfo(object):
         self.network_name = config.thermal_network_optimization.network_name
         self.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
         self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
+        self.possible_plant_sites = config.thermal_network_optimization.possible_plant_sites
+
         # initialize optimization storage variables and dictionaries
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
@@ -85,9 +87,10 @@ def thermal_network_optimization(config, locator):
     network_info.building_names = total_demand.Name.values
     network_info.number_of_buildings_in_district = total_demand.Name.count()
     # write possible plant location sites to object
-    if not config.thermal_network_optimization.possible_plant_sites:
-        # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
-        config.thermal_network_optimization.possible_plant_sites = network_info.building_names
+    if not network_info.possible_plant_sites:
+        # if there is no input from the config file as to which sites are potential plant locations,
+        # set all as possible locations
+        network_info.possible_plant_sites = network_info.building_names
 
     # create initial population
     print 'Creating initial population.'
@@ -564,7 +567,7 @@ def admissible_plant_location(network_info):
         random_index = np.random.random_integers(low=6, high=(network_info.number_of_buildings_in_district + 5))
         # check if the building at this index is in our permitted building list
         if network_info.building_names[
-            random_index - 6] in network_info.config.thermal_network_optimization.possible_plant_sites:
+            random_index - 6] in network_info.possible_plant_sites:
             # if yes, we have a suitable location
             admissible_plant_location = True
     return random_index
