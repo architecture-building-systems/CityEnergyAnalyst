@@ -98,15 +98,16 @@ def thermal_network_optimization(config, locator):
         # calculate network cost for each individual and sort by increasing cost
         sorted_population = network_cost_calculation(newMutadedGen, network_info, network_layout, config)
         print 'Lowest cost individual: ', sorted_population[0], '\n'
+
         # setup next generation
-        if generation_number < config.thermal_network_optimization.number_of_generations - 1:
-            # select individuals for next generation
-            selectedPop = selectFromPrevPop(sorted_population, network_info)
-            # breed next generation
-            newGen = breedNewGeneration(selectedPop, network_info)
-            # add mutations
-            newMutadedGen = mutateGeneration(newGen, network_info)
-            print 'Finished mutation.'
+
+        # select individuals for next generation
+        selectedPop = selectFromPrevPop(sorted_population, network_info)
+        # breed next generation
+        newGen = breedNewGeneration(selectedPop, network_info)
+        # add mutations
+        newMutadedGen = mutateGeneration(newGen, network_info)
+        print 'Finished mutation.'
     # write values into all_individuals_list and output results
     output_results_of_all_individuals(config, locator, network_info)
     print('thermal_network_optimization_main() succeeded')
