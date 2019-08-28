@@ -259,8 +259,8 @@ Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot wate
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
 
-Activation curve,E_Pump_DHN_req_W,W,District heating network pumps,red
-Activation curve,E_Pump_DCN_req_W,W,District heating network pumps,blue
+Activation curve,E_DHN_req_W,W,District heating network pumps,red
+Activation curve,E_DCN_req_W,W,District heating network pumps,blue
 
 Activation curve,E_Storage_charging_req_W,W,Charging of seasonal storage,red
 Activation curve,E_Storage_discharging_req_W,W,Discharging of seasonal sttorage,blue
@@ -269,8 +269,8 @@ Activation curve,E_HP_SC_FP_req_W,W,Electricity demand of SC flat-plate heat-exc
 Activation curve,E_HP_SC_ET_req_W,W,Electricity demand of SC evacuated-tube heat-exchangers,purple_light
 Activation curve,E_HP_PVT_req_W,W,Electricity demand of PVT heat-exchangers,green_light
 Activation curve,E_HP_Server_req_W,W,Electricity demand of server-source heat-pump,red_light
-Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
-Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
+Activation curve,E_HP_Sew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
+Activation curve,E_HP_Lake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
 Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange
 Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity for base boiler,orange_light
 Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey

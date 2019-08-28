@@ -54,8 +54,7 @@ class RampingCapacity(cea.plots.supply_system.SupplySystemPlotBase):
         data = self.process_individual_ramping_capacity()
         hours = data.index.hour
         graph = []
-        analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
-        for field in analysis_fields:
+        for field in self.analysis_fields:
             y = data[field].values / 1E6  # into MW
             trace = go.Box(x=hours, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
             graph.append(trace)
