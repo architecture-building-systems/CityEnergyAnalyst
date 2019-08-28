@@ -26,7 +26,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictElectricityPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["E_CHP_gen_directload_W",
-                                "E_CCGT_gen_directload_W",
+                                "E_Trigen_gen_directload_W",
                                 "E_Furnace_dry_gen_directload_W",
                                 "E_Furnace_wet_gen_directload_W",
                                 "E_PV_gen_directload_W",
@@ -34,7 +34,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
                                 "E_GRID_directload_W",
                                 ]
         self.analysis_fields_exports = ["E_CHP_gen_export_W",
-                                        "E_CCGT_gen_export_W",
+                                        "E_Trigen_gen_export_W",
                                         "E_Furnace_dry_gen_export_W",
                                         "E_Furnace_wet_gen_export_W",
                                         "E_PV_gen_export_W",
