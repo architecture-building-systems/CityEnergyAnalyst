@@ -92,6 +92,7 @@ def thermal_network_optimization(config, locator):
     # create initial population
     print 'Creating initial population.'
     newMutadedGen = generateInitialPopulation(network_info, network_layout)
+    
     # iterate through number of generations
     for generation_number in range(config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
@@ -100,7 +101,6 @@ def thermal_network_optimization(config, locator):
         print 'Lowest cost individual: ', sorted_population[0], '\n'
 
         # setup next generation
-
         # select individuals for next generation
         selectedPop = selectFromPrevPop(sorted_population, network_info)
         # breed next generation
@@ -108,6 +108,7 @@ def thermal_network_optimization(config, locator):
         # add mutations
         newMutadedGen = mutateGeneration(newGen, network_info)
         print 'Finished mutation.'
+
     # write values into all_individuals_list and output results
     output_results_of_all_individuals(config, locator, network_info)
     print('thermal_network_optimization_main() succeeded')
