@@ -337,7 +337,7 @@ def objective_function(network_info, network_layout, thermal_network):
 
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         #thermal_network = ThermalNetwork(network_info.locator, "", )
-        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=True)
+        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=False)
 
         # set all buildings to disconnected
         network_layout.disconnected_buildings = network_info.building_names
@@ -353,9 +353,9 @@ def objective_function(network_info, network_layout, thermal_network):
         # save which buildings are disconnected
         network_layout.disconnected_buildings = disconnected_building_names
         layout_network(network_layout, network_info.locator, plant_building_names, optimization_flag=True)
+
         # run the thermal_network simulation with the generated network
-        thermal_network.thermal_network_main()
-        thermal_network.main(network_info.config)
+        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=False)
 
     ## Cost calculations
     Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)

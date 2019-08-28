@@ -74,8 +74,8 @@ class ThermalNetwork(object):
         self.minimum_mass_flow_iteration_limit = 30
         self.minimum_edge_mass_flow = 0.1
         self.diameter_iteration_limit = 10
-        self.substation_cooling_systems = ["ahu" "aru", "scu"],
-        self.substation_heating_systems = ["ahu" "aru", "shu", "ww"],
+        self.substation_cooling_systems = ["ahu", "aru", "scu"]
+        self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
         self.temperature_control = "VT"
         self.plant_supply_temperature = 80
 
