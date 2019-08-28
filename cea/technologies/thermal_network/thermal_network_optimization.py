@@ -99,13 +99,13 @@ def thermal_network_optimization(config, locator):
 
     # create initial population
     print 'Creating initial population.'
-    newMutadedGen = generateInitialPopulation(network_info, network_layout)
+    population = generateInitialPopulation(network_info, network_layout)
 
     # iterate through number of generations
     for generation_number in range(config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
         # calculate network cost for each individual and sort by increasing cost
-        sorted_population = network_cost_calculation(newMutadedGen, network_info, network_layout, config)
+        sorted_population = network_cost_calculation(population, network_info, network_layout, config)
         print 'Lowest cost individual: ', sorted_population[0], '\n'
 
         # setup next generation
@@ -114,7 +114,7 @@ def thermal_network_optimization(config, locator):
         # breed next generation
         newGen = breedNewGeneration(selectedPop, network_info)
         # add mutations
-        newMutadedGen = mutateGeneration(newGen, network_info)
+        population = mutateGeneration(newGen, network_info)
         print 'Finished mutation.'
 
     # write values into all_individuals_list and output results
@@ -147,11 +147,11 @@ def output_results_of_all_individuals(config, locator, network_info):
     return np.nan
 
 
-def network_cost_calculation(newMutadedGen, network_info, network_layout, config):
+def network_cost_calculation(population, network_info, network_layout, config):
     """
     Main function which calls the objective function and stores values
     :param NetworkLayout network_layout:
-    :param newMutadedGen: List containing all individuals of this generation
+    :param population: List containing all individuals of this generation
     :param NetworkInfo network_info: Object storing network information.
     :return: List of sorted tuples, lowest cost first. Each tuple consists of the cost, followed by the individual as a string.
     """
@@ -163,7 +163,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
                                          columns=network_info.generation_info + network_info.cost_info)
 
     # iterate through all individuals
-    for individual in newMutadedGen:
+    for individual in population:
         thermal_network = ThermalNetwork(network_info.locator, "", network_info)
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(network_layout.network_type, individual)):
@@ -172,7 +172,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
-            capex_total, opex_total, total_cost, cost_storage_df = objective_function(network_info, network_layout)
+            capex_total, opex_total, total_cost, cost_storage_df = objective_function(network_info, network_layout, thermal_network)
 
             # calculate network total network_length_m and average diameter
             network_length_m, average_pipe_diameter_m = calc_network_size(network_info)
@@ -296,7 +296,7 @@ def translate_individual(network_info, individual):
     return building_plants, disconnected_buildings
 
 
-def objective_function(network_info, network_layout):
+def objective_function(network_info, network_layout, thermal_network):
     """
     Calculates the cost of the given individual by generating a network and simulating it.
     :param NetworkInfo network_info: Object storing network information.
@@ -591,8 +591,12 @@ def generateInitialPopulation(network_info, network_layout):
     :return: returns list of individuals as initial population for genetic algorithm
     """
     # initialize list of initial population
-    initialPop = []
-    while len(initialPop) < network_info.number_of_individuals:  # assure we have the correct amount of individuals
+    population = []
+    while len(population) < network_info.number_of_individuals:
+        # assure we have the correct amount of individuals by creating a (random) new individual and appending it to the
+        # population if it's not already present - we stop when we have created the required amout of (unique)
+        # individuals
+
         # list of where our plants are
         if network_info.config.thermal_network_optimization.optimize_building_connections:
             # if this option is set, we are optimizing which buildings to connect, so we need to disconnect some buildings
@@ -630,9 +634,9 @@ def generateInitialPopulation(network_info, network_layout):
         # create individual, but together the load type, network type (branch/loop) and plant locations and connected buildings
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         # add individual to list, avoid duplicates
-        if new_individual not in initialPop:
-            initialPop.append(new_individual)
-    return list(initialPop)
+        if new_individual not in population:
+            population.append(new_individual)
+    return population
 
 
 def mutateConnections(individual, network_info):
