@@ -156,10 +156,10 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars,
                  locator,
-                 performance_heating,
-                 performance_cooling,
-                 performance_electricity,
-                 performance_disconnected,
+                 buildings_connected_costs,
+                 buildings_connected_emissions,
+                 buildings_disconnected_costs,
+                 buildings_disconnected_emissions,
                  district_heating_generation_dispatch,
                  district_cooling_generation_dispatch,
                  district_electricity_dispatch,
@@ -175,9 +175,19 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil
 
 
-def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
-                 performance_disconnected, heating_dispatch, cooling_dispatch, electricity_dispatch,
-                 electricity_requirements, performance_totals, building_connectivity_dict):
+def save_results(master_to_slave_vars,
+                 locator,
+                 buildings_connected_costs,
+                 buildings_connected_emissions,
+                 buildings_disconnected_costs,
+                 buildings_disconnected_emissions,
+                 heating_dispatch,
+                 cooling_dispatch,
+                 electricity_dispatch,
+                 electricity_requirements,
+                 performance_totals,
+                 building_connectivity_dict):
+
     # SAVE BUILDING CONNECTIVITY
     pd.DataFrame(building_connectivity_dict).to_csv(
         locator.get_optimization_slave_building_connectivity(master_to_slave_vars.individual_number,
@@ -186,14 +196,14 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
 
     # SAVE PERFORMANCE RELATED FILES
     # put data inside a list, otherwise pandas cannot save it
-    for column in performance_disconnected.keys():
-        performance_disconnected[column] = [performance_disconnected[column]]
-    for column in performance_cooling.keys():
-        performance_cooling[column] = [performance_cooling[column]]
-    for column in performance_heating.keys():
-        performance_heating[column] = [performance_heating[column]]
-    for column in performance_electricity.keys():
-        performance_electricity[column] = [performance_electricity[column]]
+    for column in buildings_connected_costs.keys():
+        buildings_connected_costs[column] = [buildings_connected_costs[column]]
+    for column in buildings_connected_emissions.keys():
+        buildings_connected_emissions[column] = [buildings_connected_emissions[column]]
+    for column in buildings_disconnected_costs.keys():
+        buildings_disconnected_costs[column] = [buildings_disconnected_costs[column]]
+    for column in buildings_disconnected_emissions.keys():
+        buildings_disconnected_emissions[column] = [buildings_disconnected_emissions[column]]
     for column in performance_totals.keys():
         performance_totals[column] = [performance_totals[column]]
 
@@ -225,7 +235,6 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
 
     # add date and plot
     DATE = master_to_slave_vars.date
-    storage_dispatch['DATE'] = DATE
     electricity_dispatch['DATE'] = DATE
     cooling_dispatch['DATE'] = DATE
     heating_dispatch['DATE'] = DATE
