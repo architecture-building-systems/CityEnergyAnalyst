@@ -154,7 +154,7 @@ Section "Base Installation" Base_Installation_Section
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
     DetailPrint "Pip installing Jupyter"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
 
