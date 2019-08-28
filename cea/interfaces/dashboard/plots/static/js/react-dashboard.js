@@ -12,14 +12,22 @@ const {
   Empty
 } = antd;
 const { useState, useEffect, useCallback, useMemo } = React;
+const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
 const INITIAL_DASHBOARD = 0;
 const defaultPlotStyle = { height: 350, margin: 5 };
 
+// --------------------------
+// Components
+// --------------------------
+
 const Dashboard = () => {
   const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
-  const [showModalNew, setShowModalNew] = useState(false);
+  const dispatch = useDispatch();
+
+  const showModalNewDashboard = () =>
+    dispatch(setModalNewDashboardVisibility(true));
 
   const handleSelect = useCallback(index => {
     setDashIndex(index);
@@ -45,7 +53,7 @@ const Dashboard = () => {
               type="primary"
               icon="plus"
               size="small"
-              onClick={setShowModalNew}
+              onClick={showModalNewDashboard}
             >
               New Dashboard
             </Button>
@@ -59,12 +67,12 @@ const Dashboard = () => {
             <RowLayout dashIndex={dashIndex} plots={plots} />
           ) : layout === "map" ? (
             <MapLayout dashIndex={dashIndex} plots={plots} />
-          ) :(
+          ) : (
             <GridLayout dashIndex={dashIndex} plots={plots} />
           )}
         </div>
       </div>
-      <ModalNewDashboard visible={showModalNew} setVisible={setShowModalNew} />
+      <ModalNewDashboard />
     </React.Fragment>
   );
 };
@@ -93,13 +101,20 @@ const DashSelect = ({ setDashIndex, dashboards }) => {
   );
 };
 
-const ModalAddPlot = ({ visible, setVisible }) => {
+// --------------------------
+// Modal
+// --------------------------
+
+const ModalAddPlot = () => {
+  const visible = useSelector(state => state.dashboard.showModalAddPlot);
+  const dispatch = useDispatch();
+
   const handleOk = e => {
-    setVisible(false);
+    dispatch(setModalAddPlotVisibility(false));
   };
 
   const handleCancel = e => {
-    setVisible(false);
+    dispatch(setModalAddPlotVisibility(false));
   };
 
   return (
@@ -114,13 +129,16 @@ const ModalAddPlot = ({ visible, setVisible }) => {
   );
 };
 
-const ModalNewDashboard = ({ visible, setVisible }) => {
+const ModalNewDashboard = () => {
+  const visible = useSelector(state => state.dashboard.showModalNewDashboard);
+  const dispatch = useDispatch();
+
   const handleOk = e => {
-    setVisible(false);
+    dispatch(setModalNewDashboardVisibility(false));
   };
 
   const handleCancel = e => {
-    setVisible(false);
+    dispatch(setModalNewDashboardVisibility(false));
   };
 
   return (
@@ -135,12 +153,18 @@ const ModalNewDashboard = ({ visible, setVisible }) => {
   );
 };
 
+// --------------------------
+// Layouts
+// --------------------------
+
 const RowLayout = ({ dashIndex, plots }) => {
-  const [showModalAdd, setShowModalAdd] = useState(false);
+  const dispatch = useDispatch();
+
+  const showModalAddPlot = () => dispatch(setModalAddPlotVisibility(true));
 
   return (
     <React.Fragment>
-      <ModalAddPlot visible={showModalAdd} setVisible={setShowModalAdd} />
+      <ModalAddPlot />
       {plots.length ? (
         plots.map((data, index) => (
           <Row key={`${dashIndex}-${index}`}>
@@ -157,16 +181,18 @@ const RowLayout = ({ dashIndex, plots }) => {
         </Row>
       )}
 
-      <Affix offsetBottom={100}>
-        <Button
-          type="primary"
-          icon="plus"
-          style={{ float: "right" }}
-          onClick={setShowModalAdd}
-        >
-          Add plot
-        </Button>
-      </Affix>
+      {plots.length ? (
+        <Affix offsetBottom={100}>
+          <Button
+            type="primary"
+            icon="plus"
+            style={{ float: "right" }}
+            onClick={showModalAddPlot}
+          >
+            Add plot
+          </Button>
+        </Affix>
+      ) : null}
     </React.Fragment>
   );
 };
@@ -174,8 +200,23 @@ const RowLayout = ({ dashIndex, plots }) => {
 const GridLayout = ({ dashIndex, plots }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
+  const emptyplots = [];
+  if (plots.length < 6) {
+    for (var i = 0; i < 6 - plots.length; i++) {
+      emptyplots.push(
+        <div
+          className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
+          key={`${dashIndex}-${i}`}
+        >
+          <EmptyPlot />
+        </div>
+      );
+    }
+  }
+
   return (
     <React.Fragment>
+      <ModalAddPlot />
       <div className="row display-flex">
         {plots.map((data, index) => (
           <div
@@ -185,6 +226,7 @@ const GridLayout = ({ dashIndex, plots }) => {
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
         ))}
+        {emptyplots}
       </div>
     </React.Fragment>
   );
@@ -193,21 +235,43 @@ const GridLayout = ({ dashIndex, plots }) => {
 const MapLayout = ({ dashIndex, plots }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
+  const emptyplots = [];
+  if (plots.length < 5) {
+    for (var i = 0; i < 5 - plots.length; i++) {
+      emptyplots.push(
+        <div
+          className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
+          key={`${dashIndex}-${5 + i}`}
+        >
+          <EmptyPlot />
+        </div>
+      );
+    }
+  }
+
   return (
     <React.Fragment>
+      <ModalAddPlot />
       <div className="row display-flex">
         {plots.map((data, index) => (
           <div
-            className={`col-lg-${index === 0 ? 8 : 4} col-md-12 col-sm-12 col-xs-12 plot-widget`}
+            className={`col-lg-${
+              index === 0 ? 8 : 4
+            } col-md-12 col-sm-12 col-xs-12 plot-widget`}
             key={`${dashIndex}-${index}`}
           >
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
         ))}
+        {emptyplots}
       </div>
     </React.Fragment>
   );
 };
+
+// --------------------------
+// Plots
+// --------------------------
 
 const Plot = ({ index, dashIndex, data, style }) => {
   const [div, setDiv] = useState(null);
@@ -217,7 +281,7 @@ const Plot = ({ index, dashIndex, data, style }) => {
   const plotStyle = { ...defaultPlotStyle, ...style };
 
   // TODO: Maybe find a better solution
-  const hash = `cea-react-${dashIndex}-${index}`;
+  const hash = `cea-react-${data.hash}`;
 
   // Get plot div
   useEffect(() => {
@@ -271,10 +335,10 @@ const Plot = ({ index, dashIndex, data, style }) => {
       title={
         <div>
           <span style={{ fontWeight: "bold" }}>{data.title}</span>
-          {data.scenario && (
+          {data.parameters["scenario-name"] && (
             <React.Fragment>
               <span> - </span>
-              <small>{data.scenario}</small>
+              <small>{data.parameters["scenario-name"]}</small>
             </React.Fragment>
           )}
         </div>
@@ -324,7 +388,11 @@ const ErrorPlot = ({ error }) => {
 };
 
 const EmptyPlot = ({ style }) => {
+  const dispatch = useDispatch();
+  const showModalAddPlot = () => dispatch(setModalAddPlotVisibility(true));
+
   const plotStyle = { ...defaultPlotStyle, ...style };
+
   return (
     <Card
       title="Empty Plot"
@@ -333,14 +401,67 @@ const EmptyPlot = ({ style }) => {
       size="small"
     >
       <Empty>
-        <Button type="primary">Add plot</Button>
+        <Button type="primary" icon="plus" onClick={showModalAddPlot}>
+          Add plot
+        </Button>
       </Empty>
     </Card>
   );
 };
 
+// --------------------------
+// Actions
+// --------------------------
+
+const SHOW_MODAL_NEW_DASHBOARD = "SHOW_MODAL_NEW_DASHBOARD";
+const setModalNewDashboardVisibility = visible => {
+  return {
+    type: SHOW_MODAL_NEW_DASHBOARD,
+    payload: { showModalNewDashboard: visible }
+  };
+};
+
+const SHOW_MODAL_ADD_PLOT = "SHOW_MODAL_ADD_PLOT";
+const setModalAddPlotVisibility = visible => {
+  return {
+    type: SHOW_MODAL_ADD_PLOT,
+    payload: { showModalAddPlot: visible }
+  };
+};
+
+// --------------------------
+// Reducer
+// --------------------------
+
+const initialState = { showModalNewDashboard: false, showModalAddPlot: false };
+
+const dashboard = (state = initialState, { type, payload }) => {
+  switch (type) {
+    case SHOW_MODAL_NEW_DASHBOARD:
+      return { ...state, ...payload };
+    case SHOW_MODAL_ADD_PLOT:
+      return { ...state, ...payload };
+    default:
+      return state;
+  }
+};
+
+// --------------------------
+// Redux
+// --------------------------
+
+const rootReducer = Redux.combineReducers({
+  dashboard
+});
+const store = Redux.createStore(
+  rootReducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+
 ReactDOM.render(
-  React.createElement(Dashboard),
+  <Provider store={store}>
+    <Dashboard />
+  </Provider>,
   document.querySelector("#cea-dashboard")
 );
 
