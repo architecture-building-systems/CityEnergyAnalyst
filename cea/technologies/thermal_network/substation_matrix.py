@@ -288,7 +288,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                       thermal_network.substations_HEX_specs.ix[name],
                                                                       thermal_network, name, t)
         else:
-            for key in thermal_network.config.thermal_network.substation_cooling_systems:
+            for key in thermal_network.substation_cooling_systems:
                 key = 'cs_' + key
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
