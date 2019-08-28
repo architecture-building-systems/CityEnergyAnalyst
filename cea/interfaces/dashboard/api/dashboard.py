@@ -1,5 +1,6 @@
 from flask_restplus import Namespace, Resource, fields, abort
 
+import hashlib
 import cea.config
 import cea.plots.cache
 
@@ -25,6 +26,7 @@ class Dashboard(Resource):
         for d in dashboards:
             dashboard = d.to_dict()
             for i, plot in enumerate(dashboard['plots']):
+                dashboard['plots'][i]['hash'] = hashlib.md5(repr(sorted(dashboard['plots'][i].items()))).hexdigest()
                 dashboard['plots'][i]['title'] = d.plots[i].title
             out.append(dashboard)
 
