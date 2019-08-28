@@ -44,6 +44,9 @@ class NetworkInfo(object):
         self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
         self.possible_plant_sites = config.thermal_network_optimization.possible_plant_sites
 
+        # disconnected buildings as per config file for thermal-network-optimization
+        self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
+
         # initialize optimization storage variables and dictionaries
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
                           'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_hex',
@@ -75,9 +78,10 @@ def thermal_network_optimization(config, locator):
 
     # initialize object
     network_info = NetworkInfo(locator, config)
+
     network_layout = NetworkLayout()
-    network_layout.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
-    network_layout.network_type = config.thermal_network_optimization.network_type
+    network_layout.disconnected_buildings = network_info.disconnected_buildings
+    network_layout.network_type = network_info.network_type
 
     if network_info.network_type == 'DH':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
