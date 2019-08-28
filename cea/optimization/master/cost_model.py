@@ -453,8 +453,8 @@ def calc_generation_costs_cooling(locator,
                                   ):
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
-        Qc_ACH_nom_W = master_to_slave_variables.NG_Trigen_ACH_size
-        Q_GT_nom_W = master_to_slave_variables.NG_Trigen_CCGT_size
+        Qc_ACH_nom_W = master_to_slave_variables.NG_Trigen_ACH_size_W
+        Q_GT_nom_W = master_to_slave_variables.NG_Trigen_CCGT_size_W
 
         # ACH
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,

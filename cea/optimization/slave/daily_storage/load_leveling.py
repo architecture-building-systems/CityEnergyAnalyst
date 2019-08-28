@@ -43,7 +43,7 @@ class LoadLevelingDailyStorage(object):
             else:
                 Q_to_storage_possible_W = self.Q_current_storage_empty_capacity_W
 
-            self.T_tank_K = self.storage_temperature(self, Q_to_storage_possible_W, activation="charge")
+            self.T_tank_K = self.storage_temperature(Q_to_storage_possible_W, "charge")
             self.Q_current_storage_empty_capacity_W = self.Q_current_storage_empty_capacity_W - Q_to_storage_possible_W
             self.Q_current_storage_filled_capacity_W = self.Qc_tank_charging_limit_W - self.Q_current_storage_empty_capacity_W
         else:
@@ -58,7 +58,7 @@ class LoadLevelingDailyStorage(object):
             else:
                 Q_from_storage_possible_W = self.Q_current_storage_filled_capacity_W
 
-            self.T_tank_K = self.storage_temperature(self, Q_from_storage_possible_W, activation="discharge")
+            self.T_tank_K = self.storage_temperature(Q_from_storage_possible_W, "discharge")
             self.Q_current_storage_empty_capacity_W = self.Q_current_storage_empty_capacity_W + Q_from_storage_possible_W
             self.Q_current_storage_filled_capacity_W = self.Q_current_storage_filled_capacity_W - Q_from_storage_possible_W
         else:
