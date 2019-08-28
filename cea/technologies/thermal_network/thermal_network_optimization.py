@@ -92,7 +92,7 @@ def thermal_network_optimization(config, locator):
     # create initial population
     print 'Creating initial population.'
     newMutadedGen = generateInitialPopulation(network_info, network_layout)
-    
+
     # iterate through number of generations
     for generation_number in range(config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
@@ -142,8 +142,9 @@ def output_results_of_all_individuals(config, locator, network_info):
 def network_cost_calculation(newMutadedGen, network_info, network_layout, config):
     """
     Main function which calls the objective function and stores values
+    :param NetworkLayout network_layout:
     :param newMutadedGen: List containing all individuals of this generation
-    :param network_info: Object storing network information.
+    :param NetworkInfo network_info: Object storing network information.
     :return: List of sorted tuples, lowest cost first. Each tuple consists of the cost, followed by the individual as a string.
     """
     # initialize data storage and counter
@@ -237,7 +238,7 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
 def translate_individual(network_info, individual):
     """
     Translates individual to prepare cost evaluation
-    :param network_info: Object storing network information.
+    :param NetworkInfo network_info: Object storing network information.
     :return:
     """
     # find which buildings have plants in this individual
@@ -286,7 +287,7 @@ def translate_individual(network_info, individual):
 def objective_function(network_info, network_layout):
     """
     Calculates the cost of the given individual by generating a network and simulating it.
-    :param network_info: Object storing network information.
+    :param NetworkInfo network_info: Object storing network information.
     :return: total cost, opex and capex of the given individual
     """
 

@@ -59,31 +59,28 @@ class ThermalNetwork(object):
     """
 
     def __init__(self, locator, network_name, thermal_network_section=None):
+        self.locator = locator
         self.network_name = network_name
 
-        thermal_network_section_fields = {
-            'network_type': "DC",
-            'network_names': [""],
-            'file_type': "shp",
-            'set_diameter': True,
-            'load_max_edge_flowrate_from_previous_run': False,
-            'start_t': 0,
-            'stop_t': 8760,
-            'use_representative_week_per_month': True,
-            'minimum_mass_flow_iteration_limit': 30,
-            'minimum_edge_mass_flow': 0.1,
-            'diameter_iteration_limit': 10,
-            'substation_cooling_systems': ["ahu", "aru", "scu"],
-            'substation_heating_systems': ["ahu", "aru", "shu", "ww"],
-            'temperature_control': "VT",
-            'plant_supply_temperature': 80
-        }
-        for field in thermal_network_section_fields.keys():
-            if hasattr(thermal_network_section, field):
-                setattr(self, field, getattr(thermal_network_section, field))
-            else:
-                setattr(self, field, thermal_network_section_fields[field])
-        self.locator = locator
+        # some default values to be overwritten by the thermal_network_section:
+        self.network_type = "DC"
+        self.network_names = [""]
+        self.file_type = "shp"
+        self.set_diameter = True
+        self.load_max_edge_flowrate_from_previous_run = False
+        self.start_t = 0
+        self.stop_t = 8760
+        self.use_representative_week_per_month = True
+        self.minimum_mass_flow_iteration_limit = 30
+        self.minimum_edge_mass_flow = 0.1
+        self.diameter_iteration_limit = 10
+        self.substation_cooling_systems = ["ahu" "aru", "scu"],
+        self.substation_heating_systems = ["ahu" "aru", "shu", "ww"],
+        self.temperature_control = "VT"
+        self.plant_supply_temperature = 80
+
+        # replace default values with those in the config file section
+        self.copy_config_section(thermal_network_section)
 
         # combine into a dictionary to pass fewer arguments
         self.substation_systems = {'heating': self.substation_heating_systems if self.network_type == "DH" else [],
@@ -124,6 +121,16 @@ class ThermalNetwork(object):
             self.get_thermal_network_from_csv()
         else:
             self.get_thermal_network_from_shapefile()
+
+    def copy_config_section(self, thermal_network_section):
+        thermal_network_section_fields = ["network_type", "network_names", "file_type", "set_diameter",
+                                          "load_max_edge_flowrate_from_previous_run", "start_t", "stop_t",
+                                          "use_representative_week_per_month", "minimum_mass_flow_iteration_limit",
+                                          "minimum_edge_mass_flow", "diameter_iteration_limit",
+                                          "substation_cooling_systems", "substation_heating_systems",
+                                          "temperature_control", "plant_supply_temperature", ]
+        for field in thermal_network_section_fields:
+            setattr(self, field, getattr(thermal_network_section, field))
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
