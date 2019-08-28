@@ -245,6 +245,10 @@ def network_cost_calculation(newMutadedGen, network_info, network_layout, config
 def translate_individual(network_info, individual):
     """
     Translates individual to prepare cost evaluation
+
+    Extract building plant locations (building names) and a list of disconnected buildings from the individual
+
+    :param individual: the individual to extract the information (coded as genes) from
     :param NetworkInfo network_info: Object storing network information.
     :return:
     """
