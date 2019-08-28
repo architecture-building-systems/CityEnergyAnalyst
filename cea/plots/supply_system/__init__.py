@@ -115,11 +115,11 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
                                                                                self.generation))
         lenght = data_el_exports_imports.shape[0]
         ramping = []  # store how much it needs to import or export
-        ramping.append(data_el_exports_imports.loc[lenght - 1, "E_GRID_directload_W"] - data_el_exports_imports.loc[
-            0, "E_GRID_directload_W"])
+        ramping.append(data_el_exports_imports.loc[lenght - 1, "E_GRID_directload_W"]
+                       - data_el_exports_imports.loc[0, "E_GRID_directload_W"])
         for hour in range(0, lenght-1):
-            ramping.append(data_el_exports_imports.loc[hour, "E_GRID_directload_W"] - data_el_exports_imports.loc[
-                hour + 1, "E_GRID_directload_W"])
+            ramping.append(data_el_exports_imports.loc[hour, "E_GRID_directload_W"]
+                           - data_el_exports_imports.loc[hour + 1, "E_GRID_directload_W"])
 
         data_el_exports_imports = data_el_exports_imports.set_index('DATE')
         data_el_exports_imports.index = pd.to_datetime(data_el_exports_imports.index)

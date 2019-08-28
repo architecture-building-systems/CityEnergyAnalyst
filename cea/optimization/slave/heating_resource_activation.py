@@ -92,7 +92,7 @@ def heating_source_activator(Q_therm_req_W,
     if master_to_slave_vars.Furnace_wet_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
         source_Furnace_wet = 1
         # Operate only if its above minimal load
-        if Q_heat_unmet_W > (FURNACE_MIN_LOAD * master_to_slave_vars.WBFurnace_Q_max_W):
+        if Q_heat_unmet_W > master_to_slave_vars.WBFurnace_Q_max_W:
             if Q_heat_unmet_W > master_to_slave_vars.WBFurnace_Q_max_W:
                 Q_Furnace_wet_gen_W = master_to_slave_vars.WBFurnace_Q_max_W
                 # scale down if above maximum load, Furnace operates at max. capacity
@@ -134,7 +134,7 @@ def heating_source_activator(Q_therm_req_W,
     if master_to_slave_vars.Furnace_dry_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
         source_Furnace_dry = 1
         # Operate only if its above minimal load
-        if Q_heat_unmet_W > (FURNACE_MIN_LOAD * master_to_slave_vars.DBFurnace_Q_max_W):
+        if Q_heat_unmet_W > master_to_slave_vars.DBFurnace_Q_max_W:
             if Q_heat_unmet_W > master_to_slave_vars.DBFurnace_Q_max_W:
                 Q_Furnace_dry_gen_W = master_to_slave_vars.DBFurnace_Q_max_W
                 # scale down if above maximum load, Furnace operates at max. capacity

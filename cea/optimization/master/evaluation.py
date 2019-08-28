@@ -13,6 +13,8 @@ from cea.optimization.master.performance_aggregation import summarize_results_in
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
+from cea.constants import HOURS_IN_YEAR
+import numpy as np
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -105,6 +107,25 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                             lca,
                                                                                             network_features,
                                                                                             )
+    else:
+        district_heating_electricity_requirements_dispatch = {
+            # ENERGY REQUIREMENTS
+            # Electricity
+            "E_Storage_charging_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_Storage_discharging_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_DHN_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_SC_FP_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_SC_ET_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_PVT_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_Server_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_Sew_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_HP_Lake_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_GHP_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_BaseBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+        }
+
 
     # DISTRICT COOLING NETWORK:
     if master_to_slave_vars.DCN_exists:
@@ -118,6 +139,18 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                             prices,
                                                                                             lca,
                                                                                             network_features)
+    else:
+        district_cooling_electricity_requirements_dispatch = {
+            # ENERGY REQUIREMENTS
+            # Electricity
+            "E_DCN_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_BaseVCC_WS_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_PeakVCC_WS_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_BaseVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_PeakVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
+            "E_BackupVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
+        }
+
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("DISTRICT ELECTRICITY GRID OPERATION")
