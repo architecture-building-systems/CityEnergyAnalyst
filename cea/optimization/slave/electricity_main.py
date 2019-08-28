@@ -50,7 +50,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                                                 )
 
     # GET ACTIVATION CURVE
-    district_electricity_requirements_dispatch = electricity_activation_curve(district_microgrid_generation_dispatch,
+    district_electricity_dispatch = electricity_activation_curve(district_microgrid_generation_dispatch,
                                                                               district_heating_generation_dispatch,
                                                                               district_cooling_generation_dispatch,
                                                                               E_sys_req_W)
@@ -61,7 +61,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
 
 
     return district_microgrid_costs, \
-           district_electricity_requirements_dispatch, \
+           district_electricity_dispatch, \
            district_electricity_demands
 
 

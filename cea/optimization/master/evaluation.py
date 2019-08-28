@@ -83,11 +83,11 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                        district_heating_network,
                                                                        district_cooling_network)
     # INITIALIZE DICTS STORING PERFORMANCE DATA
-    district_heating_costs = {}
+    district_heating_fixed_costs = {}
     district_heating_generation_dispatch = {}
     district_heating_electricity_requirements_dispatch = {}
     district_heating_fuel_requirements_dispatch = {}
-    district_cooling_costs = {}
+    district_cooling_fixed_costs = {}
     district_cooling_generation_dispatch = {}
     district_cooling_electricity_requirements_dispatch = {}
     district_cooling_fuel_requirements_dispatch = {}
@@ -95,7 +95,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         print("DISTRICT HEATING OPERATION")
-        district_heating_costs, \
+        district_heating_fixed_costs, \
         district_heating_generation_dispatch, \
         district_heating_electricity_requirements_dispatch, \
         district_heating_fuel_requirements_dispatch = heating_main.district_heating_network(locator,
@@ -109,7 +109,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # DISTRICT COOLING NETWORK:
     if master_to_slave_vars.DCN_exists:
         print("DISTRICT COOLING OPERATION")
-        district_cooling_costs, \
+        district_cooling_fixed_costs, \
         district_cooling_generation_dispatch, \
         district_cooling_electricity_requirements_dispatch, \
         district_cooling_fuel_requirements_dispatch = cooling_main.district_cooling_network(locator,
@@ -121,8 +121,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("DISTRICT ELECTRICITY GRID OPERATION")
-    district_microgrid_costs, \
-    district_microgrid_requirements_dispatch, \
+    district_electricity_fixed_costs, \
+    district_electricity_dispatch, \
     district_electricity_demands = electricity_main.electricity_calculations_of_all_buildings(locator,
                                                                                               district_heating_generation_dispatch,
                                                                                               district_heating_electricity_requirements_dispatch,
@@ -130,11 +130,11 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                               district_cooling_electricity_requirements_dispatch)
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
-    buildings_connected_costs,\
-    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_costs,
-                                                                                       district_cooling_costs,
-                                                                                       district_microgrid_costs,
-                                                                                       district_microgrid_requirements_dispatch,
+    buildings_connected_costs, \
+    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
+                                                                                       district_cooling_fixed_costs,
+                                                                                       district_electricity_fixed_costs,
+                                                                                       district_electricity_dispatch,
                                                                                        district_heating_fuel_requirements_dispatch,
                                                                                        district_cooling_fuel_requirements_dispatch,
                                                                                        lca)
@@ -146,14 +146,12 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                              locator,
                                                                                              master_to_slave_vars)
 
-    
-
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
-                                                                                                  performance_heating,
-                                                                                                  performance_cooling,
-                                                                                                  performance_disconnected,
-                                                                                                  performance_electricity)
+                                                                                                  buildings_connected_costs,
+                                                                                                  buildings_connected_emissions,
+                                                                                                  buildings_disconnected_costs,
+                                                                                                  buildings_disconnected_emissions)
 
     print("SAVING RESULTS TO DISK")
     save_results(master_to_slave_vars,
@@ -162,11 +160,10 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                  performance_cooling,
                  performance_electricity,
                  performance_disconnected,
-                 storage_dispatch,
-                 heating_dispatch,
-                 cooling_dispatch,
-                 electricity_dispatch,
-                 electricity_requirements,
+                 district_heating_generation_dispatch,
+                 district_cooling_generation_dispatch,
+                 district_electricity_dispatch,
+                 district_electricity_demands,
                  performance_totals,
                  building_connectivity_dict)
 
@@ -179,7 +176,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
 
 def save_results(master_to_slave_vars, locator, performance_heating, performance_cooling, performance_electricity,
-                 performance_disconnected, storage_dispatch, heating_dispatch, cooling_dispatch, electricity_dispatch,
+                 performance_disconnected, heating_dispatch, cooling_dispatch, electricity_dispatch,
                  electricity_requirements, performance_totals, building_connectivity_dict):
     # SAVE BUILDING CONNECTIVITY
     pd.DataFrame(building_connectivity_dict).to_csv(
@@ -233,10 +230,6 @@ def save_results(master_to_slave_vars, locator, performance_heating, performance
     cooling_dispatch['DATE'] = DATE
     heating_dispatch['DATE'] = DATE
     electricity_requirements['DATE'] = DATE
-
-    pd.DataFrame(storage_dispatch).to_csv(locator.get_optimization_slave_storage_operation_data(
-        master_to_slave_vars.individual_number,
-        master_to_slave_vars.generation_number), index=False)
 
     pd.DataFrame(electricity_requirements).to_csv(locator.get_optimization_slave_electricity_requirements_data(
         master_to_slave_vars.individual_number,
