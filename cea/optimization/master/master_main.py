@@ -322,57 +322,43 @@ def non_dominated_sorting_genetic_algorithm(locator,
     return pop, logbook
 
 
-def save_generation_dataframes(generation, slected_individuals, locator, DCN_network_list_selected,
+def save_generation_dataframes(generation,
+                               slected_individuals,
+                               locator,
+                               DCN_network_list_selected,
                                DHN_network_list_selected):
+
     individual_list = range(len(slected_individuals))
     individual_name_list = ["Option " + str(x) for x in individual_list]
-    performance_distributed = pd.DataFrame()
-    performance_cooling = pd.DataFrame()
-    performance_heating = pd.DataFrame()
-    performance_electricity = pd.DataFrame()
+    performance_disconnected = pd.DataFrame()
+    performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
     for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
-        if DHN_barcode.count("1") > 0:
-            performance_heating = pd.concat([performance_heating,
-                                             pd.read_csv(
-                                                 locator.get_optimization_slave_heating_performance(ind, generation))],
-                                            ignore_index=True)
-        if DCN_barcode.count("1") > 0:
-            performance_cooling = pd.concat([performance_cooling,
-                                             pd.read_csv(
-                                                 locator.get_optimization_slave_cooling_performance(ind, generation))],
-                                            ignore_index=True)
+        performance_connected = pd.concat([performance_connected,
+                                           pd.read_csv(locator.get_optimization_slave_connected_performance(ind,
+                                                                                                            generation))],
+                                          ignore_index=True)
 
-        performance_distributed = pd.concat([performance_distributed, pd.read_csv(
+        performance_disconnected = pd.concat([performance_disconnected, pd.read_csv(
             locator.get_optimization_slave_disconnected_performance(ind, generation))], ignore_index=True)
-        performance_electricity = pd.concat([performance_electricity, pd.read_csv(
-            locator.get_optimization_slave_electricity_performance(ind, generation))], ignore_index=True)
         performance_totals = pd.concat([performance_totals,
                                         pd.read_csv(
                                             locator.get_optimization_slave_total_performance(ind, generation))],
                                        ignore_index=True)
 
-    performance_distributed['individual'] = individual_list
-    performance_cooling['individual'] = individual_list
-    performance_heating['individual'] = individual_list
-    performance_electricity['individual'] = individual_list
+    performance_disconnected['individual'] = individual_list
+    performance_connected['individual'] = individual_list
     performance_totals['individual'] = individual_list
-    performance_distributed['individual_name'] = individual_name_list
-    performance_cooling['individual_name'] = individual_name_list
-    performance_heating['individual_name'] = individual_name_list
-    performance_electricity['individual_name'] = individual_name_list
+    performance_disconnected['individual_name'] = individual_name_list
+    performance_connected['individual_name'] = individual_name_list
     performance_totals['individual_name'] = individual_name_list
-    performance_distributed['generation'] = generation
-    performance_cooling['generation'] = generation
-    performance_heating['generation'] = generation
-    performance_electricity['generation'] = generation
+    performance_disconnected['generation'] = generation
+    performance_connected['generation'] = generation
     performance_totals['generation'] = generation
 
     # save all results to disk
-    performance_distributed.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
-    performance_cooling.to_csv(locator.get_optimization_generation_cooling_performance(generation))
-    performance_heating.to_csv(locator.get_optimization_generation_heating_performance(generation))
-    performance_electricity.to_csv(locator.get_optimization_generation_electricity_performance(generation))
+    performance_disconnected.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
+    performance_connected.to_csv(locator.get_optimization_generation_connected_performance(generation))
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation))
 
 

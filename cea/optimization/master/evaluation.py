@@ -124,6 +124,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     district_electricity_fixed_costs, \
     district_electricity_dispatch, \
     district_electricity_demands = electricity_main.electricity_calculations_of_all_buildings(locator,
+                                                                                              master_to_slave_vars,
                                                                                               district_heating_generation_dispatch,
                                                                                               district_heating_electricity_requirements_dispatch,
                                                                                               district_cooling_generation_dispatch,
@@ -131,12 +132,14 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_connected_costs, \
-    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
+    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(master_to_slave_vars,
+                                                                                       district_heating_fixed_costs,
                                                                                        district_cooling_fixed_costs,
                                                                                        district_electricity_fixed_costs,
                                                                                        district_electricity_dispatch,
                                                                                        district_heating_fuel_requirements_dispatch,
                                                                                        district_cooling_fuel_requirements_dispatch,
+                                                                                       prices,
                                                                                        lca)
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
@@ -187,7 +190,6 @@ def save_results(master_to_slave_vars,
                  electricity_requirements,
                  performance_totals,
                  building_connectivity_dict):
-
     # SAVE BUILDING CONNECTIVITY
     pd.DataFrame(building_connectivity_dict).to_csv(
         locator.get_optimization_slave_building_connectivity(master_to_slave_vars.individual_number,
@@ -208,24 +210,16 @@ def save_results(master_to_slave_vars,
         performance_totals[column] = [performance_totals[column]]
 
     # export all including performance heating and performance cooling since we changed them
+    performance_disconnected = dict(buildings_disconnected_costs, **buildings_disconnected_emissions)
     pd.DataFrame(performance_disconnected).to_csv(
         locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,
                                                                 master_to_slave_vars.generation_number),
         index=False)
 
-    pd.DataFrame(performance_cooling).to_csv(
-        locator.get_optimization_slave_cooling_performance(master_to_slave_vars.individual_number,
+    performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
+    pd.DataFrame(performance_connected).to_csv(
+        locator.get_optimization_slave_connected_performance(master_to_slave_vars.individual_number,
                                                            master_to_slave_vars.generation_number),
-        index=False)
-
-    pd.DataFrame(performance_heating).to_csv(
-        locator.get_optimization_slave_heating_performance(master_to_slave_vars.individual_number,
-                                                           master_to_slave_vars.generation_number),
-        index=False)
-
-    pd.DataFrame(performance_electricity).to_csv(
-        locator.get_optimization_slave_electricity_performance(master_to_slave_vars.individual_number,
-                                                               master_to_slave_vars.generation_number),
         index=False)
 
     pd.DataFrame(performance_totals).to_csv(
@@ -244,8 +238,10 @@ def save_results(master_to_slave_vars,
         master_to_slave_vars.individual_number,
         master_to_slave_vars.generation_number), index=False)
 
+
     pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern(
         master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+
 
     pd.DataFrame(cooling_dispatch).to_csv(
         locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,

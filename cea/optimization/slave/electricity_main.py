@@ -38,7 +38,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
 
     # GET ENERGY GENERATION OF THE ELECTRICAL GRID
     district_microgrid_generation_dispatch = calc_district_system_electricity_generated(locator,
-                                                                                   master_to_slave_vars)
+                                                                                        master_to_slave_vars)
 
     # GET ENERGY REQUIREMENTS
     district_electricity_demands, \
@@ -50,15 +50,14 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                                                 )
 
     # GET ACTIVATION CURVE
-    district_electricity_dispatch = electricity_activation_curve(district_microgrid_generation_dispatch,
-                                                                              district_heating_generation_dispatch,
-                                                                              district_cooling_generation_dispatch,
-                                                                              E_sys_req_W)
-
+    district_electricity_dispatch = electricity_activation_curve(master_to_slave_vars,
+                                                                 district_microgrid_generation_dispatch,
+                                                                 district_heating_generation_dispatch,
+                                                                 district_cooling_generation_dispatch,
+                                                                 E_sys_req_W)
 
     # CALC COSTS
     district_microgrid_costs = calc_electricity_performance_costs(locator, master_to_slave_vars)
-
 
     return district_microgrid_costs, \
            district_electricity_dispatch, \
@@ -98,7 +97,6 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
 
 
 def calc_electricity_performance_costs(locator, master_to_slave_vars):
-
     # PV COSTS
     PV_installed_area_m2 = master_to_slave_vars.A_PV_m2  # kW
     Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
@@ -306,7 +304,8 @@ def update_performance_costs_heating(E_CHP_gen_export_W, E_Furnace_dry_gen_expor
     return performance_heating
 
 
-def electricity_activation_curve(district_grid_generation_dispatch,
+def electricity_activation_curve(master_to_slave_vars,
+                                 district_grid_generation_dispatch,
                                  district_heating_generation_dispatch,
                                  district_cooling_generation_dispatch,
                                  E_sys_req_W
@@ -327,11 +326,19 @@ def electricity_activation_curve(district_grid_generation_dispatch,
     E_GRID_directload_W = np.zeros(HOURS_IN_YEAR)
 
     # INITIALIZE VARIABLES:
-    E_CHP_gen_W = district_heating_generation_dispatch['E_CHP_gen_W']
-    E_PVT_gen_W = district_heating_generation_dispatch['E_PVT_gen_W']
-    E_Furnace_dry_gen_W = district_heating_generation_dispatch['E_Furnace_dry_gen_W']
-    E_Furnace_wet_gen_W = district_heating_generation_dispatch['E_Furnace_wet_gen_W']
-    E_Trigen_NG_gen_W = district_cooling_generation_dispatch['E_Trigen_NG_gen_W']
+    if master_to_slave_vars.DHN_exists:
+        E_CHP_gen_W = district_heating_generation_dispatch['E_CHP_gen_W']
+        E_PVT_gen_W = district_heating_generation_dispatch['E_PVT_gen_W']
+        E_Furnace_dry_gen_W = district_heating_generation_dispatch['E_Furnace_dry_gen_W']
+        E_Furnace_wet_gen_W = district_heating_generation_dispatch['E_Furnace_wet_gen_W']
+    else:
+        E_CHP_gen_W = E_PVT_gen_W = E_Furnace_dry_gen_W = E_Furnace_wet_gen_W = np.zeros(HOURS_IN_YEAR)
+
+    if master_to_slave_vars.DCN_exists:
+        E_Trigen_NG_gen_W = district_cooling_generation_dispatch['E_Trigen_NG_gen_W']
+    else:
+        E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
+
     E_PV_gen_W = district_grid_generation_dispatch['E_PV_gen_W']
 
     for hour in range(HOURS_IN_YEAR):
@@ -386,7 +393,7 @@ def electricity_activation_curve(district_grid_generation_dispatch,
                 E_Furnace_wet_gen_directload_W[hour] = 0.0
 
             # CCGT_cooling
-            if E_Trigen_NG_gen_W[hour] and E_req_hour_W > 0.0:
+            if E_Trigen_NG_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
                 delta_E = E_Trigen_NG_gen_W[hour] - E_req_hour_W
                 if delta_E >= 0.0:
                     E_CCGT_gen_export_W[hour] = delta_E
@@ -402,7 +409,7 @@ def electricity_activation_curve(district_grid_generation_dispatch,
                 E_CCGT_gen_directload_W[hour] = 0.0
 
             # PV
-            if E_PV_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
+            if E_PV_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
                 delta_E = E_PV_gen_W[hour] - E_req_hour_W
                 if delta_E >= 0.0:
                     E_PV_gen_export_W[hour] = delta_E
@@ -418,7 +425,7 @@ def electricity_activation_curve(district_grid_generation_dispatch,
                 E_PV_gen_directload_W[hour] = 0.0
 
             # PVT
-            if E_PVT_gen_W[hour] >= 0.0 and E_req_hour_W > 0.0:
+            if E_PVT_gen_W[hour] > 0.0 and E_req_hour_W > 0.0:
                 delta_E = E_PVT_gen_W[hour] - E_req_hour_W
                 if delta_E >= 0.0:
                     E_PVT_gen_export_W[hour] = delta_E
@@ -441,7 +448,7 @@ def electricity_activation_curve(district_grid_generation_dispatch,
     electricity_dispatch = {'E_CHP_gen_directload_W': E_CHP_gen_directload_W,
                             'E_CHP_gen_export_W': E_CHP_gen_export_W,
                             'E_Trigen_gen_directload_W': E_CCGT_gen_directload_W,
-                            'E_Trigen_gen_export_W': E_CHP_gen_export_W,
+                            'E_Trigen_gen_export_W': E_CCGT_gen_export_W,
                             'E_Furnace_dry_gen_directload_W': E_Furnace_dry_gen_directload_W,
                             'E_Furnace_dry_gen_export_W': E_Furnace_dry_gen_export_W,
                             'E_Furnace_wet_gen_directload_W': E_Furnace_wet_gen_directload_W,
