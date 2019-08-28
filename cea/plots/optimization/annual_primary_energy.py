@@ -34,7 +34,7 @@ class AnnualPENPlot(cea.plots.optimization.GenerationPlotBase):
 
     @property
     def title(self):
-        return "Annual primary energy"
+        return "Annual primary energy for generation #%s" % self.generation
 
     @property
     def output_path(self):

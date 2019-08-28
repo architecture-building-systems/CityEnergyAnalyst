@@ -33,7 +33,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
 
     @property
     def title(self):
-        return "Annual emissions"
+        return "Annual emissions for generation #%s" % self.generation
 
     @property
     def output_path(self):
