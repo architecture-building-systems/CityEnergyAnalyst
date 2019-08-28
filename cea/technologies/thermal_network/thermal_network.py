@@ -130,7 +130,8 @@ class ThermalNetwork(object):
                                           "substation_cooling_systems", "substation_heating_systems",
                                           "temperature_control", "plant_supply_temperature", ]
         for field in thermal_network_section_fields:
-            setattr(self, field, getattr(thermal_network_section, field))
+            if hasattr(thermal_network_section, field):
+                setattr(self, field, getattr(thermal_network_section, field))
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
