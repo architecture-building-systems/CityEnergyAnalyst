@@ -9,9 +9,10 @@ const {
   Affix,
   Modal,
   Result,
-  Empty
+  Empty,
+  Form
 } = antd;
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
 const INITIAL_DASHBOARD = 0;
@@ -22,6 +23,9 @@ const defaultPlotStyle = { height: 350, margin: 5 };
 // --------------------------
 
 const Dashboard = () => {
+  const _fetchDashboards = useSelector(
+    state => state.dashboard.fetchDashboards
+  );
   const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
   const dispatch = useDispatch();
@@ -34,20 +38,27 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5050/api/dashboard/")
-      .then(response => setDashboards(response.data));
-  }, []);
+    if (_fetchDashboards) {
+      axios.get("http://localhost:5050/api/dashboard/").then(response => {
+        setDashboards(response.data);
+        dispatch(fetchDashboards(false));
+      });
+    }
+  }, [_fetchDashboards]);
 
   if (!dashboards.length) return null;
 
   const { layout, plots } = dashboards[dashIndex];
+  const dashboardNames = dashboards.map(dashboard => dashboard.name);
 
   return (
     <React.Fragment>
       <div id="cea-dashboard-content" style={{ minHeight: "100%" }}>
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
-          <DashSelect setDashIndex={handleSelect} dashboards={dashboards} />
+          <DashSelect
+            setDashIndex={handleSelect}
+            dashboardNames={dashboardNames}
+          />
           <div style={{ position: "absolute", left: 250, top: 18 }}>
             <Button
               type="primary"
@@ -72,22 +83,14 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      <ModalNewDashboard />
+      <ModalNewDashboard setDashIndex={handleSelect}/>
+      <ModalAddPlot />
+      <ModalEditParameters />
     </React.Fragment>
   );
 };
 
-const DashSelect = ({ setDashIndex, dashboards }) => {
-  const dashList = useMemo(
-    () =>
-      dashboards.map((dashboard, index) => (
-        <option key={index} value={index}>
-          {dashboard.name}
-        </option>
-      )),
-    [dashboards]
-  );
-
+const DashSelect = React.memo(({ setDashIndex, dashboardNames }) => {
   return (
     <Affix offsetTop={30}>
       <Select
@@ -95,41 +98,21 @@ const DashSelect = ({ setDashIndex, dashboards }) => {
         style={{ width: 200 }}
         onChange={value => setDashIndex(value)}
       >
-        {dashList}
+        {dashboardNames.map((name, index) => (
+          <option key={index} value={index}>
+            {name}
+          </option>
+        ))}
       </Select>
     </Affix>
   );
-};
+});
 
 // --------------------------
 // Modal
 // --------------------------
 
-const ModalAddPlot = () => {
-  const visible = useSelector(state => state.dashboard.showModalAddPlot);
-  const dispatch = useDispatch();
-
-  const handleOk = e => {
-    dispatch(setModalAddPlotVisibility(false));
-  };
-
-  const handleCancel = e => {
-    dispatch(setModalAddPlotVisibility(false));
-  };
-
-  return (
-    <Modal
-      title="Add plot"
-      visible={visible}
-      onOk={handleOk}
-      onCancel={handleCancel}
-    >
-      <p>Some contents...</p>
-    </Modal>
-  );
-};
-
-const ModalNewDashboard = () => {
+const ModalNewDashboard = React.memo(() => {
   const visible = useSelector(state => state.dashboard.showModalNewDashboard);
   const dispatch = useDispatch();
 
@@ -151,7 +134,114 @@ const ModalNewDashboard = () => {
       <p>Some contents...</p>
     </Modal>
   );
-};
+});
+
+const ModalAddPlot = React.memo(() => {
+  const visible = useSelector(state => state.dashboard.showModalAddPlot);
+  const dispatch = useDispatch();
+
+  const handleOk = e => {
+    dispatch(setModalAddPlotVisibility(false));
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalAddPlotVisibility(false));
+  };
+
+  return (
+    <Modal
+      title="Add plot"
+      visible={visible}
+      onOk={handleOk}
+      onCancel={handleCancel}
+    >
+      <p>Some contents...</p>
+    </Modal>
+  );
+});
+
+const ModalEditParameters = React.memo(() => {
+  const [parameters, setParameters] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const visible = useSelector(state => state.dashboard.showModalEditParameters);
+  const { dashIndex, index } = useSelector(
+    state => state.dashboard.editParameter
+  );
+  const formRef = useRef();
+  const dispatch = useDispatch();
+
+  const handleOk = e => {
+    formRef.current.validateFields((err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log("Received values of form: ", values);
+        axios
+          .post(
+            `http://localhost:5050/api/dashboard/plot-parameters/${dashIndex}/${index}`,
+            values
+          )
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              dispatch(fetchDashboards(true));
+              setConfirmLoading(false);
+              dispatch(setModalEditParametersVisibility(false));
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
+      }
+    });
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalEditParametersVisibility(false));
+  };
+
+  useEffect(() => {
+    if (visible) {
+      axios
+        .get(
+          `http://localhost:5050/api/dashboard/plot-parameters/${dashIndex}/${index}`
+        )
+        .then(response => {
+          setParameters(response.data);
+        });
+    }
+  }, [dashIndex, index]);
+
+  useEffect(() => {
+    setParameters(null);
+  }, [visible]);
+
+  return (
+    <Modal
+      title="Edit plot parameters"
+      visible={visible}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      okButtonProps={{ disabled: parameters === null }}
+      confirmLoading={confirmLoading}
+    >
+      <ParamsForm ref={formRef} parameters={parameters} />
+    </Modal>
+  );
+});
+
+const ParamsForm = Form.create()(({ parameters, form }) => {
+  const { getFieldDecorator } = form;
+
+  return (
+    <Form layout="horizontal">
+      {parameters
+        ? parameters.map(param => ceaParameter(param, getFieldDecorator))
+        : "Fetching Data..."}
+    </Form>
+  );
+});
 
 // --------------------------
 // Layouts
@@ -164,10 +254,9 @@ const RowLayout = ({ dashIndex, plots }) => {
 
   return (
     <React.Fragment>
-      <ModalAddPlot />
       {plots.length ? (
         plots.map((data, index) => (
-          <Row key={`${dashIndex}-${index}`}>
+          <Row key={`${dashIndex}-${index}-${data.hash}`}>
             <Col>
               <Plot index={index} dashIndex={dashIndex} data={data} />
             </Col>
@@ -216,12 +305,11 @@ const GridLayout = ({ dashIndex, plots }) => {
 
   return (
     <React.Fragment>
-      <ModalAddPlot />
       <div className="row display-flex">
         {plots.map((data, index) => (
           <div
             className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
-            key={`${dashIndex}-${index}`}
+            key={`${dashIndex}-${index}-${data.hash}`}
           >
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
@@ -251,14 +339,13 @@ const MapLayout = ({ dashIndex, plots }) => {
 
   return (
     <React.Fragment>
-      <ModalAddPlot />
       <div className="row display-flex">
         {plots.map((data, index) => (
           <div
             className={`col-lg-${
               index === 0 ? 8 : 4
             } col-md-12 col-sm-12 col-xs-12 plot-widget`}
-            key={`${dashIndex}-${index}`}
+            key={`${dashIndex}-${index}-${data.hash}`}
           >
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
@@ -277,11 +364,15 @@ const Plot = ({ index, dashIndex, data, style }) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
   const [hasIntersected, setIntersected] = useState(false);
+  const dispatch = useDispatch();
 
   const plotStyle = { ...defaultPlotStyle, ...style };
 
   // TODO: Maybe find a better solution
   const hash = `cea-react-${data.hash}`;
+
+  const showModalEditParameters = () =>
+    dispatch(setModalEditParametersVisibility(true, dashIndex, index));
 
   // Get plot div
   useEffect(() => {
@@ -343,8 +434,13 @@ const Plot = ({ index, dashIndex, data, style }) => {
           )}
         </div>
       }
-      extra={null}
+      extra={
+        <Button onClick={showModalEditParameters} size="small">
+          Edit
+        </Button>
+      }
       style={{ ...plotStyle, height: "" }}
+      headStyle={{height: 45}}
       bodyStyle={{ height: plotStyle.height }}
       size="small"
     >
@@ -397,6 +493,7 @@ const EmptyPlot = ({ style }) => {
     <Card
       title="Empty Plot"
       style={{ ...plotStyle, height: "" }}
+      headStyle={{height: 45}}
       bodyStyle={{ height: plotStyle.height }}
       size="small"
     >
@@ -412,6 +509,14 @@ const EmptyPlot = ({ style }) => {
 // --------------------------
 // Actions
 // --------------------------
+
+const FETCH_DASHBOARDS = "FETCH_DASHBOARDS";
+const fetchDashboards = fetch => {
+  return {
+    type: FETCH_DASHBOARDS,
+    payload: { fetchDashboards: fetch }
+  };
+};
 
 const SHOW_MODAL_NEW_DASHBOARD = "SHOW_MODAL_NEW_DASHBOARD";
 const setModalNewDashboardVisibility = visible => {
@@ -429,17 +534,38 @@ const setModalAddPlotVisibility = visible => {
   };
 };
 
+const SHOW_MODAL_EDIT_PARAMETERS = "SHOW_MODAL_EDIT_PARAMETERS";
+const setModalEditParametersVisibility = (visible, dashIndex, index) => {
+  return {
+    type: SHOW_MODAL_EDIT_PARAMETERS,
+    payload: {
+      showModalEditParameters: visible,
+      editParameter: { dashIndex, index }
+    }
+  };
+};
+
 // --------------------------
 // Reducer
 // --------------------------
 
-const initialState = { showModalNewDashboard: false, showModalAddPlot: false };
+const initialState = {
+  fetchDashboards: true,
+  showModalNewDashboard: false,
+  showModalAddPlot: false,
+  showModalEditParameters: false,
+  editParameter: { dashIndex: null, index: null }
+};
 
 const dashboard = (state = initialState, { type, payload }) => {
   switch (type) {
+    case FETCH_DASHBOARDS:
+      return { ...state, ...payload };
     case SHOW_MODAL_NEW_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_ADD_PLOT:
+      return { ...state, ...payload };
+    case SHOW_MODAL_EDIT_PARAMETERS:
       return { ...state, ...payload };
     default:
       return state;
@@ -450,9 +576,7 @@ const dashboard = (state = initialState, { type, payload }) => {
 // Redux
 // --------------------------
 
-const rootReducer = Redux.combineReducers({
-  dashboard
-});
+const rootReducer = Redux.combineReducers({ dashboard });
 const store = Redux.createStore(
   rootReducer,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
