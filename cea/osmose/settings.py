@@ -5,7 +5,7 @@
 T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
 TECHS = ['HCS_LD']
-timesteps = 168  # 168 (week)
+timesteps = 24  # 168 (week)
 # timesteps = "typical days"  # 168 (week)
 typical_days_path = "E:\\WP2"
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
@@ -20,8 +20,15 @@ cases = ['WTP_CBD_m_WP1_OFF']
 
 ## LAPTOP ##
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
-osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
-# osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
+
+# Branch mk
+osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
+osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
+
+# Branch master
+# osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
+# osmose_outMsg_path = "\\scenario_1\\tmp\\OutMsg.txt"
+
 osmose_project_data_path = osmose_project_path + '\\data'
 result_destination = "E:\\test_0805"
 

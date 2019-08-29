@@ -135,8 +135,7 @@ def exec_osmose(tech, osmose_project_path):
     # print OutMsg
     result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
     run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1]
-    # OutMsg_path = os.path.join(result_path, run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
-    OutMsg_path = os.path.join(result_path, run_folder) + "\\s_001\\opt\\hc_outmsg.txt"
+    OutMsg_path = os.path.join(result_path, run_folder) + settings.osmose_outMsg_path
     f = open(OutMsg_path, "r")
     print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline(), f.readline()
 
