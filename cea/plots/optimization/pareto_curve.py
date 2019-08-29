@@ -38,7 +38,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     @property
     def layout(self):
-        data = self.preprocessing_multi_criteria_data()
+        data = self.process_generation_total_performance()
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -50,11 +50,10 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         zmax = max(zs)
         ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
                                       [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
-
-        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7), title=self.title,
-                         xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]',
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7),
+                         xaxis=dict(title='Total annualized costs [USD$(2015)/yr]', domain=[0, 1],
                                     range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title='GHG emissions [kton CO2-eq]',
+                         yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
                                     range=ranges_some_room_for_graph[1]))
 
 
@@ -97,31 +96,30 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
         return graph
 
-    def calc_table(self):
-        final_dataframe = calc_final_dataframe(self.process_generation_total_performance())
-
-        # transform data into currency
-        for column in final_dataframe.columns:
-            if '_USD' in column or '_MJoil' in column or '_tonCO2' in column:
-                final_dataframe[column] = final_dataframe[column].apply(lambda x: '{:20,.2f}'.format(x))
-
-        columns = ["Attribute"] + self.analysis_fields
-        values = []
-        for field in columns:
-            if field in ["Attribute", "individual_name"]:
-                values.append(final_dataframe[field].values)
-            else:
-                values.append(final_dataframe[field].values)
-
-        columns = ["Attribute"] + [NAMING[field] for field in self.analysis_fields]
-        table_df = pd.DataFrame({cn: cv for cn, cv in zip(columns, values)}, columns=columns)
-        return table_df
+    # def calc_table(self):
+    #     final_dataframe = calc_final_dataframe(self.process_generation_total_performance())
+    #
+    #     # transform data into currency
+    #     for column in final_dataframe.columns:
+    #         if '_USD' in column or '_MJoil' in column or '_tonCO2' in column:
+    #             final_dataframe[column] = final_dataframe[column].apply(lambda x: '{:20,.2f}'.format(x))
+    #
+    #     columns = ["Attribute"] + self.analysis_fields
+    #     values = []
+    #     for field in columns:
+    #         if field in ["Attribute", "individual_name"]:
+    #             values.append(final_dataframe[field].values)
+    #         else:
+    #             values.append(final_dataframe[field].values)
+    #
+    #     columns = ["Attribute"] + [NAMING[field] for field in self.analysis_fields]
+    #     table_df = pd.DataFrame({cn: cv for cn, cv in zip(columns, values)}, columns=columns)
+    #     return table_df
 
 
 def calc_final_dataframe(individual_data):
     least_annualized_cost = individual_data.loc[
-        individual_data[
-            "TAC_rank"] < 2]  # less than two because in the case there are two individuals MCDA calculates 1.5
+        individual_data["TAC_rank"] < 2]  # less than two because in the case there are two individuals MCDA calculates 1.5
     least_emissions = individual_data.loc[individual_data["GHG_rank"] < 2]
     least_primaryenergy = individual_data.loc[individual_data["PEN_rank"] < 2]
     user_defined_mcda = individual_data.loc[individual_data["user_MCDA_rank"] < 2]

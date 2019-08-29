@@ -42,8 +42,7 @@ class LcaCalculations(object):
             'PEN']  # MJ_oil / MJ_useful
 
         # Boiler
-        self.NG_BOILER_TO_CO2_STD = (
-                resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
+        self.NG_BOILER_TO_CO2_STD = (resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
                     'CO2'] / self.ETA_FINAL_TO_USEFUL)  # kg_CO2 / MJ_useful
         self.NG_BOILER_TO_OIL_STD = (
                 resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
