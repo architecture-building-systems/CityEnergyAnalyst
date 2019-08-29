@@ -419,7 +419,7 @@ def path_to_number_of_k_file():
 
 def path_to_osmose_project_op():
     format = 'csv'
-    path_to_folder = settings.osmose_project_path
+    path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, 'operatingcost.%s' % (format))
     return path_to_file
 
