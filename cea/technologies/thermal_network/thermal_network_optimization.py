@@ -44,6 +44,8 @@ class NetworkInfo(object):
         self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
         self.possible_plant_sites = config.thermal_network_optimization.possible_plant_sites
         self.number_of_individuals = config.thermal_network_optimization.number_of_individuals
+        self.substation_cooling_systems = config.thermal_network_optimization.substation_cooling_systems
+        self.substation_heating_systems = config.thermal_network_optimization.substation_heating_systems
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
@@ -113,7 +115,7 @@ def thermal_network_optimization(config, locator):
 
         # setup next generation
         # select individuals for next generation
-        selectedPop = selectFromPrevPop(sorted_population, network_info)
+        selectedPop = selectFromPrevPop(sorted_population, network_info, network_layout)
         # breed next generation
         newGen = breedNewGeneration(selectedPop, network_info)
         # add mutations
@@ -138,7 +140,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     for individual in network_info.populations.keys():
         # read results from each individual
         individual_df = pd.read_csv(
-            network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type,
+            network_info.locator.get_optimization_network_individual_results_file(network_info.network_type,
                                                                                   individual), index_col=None, header=0)
         all_individuals_list.append(individual_df.as_matrix())
     all_individuals_array = np.vstack(all_individuals_list)
@@ -222,12 +224,12 @@ def network_cost_calculation(population, network_info, network_layout, config):
             # save results of an unique individual
             individual_outputs_df.to_csv(
                 network_info.locator.get_optimization_network_individual_results_file(
-                    config.network_layout.network_type, individual))
+                    network_info.network_type, individual))
             # add unique individual and its total costs to the populations
             network_info.populations[str(individual)] = total_cost
         else:
             # read total cost of the individual that has been evaluated
-            individual_outputs_df = pd.read_csv(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual))
+            individual_outputs_df = pd.read_csv(network_info.locator.get_optimization_network_individual_results_file(network_info.network_type, individual))
             total_cost = individual_outputs_df['total'][0]
             while total_cost in population_performance.keys():  # make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
                 total_cost = total_cost + 0.01
@@ -240,7 +242,7 @@ def network_cost_calculation(population, network_info, network_layout, config):
         # iterate to next individual
         individual_number += 1
     generation_outputs_df.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(
-        config.network_layout.network_type, network_info.generation_number))
+        network_info.network_type, network_info.generation_number))
     network_info.generation_number += 1
     # return individuals of this generation sorted from lowest cost to highest
     return sorted(population_performance.items(), key=operator.itemgetter(0))
@@ -366,7 +368,7 @@ def objective_function(network_info, network_layout, thermal_network):
     return Capex_total, Opex_total, Costs_total, cost_storage
 
 
-def selectFromPrevPop(sortedPrevPop, network_info):
+def selectFromPrevPop(sortedPrevPop, network_info, network_layout):
     """
     Selects individuals from the previous generation for breeding and adds a predefined number of new "lucky"
     individuals which are new individuals added the gene pool.
