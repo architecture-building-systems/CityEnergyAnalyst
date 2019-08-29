@@ -16,6 +16,7 @@ TECHS = settings.TECHS
 specified_buildings = settings.specified_buildings
 timesteps = settings.timesteps
 osmose_project_path = settings.osmose_project_path
+osmose_project_data_path = settings.osmose_project_data_path
 ampl_lic_path = settings.ampl_lic_path
 result_destination = settings.result_destination
 new_calculation = settings.new_calculation
@@ -38,13 +39,13 @@ def main(case):
     start_ampl_license(ampl_lic_path, "start")
 
     ## run osmose
-    write_string_to_txt(path_to_case_folder, osmose_project_path, "path_to_case_folder.txt")  # osmose input
-    write_value_to_csv(timesteps_calc, osmose_project_path, "timesteps.csv")  # osmose input
-    write_value_to_csv(periods, osmose_project_path, "periods.csv")  # osmose input
+    write_string_to_txt(path_to_case_folder, osmose_project_data_path, "path_to_case_folder.txt")  # osmose input
+    write_value_to_csv(timesteps_calc, osmose_project_data_path, "timesteps.csv")  # osmose input
+    write_value_to_csv(periods, osmose_project_data_path, "periods.csv")  # osmose input
     for building in building_names:
         print building, ' in ', case
-        write_value_to_csv(building, osmose_project_path, "building_name.csv")  # osmose input
-        write_value_to_csv(Tamb, osmose_project_path, "Tamb.csv")
+        write_value_to_csv(building, osmose_project_data_path, "building_name.csv")  # osmose input
+        write_value_to_csv(Tamb, osmose_project_data_path, "Tamb.csv")
         for tech in TECHS:
             t = time.localtime()
             print time.strftime("%H:%M", t)
@@ -134,7 +135,8 @@ def exec_osmose(tech, osmose_project_path):
     # print OutMsg
     result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
     run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1]
-    OutMsg_path = os.path.join(result_path, run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
+    # OutMsg_path = os.path.join(result_path, run_folder) + "\\scenario_1\\tmp\\OutMsg.txt"
+    OutMsg_path = os.path.join(result_path, run_folder) + "\\s_001\\opt\\hc_outmsg.txt"
     f = open(OutMsg_path, "r")
     print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline(), f.readline()
 

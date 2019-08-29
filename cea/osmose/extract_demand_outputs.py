@@ -346,21 +346,21 @@ def path_to_total_demand(case):
 
 def path_to_osmose_project_bui(building_name):
     format = 'csv'
-    path_to_folder = settings.osmose_project_path
+    path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
     return path_to_file
 
 
 def path_to_osmose_project_hcs(building_name, extension):
     format = 'csv'
-    path_to_folder = settings.osmose_project_path
+    path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
     return path_to_file
 
 
 def path_to_osmose_project_inputT(number):
     format = 'csv'
-    path_to_folder = settings.osmose_project_path
+    path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
