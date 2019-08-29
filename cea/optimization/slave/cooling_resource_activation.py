@@ -55,8 +55,7 @@ def calc_vcc_CT_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lc
     return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
 
 
-def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, locator,
-                                      min_chiller_size_W, max_chiller_size_W):
+def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, locator):
     ACH_type = 'double'
 
     if T_DCN_re_K == T_DCN_sup_K:
@@ -65,15 +64,8 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         mdot_ACH_kgpers = Qc_from_ACH_W / (
                 (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
 
-    ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers,
-                                                         T_DCN_sup_K,
-                                                         T_DCN_re_K,
-                                                         ACH_T_IN_FROM_CHP,
-                                                         T_ground_K,
-                                                         locator,
-                                                         ACH_type,
-                                                         min_chiller_size_W,
-                                                         max_chiller_size_W)
+    ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, ACH_T_IN_FROM_CHP,
+                                                         T_ground_K, locator, ACH_type)
 
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
     Qh_CHP_ACH_W = ACH_operation['q_hw_W']
