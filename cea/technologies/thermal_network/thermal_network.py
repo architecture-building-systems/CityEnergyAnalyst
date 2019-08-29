@@ -484,13 +484,9 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
 
     if thermal_network.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
-        start_t = 0
-        stop_t = 2016  # 24 hours x 7 days x 12 months
+        thermal_network.start_t = 0
+        thermal_network.stop_t = 2016  # 24 hours x 7 days x 12 months
         prepare_inputs_of_representative_weeks(thermal_network)
-    else:
-        # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
-        start_t = thermal_network.start_t
-        stop_t = thermal_network.stop_t
 
     print('Calculating edge mass flows for pipe sizing')
     if thermal_network.load_max_edge_flowrate_from_previous_run:
@@ -541,14 +537,14 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
     print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
     number_of_processes = get_number_of_processes()
-    nhours = (stop_t - start_t)
+    nhours = (thermal_network.stop_t - thermal_network.start_t)
     if number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
         queue = multiprocessing.Manager().Queue()
         map_result = pool.map_async(hourly_thermal_calculation_wrapper,
                                      izip(repeat(queue, nhours),
-                                          range(start_t, stop_t),
+                                          range(thermal_network.start_t, thermal_network.stop_t),
                                           repeat(thermal_network, nhours)))
         while not map_result.ready():
             stream_from_queue(queue)
@@ -561,7 +557,7 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
         hourly_thermal_results = map_result.get()
     else:
         hourly_thermal_results = map(hourly_thermal_calculation,
-                                     range(start_t, stop_t),
+                                     range(thermal_network.start_t, thermal_network.stop_t),
                                      repeat(thermal_network, nhours))
 
     # save results of hourly values over full year, write to csv
