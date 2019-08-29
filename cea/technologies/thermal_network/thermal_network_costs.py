@@ -33,7 +33,7 @@ class Thermal_Network(object):
     """
 
     def __init__(self, locator, config, network_type, gv):
-        # sotre key variables
+        # store key variables
         self.locator = locator
         self.config = config
         self.network_type = network_type
@@ -48,7 +48,6 @@ class Thermal_Network(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -206,7 +205,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
     """
     Calculates the space cooling cost of disconnected loads at the building level.
     The calculation for entirely disconnected buildings is done in calc_Ctot_cs_disconnected_buildings.
-    :param network_info: an object storing information of the current network
+    :param Thermal_Network network_info: an object storing information of the current network
     :return:
     """
     disconnected_systems = []
@@ -439,7 +438,7 @@ def calc_Ctot_cs_district(network_info):
     Calculates the total costs for cooling of the entire district, which includes the cooling networks and
     disconnected loads & buildings.
     Maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
-    :param network_info: an object storing information of the current network
+    :param Thermal_Network network_info: an object storing information of the current network
     :return:
     """
     # read in general values for cost calculation
@@ -448,7 +447,9 @@ def calc_Ctot_cs_district(network_info):
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
-    network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
+    network_info.network_features = NetworkOptimizationFeatures(district_heating_network=network_info.network_type=="DH",
+                                                                district_cooling_network=network_info.network_type=="DC",
+                                                                locator=network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
     ## calculate network costs
