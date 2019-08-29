@@ -32,7 +32,7 @@ class Thermal_Network(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, network_type):
         # store key variables
         self.locator = locator
         self.config = config
@@ -62,6 +62,8 @@ class Thermal_Network(object):
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
+        self.substation_cooling_systems = config.thermal_network_optimization.substation_cooling_systems
+        self.substation_heating_systems = config.thermal_network_optimization.substation_heating_systems
 
 
 def calc_Capex_a_network_pipes(network_info):
@@ -85,7 +87,7 @@ def calc_Ctot_network_pump(network_info):
     :returns Opex_a_fixed: annual fixed operation and maintenance cost
     :returns Opex_var: annual variable operation cost
     """
-    network_type = network_info.config.thermal_network.network_type
+    network_type = network_info.network_type
 
     # read in node mass flows
     df = pd.read_csv(network_info.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
@@ -98,7 +100,7 @@ def calc_Ctot_network_pump(network_info):
 
     Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
 
-    if network_info.config.thermal_network.network_type == 'DH':
+    if network_info.network_type == 'DH':
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
@@ -226,7 +228,8 @@ def calc_Ctot_cs_disconnected_loads(network_info):
         supplied_systems = []
         # iterate through all possible cooling systems
         for system in network_info.full_cooling_systems:
-            if system not in network_info.config.thermal_network.substation_cooling_systems:
+
+            if system not in network_info.substation_cooling_systems:
                 # add system to list of loads that are supplied at building level
                 disconnected_systems.append(system)
         if len(disconnected_systems) > 0:
@@ -548,9 +551,8 @@ def main(config):
 
     # initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
-    network_info = Thermal_Network(locator, config, network_type, gv)
+    network_info = Thermal_Network(locator, config, network_type)
 
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
