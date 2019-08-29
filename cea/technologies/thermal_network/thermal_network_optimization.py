@@ -47,6 +47,9 @@ class NetworkInfo(object):
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
+        self.start_t = config.thermal_network_optimization.start_t
+        self.stop_t = config.thermal_network_optimization.stop_t
+        self.multiprocessing = config.multiprocessing
 
         # initialize optimization storage variables and dictionaries
         self.cost_info = ['capex', 'opex', 'total', 'el_network_MWh',
