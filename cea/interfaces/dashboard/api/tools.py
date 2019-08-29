@@ -1,4 +1,5 @@
 from flask_restplus import Namespace, Resource, fields
+from utils import deconstruct_parameters
 
 import cea.scripts
 import cea.config
@@ -11,21 +12,6 @@ TOOL_DESCRIPTION_MODEL = api.model('Tool', {
 })
 
 TOOL_LIST = api.model('ToolList', {'tools': fields.List})
-
-
-def deconstruct_parameters(p):
-    params = {'name': p.name, 'type': p.typename,
-              'value': p.get(), 'help': p.help}
-    try:
-        params['choices'] = p._choices
-    except AttributeError:
-        pass
-    if p.typename == 'WeatherPathParameter':
-        config = cea.config.Configuration()
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        params['choices'] = {wn: locator.get_weather(
-            wn) for wn in locator.get_weather_names()}
-    return params
 
 
 @api.route('/')
@@ -115,7 +101,6 @@ class ToolSave(Resource):
 
 def parameters_for_script(script_name, config):
     """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
-    import cea.scripts
     parameters = [p for _, p in config.matching_parameters(
         cea.scripts.by_name(script_name).parameters)]
     return parameters
