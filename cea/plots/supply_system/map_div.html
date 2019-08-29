@@ -1,7 +1,7 @@
 <div id="{{ hash }}" style="height: 100%; position: relative;">
   <div id="layers-group-{{ hash }}" style="visibility: hidden;">
     <span class="layer-toggle-{{ hash }}">
-      <label class="map-plot-label">
+      <label id='connected-{{ hash }}-label' class="map-plot-label">
         <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected'>
         Connected Buildings
       </label>
@@ -19,13 +19,13 @@
       </label>
     </span>
     <span class="layer-toggle-{{ hash }}">
-      <label class="map-plot-label">
+      <label id='network-{{ hash }}-label' class="map-plot-label">
         <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network'>
         Network
       </label>
     </span>
   </div>
-  <div style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
+  <div id="network-radios-{{ hash }}" style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
     <span>Network Type:</span>
     <label class="map-plot-label" id="dc-{{ hash }}-label" style="display: block">
       <input type="radio" id="dc-{{ hash }}" name="network-type-{{ hash }}" value="dc">
@@ -159,11 +159,12 @@
         const colors = {{ colors }};
 
         const dc = checkEmpty(_dc, `dc-${hash}`);
-        const dh = checkEmpty(_dh, `$dh-${hash}`);
+        const dh = checkEmpty(_dh, `dh-${hash}`);
         const connectedToggle = document.getElementById(`connected-${ hash }`);
         const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
         const districtToggle = document.getElementById(`district-${ hash }`);
         const networkToggle = document.getElementById(`network-${ hash }`);
+        const networkRadios = document.getElementsByName(`network-type-${ hash }`);
         let currentViewState = {
             latitude: 0,
             longitude: 0,
@@ -200,18 +201,32 @@
         function init() {
             // Disable context menu
             document.getElementById(hash).oncontextmenu = function(){return false};
-            // Check first radio
-            document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
+
+            if (networkRadios.length){
+                // Check first radio
+                document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
+                // Register onchange for network type
+                document.getElementsByName(`network-type-${ hash }`).forEach(function (element) {
+                    element.onchange = () => redraw()
+                });
+            } else {
+                let div = document.createElement("div");
+                div.innerText = "No networks found.";
+                document.getElementById(`network-radios-${ hash }`).appendChild(div);
+                document.getElementById(`network-${ hash }-label`).remove();
+                document.getElementById(`connected-${ hash }-label`).remove();
+            }
+
+            // Register onchange for layer toggles
+            document.getElementsByName(`layer-toggle-${ hash }`).forEach(function (element) {
+                element.onchange = () => redraw()
+            });
+
             // Check all layer toggle
             document.getElementsByName(`layer-toggle-${ hash }`).forEach(node => {
                 node.checked = true;
             });
-            document.getElementsByName(`network-type-${ hash }`).forEach(function (element) {
-                element.onchange = () => redraw()
-            });
-            document.getElementsByName(`layer-toggle-${ hash }`).forEach(function (element) {
-                element.onchange = () => redraw()
-            });
+
             setupButtons();
             redraw();
         }
@@ -396,6 +411,7 @@
 
         function redraw() {
             let extruded = document.getElementById(`3d-button-${ hash }`).dataset.extruded === 'true';
+            let networkType = getNetworkType();
             // Add zone layer
             let layers = [new GeoJsonLayer({
                 id: 'zone',
@@ -408,7 +424,7 @@
                 getElevation: f => f.properties['height_ag'],
                 getFillColor: buildingColor,
                 updateTriggers: {
-                    getFillColor: document.querySelector(`input[name="network-type-${ hash }"]:checked`).value
+                    getFillColor: networkType
                 },
 
                 pickable: true,
@@ -421,13 +437,14 @@
             if (district) layers.push(new GeoJsonLayer({
                 id: 'district',
                 data: district,
+                opacity: 0.1,
                 wireframe: true,
                 filled: true,
                 extruded: extruded,
                 visible: districtToggle.checked,
 
                 getElevation: f => f.properties['height_ag'],
-                getFillColor: colors.district.push(255),
+                getFillColor: colors.district,
 
                 pickable: true,
                 autoHighlight: true,
@@ -478,9 +495,11 @@
         }
 
         function buildingColor(object) {
-            let type = document.querySelector(`input[name="network-type-${ hash }"]:checked`).value;
-            let connected = data[`connected_buildings_${type.toUpperCase()}`];
-            if (connected.includes(object.properties.Name)) return colors[type];
+            let type = getNetworkType();
+            if (type) {
+                let connected = data[`connected_buildings_${type.toUpperCase()}`];
+                if (connected.includes(object.properties.Name)) return colors[type];
+            }
             return colors.disconnected
         }
 
@@ -495,27 +514,31 @@
         }
 
         function filterBuildings() {
-            let type = document.querySelector(`input[name="network-type-${ hash }"]:checked`).value;
-            let features;
-            if (connectedToggle.checked && !disconnectedToggle.checked) {
-                if (typeof(filtered[type].connected) === 'undefined') {
-                    features = zone.features.filter(feature => {
-                        return data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
-                    });
-                    filtered[type].connected = features;
+            let type = getNetworkType();
+            if (type) {
+                let features;
+                if (connectedToggle.checked && !disconnectedToggle.checked) {
+                    if (typeof(filtered[type].connected) === 'undefined') {
+                        features = zone.features.filter(feature => {
+                            return data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                        });
+                        filtered[type].connected = features;
+                    }
+                    return filtered[type].connected;
                 }
-                return filtered[type].connected;
-            }
-            if (!connectedToggle.checked && disconnectedToggle.checked) {
-                if (typeof(filtered[type].disconnected) === 'undefined') {
-                    features = zone.features.filter(feature => {
-                        return data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
-                    });
-                    filtered[type].disconnected = features;
+                if (!connectedToggle.checked && disconnectedToggle.checked) {
+                    if (typeof(filtered[type].disconnected) === 'undefined') {
+                        features = zone.features.filter(feature => {
+                            return data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                        });
+                        filtered[type].disconnected = features;
+                    }
+                    return filtered[type].disconnected;
                 }
-                return filtered[type].disconnected;
+                if (!connectedToggle.checked && !disconnectedToggle.checked) return [];
+            } else {
+                if (!disconnectedToggle.checked) return []
             }
-            if (!connectedToggle.checked && !disconnectedToggle.checked) return [];
             return zone;
         }
 
@@ -561,6 +584,12 @@
         function getNetworkVisibility(type) {
             return document.getElementById(`${type}-${ hash }`).checked
                 && networkToggle.checked
+        }
+
+        function getNetworkType() {
+            const selected = document.querySelector(`input[name="network-type-${ hash }"]:checked`);
+            if (selected) return selected.value;
+            return null
         }
     }
 
