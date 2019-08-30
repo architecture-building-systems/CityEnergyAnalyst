@@ -219,7 +219,7 @@ Activation curve,Q_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to di
 Activation curve,Q_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to direct load,green_light
 Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
-Activation curve,Q_AddBoiler_gen_directload_W,W,Back-up boiler generation,grey
+Activation curve,Q_BackupBoiler_gen_directload_W,W,Back-up boiler generation,grey
 Activation curve,Q_Storage_gen_directload_W,W,Thermal storage to direct load,red_light
 Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
 
@@ -228,13 +228,13 @@ Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red_ligh
 Activation curve,E_CHP_gen_directload_W,W,NG-fired cogeneration to direct load,purple
 Activation curve,E_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to direct load,blue_light
 Activation curve,E_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to direct load,blue
-Activation curve,E_CCGT_gen_directload_W,W,CCGT district cooling generation to direct load,blue_light
+Activation curve,E_Trigen_gen_directload_W,W,NG-fired Trigen to direct load,blue_light
 Activation curve,E_GRID_directload_W,W,Electricity imports,red
 Activation curve,E_electricalnetwork_sys_req_W,W,Total electricity demand in the system,blue_light
-Activation curve,E_PV_gen_export_W,W,PV generation exported,green_light
-Activation curve,E_PVT_gen_export_W,W,PVT generation exported,brown
-Activation curve,E_CHP_gen_export_W,W,CHP district heating generation exported,brown_light
-Activation curve,E_CCGT_gen_export_W,W,CCGT district cooling generation exported,brown_light
+Activation curve,E_PV_gen_export_W,W,PV exports,green_light
+Activation curve,E_PVT_gen_export_W,W,PVT exports ,brown
+Activation curve,E_CHP_gen_export_W,W,NG_fired cogen. exports,brown_light
+Activation curve,E_Trigen_gen_export_W,W,NG-fired trigen. exports,brown_light
 Activation curve,E_Furnace_dry_gen_export_W,W,Dry biomass generation exported,black
 Activation curve,E_Furnace_wet_gen_export_W,W,Wet biomass cogeneration exported,grey
 Activation curve,E_GRID_ramping_W,W,Likelihood of Ramp-up (+) / Ramp-down (-),red
