@@ -61,6 +61,7 @@ def calc_Qcdata_sys(bpr, tsd):
     Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
                 Lv * Y)
     # calculate system loads for data center
+    #WHATCHOUT! if we change it, then the optimization use of wasteheat breaks. mcpdata has to be positive and Qcdata_sys too!
     tsd['Qcdata_sys'] = abs(tsd['Qcdata'] + Qcdata_d_ls) # convert to positive so we get the mcp in positive numbers
     tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(abs(tsd['Qcdata_sys']))
 
