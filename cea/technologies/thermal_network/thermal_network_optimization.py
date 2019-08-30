@@ -33,8 +33,11 @@ class NetworkInfo(object):
     """
     Storage of information for the network currently being calculated.
     """
-
     def __init__(self, locator, config):
+        """
+        :type config: cea.config.Configuration
+        :type locator: cea.inputlocator.InputLocator
+        """
         # store key variables
         self.locator = locator
         self.config = config
@@ -76,6 +79,10 @@ class NetworkInfo(object):
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
+
+    def locate_individual_results(self, individual):
+        return self.locator.get_optimization_network_individual_results_file(self.network_type, individual)
+
 
 
 def thermal_network_optimization(config, locator):
@@ -132,16 +139,14 @@ def output_results_of_all_individuals(config, locator, network_info):
     """
     This function gathers all individuals evaluated and output results in one file.
     :param config:
-    :param locator:
-    :param network_info: Object storing network information.
+    :type locator: cea.inputlocator.InputLocator
+    :param NetworkInfo network_info: Object storing network information.
     :return:
     """
     all_individuals_list = []
     for individual in network_info.populations.keys():
         # read results from each individual
-        individual_df = pd.read_csv(
-            network_info.locator.get_optimization_network_individual_results_file(network_info.network_type,
-                                                                                  individual), index_col=None, header=0)
+        individual_df = pd.read_csv(network_info.locate_individual_results(individual), index_col=None, header=0)
         all_individuals_list.append(individual_df.as_matrix())
     all_individuals_array = np.vstack(all_individuals_list)
     all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
@@ -171,7 +176,7 @@ def network_cost_calculation(population, network_info, network_layout, config):
     for individual in population:
         thermal_network = ThermalNetwork(network_info.locator, "", network_info)
         # verify that we have not previously evaluated this individual, saves time!
-        if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(network_layout.network_type, individual)):
+        if not os.path.exists(network_info.locate_individual_results(individual)):
             # initialize a dataframe for this individual
             individual_outputs_df = pd.DataFrame(index=[0], columns=generation_outputs_df.columns)
             # translate barcode individual
@@ -222,14 +227,12 @@ def network_cost_calculation(population, network_info, network_layout, config):
             individual_outputs_df['has_loops'] = individual[5]
 
             # save results of an unique individual
-            individual_outputs_df.to_csv(
-                network_info.locator.get_optimization_network_individual_results_file(
-                    network_info.network_type, individual))
+            individual_outputs_df.to_csv(network_info.locate_individual_results(individual))
             # add unique individual and its total costs to the populations
             network_info.populations[str(individual)] = total_cost
         else:
             # read total cost of the individual that has been evaluated
-            individual_outputs_df = pd.read_csv(network_info.locator.get_optimization_network_individual_results_file(network_info.network_type, individual))
+            individual_outputs_df = pd.read_csv(network_info.locate_individual_results(individual))
             total_cost = individual_outputs_df['total'][0]
             while total_cost in population_performance.keys():  # make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
                 total_cost = total_cost + 0.01
