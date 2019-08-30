@@ -538,7 +538,7 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
     ## Start solving hydraulic and thermal equations at each time-step
     number_of_processes = get_number_of_processes()
     nhours = (thermal_network.stop_t - thermal_network.start_t)
-    if number_of_processes > 1:
+    if use_multiprocessing and number_of_processes > 1:
         print("Using %i CPU's" % number_of_processes)
         pool = multiprocessing.Pool(number_of_processes)
         queue = multiprocessing.Manager().Queue()
@@ -3548,6 +3548,7 @@ def main(config):
 
     print('test thermal_network_main() succeeded')
     print('total time: ', time.time() - start)
+
 
 def get_number_of_processes():
     """
