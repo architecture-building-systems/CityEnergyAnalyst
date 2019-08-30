@@ -53,7 +53,6 @@ class Thermal_Network(object):
         self.layout = 0
         self.has_loops = None
         self.populations = {}
-        self.all_individuals = None
         self.generation_number = 0
         self.building_index = []
         self.individual_number = 0
