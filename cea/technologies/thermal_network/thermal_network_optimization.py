@@ -50,7 +50,8 @@ class NetworkInfo(object):
         """
         # store key variables
         self.locator = locator
-        self.config = config
+
+        # copy from config
         self.network_type = config.thermal_network_optimization.network_type
         self.network_name = config.thermal_network_optimization.network_name
         self.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
@@ -62,6 +63,10 @@ class NetworkInfo(object):
         self.use_rule_based_approximation = config.thermal_network_optimization.use_rule_based_approximation
         self.chance_of_mutation = config.thermal_network_optimization.chance_of_mutation
         self.optimize_building_connections = config.thermal_network_optimization.optimize_building_connections
+        self.optimize_loop_branch = config.thermal_network_optimization.optimize_loop_branch
+        self.min_number_of_plants = config.thermal_network_optimization.min_number_of_plants
+        self.max_number_of_plants = config.thermal_network_optimization.max_number_of_plants
+        self.lucky_few = config.thermal_network_optimization.lucky_few
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
@@ -306,7 +311,7 @@ def translate_individual(network_info, individual):
         heating_systems = []
         cooling_systems = []
         if network_info.network_type == 'DH':
-            heating_systems = network_info.config.thermal_network.substation_heating_systems  # placeholder until DH disconnected is available
+            heating_systems = network_info.substation_heating_systems  # placeholder until DH disconnected is available
         #    for index in range(5):
         #        if individual[int(index)] == 1:
         #            heating_systems.append(network_info.full_heating_systems[int(index)])
@@ -314,8 +319,8 @@ def translate_individual(network_info, individual):
             for index in range(5):
                 if individual[int(index)] == 1.0:  # we are supplying this cooling load
                     cooling_systems.append(network_info.full_cooling_systems[int(index)])
-        network_info.config.thermal_network.substation_heating_systems = heating_systems  # save to object
-        network_info.config.thermal_network.substation_cooling_systems = cooling_systems
+        network_info.substation_heating_systems = heating_systems  # save to object
+        network_info.substation_cooling_systems = cooling_systems
 
     return building_plants, disconnected_buildings
 
@@ -336,7 +341,7 @@ def objective_function(network_info, network_layout, thermal_network):
     for building in network_info.disconnected_buildings_index:
         disconnected_building_names.append(network_info.building_names[building])
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
-    if network_info.config.thermal_network_optimization.optimize_loop_branch:
+    if network_info.optimize_loop_branch:
         if network_info.has_loops:  # we have loops, so we need to tell the network generation script this
             network_layout.allow_looped_networks = True
         else:  # we don't have loops, so we need to tell the network generation script this
@@ -396,9 +401,7 @@ def select_from_previous_population(sorted_previous_population, network_info, ne
     """
     next_generation = []
     # pick the individuals with the lowest cost
-    for i in range(0,
-                   (network_info.number_of_individuals -
-                    network_info.config.thermal_network_optimization.lucky_few)):
+    for i in range(0, (network_info.number_of_individuals - network_info.lucky_few)):
         next_generation.append(sorted_previous_population[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_generation) < network_info.number_of_individuals:
@@ -411,26 +414,26 @@ def select_from_previous_population(sorted_previous_population, network_info, ne
     return next_generation
 
 
-def breed_new_generation(selectedInd, network_info):
+def breed_new_generation(selected_individuals, network_info):
     """
     Breeds new generation for genetic algorithm. Here we don't assure that each parent is chosen at least once, but the expected value
     is that each parent should be chosen twice.
     E.g. we have N individuals. The chance of being parent 1 is 1/N, the chance of being parent 2 is (1-1/N)*1/(N-1).
     So the probability of being one of the two parents of any child is 1/N + (1-1/N)*1/(N-1) = 2/N. Since there are N children,
     the expected value is 2.
-    :param selectedInd: list of individuals to breed
-    :param network_info: Object storing network information.
-    :return: newly breeded generation
+    :param selected_individuals: list of individuals to breed
+    :param NetworkInfo network_info: Object storing network information.
+    :return: newly bred generation
     """
     newGeneration = []
     # make sure we have the correct amount of individuals
     while len(newGeneration) < network_info.number_of_individuals:
         # choose random parents
-        first_parent = random.choice(selectedInd)
-        second_parent = random.choice(selectedInd)
+        first_parent = random.choice(selected_individuals)
+        second_parent = random.choice(selected_individuals)
         # assure that both parents are not the same individual
         while second_parent == first_parent:
-            second_parent = random.choice(selectedInd)
+            second_parent = random.choice(selected_individuals)
         # setup storage for child
         child = np.zeros(len(first_parent))
         # iterate through parent individuals
@@ -446,7 +449,7 @@ def breed_new_generation(selectedInd, network_info):
                 else:
                     child[j] = float(second_parent[j])
         # make sure that we do not have too many plants now
-        while list(child[6:]).count(1.0) > network_info.config.thermal_network_optimization.max_number_of_plants:
+        while list(child[6:]).count(1.0) > network_info.max_number_of_plants:
             # we have too many plants
             # find all plant indices
             plant_indices = [i for i, x in enumerate(child) if x == 1.0]
@@ -464,7 +467,7 @@ def breed_new_generation(selectedInd, network_info):
                         random_plant = random.choice(list(
                             plant_indices))  # we chose the anchor load, but want to keep this one. So chose a new random index
 
-            if network_info.config.thermal_network_optimization.optimize_building_connections:
+            if network_info.optimize_building_connections:
                 # we are optimizing which buildings to connect
                 random_choice = np.random.random_integers(low=0,
                                                           high=1)  # either remove a plant or disconnect the building completely
@@ -475,11 +478,11 @@ def breed_new_generation(selectedInd, network_info):
             else:  # disconnect a building
                 child[int(random_plant)] = 2.0
         # make sure we still have the necessary minimum amount of plants
-        while list(child[6:]).count(1.0) < network_info.config.thermal_network_optimization.min_number_of_plants:
+        while list(child[6:]).count(1.0) < network_info.min_number_of_plants:
             # we don't have enough plants
             # Add one plant
             # find all non plant indices
-            if network_info.config.thermal_network_optimization.optimize_building_connections:
+            if network_info.optimize_building_connections:
                 random_choice = np.random.random_integers(low=0,
                                                           high=1)  # either we put a plant at a previously disconnected building or at a building already in the network
             else:
@@ -496,7 +499,7 @@ def breed_new_generation(selectedInd, network_info):
                     index = random.choice(list(indices))
                 child[index] = 1.0  # set a plant here
         # apply rule based approximation to network loads
-        if network_info.config.thermal_network_optimization.use_rule_based_approximation == True:
+        if network_info.use_rule_based_approximation:
             child[1] = child[0]  # supply both of ahu and aru or none of the two
         # make sure we don't have duplicates
         if list(child) not in newGeneration:
@@ -507,7 +510,7 @@ def breed_new_generation(selectedInd, network_info):
 def generate_plants(network_info, new_plants):
     """
     Generates the number of plants given in the config files at random, permissible, building locations.
-    :param network_info: Object storing network information.
+    :param NetworkInfo network_info: Object storing network information.
     :return: list of plant locations
     """
 
@@ -515,7 +518,7 @@ def generate_plants(network_info, new_plants):
     if not len(disconnected_buildings_index) == len(
             new_plants):  # we have at least one connected building so we need a plant
         # assign plant with or without rule-based approximation
-        if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+        if network_info.use_rule_based_approximation:
             # if this is set we are using a rule based approximation, so the first plant is at the load anchor
             anchor_building_index = calc_anchor_load_building(network_info)  # find anchor load building
             # setting the value 1.0 means we have a plant here
@@ -528,15 +531,15 @@ def generate_plants(network_info, new_plants):
 
         # assign more plants if needed
         # check how many more plants we need to add (we already added one)
-        if network_info.config.thermal_network_optimization.min_number_of_plants != network_info.config.thermal_network_optimization.max_number_of_plants:
+        if network_info.min_number_of_plants != network_info.max_number_of_plants:
             # if our minimum and maximum number of plants is the same, we have a fixed amount of plants to add.
             # this is not the case here, so we add a random amount within our constraints
-            number_of_plants_to_add = np.random.random_integers(
-                low=network_info.config.thermal_network_optimization.min_number_of_plants - 1, high=(
-                        network_info.config.thermal_network_optimization.max_number_of_plants - 1))  # minus 1 because we already added one
+            number_of_plants_to_add = np.random.randint(
+                low=network_info.min_number_of_plants - 1, # minus 1 because we already added one
+                high=(network_info.max_number_of_plants))
         else:
             # add the number of plants defined from the config file
-            number_of_plants_to_add = network_info.config.thermal_network_optimization.min_number_of_plants - 1  # minus 1 because we already added one
+            number_of_plants_to_add = network_info.min_number_of_plants - 1  # minus 1 because we already added one
         while list(new_plants).count(1.0) < number_of_plants_to_add + 1:  # while we still need to add plants
             random_index = admissible_plant_location(network_info) - 6  # chose a random place to add the plant
             new_plants[random_index] = 1.0  # set to a plant
@@ -624,7 +627,7 @@ def generate_initial_population(network_info, network_layout):
         # individuals
 
         # list of where our plants are
-        if network_info.config.thermal_network_optimization.optimize_building_connections:
+        if network_info.optimize_building_connections:
             # if this option is set, we are optimizing which buildings to connect, so we need to disconnect some buildings
             new_plants = disconnect_buildings(network_info)
         else:
@@ -637,7 +640,7 @@ def generate_initial_population(network_info, network_layout):
                         new_plants[index] = 2.0
         new_plants = generate_plants(network_info, new_plants)
         # network layout: loop or branch
-        if network_info.config.thermal_network_optimization.optimize_loop_branch:
+        if network_info.optimize_loop_branch:
             # we are optimizing if we have a loop or not, set randomly to eithre 0 or 1
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
         else:  # we are not optimizing loops or not, so read from config file input
@@ -649,13 +652,13 @@ def generate_initial_population(network_info, network_layout):
         # for DH: ahu, aru, shu, ww, 0.0
         # for DC: ahu, aru, scu, data, re
         load_type = [0.0, 0.0, 0.0, 0.0, 0.0]
-        if network_info.config.thermal_network_optimization.optimize_network_loads:
+        if network_info.optimize_network_loads:
             # we are optimizing which to connect
             for i in range(
                     3):  # FIXME: hard-coded, sice the network simulation only allows disconnected loads of AHU, ARU, SCU
                 # create a random list of 0 or 1, indicating if heat load is supplied by network or not
                 load_type[i] = float(np.random.random_integers(low=0, high=1))
-            if network_info.config.thermal_network_optimization.use_rule_based_approximation == True:
+            if network_info.use_rule_based_approximation == True:
                 # apply rule based approximation: AHU and ARU supplied together if connected to networks
                 load_type[1] = load_type[0]  # supply both of ahu and aru or none of the two
         # create individual, but together the load type, network type (branch/loop) and plant locations and connected buildings
@@ -680,7 +683,7 @@ def mutateConnections(individual, network_info):
     # split individual into building information and other information storage
     building_individual = individual[6:]
     other_individual = individual[0:6]
-    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+    if network_info.use_rule_based_approximation:
         # make sure we keep the anchor load plant
         anchor_building_index = calc_anchor_load_building(network_info)
     if add_or_remove == 0:  # disconnect a building
@@ -703,7 +706,7 @@ def mutateConnections(individual, network_info):
                 if isinstance(index, list):
                     random_index = index[0]
                 building_individual[random_index] = 0.0
-    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+    if network_info.use_rule_based_approximation:
         disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
                                         x == 2.0]  # count all disconnected buildings
         if not len(disconnected_buildings_index) == len(
@@ -725,30 +728,30 @@ def mutateLocation(individual, network_info):
     """
     # make sure we have a list type
     individual = list(individual)
-    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+    if network_info.use_rule_based_approximation:
         anchor_building_index = calc_anchor_load_building(network_info)  # keep anchor load
+    else:
+        anchor_building_index = None  # not using rule based approximation
     # if we only have one plant, we need mutation to behave differently
-    if network_info.config.thermal_network_optimization.max_number_of_plants != 1:
+    if network_info.max_number_of_plants != 1:
         # check if we have too many plants
-        if list(individual[6:]).count(
-                1.0) > network_info.config.thermal_network_optimization.max_number_of_plants:
+        if list(individual[6:]).count(1.0) > network_info.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
-            while list(individual[6:]).count(
-                    1.0) > network_info.config.thermal_network_optimization.max_number_of_plants:
+            while list(individual[6:]).count(1.0) > network_info.max_number_of_plants:
                 index = int(random.choice(indices))
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
-                    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+                    if network_info.use_rule_based_approximation:
                         while index == anchor_building_index:
                             index = int(random.choice(indices))
                 individual[index] = 0.0
         # check if we have too few plants
         elif list(individual[6:]).count(
-                1.0) < network_info.config.thermal_network_optimization.min_number_of_plants:
+                1.0) < network_info.min_number_of_plants:
             while list(individual[6:]).count(
-                    1.0) < network_info.config.thermal_network_optimization.min_number_of_plants:
+                    1.0) < network_info.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(network_info)
                 individual[index] = 1.0
@@ -761,7 +764,7 @@ def mutateLocation(individual, network_info):
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
-                    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+                    if network_info.use_rule_based_approximation:
                         while index == anchor_building_index:
                             index = int(random.choice(indices))
                 individual[index] = 0.0
@@ -773,26 +776,26 @@ def mutateLocation(individual, network_info):
                     individual[index] = 1.0
             # assure we have enough plants and not too many
             while list(individual[6:]).count(
-                    1.0) < network_info.config.thermal_network_optimization.min_number_of_plants:
+                    1.0) < network_info.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(network_info)
                 individual[index] = 1.0
 
             while list(individual[6:]).count(
-                    1.0) > network_info.config.thermal_network_optimization.max_number_of_plants:
+                    1.0) > network_info.max_number_of_plants:
                 indices = [i for i, x in enumerate(individual) if x == 1]
                 index = int(random.choice(indices))
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
-                    if network_info.config.thermal_network_optimization.use_rule_based_approximation:
+                    if network_info.use_rule_based_approximation:
                         while index == anchor_building_index:
                             index = int(random.choice(indices))
                 individual[index] = 0.0
 
     else:
         # we only have one plant so we will mutate this
-        if not network_info.config.thermal_network_optimization.use_rule_based_approximation:  # if we use the ruled based approach with only one plant, it stays at the load anchor.
+        if not network_info.use_rule_based_approximation:  # if we use the ruled based approach with only one plant, it stays at the load anchor.
             # remove the plant
             plant_individual = individual[6:]
             other_individual = individual[0:6]
@@ -871,10 +874,10 @@ def mutate_generation(new_generation, network_info):
                 mutated_individual = list(
                     mutateLocation(mutated_individual, network_info))
                 # if we optimize loop/branch layout, apply mutation here
-                if network_info.config.thermal_network_optimization.optimize_loop_branch:
+                if network_info.optimize_loop_branch:
                     mutated_individual = list(mutateLoop(mutated_individual))
-                # if we optimize connected loads, aply mutation
-                if network_info.config.thermal_network_optimization.optimize_network_loads:
+                # if we optimize connected loads, apply mutation
+                if network_info.optimize_network_loads:
                     mutated_individual = list(mutate_load(mutated_individual, network_info))
                 # overwrite old individual with mutated one, but make sure we didn't generate a duplicate
                 if mutated_individual not in new_generation:
