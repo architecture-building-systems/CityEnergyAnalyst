@@ -21,6 +21,8 @@ import random
 
 from cea.technologies.thermal_network.thermal_network_costs import calc_network_size
 
+
+
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Lennart Rogenhofer", "Sreepathi Bhargava Krishna", "Shanshan Hsieh"]
@@ -32,10 +34,32 @@ __status__ = "Production"
 
 random.seed()
 
+# some constants used
 
-INDIVIDUAL_DISCONNECTED = 0.0
-INDIVIDUAL_CONNECTED = 1.0
-INDIVIDUAL_PLANT = 2.0
+# structure of an individual for optimization:
+# LOAD_HEADER, LOOPS, BUILDINGS
+# LOAD_HEADER: list of {LOAD_CONNECTED, LOAD_DISCONNECTED} for each load (LEN_ALL_LOADS in total)
+#
+
+
+INDIVIDUAL_CONNECTED = 0
+INDIVIDUAL_PLANT = 1
+INDIVIDUAL_DISCONNECTED = 2
+
+LOAD_CONNECTED = 1
+LOAD_DISCONNECTED = 0
+
+NETWORK_HAS_LOOPS = 1
+NETWORK_HAS_NO_LOOPS = 0
+
+DH_LOAD_TYPE_NAMES = ["ahu", "aru", "shu", "ww", None]
+DC_LOAD_TYPE_NAMES = ["ahu", "aru", "scu", "data", "re"]
+LEN_ALL_LOADS = len(DC_LOAD_TYPE_NAMES)
+LEN_ADDITIONAL_INFO = 1  # one bit for whether the network has a loop or not
+LEN_INDIVIDUAL_HEADER = LEN_ALL_LOADS + LEN_ADDITIONAL_INFO
+POSSIBLE_DISCONNECTED_LOADS = {"ahu", "aru", "scu"}
+LOAD_INDEX_AHU = 0
+LOAD_INDEX_ARU = 1
 
 
 class NetworkInfo(object):
@@ -54,6 +78,7 @@ class NetworkInfo(object):
         # copy from config
         self.network_type = config.thermal_network_optimization.network_type
         self.network_name = config.thermal_network_optimization.network_name
+        self.network_names = config.thermal_network_optimization.network_names
         self.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
         self.optimize_network_loads = config.thermal_network_optimization.optimize_network_loads
         self.possible_plant_sites = config.thermal_network_optimization.possible_plant_sites
@@ -67,6 +92,10 @@ class NetworkInfo(object):
         self.min_number_of_plants = config.thermal_network_optimization.min_number_of_plants
         self.max_number_of_plants = config.thermal_network_optimization.max_number_of_plants
         self.lucky_few = config.thermal_network_optimization.lucky_few
+
+        self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
+        self.full_cooling_systems = ['ahu', 'aru',
+                                     'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
@@ -510,7 +539,7 @@ def generate_plants(network_info, new_plants):
     :return: list of plant locations
     """
 
-    disconnected_buildings_index = [i for i, x in enumerate(new_plants) if x == 2.0]  # count all disconnected buildings
+    disconnected_buildings_index = [i for i, x in enumerate(new_plants) if x == INDIVIDUAL_DISCONNECTED]  # count all disconnected buildings
     if not len(disconnected_buildings_index) == len(
             new_plants):  # we have at least one connected building so we need a plant
         # assign plant with or without rule-based approximation
@@ -518,12 +547,11 @@ def generate_plants(network_info, new_plants):
             # if this is set we are using a rule based approximation, so the first plant is at the load anchor
             anchor_building_index = calc_anchor_load_building(network_info)  # find anchor load building
             # setting the value 1.0 means we have a plant here
-            new_plants[anchor_building_index] = 1.0
+            new_plants[anchor_building_index] = INDIVIDUAL_PLANT
         else:
             # no rule based approach so just add a plant somewhere random, but check if this is an acceptable plant location
-            random_index = admissible_plant_location(
-                network_info) - 6  # -6 necessary to make sure our index is at the right place
-            new_plants[random_index] = 1.0
+            random_index = admissible_plant_location(network_info)
+            new_plants[random_index] = INDIVIDUAL_PLANT
 
         # assign more plants if needed
         # check how many more plants we need to add (we already added one)
@@ -536,9 +564,9 @@ def generate_plants(network_info, new_plants):
         else:
             # add the number of plants defined from the config file
             number_of_plants_to_add = network_info.min_number_of_plants - 1  # minus 1 because we already added one
-        while list(new_plants).count(1.0) < number_of_plants_to_add + 1:  # while we still need to add plants
-            random_index = admissible_plant_location(network_info) - 6  # chose a random place to add the plant
-            new_plants[random_index] = 1.0  # set to a plant
+        while list(new_plants).count(INDIVIDUAL_PLANT) < number_of_plants_to_add + 1:  # while we still need to add plants
+            random_index = admissible_plant_location(network_info)  # chose a random place to add the plant
+            new_plants[random_index] = INDIVIDUAL_PLANT  # set to a plant
     return list(new_plants)
 
 
@@ -591,20 +619,12 @@ def disconnect_buildings(network_info):
 def admissible_plant_location(network_info):
     """
     This function returns a random index within the individual at which a plant is permissible.
-    :param network_info: Object storing network information.
+    :param NetworkInfo network_info: Object storing network information.
     :return: permissible index of plant within an individual
     """
-    # flag to indicate if we have found an admissible plant location
-    admissible_plant_location = False
-    while not admissible_plant_location:
-        # generate a random index within our individual
-        random_index = np.random.random_integers(low=6, high=(network_info.number_of_buildings_in_district + 5))
-        # check if the building at this index is in our permitted building list
-        if network_info.building_names[
-            random_index - 6] in network_info.possible_plant_sites:
-            # if yes, we have a suitable location
-            admissible_plant_location = True
-    return random_index
+    plant_name = np.random.choice(network_info.possible_plant_sites)
+    plant_index = list(network_info.building_names).index(plant_name)
+    return plant_index
 
 
 def generate_initial_population(network_info, network_layout):
@@ -624,7 +644,8 @@ def generate_initial_population(network_info, network_layout):
 
         # list of where our plants are
         if network_info.optimize_building_connections:
-            # if this option is set, we are optimizing which buildings to connect, so we need to disconnect some buildings
+            # if this option is set, we are optimizing which buildings to connect,
+            # so we need to disconnect some buildings
             new_plants = disconnect_buildings(network_info)
         else:
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
@@ -638,34 +659,33 @@ def generate_initial_population(network_info, network_layout):
         # network layout: loop or branch
         if network_info.optimize_loop_branch:
             # we are optimizing if we have a loop or not, set randomly to eithre 0 or 1
-            loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
+            loop_no_loop_binary = np.random.choice((NETWORK_HAS_NO_LOOPS, NETWORK_HAS_LOOPS))  # 1 means loops, 0 means no loops
         else:  # we are not optimizing loops or not, so read from config file input
             if network_layout.allow_looped_networks:  # allow loop networks is true
-                loop_no_loop_binary = 1.0  # we have a loop
+                loop_no_loop_binary = NETWORK_HAS_LOOPS  # we have a loop
             else:  # branched networks only
-                loop_no_loop_binary = 0.0
+                loop_no_loop_binary = NETWORK_HAS_NO_LOOPS
         # list of integers indicating which loads are connected, 0 is disconnected, 1 is connected
         # for DH: ahu, aru, shu, ww, 0.0
         # for DC: ahu, aru, scu, data, re
-        load_type = [0.0, 0.0, 0.0, 0.0, 0.0]
+        load_type = [LOAD_DISCONNECTED] * LEN_ALL_LOADS
         if network_info.optimize_network_loads:
             # we are optimizing which to connect
-            for i in range(
-                    3):  # FIXME: hard-coded, sice the network simulation only allows disconnected loads of AHU, ARU, SCU
+            for i in range(len(POSSIBLE_DISCONNECTED_LOADS)):
                 # create a random list of 0 or 1, indicating if heat load is supplied by network or not
-                load_type[i] = float(np.random.random_integers(low=0, high=1))
-            if network_info.use_rule_based_approximation == True:
+                load_type[i] = np.random.choice([LOAD_DISCONNECTED, LOAD_CONNECTED])
+            if network_info.use_rule_based_approximation:
                 # apply rule based approximation: AHU and ARU supplied together if connected to networks
-                load_type[1] = load_type[0]  # supply both of ahu and aru or none of the two
-        # create individual, but together the load type, network type (branch/loop) and plant locations and connected buildings
-        new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
+                load_type[LOAD_INDEX_ARU] = load_type[LOAD_INDEX_AHU]  # supply both of ahu and aru or none of the two
+        # create individual, put together the load type, network type (branch/loop) and plant locations / connected buildings
+        new_individual = load_type + [loop_no_loop_binary] + new_plants
         # add individual to list, avoid duplicates
         if new_individual not in population:
             population.append(new_individual)
     return population
 
 
-def mutateConnections(individual, network_info):
+def mutate_connections(individual, network_info):
     """
     Mutates an individuals plant location and number of plants, making sure not to violate any constraints.
     :param individual: List containing individual information
@@ -675,43 +695,33 @@ def mutateConnections(individual, network_info):
     # make sure we have a list type
     individual = list(individual)
     # do we connect or discconect a building
-    add_or_remove = np.random.randint(low=0, high=2)
+    disconnect_building = np.random.choice((True, False))
     # split individual into building information and other information storage
-    building_individual = individual[6:]
-    other_individual = individual[0:6]
-    if network_info.use_rule_based_approximation:
-        # make sure we keep the anchor load plant
-        anchor_building_index = calc_anchor_load_building(network_info)
-    if add_or_remove == 0:  # disconnect a building
-        random_int = np.random.randint(low=0, high=2)  # disconnect a plant or a building
-        index = [i for i, x in enumerate(building_individual) if x == float(random_int)]
+    individual_buildings = individual[LEN_INDIVIDUAL_HEADER:]
+    individual_header = individual[0:LEN_INDIVIDUAL_HEADER]
+
+    if disconnect_building:  # disconnect a building
+        type_to_disconnect = np.random.choice((INDIVIDUAL_CONNECTED, INDIVIDUAL_PLANT))  # disconnect a plant or a building
+        index = [i for i, x in enumerate(individual_buildings) if x == type_to_disconnect]
         if index:
-            if len(index) > 1:  # we have connected buildings
-                random_index = np.random.randint(low=0, high=len(index))  # chose  a random one
-                building_individual[random_index] = 2.0
-            else:  # only one building left
-                random_index = index[0]
-                building_individual[random_index] = 2.0
+            index_to_disconnect = np.random.choice(index)
+            individual_buildings[index_to_disconnect] = INDIVIDUAL_DISCONNECTED
     else:  # connect a disconnected building
-        index = [i for i, x in enumerate(building_individual) if x == 2.0]  # all disconnected buildings
+        index = [i for i, x in enumerate(individual_buildings) if x == INDIVIDUAL_DISCONNECTED]  # all disconnected buildings
         if index:
-            if len(index) > 0:
-                random_index = np.random.randint(low=0, high=len(index))  # chose a random one
-                building_individual[random_index] = 0.0
-            else:
-                if isinstance(index, list):
-                    random_index = index[0]
-                building_individual[random_index] = 0.0
+            index_to_connect = np.random.choice(index)
+            individual_buildings[index_to_connect] = INDIVIDUAL_CONNECTED
     if network_info.use_rule_based_approximation:
-        disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
-                                        x == 2.0]  # count all disconnected buildings
+        disconnected_buildings_index = [i for i, x in enumerate(individual_buildings) if
+                                        x == INDIVIDUAL_DISCONNECTED]  # count all disconnected buildings
         if not len(disconnected_buildings_index) == len(
-                building_individual):  # we have at least one connected building so we need a plant, this should be at the anchor load
-            building_individual[anchor_building_index] = 1.0
+                individual_buildings):  # we have at least one connected building so we need a plant, this should be at the anchor load
+            # make sure we keep the anchor load plant
+            anchor_building_index = calc_anchor_load_building(network_info)
+            individual_buildings[anchor_building_index] = INDIVIDUAL_PLANT
     # put parts of individual back together
-    individual = other_individual + building_individual
-    print
-    individual
+    individual = individual_header + individual_buildings
+    print("Individual after mutating connections:", individual)
     return list(individual)
 
 
@@ -724,85 +734,62 @@ def mutateLocation(individual, network_info):
     """
     # make sure we have a list type
     individual = list(individual)
-    if network_info.use_rule_based_approximation:
-        anchor_building_index = calc_anchor_load_building(network_info)  # keep anchor load
-    else:
-        anchor_building_index = None  # not using rule based approximation
+
+    # split up individual into header (we don't care about that here) and buildings (what we're going to work on)
+    individual_header = individual[:LEN_INDIVIDUAL_HEADER]
+    individual_buildings = individual[LEN_INDIVIDUAL_HEADER:]
+
     # if we only have one plant, we need mutation to behave differently
     if network_info.max_number_of_plants != 1:
         # check if we have too many plants
-        if list(individual[6:]).count(1.0) > network_info.max_number_of_plants:
-            # remove one random plant
-            indices = [i for i, x in enumerate(individual) if x == 1]
-            while list(individual[6:]).count(1.0) > network_info.max_number_of_plants:
-                index = int(random.choice(indices))
-                # make sure we don't overwrite values that don't store plant location information
-                while index < 6:
-                    index = int(random.choice(indices))
-                    if network_info.use_rule_based_approximation:
-                        while index == anchor_building_index:
-                            index = int(random.choice(indices))
-                individual[index] = 0.0
+        if individual_buildings.count(INDIVIDUAL_PLANT) > network_info.max_number_of_plants:
+            while individual_buildings.count(INDIVIDUAL_PLANT) > network_info.max_number_of_plants:
+                remove_one_random_plant(individual_buildings, network_info)
         # check if we have too few plants
-        elif list(individual[6:]).count(
-                1.0) < network_info.min_number_of_plants:
-            while list(individual[6:]).count(
-                    1.0) < network_info.min_number_of_plants:
-                # Add one plant
-                index = admissible_plant_location(network_info)
-                individual[index] = 1.0
+        elif individual_buildings.count(INDIVIDUAL_PLANT) < network_info.min_number_of_plants:
+            while individual_buildings.count(INDIVIDUAL_PLANT) < network_info.min_number_of_plants:
+                add_one_random_plant(individual_buildings, network_info)
         else:  # not too few or too many plants
             # add or remove a plant, choose randomly
-            add_or_remove = np.random.random_integers(low=0, high=1)
-            if add_or_remove == 0:  # remove a plant
-                indices = [i for i, x in enumerate(individual) if x == 1]
-                index = int(random.choice(indices))
-                # make sure we don't overwrite values that don't store plant location information
-                while index < 6:
-                    index = int(random.choice(indices))
-                    if network_info.use_rule_based_approximation:
-                        while index == anchor_building_index:
-                            index = int(random.choice(indices))
-                individual[index] = 0.0
-            else:  # add a plant
-                original_sum = sum(individual[6:])
-                while sum(individual[
-                          6:]) == original_sum:  # make sure we actually add a new one and don't just overwrite an existing plant
-                    index = admissible_plant_location(network_info)
-                    individual[index] = 1.0
+            remove_plant = np.random.choice((True, False))
+            if remove_plant:  # remove a plant
+                remove_one_random_plant(individual_buildings, network_info)
+            else:  # add a plant, making sure we actually change something (sum will be different)
+                original_sum = sum(individual_buildings)
+                while sum(individual_buildings) == original_sum:
+                    add_one_random_plant(individual_buildings, network_info)
             # assure we have enough plants and not too many
-            while list(individual[6:]).count(
-                    1.0) < network_info.min_number_of_plants:
-                # Add one plant
-                index = admissible_plant_location(network_info)
-                individual[index] = 1.0
-
-            while list(individual[6:]).count(
-                    1.0) > network_info.max_number_of_plants:
-                indices = [i for i, x in enumerate(individual) if x == 1]
-                index = int(random.choice(indices))
-                # make sure we don't overwrite values that don't store plant location information
-                while index < 6:
-                    index = int(random.choice(indices))
-                    if network_info.use_rule_based_approximation:
-                        while index == anchor_building_index:
-                            index = int(random.choice(indices))
-                individual[index] = 0.0
-
+            while individual_buildings.count(INDIVIDUAL_PLANT) < network_info.min_number_of_plants:
+                add_one_random_plant(individual_buildings, network_info)
+            while individual_buildings.count(INDIVIDUAL_PLANT) > network_info.max_number_of_plants:
+                remove_one_random_plant(individual_buildings, network_info)
     else:
         # we only have one plant so we will mutate this
         if not network_info.use_rule_based_approximation:  # if we use the ruled based approach with only one plant, it stays at the load anchor.
             # remove the plant
-            plant_individual = individual[6:]
-            other_individual = individual[0:6]
-            index = [i for i, x in enumerate(plant_individual) if x == 1.0]
-            if len(index) > 0:
-                plant_individual[int(index[0])] = 0.0
-            individual = other_individual + plant_individual
-            # add a new one
-            index = admissible_plant_location(network_info)
-            individual[index] = 1.0
-    return list(individual)
+            index = [i for i, x in enumerate(individual_buildings) if x == INDIVIDUAL_PLANT]
+            if index:
+                individual_buildings[index[0]] = INDIVIDUAL_CONNECTED
+            add_one_random_plant(individual_buildings, network_info)
+    return list(individual_header + individual_buildings)
+
+
+def add_one_random_plant(individual_buildings, network_info):
+    # Add one plant
+    index = admissible_plant_location(network_info)
+    individual_buildings[index] = INDIVIDUAL_PLANT
+
+
+def remove_one_random_plant(individual_buildings, network_info):
+    # remove one random plant
+    indices = [i for i, x in enumerate(individual_buildings) if x == INDIVIDUAL_PLANT]
+    if network_info.use_rule_based_approximation:
+        # keep anchor load by excluding it from the possible list of plants to remove
+        anchor_building_index = calc_anchor_load_building(network_info)
+        indices = [i for i in indices if i != anchor_building_index]
+    index = int(random.choice(indices))
+    # make sure we don't overwrite values that don't store plant location information
+    individual_buildings[index] = INDIVIDUAL_CONNECTED
 
 
 def mutate_load(individual, network_info):
@@ -820,13 +807,13 @@ def mutate_load(individual, network_info):
     else:
         random_choice = np.random.random_integers(low=0,
                                                   high=2)  # once disconnected cost information for data and re available increase to 4
-    if individual[random_choice] == 1.0:
-        individual[random_choice] = 0.0
+    if individual[random_choice] == LOAD_CONNECTED:
+        individual[random_choice] = LOAD_DISCONNECTED
     else:
-        individual[random_choice] = 1.0
+        individual[random_choice] = LOAD_CONNECTED
     if network_info.use_rule_based_approximation and network_info.optimize_network_loads:
         # apply rule based approcimation to network loads
-        individual[1] = individual[0]  # supply both of ahu and aru or none of the two
+        individual[LOAD_INDEX_ARU] = individual[LOAD_INDEX_AHU]  # supply both of ahu and aru or none of the two
     return list(individual)
 
 
@@ -865,7 +852,7 @@ def mutate_generation(new_generation, network_info):
                 mutated_individual = list(new_generation[i])
                 # mutate which buildings are connected
                 if network_info.optimize_building_connections:
-                    mutated_individual = list(mutateConnections(mutated_individual, network_info))
+                    mutated_individual = list(mutate_connections(mutated_individual, network_info))
                 # apply mutation to plant location
                 mutated_individual = list(
                     mutateLocation(mutated_individual, network_info))

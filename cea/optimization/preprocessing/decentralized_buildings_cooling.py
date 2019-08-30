@@ -655,7 +655,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config)
+    prices = Prices(locator)
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
