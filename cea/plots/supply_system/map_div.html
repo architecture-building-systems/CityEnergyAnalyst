@@ -556,7 +556,7 @@
                     let area = turf.area(object);
                     innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                         `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
-                } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+                } else if (layer.id === 'dc' || layer.id === 'dh') {
                     $.each(object.properties, function (key, value) {
                         if (key !== 'Building' &&  value === 'NONE') return null;
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
