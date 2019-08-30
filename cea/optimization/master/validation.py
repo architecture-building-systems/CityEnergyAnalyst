@@ -7,7 +7,7 @@ from __future__ import division
 import random
 
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS, \
-    DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
+    DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS
 
 
 def validation_main(individual_with_name_dict,
@@ -81,7 +81,7 @@ def validation_main(individual_with_name_dict,
                 individual_with_name_dict[technology_name] = 0.0 #0.0 denotes off
 
         # FOR SUPPLY SYSTEMS SHARE - The share of solar technologies should be 1 (because they share the same area)
-        unit_name, unit_share = []
+        unit_name, unit_share = [], []
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
             minimum = limits["minimum"]
             if individual_with_name_dict[technology_name] >= minimum and technology_name in DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
