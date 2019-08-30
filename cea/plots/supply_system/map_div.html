@@ -557,6 +557,10 @@
                     innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                         `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
                 } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+                    $.each(object.properties, function (key, value) {
+                        if (key !== 'Building' &&  value === 'NONE') return null;
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
                     if (!object.properties.hasOwnProperty("Building")) {
                         let length = turf.length(object) * 1000;
                         innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
