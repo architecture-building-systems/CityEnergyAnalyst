@@ -114,14 +114,14 @@ def calc_Ctot_cooling_plants(network_info):
     """
     Calculates costs of centralized cooling plants (chillers and cooling towers).
 
-    :param network_info: an object storing information of the current network
+    :param NetworkInfo network_info: an object storing information of the current network
     :return:
     """
 
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
         network_info.locator.get_thermal_network_plant_heat_requirement_file(
-            network_info.network_type, network_info.config.thermal_network_optimization.network_names))
+            network_info.network_type, network_info.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)
 
@@ -444,10 +444,9 @@ def calc_Ctot_cs_district(network_info):
     :return:
     """
     # read in general values for cost calculation
-    network_info.config.detailed_electricity_pricing = False # ensure getting the average value
-    detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
+    detailed_electricity_pricing = False
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
-    network_info.prices = Prices(network_info.locator, network_info.config)
+    network_info.prices = Prices(network_info.locator)
     network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(district_heating_network=network_info.network_type=="DH",
                                                                 district_cooling_network=network_info.network_type=="DC",
