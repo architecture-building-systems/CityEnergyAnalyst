@@ -290,18 +290,18 @@ const GridLayout = ({ dashIndex, plots }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
   const emptyplots = [];
-  if (plots.length < 6) {
-    for (var i = 0; i < 6 - plots.length; i++) {
-      emptyplots.push(
-        <div
-          className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
-          key={`${dashIndex}-${i}`}
-        >
-          <EmptyPlot />
-        </div>
-      );
-    }
-  }
+  // if (plots.length < 6) {
+  //   for (var i = 0; i < 6 - plots.length; i++) {
+  //     emptyplots.push(
+  //       <div
+  //         className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
+  //         key={`${dashIndex}-${i}`}
+  //       >
+  //         <EmptyPlot />
+  //       </div>
+  //     );
+  //   }
+  // }
 
   return (
     <React.Fragment>
