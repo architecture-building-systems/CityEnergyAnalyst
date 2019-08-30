@@ -30,6 +30,13 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+random.seed()
+
+
+INDIVIDUAL_DISCONNECTED = 0.0
+INDIVIDUAL_CONNECTED = 1.0
+INDIVIDUAL_PLANT = 2.0
+
 
 class NetworkInfo(object):
     """
@@ -53,6 +60,8 @@ class NetworkInfo(object):
         self.substation_cooling_systems = config.thermal_network_optimization.substation_cooling_systems
         self.substation_heating_systems = config.thermal_network_optimization.substation_heating_systems
         self.use_rule_based_approximation = config.thermal_network_optimization.use_rule_based_approximation
+        self.chance_of_mutation = config.thermal_network_optimization.chance_of_mutation
+        self.optimize_building_connections = config.thermal_network_optimization.optimize_building_connections
 
         # disconnected buildings as per config file for thermal-network-optimization
         self.disconnected_buildings = config.thermal_network_optimization.disconnected_buildings
@@ -75,7 +84,6 @@ class NetworkInfo(object):
         self.layout = 0
         self.has_loops = None
         self.populations = {}
-        self.all_individuals = None
         self.generation_number = 0
         self.plant_building_index = []
         self.disconnected_buildings_index = []
@@ -841,24 +849,23 @@ def mutateLoop(individual):
     return list(individual)
 
 
-def mutate_generation(newGen, network_info):
+def mutate_generation(new_generation, network_info):
     """
     Checks if an individual should be mutated and calls the corresponding functions.
-    :param newGen: Generation to mutate
-    :param network_info: Object storing network information
+    :param new_generation: Generation to mutate
+    :param NetworkInfo network_info: Object storing network information
     :return: Mutated generation
     """
     # iterate through individuals of this generation
-    for i in range(len(newGen)):
-        random.seed()
+    for i in range(len(new_generation)):
         # check if we should mutate
-        if random.random() * 100 < network_info.config.thermal_network_optimization.chance_of_mutation:
+        if random.random() * 100 < network_info.chance_of_mutation:
             # we have mutation
             mutated_element_flag = False
             while not mutated_element_flag:
-                mutated_individual = list(newGen[i])
+                mutated_individual = list(new_generation[i])
                 # mutate which buildings are connected
-                if network_info.config.thermal_network_optimization.optimize_building_connections:
+                if network_info.optimize_building_connections:
                     mutated_individual = list(mutateConnections(mutated_individual, network_info))
                 # apply mutation to plant location
                 mutated_individual = list(
@@ -870,10 +877,10 @@ def mutate_generation(newGen, network_info):
                 if network_info.config.thermal_network_optimization.optimize_network_loads:
                     mutated_individual = list(mutate_load(mutated_individual, network_info))
                 # overwrite old individual with mutated one, but make sure we didn't generate a duplicate
-                if mutated_individual not in newGen:
+                if mutated_individual not in new_generation:
                     mutated_element_flag = True
-                    newGen[i] = mutated_individual
-    return newGen
+                    new_generation[i] = mutated_individual
+    return new_generation
 
 
 # ============================
