@@ -69,6 +69,9 @@ const Dashboard = () => {
               New Dashboard
             </Button>
             <Button type="primary" icon="edit" size="small">
+              Duplicate Dashboard
+            </Button>
+            <Button type="primary" icon="edit" size="small">
               Set Scenario
             </Button>
           </div>
@@ -83,8 +86,9 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      <ModalNewDashboard setDashIndex={handleSelect}/>
+      <ModalNewDashboard setDashIndex={handleSelect} />
       <ModalAddPlot />
+      <ModalChangePlot />
       <ModalEditParameters />
     </React.Fragment>
   );
@@ -160,13 +164,119 @@ const ModalAddPlot = React.memo(() => {
   );
 });
 
+const ModalChangePlot = React.memo(() => {
+  const [categories, setCategories] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [values, setValues] = useState({ category: null, plot_id: null });
+  const visible = useSelector(state => state.dashboard.showModalChangePlot);
+  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
+  const dispatch = useDispatch();
+
+  const handleValue = useCallback(values => setValues(values), []);
+
+  const handleOk = e => {
+    setConfirmLoading(true);
+    axios
+      .post(
+        `http://localhost:5050/api/dashboard/change-plot/${dashIndex}/${index}`,
+        values
+      )
+      .then(response => {
+        if (response) {
+          console.log(response.data);
+          dispatch(fetchDashboards(true));
+          setConfirmLoading(false);
+          dispatch(setModalChangePlotVisibility(false));
+        }
+      })
+      .catch(error => {
+        setConfirmLoading(false);
+        console.log(error.response);
+      });
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalChangePlotVisibility(false));
+  };
+
+  useEffect(() => {
+    if (visible) {
+      axios
+        .get("http://localhost:5050/api/dashboard/plot-categories")
+        .then(response => {
+          setCategories(response.data);
+        });
+    } else setCategories(null);
+  }, [visible]);
+
+  return (
+    <Modal
+      title="Change Plot"
+      visible={visible}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      okButtonProps={{ disabled: categories === null }}
+      confirmLoading={confirmLoading}
+    >
+      <CategoriesForm categories={categories} setValues={handleValue} />
+    </Modal>
+  );
+});
+
+const CategoriesForm = Form.create()(({ categories, setValues }) => {
+  if (categories === null) return null;
+
+  const categoryIDs = Object.keys(categories);
+  const [selected, setSelected] = useState({
+    category: categoryIDs[0],
+    plots: categories[categoryIDs[0]].plots,
+    selectedPlot: categories[categoryIDs[0]].plots[0].id
+  });
+
+  const handleCategoryChange = value => {
+    setValues({ category: value, plot_id: categories[value].plots[0].id });
+    setSelected({
+      category: value,
+      plots: categories[value].plots,
+      selectedPlot: categories[value].plots[0].id
+    });
+  };
+
+  const handlePlotChange = value => {
+    setValues({ category: selected.category, plot_id: value });
+    setSelected({ ...selected, selectedPlot: value });
+  };
+
+  return (
+    <Form layout="vertical">
+      <Form.Item label="Category" key="category">
+        <Select defaultValue={categoryIDs[0]} onChange={handleCategoryChange}>
+          {categoryIDs.map(id => (
+            <Option key={id} value={id}>
+              {categories[id].label}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item label="Plot" key="plot">
+        <Select value={selected.selectedPlot} onChange={handlePlotChange}>
+          {selected.plots.map(plot => (
+            <Option key={plot.id} value={plot.id}>
+              {plot.name}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+    </Form>
+  );
+});
+
 const ModalEditParameters = React.memo(() => {
   const [parameters, setParameters] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const visible = useSelector(state => state.dashboard.showModalEditParameters);
-  const { dashIndex, index } = useSelector(
-    state => state.dashboard.editParameter
-  );
+  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
   const formRef = useRef();
   const dispatch = useDispatch();
 
@@ -374,6 +484,9 @@ const Plot = ({ index, dashIndex, data, style }) => {
   const showModalEditParameters = () =>
     dispatch(setModalEditParametersVisibility(true, dashIndex, index));
 
+  const showModalChangePlot = () =>
+    dispatch(setModalChangePlotVisibility(true, dashIndex, index));
+
   // Get plot div
   useEffect(() => {
     let mounted = true;
@@ -435,12 +548,17 @@ const Plot = ({ index, dashIndex, data, style }) => {
         </div>
       }
       extra={
-        <Button onClick={showModalEditParameters} size="small">
-          Edit
-        </Button>
+        <React.Fragment>
+          <Button onClick={showModalChangePlot} size="small">
+            Change
+          </Button>
+          <Button onClick={showModalEditParameters} size="small">
+            Edit
+          </Button>
+        </React.Fragment>
       }
       style={{ ...plotStyle, height: "" }}
-      headStyle={{height: 45}}
+      headStyle={{ height: 45 }}
       bodyStyle={{ height: plotStyle.height }}
       size="small"
     >
@@ -493,7 +611,7 @@ const EmptyPlot = ({ style }) => {
     <Card
       title="Empty Plot"
       style={{ ...plotStyle, height: "" }}
-      headStyle={{height: 45}}
+      headStyle={{ height: 45 }}
       bodyStyle={{ height: plotStyle.height }}
       size="small"
     >
@@ -534,13 +652,21 @@ const setModalAddPlotVisibility = visible => {
   };
 };
 
+const SHOW_MODAL_CHANGE_PLOT = "SHOW_MODAL_CHANGE_PLOT";
+const setModalChangePlotVisibility = (visible, dashIndex, index) => {
+  return {
+    type: SHOW_MODAL_CHANGE_PLOT,
+    payload: { showModalChangePlot: visible, activePlot: { dashIndex, index } }
+  };
+};
+
 const SHOW_MODAL_EDIT_PARAMETERS = "SHOW_MODAL_EDIT_PARAMETERS";
 const setModalEditParametersVisibility = (visible, dashIndex, index) => {
   return {
     type: SHOW_MODAL_EDIT_PARAMETERS,
     payload: {
       showModalEditParameters: visible,
-      editParameter: { dashIndex, index }
+      activePlot: { dashIndex, index }
     }
   };
 };
@@ -553,8 +679,9 @@ const initialState = {
   fetchDashboards: true,
   showModalNewDashboard: false,
   showModalAddPlot: false,
+  showModalChangePlot: false,
   showModalEditParameters: false,
-  editParameter: { dashIndex: null, index: null }
+  activePlot: { dashIndex: null, index: null }
 };
 
 const dashboard = (state = initialState, { type, payload }) => {
@@ -564,6 +691,8 @@ const dashboard = (state = initialState, { type, payload }) => {
     case SHOW_MODAL_NEW_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_ADD_PLOT:
+      return { ...state, ...payload };
+    case SHOW_MODAL_CHANGE_PLOT:
       return { ...state, ...payload };
     case SHOW_MODAL_EDIT_PARAMETERS:
       return { ...state, ...payload };
