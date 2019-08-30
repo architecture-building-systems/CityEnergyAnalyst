@@ -57,16 +57,6 @@ function showProperties({object, layer}, event) {
     }
 }
 
-function nodeFillColor(type) {
-    if (type === 'NONE') {
-        return [100, 100, 100]
-    } else if (type === 'CONSUMER') {
-        return [255, 255, 255]
-    } else if (type === 'PLANT') {
-        return [0, 0, 0]
-    }
-}
-
 function buildingColor(color, object) {
     let selected = inputstore.getSelected();
     for(let i = 0; i < selected.length; i++){

@@ -437,7 +437,7 @@
             if (district) layers.push(new GeoJsonLayer({
                 id: 'district',
                 data: district,
-                opacity: 0.1,
+                opacity: 0.3,
                 wireframe: true,
                 filled: true,
                 extruded: extruded,
@@ -462,7 +462,7 @@
                 visible: getNetworkVisibility('dc'),
 
                 getLineColor: colors.dc,
-                getFillColor: f => nodeFillColor(f.properties['Type']),
+                getFillColor: f => nodeFillColor(f.properties['Type'], 'dc'),
                 getLineWidth: 3,
                 getRadius: 3,
 
@@ -481,7 +481,7 @@
                 visible: getNetworkVisibility('dh'),
 
                 getLineColor: colors.dh,
-                getFillColor: f => nodeFillColor(f.properties['Type']),
+                getFillColor: f => nodeFillColor(f.properties['Type'], 'dh'),
                 getLineWidth: 3,
                 getRadius: 3,
 
@@ -503,9 +503,9 @@
             return colors.disconnected
         }
 
-        function nodeFillColor(type) {
+        function nodeFillColor(type, network) {
             if (type === 'NONE') {
-                return [100, 100, 100]
+                return network === 'dc' ? colors.dc : colors.dh
             } else if (type === 'CONSUMER') {
                 return [255, 255, 255]
             } else if (type === 'PLANT') {

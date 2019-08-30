@@ -52,7 +52,7 @@ const jsonURLs = {
 };
 
 const defaultColors = {
-    'zone': [63,192,194],
+    'zone': [68,76,83],
     'district': [255,255,255],
     'streets': [255,255,255],
     'dh': [240,75,91],
@@ -323,7 +323,7 @@ function createDCNetworksLayer(_layers, data, props={}) {
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: defaultColors.dc,
-        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getFillColor: f => nodeFillColor(f.properties['Type'], id),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -349,7 +349,7 @@ function createDHNetworksLayer(_layers, data, props={}) {
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getLineColor: defaultColors.dh,
-        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getFillColor: f => nodeFillColor(f.properties['Type'], id),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -561,6 +561,10 @@ function updateTooltip({x, y, object, layer}) {
             innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                 `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
         } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+            $.each(object.properties, function (key, value) {
+                if (key !== 'Building' &&  value === 'NONE') return null;
+                innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+            });
             if (!object.properties.hasOwnProperty("Building")) {
                 let length = turf.length(object) * 1000;
                 innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
@@ -577,9 +581,9 @@ function updateTooltip({x, y, object, layer}) {
     }
 }
 
-function nodeFillColor(type) {
+function nodeFillColor(type, network) {
     if (type === 'NONE') {
-        return [100, 100, 100]
+        return network === 'dc_networks' ? defaultColors.dc : defaultColors.dh
     } else if (type === 'CONSUMER') {
         return [255, 255, 255]
     } else if (type === 'PLANT') {
