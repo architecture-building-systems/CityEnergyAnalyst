@@ -19,28 +19,32 @@ __status__ = "Production"
 
 
 DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
+DH_CONVERSION_TECHNOLOGIES_WITH_SIZE_AGGREAGTION_NEEDED = ["NG_Cogen", "WB_Cogen", "DB_Cogen", "NG_BaseBoiler",
+                                                           "NG_PeakBoiler", "WS_HP", "SS_HP", "GS_HP", "DS_HP"]
+DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = []
 
-DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "BG_CCGT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "WB_Furnace": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "DB_Furnace": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "WB_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "DB_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
                                     "NG_BaseBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "BG_BaseBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
                                     "NG_PeakBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "BG_PeakBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "HPLake": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "HPSewage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "GHP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "HPServer": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "WS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "SS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "GS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "DS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
                                     "PVT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
                                     "SC_ET": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
                                     "SC_FP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
-                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}, }
+                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}
+                                    }
 
-DC_CONVERSION_TECHNOLOGIES_SHARE = {"FLake": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "VCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "ACH": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2}
+DC_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Trigen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "WS_BaseVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "WS_PeakVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "AS_BaseVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "AS_PeakVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
+                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
+                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}
                                     }
 DC_TECHNOLOGIES_SHARING_SPACE = []
 
@@ -151,6 +155,8 @@ STORAGE_COOLING_ALLOWED = True
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
+VCC_CODE_CENTRALIZED = 'CH1'
+VCC_CODE_DECENTRALIZED = 'CH3'
 
 # Absorption chiller
 ACH_T_IN_FROM_CHP = 150 + 273.0  # hot water from CHP to the generator of ACH

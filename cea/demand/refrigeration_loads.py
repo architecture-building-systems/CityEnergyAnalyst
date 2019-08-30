@@ -42,9 +42,9 @@ def calc_Qcre_sys(bpr, tsd, schedules):
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
     Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
-    # calculate system loads for data center
-    tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
+    # calculate system loads for data center
+    tsd['Qcre_sys'] = abs(tsd['Qcre'] + Qcre_d_ls) #make sure you get the right mcpcre positive
     # writing values to tsd, replacing function and np.vectorize call with simple for loop
     tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] =\
         np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd['Qcre_sys'])
@@ -61,9 +61,9 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     """
 
     if Qcre_sys > 0.0:
-        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
         Tcre_sys_re = T_C_REF_RE_0
         Tcre_sys_sup = T_C_REF_SUP_0
+        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
     else:
         mcpcre_sys = 0.0
         Tcre_sys_re = np.nan

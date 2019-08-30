@@ -49,6 +49,10 @@ CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the H
 CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
 DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calulation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 
+# Cooling Towers
+CT_MIN_PARTLOAD_RATIO = 0.15 # from Grahovac, M. et al. (2012). VC CHILLERS AND PV PANELS: A GENERIC PLANNING TOOL PROVIDING THE OPTIMAL DIMENSIONS TO MINIMIZE COSTS OR EMISSIONS.
+
+
 #Furnace
 FURNACE_MIN_LOAD = 0.2  # Minimum load possible (does not affect Model itself!)
 FURNACE_MIN_ELECTRIC = 0.3  # Minimum load for electricity generation in furnace plant

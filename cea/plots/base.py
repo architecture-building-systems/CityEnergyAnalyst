@@ -126,7 +126,8 @@ class PlotBase(object):
 
         FIXME: what about columns with negative values?
         """
-        return [field for field in fields if data[field].sum() > 0.0]
+        import numpy as np
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""

@@ -32,19 +32,20 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictHeatingPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = [
-            "Q_Storage_gen_W",
+            "Q_Storage_gen_directload_W",
             "Q_HP_Server_gen_directload_W",
             "Q_PVT_gen_directload_W",
             "Q_SC_ET_gen_directload_W",
             "Q_SC_FP_gen_directload_W",
             "Q_CHP_gen_directload_W",
-            "Q_Furnace_gen_directload_W",
+            "Q_Furnace_dry_gen_directload_W",
+            "Q_Furnace_wet_gen_directload_W",
             "Q_HP_Sew_gen_directload_W",
             "Q_HP_Lake_gen_directload_W",
             "Q_GHP_gen_directload_W",
             "Q_BaseBoiler_gen_directload_W",
             "Q_PeakBoiler_gen_directload_W",
-            "Q_AddBoiler_gen_directload_W",
+            "Q_BackupBoiler_gen_directload_W",
         ]
 
         self.analysis_field_demand = ['Q_districtheating_sys_req_W']
