@@ -92,10 +92,6 @@ class NetworkInfo(object):
         self.generation_number = 0
         self.plant_building_index = []
         self.disconnected_buildings_index = []
-        # list of all possible heating or cooling systems. used to compare which ones are centralized / decentralized
-        self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
-        self.full_cooling_systems = ['ahu', 'aru',
-                                     'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
         # write buildings names to object
         total_demand = pd.read_csv(locator.get_total_demand())
