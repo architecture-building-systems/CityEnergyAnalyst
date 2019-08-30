@@ -80,6 +80,16 @@ class NetworkInfo(object):
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
+        # write buildings names to object
+        total_demand = pd.read_csv(locator.get_total_demand())
+        self.building_names = total_demand.Name.values
+        self.number_of_buildings_in_district = total_demand.Name.count()
+        # write possible plant location sites to object
+        if not self.possible_plant_sites:
+            # if there is no input from the config file as to which sites are potential plant locations,
+            # set all as possible locations
+            self.possible_plant_sites = self.building_names
+
     def locate_individual_results(self, individual):
         return self.locator.get_optimization_network_individual_results_file(self.network_type, individual)
 
@@ -98,16 +108,6 @@ def thermal_network_optimization(config, locator):
 
     if network_info.network_type == 'DH':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
-
-    # write buildings names to object
-    total_demand = pd.read_csv(locator.get_total_demand())
-    network_info.building_names = total_demand.Name.values
-    network_info.number_of_buildings_in_district = total_demand.Name.count()
-    # write possible plant location sites to object
-    if not network_info.possible_plant_sites:
-        # if there is no input from the config file as to which sites are potential plant locations,
-        # set all as possible locations
-        network_info.possible_plant_sites = network_info.building_names
 
     # create initial population
     print 'Creating initial population.'
