@@ -35,7 +35,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
 
     @property
     def title(self):
-        return "Annual Costs"
+        return "Annual Costs for generation #%s" % self.generation
 
     @property
     def output_path(self):

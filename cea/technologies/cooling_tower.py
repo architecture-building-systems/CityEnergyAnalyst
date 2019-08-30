@@ -4,7 +4,7 @@ System Modeling: Cooling tower
 from __future__ import division
 import pandas as pd
 from math import ceil, log
-from cea.optimization.constants import CT_MAX_SIZE
+from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -17,7 +17,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(q_hot_Wh, Q_nom_W, max_CT_unit_size_W):
+def calc_CT(q_hot_Wh, Q_nom_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
@@ -30,26 +30,39 @@ def calc_CT(q_hot_Wh, Q_nom_W, max_CT_unit_size_W):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
+    if (Q_nom_W > 0.0 and q_hot_Wh > 0.0):
+        # calculate CT operation at part load
+        q_partload_ratio = q_hot_Wh / Q_nom_W
+        w_partload_factor = calc_CT_partload_factor(q_partload_ratio)
 
-    # calculate number of CT activated according to loads
-    if q_hot_Wh > max_CT_unit_size_W:
-        # distribute loads to multiple units
-        number_of_units_activated = q_hot_Wh / max_CT_unit_size_W
+        # calculate nominal fan power
+        w_nom_fan = 0.011 * Q_nom_W
+
+        # calculate total electricity consumption
+        el_W = w_partload_factor * w_nom_fan
+
     else:
-        # operate one unit at the load
-        number_of_units_activated = 1.0
+        el_W = 0
 
-    # calculate CT operation at part load
-    qpartload = q_hot_Wh / Q_nom_W
-    wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * qpartload + 0.0026
+    return el_W
 
-    # calculate fan power
-    wdesign_fan = 0.011 * Q_nom_W
 
-    # calculate total electricity consumption
-    wdot_W = (wpartload * wdesign_fan) * number_of_units_activated # FIXME: should be wpartload + wdesign_fan?
-
-    return wdot_W
+def calc_CT_partload_factor(q_part_load_ratio):
+    """
+    Calculate the partload factor according to partload ratio.
+    The equation is only valid when the part load ratio is higher than 15%.
+    :param q_part_load_ratio:
+    :return:
+    ..[Nguyen,T., 2015] Thuy-An,Nguyen (2015), Optimization of a District Energy System in the context of Urban Transformation.
+    Master Thesis, ETHZ.
+    ..[Grahovac,M., 2012] Grahovac, M. et al. (2012). VC CHILLERS AND PV PANELS: A GENERIC PLANNING TOOL PROVIDING THE
+    OPTIMAL DIMENSIONS TO MINIMIZE COSTS OR EMISSIONS. Presented at the Forth German-Austrian IBPSA Conference BauSIM,
+    Berlin University of the Arts.
+    """
+    if q_part_load_ratio < CT_MIN_PARTLOAD_RATIO:
+        q_part_load_ratio = CT_MIN_PARTLOAD_RATIO
+    w_partload_factor = 0.8603 * q_part_load_ratio ** 3 + 0.2045 * q_part_load_ratio ** 2 - 0.0623 * q_part_load_ratio + 0.0026
+    return w_partload_factor
 
 
 def calc_CT_yearly(q_hot_kWh):
@@ -135,14 +148,17 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
-def get_CT_max_size(locator, CT_code='CT1'):
-    CT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CT")
-    CT_cost_data = CT_cost_data[CT_cost_data['code'] == CT_code]
-    max_CT_unit_size_W = max(CT_cost_data['cap_max'].values)
-    return max_CT_unit_size_W
+def main(locator):
+    import numpy as np
+    q_hot_Wh = np.arange(0.0, 1E3, 100)
+    Q_nom_W = 1E3
+    wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
+    print wdot_W
 
 
 
+if __name__ == '__main__':
+    main()
 
 
 

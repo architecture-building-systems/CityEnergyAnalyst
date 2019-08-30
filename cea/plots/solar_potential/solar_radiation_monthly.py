@@ -23,8 +23,8 @@ class SolarRadiationMonthly(cea.plots.solar_potential.SolarPotentialPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack',
-                         yaxis=dict(title='Solar radiation [MWh/month]', domain=[0.35, 1]))
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Solar radiation [MWh/month]'))
 
     def calc_graph(self):
         # calculate graph

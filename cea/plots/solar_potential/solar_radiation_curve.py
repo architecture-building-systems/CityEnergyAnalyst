@@ -21,20 +21,9 @@ class SolarRadiationCurvePlot(cea.plots.solar_potential.SolarPotentialPlotBase):
 
     @property
     def layout(self):
-        date = self.input_data_aggregated_kW.DATE
-        return dict(title=self.title,
-                    yaxis=dict(domain=dict(x=[0, 1], y=[0.0, 0.7]), title='Solar Radiation [kW]'),
-                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(rangeselector=dict(
-                buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
-                              dict(count=1, label='1w', step='week', stepmode='backward'),
-                              dict(count=1, label='1m', step='month', stepmode='backward'),
-                              dict(count=6, label='6m', step='month', stepmode='backward'), dict(step='all')])),
-                                                                                                   rangeslider=dict(),
-                                                                                                   type='date',
-                                                                                                   range=[date[0],
-                                                                                                          date[168]],
-                                                                                                   fixedrange=False))
-
+        return dict(
+                    yaxis=dict(title='Solar Radiation [kW]'),
+                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'))
     def calc_graph(self):
         graph = []
         data_frame = self.input_data_aggregated_kW
