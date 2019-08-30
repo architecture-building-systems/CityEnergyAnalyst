@@ -110,8 +110,7 @@ def cooling_resource_activator(Q_thermal_req,
         Qh_Trigen_req_W, \
         E_ACH_req_W = calc_chiller_absorption_operation(Q_Trigen_gen_W, T_district_cooling_return_K,
                                                         T_district_cooling_supply_K, T_ground_K,
-                                                        locator, master_to_slave_variables.NG_Trigen_ACH_size_W,
-                                                        master_to_slave_variables.NG_Trigen_ACH_size_W)
+                                                        locator)
 
         # operation of the CCGT
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W,
