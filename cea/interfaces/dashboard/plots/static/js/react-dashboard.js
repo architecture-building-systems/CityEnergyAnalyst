@@ -16,7 +16,11 @@ const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
 const INITIAL_DASHBOARD = 0;
-const defaultPlotStyle = { height: 350, margin: 5 };
+const defaultPlotStyle = {
+  height: "calc(50vh - 150px)",
+  minHeight: 300,
+  margin: 5
+};
 
 // --------------------------
 // Components
@@ -557,9 +561,9 @@ const Plot = ({ index, dashIndex, data, style }) => {
           </Button>
         </React.Fragment>
       }
-      style={{ ...plotStyle, height: "" }}
+      style={{ ...plotStyle, height: "", minHeight: "" }}
       headStyle={{ height: 45 }}
-      bodyStyle={{ height: plotStyle.height }}
+      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
       {div ? (
@@ -610,9 +614,9 @@ const EmptyPlot = ({ style }) => {
   return (
     <Card
       title="Empty Plot"
-      style={{ ...plotStyle, height: "" }}
+      style={{ ...plotStyle, height: "", minHeight: "" }}
       headStyle={{ height: 45 }}
-      bodyStyle={{ height: plotStyle.height }}
+      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
       <Empty>
