@@ -29,8 +29,8 @@ const defaultPlotStyle = {
 // --------------------------
 
 const Dashboard = () => {
-  const _fetchDashboards = useSelector(
-    state => state.dashboard.fetchDashboards
+  const fetchingDashboards = useSelector(
+    state => state.dashboard.fetchingDashboards
   );
   const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
@@ -44,13 +44,13 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (_fetchDashboards) {
+    if (fetchingDashboards) {
       axios.get("http://localhost:5050/api/dashboard/").then(response => {
         setDashboards(response.data);
         dispatch(fetchDashboards(false));
       });
     }
-  }, [_fetchDashboards]);
+  }, [fetchingDashboards]);
 
   if (!dashboards.length) return null;
 
@@ -742,7 +742,7 @@ const FETCH_DASHBOARDS = "FETCH_DASHBOARDS";
 const fetchDashboards = fetch => {
   return {
     type: FETCH_DASHBOARDS,
-    payload: { fetchDashboards: fetch }
+    payload: { fetchingDashboards: fetch }
   };
 };
 
@@ -797,7 +797,7 @@ const setModalDeletePlotVisibility = (visible, dashIndex, index) => {
 // --------------------------
 
 const initialState = {
-  fetchDashboards: true,
+  fetchingDashboards: true,
   showModalNewDashboard: false,
   showModalAddPlot: false,
   showModalChangePlot: false,
