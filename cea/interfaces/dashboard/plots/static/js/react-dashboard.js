@@ -629,7 +629,6 @@ const Plot = ({ index, dashIndex, data, style }) => {
       }
       extra={<EditMenu dashIndex={dashIndex} index={index} />}
       style={{ ...plotStyle, height: "", minHeight: "" }}
-      headStyle={{ height: 45 }}
       bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
@@ -674,9 +673,7 @@ const EditMenu = React.memo(({ dashIndex, index }) => {
   return (
     <React.Fragment>
       <Dropdown overlay={menu} trigger={["click"]}>
-        <a className="ant-dropdown-link">
-          Edit <Icon type="down" />
-        </a>
+        <Icon type="edit" theme="twoTone" />
       </Dropdown>
     </React.Fragment>
   );
@@ -721,7 +718,6 @@ const EmptyPlot = ({ style, dashIndex, index }) => {
     <Card
       title="Empty Plot"
       style={{ ...plotStyle, height: "", minHeight: "" }}
-      headStyle={{ height: 45 }}
       bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
