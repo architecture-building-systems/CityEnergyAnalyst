@@ -12,12 +12,12 @@ const {
   Empty,
   Form,
   Menu,
-  Dropdown
+  Dropdown,
+  Radio
 } = antd;
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
-const INITIAL_DASHBOARD = 0;
 const defaultPlotStyle = {
   height: "calc(50vh - 125px)",
   minHeight: 300,
@@ -33,7 +33,7 @@ const Dashboard = () => {
     state => state.dashboard.fetchingDashboards
   );
   const [dashboards, setDashboards] = useState([]);
-  const [dashIndex, setDashIndex] = useState(INITIAL_DASHBOARD);
+  const [dashIndex, setDashIndex] = useState(0);
   const dispatch = useDispatch();
 
   const showModalNewDashboard = () =>
@@ -62,6 +62,7 @@ const Dashboard = () => {
       <div id="cea-dashboard-content" style={{ minHeight: "100%" }}>
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
           <DashSelect
+            dashIndex={dashIndex}
             setDashIndex={handleSelect}
             dashboardNames={dashboardNames}
           />
@@ -92,7 +93,10 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      <ModalNewDashboard setDashIndex={handleSelect} />
+      <ModalNewDashboard
+        setDashIndex={handleSelect}
+        dashboards={dashboards.length}
+      />
       <ModalAddPlot />
       <ModalChangePlot />
       <ModalEditParameters />
@@ -101,19 +105,25 @@ const Dashboard = () => {
   );
 };
 
-const DashSelect = React.memo(({ setDashIndex, dashboardNames }) => {
+const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
+  const dashList = useMemo(
+    () =>
+      dashboardNames.map((name, index) => (
+        <option key={index} value={index}>
+          {name}
+        </option>
+      )),
+    [dashboardNames]
+  );
+
   return (
     <Affix offsetTop={30}>
       <Select
-        defaultValue={INITIAL_DASHBOARD}
+        value={dashboardNames[dashIndex]}
         style={{ width: 200 }}
         onChange={value => setDashIndex(value)}
       >
-        {dashboardNames.map((name, index) => (
-          <option key={index} value={index}>
-            {name}
-          </option>
-        ))}
+        {dashList}
       </Select>
     </Affix>
   );
@@ -123,17 +133,48 @@ const DashSelect = React.memo(({ setDashIndex, dashboardNames }) => {
 // Modal
 // --------------------------
 
-const ModalNewDashboard = React.memo(() => {
+const ModalNewDashboard = React.memo(({ setDashIndex, dashboards }) => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [newDashIndex, setNewDashIndex] = useState(null);
   const visible = useSelector(state => state.dashboard.showModalNewDashboard);
+  const formRef = useRef();
   const dispatch = useDispatch();
 
   const handleOk = e => {
-    dispatch(setModalNewDashboardVisibility(false));
+    formRef.current.validateFields((err, values) => {
+      console.log(!err, values);
+      if (!err) {
+        setConfirmLoading(true);
+        console.log("Received values of form: ", values);
+        axios
+          .post(`http://localhost:5050/api/dashboard/new`, values)
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              dispatch(fetchDashboards(true));
+              setConfirmLoading(false);
+              dispatch(setModalNewDashboardVisibility(false));
+              setNewDashIndex(response.data.new_dashboard_index);
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
+      }
+    });
   };
 
   const handleCancel = e => {
     dispatch(setModalNewDashboardVisibility(false));
   };
+
+  useEffect(() => {
+    if (newDashIndex !== null) {
+      setDashIndex(newDashIndex);
+      setNewDashIndex(null);
+    }
+  }, [dashboards]);
 
   return (
     <Modal
@@ -141,9 +182,55 @@ const ModalNewDashboard = React.memo(() => {
       visible={visible}
       onOk={handleOk}
       onCancel={handleCancel}
+      confirmLoading={confirmLoading}
     >
-      <p>Some contents...</p>
+      {visible ? <DashForm ref={formRef} /> : null}
     </Modal>
+  );
+});
+
+const DashForm = Form.create()(({ form }) => {
+  const { getFieldDecorator } = form;
+
+  return (
+    <Form layout="horizontal">
+      <Form.Item
+        label="Name"
+        key="name"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 11, offset: 1 }}
+      >
+        {getFieldDecorator("name", {
+          initialValue: "",
+          rules: [{ required: true }]
+        })(<Input />)}
+      </Form.Item>
+      <Form.Item
+        label="Description"
+        key="description"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 11, offset: 1 }}
+      >
+        {getFieldDecorator("description", {
+          initialValue: ""
+        })(<Input />)}
+      </Form.Item>
+      <Form.Item
+        label="Layout"
+        key="layout"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 11, offset: 1 }}
+      >
+        {getFieldDecorator("layout", {
+          initialValue: "row"
+        })(
+          <Radio.Group>
+            <Radio value="row">Row</Radio>
+            <Radio value="grid">Grid</Radio>
+          </Radio.Group>
+        )}
+      </Form.Item>
+    </Form>
   );
 });
 
@@ -560,7 +647,6 @@ const MapLayout = ({ dashIndex, plots }) => {
 const Plot = ({ index, dashIndex, data, style }) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
-  const dispatch = useDispatch();
 
   const plotStyle = { ...defaultPlotStyle, ...style };
 
