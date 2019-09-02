@@ -142,7 +142,10 @@ class Dashboard(object):
 
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
-        self.plots.pop(plot_index)
+        if self.layout == 'grid':
+            self.plots[plot_index] = None
+        else:
+            self.plots.pop(plot_index)
 
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
