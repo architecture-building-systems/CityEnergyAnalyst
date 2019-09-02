@@ -19,7 +19,7 @@ const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
 const INITIAL_DASHBOARD = 0;
 const defaultPlotStyle = {
-  height: "calc(50vh - 150px)",
+  height: "calc(50vh - 125px)",
   minHeight: 300,
   margin: 5
 };
