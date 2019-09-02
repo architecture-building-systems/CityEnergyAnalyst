@@ -10,7 +10,7 @@ const ceaParameter = (param, getFieldDecorator) => {
   let input = [];
 
   if (["IntegerParameter", "RealParameter"].includes(type)) {
-    const stringValue = value ? value.toString() : "";
+    const stringValue = value !== null ? value.toString() : "";
     const regex =
       type === "IntegerParameter"
         ? /^(?:[1-9][0-9]*|0)$/
