@@ -94,8 +94,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE):
     eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60)
 
     if MOIST_TYPE == "dry":
-        eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(
-            60) + 0.087  # 8.7 % efficiency gain when using dry fuel
+        eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60) + 0.087  # 8.7 % efficiency gain when using dry fuel
         eta_el += 0.087
 
     Q_therm_prim = Q_load / eff_therm_tot  # primary energy requirement
@@ -164,30 +163,32 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca
 
             break
 
-    Q_prim_W = Q_th_load_W
-    Q_th_load_W = Q_therm_W
+
 
     if MOIST_TYPE == "dry":
+        Q_prim_W = Q_th_load_W
+        Q_th_load_W = Q_therm_W
         C_furn_therm = Q_prim_W * FURNACE_FUEL_COST_DRY  # [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[
-            hour]  # [CHF / Wh] cost gain by selling el. to the grid.
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[hour]  # [CHF / Wh] cost gain by selling el. to the grid.
         C_furn = C_furn_therm - C_furn_el_sold
         C_furn_per_Wh = C_furn / Q_th_load_W
 
     else:
-        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * FURNACE_FUEL_COST_WET
+        Q_prim_W = Q_th_load_W
+        Q_th_load_W = Q_therm_W
+        C_furn_therm = Q_prim_W * FURNACE_FUEL_COST_WET
         C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[hour]
         C_furn = C_furn_therm - C_furn_el_sold
         C_furn_per_Wh = C_furn / Q_th_load_W  # in CHF / Wh
 
-    E_furn_el_produced = eta_el * Q_prim_W - Q_aux_W
+    E_furn_el_produced = eta_el * Q_prim_W
 
     return C_furn, C_furn_per_Wh, Q_prim_W, Q_th_load_W, E_furn_el_produced
 
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design_W, Q_annual_W, config, locator, technology_type):
+def calc_Cinv_furnace(Q_design_W, locator, technology_type):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 

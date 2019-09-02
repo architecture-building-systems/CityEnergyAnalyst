@@ -64,7 +64,7 @@ def moo_optimization(locator, weather_file, config):
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = list(total_demand.Name.values)  # needs to be a list to avoid errors
+    building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator)
 
@@ -87,7 +87,7 @@ def moo_optimization(locator, weather_file, config):
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
     master_main.non_dominated_sorting_genetic_algorithm(locator,
-                                                        building_names,
+                                                        building_names_all,
                                                         district_heating_network,
                                                         district_cooling_network,
                                                         buildings_heating_demand,

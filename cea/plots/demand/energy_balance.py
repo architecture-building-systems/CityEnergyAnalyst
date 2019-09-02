@@ -55,7 +55,7 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
+                         yaxis=dict(title='Energy balance [kWh/m2_GFA]'))
 
     @property
     def data_frame_month(self):

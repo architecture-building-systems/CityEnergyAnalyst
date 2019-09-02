@@ -29,8 +29,8 @@ VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]
 VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
 
 # layout of graph and table
-YAXIS_DOMAIN_GRAPH = [0, 0.8]
-XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
+YAXIS_DOMAIN_GRAPH = [0, 1]
+XAXIS_DOMAIN_GRAPH = [0, 1]
 
 
 class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
