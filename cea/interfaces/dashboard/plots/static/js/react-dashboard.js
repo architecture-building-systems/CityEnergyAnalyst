@@ -545,7 +545,7 @@ const RowLayout = ({ dashIndex, plots }) => {
   const dispatch = useDispatch();
 
   const showModalAddPlot = () =>
-    dispatch(setModalAddPlotVisibility(true, dashIndex, plots.length + 1));
+    dispatch(setModalAddPlotVisibility(true, dashIndex, plots.length));
 
   return (
     <React.Fragment>
