@@ -10,13 +10,19 @@ const {
   Modal,
   Result,
   Empty,
-  Form
+  Form,
+  Menu,
+  Dropdown
 } = antd;
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const { Provider, connect, useSelector, useDispatch } = ReactRedux;
 
 const INITIAL_DASHBOARD = 0;
-const defaultPlotStyle = { height: 350, margin: 5 };
+const defaultPlotStyle = {
+  height: "calc(50vh - 150px)",
+  minHeight: 300,
+  margin: 5
+};
 
 // --------------------------
 // Components
@@ -399,20 +405,6 @@ const RowLayout = ({ dashIndex, plots }) => {
 const GridLayout = ({ dashIndex, plots }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
-  const emptyplots = [];
-  // if (plots.length < 6) {
-  //   for (var i = 0; i < 6 - plots.length; i++) {
-  //     emptyplots.push(
-  //       <div
-  //         className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
-  //         key={`${dashIndex}-${i}`}
-  //       >
-  //         <EmptyPlot />
-  //       </div>
-  //     );
-  //   }
-  // }
-
   return (
     <React.Fragment>
       <div className="row display-flex">
@@ -424,7 +416,6 @@ const GridLayout = ({ dashIndex, plots }) => {
             <Plot index={index} dashIndex={dashIndex} data={data} />
           </div>
         ))}
-        {emptyplots}
       </div>
     </React.Fragment>
   );
@@ -473,19 +464,12 @@ const MapLayout = ({ dashIndex, plots }) => {
 const Plot = ({ index, dashIndex, data, style }) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
-  const [hasIntersected, setIntersected] = useState(false);
   const dispatch = useDispatch();
 
   const plotStyle = { ...defaultPlotStyle, ...style };
 
   // TODO: Maybe find a better solution
   const hash = `cea-react-${data.hash}`;
-
-  const showModalEditParameters = () =>
-    dispatch(setModalEditParametersVisibility(true, dashIndex, index));
-
-  const showModalChangePlot = () =>
-    dispatch(setModalChangePlotVisibility(true, dashIndex, index));
 
   // Get plot div
   useEffect(() => {
@@ -547,19 +531,10 @@ const Plot = ({ index, dashIndex, data, style }) => {
           )}
         </div>
       }
-      extra={
-        <React.Fragment>
-          <Button onClick={showModalChangePlot} size="small">
-            Change
-          </Button>
-          <Button onClick={showModalEditParameters} size="small">
-            Edit
-          </Button>
-        </React.Fragment>
-      }
-      style={{ ...plotStyle, height: "" }}
+      extra={<EditMenu dashIndex={dashIndex} index={index} />}
+      style={{ ...plotStyle, height: "", minHeight: "" }}
       headStyle={{ height: 45 }}
-      bodyStyle={{ height: plotStyle.height }}
+      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
       {div ? (
@@ -572,6 +547,37 @@ const Plot = ({ index, dashIndex, data, style }) => {
     </Card>
   );
 };
+
+const EditMenu = React.memo(({ dashIndex, index }) => {
+  const dispatch = useDispatch();
+
+  const showModalEditParameters = () =>
+    dispatch(setModalEditParametersVisibility(true, dashIndex, index));
+
+  const showModalChangePlot = () =>
+    dispatch(setModalChangePlotVisibility(true, dashIndex, index));
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="0" onClick={showModalChangePlot}>
+        Change Plot
+      </Menu.Item>
+      <Menu.Item key="1" onClick={showModalEditParameters}>
+        Edit Parameters
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <React.Fragment>
+      <Dropdown overlay={menu} trigger={["click"]}>
+        <a className="ant-dropdown-link">
+          Edit <Icon type="down" />
+        </a>
+      </Dropdown>
+    </React.Fragment>
+  );
+});
 
 const LoadingPlot = ({ plotStyle }) => {
   return (
@@ -610,9 +616,9 @@ const EmptyPlot = ({ style }) => {
   return (
     <Card
       title="Empty Plot"
-      style={{ ...plotStyle, height: "" }}
+      style={{ ...plotStyle, height: "", minHeight: "" }}
       headStyle={{ height: 45 }}
-      bodyStyle={{ height: plotStyle.height }}
+      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
       <Empty>

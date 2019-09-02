@@ -27,8 +27,9 @@ class Dashboard(Resource):
         for d in dashboards:
             dashboard = d.to_dict()
             for i, plot in enumerate(dashboard['plots']):
-                dashboard['plots'][i]['hash'] = hashlib.md5(repr(sorted(dashboard['plots'][i].items()))).hexdigest()
-                dashboard['plots'][i]['title'] = d.plots[i].title
+                if plot['plot'] != 'empty':
+                    plot['hash'] = hashlib.md5(repr(sorted(plot.items()))).hexdigest()
+                    plot['title'] = d.plots[i].title
             out.append(dashboard)
 
         return out
