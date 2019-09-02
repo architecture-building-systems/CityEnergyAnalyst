@@ -96,6 +96,7 @@ const Dashboard = () => {
       <ModalAddPlot />
       <ModalChangePlot />
       <ModalEditParameters />
+      <ModalDeletePlot />
     </React.Fragment>
   );
 };
@@ -403,6 +404,52 @@ const ParamsForm = Form.create()(({ parameters, form }) => {
   );
 });
 
+const ModalDeletePlot = React.memo(() => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const visible = useSelector(state => state.dashboard.showModalDeletePlot);
+  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
+  const dispatch = useDispatch();
+
+  const handleOk = e => {
+    setConfirmLoading(true);
+    axios
+      .post(
+        `http://localhost:5050/api/dashboard/delete-plot/${dashIndex}/${index}`
+      )
+      .then(response => {
+        if (response) {
+          console.log(response.data);
+          dispatch(fetchDashboards(true));
+          setConfirmLoading(false);
+          dispatch(setModalDeletePlotVisibility(false));
+        }
+      })
+      .catch(error => {
+        setConfirmLoading(false);
+        console.log(error.response);
+      });
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalDeletePlotVisibility(false));
+  };
+
+  return (
+    <Modal
+      title="Delete plot"
+      visible={visible}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+      okText="Delete"
+      okButtonProps={{ type: "danger" }}
+    >
+      Are you sure you want to delete this plot?
+    </Modal>
+  );
+});
+
 // --------------------------
 // Layouts
 // --------------------------
@@ -436,7 +483,7 @@ const RowLayout = ({ dashIndex, plots }) => {
           <Button
             type="primary"
             icon="plus"
-            style={{ float: "right" }}
+            style={{ float: "right", marginTop: 20 }}
             onClick={showModalAddPlot}
           >
             Add plot
@@ -606,13 +653,20 @@ const EditMenu = React.memo(({ dashIndex, index }) => {
   const showModalChangePlot = () =>
     dispatch(setModalChangePlotVisibility(true, dashIndex, index));
 
+  const showModalDeletePlot = () =>
+    dispatch(setModalDeletePlotVisibility(true, dashIndex, index));
+
   const menu = (
     <Menu>
-      <Menu.Item key="0" onClick={showModalChangePlot}>
+      <Menu.Item key="changePlot" onClick={showModalChangePlot}>
         Change Plot
       </Menu.Item>
-      <Menu.Item key="1" onClick={showModalEditParameters}>
+      <Menu.Item key="editParameters" onClick={showModalEditParameters}>
         Edit Parameters
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="deletePlot" onClick={showModalDeletePlot}>
+        <div style={{ color: "red" }}>Delete Plot</div>
       </Menu.Item>
     </Menu>
   );
@@ -727,6 +781,17 @@ const setModalEditParametersVisibility = (visible, dashIndex, index) => {
   };
 };
 
+const SHOW_MODAL_DELETE_PLOT = "SHOW_MODAL_DELETE_PLOT";
+const setModalDeletePlotVisibility = (visible, dashIndex, index) => {
+  return {
+    type: SHOW_MODAL_DELETE_PLOT,
+    payload: {
+      showModalDeletePlot: visible,
+      activePlot: { dashIndex, index }
+    }
+  };
+};
+
 // --------------------------
 // Reducer
 // --------------------------
@@ -737,6 +802,7 @@ const initialState = {
   showModalAddPlot: false,
   showModalChangePlot: false,
   showModalEditParameters: false,
+  showModalDeletePlot: false,
   activePlot: { dashIndex: null, index: null }
 };
 
@@ -751,6 +817,8 @@ const dashboard = (state = initialState, { type, payload }) => {
     case SHOW_MODAL_CHANGE_PLOT:
       return { ...state, ...payload };
     case SHOW_MODAL_EDIT_PARAMETERS:
+      return { ...state, ...payload };
+    case SHOW_MODAL_DELETE_PLOT:
       return { ...state, ...payload };
     default:
       return state;
