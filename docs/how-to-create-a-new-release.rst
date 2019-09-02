@@ -108,14 +108,17 @@ The documentation will be rendered via the readthedocs_ site, allowing future de
 to understand and build upon your work. Note: entry points created by the command ``cea install-toolbox`` should be run at least once
 and you also need to install GraphViz_ to produce the graphs.
 
-CEA uses sphinx_ to document all module code, and has a tool specific to documentation to make your life a little easier::
+CEA uses sphinx_ to document all module code, and has a tool specific to documentation to make your life a little easier. Simply run via the command
+line once the cea virtual environment is activated in conda: ``activate cea``::
 
 ``cea-doc html``
 
-Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file and if your code writes any new output variables or files,
+This will remove, rebuild and open any change files, allowing you to check how the documentation htmls were rendered. Please address any
+errors (red text) which appears during the sphinx build. For more information, check out the :doc:`how-to-document-cea`.
+
+Finally, any changes to the conda environment need to be reflected in the ``docs/environment.yml`` file and if your code writes any new output variables or files,
 the ``schemas.yml`` should be updated accordingly.
 
-For more information, check out the :doc:`how-to-document-cea`.
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
 .. _sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html
