@@ -103,27 +103,22 @@ still work on a new installation. This is important because it can find missing 
 Building the documentation
 --------------------------
 
-An important part of the release process is ensuring that the documentation for readthedocs_ site can be built. This can
-be tested locally by executing the following commands in the repository folder::
+Well documented code is an essential part of the release, allowing your code's legacy to only grow in glory and admiration.
+The documentation will be rendered via the readthedocs_ site, allowing future developers, practitioners, researchers and students
+to understand and build upon your work. Note: entry points created by the command ``cea install-toolbox`` should be run at least once
+and you also need to install GraphViz_ to produce the graphs.
 
-    cd docs
-    make clean
-    make html
+CEA uses sphinx_ to document all module code, and has a tool specific to documentation to make your life a little easier::
 
-For this to run you will need to first ``pip install sphinx``. Also note that the command ``cea install-toolbox`` needs
-to be run at least once to set up some paths required for importing certain modules. You will also need to do
-``conda install numba``. You also need to install GraphViz_ to produce the graphs.
+``cea-doc html``
 
-If any error messages show up, these need to be fixed before publishing the release. The readthedocs_ site uses
-these steps to produce the developer and API documentation.
+Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file and if your code writes any new output variables or files,
+the ``schemas.yml`` should be updated accordingly.
 
-The documentation will be build in the folder ``docs/_build/html`` and you can open the ``index.html`` file there to
-browse the documentation.
-
-Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file.
-
+For more information, check out the :doc:`how-to-document-cea`.
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
+.. _sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html
 .. _GraphViz: http://www.graphviz.org/Download.php
 
 Uploading to PyPI
