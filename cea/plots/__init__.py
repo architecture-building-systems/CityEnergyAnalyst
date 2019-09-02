@@ -146,12 +146,13 @@ class Dashboard(object):
                 'layout': self.layout,
                 'plots': [{'plot': p.id(),
                            'category': p.category_name,
-                           'parameters': p.parameters} for p in self.plots]}
+                           'parameters': p.parameters} if p is not None else {'plot': 'empty'} for p in self.plots]}
 
 
 def load_plot(project, plot_definition, cache):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
-    # print('load_plot', project, plot_definition)
+    if plot_definition['plot'] == 'empty':
+        return None
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
