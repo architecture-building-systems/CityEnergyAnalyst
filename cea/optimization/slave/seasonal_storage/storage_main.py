@@ -382,7 +382,7 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
             Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
 
     Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W,
-                                                                                              locator, config,
+                                                                                              locator,
                                                                                               'HP2')
 
     # SUMMARY OF COSTS AND EMISSIONS
