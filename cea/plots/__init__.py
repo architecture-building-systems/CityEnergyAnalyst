@@ -53,8 +53,9 @@ def read_dashboards(config, cache):
 
 def write_dashboards(config, dashboards):
     """Write a list of Dashboard objects to disk"""
+    yaml.SafeDumper.ignore_aliases = lambda *args: True
     with open(dashboard_yml_path(config), 'w') as f:
-        yaml.dump([d.to_dict() for d in dashboards], f)
+        yaml.safe_dump([d.to_dict() for d in dashboards], f)
 
 
 def dashboard_yml_path(config):

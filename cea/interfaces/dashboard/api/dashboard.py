@@ -80,7 +80,7 @@ class DashboardPlotParameters(Resource):
 
 
 @api.route('/change-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardChange(Resource):
+class DashboardChangePlot(Resource):
     def post(self, dashboard_index, plot_index):
         form = api.payload
         config = cea.config.Configuration()
@@ -89,6 +89,21 @@ class DashboardChange(Resource):
 
         dashboard = dashboards[dashboard_index]
         dashboard.replace_plot(form['category'], form['plot_id'], plot_index)
+        cea.plots.write_dashboards(config, dashboards)
+
+        return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
+
+
+@api.route('/add-plot/<int:dashboard_index>/<int:plot_index>')
+class DashboardAddPlot(Resource):
+    def post(self, dashboard_index, plot_index):
+        form = api.payload
+        config = cea.config.Configuration()
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
+
+        dashboard = dashboards[dashboard_index]
+        dashboard.add_plot(form['category'], form['plot_id'], plot_index)
         cea.plots.write_dashboards(config, dashboards)
 
         return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
