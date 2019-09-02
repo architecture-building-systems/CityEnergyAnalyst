@@ -39,6 +39,18 @@ class Dashboard(Resource):
         return out
 
 
+@api.route('/new')
+class DashboardAddPlot(Resource):
+    def post(self):
+        form = api.payload
+        config = cea.config.Configuration()
+        plot_cache = cea.plots.cache.PlotCache(config)
+
+        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['description'], form['layout'])
+
+        return {'new_dashboard_index': dashboard_index}
+
+
 @api.route('/plot-categories')
 class DashboardPlotCategories(Resource):
     def get(self):
