@@ -78,7 +78,12 @@ def new_dashboard(config, cache, name, description, layout):
     Returns the index of the new dashboard in the dashboards list.
     """
     dashboards = read_dashboards(config, cache)
-    dashboards.append(default_dashboard(config, cache, name, description, layout))
+    dashboards.append(Dashboard(config, {
+        'name': name,
+        'description': description,
+        'layout': layout,
+        'plots': [{'plot': 'empty'}] * 6 if layout == 'grid' else []
+    }, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
