@@ -147,25 +147,61 @@ const ModalNewDashboard = React.memo(() => {
 });
 
 const ModalAddPlot = React.memo(() => {
+  const [categories, setCategories] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [values, setValues] = useState({ category: null, plot_id: null });
   const visible = useSelector(state => state.dashboard.showModalAddPlot);
+  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
   const dispatch = useDispatch();
 
+  const handleValue = useCallback(values => setValues(values), []);
+
   const handleOk = e => {
-    dispatch(setModalAddPlotVisibility(false));
+    setConfirmLoading(true);
+    axios
+      .post(
+        `http://localhost:5050/api/dashboard/add-plot/${dashIndex}/${index}`,
+        values
+      )
+      .then(response => {
+        if (response) {
+          console.log(response.data);
+          dispatch(fetchDashboards(true));
+          setConfirmLoading(false);
+          dispatch(setModalAddPlotVisibility(false));
+        }
+      })
+      .catch(error => {
+        setConfirmLoading(false);
+        console.log(error.response);
+      });
   };
 
   const handleCancel = e => {
     dispatch(setModalAddPlotVisibility(false));
   };
 
+  useEffect(() => {
+    if (visible) {
+      axios
+        .get("http://localhost:5050/api/dashboard/plot-categories")
+        .then(response => {
+          setCategories(response.data);
+        });
+    } else setCategories(null);
+  }, [visible]);
+
   return (
     <Modal
       title="Add plot"
       visible={visible}
+      width={800}
       onOk={handleOk}
       onCancel={handleCancel}
+      okButtonProps={{ disabled: categories === null }}
+      confirmLoading={confirmLoading}
     >
-      <p>Some contents...</p>
+      <CategoriesForm categories={categories} setValues={handleValue} />
     </Modal>
   );
 });
@@ -253,6 +289,14 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
     setValues({ category: selected.category, plot_id: value });
     setSelected({ ...selected, selectedPlot: value });
   };
+
+  useEffect(() => {
+    if (categories !== null)
+      setValues({
+        category: selected.category,
+        plot_id: selected.selectedPlot
+      });
+  }, [categories]);
 
   return (
     <Form layout="vertical">
@@ -366,7 +410,8 @@ const ParamsForm = Form.create()(({ parameters, form }) => {
 const RowLayout = ({ dashIndex, plots }) => {
   const dispatch = useDispatch();
 
-  const showModalAddPlot = () => dispatch(setModalAddPlotVisibility(true));
+  const showModalAddPlot = () =>
+    dispatch(setModalAddPlotVisibility(true, dashIndex, plots.length + 1));
 
   return (
     <React.Fragment>
@@ -381,7 +426,7 @@ const RowLayout = ({ dashIndex, plots }) => {
       ) : (
         <Row>
           <Col>
-            <EmptyPlot />
+            <EmptyPlot dashIndex={dashIndex} index={0} />
           </Col>
         </Row>
       )}
@@ -413,7 +458,11 @@ const GridLayout = ({ dashIndex, plots }) => {
             className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
             key={`${dashIndex}-${index}-${data.hash}`}
           >
-            <Plot index={index} dashIndex={dashIndex} data={data} />
+            {data.plot !== "empty" ? (
+              <Plot index={index} dashIndex={dashIndex} data={data} />
+            ) : (
+              <EmptyPlot dashIndex={dashIndex} index={index} />
+            )}
           </div>
         ))}
       </div>
@@ -432,7 +481,7 @@ const MapLayout = ({ dashIndex, plots }) => {
           className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
           key={`${dashIndex}-${5 + i}`}
         >
-          <EmptyPlot />
+          <EmptyPlot dashIndex={dashIndex} index={5 + i} />
         </div>
       );
     }
@@ -607,9 +656,10 @@ const ErrorPlot = ({ error }) => {
   return null;
 };
 
-const EmptyPlot = ({ style }) => {
+const EmptyPlot = ({ style, dashIndex, index }) => {
   const dispatch = useDispatch();
-  const showModalAddPlot = () => dispatch(setModalAddPlotVisibility(true));
+  const showModalAddPlot = () =>
+    dispatch(setModalAddPlotVisibility(true, dashIndex, index));
 
   const plotStyle = { ...defaultPlotStyle, ...style };
 
@@ -651,10 +701,10 @@ const setModalNewDashboardVisibility = visible => {
 };
 
 const SHOW_MODAL_ADD_PLOT = "SHOW_MODAL_ADD_PLOT";
-const setModalAddPlotVisibility = visible => {
+const setModalAddPlotVisibility = (visible, dashIndex, index) => {
   return {
     type: SHOW_MODAL_ADD_PLOT,
-    payload: { showModalAddPlot: visible }
+    payload: { showModalAddPlot: visible, activePlot: { dashIndex, index } }
   };
 };
 
