@@ -277,7 +277,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if thermal_network.network_type == 'DH':
-            for key in thermal_network.config.thermal_network.substation_heating_systems:
+            for key in thermal_network.substation_heating_systems:
                 key = 'hs_' + key
                 if not name in thermal_network.ch_old[key][t].columns:
                     thermal_network.ch_old[key][t][name] = 0.0
