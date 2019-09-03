@@ -248,8 +248,15 @@ Optimization:
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'thermal-network:network-type', 'thermal-network:network-names',
-                 'optimization', 'decentralized', 'general:multiprocessing']
+    parameters: ['general:scenario', 'general:multiprocessing', optimization]
+    input-files:
+      - [get_street_network]
+      - [get_total_demand]
+      - [get_lake_potential]
+      - [get_sewage_heat_potential]
+      - [get_sewage_heat_potential]
+      - [get_geothermal_potential]
+      - [PV_totals]
 
   - name: decentralized
     label: Decentralized supply system
@@ -309,7 +316,7 @@ Utilities:
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
     input-files:
-    - [get_zone_geometry]
+      - [get_zone_geometry]
 
 
 default:
@@ -320,27 +327,27 @@ default:
     interfaces: [cli, arcgis]
     module: cea.plots.plots_main
     parameters: ['general:scenario', plots]
-#
-#  - name: plots-scenario-comparisons
-#    label: Plots comparison
-#    description: Plots comparing urban scenarios and supply system configurations
-#    interfaces: [cli, arcgis, dashboard]
-#    module: cea.plots.comparisons.main
-#    parameters: [plots-scenario-comparisons]
+  #
+  #  - name: plots-scenario-comparisons
+  #    label: Plots comparison
+  #    description: Plots comparing urban scenarios and supply system configurations
+  #    interfaces: [cli, arcgis, dashboard]
+  #    module: cea.plots.comparisons.main
+  #    parameters: [plots-scenario-comparisons]
 
-#  - name: plots-supply-system
-#    label: Plots optimization detailed
-#    description: Create plots for a supply system (default or optimal) of an urban scenario
-#    interfaces: [cli, arcgis, dashboard]
-#    module: cea.plots.supply_system.main
-#    parameters: ['general:scenario', plots-supply-system]
-#
-#  - name: plots-optimization
-#    label: Plots optimization overview
-#    description: Create plots for the results of the optimzation of an urban scenario
-#    interfaces: [cli, arcgis, dashboard]
-#    module: cea.plots.optimization.main
-#    parameters: ['general:scenario', plots-optimization,]
+  #  - name: plots-supply-system
+  #    label: Plots optimization detailed
+  #    description: Create plots for a supply system (default or optimal) of an urban scenario
+  #    interfaces: [cli, arcgis, dashboard]
+  #    module: cea.plots.supply_system.main
+  #    parameters: ['general:scenario', plots-supply-system]
+  #
+  #  - name: plots-optimization
+  #    label: Plots optimization overview
+  #    description: Create plots for the results of the optimzation of an urban scenario
+  #    interfaces: [cli, arcgis, dashboard]
+  #    module: cea.plots.optimization.main
+  #    parameters: ['general:scenario', plots-optimization,]
 
   - name: benchmark-graphs
     label: benchmark-graphs

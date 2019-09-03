@@ -137,6 +137,9 @@ def check_input_files(config, locator):
         if not os.path.exists(locator.PVT_totals()):
             raise ValueError(
                 "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
+        network_type = "DH"
+    else:
+        network_type = "DC"
     if not os.path.exists(locator.SC_totals(panel_type='FP')):
         raise ValueError(
             "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
@@ -147,10 +150,10 @@ def check_input_files(config, locator):
         raise ValueError(
             "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
     if not os.path.exists(locator.get_lake_potential()):
-        raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first.")
+        raise ValueError("Missing water-body potential of the scenario. Consider running lake potential script first.")
     if not os.path.exists(locator.get_geothermal_potential()):
         raise ValueError("Missing geothermal potential of the scenario. Consider running lake potential script first.")
-    if not os.path.exists(locator.get_thermal_network_edge_list_file(config.thermal_network.network_type, '')):
+    if not os.path.exists(locator.get_thermal_network_edge_list_file(network_type, '')):
         raise ValueError(
             "Missing thermal network simulation results. Consider running thermal network simulation script first.")
 
