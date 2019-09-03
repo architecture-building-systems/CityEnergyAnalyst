@@ -39,6 +39,9 @@ const Dashboard = () => {
   const showModalNewDashboard = () =>
     dispatch(setModalNewDashboardVisibility(true));
 
+  const showModalDuplicateDashboard = () =>
+    dispatch(setModalDuplicateDashboardVisibility(true));
+
   const handleSelect = useCallback(index => {
     setDashIndex(index);
   }, []);
@@ -75,7 +78,12 @@ const Dashboard = () => {
             >
               New Dashboard
             </Button>
-            <Button type="primary" icon="edit" size="small">
+            <Button
+              type="primary"
+              icon="copy"
+              size="small"
+              onClick={showModalDuplicateDashboard}
+            >
               Duplicate Dashboard
             </Button>
             <Button type="primary" icon="edit" size="small">
@@ -95,7 +103,12 @@ const Dashboard = () => {
       </div>
       <ModalNewDashboard
         setDashIndex={handleSelect}
-        dashboards={dashboards.length}
+        dashboardNames={dashboardNames}
+      />
+      <ModalDuplicateDashboard
+        dashIndex={dashIndex}
+        setDashIndex={handleSelect}
+        dashboardNames={dashboardNames}
       />
       <ModalAddPlot />
       <ModalChangePlot />
@@ -133,7 +146,7 @@ const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
 // Modal
 // --------------------------
 
-const ModalNewDashboard = React.memo(({ setDashIndex, dashboards }) => {
+const ModalNewDashboard = React.memo(({ setDashIndex, dashboardNames }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [newDashIndex, setNewDashIndex] = useState(null);
   const visible = useSelector(state => state.dashboard.showModalNewDashboard);
@@ -174,7 +187,7 @@ const ModalNewDashboard = React.memo(({ setDashIndex, dashboards }) => {
       setDashIndex(newDashIndex);
       setNewDashIndex(null);
     }
-  }, [dashboards]);
+  }, [dashboardNames]);
 
   return (
     <Modal
@@ -233,6 +246,107 @@ const DashForm = Form.create()(({ form }) => {
     </Form>
   );
 });
+
+const ModalDuplicateDashboard = React.memo(
+  ({ dashIndex, setDashIndex, dashboardNames }) => {
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [newDashIndex, setNewDashIndex] = useState(null);
+    const visible = useSelector(
+      state => state.dashboard.showModalDuplicateDashboard
+    );
+    const formRef = useRef();
+    const dispatch = useDispatch();
+
+    const handleOk = e => {
+      formRef.current.validateFields((err, values) => {
+        console.log(!err, values);
+        if (!err) {
+          setConfirmLoading(true);
+          console.log("Received values of form: ", values);
+          axios
+            .post(`http://localhost:5050/api/dashboard/duplicate`, {
+              ...values,
+              dashboard_index: dashIndex
+            })
+            .then(response => {
+              if (response) {
+                console.log(response.data);
+                dispatch(fetchDashboards(true));
+                setConfirmLoading(false);
+                dispatch(setModalDuplicateDashboardVisibility(false));
+                setNewDashIndex(response.data.new_dashboard_index);
+              }
+            })
+            .catch(error => {
+              setConfirmLoading(false);
+              console.log(error.response);
+            });
+        }
+      });
+    };
+
+    const handleCancel = e => {
+      dispatch(setModalDuplicateDashboardVisibility(false));
+    };
+
+    useEffect(() => {
+      if (newDashIndex !== null) {
+        setDashIndex(newDashIndex);
+        setNewDashIndex(null);
+      }
+    }, [dashboardNames]);
+
+    return (
+      <Modal
+        title="Duplicate Dashboard"
+        visible={visible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        confirmLoading={confirmLoading}
+      >
+        {visible ? (
+          <DashDuplicateForm
+            ref={formRef}
+            dashIndex={dashIndex}
+            dashboardNames={dashboardNames}
+          />
+        ) : null}
+      </Modal>
+    );
+  }
+);
+
+const DashDuplicateForm = Form.create()(
+  ({ form, dashIndex, dashboardNames }) => {
+    const { getFieldDecorator } = form;
+
+    return (
+      <Form layout="horizontal">
+        <Form.Item
+          label="Name"
+          key="name"
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 11, offset: 1 }}
+        >
+          {getFieldDecorator("name", {
+            initialValue: `${dashboardNames[dashIndex]}(Copy)`,
+            rules: [{ required: true }]
+          })(<Input />)}
+        </Form.Item>
+        <Form.Item
+          label="Description"
+          key="description"
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 11, offset: 1 }}
+        >
+          {getFieldDecorator("description", {
+            initialValue: ""
+          })(<Input />)}
+        </Form.Item>
+      </Form>
+    );
+  }
+);
 
 const ModalAddPlot = React.memo(() => {
   const [categories, setCategories] = useState(null);
@@ -836,6 +950,14 @@ const setModalNewDashboardVisibility = visible => {
   };
 };
 
+const SHOW_MODAL_DUPLICATE_DASHBOARD = "SHOW_MODAL_DUPLICATE_DASHBOARD";
+const setModalDuplicateDashboardVisibility = visible => {
+  return {
+    type: SHOW_MODAL_DUPLICATE_DASHBOARD,
+    payload: { showModalDuplicateDashboard: visible }
+  };
+};
+
 const SHOW_MODAL_ADD_PLOT = "SHOW_MODAL_ADD_PLOT";
 const setModalAddPlotVisibility = (visible, dashIndex, index) => {
   return {
@@ -881,6 +1003,7 @@ const setModalDeletePlotVisibility = (visible, dashIndex, index) => {
 const initialState = {
   fetchingDashboards: true,
   showModalNewDashboard: false,
+  showModalDuplicateDashboard: false,
   showModalAddPlot: false,
   showModalChangePlot: false,
   showModalEditParameters: false,
@@ -893,6 +1016,8 @@ const dashboard = (state = initialState, { type, payload }) => {
     case FETCH_DASHBOARDS:
       return { ...state, ...payload };
     case SHOW_MODAL_NEW_DASHBOARD:
+      return { ...state, ...payload };
+    case SHOW_MODAL_DUPLICATE_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_ADD_PLOT:
       return { ...state, ...payload };

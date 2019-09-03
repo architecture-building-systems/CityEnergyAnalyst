@@ -50,6 +50,18 @@ class DashboardAddPlot(Resource):
 
         return {'new_dashboard_index': dashboard_index}
 
+@api.route('/duplicate')
+class DashboardDuplicatePlot(Resource):
+    def post(self):
+        form = api.payload
+        config = cea.config.Configuration()
+        plot_cache = cea.plots.cache.PlotCache(config)
+
+        dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['description'], form['dashboard_index'])
+
+        return {'new_dashboard_index': dashboard_index}
+
+
 
 @api.route('/plot-categories')
 class DashboardPlotCategories(Resource):
