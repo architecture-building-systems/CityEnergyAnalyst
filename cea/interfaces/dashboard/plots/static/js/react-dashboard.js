@@ -224,16 +224,6 @@ const DashForm = Form.create()(({ form }) => {
         })(<Input />)}
       </Form.Item>
       <Form.Item
-        label="Description"
-        key="description"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 11, offset: 1 }}
-      >
-        {getFieldDecorator("description", {
-          initialValue: ""
-        })(<Input />)}
-      </Form.Item>
-      <Form.Item
         label="Layout"
         key="layout"
         labelCol={{ span: 6 }}
@@ -335,16 +325,6 @@ const DashDuplicateForm = Form.create()(
           {getFieldDecorator("name", {
             initialValue: `${dashboardNames[dashIndex]}(Copy)`,
             rules: [{ required: true }]
-          })(<Input />)}
-        </Form.Item>
-        <Form.Item
-          label="Description"
-          key="description"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 11, offset: 1 }}
-        >
-          {getFieldDecorator("description", {
-            initialValue: ""
           })(<Input />)}
         </Form.Item>
       </Form>

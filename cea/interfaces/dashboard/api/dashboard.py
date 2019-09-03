@@ -46,7 +46,7 @@ class DashboardNew(Resource):
         config = cea.config.Configuration()
         plot_cache = cea.plots.cache.PlotCache(config)
 
-        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['description'], form['layout'])
+        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['layout'])
 
         return {'new_dashboard_index': dashboard_index}
 
@@ -58,7 +58,7 @@ class DashboardDuplicate(Resource):
         config = cea.config.Configuration()
         plot_cache = cea.plots.cache.PlotCache(config)
 
-        dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['description'], form['dashboard_index'])
+        dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['dashboard_index'])
 
         return {'new_dashboard_index': dashboard_index}
 
