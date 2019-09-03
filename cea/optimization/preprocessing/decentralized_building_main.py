@@ -29,13 +29,13 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     """
 
     # local variables
-    #TODO: This will do it in Singapore too, so watch-out...
     buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+    buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
     buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
 
     # calculate substations
 
-    if (buildings_name_with_heating != [] and config.data_helper.region != 'SG'): #FIXME: temporal fix to avoid heating calculation in SG
+    if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
         decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand,
                                                                             buildings_name_with_heating,
                                                                             config, prices, lca)
