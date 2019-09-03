@@ -19,8 +19,8 @@ import time
 import pandas as pd
 
 import cea.config
-from cea.analysis.clustering.sax.sax import SAX
-from cea.analysis.clustering.sax.sax_optimization import sax_optimization
+from legacy.clustering.sax.sax import SAX
+from legacy.clustering.sax import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
 from cea.plots.old.clusters_plot import plot_day
 from cea.plots.old.pareto_frontier_plot import frontier_2D_3OB

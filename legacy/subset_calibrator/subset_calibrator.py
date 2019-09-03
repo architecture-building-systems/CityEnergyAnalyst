@@ -89,7 +89,7 @@ def ss_loop(design, lhs_samples, NN_input_ready_ht,scalerX,perceptron_ht,scalerT
 
 def ss_calibrator(building_name):
 
-    from cea.analysis.clustering.kmeans.k_means_partitioner import partitioner
+    from legacy.clustering.kmeans import partitioner
     list_median, cluster_labels = partitioner(building_name)
     intended_parameters = ['people', 'Eaf', 'Elf', 'Qwwf', 'I_rad', 'I_sol', 'T_ext', 'rh_ext',
                            'ta_hs_set', 'ta_cs_set', 'theta_a', 'Qhsf', 'Qcsf']
