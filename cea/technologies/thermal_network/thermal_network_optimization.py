@@ -171,7 +171,7 @@ def thermal_network_optimization(config, locator):
     for generation_number in range(config.thermal_network_optimization.number_of_generations):
         print("Running optimization for generation number {generation}".format(generation=generation_number))
         # calculate network cost for each individual and sort by increasing cost
-        sorted_population = network_cost_calculation(population, network_info, network_layout, config)
+        sorted_population = network_cost_calculation(population, network_info, network_layout)
         print("Lowest cost individual: {winner}".format(winner=sorted_population[0]))
         print()
 
@@ -212,7 +212,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     return np.nan
 
 
-def network_cost_calculation(population, network_info, network_layout, config):
+def network_cost_calculation(population, network_info, network_layout):
     """
     Main function which calls the objective function and stores values
     :param NetworkLayout network_layout:
