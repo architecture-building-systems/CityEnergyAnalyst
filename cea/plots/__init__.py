@@ -152,6 +152,13 @@ class Dashboard(object):
         else:
             self.plots.pop(plot_index)
 
+    def set_scenario(self, scenario):
+        """Set all scenario parameters of dashboard plots"""
+        for plot in self.plots:
+            if plot is not None:
+                if 'scenario-name' in plot.parameters:
+                    plot.parameters['scenario-name'] = scenario
+
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
         return {'name': self.name,

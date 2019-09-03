@@ -42,6 +42,8 @@ const Dashboard = () => {
   const showModalDuplicateDashboard = () =>
     dispatch(setModalDuplicateDashboardVisibility(true));
 
+  const showModalSetScenario = () => dispatch(setModalSetScenario(true));
+
   const handleSelect = useCallback(index => {
     setDashIndex(index);
   }, []);
@@ -86,7 +88,12 @@ const Dashboard = () => {
             >
               Duplicate Dashboard
             </Button>
-            <Button type="primary" icon="edit" size="small">
+            <Button
+              type="primary"
+              icon="edit"
+              size="small"
+              onClick={showModalSetScenario}
+            >
               Set Scenario
             </Button>
           </div>
@@ -110,6 +117,7 @@ const Dashboard = () => {
         setDashIndex={handleSelect}
         dashboardNames={dashboardNames}
       />
+      <ModalSetScenario dashIndex={dashIndex} />
       <ModalAddPlot />
       <ModalChangePlot />
       <ModalEditParameters />
@@ -155,7 +163,6 @@ const ModalNewDashboard = React.memo(({ setDashIndex, dashboardNames }) => {
 
   const handleOk = e => {
     formRef.current.validateFields((err, values) => {
-      console.log(!err, values);
       if (!err) {
         setConfirmLoading(true);
         console.log("Received values of form: ", values);
@@ -259,7 +266,6 @@ const ModalDuplicateDashboard = React.memo(
 
     const handleOk = e => {
       formRef.current.validateFields((err, values) => {
-        console.log(!err, values);
         if (!err) {
           setConfirmLoading(true);
           console.log("Received values of form: ", values);
@@ -347,6 +353,82 @@ const DashDuplicateForm = Form.create()(
     );
   }
 );
+
+const ModalSetScenario = React.memo(({ dashIndex }) => {
+  const [scenarios, setScenarios] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const visible = useSelector(state => state.dashboard.showModalSetScenario);
+  const formRef = useRef();
+  const dispatch = useDispatch();
+
+  const handleOk = e => {
+    formRef.current.validateFields((err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log("Received values of form: ", values);
+        axios
+          .post(
+            `http://localhost:5050/api/dashboard/set-scenario/${dashIndex}`,
+            values
+          )
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              dispatch(fetchDashboards(true));
+              setConfirmLoading(false);
+              dispatch(setModalSetScenario(false));
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
+      }
+    });
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalSetScenario(false));
+  };
+
+  useEffect(() => {
+    if (visible) {
+      axios.get("http://localhost:5050/api/project/").then(response => {
+        const { scenario, scenarios } = response.data;
+        setScenarios({
+          type: "ScenarioNameParameter",
+          name: "scenario",
+          value: scenario,
+          help: 'Change the scenario parameter of all plots in this dashboard',
+          choices: scenarios
+        });
+      });
+    } else setScenarios(null);
+  }, [visible]);
+
+  return (
+    <Modal
+      title="Set Scenario"
+      visible={visible}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+    >
+      <SetScenarioForm ref={formRef} scenarios={scenarios} />
+    </Modal>
+  );
+});
+
+const SetScenarioForm = Form.create()(({ form, scenarios }) => {
+  const { getFieldDecorator } = form;
+  return (
+    <Form layout="horizontal">
+      {scenarios
+        ? ceaParameter(scenarios, getFieldDecorator)
+        : "Fetching Data..."}
+    </Form>
+  );
+});
 
 const ModalAddPlot = React.memo(() => {
   const [categories, setCategories] = useState(null);
@@ -958,6 +1040,14 @@ const setModalDuplicateDashboardVisibility = visible => {
   };
 };
 
+const SHOW_MODAL_SET_SCENARIO = "SHOW_MODAL_SET_SCENARIO";
+const setModalSetScenario = visible => {
+  return {
+    type: SHOW_MODAL_SET_SCENARIO,
+    payload: { showModalSetScenario: visible }
+  };
+};
+
 const SHOW_MODAL_ADD_PLOT = "SHOW_MODAL_ADD_PLOT";
 const setModalAddPlotVisibility = (visible, dashIndex, index) => {
   return {
@@ -1004,6 +1094,7 @@ const initialState = {
   fetchingDashboards: true,
   showModalNewDashboard: false,
   showModalDuplicateDashboard: false,
+  showModalSetScenario: false,
   showModalAddPlot: false,
   showModalChangePlot: false,
   showModalEditParameters: false,
@@ -1018,6 +1109,8 @@ const dashboard = (state = initialState, { type, payload }) => {
     case SHOW_MODAL_NEW_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_DUPLICATE_DASHBOARD:
+      return { ...state, ...payload };
+    case SHOW_MODAL_SET_SCENARIO:
       return { ...state, ...payload };
     case SHOW_MODAL_ADD_PLOT:
       return { ...state, ...payload };
