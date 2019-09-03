@@ -64,15 +64,14 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache, name='Default Dashboard', description='', layout='row'):
+def default_dashboard(config, cache, name='Default Dashboard', layout='row'):
     """Return a default Dashboard"""
     return Dashboard(config, {'name': name,
-                              'description': description,
                               'layout': layout,
                               'plots': []}, cache)
 
 
-def new_dashboard(config, cache, name, description, layout):
+def new_dashboard(config, cache, name, layout):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
@@ -80,7 +79,6 @@ def new_dashboard(config, cache, name, description, layout):
     dashboards = read_dashboards(config, cache)
     dashboards.append(Dashboard(config, {
         'name': name,
-        'description': description,
         'layout': layout,
         'plots': [{'plot': 'empty'}] * 6 if layout == 'grid' else []
     }, cache))
@@ -88,12 +86,11 @@ def new_dashboard(config, cache, name, description, layout):
     return len(dashboards) - 1
 
 
-def duplicate_dashboard(config, cache, name, description, dashboard_index):
+def duplicate_dashboard(config, cache, name, dashboard_index):
     dashboards = read_dashboards(config, cache)
     dashboard = dashboards[dashboard_index].to_dict()
     dashboards.append(Dashboard(config, {
         'name': name,
-        'description': description,
         'layout': dashboard['layout'],
         'plots': dashboard['plots']
     }, cache))
@@ -116,10 +113,6 @@ class Dashboard(object):
         self.name = dashboard_dict['name']
         self.cache = cache
         self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
-        try:
-            self.description = dashboard_dict['description']
-        except KeyError:
-            self.description = ''
         try:
             layout = dashboard_dict['layout']
             self.layout = 'grid' if layout == 'map' else layout
@@ -163,7 +156,6 @@ class Dashboard(object):
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
         return {'name': self.name,
-                'description': self.description,
                 'layout': self.layout,
                 'plots': [{'plot': p.id(),
                            'category': p.category_name,
