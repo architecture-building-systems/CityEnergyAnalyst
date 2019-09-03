@@ -65,7 +65,7 @@ def main(case):
         building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         # building_result_path = os.path.join(building_result_path, "reduced")
-        # plot_results.main(building, TECHS, building_result_path)
+        plot_results.main(building, TECHS, building_result_path)
         # compare_el.main(building, building_result_path)
         # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
@@ -122,22 +122,25 @@ def exec_osmose(tech, osmose_project_path):
     output, err = p.communicate()
 
     if err.decode('utf-8') is not '':
-        # print(err.decode('utf-8'))
+        print(err.decode('utf-8'))
         if err.decode('utf-8').startswith('WARNING:'):
-            print 'warning'  # , err.decode('utf-8')
-        elif err.decode('utf-8').startswith('pandoc: Could not find image'):
-            print 'warning'  # , err.decode('utf-8')
-        else:
-            print "ERROR"
+            print 'warning ', err
+        if err.decode('utf-8').startswith('pandoc: Could not find image'):
+            print 'warning ', err
 
     # print(output.decode('utf-8'))
 
     # print OutMsg
     result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
     run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1]
+    print tech, run_folder
     OutMsg_path = os.path.join(result_path, run_folder) + settings.osmose_outMsg_path
     f = open(OutMsg_path, "r")
-    print tech, run_folder, "OutMsg: ", f.readline(), f.readline(), f.readline(), f.readline()
+    keywords = ['integer infeasible', 'mipgap']
+    for line_count, line_text in enumerate(f):
+        for keyword in keywords:
+            if keyword in line_text:
+                print line_text
 
     return result_path, run_folder
 
