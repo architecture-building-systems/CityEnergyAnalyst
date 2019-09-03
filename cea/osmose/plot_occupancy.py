@@ -21,31 +21,46 @@ def main(cases, building, path_to_save_results):
 
     # plot
     plot_occupancy_and_setpoints(SAT_occupancy_dict, WED_occupancy_dict, building, path_to_save_results, setpoint_df)
+
+    # fig,(ax1,ax2) = plt.subplots(1, 2, sharey=True, figsize=(8.5, 3.5))
+    # # plot WED
+    # ax1 = plot_occupancy(ax1, WED_occupancy_dict, 'Wednesday')
+    # ax1.set(ylabel='Occupancy [pax/m2]')
+    # ax1.yaxis.label.set_size(16)
+    # # plot SAT
+    # ax2 = plot_occupancy(ax2, SAT_occupancy_dict, 'Saturday')
+    # ax2.legend(loc='upper center', ncol=3, fontsize=16, columnspacing=0.1)
+    # filename = building + '_occupancy' + '.png'
+    # plt.tight_layout()
+    # fig.savefig(os.path.join(path_to_save_results, filename))
+
     return np.nan
 
 
 def plot_occupancy_and_setpoints(SAT_occupancy_dict, WED_occupancy_dict, building, path_to_save_results, setpoint_df):
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, figsize=(10, 3.5))
+    fontsize = 20
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, figsize=(13.5, 4))
     # plot WED
     ax1 = plot_occupancy(ax1, WED_occupancy_dict, 'Wednesday')
-    ax1.set(ylabel='Occupancy [ppl/m2]')
-    ax1.yaxis.label.set_size(10)
+    ax1.set(ylabel='Occupancy [pax/m2]')
+    ax1.yaxis.label.set_size(fontsize)
     # plot SAT
     ax2 = plot_occupancy(ax2, SAT_occupancy_dict, 'Saturday')
-    ax2.legend(loc='upper right', ncol=3, fontsize='small', columnspacing=0.15)
+    ax2.legend(loc='upper center', ncol=3, fontsize=18, columnspacing=0.1)
     # plot table
     ax3.axis('off')
     table = ax3.table(cellText=setpoint_df.values,
                       colLabels=setpoint_df.columns, rowLabels=setpoint_df.index,
                       loc='center right', colWidths=[0.11] * 3)
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
+    table.set_fontsize(18)
     table.scale(2, 2)
     plt.tight_layout()
     #plt.show()
     filename = building + '_occupancy' + '.png'
     fig.savefig(os.path.join(path_to_save_results, filename))
     return np.nan
+
 
 
 def setpoint_table():
@@ -58,6 +73,8 @@ def setpoint_table():
 
 
 def plot_occupancy(ax, occupancy_dict, day):
+    text_fontsize = 20
+    tick_fontsize = 16
     CASE_TABLE = {'WTP_CBD_m_WP1_HOT': 'Hotel', 'WTP_CBD_m_WP1_OFF': 'Office', 'WTP_CBD_m_WP1_RET': 'Retail'}
     COLOR_TABLE = {'WTP_CBD_m_WP1_HOT': '#C96A50', 'WTP_CBD_m_WP1_OFF': '#3E9AA3', 'WTP_CBD_m_WP1_RET': '#51443D'}
     for case in occupancy_dict.keys():
@@ -65,13 +82,15 @@ def plot_occupancy(ax, occupancy_dict, day):
         y = occupancy_dict[case].values
         ax.plot(x, y, label=CASE_TABLE[case], color=COLOR_TABLE[case])
     ax.set(xlabel='Time [hr]')
-    ax.xaxis.label.set_size(10)
-    ax.set_title(day, fontdict={'fontsize': 10, 'fontweight': 'medium'})
-    ax.set(xlim=(1, 24), ylim=(0, 0.17))
+    ax.xaxis.label.set_size(text_fontsize)
+    ax.set_title(day, fontdict={'fontsize': text_fontsize, 'fontweight': 'medium'})
+    ax.set(xlim=(1, 24), ylim=(0, 0.18))
     for tick in ax.get_xticklabels():
         tick.set_fontname("Arial")
+        tick.set_fontsize(tick_fontsize)
     for tick in ax.get_yticklabels():
         tick.set_fontname("Arial")
+        tick.set_fontsize(tick_fontsize)
     return ax
 
 
@@ -153,6 +172,6 @@ def path_to_total_demand(case):
 
 if __name__ == '__main__':
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    building = 'B006'
+    building = 'B001'
     path_to_save_results = settings.result_destination
     main(cases, building, path_to_save_results)
