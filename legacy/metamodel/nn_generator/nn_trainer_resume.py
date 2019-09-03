@@ -9,7 +9,6 @@ from keras.models import Model
 from keras.models import load_model
 from keras.callbacks import EarlyStopping
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 
 import theano
@@ -96,7 +95,6 @@ def main(config):
     num_cpu_threads = multiprocessing.cpu_count()
     theano.config.openmp = True
     OMP_NUM_THREADS = num_cpu_threads
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
     model, scalerT, scalerX = nn_model_collector(locator)

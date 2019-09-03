@@ -94,8 +94,8 @@ def ss_calibrator(building_name):
     intended_parameters = ['people', 'Eaf', 'Elf', 'Qwwf', 'I_rad', 'I_sol', 'T_ext', 'rh_ext',
                            'ta_hs_set', 'ta_cs_set', 'theta_a', 'Qhsf', 'Qcsf']
     # collect the simulation results
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+
+    scenario_path = config.scenario #this is a new variable and needs to be updated
     locator = inputlocator.InputLocator(scenario=scenario_path)
     metered_path=r'C:\reference-case-open\baseline\inputs\building-metering'
     metered_building=os.path.join(metered_path, '%s.csv' % building_name)

@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
