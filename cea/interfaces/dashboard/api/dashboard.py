@@ -40,7 +40,7 @@ class Dashboard(Resource):
 
 
 @api.route('/new')
-class DashboardAddPlot(Resource):
+class DashboardNew(Resource):
     def post(self):
         form = api.payload
         config = cea.config.Configuration()
@@ -50,8 +50,9 @@ class DashboardAddPlot(Resource):
 
         return {'new_dashboard_index': dashboard_index}
 
+
 @api.route('/duplicate')
-class DashboardDuplicatePlot(Resource):
+class DashboardDuplicate(Resource):
     def post(self):
         form = api.payload
         config = cea.config.Configuration()
@@ -123,7 +124,7 @@ class DashboardChangePlot(Resource):
 
 
 @api.route('/add-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardDeletePlot(Resource):
+class DashboardAddPlot(Resource):
     def post(self, dashboard_index, plot_index):
         form = api.payload
         config = cea.config.Configuration()
@@ -138,7 +139,7 @@ class DashboardDeletePlot(Resource):
 
 
 @api.route('/delete-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardAddPlot(Resource):
+class DashboardDeletePlot(Resource):
     def post(self, dashboard_index, plot_index):
         config = cea.config.Configuration()
         plot_cache = cea.plots.cache.PlotCache(config)
