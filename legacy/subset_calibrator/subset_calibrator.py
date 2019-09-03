@@ -148,7 +148,7 @@ def ss_calibrator(building_name):
     NN_target_cl = np.array(NN_target_cl)
 
     # return NN_input, NN_target_ht, NN_target_cl
-    from cea.demand.calibration.subset_calibrator.surrogate_4_calibration import prep_NN_inputs
+    from legacy.subset_calibrator.surrogate_4_calibration import prep_NN_inputs
     NN_delays = 1
     NN_input_ready_ht, NN_target_ready_ht = prep_NN_inputs(NN_input, NN_target_ht, NN_delays)
     NN_input_ready_cl, NN_target_ready_cl = prep_NN_inputs(NN_input, NN_target_cl, NN_delays)
