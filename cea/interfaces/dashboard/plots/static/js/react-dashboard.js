@@ -101,8 +101,6 @@ const Dashboard = () => {
         <div id="cea-dashboard-layout">
           {layout === "row" ? (
             <RowLayout dashIndex={dashIndex} plots={plots} />
-          ) : layout === "map" ? (
-            <MapLayout dashIndex={dashIndex} plots={plots} />
           ) : (
             <GridLayout dashIndex={dashIndex} plots={plots} />
           )}
@@ -399,7 +397,7 @@ const ModalSetScenario = React.memo(({ dashIndex }) => {
           type: "ScenarioNameParameter",
           name: "scenario",
           value: scenario,
-          help: 'Change the scenario parameter of all plots in this dashboard',
+          help: "Change the scenario parameter of all plots in this dashboard",
           choices: scenarios
         });
       });
@@ -795,42 +793,6 @@ const GridLayout = ({ dashIndex, plots }) => {
             )}
           </div>
         ))}
-      </div>
-    </React.Fragment>
-  );
-};
-
-const MapLayout = ({ dashIndex, plots }) => {
-  if (!plots.length) return <h1>No plots found</h1>;
-
-  const emptyplots = [];
-  if (plots.length < 5) {
-    for (var i = 0; i < 5 - plots.length; i++) {
-      emptyplots.push(
-        <div
-          className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
-          key={`${dashIndex}-${5 + i}`}
-        >
-          <EmptyPlot dashIndex={dashIndex} index={5 + i} />
-        </div>
-      );
-    }
-  }
-
-  return (
-    <React.Fragment>
-      <div className="row display-flex">
-        {plots.map((data, index) => (
-          <div
-            className={`col-lg-${
-              index === 0 ? 8 : 4
-            } col-md-12 col-sm-12 col-xs-12 plot-widget`}
-            key={`${dashIndex}-${index}-${data.hash}`}
-          >
-            <Plot index={index} dashIndex={dashIndex} data={data} />
-          </div>
-        ))}
-        {emptyplots}
       </div>
     </React.Fragment>
   );
