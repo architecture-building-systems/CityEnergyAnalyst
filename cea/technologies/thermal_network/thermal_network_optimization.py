@@ -148,6 +148,7 @@ class NetworkInfo(object):
             self.__weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C']]
         return self.__weather_data
 
+
 def thermal_network_optimization(config, locator):
     # initialize timer
     start = time.time()
@@ -271,16 +272,14 @@ def network_cost_calculation(population, network_info, network_layout, config):
             individual_outputs_df['capex_chiller'] = cost_storage_df.ix['capex_chiller'][0]
             individual_outputs_df['capex_CT'] = cost_storage_df.ix['capex_CT'][0]
             individual_outputs_df['individual'] = str(individual)
-            individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
-            individual_outputs_df['has_loops'] = individual[5]
+            individual_outputs_df['number_of_plants'] = individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_PLANT)
+            individual_outputs_df['has_loops'] = individual[LOOPS_INDEX]
             individual_outputs_df['plant_buildings'] = str(building_plants)
             individual_outputs_df['disconnected_buildings'] = str(
                 disconnected_buildings) if disconnected_buildings != [] else 0
             individual_outputs_df['supplied_loads'] = ', '.join(list_of_supplied_loads)
             individual_outputs_df['network_length_m'] = network_length_m
             individual_outputs_df['avg_diam_m'] = average_pipe_diameter_m
-            individual_outputs_df['number_of_plants'] = individual[6:].count(1.0)
-            individual_outputs_df['has_loops'] = individual[5]
 
             # save results of an unique individual
             individual_outputs_df.to_csv(network_info.locate_individual_results(individual))
@@ -481,32 +480,32 @@ def breed_new_generation(selected_individuals, network_info):
         for j in range(len(first_parent)):
             # if both parents have the same value, it is passed on to the child
             if int(first_parent[j]) == int(second_parent[j]):
-                child[j] = float(first_parent[j])
+                child[j] = first_parent[j]
             else:  # both parents do not have the same value
                 # we randomly chose from which parent we inherit
                 which_parent = np.random.random_integers(low=0, high=1)
                 if which_parent == 0:
-                    child[j] = float(first_parent[j])
+                    child[j] = first_parent[j]
                 else:
-                    child[j] = float(second_parent[j])
+                    child[j] = second_parent[j]
         # make sure that we do not have too many plants now
-        while list(child[6:]).count(1.0) > network_info.max_number_of_plants:
+        while list(child[LEN_INDIVIDUAL_HEADER:]).count(INDIVIDUAL_PLANT) > network_info.max_number_of_plants:
             # we have too many plants
             # find all plant indices
-            plant_indices = [i for i, x in enumerate(child) if x == 1.0]
+            plant_indices = [i for i, x in enumerate(child) if x == INDIVIDUAL_PLANT]
             # chose a random one
-            random_plant = random.choice(list(plant_indices))
+            random_plant = random.choice(plant_indices)
             if network_info.use_rule_based_approximation:
                 anchor_building_index = calc_anchor_load_building(network_info)  # find the anchor index
             else:
                 anchor_building_index = None  # we're not using rule based approximation
             # make sure we are not overwriting the values of network layout information or the anchor building plant
-            while random_plant < 6:  # these values are network information, not plant location
-                random_plant = random.choice(list(plant_indices))  # find a new index
+            while random_plant < LEN_INDIVIDUAL_HEADER:  # these values are network information, not plant location
+                random_plant = random.choice(plant_indices)  # find a new index
                 if network_info.use_rule_based_approximation:
                     while random_plant == anchor_building_index:
-                        random_plant = random.choice(list(
-                            plant_indices))  # we chose the anchor load, but want to keep this one. So chose a new random index
+                        # we chose the anchor load, but want to keep this one. So chose a new random index
+                        random_plant = random.choice(plant_indices)
 
             if network_info.optimize_building_connections:
                 # we are optimizing which buildings to connect
@@ -515,11 +514,11 @@ def breed_new_generation(selected_individuals, network_info):
             else:
                 random_choice = 0  # we are not disconnecting buildings, so always remove a plant, never disconnect
             if random_choice == 0:  # remove a plant
-                child[int(random_plant)] = 0.0
+                child[int(random_plant)] = INDIVIDUAL_CONNECTED
             else:  # disconnect a building
-                child[int(random_plant)] = 2.0
+                child[int(random_plant)] = INDIVIDUAL_DISCONNECTED
         # make sure we still have the necessary minimum amount of plants
-        while list(child[6:]).count(1.0) < network_info.min_number_of_plants:
+        while list(child[LEN_INDIVIDUAL_HEADER:]).count(INDIVIDUAL_PLANT) < network_info.min_number_of_plants:
             # we don't have enough plants
             # Add one plant
             # find all non plant indices
@@ -530,18 +529,18 @@ def breed_new_generation(selected_individuals, network_info):
                 random_choice = 0
             if random_choice == 0:
                 # find all connected buildings without a plant
-                indices = [i for i, x in enumerate(child) if np.isclose(x, 0.0)]
+                indices = [i for i, x in enumerate(child) if x == INDIVIDUAL_PLANT]
             else:
                 # find all disconnected buildings
-                indices = [i for i, x in enumerate(child) if np.isclose(x, 2.0)]
+                indices = [i for i, x in enumerate(child) if x == INDIVIDUAL_DISCONNECTED]
             if len(indices) > 0:  # we have some buildings to chose from
                 index = int(random.choice(indices))  # chose a random one
-                while index < 6:  # apply only to fields which save plant information
+                while index < LEN_INDIVIDUAL_HEADER:  # apply only to fields which save plant information
                     index = random.choice(list(indices))
-                child[index] = 1.0  # set a plant here
+                child[index] = INDIVIDUAL_PLANT  # set a plant here
         # apply rule based approximation to network loads
         if network_info.use_rule_based_approximation:
-            child[1] = child[0]  # supply both of ahu and aru or none of the two
+            child[LOAD_INDEX_ARU] = child[LOAD_INDEX_AHU]  # supply both of ahu and aru or none of the two
         # make sure we don't have duplicates
         if list(child) not in newGeneration:
             newGeneration.append(list(child))
@@ -624,10 +623,10 @@ def disconnect_buildings(network_info):
     for i in range(random_amount):
         # chose a random location / index to disconnect
         random_index = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
-        while new_buildings[random_index] == 2.0:
+        while new_buildings[random_index] == INDIVIDUAL_DISCONNECTED:
             # if this building is already disconnected, chose a different index
             random_index = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
-        new_buildings[random_index] = 2.0
+        new_buildings[random_index] = INDIVIDUAL_DISCONNECTED
     # return list of disconnected buildings
     return list(new_buildings)
 
@@ -670,7 +669,7 @@ def generate_initial_population(network_info, network_layout):
             for building in network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
                     if str(building) == str(building_name):
-                        new_plants[index] = 2.0
+                        new_plants[index] = INDIVIDUAL_DISCONNECTED
         new_plants = generate_plants(network_info, new_plants)
         # network layout: loop or branch
         if network_info.optimize_loop_branch:
@@ -844,10 +843,10 @@ def mutateLoop(individual):
     # keep our loop or not
     keep_or_remove = np.random.random_integers(low=0, high=1)
     if keep_or_remove == 1:  # switch value
-        if individual[5] == 1.0:  # loops are activated
-            individual[5] = 0.0  # turn off
+        if individual[LOOPS_INDEX] == NETWORK_HAS_LOOPS:  # loops are activated
+            individual[LOOPS_INDEX] = NETWORK_HAS_NO_LOOPS  # turn off
         else:  # branches only
-            individual[5] = 1.0  # turn on loops
+            individual[LOOPS_INDEX] = NETWORK_HAS_LOOPS  # turn on loops
     return list(individual)
 
 
