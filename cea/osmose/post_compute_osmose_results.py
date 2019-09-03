@@ -16,9 +16,9 @@ def set_up_ex_df(results, operation_df, electricity_df, air_flow_df):
     results['rh_RA'] = 0.6  # humidity set point
     w_RA_gperkg = np.vectorize(calc_w_from_rh)(results['rh_RA'] * 100, results['T_RA'])  # g/kg d.a.
     # exergy of moist air (indoor/outdoor)
-    ex_air_ext = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_ext'], results['w_ext'], T_ref_C,
+    ex_air_ext = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_ext'].values, results['w_ext'].values, T_ref_C,
                                                                w_ref_sat_gperkg)  # kJ/kg
-    ex_air_int = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_RA'], w_RA_gperkg, T_ref_C, w_ref_sat_gperkg)
+    ex_air_int = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_RA'].values, w_RA_gperkg, T_ref_C, w_ref_sat_gperkg)
 
     ## minimum exergy requirement (theoretical)
     Ex_min_Qc_kWh, Ex_min_air_kWh, Ex_min_w_kWh, rh_ref = calc_theoretical_Ex_requirement(T_ref_C, ex_air_ext,
@@ -113,9 +113,11 @@ def calc_RAU_process_Ex(T_ref_C, ex_air_int, results, rh_ref, w_RA_gperkg, w_ref
 
 def calc_OAU_process_Ex(T_ref_C, air_flow_df, ex_air_ext, operation_df, results, rh_ref, w_ref_sat_gperkg):
     # ex of air
-    oau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(operation_df['T_SA'], operation_df['w_SA'], T_ref_C,
-                                                                  w_ref_sat_gperkg)
-    oau_ex_air_RA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_RA'], 10.29, T_ref_C, w_ref_sat_gperkg)
+    oau_ex_air_in = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(operation_df['T_SA'].values,
+                                                                  operation_df['w_SA'].values,
+                                                                  T_ref_C, w_ref_sat_gperkg)
+    oau_ex_air_RA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['T_RA'].values, 10.29,
+                                                                  T_ref_C, w_ref_sat_gperkg)
     oau_ex_air_EA = np.vectorize(calc_Ex.calc_exergy_moist_air_2)(results['OAU_T_EA'].values,
                                                                   results['OAU_w_EA'].values,
                                                                   T_ref_C, w_ref_sat_gperkg)
