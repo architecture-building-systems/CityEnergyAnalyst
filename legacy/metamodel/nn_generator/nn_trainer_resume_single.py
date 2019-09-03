@@ -15,7 +15,6 @@ def run_nn_resume_single(locator, random_variables, target_parameters, list_buil
     neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator)
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     weather_path = config.weather()
     building_properties, schedules_dict, date = properties_and_schedule(locator)

@@ -229,7 +229,6 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     return
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
