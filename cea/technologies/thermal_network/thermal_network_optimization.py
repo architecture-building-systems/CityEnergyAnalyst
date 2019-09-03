@@ -61,6 +61,7 @@ LEN_INDIVIDUAL_HEADER = LEN_ALL_LOADS + LEN_ADDITIONAL_INFO
 POSSIBLE_DISCONNECTED_LOADS = {"ahu", "aru", "scu"}
 LOAD_INDEX_AHU = 0
 LOAD_INDEX_ARU = 1
+LOOPS_INDEX = LEN_ALL_LOADS
 
 
 class NetworkInfo(object):
@@ -317,24 +318,24 @@ def translate_individual(network_info, individual):
     :return:
     """
     # find which buildings have plants in this individual
-    network_info.plant_building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
+    network_info.plant_building_index = [i for i, x in enumerate(individual[6:]) if x == INDIVIDUAL_PLANT]
     # find disconnected buildings
-    network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == 2]
+    network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == INDIVIDUAL_DISCONNECTED]
     # output information on individual to be evaluated, translate individual
     print('Individual: ', individual)
-    print('With ', int(individual[6:].count(1.0)), ' plant(s) at building(s): ')
+    print('With ', int(individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_PLANT)), ' plant(s) at building(s): ')
     building_plants = []
     for building in network_info.plant_building_index:
         building_plants.append(network_info.building_names[building])
         print(network_info.building_names[building])
     print()
-    'With ', int(individual[6:].count(2.0)), ' disconnected building(s): '
+    'With ', int(individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_DISCONNECTED)), ' disconnected building(s): '
     disconnected_buildings = []
     for building in network_info.disconnected_buildings_index:
         disconnected_buildings.append(network_info.building_names[building])
         print(network_info.building_names[building])
     # check if we have loops or not
-    if individual[5] == 1:
+    if individual[LOOPS_INDEX] == NETWORK_HAS_LOOPS:
         network_info.has_loops = True
         print('Network has loops.')
     else:
@@ -352,8 +353,8 @@ def translate_individual(network_info, individual):
         #        if individual[int(index)] == 1:
         #            heating_systems.append(network_info.full_heating_systems[int(index)])
         else:  # DC mode
-            for index in range(5):
-                if individual[int(index)] == 1.0:  # we are supplying this cooling load
+            for index in range(LEN_ALL_LOADS):
+                if individual[int(index)] == LOAD_CONNECTED:  # we are supplying this cooling load
                     cooling_systems.append(network_info.full_cooling_systems[int(index)])
         network_info.substation_heating_systems = heating_systems  # save to object
         network_info.substation_cooling_systems = cooling_systems
