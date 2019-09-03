@@ -132,7 +132,7 @@ def plot_chiller_temperatures_bar(chiller_df, building, building_result_path):
     for i in range(chiller_df.index.size):
         color = colors[chiller_df.index[i]]
         ax.bar(X + width, chiller_df.loc[chiller_df.index[i]][:], width=0.15, label=chiller_df.index[i], color=color)
-        width = width + 0.15
+        width = width + 0.2
     # ax.bar(X + 0.25, chiller_df.loc[chiller_df.index[1]][:], width=0.25, label=chiller_df.index[1])
     ax.legend(loc='upper right')
     ax.set_xticks(X + width / 2)
