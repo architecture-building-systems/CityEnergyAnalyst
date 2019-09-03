@@ -52,14 +52,16 @@ def main(building, TECHS, building_result_path):
                 # plot_water_in_out(building, building_result_path, humidity_df, results, tech) # TODO: to be finished
 
             ## plot humidity level (storage)
-            hu_store_df = set_up_hu_store_df(results)
-            if 'humidity_storage' in PLOTS:
-                plot_hu_store(building, building_result_path, hu_store_df, tech)
+            if 'hu_storage' in results.columns.values:
+                hu_store_df = set_up_hu_store_df(results)
+                if 'humidity_storage' in PLOTS:
+                    plot_hu_store(building, building_result_path, hu_store_df, tech)
 
             ## plot co2 level (storage)
-            co2_store_df = set_up_co2_store_df(results)
-            if 'co2_storage' in PLOTS:
-                plot_co2_store(building, building_result_path, co2_store_df, tech)
+            if 'co2_storage' in results.columns.values:
+                co2_store_df = set_up_co2_store_df(results)
+                if 'co2_storage' in PLOTS:
+                    plot_co2_store(building, building_result_path, co2_store_df, tech)
 
             ## plot heat balance
             heat_df = set_up_heat_df(tech, results)
@@ -201,23 +203,27 @@ def check_electricity_bal(results, building, building_result_path, tech):
     if abs(Electricity_bal.sum() / Electricity_OUT.sum()) >= 1e-5:
         print('Electriicty_bal not zero...')
 
-        el_IN_dict = {}
-        el_IN_dict['grid'] = results['SU_elec']
+    el_IN_dict = {}
+    el_IN_dict['grid'] = results['SU_elec']
+    el_IN_label_dict = {'grid': 'el grid'}
 
-        el_OUT_dict = {}
-        el_OUT_dict['el_oau_out_fan'] = results['el_oau_out_fan']
-        el_OUT_dict['el_iehx_out_fan'] = results.filter(like='el_oau_out').sum(axis=1) - results['el_oau_out_fan']
-        el_OUT_dict['SCU'] = results['el_scu_pump'] + results['el_chi_ht']
-        el_OUT_dict['LCU'] = results['el_lcu_fan'] + results['el_chi_lt']
-        el_OUT_dict['el_oau_in'] = results.filter(like='el_oau_in').sum(axis=1)
-        el_OUT_dict['el_oau_chi'] = results.filter(like='el_oau_chi').sum(axis=1)
-        el_OUT_dict['el_ct Towers'] = results['el_ct']
-        if tech == 'HCS_LD':
-            el_OUT_dict['el_oau_HP'] = results['el_LDHP']
+    el_OUT_dict = {}
+    # el_OUT_dict['el_oau_out_fan'] = results['el_oau_out_fan']
+    # el_OUT_dict['el_iehx_out_fan'] = results.filter(like='el_oau_out').sum(axis=1) - results['el_oau_out_fan']
+    el_OUT_dict['SCU pump'] = results['el_scu_pump']
+    el_OUT_dict['SCU chiller'] = results['el_chi_ht']
+    el_OUT_dict['LCU fan'] = results['el_lcu_fan']
+    el_OUT_dict['LCU chiller'] = results['el_chi_lt']
+    el_OUT_dict['OAU fan'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan']
+    el_OUT_dict['OAU chiller'] = results.filter(like='el_oau_chi').sum(axis=1)
+    el_OUT_dict['Cooling Towers'] = results['el_ct']
+    el_OUT_label_dict = {'el_oau_out_fan': 'Fan'}
 
-        name = 'el_bal'
-        plot_stacked_bars_side_by_side(el_IN_dict, el_OUT_dict, results.shape[0], building, building_result_path,
-                                       tech, name)
+    if tech == 'HCS_LD':
+        el_OUT_dict['el_oau_HP'] = results['el_LDHP']
+    name = 'Electricity [kW]'
+    plot_stacked_bars_side_by_side(el_IN_dict, el_OUT_dict, results.shape[0], building, building_result_path, tech,
+                                   name)
     return np.nan
 
 
@@ -231,47 +237,57 @@ def check_bui_air_bal(results, building, building_result_path, tech):
 
         # plot
         air_IN_dict = {}
-        air_IN_dict['m_inf_in'] = results['m_inf_in']
-        air_IN_dict['m_oau_in'] = results.filter(like='m_oau_in').sum(axis=1)
-        air_IN_dict['SU_vent'] = results.filter(like='SU_vent').sum(axis=1)
+        air_IN_dict['Infiltration'] = results['m_inf_in']
+        air_IN_dict['OAU'] = results.filter(like='m_oau_in').sum(axis=1)
+        air_IN_dict['Error'] = results.filter(like='SU_vent').sum(axis=1)
 
         air_OUT_dict = {}
-        air_OUT_dict['m_oau_out'] = results.filter(like='m_oau_out').sum(axis=1)
-        air_OUT_dict['SU_exhaust'] = results.filter(like='SU_exhaust').sum(axis=1)
+        air_OUT_dict['Exhaust'] = results.filter(like='m_oau_out').sum(axis=1)
+        air_OUT_dict['Error'] = results.filter(like='SU_exhaust').sum(axis=1)
 
-        name = 'bui_air_bal'
+        name = 'Air flows [kg/s]'
         plot_stacked_bars_side_by_side(air_IN_dict, air_OUT_dict, results.shape[0], building, building_result_path,
                                        tech, name)
     return np.nan
 
 
 def check_bui_water_bal(results, building, building_result_path, tech):
-    Bui_water_bal_IN = results.filter(like='w_oau_out').sum(axis=1) + results['w_lcu'] + results[
-        'w_sto_charge'] + results.filter(
+    if 'w_sto_charge' in results.columns.values:
+        w_sto_charge = results['w_sto_charge']
+        w_sto_discharge = results['w_sto_discharge']
+    else:
+        timesteps = results.shape[0]
+        w_sto_charge = np.zeros(timesteps)
+        w_sto_discharge = np.zeros(timesteps)
+    Bui_water_bal_IN = results.filter(like='w_oau_out').sum(axis=1) + results['w_lcu'] + w_sto_charge + results.filter(
         like='SU_dhu').sum(axis=1)
     # Bui_water_bal_OUT = results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1) + results['w_sto_discharge'] \
     #                     + results.filter(like='SU_hu').sum(axis=1)
-    Bui_water_bal_OUT = results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1) + results['w_sto_discharge'] \
-                        + results.filter(like='SU_hu').sum(axis=1)
+    Bui_water_bal_OUT = results['w_bui'] + results.filter(like='w_oau_in').sum(axis=1) + w_sto_discharge + \
+                        results.filter(like='SU_hu').sum(axis=1)
     Bui_water_bal = Bui_water_bal_IN - Bui_water_bal_OUT
     if abs(Bui_water_bal.sum() / Bui_water_bal_IN.sum()) >= 1e-5:
         print ('Bui_water_bal not zero...')
 
-        water_IN_dict = {}
-        water_IN_dict['w_oau_out'] = results.filter(like='w_oau_out').sum(axis=1)
-        water_IN_dict['w_lcu'] = results['w_lcu']
-        water_IN_dict['w_sto_charge'] = results['w_sto_charge']
-        water_IN_dict['SU_dhu'] = results.filter(like='SU_dhu').sum(axis=1)
+    water_IN_dict = {}
+    water_IN_dict['OAU out'] = results.filter(like='w_oau_out').sum(axis=1)
+    water_IN_dict['RAU'] = results['w_lcu']
+    if w_sto_charge.max() > 0.0:
+        water_IN_dict['Stored'] = w_sto_charge
+    if results.filter(like='SU_dhu').sum(axis=1).sum() > 0.0:
+        water_IN_dict['Error'] = results.filter(like='SU_dhu').sum(axis=1)
 
-        water_OUT_dict = {}
-        water_OUT_dict['w_bui'] = results['w_bui']
-        water_OUT_dict['w_oau_in'] = results.filter(like='w_oau_in').sum(axis=1)
-        water_OUT_dict['w_sto_discharge'] = results['w_sto_discharge']
-        water_OUT_dict['SU_hu'] = results.filter(like='SU_hu').sum(axis=1)
+    water_OUT_dict = {}
+    water_OUT_dict['Building gains'] = results['w_bui']
+    water_OUT_dict['OAU in'] = results.filter(like='w_oau_in').sum(axis=1)
+    if w_sto_discharge.max() > 0.0:
+        water_OUT_dict['Discharged'] = w_sto_discharge
+    if results.filter(like='SU_hu').sum(axis=1).sum() > 0.0:
+        water_OUT_dict['Error'] = results.filter(like='SU_hu').sum(axis=1)
 
-        name = 'bui_water_bal'
-        plot_stacked_bars_side_by_side(water_IN_dict, water_OUT_dict, results.shape[0], building, building_result_path,
-                                       tech, name)
+    name = 'Water'
+    plot_stacked_bars_side_by_side(water_IN_dict, water_OUT_dict, results.shape[0], building, building_result_path,
+                                   tech, name)
 
     return np.nan
 
@@ -287,20 +303,22 @@ def check_bui_energy_bal(results, building, building_result_path, tech):
             Bui_energy_bal.sum() / Bui_energy_bal_IN.sum()) >= 1e-5:  # difference more than 1% of total sensible energy in
         print('Bui_energy_bal not zero...')
 
-        energy_IN_dict = {}
-        energy_IN_dict['q_bui'] = results['q_bui']
-        energy_IN_dict['q_oau_sen_in'] = results.filter(like='q_oau_sen_in').sum(axis=1)
-        energy_IN_dict['SU_Qh'] = results.filter(like='SU_Qh').sum(axis=1)
-        energy_OUT_dict = {}
-        energy_OUT_dict['q_oau_sen_out'] = results.filter(like='q_oau_sen_out').sum(axis=1)
-        energy_OUT_dict['q_scu_sen'] = results['q_scu_sen']
-        energy_OUT_dict['q_lcu_sen'] = results['q_lcu_sen']
-        energy_OUT_dict['SU_Qc'] = results.filter(like='SU_Qc').sum(axis=1)
+    energy_IN_dict = {}
+    energy_IN_dict['building gains'] = results['q_bui']
+    energy_IN_dict['OAU in'] = results.filter(like='q_oau_sen_in').sum(axis=1)
+    if results.filter(like='SU_Qh').sum(axis=1).sum() > 0.0:
+        energy_IN_dict['Dummy heating'] = results.filter(like='SU_Qh').sum(axis=1)
 
-        name = 'bui_energy_bal'
-        plot_stacked_bars_side_by_side(energy_IN_dict, energy_OUT_dict, results.shape[0], building,
-                                       building_result_path,
-                                       tech, name)
+    energy_OUT_dict = {}
+    energy_OUT_dict['OAU out'] = results.filter(like='q_oau_sen_out').sum(axis=1)
+    energy_OUT_dict['SCU'] = results['q_scu_sen']
+    energy_OUT_dict['RAU'] = results['q_lcu_sen']
+    if results.filter(like='SU_Qc').sum(axis=1).sum() > 0.0:
+        energy_OUT_dict['Dummy cooling'] = results.filter(like='SU_Qc').sum(axis=1)
+
+    name = 'Sensible heat [kW]'
+    plot_stacked_bars_side_by_side(energy_IN_dict, energy_OUT_dict, results.shape[0], building, building_result_path,
+                                   tech, name)
 
     return np.nan
 
@@ -309,12 +327,13 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, timesteps,
                                    name):
     # plotting
     fig, ax = plt.subplots()
-    bar_width = 0.3
+    bar_width = 0.4
     x_ticks = np.arange(timesteps) + 1
     # left stack
     x_axis_left = x_ticks - 0.2
     y_offset = np.zeros(timesteps)
-    colors = ['#AD4456', '#D76176', '#E3909F', '#742D3A', '#270F14', '#FF4B31']  # PINKS
+    # colors = ['#AD4456', '#D76176', '#E3909F', '#742D3A', '#270F14', '#FF4B31']  # PINKS
+    colors = ['#85a391', '#b9cac0', '#270F14', '#dce4df', '#ab9c81', '#e7dfcf']  # Organic Forest Logo Color Palette
     c = 0
     for key in left_stack_dict.keys():
         ax.bar(x_axis_left, left_stack_dict[key], bar_width, bottom=y_offset, label=key, color=colors[c])
@@ -324,7 +343,8 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, timesteps,
     # right stack
     x_axis_right = x_ticks + 0.2
     y_offset = np.zeros(timesteps)
-    colors = ['#29465A', '#39617E', '#718C60', '#77AACF', '#111C24', '#507C88', '#111C24', '#507C88']  # BLUES
+    # colors = ['#29465A', '#39617E', '#718C60', '#77AACF', '#111C24', '#507C88', '#111C24', '#507C88']  # BLUES
+    colors = ['#cd98a4', '#b86d7e', '#f7dcd7', '#eccac9', '#f6e9e6', '#bca1a0', '#DEB3B7', '#ebd1d3']  # Broken Blush Color Palette
     c = 0
     for key in right_stack_dict.keys():
         ax.bar(x_axis_right, right_stack_dict[key], bar_width, bottom=y_offset, label=key, color=colors[c])
@@ -337,6 +357,7 @@ def plot_stacked_bars_side_by_side(left_stack_dict, right_stack_dict, timesteps,
     # put legend to the right
     ax.legend(loc='center left', bbox_to_anchor=(1.04, 0.5))
     ax.set(xlabel='Time [hr]', ylabel=name, ylim=(0, y_max + 0.05 * y_max))
+    ax.yaxis.label.set_size(16)
     # plt.show()
 
     plt.title(building + "_" + tech)
@@ -756,7 +777,8 @@ def set_up_humidity_df(tech, results):
     total_oau = total_oau_out - total_oau_in
     humidity_df['m_w_oau_removed'] = total_oau[total_oau > 0]
     humidity_df['m_w_oau_added'] = total_oau[total_oau < 0] * (-1)
-    humidity_df['m_w_stored'] = results['w_sto_charge']
+    if 'hu_storage' in results.columns.values:
+        humidity_df['m_w_stored'] = results['w_sto_charge']
     # humidity_df['m_w_discharged'] = results['w_sto_discharge']
     humidity_df = humidity_df.fillna(0)
 
@@ -1102,8 +1124,10 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
     # plot bars
     for c in range(len(electricity_per_area_df.columns)):
         column = electricity_per_area_df.columns[c]
+        label_dict = {'el_chi_lt':'RAU chiller', 'el_aux_lcu':'RAU fan', 'el_aux_oau':'OAU fan', 'el_chi_oau':'OAU chiller',
+                      'el_chi_ht':'SCU chiller', 'el_aux_scu':'SCU pump', 'el_ct': 'Cooling Tower'}
         ax.bar(x_ticks, electricity_per_area_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
-               label=column)
+               label=label_dict[column])
         y_offset = y_offset + electricity_per_area_df[column]
     ax.set(xlabel='Time [hr]', ylabel='Electricity Use [Wh/m2]', xlim=(t_0, t_end), ylim=(0, 35))
     ax.xaxis.label.set_size(14)
@@ -1185,7 +1209,7 @@ def get_hourly_oau_operations(tech, results, composite_df):
             elif tech == 'HCS_IEHX':
                 # water condensed on coil
                 m_w_cond_kgpers = calc_m_w_cond_composite('w_OA2_', 'w_OA3_', chiller_used, i, results, composite_df)
-                if t == 1:
+                if 'm_w_removed_1' not in results.columns.values:
                     # save the amount of water removed in the recovery
                     results['m_w_removed_1'] = np.full(results.shape[0], np.nan)
                     results['T_w_removed_1'] = np.full(results.shape[0], np.nan)
@@ -1440,9 +1464,9 @@ def path_to_chiller_csv(building, building_result_path, tech, name):
 
 
 if __name__ == '__main__':
-    buildings = ["B001"]
+    buildings = ["B003"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    tech = ["HCS_ER0"]
+    tech = ["HCS_coil"]
     # tech = ["HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_ER0"]
     #  tech = ["HCS_ER0", "HCS_3for2", "HCS_IEHX", "HCS_coil", "HCS_LD", "HCS_status_quo"]
     # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
@@ -1451,14 +1475,14 @@ if __name__ == '__main__':
     #          "MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT",
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
-    cases = ["HKG_CBD_m_WP1_HOT"]
+    cases = ["WTP_CBD_m_WP1_OFF"]
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_results"
-    result_path = "D:\\SH\\WP2\\HKG_Summer"
+    result_path = "E:\\test_0805"
     # result_path = "C:\\Users\\Shanshan\\Documents\\WP1_0421"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_168"
+            building_time = building + "_1_24"
             building_result_path = os.path.join(folder_path, building_time)
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
