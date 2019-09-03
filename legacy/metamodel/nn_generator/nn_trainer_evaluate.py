@@ -10,9 +10,9 @@
 from math import sqrt
 
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_settings import random_variables, target_parameters
-from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
-from cea.demand.metamodel.nn_generator.nn_test_sampler import sampling_single
+from legacy.metamodel.nn_generator import random_variables, target_parameters
+from legacy.metamodel.nn_generator import nn_model_collector
+from legacy.metamodel.nn_generator import sampling_single
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import cea.inputlocator
 import cea.config

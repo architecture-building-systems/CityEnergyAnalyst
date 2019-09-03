@@ -1,11 +1,11 @@
-from cea.demand.metamodel.nn_generator.nn_settings import random_variables, target_parameters
-from cea.demand.metamodel.nn_generator.nn_trainer import nn_input_collector
+from legacy.metamodel.nn_generator import random_variables, target_parameters
+from legacy.metamodel.nn_generator import nn_input_collector
 
 import cea.inputlocator
 import cea.globalvar
 import cea.config
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
+from legacy.metamodel.nn_generator import neural_trainer_resume, nn_model_collector
 
 
 def run_nn_resume_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):

@@ -17,9 +17,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 import numpy as np
-from cea.demand.metamodel.nn_generator.nn_random_sampler import sampling_main
-from cea.demand.metamodel.nn_generator.nn_settings import nn_passes, random_variables, target_parameters, autoencoder
-from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer, nn_input_collector
+from legacy.metamodel.nn_generator import sampling_main
+from legacy.metamodel.nn_generator import nn_passes, random_variables, target_parameters, autoencoder
+from legacy.metamodel.nn_generator import neural_trainer, nn_input_collector
 from sklearn.externals import joblib
 import cea.config
 import cea.inputlocator
@@ -27,7 +27,7 @@ import cea.globalvar
 
 import cea
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
+from legacy.metamodel.nn_generator import neural_trainer_resume, nn_model_collector
 from cea.utilities import epwreader
 
 def run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, scalerX,

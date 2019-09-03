@@ -9,16 +9,11 @@
 
 import os
 from os import listdir
-from math import sqrt
-import multiprocessing as mp
-from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_trainer_estimate import input_prepare_estimate
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.nn_settings import nn_delay, target_parameters, warmup_period
-from cea.demand.metamodel.nn_generator.input_matrix import get_cea_inputs
-from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
+from legacy.metamodel.nn_generator import target_parameters, warmup_period
+from legacy.metamodel.nn_generator import nn_model_collector
 import cea.inputlocator
 import cea.globalvar
 import cea.config

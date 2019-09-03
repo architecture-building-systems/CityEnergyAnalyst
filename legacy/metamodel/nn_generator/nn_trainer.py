@@ -21,8 +21,8 @@ import os
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 import cea
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples
-from cea.demand.metamodel.nn_generator.nn_settings import autoencoder
+from legacy.metamodel.nn_generator import number_samples
+from legacy.metamodel.nn_generator import autoencoder
 import cea.inputlocator
 import cea.config
 

@@ -14,8 +14,8 @@ import cea.config
 
 import theano
 import multiprocessing
-from cea.demand.metamodel.nn_generator.nn_trainer import nn_input_collector
-from cea.demand.metamodel.nn_generator.nn_settings import autoencoder
+from legacy.metamodel.nn_generator import nn_input_collector
+from legacy.metamodel.nn_generator import autoencoder
 
 
 def neural_trainer_resume(inputs_x, targets_t, model, scalerX, scalerT, locator, autoencoder):

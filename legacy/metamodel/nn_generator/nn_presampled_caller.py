@@ -15,7 +15,7 @@ __status__ = "Production"
 import os
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_random_sampler import input_dropout
+from legacy.metamodel.nn_generator import input_dropout
 
 def presampled_collector(locator,collect_count,config):
     number_samples_scaler = config.neural_network.number_samples_scaler

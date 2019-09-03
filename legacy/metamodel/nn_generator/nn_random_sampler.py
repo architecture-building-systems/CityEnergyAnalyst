@@ -14,7 +14,6 @@ __status__ = "Production"
 
 # import h5py
 import os
-import pickle
 
 import numpy as np
 import pandas as pd
@@ -23,12 +22,11 @@ import cea.inputlocator
 import cea.globalvar
 import cea.config
 from cea.demand import demand_main
-from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples, random_variables, \
+from legacy.metamodel.nn_generator import number_samples, random_variables, \
     target_parameters, boolean_vars
-from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from legacy.metamodel.nn_generator import input_prepare_main
 
 
 def input_dropout(urban_input_matrix, urban_taget_matrix):

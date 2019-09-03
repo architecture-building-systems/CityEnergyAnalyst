@@ -23,9 +23,9 @@ import cea.globalvar
 import cea.config
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_settings import random_variables,\
+from legacy.metamodel.nn_generator import random_variables,\
     target_parameters, boolean_vars
-from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from legacy.metamodel.nn_generator import input_prepare_main
 from geopandas import GeoDataFrame as Gdf
 
 def sampling_single(locator, random_variables, target_parameters, list_building_names, config,

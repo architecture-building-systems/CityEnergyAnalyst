@@ -28,7 +28,7 @@ import pandas as pd
 from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from legacy.metamodel.nn_generator import input_prepare_main
 from cea.utilities import epwreader
 
 

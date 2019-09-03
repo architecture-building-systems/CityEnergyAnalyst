@@ -8,7 +8,6 @@ from __future__ import division
 import multiprocessing as mp
 import numpy as np
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator import input_matrix
 import cea.config
 import cea.inputlocator
 import cea.globalvar
@@ -49,7 +48,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, nn_delay
     #   creat an empty job list to be filled later
     joblist = []
     #   create one job for each data preparation task i.e. each building
-    from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
+    from legacy.metamodel.nn_generator import input_prepare_multi_processing
     for building_name in list_building_names:
         job = pool.apply_async(input_prepare_multi_processing,
                                [building_name, locator, target_parameters, nn_delay,climatic_variables,year,
