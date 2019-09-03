@@ -10,8 +10,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import MinMaxScaler
 
-import cea
-import cea.globalvar
 import cea.inputlocator as inputlocator
 
 __author__ = "Fazel Khayatian"
@@ -282,8 +280,7 @@ def ss_calibrator(building_name):
 
 
 def run_as_script():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    scenario_path = config.scenario
     locator = inputlocator.InputLocator(scenario=scenario_path)
 
 

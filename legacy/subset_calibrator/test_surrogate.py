@@ -1,8 +1,6 @@
 from keras.models import model_from_json
 import os
 import cea.inputlocator as inputlocator
-import cea.globalvar
-import cea
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
@@ -12,8 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 def run_as_script():
 
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    scenario_path = config.scenario
     locator = inputlocator.InputLocator(scenario=scenario_path)
     json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
     weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.h5" % locals())

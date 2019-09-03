@@ -15,7 +15,6 @@ from cea.demand.demand_main import properties_and_schedule
 from legacy.metamodel.nn_generator import target_parameters, warmup_period
 from legacy.metamodel.nn_generator import nn_model_collector
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 from cea.utilities import epwreader
 from cea.constants import HOURS_IN_YEAR
@@ -101,7 +100,6 @@ def ss_calibrator(number_samples_scaler,locator,list_building_names):
     print mbe_initial_sample , cvrmse_initial_sample
 
 def main(config):
-    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_data = epwreader.epw_reader(locator.get_weather_file())[['year', 'drybulb_C', 'wetbulb_C',
                                                                      'relhum_percent', 'windspd_ms', 'skytemp_C']]
