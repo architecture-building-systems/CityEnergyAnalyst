@@ -317,9 +317,9 @@ def translate_individual(network_info, individual):
     :return:
     """
     # find which buildings have plants in this individual
-    network_info.plant_building_index = [i for i, x in enumerate(individual[6:]) if x == INDIVIDUAL_PLANT]
+    network_info.plant_building_index = [i for i, x in enumerate(individual[LEN_INDIVIDUAL_HEADER:]) if x == INDIVIDUAL_PLANT]
     # find disconnected buildings
-    network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == INDIVIDUAL_DISCONNECTED]
+    network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[LEN_INDIVIDUAL_HEADER:]) if x == INDIVIDUAL_DISCONNECTED]
     # output information on individual to be evaluated, translate individual
     print('Individual: ', individual)
     print('With ', int(individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_PLANT)), ' plant(s) at building(s): ')
@@ -474,7 +474,7 @@ def breed_new_generation(selected_individuals, network_info):
         while second_parent == first_parent:
             second_parent = random.choice(selected_individuals)
         # setup storage for child
-        child = np.zeros(len(first_parent))
+        child = [0] * len(first_parent)
         # iterate through parent individuals
         for j in range(len(first_parent)):
             # if both parents have the same value, it is passed on to the child
@@ -482,11 +482,7 @@ def breed_new_generation(selected_individuals, network_info):
                 child[j] = first_parent[j]
             else:  # both parents do not have the same value
                 # we randomly chose from which parent we inherit
-                which_parent = np.random.random_integers(low=0, high=1)
-                if which_parent == 0:
-                    child[j] = first_parent[j]
-                else:
-                    child[j] = second_parent[j]
+                child[j] = random.choice((first_parent[j], second_parent[j]))
         # make sure that we do not have too many plants now
         while list(child[LEN_INDIVIDUAL_HEADER:]).count(INDIVIDUAL_PLANT) > network_info.max_number_of_plants:
             # we have too many plants
