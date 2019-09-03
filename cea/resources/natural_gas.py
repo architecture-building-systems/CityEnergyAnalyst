@@ -25,7 +25,6 @@ def calc_Cinv_gas(PnomGas):
 
     :param PnomGas: peak natural gas supply in [W]
     :type PnomGas: float
-    :param gv: globalvar.py
 
     :returns InvCa:
     :rtype InvCa:
