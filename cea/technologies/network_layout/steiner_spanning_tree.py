@@ -4,7 +4,7 @@ This script calculates the minimum spanning tree of a shapefile network
 
 import math
 import os
-
+from typing import List
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -31,6 +31,28 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                                output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
                                type_network, total_demand_location, create_plant, allow_looped_networks,
                                optimization_flag, plant_building_names, disconnected_building_names):
+    """
+    Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
+    present form.
+
+    :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    :param str input_network_shp: e.g. "%TEMP%\potential_network.shp"
+    :param str output_network_folder: "{general:scenario}\inputs\networks\DC"
+    :param str building_nodes_shp: e.g. "%TEMP%\nodes_buildings.shp"
+    :param str output_edges: "{general:scenario}\inputs\networks\DC\edges.shp"
+    :param str output_nodes: "{general:scenario}\inputs\networks\DC\nodes.shp"
+    :param str weight_field: e.g. "Shape_Leng"
+    :param str type_mat_default: e.g. "T1"
+    :param float pipe_diameter_default: e.g. 150
+    :param str type_network: "DC" or "DH"
+    :param str total_demand_location: "{general:scenario}\outputs\data\demand\Total_demand.csv"
+    :param bool create_plant: e.g. True
+    :param bool allow_looped_networks:
+    :param bool optimization_flag:
+    :param List[str] plant_building_names: e.g. ``['B001']``
+    :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
+    :return: ``(mst_edges, new_mst_nodes)``s
+    """
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -74,7 +96,7 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs.')
 
-    nx.write_shp(mst_non_directed, output_network_folder)
+    nx.write_shp(mst_non_directed, output_network_folder)  # writes nodes.shp and edges.shp
 
     # populate fields Building, Type, Name
     mst_nodes = gdf.from_file(output_nodes)

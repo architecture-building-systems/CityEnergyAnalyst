@@ -11,6 +11,7 @@ import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network.thermal_network import ThermalNetwork, thermal_network_main
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
+from cea.utilities import epwreader
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
@@ -92,6 +93,7 @@ class NetworkInfo(object):
         self.min_number_of_plants = config.thermal_network_optimization.min_number_of_plants
         self.max_number_of_plants = config.thermal_network_optimization.max_number_of_plants
         self.lucky_few = config.thermal_network_optimization.lucky_few
+        self.yearly_cost_calculations = config.thermal_network_optimization.yearly_cost_calculations
 
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',
@@ -126,6 +128,9 @@ class NetworkInfo(object):
         total_demand = pd.read_csv(locator.get_total_demand())
         self.building_names = total_demand.Name.values
         self.number_of_buildings_in_district = total_demand.Name.count()
+
+        self.__weather_data = None
+
         # write possible plant location sites to object
         if not self.possible_plant_sites:
             # if there is no input from the config file as to which sites are potential plant locations,
@@ -135,6 +140,12 @@ class NetworkInfo(object):
     def locate_individual_results(self, individual):
         return self.locator.get_optimization_network_individual_results_file(self.network_type, individual)
 
+    @property
+    def weather_data(self):
+        if self.__weather_data is None:
+            weather_path = self.locator.get_weather_file()
+            self.__weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C']]
+        return self.__weather_data
 
 def thermal_network_optimization(config, locator):
     # initialize timer
@@ -356,7 +367,7 @@ def objective_function(network_info, network_layout, thermal_network):
     :param NetworkInfo network_info: Object storing network information.
     :return: total cost, opex and capex of the given individual
     """
-
+    print("HERE: thermal-network-optimization: objective_function")
     # convert indices into building names of plant buildings and disconnected buildings
     plant_building_names = []
     disconnected_building_names = []
@@ -384,9 +395,12 @@ def objective_function(network_info, network_layout, thermal_network):
         # set all loads to 0 to make sure that we have no cost for the network
         thermal_network.substation_heating_systems = []
         thermal_network.substation_cooling_systems = []
+
         # generate a network with all buildings connected but no loads
+        # NOTE: this changes the nodes.shp and edges.shp file and they need to be re-loaded!
         network_layout = NetworkLayout(network_info)
         layout_network(network_layout, network_info.locator, network_info.building_names, optimization_flag=True)
+        thermal_network.get_thermal_network_from_shapefile()
 
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         # thermal_network = ThermalNetwork(network_info.locator, "", )
@@ -406,6 +420,7 @@ def objective_function(network_info, network_layout, thermal_network):
         # save which buildings are disconnected
         network_layout.disconnected_buildings = disconnected_building_names
         layout_network(network_layout, network_info.locator, plant_building_names, optimization_flag=True)
+        thermal_network.get_thermal_network_from_shapefile()
 
         # run the thermal_network simulation with the generated network
         thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=False)
