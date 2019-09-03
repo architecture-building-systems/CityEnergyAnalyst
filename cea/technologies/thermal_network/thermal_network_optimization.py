@@ -474,7 +474,7 @@ def breed_new_generation(selected_individuals, network_info):
         while second_parent == first_parent:
             second_parent = random.choice(selected_individuals)
         # setup storage for child
-        child = [0] * len(first_parent)
+        child = [INDIVIDUAL_CONNECTED] * len(first_parent)
         # iterate through parent individuals
         for j in range(len(first_parent)):
             # if both parents have the same value, it is passed on to the child
@@ -611,7 +611,7 @@ def disconnect_buildings(network_info):
     :return: list of plant locations
     """
     # initialize storage of plants and disconneted buildings
-    new_buildings = np.zeros(network_info.number_of_buildings_in_district)
+    new_buildings = [INDIVIDUAL_PLANT] * network_info.number_of_buildings_in_district
     # choose random amount, choose random locations, start disconnecting buildings
     random_amount = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
     # disconnect a random amount of buildings
@@ -659,7 +659,7 @@ def generate_initial_population(network_info, network_layout):
             new_plants = disconnect_buildings(network_info)
         else:
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
-            new_plants = np.zeros(network_info.number_of_buildings_in_district)
+            new_plants = [INDIVIDUAL_PLANT] * network_info.number_of_buildings_in_district
             # read in the list of disconnected buildings from config file, if any are given
             for building in network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
