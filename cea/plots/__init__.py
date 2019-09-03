@@ -121,7 +121,8 @@ class Dashboard(object):
         except KeyError:
             self.description = ''
         try:
-            self.layout = dashboard_dict['layout']
+            layout = dashboard_dict['layout']
+            self.layout = 'grid' if layout == 'map' else layout
         except KeyError:
             self.layout = 'row'
 
