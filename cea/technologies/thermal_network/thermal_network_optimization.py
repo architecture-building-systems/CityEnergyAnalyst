@@ -367,7 +367,6 @@ def objective_function(network_info, network_layout, thermal_network):
     :param NetworkInfo network_info: Object storing network information.
     :return: total cost, opex and capex of the given individual
     """
-    print("HERE: thermal-network-optimization: objective_function")
     # convert indices into building names of plant buildings and disconnected buildings
     plant_building_names = []
     disconnected_building_names = []
