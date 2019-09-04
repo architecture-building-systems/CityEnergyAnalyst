@@ -424,7 +424,7 @@ def calc_generation_costs_cooling_storage(locator,
                                           daily_storage):
     # STORAGE TANK
     if master_to_slave_variables.Storage_cooling_on == 1:
-        V_tank_m3 = daily_storage.V_tank_M3
+        V_tank_m3 = daily_storage.V_tank_m3
         Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
                                                                                                   config, 'TES2')
     else:

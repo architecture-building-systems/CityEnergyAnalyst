@@ -110,6 +110,24 @@ def district_cooling_network(locator,
     source_BaseVCC_AS = np.zeros(HOURS_IN_YEAR)
     source_PeakVCC_AS = np.zeros(HOURS_IN_YEAR)
 
+
+    # daily_storage, \
+    # activation_output, \
+    # thermal_output, \
+    # electricity_output, \
+    # gas_output = np.vectorize(cooling_resource_activator)(Q_thermal_req_W,
+    #                                         T_district_cooling_supply_K,
+    #                                         T_district_cooling_return_K,
+    #                                         Q_therm_Lake_W,
+    #                                         T_source_average_Lake_K,
+    #                                         daily_storage,
+    #                                         T_ground_K,
+    #                                         lca,
+    #                                         master_to_slave_variables,
+    #                                         0,
+    #                                         prices,
+    #                                         locator)
+    # print('done')
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
@@ -149,7 +167,7 @@ def district_cooling_network(locator,
             E_PeakVCC_AS_req_W[hour] = electricity_output['E_PeakVCC_AS_req_W']
             E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
-            NG_Trigen_req_W = gas_output['NG_Trigen_req_W']
+            NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
 
     # BACK-UPP VCC - AIR SOURCE
