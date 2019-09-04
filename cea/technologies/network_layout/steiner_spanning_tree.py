@@ -14,7 +14,6 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 from shapely.geometry import LineString
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"

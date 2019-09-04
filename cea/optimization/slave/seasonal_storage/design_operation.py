@@ -45,7 +45,6 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     :type STORE_DATA:
     :type master_to_slave_vars:
     :type P_HP_max_W:
-    :type gV:
     :return:
     :rtype:
     """

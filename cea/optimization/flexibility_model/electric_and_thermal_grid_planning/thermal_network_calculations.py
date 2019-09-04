@@ -5,7 +5,6 @@ import time
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning import process_results
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
@@ -49,8 +48,7 @@ def thermal_network_calculations(m, dict_connected, locator, individual, config,
     process_results.thermal_network_layout_to_shapefile(config, input_path_name, locator)
     thermal_network.main(config)
 
-    gv = cea.globalvar.GlobalVariables()
-    network_info = thermal_network_costs.Thermal_Network(locator, config, network_type, gv)
+    network_info = thermal_network_costs.Thermal_Network(locator, config, network_type)
     disconnected_buildings_index = []
     for i in range(len(individual)):
         if individual[i] == 0:
