@@ -31,12 +31,10 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names: dataframe with names of all buildings in the area
     :param weather_file: path to wather file
-    :param gv: path to global variables class
     :type locator: class
     :type total_demand: list
     :type building_names: list
     :type weather_file: string
-    :type gv: class
     :return:
         - extraCosts: extra pareto optimal costs due to electricity and process heat (
             these are treated separately and not considered inside the optimization)
