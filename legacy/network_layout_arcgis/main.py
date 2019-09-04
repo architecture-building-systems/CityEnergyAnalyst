@@ -1,4 +1,4 @@
-import cea.globalvar
+
 import cea.inputlocator
 from legacy.network_layout_arcgis.connectivity_potential import calc_connectivity_network
 from legacy.network_layout_arcgis.substations_location import calc_substation_location

@@ -603,7 +603,6 @@ def calc_generation_costs_heating(locator,
     :param Q_uncovered_annual_W: total heating uncovered
     :param solar_features: solar features
     :param thermal_network: network features
-    :param gv: global variables
     :type indCombi: string
     :type buildList: list
     :type locator: string
@@ -612,7 +611,6 @@ def calc_generation_costs_heating(locator,
     :type Q_uncovered_annual_W: float
     :type solar_features: class
     :type thermal_network: class
-    :type gv: class
 
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple

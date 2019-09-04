@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
 from cea.utilities import epwreader
