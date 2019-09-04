@@ -51,7 +51,9 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     """
 
     # create a dict of input operating conditions
-    input_conditions = {'T_chw_sup_K': T_chw_sup_K, 'T_chw_re_K': T_chw_re_K, 'T_hw_in_C': T_hw_in_C,
+    input_conditions = {'T_chw_sup_K': T_chw_sup_K,
+                        'T_chw_re_K': T_chw_re_K,
+                        'T_hw_in_C': T_hw_in_C,
                         'T_ground_K': T_ground_K}
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     q_chw_total_W = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K)
@@ -157,7 +159,9 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     T_hw_out_C = input_conditions['T_hw_in_C'] - q_hw_kW / mcp_hw_kWperK
     T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK  # TODO: set upper bound of the chiller operation
 
-    return {'T_hw_out_C': T_hw_out_C, 'T_cw_out_C': T_cw_out_C, 'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
+    return {'T_hw_out_C': T_hw_out_C,
+            'T_cw_out_C': T_cw_out_C,
+            'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
             'q_cw_W': q_cw_kW * 1000}
 
 

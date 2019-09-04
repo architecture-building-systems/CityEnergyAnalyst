@@ -6,14 +6,12 @@ import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as CTModel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import ACH_T_IN_FROM_CHP
-from cea.optimization.constants import VCC_T_COOL_IN
+from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP
 from cea.technologies.cogeneration import calc_cop_CCGT
-from cea.technologies.constants import DT_COOL
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna", "Shanshan Hsieh"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Shanshan Hsieh", "Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -55,19 +53,19 @@ def calc_vcc_CT_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lc
     return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
 
 
-def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, locator):
+def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, locator):
     ACH_type = 'double'
 
     if T_DCN_re_K == T_DCN_sup_K:
         mdot_ACH_kgpers = 0
     else:
-        mdot_ACH_kgpers = Qc_from_ACH_W / (
+        mdot_ACH_kgpers = Qc_ACH_req_W / (
                 (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
 
     ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, ACH_T_IN_FROM_CHP,
                                                          T_ground_K, locator, ACH_type)
 
-    Qc_CT_ACH_W = ACH_operation['q_cw_W']
+    Qc_CT_ACH_W = ACH_operation['q_chw_W']
     Qh_CHP_ACH_W = ACH_operation['q_hw_W']
     E_used_ACH_W = ACH_operation['wdot_W']
 
@@ -86,7 +84,6 @@ def cooling_resource_activator(Q_thermal_req,
                                hour,
                                prices,
                                locator):
-
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_W = 0.0
@@ -117,7 +114,7 @@ def cooling_resource_activator(Q_thermal_req,
                                         ACH_T_IN_FROM_CHP,
                                         "NG",
                                         prices,
-                                        lca.ELEC_PRICE[hour])
+                                        lca.ELEC_PRICE[hour])  # create cost information
         Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
         cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
         q_output_CC_min_W = CC_op_cost_data['q_output_min_W']
@@ -308,7 +305,7 @@ def cooling_resource_activator(Q_thermal_req,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
         'E_BaseVCC_AS_req_W': E_BaseVCC_AS_req_W,
         'E_PeakVCC_AS_req_W': E_PeakVCC_AS_req_W,
-        'E_Trigen_NG_gen_W' : E_Trigen_NG_gen_W
+        'E_Trigen_NG_gen_W': E_Trigen_NG_gen_W
     }
 
     thermal_output = {

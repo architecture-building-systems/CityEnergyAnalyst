@@ -5,13 +5,13 @@ import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.cogeneration import calc_cop_CCGT
-from cea.technologies.constants import FURNACE_MIN_LOAD, BOILER_MIN
+from cea.technologies.constants import BOILER_MIN
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -52,7 +52,8 @@ def heating_source_activator(Q_therm_req_W,
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_vars.CCGT_SIZE_W,
                                         tdhsup_K,
                                         "NG",
-                                        prices, lca.ELEC_PRICE[hour])  # create cost information
+                                        prices,
+                                        lca.ELEC_PRICE[hour])  # create cost information
         Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
         cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
         q_output_CC_min_W = CC_op_cost_data['q_output_min_W']
