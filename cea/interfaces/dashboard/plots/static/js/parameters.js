@@ -1,10 +1,10 @@
 const { Form, Input, Icon, Switch, Select, Divider } = antd;
 
-const ceaParameter = (param, getFieldDecorator) => {
+const ceaParameter = (param, form) => {
   const { name, type, value, help } = param;
-
+  const { getFieldDecorator, setFieldsValue } = form;
   const openDialog = () => {
-    console.log('open dialog')
+    console.log("open dialog");
   };
 
   let input = [];
@@ -85,6 +85,21 @@ const ceaParameter = (param, getFieldDecorator) => {
         {choice}
       </Option>
     ));
+
+    const selectAll = e => {
+      e.preventDefault();
+      setFieldsValue({
+        [name]: choices
+      });
+    };
+
+    const unselectAll = e => {
+      e.preventDefault();
+      setFieldsValue({
+        [name]: []
+      });
+    };
+
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
@@ -96,6 +111,20 @@ const ceaParameter = (param, getFieldDecorator) => {
             placeholder="Nothing Selected"
             showArrow
             maxTagCount={10}
+            dropdownRender={menu => (
+              <div>
+                <div style={{ padding: "8px", textAlign: "center" }}>
+                  <Button onMouseDown={selectAll} style={{ width: "45%" }}>
+                    Select All
+                  </Button>
+                  <Button onMouseDown={unselectAll} style={{ width: "45%" }}>
+                    Unselect All
+                  </Button>
+                </div>
+                <Divider style={{ margin: "4px 0" }} />
+                {menu}
+              </div>
+            )}
           >
             {Options}
           </Select>

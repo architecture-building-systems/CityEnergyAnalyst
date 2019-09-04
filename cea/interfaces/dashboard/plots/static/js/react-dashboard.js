@@ -734,7 +734,7 @@ const ParamsForm = Form.create()(({ parameters, form }) => {
   return (
     <Form layout="horizontal">
       {parameters
-        ? parameters.map(param => ceaParameter(param, getFieldDecorator))
+        ? parameters.map(param => ceaParameter(param, form))
         : "Fetching Data..."}
     </Form>
   );
