@@ -8,7 +8,7 @@ import cea.plots.cache
 api = Namespace('Dashboard', description='Dashboard plots')
 
 
-LAYOUTS = ['row', 'grid', 'map']
+LAYOUTS = ['row', 'grid']
 CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name} for p in c.plots]}
               for c in cea.plots.categories.list_categories()}
 
@@ -46,7 +46,13 @@ class DashboardNew(Resource):
         config = cea.config.Configuration()
         plot_cache = cea.plots.cache.PlotCache(config)
 
-        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['layout'])
+        if 'grid' in form['layout']:
+            types = [[2] + [1] * 4, [1] * 6, [1] * 3 + [3], [2, 1] * 2]
+            grid_width = types[int(form['layout'].split('-')[-1])-1]
+            dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], 'grid',
+                                                      grid_width=grid_width)
+        else:
+            dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['layout'])
 
         return {'new_dashboard_index': dashboard_index}
 

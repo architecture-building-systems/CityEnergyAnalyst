@@ -64,24 +64,30 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache, name='Default Dashboard', layout='row'):
+def default_dashboard(config, cache):
     """Return a default Dashboard"""
-    return Dashboard(config, {'name': name,
-                              'layout': layout,
-                              'plots': []}, cache)
+    return Dashboard(config, {
+        'name': 'Default Dashboard',
+        'layout': 'row',
+        'plots': []
+    }, cache)
 
 
-def new_dashboard(config, cache, name, layout):
+def new_dashboard(config, cache, name, layout, grid_width=None):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
-    dashboards = read_dashboards(config, cache)
-    dashboards.append(Dashboard(config, {
+    dashboard_dict = {
         'name': name,
         'layout': layout,
-        'plots': [{'plot': 'empty'}] * 6 if layout == 'grid' else []
-    }, cache))
+        'plots': []
+    }
+    if layout == 'grid':
+        dashboard_dict['grid_width'] = grid_width
+        dashboard_dict['plots'] = [{'plot': 'empty'}] * len(grid_width)
+    dashboards = read_dashboards(config, cache)
+    dashboards.append(Dashboard(config, dashboard_dict, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
@@ -118,6 +124,11 @@ class Dashboard(object):
             self.layout = 'grid' if layout == 'map' else layout
         except KeyError:
             self.layout = 'row'
+        if self.layout == 'grid':
+            try:
+                self.grid_width = dashboard_dict['grid_width']
+            except KeyError:
+                self.grid_width = [1] * len(self.plots)
 
     def add_plot(self, category, plot_id, index=None):
         """Add a new plot to the dashboard"""
@@ -155,11 +166,13 @@ class Dashboard(object):
 
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
-        return {'name': self.name,
-                'layout': self.layout,
-                'plots': [{'plot': p.id(),
-                           'category': p.category_name,
-                           'parameters': p.parameters} if p is not None else {'plot': 'empty'} for p in self.plots]}
+        out = {'name': self.name, 'layout': self.layout, 
+               'plots': [{'plot': p.id(), 
+                          'category': p.category_name, 
+                          'parameters': p.parameters} if p is not None else {'plot': 'empty'} for p in self.plots]}
+        if self.layout == 'grid':
+            out['grid_width'] = self.grid_width
+        return out
 
 
 def load_plot(project, plot_definition, cache):
