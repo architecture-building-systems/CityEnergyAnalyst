@@ -102,7 +102,11 @@ const Dashboard = () => {
           {layout === "row" ? (
             <RowLayout dashIndex={dashIndex} plots={plots} />
           ) : (
-            <GridLayout dashIndex={dashIndex} plots={plots} />
+            <GridLayout
+              dashIndex={dashIndex}
+              plots={plots}
+              grid_width={dashboards[dashIndex].grid_width}
+            />
           )}
         </div>
       </div>
@@ -198,6 +202,7 @@ const ModalNewDashboard = React.memo(({ setDashIndex, dashboardNames }) => {
     <Modal
       title="New Dashboard"
       visible={visible}
+      width={800}
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
@@ -233,8 +238,11 @@ const DashForm = Form.create()(({ form }) => {
           initialValue: "row"
         })(
           <Radio.Group>
-            <Radio value="row">Row</Radio>
-            <Radio value="grid">Grid</Radio>
+            <Radio value="row" style={{display: 'block'}}>Row</Radio>
+            <Radio value="grid-1">Grid 1<div className='grid-1-image'></div></Radio>
+            <Radio value="grid-2">Grid 2<div className='grid-2-image'></div></Radio>
+            <Radio value="grid-3">Grid 3<div className='grid-3-image'></div></Radio>
+            <Radio value="grid-4">Grid 4<div className='grid-4-image'></div></Radio>
           </Radio.Group>
         )}
       </Form.Item>
@@ -755,7 +763,7 @@ const RowLayout = ({ dashIndex, plots }) => {
   );
 };
 
-const GridLayout = ({ dashIndex, plots }) => {
+const GridLayout = ({ dashIndex, plots, grid_width }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
   return (
@@ -763,7 +771,8 @@ const GridLayout = ({ dashIndex, plots }) => {
       <div className="row display-flex">
         {plots.map((data, index) => (
           <div
-            className="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget"
+            className={`col-lg-${grid_width[index] *
+              4} col-md-12 col-sm-12 col-xs-12 plot-widget`}
             key={`${dashIndex}-${index}-${data.hash}`}
           >
             {data.plot !== "empty" ? (
