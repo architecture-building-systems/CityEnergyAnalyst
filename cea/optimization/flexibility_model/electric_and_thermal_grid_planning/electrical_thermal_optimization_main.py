@@ -13,7 +13,6 @@ from deap import tools
 
 import cea
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
     electric_network_optimization
