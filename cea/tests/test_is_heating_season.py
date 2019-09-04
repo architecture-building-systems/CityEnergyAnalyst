@@ -2,7 +2,7 @@
  the implementation of #251 (move Heating/Cooling season to a non northern-hemisphere-based system).
 
 
-Old style: :py:attr:`cea.globalvar.GlobalVariables.seasonhours` was a list with the values [3216, 6192] referring to
+
 the hours to start and stop (?) the heating season as explained in the reproduced method ``is_heating_season`` below.
 
 New style: 6 attributes, ``heating_season_start``, ``heating_season_end``, ``cooling_season_start``,

@@ -4,7 +4,6 @@ hydraulic network
 
 from __future__ import division
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network as thermal_network
