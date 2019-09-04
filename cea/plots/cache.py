@@ -24,6 +24,7 @@ class NullPlotCache(object):
     def lookup_table_div(self, plot, producer):
         return producer()
 
+
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
     def __init__(self, project):
