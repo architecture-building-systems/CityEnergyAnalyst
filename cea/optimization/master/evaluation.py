@@ -227,7 +227,7 @@ def save_results(master_to_slave_vars,
     pd.DataFrame(building_connectivity_dict).to_csv(
         locator.get_optimization_slave_building_connectivity(master_to_slave_vars.individual_number,
                                                              master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     # SAVE PERFORMANCE RELATED FILES
     # put data inside a list, otherwise pandas cannot save it
@@ -247,18 +247,18 @@ def save_results(master_to_slave_vars,
     pd.DataFrame(performance_disconnected).to_csv(
         locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,
                                                                 master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
     pd.DataFrame(performance_connected).to_csv(
         locator.get_optimization_slave_connected_performance(master_to_slave_vars.individual_number,
                                                            master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     pd.DataFrame(performance_totals).to_csv(
         locator.get_optimization_slave_total_performance(master_to_slave_vars.individual_number,
                                                          master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     # add date and plot
     DATE = master_to_slave_vars.date
@@ -269,19 +269,19 @@ def save_results(master_to_slave_vars,
 
     pd.DataFrame(electricity_requirements).to_csv(locator.get_optimization_slave_electricity_requirements_data(
         master_to_slave_vars.individual_number,
-        master_to_slave_vars.generation_number), index=False)
+        master_to_slave_vars.generation_number), index=False, float_format='%.3f')
 
 
     pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern(
-        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False, float_format='%.3f')
 
 
     pd.DataFrame(cooling_dispatch).to_csv(
         locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     pd.DataFrame(heating_dispatch).to_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
