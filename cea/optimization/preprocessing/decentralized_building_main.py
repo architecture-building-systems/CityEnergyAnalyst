@@ -20,9 +20,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     This functions optimizes disconnected buildings individually
 
     :param locator: locator class
-    :param gv: global variables class
     :type locator: class
-    :type gv: class
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
