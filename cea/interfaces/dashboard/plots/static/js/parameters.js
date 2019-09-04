@@ -95,6 +95,7 @@ const ceaParameter = (param, getFieldDecorator) => {
             style={{ width: "100%" }}
             placeholder="Nothing Selected"
             showArrow
+            maxTagCount={10}
           >
             {Options}
           </Select>
