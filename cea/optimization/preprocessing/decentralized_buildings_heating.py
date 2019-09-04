@@ -55,6 +55,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     substation.substation_main_heating(locator, total_demand, building_names)
 
     for building_name in building_names:
+        print('running for building %s') %(building_name)
         # run substation model to derive temperatures of the building
         substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", ""))
         q_load_Wh = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"],
