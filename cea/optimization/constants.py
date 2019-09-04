@@ -159,7 +159,7 @@ VCC_CODE_CENTRALIZED = 'CH1'
 VCC_CODE_DECENTRALIZED = 'CH3'
 
 # Absorption chiller
-ACH_T_IN_FROM_CHP = 150.0 + 273.0  # hot water from CHP to the generator of ACH
+ACH_T_IN_FROM_CHP_K = 150.0 + 273.0  # hot water from CHP to the generator of ACH
 ACH_TYPE_SINGLE = 'single'  # single effect absorption chiller
 ACH_TYPE_DOUBLE = 'double'  # double effect absorption chiller
 
