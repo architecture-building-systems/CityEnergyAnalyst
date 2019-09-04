@@ -69,6 +69,16 @@ class DashboardDuplicate(Resource):
         return {'new_dashboard_index': dashboard_index}
 
 
+@api.route('/delete/<int:dashboard_index>')
+class DashboardDelete(Resource):
+    def post(self, dashboard_index):
+        form = api.payload
+        config = cea.config.Configuration()
+        cea.plots.delete_dashboard(config, dashboard_index)
+
+        return {'message': 'deleted dashboard'}
+
+
 @api.route('/set-scenario/<int:dashboard_index>')
 class DashboardScenario(Resource):
     def post(self, dashboard_index):

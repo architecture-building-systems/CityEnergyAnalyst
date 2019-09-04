@@ -42,7 +42,11 @@ const Dashboard = () => {
   const showModalDuplicateDashboard = () =>
     dispatch(setModalDuplicateDashboardVisibility(true));
 
-  const showModalSetScenario = () => dispatch(setModalSetScenario(true));
+  const showModalSetScenario = () =>
+    dispatch(setModalSetScenarioVisibility(true));
+
+  const showModalDeleteDashboard = () =>
+    dispatch(setModalDeleteDashboardVisibility(true));
 
   const handleSelect = useCallback(index => {
     setDashIndex(index);
@@ -71,7 +75,7 @@ const Dashboard = () => {
             setDashIndex={handleSelect}
             dashboardNames={dashboardNames}
           />
-          <div style={{ position: "absolute", left: 250, top: 18 }}>
+          <span>
             <Button
               type="primary"
               icon="plus"
@@ -96,7 +100,15 @@ const Dashboard = () => {
             >
               Set Scenario
             </Button>
-          </div>
+            <Button
+              type="danger"
+              icon="delete"
+              size="small"
+              onClick={showModalDeleteDashboard}
+            >
+              Delete Dashboard
+            </Button>
+          </span>
         </div>
         <div id="cea-dashboard-layout">
           {layout === "row" ? (
@@ -120,6 +132,7 @@ const Dashboard = () => {
         dashboardNames={dashboardNames}
       />
       <ModalSetScenario dashIndex={dashIndex} />
+      <ModalDeleteDashboard dashIndex={dashIndex} setDashIndex={handleSelect} />
       <ModalAddPlot />
       <ModalChangePlot />
       <ModalEditParameters />
@@ -140,15 +153,13 @@ const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
   );
 
   return (
-    <Affix offsetTop={30}>
-      <Select
-        value={dashboardNames[dashIndex]}
-        style={{ width: 200 }}
-        onChange={value => setDashIndex(value)}
-      >
-        {dashList}
-      </Select>
-    </Affix>
+    <Select
+      value={dashboardNames[dashIndex]}
+      style={{ width: 200, marginRight: 20 }}
+      onChange={value => setDashIndex(value)}
+    >
+      {dashList}
+    </Select>
   );
 });
 
@@ -238,11 +249,21 @@ const DashForm = Form.create()(({ form }) => {
           initialValue: "row"
         })(
           <Radio.Group>
-            <Radio value="row" style={{display: 'block'}}>Row</Radio>
-            <Radio value="grid-1">Grid 1<div className='grid-1-image'></div></Radio>
-            <Radio value="grid-2">Grid 2<div className='grid-2-image'></div></Radio>
-            <Radio value="grid-3">Grid 3<div className='grid-3-image'></div></Radio>
-            <Radio value="grid-4">Grid 4<div className='grid-4-image'></div></Radio>
+            <Radio value="row" style={{ display: "block" }}>
+              Row
+            </Radio>
+            <Radio value="grid-1">
+              Grid 1<div className="grid-1-image"></div>
+            </Radio>
+            <Radio value="grid-2">
+              Grid 2<div className="grid-2-image"></div>
+            </Radio>
+            <Radio value="grid-3">
+              Grid 3<div className="grid-3-image"></div>
+            </Radio>
+            <Radio value="grid-4">
+              Grid 4<div className="grid-4-image"></div>
+            </Radio>
           </Radio.Group>
         )}
       </Form.Item>
@@ -362,7 +383,7 @@ const ModalSetScenario = React.memo(({ dashIndex }) => {
               console.log(response.data);
               dispatch(fetchDashboards(true));
               setConfirmLoading(false);
-              dispatch(setModalSetScenario(false));
+              dispatch(setModalSetScenarioVisibility(false));
             }
           })
           .catch(error => {
@@ -374,7 +395,7 @@ const ModalSetScenario = React.memo(({ dashIndex }) => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalSetScenario(false));
+    dispatch(setModalSetScenarioVisibility(false));
   };
 
   useEffect(() => {
@@ -413,6 +434,52 @@ const SetScenarioForm = Form.create()(({ form, scenarios }) => {
         ? ceaParameter(scenarios, getFieldDecorator)
         : "Fetching Data..."}
     </Form>
+  );
+});
+
+const ModalDeleteDashboard = React.memo(({ dashIndex, setDashIndex }) => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const visible = useSelector(
+    state => state.dashboard.showModalDeleteDashboard
+  );
+  const dispatch = useDispatch();
+
+  const handleOk = e => {
+    setConfirmLoading(true);
+    axios
+      .post(`http://localhost:5050/api/dashboard/delete/${dashIndex}`)
+      .then(response => {
+        if (response) {
+          console.log(response.data);
+          setDashIndex(0);
+          dispatch(fetchDashboards(true));
+          setConfirmLoading(false);
+          dispatch(setModalDeleteDashboardVisibility(false));
+        }
+      })
+      .catch(error => {
+        setConfirmLoading(false);
+        console.log(error.response);
+      });
+  };
+
+  const handleCancel = e => {
+    dispatch(setModalDeleteDashboardVisibility(false));
+  };
+
+  return (
+    <Modal
+      title="Delete Dashboard"
+      visible={visible}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+      okText="Delete"
+      okButtonProps={{ type: "danger" }}
+    >
+      Are you sure you want to delete this dashboard?
+    </Modal>
   );
 });
 
@@ -992,10 +1059,18 @@ const setModalDuplicateDashboardVisibility = visible => {
 };
 
 const SHOW_MODAL_SET_SCENARIO = "SHOW_MODAL_SET_SCENARIO";
-const setModalSetScenario = visible => {
+const setModalSetScenarioVisibility = visible => {
   return {
     type: SHOW_MODAL_SET_SCENARIO,
     payload: { showModalSetScenario: visible }
+  };
+};
+
+const SHOW_MODAL_DELETE_DASHBOARD = "SHOW_MODAL_DELETE_DASHBOARD";
+const setModalDeleteDashboardVisibility = visible => {
+  return {
+    type: SHOW_MODAL_DELETE_DASHBOARD,
+    payload: { showModalDeleteDashboard: visible }
   };
 };
 
@@ -1046,6 +1121,7 @@ const initialState = {
   showModalNewDashboard: false,
   showModalDuplicateDashboard: false,
   showModalSetScenario: false,
+  showModalDeleteDashboard: false,
   showModalAddPlot: false,
   showModalChangePlot: false,
   showModalEditParameters: false,
@@ -1062,6 +1138,8 @@ const dashboard = (state = initialState, { type, payload }) => {
     case SHOW_MODAL_DUPLICATE_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_SET_SCENARIO:
+      return { ...state, ...payload };
+    case SHOW_MODAL_DELETE_DASHBOARD:
       return { ...state, ...payload };
     case SHOW_MODAL_ADD_PLOT:
       return { ...state, ...payload };
