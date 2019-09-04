@@ -5,7 +5,6 @@ import time
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning import process_results
 from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \

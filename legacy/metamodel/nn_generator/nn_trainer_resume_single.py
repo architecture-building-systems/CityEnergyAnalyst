@@ -2,7 +2,6 @@ from legacy.metamodel.nn_generator import random_variables, target_parameters
 from legacy.metamodel.nn_generator import nn_input_collector
 
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 from cea.demand.demand_main import properties_and_schedule
 from legacy.metamodel.nn_generator import neural_trainer_resume, nn_model_collector

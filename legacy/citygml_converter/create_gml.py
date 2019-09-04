@@ -11,7 +11,6 @@ import py4design.gml3dmodel as gml3dmodel
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
-import cea.globalvar
 import cea.inputlocator
 import numpy as np
 import gdal

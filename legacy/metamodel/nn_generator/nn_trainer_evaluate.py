@@ -16,7 +16,6 @@ from legacy.metamodel.nn_generator import sampling_single
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import cea.inputlocator
 import cea.config
-import cea.globalvar
 from cea.demand.demand_main import properties_and_schedule
 from cea.utilities import epwreader
 

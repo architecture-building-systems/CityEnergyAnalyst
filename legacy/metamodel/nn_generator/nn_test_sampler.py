@@ -19,7 +19,6 @@ from cea.demand.calibration.bayesian_calibrator.calibration_sampling import appl
 from cea.demand import demand_main
 import pickle
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 import numpy as np
 import pandas as pd

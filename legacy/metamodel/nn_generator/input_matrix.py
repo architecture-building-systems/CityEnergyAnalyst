@@ -8,7 +8,6 @@
 """
 from __future__ import division
 import pandas as pd
-import cea.globalvar
 import cea.inputlocator
 import cea.config
 from cea.demand.demand_main import properties_and_schedule

@@ -19,7 +19,6 @@ __status__ = "Production"
 # import h5py
 import os
 
-import cea.globalvar
 import cea.inputlocator
 import cea.config
 import numpy as np

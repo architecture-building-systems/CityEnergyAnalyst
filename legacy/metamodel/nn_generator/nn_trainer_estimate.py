@@ -15,7 +15,6 @@ from legacy.metamodel.nn_generator import nn_delay, target_parameters, warmup_pe
 from legacy.metamodel.nn_generator import get_cea_inputs
 from legacy.metamodel.nn_generator import nn_model_collector
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 from cea.utilities import epwreader
 

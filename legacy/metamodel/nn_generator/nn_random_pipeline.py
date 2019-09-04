@@ -23,7 +23,6 @@ from legacy.metamodel.nn_generator import neural_trainer, nn_input_collector
 from sklearn.externals import joblib
 import cea.config
 import cea.inputlocator
-import cea.globalvar
 
 import cea
 from cea.demand.demand_main import properties_and_schedule

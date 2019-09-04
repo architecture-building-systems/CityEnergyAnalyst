@@ -10,7 +10,6 @@ import numpy as np
 from cea.demand.demand_main import properties_and_schedule
 import cea.config
 import cea.inputlocator
-import cea.globalvar
 from cea.utilities import epwreader
 
 __author__ = "Fazel Khayatian"

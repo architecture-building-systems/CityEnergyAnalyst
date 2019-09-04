@@ -2,7 +2,6 @@
 import pandas as pd
 import os
 from cea.utilities import dbf
-import cea.globalvar
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR

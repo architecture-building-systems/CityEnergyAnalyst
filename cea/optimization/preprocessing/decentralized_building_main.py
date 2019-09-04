@@ -5,7 +5,6 @@ This computes the close-to-optimal supply system for single buildings.
 
 """
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 from cea.optimization.prices import Prices as Prices

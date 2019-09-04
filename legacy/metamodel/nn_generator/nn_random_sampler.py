@@ -19,7 +19,6 @@ import numpy as np
 import pandas as pd
 
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
