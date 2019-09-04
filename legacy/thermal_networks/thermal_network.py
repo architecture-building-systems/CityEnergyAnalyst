@@ -16,27 +16,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-
-# investment and maintenance costs
-
-def calc_Cinv_network_linear(LengthNetwork, gv):
-    """
-    calculate annualised network investment cost with a linearized function.
-
-    :param LengthNetwork: total length of the network in [m]
-
-    :returns InvCa: annualised investment cost of the thermal network
-    :rtype InvCa: float
-
-    """
-
-    InvC = 0
-    InvC = LengthNetwork * gv.PipeCostPerMeterInv
-    InvCa = InvC * gv.PipeInterestRate * (1 + gv.PipeInterestRate) ** gv.PipeLifeTime / ((1 + gv.PipeInterestRate) ** gv.PipeLifeTime - 1)
-
-    return InvCa, InvC
-
 # Pumping Cost
 
 def calc_Closs_pressure(locator, network_name, network_type):
