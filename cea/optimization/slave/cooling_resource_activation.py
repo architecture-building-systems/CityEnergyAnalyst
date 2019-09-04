@@ -310,7 +310,7 @@ def cooling_resource_activator(Q_thermal_req,
     }
 
     thermal_output = {
-        'Q_Trigen_gen_W': Q_Trigen_gen_W,
+        'Q_Trigen_NG_gen_W': Q_Trigen_gen_W,
         'Q_BaseVCC_WS_gen_W': Q_BaseVCC_WS_gen_W,
         'Q_PeakVCC_WS_gen_W': Q_PeakVCC_WS_gen_W,
         'Q_BaseVCC_AS_gen_W': Q_BaseVCC_AS_gen_W,

@@ -60,7 +60,6 @@ def district_cooling_network(locator,
     T_district_cooling_supply_K,\
     mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_variables)
 
-    print("CALCULATING ECOLOGICAL COSTS OF DAILY COOLING STORAGE - DUE TO OPERATION (IF ANY)")
     # Initialize daily storage calss
     T_ground_K = calculate_ground_temperature(locator, config)
     daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
@@ -103,7 +102,6 @@ def district_cooling_network(locator,
     E_BaseVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
     E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
-
     NG_Trigen_req_W = np.zeros(HOURS_IN_YEAR)
 
     source_Trigen_NG = np.zeros(HOURS_IN_YEAR)
@@ -149,10 +147,10 @@ def district_cooling_network(locator,
             E_PeakVCC_WS_req_W[hour] = electricity_output['E_PeakVCC_WS_req_W']
             E_BaseVCC_AS_req_W[hour] = electricity_output['E_BaseVCC_AS_req_W']
             E_PeakVCC_AS_req_W[hour] = electricity_output['E_PeakVCC_AS_req_W']
-            E_BackupVCC_AS_req_W[hour] = electricity_output['E_BackupVCC_AS_req_W']
             E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
             NG_Trigen_req_W = gas_output['NG_Trigen_req_W']
+
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
