@@ -595,7 +595,7 @@ def extract_demand_buildings(master_to_slave_vars, building_names, locator):
                 if name in building_names_cooling:
                     # if there is a decentralized cooling use it.
                     building_dencentralized_system = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
+                        locator.get_optimization_decentralized_folder_building_cooling_activation(name))
                     E_cs_cre_cdata_req_W += building_dencentralized_system['E_cs_cre_cdata_req_W']
                 else:
                     # if not (cae of building with electric load and not cooling
