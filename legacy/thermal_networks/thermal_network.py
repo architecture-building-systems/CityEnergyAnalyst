@@ -25,7 +25,6 @@ def calc_Cinv_network_linear(LengthNetwork, gv):
     calculate annualised network investment cost with a linearized function.
 
     :param LengthNetwork: total length of the network in [m]
-    :pram gV: globalvar.py
 
     :returns InvCa: annualised investment cost of the thermal network
     :rtype InvCa: float
