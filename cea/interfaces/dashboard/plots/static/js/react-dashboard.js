@@ -885,7 +885,7 @@ const Plot = ({ index, dashIndex, data, style }) => {
                   script = domNode.children[0].data;
                 }
               }
-            });
+            }).filter(node => node.type === "div" || node.type === "style");
             return { content, script };
           });
       })
