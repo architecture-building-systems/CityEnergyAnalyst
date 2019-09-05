@@ -78,8 +78,8 @@ def district_cooling_network(locator,
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     # get properties of technology used in this script
-    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
-    CCGT_operation_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
+    ACH_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
     # intitalize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -118,8 +118,8 @@ def district_cooling_network(locator,
                                                     daily_storage,
                                                     T_ground_K[hour],
                                                     master_to_slave_variables,
-                                                    chiller_prop,
-                                                    CCGT_operation_data)
+                                                    ACH_prop,
+                                                    CCGT_prop)
 
             source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
             source_BaseVCC_WS[hour] = activation_output["source_BaseVCC_WS"]
@@ -148,7 +148,6 @@ def district_cooling_network(locator,
     if master_to_slave_variables.AS_BackupVCC_size_W != 0:
         master_to_slave_variables.AS_BackupVCC_on = 1
         for hour in range(HOURS_IN_YEAR):
-            _, \
             Q_BackupVCC_AS_gen_W[hour], \
             E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
                                                                T_district_cooling_return_K[hour],
