@@ -13,7 +13,8 @@ const {
   Form,
   Menu,
   Dropdown,
-  Radio
+  Radio,
+  Tooltip
 } = antd;
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const { Provider, connect, useSelector, useDispatch } = ReactRedux;
@@ -927,7 +928,16 @@ const Plot = ({ index, dashIndex, data, style }) => {
           )}
         </div>
       }
-      extra={<EditMenu dashIndex={dashIndex} index={index} />}
+      extra={
+        <React.Fragment>
+          {div ? (
+            div.content.length === 1 ? (
+              <PlotLegendToggle divID={div.content[0].props.id} />
+            ) : null
+          ) : null}
+          <EditMenu dashIndex={dashIndex} index={index} />
+        </React.Fragment>
+      }
       style={{ ...plotStyle, height: "", minHeight: "" }}
       bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
@@ -940,6 +950,24 @@ const Plot = ({ index, dashIndex, data, style }) => {
         <LoadingPlot plotStyle={plotStyle} />
       )}
     </Card>
+  );
+};
+
+const PlotLegendToggle = ({ divID }) => {
+  const [showLegend, setShowLegend] = useState(true);
+  const toggleLegends = () => {
+    Plotly.relayout(divID, { showlegend: !showLegend });
+    setShowLegend(!showLegend);
+  };
+
+  return (
+    <Tooltip title="Toggle Legend">
+      <Icon
+        type="unordered-list"
+        onClick={toggleLegends}
+        style={{ color: showLegend ? "#1890ff" : "grey", margin: "0 5px" }}
+      />
+    </Tooltip>
   );
 };
 
@@ -973,7 +1001,7 @@ const EditMenu = React.memo(({ dashIndex, index }) => {
   return (
     <React.Fragment>
       <Dropdown overlay={menu} trigger={["click"]}>
-        <Icon type="edit" theme="twoTone" />
+        <Icon type="edit" theme="twoTone" style={{ margin: "0 5px" }} />
       </Dropdown>
     </React.Fragment>
   );
