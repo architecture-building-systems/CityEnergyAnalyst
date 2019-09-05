@@ -34,7 +34,12 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, 
     return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
 
 
-def calc_vcc_CT_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
+def calc_vcc_CT_operation(Qc_from_VCC_W,
+                          T_DCN_re_K,
+                          T_DCN_sup_K,
+                          T_source_K,
+                          lca,
+                          hour):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
@@ -253,7 +258,8 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                   lca)
+                                                   lca,
+                                                   hour)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
@@ -284,7 +290,8 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                   lca)
+                                                   lca,
+                                                   hour)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W

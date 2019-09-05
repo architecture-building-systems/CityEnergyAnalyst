@@ -181,7 +181,8 @@ def district_cooling_network(locator,
                                                                T_district_cooling_return_K[hour],
                                                                T_district_cooling_supply_K[hour],
                                                                VCC_T_COOL_IN,
-                                                               lca)
+                                                               lca,
+                                                               hour)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
