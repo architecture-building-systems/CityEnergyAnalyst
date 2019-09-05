@@ -7,19 +7,15 @@ If Lake exhausted, then use other supply technologies
 """
 from __future__ import division
 
-
-
 import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K
-from cea.optimization.constants import VCC_T_COOL_IN
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
-from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation
-from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
+from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
-from cea.technologies.constants import DT_COOL
+from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -57,7 +53,7 @@ def district_cooling_network(locator,
     # Import Temperatures from Network Summary:
     Q_thermal_req_W, \
     T_district_cooling_return_K, \
-    T_district_cooling_supply_K,\
+    T_district_cooling_supply_K, \
     mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_variables)
 
     # Initialize daily storage calss
@@ -81,10 +77,11 @@ def district_cooling_network(locator,
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
-    #get properties of technology used in this script
+    # get properties of technology used in this script
     chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+    CCGT_operation_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
-    #intitalize variables
+    # intitalize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -107,7 +104,6 @@ def district_cooling_network(locator,
     source_BaseVCC_AS = np.zeros(HOURS_IN_YEAR)
     source_PeakVCC_AS = np.zeros(HOURS_IN_YEAR)
 
-
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
@@ -122,7 +118,8 @@ def district_cooling_network(locator,
                                                     daily_storage,
                                                     T_ground_K[hour],
                                                     master_to_slave_variables,
-                                                    chiller_prop)
+                                                    chiller_prop,
+                                                    CCGT_operation_data)
 
             source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
             source_BaseVCC_WS[hour] = activation_output["source_BaseVCC_WS"]
@@ -145,7 +142,6 @@ def district_cooling_network(locator,
             E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
             NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
-
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
@@ -178,7 +174,6 @@ def district_cooling_network(locator,
                                                                               network_features,
                                                                               lca,
                                                                               "DC")
-
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
     performance = dict(performance_costs_generation, **performance_costs_storage)
@@ -230,9 +225,8 @@ def district_cooling_network(locator,
 
     return district_cooling_costs, \
            district_cooling_generation_dispatch, \
-           district_cooling_electricity_requirements_dispatch,\
+           district_cooling_electricity_requirements_dispatch, \
            district_cooling_fuel_requirements_dispatch
-
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
@@ -256,6 +250,3 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
         Q_cooling_req_W = df['Q_DCNf_space_cooling_data_center_and_refrigeration_W'].values
 
     return Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers
-
-
-
