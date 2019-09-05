@@ -12,7 +12,6 @@ from cea.analysis.lca.operation import lca_operation
 from cea.analysis.lca.mobility import lca_mobility
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"

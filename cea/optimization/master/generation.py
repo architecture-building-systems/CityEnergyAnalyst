@@ -11,7 +11,7 @@ from cea.optimization.master.validation import validation_main
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -41,9 +41,7 @@ def generate_main(individual_with_names_dict,
     Cooling Network: Network of buildings connected to centralized cooling. Both these networks can be different, and will
     always have a fixed length corresponding to the total number of buildings in the neighborhood
     :param nBuildings: number of buildings
-    :param gv: global variables class
     :type nBuildings: int
-    :type gv: class
     :return: individual: representation of values taken by the individual
     :rtype: list
     """
@@ -84,7 +82,6 @@ def generate_main(individual_with_names_dict,
 def populate_individual(empty_individual_with_names_dict,
                         name_share_conversion_technologies,
                         columns_buildings_name):
-
     # do it for the share of the units that are activated
     for column, limits in name_share_conversion_technologies.iteritems():
         lim_inf = limits["liminf"]
@@ -98,7 +95,12 @@ def populate_individual(empty_individual_with_names_dict,
     return empty_individual_with_names_dict
 
 
-def individual_to_barcode(individual, column_names, column_names_buildings_heating,
+def individual_to_barcode(individual,
+                          building_names_all,
+                          building_names_heating,
+                          building_names_cooling,
+                          column_names,
+                          column_names_buildings_heating,
                           column_names_buildings_cooling):
     """
     Reads the 0-1 combination of connected/disconnected buildings
@@ -120,4 +122,40 @@ def individual_to_barcode(individual, column_names, column_names_buildings_heati
         if name in individual_with_name_dict.keys():
             DCN_barcode += str(int(individual_with_name_dict[name]))
 
-    return DHN_barcode, DCN_barcode, individual_with_name_dict
+    # calc building connectivity
+    building_connectivity_dict = calc_building_connectivity_dict(building_names_all,
+                                                                 building_names_heating,
+                                                                 building_names_cooling,
+                                                                 DHN_barcode,
+                                                                 DCN_barcode)
+
+    return DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict
+
+
+def calc_building_connectivity_dict(building_names_all,
+                                    building_names_heating,
+                                    building_names_cooling,
+                                    DHN_barcode,
+                                    DCN_barcode):
+    data_heating_connections = []
+    data_cooling_connections = []
+    data_connectivity_heating = dict(zip(building_names_heating, DHN_barcode))
+    data_connectivity_cooling = dict(zip(building_names_cooling, DCN_barcode))
+    for building in building_names_all:
+        if building in data_connectivity_heating.keys():
+            data_heating_connections.append(data_connectivity_heating[building])
+        else:
+            data_heating_connections.append('0') #if it is not inside the network then it is disconnected
+
+        if building in data_connectivity_cooling.keys():
+            data_cooling_connections.append(data_connectivity_cooling[building])
+        else:
+            data_cooling_connections.append('0') #if it is not inside the network then it is disconnected
+
+    building_connectivity_dict = {
+        "Name": building_names_all,
+        "DH_connectivity": data_heating_connections,
+        "DC_connectivity": data_cooling_connections,
+    }
+
+    return building_connectivity_dict

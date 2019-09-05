@@ -23,8 +23,8 @@ class EmissionsPlot(cea.plots.life_cycle.LifeCycleAnalysisPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack',
-                         yaxis=dict(title='Green House Gas Emissions [ton CO2-eq/yr]', domain=[0.35, 1]),
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Green House Gas Emissions [ton CO2-eq/yr]'),
                          xaxis=dict(title='Building Name'))
 
     def calc_graph(self):

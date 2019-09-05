@@ -208,7 +208,7 @@ class Plots(object):
 
             #add name of scenario
             data_raw_df['scenario'] = scenario_name
-            data_raw_df.set_index('scenario', inplace=True
+            data_raw_df.set_index('scenario', inplace=True)
             data_processed
 
         return data_processed

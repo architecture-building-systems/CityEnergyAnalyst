@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, request, url_for, jsonify
+from flask import Blueprint, render_template, redirect, request, url_for, jsonify, current_app
 
 import cea.plots
 import cea.glossary
@@ -11,6 +11,56 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static'
 )
+
+
+@blueprint.route('/get-tools')
+def route_get_tools():
+    import cea.scripts
+    from itertools import groupby
+
+    tools = sorted(cea.scripts.for_interface('dashboard'), key=lambda t: t.category)
+    result = {}
+    for category, group in groupby(tools, lambda t: t.category):
+        result[category] = [{t.name: {'label': t.label, 'description': t.description}} for t in group]
+
+    return jsonify(result)
+
+
+@blueprint.route('get-tools/<script_name>')
+def route_get_tools_parameters(script_name):
+    config = current_app.cea_config
+    script = cea.scripts.by_name(script_name)
+
+    parameters = []
+    categories = {}
+    for _, parameter in config.matching_parameters(script.parameters):
+        if parameter.category:
+            if parameter.category not in categories:
+                categories[parameter.category] = []
+            categories[parameter.category].append(deconstruct_parameters(parameter))
+        else:
+            parameters.append(deconstruct_parameters(parameter))
+
+    out = {
+        'label': script.label,
+        'category': script.category,
+        'parameters': parameters,
+        'categorical_parameters': categories,
+    }
+    return jsonify(out)
+
+
+def deconstruct_parameters(p):
+    params = {'name': p.name, 'type': p.typename, 'value': p.get(), 'help': p.help}
+    try:
+        params['choices'] = p._choices
+    except AttributeError:
+        pass
+    if p.typename == 'WeatherPathParameter':
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        params['choices'] = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
+    return params
 
 
 @blueprint.route('/')
@@ -64,4 +114,4 @@ def not_found_error(error):
 def internal_error(error):
     import traceback
     error_trace = traceback.format_exc()
-    return render_template('errors/page_500.html', error=error_trace), 500
+    return error_trace, 500

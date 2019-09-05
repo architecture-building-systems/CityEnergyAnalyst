@@ -183,14 +183,17 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
         T_DCN_space_cooling_and_refrigeration_withoutlosses_re_K = np.vectorize(calc_return_temp)(
             sum_tret_mdot_cool_space_cooling_and_refrigeration,
             mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers)
+
         T_DCN_space_cooling_and_refrigeration_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(
             T_DCN_space_cooling_and_refrigeration_withoutlosses_re_K,
             Q_DC_building_netw_space_cooling_and_refrigeration_total_W,
             mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers,
             HEAT_CAPACITY_OF_WATER_JPERKGK, "DC")
+
         T_DCN_space_cooling_data_center_and_refrigeration_withoutlosses_re_K = np.vectorize(calc_return_temp)(
             sum_tret_mdot_cool_space_cooling_data_center_and_refrigeration,
             mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers)
+
         T_DCN_space_cooling_data_center_and_refrigeration_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(
             T_DCN_space_cooling_data_center_and_refrigeration_withoutlosses_re_K,
             Q_DC_building_netw_space_cooling_data_center_and_refrigeration_total_W,

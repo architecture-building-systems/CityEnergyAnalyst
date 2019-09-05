@@ -416,7 +416,7 @@ default:
     lable: Workflow
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
-    module: cea.tests.workflow
+    module: cea.workflows.workflow
     parameters: [workflow]
 
 
