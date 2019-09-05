@@ -23,7 +23,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop, ACH_type):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -66,7 +66,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0.0
         input_conditions['q_chw_W'] = 0.0
     else:
-        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller") #TODO: move out from this function to save time
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         min_chiller_size_W = min(chiller_prop['cap_min'].values)
         max_chiller_size_W = max(chiller_prop['cap_max'].values)
@@ -242,8 +241,9 @@ def main(config):
     T_hw_in_C = 98
     T_ground_K = 300
     ACH_type = 'single'
+    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
 
-    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator,
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop,
                                           ACH_type)
     print(chiller_operation)
 

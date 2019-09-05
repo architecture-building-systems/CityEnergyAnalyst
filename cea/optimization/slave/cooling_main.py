@@ -81,6 +81,10 @@ def district_cooling_network(locator,
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
+    #get properties of technology used in this script
+    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+
+    #intitalize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -118,7 +122,7 @@ def district_cooling_network(locator,
                                                     daily_storage,
                                                     T_ground_K[hour],
                                                     master_to_slave_variables,
-                                                    locator)
+                                                    chiller_prop)
 
             source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
             source_BaseVCC_WS[hour] = activation_output["source_BaseVCC_WS"]

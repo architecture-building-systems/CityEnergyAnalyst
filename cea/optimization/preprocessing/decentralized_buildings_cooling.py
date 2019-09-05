@@ -57,6 +57,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
+    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SENSIBLE COOLING UNIT
@@ -151,7 +152,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_cw_single_ACH_Wh, \
         q_hw_single_ACH_Wh,\
         q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 locator, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
 
         ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
         # CT operation
@@ -195,7 +196,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_cw_single_ACH_Wh, \
         q_hw_single_ACH_Wh,\
         q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_ET_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 locator, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
         # CT operation
         q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
@@ -266,7 +267,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             el_FP_ACH_to_SCU_Wh, \
             q_cw_FP_ACH_to_SCU_Wh, \
             q_hw_FP_ACH_to_SCU_Wh,\
-            q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, locator,
+            q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, chiller_prop,
                                                         mdot_SCU_kgpers, ACH_TYPE_SINGLE)
             ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
             # boiler operation
@@ -546,14 +547,14 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
     return operation_results
 
 
-def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, locator, mdot_chw_kgpers, ACH_type):
+def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, chiller_prop, mdot_chw_kgpers, ACH_type):
 
     SC_to_single_ACH_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_chw_kgpers,
                                                                                     T_chw_sup_K,
                                                                                     T_chw_re_K,
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
-                                                                                    locator,
+                                                                                    chiller_prop,
                                                                                     ACH_type)
 
 
