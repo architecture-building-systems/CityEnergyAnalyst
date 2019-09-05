@@ -28,7 +28,7 @@ class PhotovoltaicMonthlyPlot(cea.plots.solar_technology_potentials.SolarTechnol
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack', yaxis=dict(title='PV Electricity [MWh]', domain=[0.35, 1]))
+        return go.Layout(barmode='stack', yaxis=dict(title='PV Electricity [MWh]'))
 
     def calc_graph(self):
         graph = []

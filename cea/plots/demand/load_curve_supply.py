@@ -48,14 +48,14 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         for field in analysis_fields:
             y = data[field].values / 1E3# to MW
             name = NAMING[field]
-            trace = go.Scatter(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
+            trace = go.Scattergl(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
 
         data_T = self.calculate_external_temperature()
         for field in ["T_ext_C"]:
             y = data_T[field].values
             name = NAMING[field]
-            trace = go.Scatter(x=data_T.index, y=y, name=name, yaxis='y2', opacity=0.2)
+            trace = go.Scattergl(x=data_T.index, y=y, name=name, yaxis='y2', opacity=0.2)
             traces.append(trace)
         return traces
 

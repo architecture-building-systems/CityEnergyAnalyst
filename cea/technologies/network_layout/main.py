@@ -1,7 +1,6 @@
 import os
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
@@ -17,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, plant_building_names, input_path_name='streets', output_name_network="",
+def network_layout(config, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
                    optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
@@ -64,8 +63,7 @@ def network_layout(config, locator, plant_building_names, input_path_name='stree
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    plant_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, plant_building_names)
+    network_layout(config, locator)
 
 
 if __name__ == '__main__':

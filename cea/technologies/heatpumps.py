@@ -200,7 +200,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
+def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, lca, hour):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -225,6 +225,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
     :returns Q_therm: thermal energy supplied to DHN
 
     """
+    mdot_kgpers = Q_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K))
 
     E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake)
 
@@ -335,7 +336,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     return cost_HPSew_USD, qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology_type):
+def calc_Cinv_HP(HP_Size, locator, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 

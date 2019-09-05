@@ -21,20 +21,9 @@ class SolarRadiationCurvePlot(cea.plots.solar_potential.SolarPotentialPlotBase):
 
     @property
     def layout(self):
-        date = self.input_data_aggregated_kW.DATE
-        return dict(title=self.title,
-                    yaxis=dict(domain=dict(x=[0, 1], y=[0.0, 0.7]), title='Solar Radiation [kW]'),
-                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'), xaxis=dict(rangeselector=dict(
-                buttons=list([dict(count=1, label='1d', step='day', stepmode='backward'),
-                              dict(count=1, label='1w', step='week', stepmode='backward'),
-                              dict(count=1, label='1m', step='month', stepmode='backward'),
-                              dict(count=6, label='6m', step='month', stepmode='backward'), dict(step='all')])),
-                                                                                                   rangeslider=dict(),
-                                                                                                   type='date',
-                                                                                                   range=[date[0],
-                                                                                                          date[168]],
-                                                                                                   fixedrange=False))
-
+        return dict(
+                    yaxis=dict(title='Solar Radiation [kW]'),
+                    yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'))
     def calc_graph(self):
         graph = []
         data_frame = self.input_data_aggregated_kW
@@ -44,9 +33,9 @@ class SolarRadiationCurvePlot(cea.plots.solar_potential.SolarPotentialPlotBase):
             y = data_frame[field].values
             name = NAMING[field]
             if field == "T_ext_C":
-                trace = go.Scatter(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
+                trace = go.Scattergl(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
             else:
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -82,9 +71,9 @@ def calc_graph(analysis_fields, data_frame):
         y = data_frame[field].values
         name = NAMING[field]
         if field == "T_ext_C":
-            trace = go.Scatter(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
+            trace = go.Scattergl(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
         else:
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph

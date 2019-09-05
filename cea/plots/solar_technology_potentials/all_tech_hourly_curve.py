@@ -34,16 +34,7 @@ class AllTechHourlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPot
 
     @property
     def layout(self):
-        return dict(title=self.title, yaxis=dict(title='Hourly production [kWh]'),
-                  xaxis=dict(rangeselector=dict(buttons=list([
-                      dict(count=1, label='1d', step='day', stepmode='backward'),
-                      dict(count=1, label='1w', step='week', stepmode='backward'),
-                      dict(count=1, label='1m', step='month', stepmode='backward'),
-                      dict(count=6, label='6m', step='month', stepmode='backward'),
-                      dict(count=1, label='1y', step='year', stepmode='backward'),
-                      dict(step='all')])), rangeslider=dict(), type='date', range=[self.data_frame.index[0],
-                                                                                   self.data_frame.index[168]],
-                      fixedrange=False))
+        return dict(yaxis=dict(title='Hourly production [kWh]'))
 
     def missing_input_files(self):
         """Overriding the base version of this method, since for this plot, having at least one technology
@@ -71,9 +62,9 @@ class AllTechHourlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPot
             y = data_frame[field].values
             name = field.split('_kWh', 1)[0]
             if name.startswith('PV_'):
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
             else:
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, visible='legendonly',
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, visible='legendonly',
                                    marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -88,9 +79,9 @@ def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output
             y = data_frame[field].values
             name = field.split('_kWh', 1)[0]
             if tech == 'PV':
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
             else:
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, visible='legendonly',
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, visible='legendonly',
                                    marker=dict(color=COLOR[field]))
             traces.append(trace)
 

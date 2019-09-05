@@ -3,7 +3,6 @@ Absorption chillers
 """
 from __future__ import division, print_function
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
@@ -23,8 +22,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type,
-                      min_chiller_size_W, max_chiller_size_W):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -65,8 +63,10 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0.0
         input_conditions['q_chw_W'] = 0.0
     else:
-        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller") #TODO: move out from this function to save time
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+        min_chiller_size_W = min(chiller_prop['cap_min'].values)
+        max_chiller_size_W = max(chiller_prop['cap_max'].values)
         # get chiller properties and input conditions according to load
         if q_chw_total_W < min_chiller_size_W:
             # get chiller property according to load
@@ -226,15 +226,6 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
 
     return Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD
 
-def get_min_max_ACH_unit_size(locator, ACH_type):
-    # read chiller operation parameters from database
-    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
-    chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-    min_chiller_size_W = min(chiller_prop['cap_min'].values)
-    max_chiller_size_W = max(chiller_prop['cap_max'].values)
-
-    return min_chiller_size_W, max_chiller_size_W
-
 def main(config):
     """
     run the whole preprocessing routine
@@ -245,11 +236,10 @@ def main(config):
     T_chw_re_K = 14 + 273.0
     T_hw_in_C = 98
     T_ground_K = 300
-    building_name = 'B01'
-    Q_installed_size_W = 80000
     ACH_type = 'single'
-    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type,
-                                          locator, config)
+
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator,
+                                          ACH_type)
     print(chiller_operation)
 
     print('test_decentralized_buildings_cooling() succeeded')

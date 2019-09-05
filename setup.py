@@ -37,6 +37,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'staticmap',
                     'sphinx',
                     'timezonefinder==3.4.2',  # last version to work with python2
+                    'flask-restplus==0.12.1',
                     'twine',
                     'utm',
                     'xlrd',
