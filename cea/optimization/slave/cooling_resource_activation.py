@@ -52,7 +52,7 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     return Qc_VCC_W, E_used_VCC_W
 
 
-def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, locator):
+def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop):
     ACH_type = 'double'
 
     if T_DCN_re_K == T_DCN_sup_K:
@@ -66,7 +66,7 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
                                                          T_DCN_re_K,
                                                          T_ACH_in_C,
                                                          T_ground_K,
-                                                         locator,
+                                                         chiller_prop,
                                                          ACH_type)
 
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
@@ -84,7 +84,7 @@ def cooling_resource_activator(Q_thermal_req,
                                daily_storage_class,
                                T_ground_K,
                                master_to_slave_variables,
-                               locator):
+                               chiller_prop):
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_W = 0.0
@@ -113,7 +113,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                         T_district_cooling_supply_K,
                                                         T_ACH_in_C,
                                                         T_ground_K,
-                                                        locator)
+                                                        chiller_prop)
 
         # operation of the CCGT
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W,
