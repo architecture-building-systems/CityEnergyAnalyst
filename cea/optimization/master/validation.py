@@ -41,6 +41,8 @@ def validation_main(individual_with_name_dict,
             minimum = limits["minimum"]
             if individual_with_name_dict[technology_name] < minimum:
                 individual_with_name_dict[technology_name] = 0.0 #0.0 denotes off
+            else:
+                individual_with_name_dict[technology_name] = round(individual_with_name_dict[technology_name],2)
 
         # FOR SUPPLY SYSTEMS SHARE - The share of solar technologies should be 1 (because they share the same area)
         unit_name, unit_share = [], []
@@ -51,7 +53,7 @@ def validation_main(individual_with_name_dict,
                 unit_share.append(individual_with_name_dict[technology_name])
         sum_shares = sum(unit_share)
         if sum_shares > 1.0: #only i the case that the sum of shares is more than the maximum of 1.0
-            normalized_shares = [i / sum_shares for i in unit_share]
+            normalized_shares = [round(i / sum_shares,2) for i in unit_share]
             for column, share in zip(unit_name, normalized_shares):
                 individual_with_name_dict[column] = share
 
@@ -88,7 +90,7 @@ def validation_main(individual_with_name_dict,
                 unit_name.append(technology_name)
                 unit_share.append(individual_with_name_dict[technology_name])
         sum_shares = sum(unit_share)
-        normalized_shares = [i / sum_shares for i in unit_share]
+        normalized_shares = [round(i / sum_shares,2) for i in unit_share]
         for column, share in zip(unit_name, normalized_shares):
             individual_with_name_dict[column] = share
 
