@@ -5,7 +5,7 @@
 {% block stylesheets %}
   {{ super() }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.22.0/antd.css">
-  <link rel="stylesheet" href="{{ url_for('.static', filename='css/react-dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='css/react-dashboard.css') }}?u={{ last_updated }}">
 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
@@ -47,7 +47,7 @@
   <script src="https://unpkg.com/html-react-parser@latest/dist/html-react-parser.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
-  <script src="{{ url_for('.static', filename='js/parameters.js') }}" type="text/babel"></script>
-  <script src="{{ url_for('.static', filename='js/react-dashboard.js') }}" type="text/babel"></script>
+  <script src="{{ url_for('.static', filename='js/parameters.js') }}?u={{ last_updated }}" type="text/babel"></script>
+  <script src="{{ url_for('.static', filename='js/react-dashboard.js') }}?u={{ last_updated }}" type="text/babel"></script>
 {% endblock javascripts %}
 
