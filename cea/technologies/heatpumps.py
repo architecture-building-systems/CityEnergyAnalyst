@@ -124,7 +124,7 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, lca, Q_therm_GHP_W, hour):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -166,16 +166,14 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, lca, Q_therm_GHP_W, h
         q_therm_W = 0
         qcoldot_W = 0
         E_GHP_req_W = 0
-        cost_GHP_USD = 0
     else:
         q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         if q_therm_W > Q_therm_GHP_W:
             q_therm_W = Q_therm_GHP_W
         qcoldot_W = q_therm_W * (1 - (1 / COP))
         E_GHP_req_W = q_therm_W / COP
-        cost_GHP_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
 
-    return cost_GHP_USD, E_GHP_req_W, qcoldot_W, q_therm_W
+    return E_GHP_req_W, qcoldot_W, q_therm_W
 
 
 def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
@@ -200,7 +198,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, lca, hour):
+def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -231,11 +229,9 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, lca, hour):
 
     Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
-    C_HPL_el_USD = E_HPLake_req_W * lca.ELEC_PRICE[hour]
-
     Q_cold_primary_W = qcolddot_W
 
-    return C_HPL_el_USD, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
+    return E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
 def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     """
@@ -282,7 +278,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
 
     return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W, hour):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -324,16 +320,14 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
         q_therm_W = Q_therm_Sew_W
         qcoldot_W = Q_therm_Sew_W
         E_HPSew_req_W = 0.0
-        cost_HPSew_USD = 0.0
     else:
         q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         if q_therm_W > Q_therm_Sew_W:
             q_therm_W = Q_therm_Sew_W
         qcoldot_W = q_therm_W * (1 - (1 / COP))
         E_HPSew_req_W = q_therm_W / COP
-        cost_HPSew_USD = E_HPSew_req_W * lca.ELEC_PRICE[hour]
 
-    return cost_HPSew_USD, qcoldot_W, q_therm_W, E_HPSew_req_W
+    return qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
 def calc_Cinv_HP(HP_Size, locator, technology_type):

@@ -19,7 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, hour):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
@@ -28,18 +28,13 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, lca, 
     Qc_VCC_W = VCC_operation['q_chw_W']
     E_used_VCC_W = VCC_operation['wdot_W']
 
-    # calculate variable costs
-    opex_var_VCC_USD = E_used_VCC_W * lca.ELEC_PRICE[hour]
-
-    return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
+    return Qc_VCC_W, E_used_VCC_W
 
 
 def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_re_K,
                           T_DCN_sup_K,
-                          T_source_K,
-                          lca,
-                          hour):
+                          T_source_K ):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
@@ -53,9 +48,8 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
 
     # calcualte energy consumption and variable costs
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
-    opex_var_VCC_USD = E_used_VCC_W * lca.ELEC_PRICE[hour]
 
-    return opex_var_VCC_USD, Qc_VCC_W, E_used_VCC_W
+    return Qc_VCC_W, E_used_VCC_W
 
 
 def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, locator):
@@ -89,10 +83,7 @@ def cooling_resource_activator(Q_thermal_req,
                                T_source_average_Lake_K,
                                daily_storage_class,
                                T_ground_K,
-                               lca,
                                master_to_slave_variables,
-                               hour,
-                               prices,
                                locator):
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
@@ -127,11 +118,8 @@ def cooling_resource_activator(Q_thermal_req,
         # operation of the CCGT
         CC_op_cost_data = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W,
                                         ACH_T_IN_FROM_CHP_K,
-                                        "NG",
-                                        prices,
-                                        lca.ELEC_PRICE[hour])  # create cost information
+                                        "NG")  # create cost information
         Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
-        cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
         Q_output_CC_max_W = CC_op_cost_data['q_output_max_W']
         eta_elec_interpol = CC_op_cost_data['eta_el_fn_q_input']
 
@@ -139,17 +127,13 @@ def cooling_resource_activator(Q_thermal_req,
         # operation Possible if above minimal load
         if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
             Q_CHP_gen_W = float(Qh_CCGT_req_W)
-            cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
             NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
             E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
-            cost_Trigen_USD = cost_per_Wh_CC * Q_CHP_gen_W
 
         else:  # Only part of the demand can be delivered as 100% load achieved
             Q_CHP_gen_W = Q_output_CC_max_W
-            cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CHP_gen_W)
             NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
             E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
-            cost_Trigen_USD = cost_per_Wh_CC * Q_CHP_gen_W
 
         # update unmet cooling load
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_Trigen_gen_directload_W - Qc_from_storage_W
@@ -158,7 +142,6 @@ def cooling_resource_activator(Q_thermal_req,
         source_Trigen_NG = 0
         Q_Trigen_gen_W = 0.0
         NG_Trigen_req_W = 0.0
-        cost_Trigen_USD = 0.0
         E_Trigen_NG_gen_W = 0.0
 
     # Base VCC water-source
@@ -179,16 +162,13 @@ def cooling_resource_activator(Q_thermal_req,
             Q_therm_Lake_W -= Q_BaseVCC_WS_gen_W  # discount availability
 
         if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
-            opex_BaseVCC_WS_USDperhr, \
             Q_BaseVCC_WS_gen_W, \
             E_BaseVCC_WS_req_W = calc_vcc_operation(Q_BaseVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
-                                                    lca,
-                                                    hour)
+                                                    )
         else:  # bypass, do not use chiller
-            opex_BaseVCC_WS_USDperhr = 0.0
             E_BaseVCC_WS_req_W = 0.0
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_BaseVCC_WS_gen_directload_W - Qc_from_storage_W
@@ -217,23 +197,19 @@ def cooling_resource_activator(Q_thermal_req,
             Q_therm_Lake_W -= Q_PeakVCC_WS_gen_W  # discount availability
 
         if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
-            opex_PeakVCC_WS_USDperhr, \
             Q_PeakVCC_WS_gen_W, \
             E_PeakVCC_WS_req_W = calc_vcc_operation(Q_PeakVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
-                                                    lca,
-                                                    hour)
+                                                    )
         else:  # bypass, do not use chiller
-            opex_PeakVCC_WS_USDperhr = 0.0
             E_PeakVCC_WS_req_W = 0.0
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_PeakVCC_WS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
         source_PeakVCC_WS = 0
-        opex_PeakVCC_WS_USDperhr = 0.0
         Q_PeakVCC_WS_gen_W = 0.0
         E_PeakVCC_WS_req_W = 0.0
 
@@ -252,14 +228,12 @@ def cooling_resource_activator(Q_thermal_req,
             Qc_from_storage_W = 0.0
             Q_BaseVCC_AS_gen_W = Q_BaseVCC_AS_gen_directload_W + Q_BaseVCC_AS_gen_storage_W
 
-        opex_BaseVCC_AS_USDperhr, \
         Q_BaseVCC_AS_gen_W, \
         E_BaseVCC_AS_req_W = calc_vcc_CT_operation(Q_BaseVCC_AS_gen_W,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                   lca,
-                                                   hour)
+                                                  )
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
@@ -284,20 +258,16 @@ def cooling_resource_activator(Q_thermal_req,
             Qc_from_storage_W = 0.0
             Q_PeakVCC_AS_gen_W = Q_PeakVCC_AS_gen_directload_W + Q_PeakVCC_AS_gen_storage_W
 
-        opex_PeakVCC_AS_USDperhr, \
         Q_PeakVCC_AS_gen_W, \
         E_PeakVCC_AS_req_W = calc_vcc_CT_operation(Q_PeakVCC_AS_gen_W,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
-                                                   VCC_T_COOL_IN,
-                                                   lca,
-                                                   hour)
+                                                   VCC_T_COOL_IN)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
         source_PeakVCC_AS = 0
-        opex_PeakVCC_AS_USDperhr = 0.0
         Q_PeakVCC_AS_gen_W = 0.0
         E_PeakVCC_AS_req_W = 0.0
 

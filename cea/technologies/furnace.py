@@ -106,7 +106,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE):
 
 # operation costs
 
-def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca, hour):
+def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
@@ -160,30 +160,15 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, lca
         if eta_therm_real == 0:
             eta_el = 0
             Q_aux_W = 0
-
             break
 
-
-
     if MOIST_TYPE == "dry":
-        Q_prim_W = Q_th_load_W
-        Q_th_load_W = Q_therm_W
-        C_furn_therm = Q_prim_W * FURNACE_FUEL_COST_DRY  # [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[hour]  # [CHF / Wh] cost gain by selling el. to the grid.
-        C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load_W
-
+        Q_fuel_req_W = Q_th_load_W
     else:
-        Q_prim_W = Q_th_load_W
-        Q_th_load_W = Q_therm_W
-        C_furn_therm = Q_prim_W * FURNACE_FUEL_COST_WET
-        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * lca.ELEC_PRICE[hour]
-        C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load_W  # in CHF / Wh
+        Q_fuel_req_W = Q_th_load_W
+    E_furn_el_produced = eta_el * Q_fuel_req_W
 
-    E_furn_el_produced = eta_el * Q_prim_W
-
-    return C_furn, C_furn_per_Wh, Q_prim_W, Q_th_load_W, E_furn_el_produced
+    return Q_fuel_req_W, E_furn_el_produced
 
 
 # investment and maintenance costs

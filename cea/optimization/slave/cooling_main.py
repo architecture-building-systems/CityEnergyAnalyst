@@ -117,10 +117,7 @@ def district_cooling_network(locator,
                                                     T_source_average_Lake_K[hour],
                                                     daily_storage,
                                                     T_ground_K[hour],
-                                                    lca,
                                                     master_to_slave_variables,
-                                                    hour,
-                                                    prices,
                                                     locator)
 
             source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
@@ -156,9 +153,7 @@ def district_cooling_network(locator,
             E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
                                                                T_district_cooling_return_K[hour],
                                                                T_district_cooling_supply_K[hour],
-                                                               VCC_T_COOL_IN,
-                                                               lca,
-                                                               hour)
+                                                               VCC_T_COOL_IN)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
