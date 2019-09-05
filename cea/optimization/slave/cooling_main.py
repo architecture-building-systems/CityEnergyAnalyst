@@ -89,13 +89,6 @@ def district_cooling_network(locator,
     Q_BackupVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_DailyStorage_gen_W = np.zeros(HOURS_IN_YEAR)
 
-    opex_var_Trigen_NG_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BaseVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_PeakVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BaseVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_PeakVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BackupVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-
     E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
@@ -111,23 +104,6 @@ def district_cooling_network(locator,
     source_PeakVCC_AS = np.zeros(HOURS_IN_YEAR)
 
 
-    # daily_storage, \
-    # activation_output, \
-    # thermal_output, \
-    # electricity_output, \
-    # gas_output = np.vectorize(cooling_resource_activator)(Q_thermal_req_W,
-    #                                         T_district_cooling_supply_K,
-    #                                         T_district_cooling_return_K,
-    #                                         Q_therm_Lake_W,
-    #                                         T_source_average_Lake_K,
-    #                                         daily_storage,
-    #                                         T_ground_K,
-    #                                         lca,
-    #                                         master_to_slave_variables,
-    #                                         0,
-    #                                         prices,
-    #                                         locator)
-    # print('done')
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
@@ -175,7 +151,7 @@ def district_cooling_network(locator,
     if master_to_slave_variables.AS_BackupVCC_size_W != 0:
         master_to_slave_variables.AS_BackupVCC_on = 1
         for hour in range(HOURS_IN_YEAR):
-            opex_var_BackupVCC_AS_USDhr[hour], \
+            _, \
             Q_BackupVCC_AS_gen_W[hour], \
             E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
                                                                T_district_cooling_return_K[hour],
