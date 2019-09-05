@@ -196,7 +196,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
         source_BaseVCC_WS = 0
-        opex_BaseVCC_WS_USDperhr = 0.0
         Q_BaseVCC_WS_gen_W = 0.0
         E_BaseVCC_WS_req_W = 0.0
 
@@ -260,7 +259,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
         source_BaseVCC_AS = 0
-        opex_BaseVCC_AS_USDperhr = 0.0
         Q_BaseVCC_AS_gen_W = 0.0
         E_BaseVCC_AS_req_W = 0.0
 
@@ -298,7 +296,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_BackupVCC_AS_gen_W = 0.0
 
     ## writing outputs
-
     electricity_output = {
         'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
