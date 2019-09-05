@@ -182,7 +182,6 @@ def district_heating_network(locator,
             electricity_output, \
             gas_output, \
             biomass_output = heating_source_activator(Q_thermal_req_W[hour],
-                                                      hour,
                                                       master_to_slave_variables,
                                                       Q_therm_GHP_W[hour],
                                                       T_source_average_GHP_W[hour],
@@ -192,8 +191,7 @@ def district_heating_network(locator,
                                                       T_source_average_sewage_K[hour],
                                                       T_district_heating_supply_K[hour],
                                                       T_district_heating_return_K[hour],
-                                                      prices,
-                                                      lca)
+                                                    )
 
             source_HP_Sewage[hour] = activation_output['Source_HP_Sewage']
             source_HP_Lake[hour] = activation_output['Source_HP_Lake']
@@ -236,14 +234,10 @@ def district_heating_network(locator,
         master_to_slave_variables.BackupBoiler_on = 1
         for hour in range(HOURS_IN_YEAR):
             tdhret_req_K = T_district_heating_return_K[hour]
-            _, \
-            _, \
             NG_BackupBoiler_req_W[hour], \
             E_BackupBoiler_req_W[hour] = cond_boiler_op_cost(Q_AddBoiler_gen_W[hour],
                                                              master_to_slave_variables.BackupBoiler_size_W,
-                                                             tdhret_req_K,
-                                                             "NG",
-                                                             prices, lca, hour)
+                                                             tdhret_req_K)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
     performance_costs_generation = cost_model.calc_generation_costs_heating(locator,
