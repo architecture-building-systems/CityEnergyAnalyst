@@ -157,3 +157,22 @@ Uploading to PyPI
   - ask the repository admins for username and password
 
 .. _twine: https://pypi.python.org/pypi/twine
+
+
+Updating Link in www.cityenergyanalyst.com/tryit
+--------------------------------------------------
+
+- Go to www.cityenergyanalyst.com
+- press Esc and login into squarespace (the credentials are here_)
+- go to Pages/Try CEA  (It is the last page in the list
+- go to edit 'Page content'
+- go to edit 'Form'
+- Change 'Form Name' to the name of the new version of CEA you just released
+- go to the tab 'Advanced'
+- Change 'POST-SUBMIT REDIRECT' to the link where the .exe of CEA can be downloaded from
+- Change 'POST-SUBMIT MESSAGE'/here, to the link where the .exe of CEA can be downloaded from
+- Click 'Apply'
+- Click 'Save'
+
+.. _here: https://city-energy-analyst.readthedocs.io/en/latest/communication.html#cea-website
+
