@@ -88,7 +88,7 @@ def populate_individual(empty_individual_with_names_dict,
     for column, limits in name_share_conversion_technologies.iteritems():
         lim_inf = limits["liminf"]
         lim_sup = limits["limsup"]
-        empty_individual_with_names_dict[column] = random.uniform(lim_inf, lim_sup)
+        empty_individual_with_names_dict[column] = round(random.uniform(lim_inf, lim_sup),2)
 
     # do it for the buildings
     for column in columns_buildings_name:
