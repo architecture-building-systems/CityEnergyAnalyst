@@ -23,7 +23,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop, ACH_type):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -49,7 +49,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
-
+    chiller_prop = chiller_prop.chiller_prop #get data from the class
     # create a dict of input operating conditions
     input_conditions = {'T_chw_sup_K': T_chw_sup_K,
                         'T_chw_re_K': T_chw_re_K,
@@ -66,7 +66,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0.0
         input_conditions['q_chw_W'] = 0.0
     else:
-        chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         min_chiller_size_W = min(chiller_prop['cap_min'].values)
         max_chiller_size_W = max(chiller_prop['cap_max'].values)
         # get chiller properties and input conditions according to load
