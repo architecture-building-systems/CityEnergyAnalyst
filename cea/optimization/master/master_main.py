@@ -109,8 +109,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
     # during the warmp up period we make sure we explore a wide range of solutions so the scaler works
-    if NIND < 20:
-        NIND_GEN0 = 20
+    if NIND < 10:
+        NIND_GEN0 = 10
     else:
         NIND_GEN0 = NIND
     NOBJ = 3  # number of objectives
