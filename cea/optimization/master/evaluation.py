@@ -174,8 +174,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_connected_costs, \
-    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(master_to_slave_vars,
-                                                                                       district_heating_fixed_costs,
+    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
                                                                                        district_cooling_fixed_costs,
                                                                                        district_electricity_fixed_costs,
                                                                                        district_electricity_dispatch,
