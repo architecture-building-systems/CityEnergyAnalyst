@@ -285,9 +285,8 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             # add gas costs
             q_gas_total_Wh = q_gas_for_boiler_Wh
             operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
-            operation_results[5][8] += sum(
-                q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-            operation_results[5][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+            operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+            operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
             cooling_dispatch[5] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
                                    'Q_ACH_HT_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
