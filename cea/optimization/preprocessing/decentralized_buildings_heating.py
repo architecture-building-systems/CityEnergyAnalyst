@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
@@ -100,8 +101,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         Boiler_Status = np.where(Qgas_to_Boiler_Wh > 0.0, 1, 0)
         # add costs
         Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)  # CHF
-        GHG_tonCO2[0][5] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-        PEN_MJoil[0][6] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+        GHG_tonCO2[0][5] += calc_emissions_Whyr_to_tonCO2yr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+        PEN_MJoil[0][6] += calc_pen_Whyr_to_MJoilyr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
         heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
@@ -112,8 +113,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         ## 1: Boiler BG
         # add costs
         Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
-        GHG_tonCO2[1][5] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-        PEN_MJoil[1][6] += sum(Qgas_to_Boiler_Wh * WH_TO_J / 1E6 * lca.BG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+        GHG_tonCO2[1][5] += calc_emissions_Whyr_to_tonCO2yr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+        PEN_MJoil[1][6] += calc_pen_Whyr_to_MJoilyr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
         heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
@@ -127,10 +128,9 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         el_from_FC_Wh = Qgas_to_FC_Wh * FC_Effel
         FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
         # add variable costs, emissions and primary energy
-        Opex_a_var_USD[2][4] += sum(
-            prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
+        Opex_a_var_USD[2][4] += sum(prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
         GHG_tonCO2_from_FC = (0.0874 * Qgas_to_FC_Wh * 3600E-6 + 773 * 0.45 * el_from_FC_Wh * 1E-6 -
-                              lca.EL_TO_CO2 * el_from_FC_Wh * 3600E-6) / 1E3
+                              lca.EL_TO_CO2_EQ * el_from_FC_Wh * 3600E-6) / 1E3
         GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
         # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
         # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
@@ -182,14 +182,13 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             # electricity
             el_total_Wh = el_GHP_Wh
             Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-            GHG_tonCO2[3 + i][5] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_CO2_STD / 1E3)  # ton CO2
-            PEN_MJoil[3 + i][6] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_OIL_STD)  # MJ-oil-eq
+            GHG_tonCO2[3 + i][5] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+            PEN_MJoil[3 + i][6] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # gas
             Q_gas_total_Wh = Qgas_to_GHPBoiler_Wh + Qgas_to_Boiler_Wh
             Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)  # CHF
-            GHG_tonCO2[3 + i][5] += sum(
-                Q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-            PEN_MJoil[3 + i][6] += sum(Q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+            GHG_tonCO2[3 + i][5] += calc_emissions_Whyr_to_tonCO2yr(sum(Q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+            PEN_MJoil[3 + i][6] += calc_pen_Whyr_to_MJoilyr(sum(Q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
             resourcesRes[3 + i][0] = sum(qhot_missing_Wh + q_load_NG_Boiler_Wh)
             resourcesRes[3 + i][2] = sum(el_GHP_Wh)
