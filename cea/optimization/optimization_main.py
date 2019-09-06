@@ -65,8 +65,8 @@ def moo_optimization(locator, weather_file, config):
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
-    lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
-    prices = Prices(locator, config)
+    lca = LcaCalculations(locator)
+    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
 
     # local flags
     district_heating_network = config.optimization.district_heating_network
