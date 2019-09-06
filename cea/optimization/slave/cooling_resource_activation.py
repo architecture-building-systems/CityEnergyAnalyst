@@ -67,8 +67,13 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
                                                          chiller_prop)
 
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
-    Qh_CHP_ACH_W = ACH_operation['q_chw_W'] #TODO:fix this, it is asumed for now
-    E_used_ACH_W = ACH_operation['wdot_W']
+
+    # calculate cooling tower
+    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_ACH_W, Qc_CT_ACH_W)
+
+    # calcualte energy consumption and variable costs
+    Qh_CHP_ACH_W = ACH_operation['q_hw_W']
+    E_used_ACH_W = ACH_operation['wdot_W'] + wdot_CT_Wh
 
     return Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W
 
