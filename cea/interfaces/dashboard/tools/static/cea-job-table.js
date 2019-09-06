@@ -48,7 +48,8 @@ $(document).ready(function () {
     $.getJSON(URL_LIST_JOBS, null, function (jobs) {
         cea_job_table = new Tabulator("#cea-job-table", {
             data: jobs,           //load row data from array
-            layout: "fitColumns",      //fit columns to width of table
+            layout: "fitDataFill",      //fit columns to width of data
+            layoutColumnsOnNewData: true,
             responsiveLayout: "hide",  //hide columns that dont fit on the table
             tooltips: true,            //show tool tips on cells
             addRowPos: "top",          //when adding a new row, add it to the top of the table
@@ -62,7 +63,7 @@ $(document).ready(function () {
                 {title: "id", field: "id"},
                 {title: "Script", field: "script"},
                 {title: "State", field: "state", formatter: (cell) => JOB_STATES[cell.getValue()]},
-                {title: "Parameters", field: "parameters", formatter: function (cell, formatterParams, onRendered) {
+                {title: "Parameters", field: "parameters", formatter: function (cell) {
                     let parameters = cell.getValue();
                     let formatted = Object.keys(parameters).map((key) => `<li>${key}: ${parameters[key]}</li>`);
                     return "<ul>" + formatted.join("") + "</ul>";
