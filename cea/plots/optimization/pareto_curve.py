@@ -75,7 +75,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
 
         graph = []
-        trace = go.Scatter(x=xs, y=ys, mode='markers', name='data', text=individual_names,
+        trace = go.Scattergl(x=xs, y=ys, mode='markers', name='data', text=individual_names,
                            marker=dict(size='12', color=zs,
                                        colorbar=go.ColorBar(title='Primary Energy [MJoil]', titleside='bottom'),
                                        colorscale='Jet', showscale=True, opacity=0.8))
@@ -88,7 +88,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
             xs = final_dataframe[self.objectives[0]].values
             ys = final_dataframe[self.objectives[1]].values
             name = final_dataframe["Attribute"].values
-            trace = go.Scatter(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
+            trace = go.Scattergl(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
                                marker=dict(size='20', color='white', line=dict(
                                    color='black',
                                    width=2)))

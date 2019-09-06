@@ -41,9 +41,7 @@ def generate_main(individual_with_names_dict,
     Cooling Network: Network of buildings connected to centralized cooling. Both these networks can be different, and will
     always have a fixed length corresponding to the total number of buildings in the neighborhood
     :param nBuildings: number of buildings
-    :param gv: global variables class
     :type nBuildings: int
-    :type gv: class
     :return: individual: representation of values taken by the individual
     :rtype: list
     """

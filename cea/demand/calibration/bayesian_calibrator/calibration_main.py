@@ -29,7 +29,6 @@ import numpy as np
 import pickle
 import time
 import matplotlib.pyplot as plt
-import cea.globalvar
 import cea.inputlocator
 
 import cea.demand.calibration.settings
