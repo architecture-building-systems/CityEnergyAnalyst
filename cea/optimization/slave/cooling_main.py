@@ -29,6 +29,9 @@ __status__ = "Production"
 
 
 # technical model
+class AbsorptionChiller(object):
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
 
 def district_cooling_network(locator,
                              master_to_slave_variables,
@@ -78,7 +81,7 @@ def district_cooling_network(locator,
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     # get properties of technology used in this script
-    ACH_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+    ACH_prop = AbsorptionChiller(pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller"), 'double')
     CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
     # intitalize variables

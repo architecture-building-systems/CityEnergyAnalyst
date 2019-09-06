@@ -546,16 +546,18 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
         operation_results[5][6] = 1
     return operation_results
 
+class AbsorptionChiller(object):
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop =  chiller_prop[chiller_prop['type'] == ACH_type]
 
 def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, chiller_prop, mdot_chw_kgpers, ACH_type):
-
+    chiller_prop = AbsorptionChiller(chiller_prop, ACH_type)
     SC_to_single_ACH_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_chw_kgpers,
                                                                                     T_chw_sup_K,
                                                                                     T_chw_re_K,
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
-                                                                                    chiller_prop,
-                                                                                    ACH_type)
+                                                                                    chiller_prop)
 
 
     el_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_to_single_ACH_operation])

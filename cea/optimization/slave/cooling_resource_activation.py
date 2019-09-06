@@ -51,9 +51,8 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     return Qc_VCC_W, E_used_VCC_W
 
 
-def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop):
-    ACH_type = 'double'
 
+def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop):
     if T_DCN_re_K == T_DCN_sup_K:
         mdot_ACH_kgpers = 0
     else:
@@ -65,8 +64,7 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
                                                          T_DCN_re_K,
                                                          T_ACH_in_C,
                                                          T_ground_K,
-                                                         chiller_prop,
-                                                         ACH_type)
+                                                         chiller_prop)
 
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
     Qh_CHP_ACH_W = ACH_operation['q_chw_W'] #TODO:fix this, it is asumed for now
