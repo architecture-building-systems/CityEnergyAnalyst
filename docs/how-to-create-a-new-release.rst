@@ -162,9 +162,9 @@ Uploading to PyPI
 Updating Link in www.cityenergyanalyst.com/tryit
 --------------------------------------------------
 
-- Go to www.cityenergyanalyst.com
-- press Esc and login into squarespace (the credentials are here_)
-- go to Pages/Try CEA  (It is the last page in the list
+- go to www.cityenergyanalyst.com
+- press Esc and try logging into squarespace (the credentials are here_)
+- go to Pages/Try CEA  (it is the last page in the list)
 - go to edit 'Page content'
 - go to edit 'Form'
 - Change 'Form Name' to the name of the new version of CEA you just released
