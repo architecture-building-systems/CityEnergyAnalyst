@@ -62,7 +62,11 @@ $(document).ready(function () {
                 {title: "id", field: "id"},
                 {title: "Script", field: "script"},
                 {title: "State", field: "state", formatter: (cell) => JOB_STATES[cell.getValue()]},
-                {title: "Parameters", field: "parameters"}
+                {title: "Parameters", field: "parameters", formatter: function (cell, formatterParams, onRendered) {
+                    let parameters = cell.getValue();
+                    let formatted = Object.keys(parameters).map((key) => `<li>${key}: ${parameters[key]}</li>`);
+                    return "<ul>" + formatted.join("") + "</ul>";
+                }}
             ],
             rowClick: (e, row) => show_job_output(row.getData())
         });
