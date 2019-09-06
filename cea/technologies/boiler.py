@@ -97,13 +97,17 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K):
     :rtype E_aux_Boiler: float
     :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
+    if Q_therm_W > 0.0:
 
-    # boiler efficiency
-    eta_boiler = cond_boiler_operation(Q_therm_W, Q_design_W, T_return_to_boiler_K)
+        # boiler efficiency
+        eta_boiler = cond_boiler_operation(Q_therm_W, Q_design_W, T_return_to_boiler_K)
 
-    E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
+        E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
 
-    Q_primary_W = Q_therm_W / eta_boiler
+        Q_primary_W = Q_therm_W / eta_boiler
+    else:
+        Q_primary_W = 0.0
+        E_aux_Boiler_req_W = 0.0
 
     return Q_primary_W, E_aux_Boiler_req_W
 
