@@ -23,7 +23,6 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
-from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import ACH_TYPE_DOUBLE
 from cea.optimization.constants import N_PVT
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
@@ -251,25 +250,26 @@ def summary_fuel_electricity_consumption(master_to_slave_vars,
                                          district_microgrid_requirements_dispatch):
     # join in one dictionary to facilitate the iteration
     join1 = dict(district_microgrid_requirements_dispatch, **district_heating_fuel_requirements_dispatch)
-    joined_dict = dict(join1, **district_cooling_fuel_requirements_dispatch)
+    data = dict(join1, **district_cooling_fuel_requirements_dispatch)
     # Iterate over all the files
-    sum_natural_gas_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_wet_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_dry_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_electricity_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_electricity_exports_W = np.zeros(HOURS_IN_YEAR)
+    sum_natural_gas_imports_W = (data['NG_CHP_req_W'] +
+                                 data['NG_BaseBoiler_req_W'] +
+                                 data['NG_PeakBoiler_req_W'] +
+                                 data['NG_BackupBoiler_req_W'] +
+                                 data['NG_Trigen_req_W'])
 
-    for key, value in joined_dict.items():
-        if "NG_" in key and "req" in key:
-            sum_natural_gas_imports_W += value
-        elif "WB_" in key and "req" in key:
-            sum_wet_biomass_imports_W += value
-        elif "DB_" in key and "req" in key:
-            sum_dry_biomass_imports_W += value
-        elif "E_" in key and "GRID" in key and "directload" in key:
-            sum_electricity_imports_W += value
-        elif "E_" in key and "export" in key:
-            sum_electricity_exports_W += value
+    sum_wet_biomass_imports_W = data['WB_Furnace_req_W']
+
+    sum_dry_biomass_imports_W = (data['DB_Furnace_req_W'])
+
+    sum_electricity_imports_W = (data['E_GRID_directload_W'])
+
+    sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
+                                 data['E_Furnace_dry_gen_export_W'] +
+                                 data['E_Furnace_wet_gen_export_W'] +
+                                 data['E_PV_gen_export_W'] +
+                                 data['E_PVT_gen_export_W'] +
+                                 data['E_Trigen_gen_export_W'])
 
     return sum_natural_gas_imports_W, \
            sum_wet_biomass_imports_W, \
