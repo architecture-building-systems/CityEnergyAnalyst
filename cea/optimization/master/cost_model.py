@@ -183,13 +183,13 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
                                             sum_electricity_imports_W,
                                             sum_electricity_exports_W,
                                             prices,
-                                            lca):
+                                            ):
     # COSTS
     Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W) * prices.NG_PRICE
     Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.BG_PRICE
     Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.BG_PRICE
-    Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * lca.ELEC_PRICE)
-    Opex_var_GRID_sell_sys_connected_USD = - sum(sum_electricity_exports_W * lca.ELEC_PRICE_EXPORT)
+    Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
+    Opex_var_GRID_sell_sys_connected_USD = - sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 
     district_variable_costs = {
         "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
@@ -215,15 +215,15 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     sum_electricity_imports_Whyr = sum(sum_electricity_imports_W)
     sum_electricity_exports_Whyr = sum(sum_electricity_exports_W)
 
-    GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_BOILER_TO_CO2_STD)
-    GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.FURNACE_TO_CO2_STD)
-    GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.FURNACE_TO_CO2_STD)
-    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr, lca.EL_TO_CO2)
-    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr, lca.EL_TO_CO2)
+    GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_TO_CO2_EQ)
+    GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_CO2_EQ)
+    GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_CO2_EQ)
+    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr, lca.EL_TO_CO2_EQ)
+    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr, lca.EL_TO_CO2_EQ)
 
-    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_BOILER_TO_OIL_STD)
-    PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.FURNACE_TO_OIL_STD)
-    PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.FURNACE_TO_OIL_STD)
+    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_STD)
+    PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_OIL_EQ)
+    PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_OIL_EQ)
     PEN_GRID_imports_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_electricity_imports_Whyr, lca.EL_TO_OIL_EQ)
     PEN_GRID_exports_connected_MJoilyr = - calc_pen_Whyr_to_MJoilyr(sum_electricity_exports_Whyr, lca.EL_TO_OIL_EQ)
 
@@ -244,8 +244,7 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     return buildings_connected_emissions_primary_energy
 
 
-def summary_fuel_electricity_consumption(master_to_slave_vars,
-                                         district_cooling_fuel_requirements_dispatch,
+def summary_fuel_electricity_consumption( district_cooling_fuel_requirements_dispatch,
                                          district_heating_fuel_requirements_dispatch,
                                          district_microgrid_requirements_dispatch):
     # join in one dictionary to facilitate the iteration
@@ -293,8 +292,7 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
     sum_electricity_imports_W, \
-    sum_electricity_exports_W = summary_fuel_electricity_consumption(master_to_slave_vars,
-                                                                     district_cooling_fuel_requirements_dispatch,
+    sum_electricity_exports_W = summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                                                      district_heating_fuel_requirements_dispatch,
                                                                      district_microgrid_requirements_dispatch)
 
@@ -305,7 +303,7 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
                                                                       sum_electricity_imports_W,
                                                                       sum_electricity_exports_W,
                                                                       prices,
-                                                                      lca)
+                                                                      )
     # join all the costs
     join1 = dict(district_heating_costs, **district_cooling_costs)
     join2 = dict(join1, **district_microgrid_costs)
