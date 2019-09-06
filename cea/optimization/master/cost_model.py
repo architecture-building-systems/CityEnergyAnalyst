@@ -221,7 +221,7 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr, lca.EL_TO_CO2_EQ)
     GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr, lca.EL_TO_CO2_EQ)
 
-    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_STD)
+    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_EQ)
     PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_OIL_EQ)
     PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_OIL_EQ)
     PEN_GRID_imports_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_electricity_imports_Whyr, lca.EL_TO_OIL_EQ)
