@@ -206,7 +206,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
         operation_results[3][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2)  # ton CO2
+        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
         operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh),  lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
         operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
