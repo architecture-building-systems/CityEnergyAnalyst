@@ -200,11 +200,9 @@ def calc_master_to_slave_variables(locator, gen,
     :param individual_with_names_dict: list with inidividual
     :param Q_heating_max_W:  peak heating demand
     :param locator: locator class
-    :param gv: global variables class
     :type individual_with_names_dict: list
     :type Q_heating_max_W: float
     :type locator: string
-    :type gv: class
     :return: master_to_slave_vars : class MasterSlaveVariables
     :rtype: class
     """

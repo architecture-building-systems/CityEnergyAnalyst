@@ -11,7 +11,6 @@ import warnings
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.master import master_main
@@ -53,10 +52,8 @@ def moo_optimization(locator, weather_file, config):
 
     :param locator: path to input locator
     :param weather_file: path to weather file
-    :param gv: global variables class
     :type locator: cea.inputlocator.InputLocator
     :type weather_file: string
-    :type gv: class
 
     :returns: None
     :rtype: Nonetype

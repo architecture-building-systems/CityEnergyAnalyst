@@ -10,7 +10,7 @@ import json
 
 import cea.inputlocator
 import cea.plots.supply_system
-from cea.plots.variable_naming import COLORS_TO_RGB
+from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import network_layout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.utilities.dbf import dbf_to_dataframe
@@ -25,15 +25,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_color(color):
-    return [int(x) for x in COLORS_TO_RGB[color].split('(')[1].split(')')[0].split(',')]
+
 
 
 # Colors for the networks in the map
 COLORS = {
-    'dh': get_color('red'),
-    'dc': get_color('blue'),
-    'disconnected': get_color('grey')
+    'district': get_color_array('white'),
+    'dh': get_color_array('red'),
+    'dc': get_color_array('blue'),
+    'disconnected': get_color_array('grey')
 }
 
 
@@ -77,13 +77,15 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry())\
             .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()) \
+            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
         dc = self.get_newtork_json(data['path_output_edges_DC'], data['path_output_nodes_DC'])
         dh = self.get_newtork_json(data['path_output_edges_DH'], data['path_output_nodes_DH'])
 
         # Generate div id using hash of parameters
         div = Template(open(template).read())\
             .render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), colors=COLORS,
-                    zone=zone, dc=dc, dh=dh)
+                    zone=zone, district=district, dc=dc, dh=dh)
         return div
 
     def get_newtork_json(self, edges, nodes):

@@ -460,8 +460,8 @@ class WeatherPathParameter(Parameter):
 class WorkflowParameter(Parameter):
     typename = "WorkflowParameter"
     examples = {
-        "heating-case": os.path.join(os.path.dirname(__file__), "tests", "heating-case.yml"),
-        "cooling-case": os.path.join(os.path.dirname(__file__), "tests", "cooling-case.yml")
+        "district-heating-system": os.path.join(os.path.dirname(__file__), "workflows", "district_heating_system.yml"),
+        "district-cooling-system": os.path.join(os.path.dirname(__file__), "workflows", "district_cooling_system.yml")
     }
 
     def decode(self, value):
@@ -471,7 +471,7 @@ class WorkflowParameter(Parameter):
             return value
         else:
             print("ERROR: Workflow not found: {workflow} - using heating-case instead".format(workflow=value))
-            return self.examples["heating-case"]
+            return self.examples[self.examples.keys()[0]]
 
 
 class BooleanParameter(Parameter):

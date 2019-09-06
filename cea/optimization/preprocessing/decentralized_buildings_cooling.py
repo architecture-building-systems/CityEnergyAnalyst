@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
@@ -49,7 +48,6 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     with evacuated tube solar collectors.
     :param locator: locator class with paths to input/output files
     :param building_names: list with names of buildings
-    :param gv: global variable class
     :param config: cea.config
     :param prices: prices class
     :return: one .csv file with results of operations of disconnected buildings; one .csv file with operation of the
