@@ -277,8 +277,7 @@ def summary_fuel_electricity_consumption( district_cooling_fuel_requirements_dis
            sum_electricity_exports_W
 
 
-def buildings_connected_costs_and_emissions(master_to_slave_vars,
-                                            district_heating_costs,
+def buildings_connected_costs_and_emissions( district_heating_costs,
                                             district_cooling_costs,
                                             district_microgrid_costs,
                                             district_microgrid_requirements_dispatch,
