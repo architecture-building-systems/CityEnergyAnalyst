@@ -1,5 +1,5 @@
 /*jslint browser:true */
-/*global $, Tabulator, io, console */
+/*global $, Tabulator, io, console, window */
 
 /**
  * Functions to run a tool from the tools page.
@@ -79,22 +79,7 @@ function cea_run(script) {
         traditional: true,
         success: function (job_info) {
             $.post(`start/${job_info.id}`, function () {
-                let socket = io.connect(`http://${document.domain}:${location.port}`);
-                let $cea_modal_close = $(".cea-modal-close");
-                let message_appender = function (data) {
-                    $("#cea-console-output-body").append(data.message);
-                };
-                socket.on("cea-worker-message", message_appender);
-                socket.on("cea-worker-success", function () {
-                    $cea_modal_close.removeAttr("disabled");
-                    $cea_modal_close.addClass("btn-success");
-                    socket.removeListener("cea-worker-message", message_appender);
-                });
-                socket.on("cea-worker-error", function () {
-                    $cea_modal_close.removeAttr("disabled");
-                    $(".cea-modal-close").addClass("btn-danger");
-                    socket.removeListener("cea-worker-message", message_appender);
-                });
+                window.location.href = "/tools";
             });
         }
     });
