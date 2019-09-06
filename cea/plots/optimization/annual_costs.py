@@ -46,7 +46,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
+                         yaxis=dict(title='Annualized cost [USD$(2015)/year]'))
 
     def calc_graph(self):
         self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
