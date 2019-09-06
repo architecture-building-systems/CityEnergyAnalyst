@@ -652,8 +652,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
+    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
+    lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
     print 'test_decentralized_buildings_cooling() succeeded'
