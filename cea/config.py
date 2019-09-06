@@ -484,7 +484,7 @@ class BooleanParameter(Parameter):
         return 'true' if value else 'false'
 
     def decode(self, value):
-        return self._boolean_states[value.lower()]
+        return self._boolean_states[str(value).lower()]
 
 
 class IntegerParameter(Parameter):
