@@ -293,11 +293,11 @@ def heating_source_activator(Q_therm_req_W,
                 'E_Furnace_dry_gen_W': E_Furnace_dry_gen_W,
                 'E_Furnace_wet_gen_W': E_Furnace_wet_gen_W,
                 }
-    Gas_output = {'Gas_CHP_req_W': Gas_used_CHP_W,
-                  'Gas_BaseBoiler_req_W': Gas_used_BaseBoiler_W,
-                  'Gas_PeakBoiler_req_W': Gas_used_PeakBoiler_W}
+    Gas_output = {'NG_CHP_req_W': float(Gas_used_CHP_W),
+                  'NG_BaseBoiler_req_W': Gas_used_BaseBoiler_W,
+                  'NG_PeakBoiler_req_W': Gas_used_PeakBoiler_W}
 
-    Biomass_output = {'Biomass_Furnace_dry_req_W': Biomass_used_Furnace_dry_W,
-                      'Biomass_Furnace_wet_req_W': Biomass_used_Furnace_wet_W}
+    Biomass_output = {'WetBiomass_Furnace_req_W': Biomass_used_Furnace_dry_W,
+                      'DryBiomass_Furnace_req_W': Biomass_used_Furnace_wet_W}
 
     return source_output, Q_output, E_output, Gas_output, Biomass_output
