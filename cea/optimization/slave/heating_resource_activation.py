@@ -59,21 +59,21 @@ def heating_source_activator(Q_therm_req_W,
             # operation Possible if above minimal load
             if Q_heat_unmet_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = Q_heat_unmet_W
-                Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(Gas_used_CHP_W)) * Gas_used_CHP_W
+                NG_CHP_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
+                E_CHP_gen_W = np.float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
             else:  # Only part of the demand can be delivered as 100% load achieved
                 Q_CHP_gen_W = Q_output_CC_max_W
-                Gas_used_CHP_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(Gas_used_CHP_W)) * Gas_used_CHP_W
+                NG_CHP_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
+                E_CHP_gen_W = np.float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
         else:
             source_CHP = 0
-            Gas_used_CHP_W = 0.0
+            NG_CHP_req_W = 0.0
             E_CHP_gen_W = 0.0
             Q_CHP_gen_W = 0.0
         Q_heat_unmet_W = Q_heat_unmet_W - Q_CHP_gen_W
     else:
         source_CHP = 0
-        Gas_used_CHP_W = 0.0
+        NG_CHP_req_W = 0.0
         E_CHP_gen_W = 0.0
         Q_CHP_gen_W = 0.0
 
@@ -85,22 +85,22 @@ def heating_source_activator(Q_therm_req_W,
             if Q_heat_unmet_W > master_to_slave_vars.WBFurnace_Q_max_W:
                 Q_Furnace_wet_gen_W = master_to_slave_vars.WBFurnace_Q_max_W
                 # scale down if above maximum load, Furnace operates at max. capacity
-                Biomass_used_Furnace_wet_W, E_Furnace_wet_gen_W = furnace_op_cost(Q_Furnace_wet_gen_W,
-                                                                                  master_to_slave_vars.WBFurnace_Q_max_W,
-                                                                                  tdhret_req_K,
-                                                                                  "wet")
+                DryBiomass_Furnace_req_W, E_Furnace_wet_gen_W = furnace_op_cost(Q_Furnace_wet_gen_W,
+                                                                                master_to_slave_vars.WBFurnace_Q_max_W,
+                                                                                tdhret_req_K,
+                                                                                "wet")
 
 
             else:  # Normal Operation Possible
                 Q_Furnace_wet_gen_W = Q_heat_unmet_W
-                Biomass_used_Furnace_wet_W, E_Furnace_wet_gen_W = furnace_op_cost(Q_Furnace_wet_gen_W,
-                                                                                  master_to_slave_vars.WBFurnace_Q_max_W,
-                                                                                  tdhret_req_K,
-                                                                                  "wet")
+                DryBiomass_Furnace_req_W, E_Furnace_wet_gen_W = furnace_op_cost(Q_Furnace_wet_gen_W,
+                                                                                master_to_slave_vars.WBFurnace_Q_max_W,
+                                                                                tdhret_req_K,
+                                                                                "wet")
         else:
             source_Furnace_wet = 0
             E_Furnace_wet_gen_W = 0.0
-            Biomass_used_Furnace_wet_W = 0.0
+            DryBiomass_Furnace_req_W = 0.0
             Q_Furnace_wet_gen_W = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_wet_gen_W
@@ -108,7 +108,7 @@ def heating_source_activator(Q_therm_req_W,
     else:
         source_Furnace_wet = 0
         E_Furnace_wet_gen_W = 0.0
-        Biomass_used_Furnace_wet_W = 0.0
+        DryBiomass_Furnace_req_W = 0.0
         Q_Furnace_wet_gen_W = 0.0
 
     # DRY FURNACE
@@ -119,28 +119,28 @@ def heating_source_activator(Q_therm_req_W,
             if Q_heat_unmet_W > master_to_slave_vars.DBFurnace_Q_max_W:
                 Q_Furnace_dry_gen_W = master_to_slave_vars.DBFurnace_Q_max_W
                 # scale down if above maximum load, Furnace operates at max. capacity
-                Biomass_used_Furnace_dry_W, E_Furnace_dry_gen_W = furnace_op_cost(Q_Furnace_dry_gen_W,
-                                                                                  master_to_slave_vars.DBFurnace_Q_max_W,
-                                                                                  tdhret_req_K,
-                                                                                  "dry")
+                WetBiomass_Furnace_req_W, E_Furnace_dry_gen_W = furnace_op_cost(Q_Furnace_dry_gen_W,
+                                                                                master_to_slave_vars.DBFurnace_Q_max_W,
+                                                                                tdhret_req_K,
+                                                                                "dry")
 
             else:  # Normal Operation Possible
                 Q_Furnace_dry_gen_W = Q_heat_unmet_W
-                Biomass_used_Furnace_dry_W, E_Furnace_dry_gen_W = furnace_op_cost(Q_Furnace_dry_gen_W,
-                                                                                  master_to_slave_vars.DBFurnace_Q_max_W,
-                                                                                  tdhret_req_K,
-                                                                                  "dry")
+                WetBiomass_Furnace_req_W, E_Furnace_dry_gen_W = furnace_op_cost(Q_Furnace_dry_gen_W,
+                                                                                master_to_slave_vars.DBFurnace_Q_max_W,
+                                                                                tdhret_req_K,
+                                                                                "dry")
         else:
             source_Furnace_dry = 0
             E_Furnace_dry_gen_W = 0.0
-            Biomass_used_Furnace_dry_W = 0.0
+            WetBiomass_Furnace_req_W = 0.0
             Q_Furnace_dry_gen_W = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_dry_gen_W
     else:
         source_Furnace_dry = 0
         E_Furnace_dry_gen_W = 0.0
-        Biomass_used_Furnace_dry_W = 0.0
+        WetBiomass_Furnace_req_W = 0.0
         Q_Furnace_dry_gen_W = 0.0
 
     if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K,
@@ -199,10 +199,10 @@ def heating_source_activator(Q_therm_req_W,
             mdot_DH_to_GHP_kgpers = Q_GHP_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
 
         E_GHP_req_W, Q_coldsource_GHP_W, Q_GHP_gen_W = GHP_op_cost(mdot_DH_to_GHP_kgpers,
-                                                                                     tdhsup_K,
-                                                                                     tdhret_req_K,
-                                                                                     TretGHPArray_K,
-                                                                                     Q_GHP_gen_W)
+                                                                   tdhsup_K,
+                                                                   tdhret_req_K,
+                                                                   TretGHPArray_K,
+                                                                   Q_GHP_gen_W)
         Q_heat_unmet_W = Q_heat_unmet_W - Q_GHP_gen_W
 
     else:
@@ -218,13 +218,13 @@ def heating_source_activator(Q_therm_req_W,
             else:
                 Q_BaseBoiler_gen_W = Q_heat_unmet_W
 
-            Gas_used_BaseBoiler_W, E_BaseBoiler_req_W = cond_boiler_op_cost(Q_BaseBoiler_gen_W,
-                                                                            master_to_slave_vars.Boiler_Q_max_W,
-                                                                            tdhret_req_K)
+            NG_BaseBoiler_req_W, E_BaseBoiler_req_W = cond_boiler_op_cost(Q_BaseBoiler_gen_W,
+                                                                          master_to_slave_vars.Boiler_Q_max_W,
+                                                                          tdhret_req_K)
         else:
             source_BaseBoiler = 0
             Q_BaseBoiler_gen_W = 0.0
-            Gas_used_BaseBoiler_W = 0.0
+            NG_BaseBoiler_req_W = 0.0
             E_BaseBoiler_req_W = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_BaseBoiler_gen_W
@@ -232,7 +232,7 @@ def heating_source_activator(Q_therm_req_W,
     else:
         source_BaseBoiler = 0
         Q_BaseBoiler_gen_W = 0.0
-        Gas_used_BaseBoiler_W = 0.0
+        NG_BaseBoiler_req_W = 0.0
         E_BaseBoiler_req_W = 0.0
 
     if master_to_slave_vars.BoilerPeak_on == 1 and Q_heat_unmet_W > 0:
@@ -243,13 +243,13 @@ def heating_source_activator(Q_therm_req_W,
             else:
                 Q_PeakBoiler_gen_W = Q_heat_unmet_W
 
-            Gas_used_PeakBoiler_W, E_PeakBoiler_req_W = cond_boiler_op_cost(Q_PeakBoiler_gen_W,
-                                                                             master_to_slave_vars.BoilerPeak_Q_max_W,
-                                                                             tdhret_req_K)
+            NG_PeakBoiler_req_W, E_PeakBoiler_req_W = cond_boiler_op_cost(Q_PeakBoiler_gen_W,
+                                                                          master_to_slave_vars.BoilerPeak_Q_max_W,
+                                                                          tdhret_req_K)
         else:
             source_PeakBoiler = 0
             Q_PeakBoiler_gen_W = 0.0
-            Gas_used_PeakBoiler_W = 0
+            NG_PeakBoiler_req_W = 0
             E_PeakBoiler_req_W = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_PeakBoiler_gen_W
@@ -257,7 +257,7 @@ def heating_source_activator(Q_therm_req_W,
     else:
         source_PeakBoiler = 0
         Q_PeakBoiler_gen_W = 0.0
-        Gas_used_PeakBoiler_W = 0
+        NG_PeakBoiler_req_W = 0
         E_PeakBoiler_req_W = 0.0
 
     if Q_heat_unmet_W > 1.0E-3:
@@ -265,39 +265,26 @@ def heating_source_activator(Q_therm_req_W,
     else:
         Q_uncovered_W = 0.0
 
-    source_output = {'Source_HP_Sewage': source_HP_Sewage,
-                     'Source_HP_Lake': source_HP_Lake,
-                     'Source_GHP': source_GHP,
-                     'Source_CHP': source_CHP,
-                     'Source_Furnace_dry': source_Furnace_dry,
-                     'Source_Furnace_wet': source_Furnace_wet,
-                     'Source_BaseBoiler': source_BaseBoiler,
-                     'Source_PeakBoiler': source_PeakBoiler}
 
-    Q_output = {'Q_HPSew_gen_W': Q_HPSew_gen_W,
-                'Q_HPLake_gen_W': Q_HPLake_gen_W,
-                'Q_GHP_gen_W': Q_GHP_gen_W,
-                'Q_CHP_gen_W': Q_CHP_gen_W,
-                'Q_Furnace_dry_gen_W': Q_Furnace_dry_gen_W,
-                'Q_Furnace_wet_gen_W': Q_Furnace_wet_gen_W,
-                'Q_BaseBoiler_gen_W': Q_BaseBoiler_gen_W,
-                'Q_PeakBoiler_gen_W': Q_PeakBoiler_gen_W,
-                'Q_AddBoiler_gen_W': Q_uncovered_W}
-
-    E_output = {'E_HPSew_req_W': E_HPSew_req_W,
-                'E_HPLake_req_W': E_HPLake_req_W,
-                'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
-                'E_PeakBoiler_req_W': E_PeakBoiler_req_W,
-                'E_GHP_req_W': E_GHP_req_W,
-                'E_CHP_gen_W': E_CHP_gen_W,
-                'E_Furnace_dry_gen_W': E_Furnace_dry_gen_W,
-                'E_Furnace_wet_gen_W': E_Furnace_wet_gen_W,
-                }
-    Gas_output = {'NG_CHP_req_W': float(Gas_used_CHP_W),
-                  'NG_BaseBoiler_req_W': Gas_used_BaseBoiler_W,
-                  'NG_PeakBoiler_req_W': Gas_used_PeakBoiler_W}
-
-    Biomass_output = {'WetBiomass_Furnace_req_W': Biomass_used_Furnace_dry_W,
-                      'DryBiomass_Furnace_req_W': Biomass_used_Furnace_wet_W}
-
-    return source_output, Q_output, E_output, Gas_output, Biomass_output
+    return Q_HPSew_gen_W, \
+           Q_HPLake_gen_W, \
+           Q_GHP_gen_W, \
+           Q_CHP_gen_W, \
+           Q_Furnace_dry_gen_W, \
+           Q_Furnace_wet_gen_W, \
+           Q_BaseBoiler_gen_W, \
+           Q_PeakBoiler_gen_W, \
+           Q_uncovered_W, \
+           E_HPSew_req_W, \
+           E_HPLake_req_W, \
+           E_BaseBoiler_req_W, \
+           E_PeakBoiler_req_W, \
+           E_GHP_req_W, \
+           E_CHP_gen_W, \
+           E_Furnace_dry_gen_W, \
+           E_Furnace_wet_gen_W, \
+           NG_CHP_req_W, \
+           NG_BaseBoiler_req_W, \
+           NG_PeakBoiler_req_W, \
+           WetBiomass_Furnace_req_W, \
+           DryBiomass_Furnace_req_W
