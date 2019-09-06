@@ -19,11 +19,6 @@
   min-width: 500px;
 }
 
-.plot-widget .x_panel {
-  height: 100%;
-  min-height: 500px;
-}
-
 #map-container .x_panel{
   padding: 15px;
 }

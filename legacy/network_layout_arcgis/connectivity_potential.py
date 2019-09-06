@@ -3,7 +3,6 @@ This script uses libraries in arcgis to create connections from
 a series of points (buildings) to the closest street
 """
 
-import cea.globalvar
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 import cea.config

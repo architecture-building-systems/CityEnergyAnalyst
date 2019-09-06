@@ -5,7 +5,6 @@ This computes the close-to-optimal supply system for single buildings.
 
 """
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 from cea.optimization.prices import Prices as Prices
@@ -21,9 +20,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     This functions optimizes disconnected buildings individually
 
     :param locator: locator class
-    :param gv: global variables class
     :type locator: class
-    :type gv: class
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """

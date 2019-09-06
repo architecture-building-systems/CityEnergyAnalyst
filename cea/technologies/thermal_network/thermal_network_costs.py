@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices

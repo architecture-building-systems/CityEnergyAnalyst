@@ -51,8 +51,16 @@ const jsonURLs = {
     'dc_networks': '/inputs/geojson/networks/DC'
 };
 
+const defaultColors = {
+    'zone': [68,76,83],
+    'district': [255,255,255],
+    'streets': [255,255,255],
+    'dh': [240,75,91],
+    'dc': [63,192,194],
+};
+
 class MapClass {
-    constructor(container = 'map') {
+    constructor(container = 'map', colors={}) {
         this.data = {};
         this.layerProps = {};
 
@@ -64,6 +72,7 @@ class MapClass {
         };
 
         this.mapStyles = {light: lightMap, dark: darkMap};
+        this.colors = {...defaultColors, ...colors};
         this.layers = [new GeoJsonLayer({id:'streets'}), new GeoJsonLayer({id:'dh_networks'}),
             new GeoJsonLayer({id:'dc_networks'}), new GeoJsonLayer({id:'zone'}), new GeoJsonLayer({id:'district'})];
 
@@ -82,7 +91,7 @@ class MapClass {
 
         $(`#${container}`).attr('oncontextmenu', 'return false;')
             .append('<div id="map-tooltip"></div>')
-            .append('<div id="layers-group">');
+            .append('<div id="layers-group" style="color: black; visibility: hidden;"></div>');
     }
 
     init({data = {}, urls = {}, extrude = false} = {}) {
@@ -240,7 +249,7 @@ function createZoneLayer(_layers, data, props={}) {
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: [0, 0, 255],
+        getFillColor: defaultColors.zone,
 
         pickable: true,
         autoHighlight: true,
@@ -260,13 +269,13 @@ function createDistrictLayer(_layers, data, props={}) {
     layers.splice(4, 0, new GeoJsonLayer({
         id: id,
         data: data,
-        opacity: 0.5,
+        opacity: 0.3,
         wireframe: true,
         filled: true,
         visible: $(`#${id}-toggle`).prop('checked'),
 
         getElevation: f => f.properties['height_ag'],
-        getFillColor: [255, 0, 0],
+        getFillColor: defaultColors.district,
 
         pickable: true,
         autoHighlight: true,
@@ -286,9 +295,10 @@ function createStreetsLayer(_layers, data, props={}) {
     layers.splice(0, 0, new GeoJsonLayer({
         id: id,
         data: data,
+        opacity: 0.30,
         visible: $(`#${id}-toggle`).prop('checked'),
 
-        getLineColor: [255, 0, 0],
+        getLineColor: defaultColors.streets,
         getLineWidth: 3,
 
         pickable: true,
@@ -312,8 +322,8 @@ function createDCNetworksLayer(_layers, data, props={}) {
         filled: true,
         visible: $(`#${id}-toggle`).prop('checked'),
 
-        getLineColor: [0, 255, 255],
-        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getLineColor: defaultColors.dc,
+        getFillColor: f => nodeFillColor(f.properties['Type'], id),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -338,8 +348,8 @@ function createDHNetworksLayer(_layers, data, props={}) {
         filled: true,
         visible: $(`#${id}-toggle`).prop('checked'),
 
-        getLineColor: [0, 255, 0],
-        getFillColor: f => nodeFillColor(f.properties['Type']),
+        getLineColor: defaultColors.dh,
+        getFillColor: f => nodeFillColor(f.properties['Type'], id),
         getLineWidth: 3,
         getRadius: 3,
 
@@ -370,7 +380,9 @@ function setupButtons(MapClass) {
             this._btn.type = "button";
             this._btn.setAttribute("data-extruded", this._extruded);
             this._btn.setAttribute("data-toggle", "tooltip");
-            this._btn.setAttribute("data-placement", "right");
+            this._btn.setAttribute("data-placement", "left");
+            this._btn.setAttribute("data-container", "body");
+            this._btn.setAttribute("data-trigger", "hover");
             this._btn.setAttribute("title", "Toggle 3D");
             this._btn.onclick = function () {
                 this._extruded = !this._extruded;
@@ -415,10 +427,12 @@ function setupButtons(MapClass) {
 
             this._btn = document.createElement("button");
             this._btn.id = "dark-button";
-            this._btn.className = "mapboxgl-ctrl-icon";
+            this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-map-style";
             this._btn.type = "button";
             this._btn.setAttribute("data-toggle", "tooltip");
-            this._btn.setAttribute("data-placement", "right");
+            this._btn.setAttribute("data-placement", "left");
+            this._btn.setAttribute("data-container", "body");
+            this._btn.setAttribute("data-trigger", "hover");
             this._btn.setAttribute("title", "Toggle Dark map");
             this._btn.onclick = function() {
                 this._dark = !this._dark;
@@ -428,7 +442,6 @@ function setupButtons(MapClass) {
                     _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
                 }
             };
-            this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
 
             this._container = document.createElement("div");
             this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -452,7 +465,9 @@ function setupButtons(MapClass) {
             this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
             this._btn.type = "button";
             this._btn.setAttribute("data-toggle", "tooltip");
-            this._btn.setAttribute("data-placement", "right");
+            this._btn.setAttribute("data-placement", "left");
+            this._btn.setAttribute("data-container", "body");
+            this._btn.setAttribute("data-trigger", "hover");
             this._btn.setAttribute("title", "Center to location");
             this._btn.onclick = function () {
                 _this.deckgl.setProps({
@@ -479,9 +494,48 @@ function setupButtons(MapClass) {
         }
     }
 
-    _this.deckgl.getMapboxMap().addControl(new dToggle(), 'top-left');
-    _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-left');
-    _this.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-left');
+    class showLayerToggle {
+        constructor() {
+            this._show = false;
+        }
+        onAdd(map) {
+            this._map = map;
+
+            this._btn = document.createElement("button");
+            this._btn.id = "layer-toggle-button";
+            this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-layer-toggle";
+            this._btn.type = "button";
+            this._btn.setAttribute("data-toggle", "tooltip");
+            this._btn.setAttribute("data-placement", "left");
+            this._btn.setAttribute("data-container", "body");
+            this._btn.setAttribute("data-trigger", "hover");
+            this._btn.setAttribute("title", "Show layer toggle");
+            this._btn.onclick = function () {
+                this._show = !this._show;
+                if (this._show) {
+                    document.getElementById("layers-group").style.visibility = "visible";
+                } else {
+                    document.getElementById("layers-group").style.visibility = "hidden";
+                }
+            };
+
+            this._container = document.createElement("div");
+            this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+            this._container.appendChild(this._btn);
+
+            return this._container;
+        }
+
+        onRemove() {
+            this._container.parentNode.removeChild(this._container);
+            this._map = undefined;
+        }
+    }
+
+    _this.deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+    _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+    _this.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+    _this.deckgl.getMapboxMap().addControl(new showLayerToggle(), 'top-right');
     _this.deckgl.setProps({
         onDragStart: (info, event) => {
             let dToggleButton = $('#3d-button');
@@ -507,6 +561,10 @@ function updateTooltip({x, y, object, layer}) {
             innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                 `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
         } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+            $.each(object.properties, function (key, value) {
+                if (key !== 'Building' &&  value === 'NONE') return null;
+                innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+            });
             if (!object.properties.hasOwnProperty("Building")) {
                 let length = turf.length(object) * 1000;
                 innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
@@ -523,9 +581,9 @@ function updateTooltip({x, y, object, layer}) {
     }
 }
 
-function nodeFillColor(type) {
+function nodeFillColor(type, network) {
     if (type === 'NONE') {
-        return [100, 100, 100]
+        return network === 'dc_networks' ? defaultColors.dc : defaultColors.dh
     } else if (type === 'CONSUMER') {
         return [255, 255, 255]
     } else if (type === 'PLANT') {
