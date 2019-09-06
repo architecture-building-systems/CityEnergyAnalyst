@@ -125,6 +125,14 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
             "E_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
             "E_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
         }
+        district_heating_fuel_requirements_dispatch = {
+            "NG_CHP_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_BaseBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "WB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
+            "DB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
+        }
 
 
     # DISTRICT COOLING NETWORK:
@@ -149,6 +157,9 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
             "E_BaseVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
             "E_PeakVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
             "E_BackupVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
+        }
+        district_cooling_fuel_requirements_dispatch ={
+            "NG_Trigen_req_W": np.zeros(HOURS_IN_YEAR)
         }
 
 
