@@ -66,9 +66,6 @@ function cea_run(script) {
     if (!$("#cea-tool-parameters").parsley().isValid()) {
         return false;
     }
-    $(".cea-modal-close").attr("disabled", "disabled").removeClass("btn-danger").removeClass("btn-success");
-    $("#cea-console-output-body").text("");
-    $("#cea-console-output").modal({"show": true, "backdrop": "static"});
 
     let new_job_info = {"script": script, "parameters": get_parameter_values()};
     $.ajax({
