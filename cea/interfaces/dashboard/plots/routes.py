@@ -22,7 +22,13 @@ categories = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name
 
 @blueprint.route('/index')
 def index():
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
+    return redirect(url_for('plots_blueprint.route_react_dashboard'))
+
+
+@blueprint.route('/dashboard')
+def route_react_dashboard():
+    debug = current_app.cea_config.get('general:debug')
+    return render_template('react_dashboard.html', debug=debug, last_updated=dir_last_updated())
 
 
 @blueprint.route('/dashboard/<int:dashboard_index>')

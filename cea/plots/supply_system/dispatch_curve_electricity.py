@@ -26,19 +26,22 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
     def __init__(self, project, parameters, cache):
         super(DispatchCurveDistrictElectricityPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["E_CHP_gen_directload_W",
-                                "E_CCGT_gen_directload_W",
-                                "E_Furnace_gen_directload_W",
+                                "E_Trigen_gen_directload_W",
+                                "E_Furnace_dry_gen_directload_W",
+                                "E_Furnace_wet_gen_directload_W",
                                 "E_PV_gen_directload_W",
                                 "E_PVT_gen_directload_W",
                                 "E_GRID_directload_W",
                                 ]
         self.analysis_fields_exports = ["E_CHP_gen_export_W",
-                                        "E_CCGT_gen_export_W",
-                                        "E_Furnace_gen_export_W",
+                                        "E_Trigen_gen_export_W",
+                                        "E_Furnace_dry_gen_export_W",
+                                        "E_Furnace_wet_gen_export_W",
                                         "E_PV_gen_export_W",
                                         "E_PVT_gen_export_W",
                                         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
+        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_electricity_activation_pattern,
                              [self.individual, self.generation])]
 
@@ -72,7 +75,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
         data_req = self.process_individual_requirements_curve_electricity()
         for field in self.analysis_field_demand:
             y = (data_req[field].values) / 1E6 # into MWh
-            trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
+            trace = go.Scattergl(x=data.index, y=y, name=NAMING[field],
                                line=dict(width=1, color=COLOR[field]))
 
             graph.append(trace)

@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices
@@ -32,7 +31,7 @@ class Thermal_Network(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, network_type):
         # sotre key variables
         self.locator = locator
         self.config = config
@@ -48,7 +47,6 @@ class Thermal_Network(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -547,9 +545,8 @@ def main(config):
 
     # initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
-    network_info = Thermal_Network(locator, config, network_type, gv)
+    network_info = Thermal_Network(locator, config, network_type)
 
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
