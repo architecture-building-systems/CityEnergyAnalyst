@@ -6,7 +6,7 @@ map.init({data: {
     }});
 
 map.setLayerProps('zone', {
-    getFillColor: f => buildingColor([0, 0, 255], f),
+    getFillColor: f => buildingColor(defaultColors.zone, f),
     updateTriggers: {
         getFillColor: inputstore.getSelected()
     },
@@ -14,7 +14,7 @@ map.setLayerProps('zone', {
 });
 
 map.setLayerProps('district', {
-    getFillColor: f => buildingColor([255, 0, 0], f),
+    getFillColor: f => buildingColor(defaultColors.district, f),
     updateTriggers: {
         getFillColor: inputstore.getSelected()
     },
@@ -54,16 +54,6 @@ function showProperties({object, layer}, event) {
     } else {
         inputstore.setSelected(['']);
         redrawBuildings();
-    }
-}
-
-function nodeFillColor(type) {
-    if (type === 'NONE') {
-        return [100, 100, 100]
-    } else if (type === 'CONSUMER') {
-        return [255, 255, 255]
-    } else if (type === 'PLANT') {
-        return [0, 0, 0]
     }
 }
 

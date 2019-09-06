@@ -51,14 +51,6 @@ cea.constants module
     :undoc-members:
     :show-inheritance:
 
-cea.globalvar module
---------------------
-
-.. automodule:: cea.globalvar
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.glossary module
 -------------------
 

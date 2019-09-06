@@ -14,7 +14,6 @@ from cea.resources import geothermal
 import collections
 import geopandas as gpd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import os
 import random

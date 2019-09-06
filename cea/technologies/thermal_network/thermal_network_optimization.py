@@ -6,7 +6,6 @@ from __future__ import division
 from __future__ import print_function
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network.thermal_network import ThermalNetwork, thermal_network_main
