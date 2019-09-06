@@ -55,10 +55,10 @@ class PvtMonthlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotent
     @property
     def layout(self):
         analysis_range = calc_range(self.data_frame, self.E_analysis_fields_used, self.Q_analysis_fields_used)
-        return go.Layout(title=self.title, barmode='stack',
-                         yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero',
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='PVT Electricity/Heat production [MWh]', rangemode='tozero',
                                     scaleanchor='y2', range=analysis_range),
-                         yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=analysis_range))
+                         yaxis2=dict(overlaying='y', anchor='x', range=analysis_range))
 
     def calc_graph(self):
         # calculate graph

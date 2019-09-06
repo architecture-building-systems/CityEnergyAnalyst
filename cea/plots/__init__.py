@@ -53,8 +53,9 @@ def read_dashboards(config, cache):
 
 def write_dashboards(config, dashboards):
     """Write a list of Dashboard objects to disk"""
+    yaml.SafeDumper.ignore_aliases = lambda *args: True
     with open(dashboard_yml_path(config), 'w') as f:
-        yaml.dump([d.to_dict() for d in dashboards], f)
+        yaml.safe_dump([d.to_dict() for d in dashboards], f)
 
 
 def dashboard_yml_path(config):
@@ -63,31 +64,39 @@ def dashboard_yml_path(config):
     return dashboard_yml
 
 
-def default_dashboard(config, cache, name='Default Dashboard', description='', layout='row'):
+def default_dashboard(config, cache):
     """Return a default Dashboard"""
-    return Dashboard(config, {'name': name,
-                              'description': description,
-                              'layout': layout,
-                              'plots': []}, cache)
+    return Dashboard(config, {
+        'name': 'Default Dashboard',
+        'layout': 'row',
+        'plots': []
+    }, cache)
 
 
-def new_dashboard(config, cache, name, description, layout):
+def new_dashboard(config, cache, name, layout, grid_width=None):
     """
     Append a new dashboard to the dashboard configuration and write it back to disk.
     Returns the index of the new dashboard in the dashboards list.
     """
+    dashboard_dict = {
+        'name': name,
+        'layout': layout,
+        'plots': []
+    }
+    if layout == 'grid':
+        dashboard_dict['grid_width'] = grid_width
+        dashboard_dict['plots'] = [{'plot': 'empty'}] * len(grid_width)
     dashboards = read_dashboards(config, cache)
-    dashboards.append(default_dashboard(config, cache, name, description, layout))
+    dashboards.append(Dashboard(config, dashboard_dict, cache))
     write_dashboards(config, dashboards)
     return len(dashboards) - 1
 
 
-def duplicate_dashboard(config, cache, name, description, dashboard_index):
+def duplicate_dashboard(config, cache, name, dashboard_index):
     dashboards = read_dashboards(config, cache)
     dashboard = dashboards[dashboard_index].to_dict()
     dashboards.append(Dashboard(config, {
         'name': name,
-        'description': description,
         'layout': dashboard['layout'],
         'plots': dashboard['plots']
     }, cache))
@@ -111,21 +120,27 @@ class Dashboard(object):
         self.cache = cache
         self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
         try:
-            self.description = dashboard_dict['description']
-        except KeyError:
-            self.description = ''
-        try:
-            self.layout = dashboard_dict['layout']
+            layout = dashboard_dict['layout']
+            self.layout = 'grid' if layout == 'map' else layout
         except KeyError:
             self.layout = 'row'
+        if self.layout == 'grid':
+            try:
+                self.grid_width = dashboard_dict['grid_width']
+            except KeyError:
+                self.grid_width = [1] * len(self.plots)
 
-    def add_plot(self, category, plot_id):
+    def add_plot(self, category, plot_id, index=None):
         """Add a new plot to the dashboard"""
         plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
         parameters = plot_class.get_default_parameters(self.config)
 
         plot = plot_class(self.config.project, parameters, self.cache)
-        self.plots.append(plot)
+
+        if index is None or index == len(self.plots):
+            self.plots.append(plot)
+        else:
+            self.plots[index] = plot
 
     def replace_plot(self, category, plot_id, plot_index):
         """Replace plot at index"""
@@ -137,21 +152,33 @@ class Dashboard(object):
 
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
-        self.plots.pop(plot_index)
+        if self.layout == 'grid':
+            self.plots[plot_index] = None
+        else:
+            self.plots.pop(plot_index)
+
+    def set_scenario(self, scenario):
+        """Set all scenario parameters of dashboard plots"""
+        for plot in self.plots:
+            if plot is not None:
+                if 'scenario-name' in plot.parameters:
+                    plot.parameters['scenario-name'] = scenario
 
     def to_dict(self):
         """Return a dict representation for storing in yaml"""
-        return {'name': self.name,
-                'description': self.description,
-                'layout': self.layout,
-                'plots': [{'plot': p.id(),
-                           'category': p.category_name,
-                           'parameters': p.parameters} for p in self.plots]}
+        out = {'name': self.name, 'layout': self.layout, 
+               'plots': [{'plot': p.id(), 
+                          'category': p.category_name, 
+                          'parameters': p.parameters} if p is not None else {'plot': 'empty'} for p in self.plots]}
+        if self.layout == 'grid':
+            out['grid_width'] = self.grid_width
+        return out
 
 
 def load_plot(project, plot_definition, cache):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
-    # print('load_plot', project, plot_definition)
+    if plot_definition['plot'] == 'empty':
+        return None
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
@@ -161,7 +188,6 @@ def load_plot(project, plot_definition, cache):
 
 def main(config):
     """Test the dashboard functionality. Run it twice, because the dashboard.yml might have been created as a result"""
-    print(read_dashboards(config))
     print(read_dashboards(config))
 
 

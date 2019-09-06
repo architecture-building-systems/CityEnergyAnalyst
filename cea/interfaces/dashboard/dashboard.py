@@ -122,11 +122,13 @@ def main(config):
     import inputs.routes
     import landing.routes
     from server import blueprint as server_blueprint
+    from api import blueprint as api_blueprint
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(landing.routes.blueprint)
+    app.register_blueprint(api_blueprint)
     app.register_blueprint(server_blueprint)
 
     # keep a copy of the configuration we're using
