@@ -113,7 +113,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
         DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
         # add electricity costs, CO2, PE
-        operation_results[0][7] += sum(lca.ELEC_PRICE * el_DX_hourly_Wh)
+        operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
         operation_results[0][8] += sum(el_DX_hourly_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
         operation_results[0][9] += sum(el_DX_hourly_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ oil
         # activation
@@ -134,7 +134,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
         # add costs
         el_total_Wh = el_VCC_Wh + el_CT_Wh
-        operation_results[1][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         operation_results[1][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
         operation_results[1][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
@@ -168,7 +168,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                                                  q_sc_gen_FP_Wh)
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-        operation_results[2][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[2][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         operation_results[2][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
         operation_results[2][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
@@ -206,7 +206,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_burner_load_Wh = calc_burner_operation(Qc_nom_AHU_ARU_SCU_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh)
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
-        operation_results[3][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[3][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         operation_results[3][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
         operation_results[3][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
@@ -246,7 +246,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
             # add el costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
-            operation_results[4][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+            operation_results[4][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
             operation_results[4][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
             operation_results[4][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
@@ -282,7 +282,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
             # add electricity costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-            operation_results[5][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+            operation_results[5][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
             operation_results[5][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
             operation_results[5][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add gas costs

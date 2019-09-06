@@ -251,8 +251,8 @@ def district_heating_network(locator,
     E_used_district_heating_network_W = cost_model.calc_network_costs_heating(locator,
                                                                               master_to_slave_variables,
                                                                               network_features,
-                                                                              lca,
-                                                                              "DH")
+                                                                              "DH",
+                                                                              prices)
 
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE

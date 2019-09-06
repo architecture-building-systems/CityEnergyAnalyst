@@ -174,8 +174,8 @@ def district_cooling_network(locator,
     E_used_district_cooling_network_W = cost_model.calc_network_costs_cooling(locator,
                                                                               master_to_slave_variables,
                                                                               network_features,
-                                                                              lca,
-                                                                              "DC")
+                                                                              "DC",
+                                                                              prices)
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
     performance = dict(performance_costs_generation, **performance_costs_storage)

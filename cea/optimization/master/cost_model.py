@@ -88,7 +88,7 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     return disconnected_costs, disconnected_emissions
 
 
-def calc_network_costs_heating(locator, master_to_slave_vars, network_features, lca, network_type):
+def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type, prices):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
@@ -106,7 +106,7 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
 
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, network_type)
+        master_to_slave_vars, network_features, locator, network_type, prices)
 
     # summarize
     Capex_Network_USD += Capex_pump_USD
@@ -319,7 +319,7 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
     return connected_costs, connected_emissions
 
 
-def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, lca, network_type):
+def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
@@ -337,7 +337,7 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
 
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, network_type)
+        master_to_slave_vars, network_features, locator, network_type, prices)
 
     # COOLING SUBSTATIONS
     DCN_barcode = master_to_slave_vars.DCN_barcode

@@ -128,7 +128,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
         # add variable costs, emissions and primary energy
         Opex_a_var_USD[2][4] += sum(
-            prices.NG_PRICE * Qgas_to_FC_Wh - lca.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
+            prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
         GHG_tonCO2_from_FC = (0.0874 * Qgas_to_FC_Wh * 3600E-6 + 773 * 0.45 * el_from_FC_Wh * 1E-6 -
                               lca.EL_TO_CO2 * el_from_FC_Wh * 3600E-6) / 1E3
         GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
@@ -181,7 +181,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             # add costs
             # electricity
             el_total_Wh = el_GHP_Wh
-            Opex_a_var_USD[3 + i][4] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
+            Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
             GHG_tonCO2[3 + i][5] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_CO2_STD / 1E3)  # ton CO2
             PEN_MJoil[3 + i][6] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.SMALL_GHP_TO_OIL_STD)  # MJ-oil-eq
             # gas
