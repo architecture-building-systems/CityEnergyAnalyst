@@ -150,6 +150,7 @@ def district_cooling_network(locator,
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0:
         master_to_slave_variables.AS_BackupVCC_on = 1
+
         for hour in range(HOURS_IN_YEAR):
             Q_BackupVCC_AS_gen_W[hour], \
             E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
