@@ -19,10 +19,10 @@ Subpackages
     cea.optimization
     cea.plots
     cea.resources
-    cea.supply
     cea.technologies
     cea.tests
     cea.utilities
+    cea.workflows
 
 Submodules
 ----------
