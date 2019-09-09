@@ -44,7 +44,7 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         for field in analysis_fields:
             data_frame = data_frame.sort_values(by=field, ascending=False)
             y = data_frame[field].values
-            trace = go.Scatter(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
+            trace = go.Scattergl(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
                                marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -126,7 +126,7 @@ def calc_graph(analysis_fields, data_frame):
     for field in analysis_fields:
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
-        trace = go.Scatter(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
+        trace = go.Scattergl(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph
