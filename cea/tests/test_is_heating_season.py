@@ -1,11 +1,8 @@
 """
-Test to make sure the semantics of :py:meth:`cea.globalvar.GlobalVariables.is_heating_season` matches changes made
-due to the implementation of #251 (move Heating/Cooling season to a non northern-hemisphere-based system).
+ the implementation of #251 (move Heating/Cooling season to a non northern-hemisphere-based system).
 
-This test copies data from the ``globalvar.py`` module, as we intend to remove / replace that functionality with a more
-flexible logic. It also tests the new logic.
 
-Old style: :py:attr:`cea.globalvar.GlobalVariables.seasonhours` was a list with the values [3216, 6192] referring to
+
 the hours to start and stop (?) the heating season as explained in the reproduced method ``is_heating_season`` below.
 
 New style: 6 attributes, ``heating_season_start``, ``heating_season_end``, ``cooling_season_start``,

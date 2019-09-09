@@ -75,7 +75,7 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
         data_req = self.process_individual_requirements_curve_electricity()
         for field in self.analysis_field_demand:
             y = (data_req[field].values) / 1E6 # into MWh
-            trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
+            trace = go.Scattergl(x=data.index, y=y, name=NAMING[field],
                                line=dict(width=1, color=COLOR[field]))
 
             graph.append(trace)

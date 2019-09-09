@@ -11,7 +11,6 @@ import time
 import numpy as np
 import pandas as pd
 from scipy import interpolate
-import cea.globalvar
 import cea.inputlocator
 from math import *
 from cea.utilities import epwreader

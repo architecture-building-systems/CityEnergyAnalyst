@@ -10,9 +10,10 @@ import json
 
 import cea.inputlocator
 import cea.plots.supply_system
-from cea.plots.variable_naming import COLORS_TO_RGB
+from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import network_layout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -24,15 +25,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_color(color):
-    return [int(x) for x in COLORS_TO_RGB[color].split('(')[1].split(')')[0].split(',')]
+
 
 
 # Colors for the networks in the map
 COLORS = {
-    'dh': get_color('red'),
-    'dc': get_color('blue'),
-    'disconnected': get_color('grey')
+    'district': get_color_array('white'),
+    'dh': get_color_array('red'),
+    'dc': get_color_array('blue'),
+    'disconnected': get_color_array('grey')
 }
 
 
@@ -49,10 +50,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
     def __init__(self, project, parameters, cache):
         super(SupplySystemMapPlot, self).__init__(project, parameters, cache)
         self.generation = self.parameters['generation']
-        self.individual = self.parameters['individual']
+        self.individual = self.parameters['individual'] if self.generation is not None else 0
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
-        self.input_files = [(self.locator.get_optimization_slave_building_connectivity, [self.individual, self.generation])]
+        self.input_files = [(self.locator.get_optimization_slave_building_connectivity,
+                             [self.individual, self.generation])] if self.generation is not None else []
 
     @property
     def title(self):
@@ -75,13 +77,15 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry())\
             .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()) \
+            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
         dc = self.get_newtork_json(data['path_output_edges_DC'], data['path_output_nodes_DC'])
         dh = self.get_newtork_json(data['path_output_edges_DH'], data['path_output_nodes_DH'])
 
         # Generate div id using hash of parameters
         div = Template(open(template).read())\
             .render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), colors=COLORS,
-                    zone=zone, dc=dc, dh=dh)
+                    zone=zone, district=district, dc=dc, dh=dh)
         return div
 
     def get_newtork_json(self, edges, nodes):
@@ -95,9 +99,26 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         return json.dumps(network_json)
 
     def data_processing(self):
-        # get data from generation
-        building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity(self.individual,
-                                                                                                      self.generation))
+        building_connectivity = None
+
+        if self.generation is not None:
+            # get data from generation
+            building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity
+                                                (self.individual, self.generation))
+            network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
+        else:
+            supply_systems = dbf_to_dataframe(self.locator.get_building_supply())
+            heating_infrastructure = pd.read_excel(self.locator.get_life_cycle_inventory_supply_systems(),
+                                                   sheet_name='HEATING').set_index('code')['scale_hs']
+            cooling_infrastructure = pd.read_excel(self.locator.get_life_cycle_inventory_supply_systems(),
+                                                   sheet_name='COOLING').set_index('code')['scale_cs']
+            building_connectivity = supply_systems[['Name']].copy()
+            building_connectivity['DH_connectivity'] = (
+                    supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)
+            building_connectivity['DC_connectivity'] = (
+                    supply_systems['type_cs'].map(cooling_infrastructure) == 'DISTRICT').astype(int)
+
+            network_name = "base"
 
         # FOR DISTRICT HEATING NETWORK
         if building_connectivity[
@@ -107,7 +128,6 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             disconnected_buildings_DH = [x for x in building_connectivity['Name'].values if
                                          x not in connected_buildings_DH]
             network_type = "DH"
-            network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
             path_output_edges_DH, path_output_nodes_DH = self.create_network_layout(connected_buildings_DH,
                                                                                     network_type, network_name)
         else:
@@ -124,7 +144,6 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             disconnected_buildings_DC = [x for x in building_connectivity['Name'].values if
                                          x not in connected_buildings_DC]
             network_type = "DC"
-            network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
             path_output_edges_DC, path_output_nodes_DC = self.create_network_layout(connected_buildings_DC,
                                                                                     network_type, network_name)
         else:

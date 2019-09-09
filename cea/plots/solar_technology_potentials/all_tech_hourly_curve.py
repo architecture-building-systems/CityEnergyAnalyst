@@ -62,9 +62,9 @@ class AllTechHourlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPot
             y = data_frame[field].values
             name = field.split('_kWh', 1)[0]
             if name.startswith('PV_'):
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
             else:
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, visible='legendonly',
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, visible='legendonly',
                                    marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -79,9 +79,9 @@ def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output
             y = data_frame[field].values
             name = field.split('_kWh', 1)[0]
             if tech == 'PV':
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, marker=dict(color=COLOR[field]))
             else:
-                trace = go.Scatter(x=data_frame.index, y=y, name=name, visible='legendonly',
+                trace = go.Scattergl(x=data_frame.index, y=y, name=name, visible='legendonly',
                                    marker=dict(color=COLOR[field]))
             traces.append(trace)
 

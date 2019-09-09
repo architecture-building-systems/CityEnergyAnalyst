@@ -10,7 +10,6 @@ from cea.datamanagement.data_helper import calc_mainuse
 from cea.datamanagement.data_helper import calc_category
 from cea.utilities.dbf import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
-import cea.globalvar
 import cea.inputlocator
 import cea.config
 from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, CONVERSION_AREA_TO_FLOOR_AREA_RATIO

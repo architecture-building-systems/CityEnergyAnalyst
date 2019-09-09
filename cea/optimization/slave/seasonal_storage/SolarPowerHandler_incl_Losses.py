@@ -19,11 +19,9 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_
     :param Q_solar_available_Wh: solar energy available at a given time step
     :param Q_network_demand_W: network load at a given time step
     :param P_HP_max_W: storage??
-    :param gv: global variables
     :type Q_solar_available_Wh: float
     :type Q_network_demand_W: float
     :type P_HP_max_W: float
-    :type gv: class
 
     :return:Q_to_storage: Thermal Energy going to the Storage Tanks (excl. conversion losses)
         Q_from_storage: Thermal Energy required from storage (excl conversion losses)
