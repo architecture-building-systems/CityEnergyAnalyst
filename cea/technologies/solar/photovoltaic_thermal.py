@@ -698,7 +698,7 @@ def main(config):
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
     # weather hourly_results_per_building
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather hourly_results_per_building done.')
 

@@ -42,10 +42,30 @@ def register_scripts():
             script_runner.__doc__ = 'FIXME: Add API documentation to {}'.format(module_path)
         return script_runner
 
+    class LazyLoader(object):
+        """Allow lazy-loading of cea scripts"""
+        def __init__(self, cea_script):
+            self._cea_script = cea_script
+            self._runner = None
+
+        def __call__(self, *args, **kwargs):
+            self._runner.__call__(*args, **kwargs)
+
+        def __getattribute__(self, item):
+            if item == "_runner" and not object.__getattribute__(self, "_runner"):
+                # lazy load happens here!
+                self._runner = script_wrapper(self._cea_script)
+
+            if item in {"__call__", "_cea_script", "_runner"}:
+                # handle access to some methods / attributes
+                return object.__getattribute__(self, item)
+
+            return getattr(self._runner, item)
+
     for cea_script in sorted(cea.scripts.list_scripts()):
         print("cea.api: loading cea_script: {script}".format(script=cea_script))
         script_py_name = cea_script.name.replace('-', '_')
-        globals()[script_py_name] = script_wrapper(cea_script)
+        globals()[script_py_name] = LazyLoader(cea_script)
 
 
 register_scripts()

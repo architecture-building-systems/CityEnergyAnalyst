@@ -110,7 +110,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = electrical_loads.calc_Eauxf_ve(tsd) #calc auxiliary loads ventilation
         tsd = electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr) #calc auxiliary loads heating and cooling
 
-        #SOME TRICKS FOR THE GRAPHS - see where to put this.
+        #Positive loads
         tsd = latent_loads.calc_latent_gains_from_people(tsd, bpr)
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])

@@ -20,10 +20,8 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
 
     :param locator: locator class
     :param total_demand: dataframe with building demand
-    :param gv: global variables
     :type locator: class
     :type total_demand: class
-    :type gv: class
     :return: hpCosts, hpCO2, hpPrim
     :rtype: tuple
     """

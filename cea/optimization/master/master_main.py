@@ -13,7 +13,8 @@ from deap import algorithms
 from deap import tools, creator, base
 
 from cea.optimization.constants import CXPB, MUTPB
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE,  DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, DC_ACRONYM
+from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
+    DC_ACRONYM
 from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
@@ -38,7 +39,7 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 def objective_function(individual,
                        individual_number,
                        generation,
-                       building_names,
+                       building_names_all,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
                        building_names_heating,
@@ -62,7 +63,7 @@ def objective_function(individual,
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.number_of_generations))
     costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
-                                                             building_names,
+                                                             building_names_all,
                                                              locator,
                                                              network_features,
                                                              config,
@@ -107,7 +108,11 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
-    NIND_GEN0 = 20  # during the warmp up period we make sure we explore a wide range of solutions so the scaler works
+    # during the warmp up period we make sure we explore a wide range of solutions so the scaler works
+    if NGEN < 20:
+        NIND_GEN0 = 20
+    else:
+        NIND_GEN0 = NGEN
     NOBJ = 3  # number of objectives
     P = [2, 1]
     SCALES = [1, 0.5]
@@ -267,23 +272,16 @@ def non_dominated_sorting_genetic_algorithm(locator,
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
-        DCN_network_list_selected = []
-        DHN_network_list_selected = []
-        for individual in pop:
-            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                        column_names,
-                                                                                        column_names_buildings_heating,
-                                                                                        column_names_buildings_cooling)
-            DCN_network_list_selected.append(DCN_barcode)
-            DHN_network_list_selected.append(DHN_barcode)
-
         DHN_network_list_tested = []
         DCN_network_list_tested = []
         for individual in invalid_ind:
-            DHN_barcode, DCN_barcode, individual_with_name_dict = individual_to_barcode(individual,
-                                                                                        column_names,
-                                                                                        column_names_buildings_heating,
-                                                                                        column_names_buildings_cooling)
+            DHN_barcode, DCN_barcode, individual_with_name_dict, _ = individual_to_barcode(individual,
+                                                                                           building_names_all,
+                                                                                           building_names_heating,
+                                                                                           building_names_cooling,
+                                                                                           column_names,
+                                                                                           column_names_buildings_heating,
+                                                                                           column_names_buildings_cooling)
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
@@ -300,8 +298,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
                       all_population_DCN_network_barcode=DCN_network_list,
                       tested_population_DHN_network_barcode=DHN_network_list_tested,
                       tested_population_DCN_network_barcode=DCN_network_list_tested,
-                      selected_population_DHN_network_barcode=DHN_network_list_selected,
-                      selected_population_DCN_network_barcode=DCN_network_list_selected,
                       tested_population=invalid_ind,
                       tested_population_fitness=fitnesses,
                       epsIndicator=epsInd,
@@ -326,57 +322,43 @@ def non_dominated_sorting_genetic_algorithm(locator,
     return pop, logbook
 
 
-def save_generation_dataframes(generation, slected_individuals, locator, DCN_network_list_selected,
+def save_generation_dataframes(generation,
+                               slected_individuals,
+                               locator,
+                               DCN_network_list_selected,
                                DHN_network_list_selected):
+
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["Option " + str(x) for x in individual_list]
-    performance_distributed = pd.DataFrame()
-    performance_cooling = pd.DataFrame()
-    performance_heating = pd.DataFrame()
-    performance_electricity = pd.DataFrame()
+    individual_name_list = ["System " + str(x) for x in individual_list]
+    performance_disconnected = pd.DataFrame()
+    performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
     for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
-        if DHN_barcode.count("1") > 0:
-            performance_heating = pd.concat([performance_heating,
-                                             pd.read_csv(
-                                                 locator.get_optimization_slave_heating_performance(ind, generation))],
-                                            ignore_index=True)
-        if DCN_barcode.count("1") > 0:
-            performance_cooling = pd.concat([performance_cooling,
-                                             pd.read_csv(
-                                                 locator.get_optimization_slave_cooling_performance(ind, generation))],
-                                            ignore_index=True)
+        performance_connected = pd.concat([performance_connected,
+                                           pd.read_csv(locator.get_optimization_slave_connected_performance(ind,
+                                                                                                            generation))],
+                                          ignore_index=True)
 
-        performance_distributed = pd.concat([performance_distributed, pd.read_csv(
+        performance_disconnected = pd.concat([performance_disconnected, pd.read_csv(
             locator.get_optimization_slave_disconnected_performance(ind, generation))], ignore_index=True)
-        performance_electricity = pd.concat([performance_electricity, pd.read_csv(
-            locator.get_optimization_slave_electricity_performance(ind, generation))], ignore_index=True)
         performance_totals = pd.concat([performance_totals,
                                         pd.read_csv(
                                             locator.get_optimization_slave_total_performance(ind, generation))],
                                        ignore_index=True)
 
-    performance_distributed['individual'] = individual_list
-    performance_cooling['individual'] = individual_list
-    performance_heating['individual'] = individual_list
-    performance_electricity['individual'] = individual_list
+    performance_disconnected['individual'] = individual_list
+    performance_connected['individual'] = individual_list
     performance_totals['individual'] = individual_list
-    performance_distributed['individual_name'] = individual_name_list
-    performance_cooling['individual_name'] = individual_name_list
-    performance_heating['individual_name'] = individual_name_list
-    performance_electricity['individual_name'] = individual_name_list
+    performance_disconnected['individual_name'] = individual_name_list
+    performance_connected['individual_name'] = individual_name_list
     performance_totals['individual_name'] = individual_name_list
-    performance_distributed['generation'] = generation
-    performance_cooling['generation'] = generation
-    performance_heating['generation'] = generation
-    performance_electricity['generation'] = generation
+    performance_disconnected['generation'] = generation
+    performance_connected['generation'] = generation
     performance_totals['generation'] = generation
 
     # save all results to disk
-    performance_distributed.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
-    performance_cooling.to_csv(locator.get_optimization_generation_cooling_performance(generation))
-    performance_heating.to_csv(locator.get_optimization_generation_heating_performance(generation))
-    performance_electricity.to_csv(locator.get_optimization_generation_electricity_performance(generation))
+    performance_disconnected.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
+    performance_connected.to_csv(locator.get_optimization_generation_connected_performance(generation))
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation))
 
 
@@ -490,8 +472,8 @@ def get_column_names_individual(district_heating_network,
     # 3 cases are possible
     if district_heating_network and district_cooling_network:
         # local variables
-        heating_unit_names_share = [x for x,y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
-        cooling_unit_names_share = [x for x,y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        heating_unit_names_share = [x for x, y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        cooling_unit_names_share = [x for x, y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         # combine both strings and calculate the ranges of each part of the individual
@@ -502,7 +484,7 @@ def get_column_names_individual(district_heating_network,
 
     elif district_heating_network:
         # local variables
-        heating_unit_names_share = [x for x,y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        heating_unit_names_share = [x for x, y in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names_share = []
         column_names_buildings_cooling = []
@@ -510,7 +492,7 @@ def get_column_names_individual(district_heating_network,
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x for x,y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
+        cooling_unit_names_share = [x for x, y in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems()]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names_share = []
         column_names_buildings_heating = []

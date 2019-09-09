@@ -14,7 +14,6 @@ from cea.resources import geothermal
 import collections
 import geopandas as gpd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import os
 import random
@@ -842,7 +841,8 @@ def calculate_ground_temperature(locator, config):
     :return: list of ground temperatures, one for each hour of the year
     :rtype: list[np.float64]
     """
-    weather_file = config.weather
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    weather_file = locator.get_weather_file()
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
