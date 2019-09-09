@@ -244,7 +244,7 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     return buildings_connected_emissions_primary_energy
 
 
-def summary_fuel_electricity_consumption( district_cooling_fuel_requirements_dispatch,
+def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                          district_heating_fuel_requirements_dispatch,
                                          district_microgrid_requirements_dispatch):
     # join in one dictionary to facilitate the iteration
