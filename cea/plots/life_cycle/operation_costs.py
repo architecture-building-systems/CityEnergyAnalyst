@@ -23,8 +23,8 @@ class OperationCostsPlot(cea.plots.life_cycle.LifeCycleAnalysisPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack',
-                         yaxis=dict(title='Yearly Operation Costs [$/yr]', domain=[0.35, 1]),
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='Yearly Operation Costs [$/yr]'),
                          xaxis=dict(title='Building Name'))
 
     def calc_graph(self):

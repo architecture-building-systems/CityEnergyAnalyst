@@ -42,7 +42,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         self.category_path = os.path.join('testing', 'supply-system-overview')
         self.generation = self.parameters['generation']
         self.individual = self.parameters['individual']
-        self.timeframe = self.parameters['timeframe']
+        self.input_files = []
 
     @cea.plots.cache.cached
     def process_individual_dispatch_curve_heating(self):
@@ -96,7 +96,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     def process_individual_requirements_curve_electricity(self):
         data_el_requirements = pd.read_csv(
             self.locator.get_optimization_slave_electricity_requirements_data(self.individual,
-                                                                               self.generation)).set_index('DATE')
+                                                                              self.generation)).set_index('DATE')
         if self.timeframe == "daily":
             data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
             data_el_requirements = data_el_requirements.resample('D').sum()
@@ -107,3 +107,21 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
             data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
             data_el_requirements = data_el_requirements.resample('M').sum()
         return data_el_requirements
+
+    @cea.plots.cache.cached
+    def process_individual_ramping_capacity(self):
+        data_el_exports_imports = pd.read_csv(
+            self.locator.get_optimization_slave_electricity_activation_pattern(self.individual,
+                                                                               self.generation))
+        lenght = data_el_exports_imports.shape[0]
+        ramping = []  # store how much it needs to import or export
+        ramping.append(data_el_exports_imports.loc[lenght - 1, "E_GRID_directload_W"]
+                       - data_el_exports_imports.loc[0, "E_GRID_directload_W"])
+        for hour in range(0, lenght-1):
+            ramping.append(data_el_exports_imports.loc[hour, "E_GRID_directload_W"]
+                           - data_el_exports_imports.loc[hour + 1, "E_GRID_directload_W"])
+
+        data_el_exports_imports = data_el_exports_imports.set_index('DATE')
+        data_el_exports_imports.index = pd.to_datetime(data_el_exports_imports.index)
+        data_el_exports_imports["E_GRID_ramping_W"] = ramping
+        return data_el_exports_imports

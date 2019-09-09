@@ -37,21 +37,22 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
             "E_HP_SC_ET_req_W",
             "E_HP_PVT_req_W",
             "E_HP_Server_req_W",
-            "E_HPSew_req_W",
-            "E_HPLake_req_W",
+            "E_HP_Sew_req_W",
+            "E_HP_Lake_req_W",
             "E_GHP_req_W",
             "E_BaseBoiler_req_W",
             "E_PeakBoiler_req_W",
             "E_BackupBoiler_req_W",
-            "E_FreeCooling_req_W",
-            "E_VCC_req_W",
-            "E_VCC_backup_req_W",
-            "E_ACH_req_W",
-            "E_CT_req_W",
+            "E_DCN_req_W",
+            "E_BaseVCC_WS_req_W",
+            "E_PeakVCC_WS_req_W",
+            "E_BaseVCC_AS_req_W",
+            "E_PeakVCC_AS_req_W",
+            "E_BackupVCC_AS_req_W",
 
             # Due to heating and cooling networks
-            "E_Pump_DHN_req_W",
-            "E_Pump_DCN_req_W",
+            "E_DHN_req_W",
+            "E_DCN_req_W",
 
             # Due to Seasonal storage
             "E_Storage_charging_req_W",
@@ -67,6 +68,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']
+        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
@@ -99,7 +101,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
         # data about demand
         for field in self.analysis_field_demand:
             y = (data[field].values) / 1E6  # into MWh
-            trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
+            trace = go.Scattergl(x=data.index, y=y, name=NAMING[field],
                                line=dict(width=1, color=COLOR[field]))
 
             graph.append(trace)

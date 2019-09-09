@@ -126,7 +126,8 @@ class PlotBase(object):
 
         FIXME: what about columns with negative values?
         """
-        return [field for field in fields if data[field].sum() > 0.0]
+        import numpy as np
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
@@ -160,20 +161,7 @@ class PlotBase(object):
 
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
-        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=20, b=50), 'hovermode': 'closest'})
-        fig['layout']['updatemenus'] = [dict(direction="down",
-                                             showactive=True,
-                                             x=0,
-                                             xanchor="right",
-                                             y=1,
-                                             yanchor="bottom",
-                                             buttons=[dict(label='ON',
-                                                           method='relayout',
-                                                           args=['showlegend', True]),
-                                                      dict(label='OFF',
-                                                           method='relayout',
-                                                           args=['showlegend', False])
-                                                      ])]
+        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=20, b=50), 'hovermode': 'closest', 'font': dict(size=10)})
         fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
