@@ -9,7 +9,7 @@ import os
 import warnings
 
 import pandas as pd
-
+import time
 import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import LcaCalculations
@@ -58,6 +58,7 @@ def moo_optimization(locator, weather_file, config):
     :returns: None
     :rtype: Nonetype
     '''
+    t0 = time.clock()
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -92,6 +93,8 @@ def moo_optimization(locator, weather_file, config):
                                                         buildings_electricity_demand,
                                                         network_features, config, prices, lca)
 
+    t1 = time.clock()
+    print('Centralized Optimization succeeded after %s seconds' %(t1-t0))
 
 # ============================
 # test
@@ -111,10 +114,8 @@ def main(config):
         import sys
         print(err.message)
         sys.exit(1)
-
     moo_optimization(locator=locator, weather_file=weather_file, config=config)
 
-    print('test_optimization_main() succeeded')
 
 
 def check_input_files(config, locator):
