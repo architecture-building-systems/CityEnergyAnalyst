@@ -271,6 +271,12 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance.csv' % locals())
 
+    def get_optimization_generation_total_performance_pareto(self,  gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'gen_%(gen_num)s_total_performance_pareto.csv' % locals())
+
+
 
     def get_preprocessing_costs(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
