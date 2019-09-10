@@ -195,7 +195,8 @@ def check_electricity_bal(results, building, building_result_path, tech):
                           results.filter(like='el_oau_chi').sum(axis=1) + results['el_ct']
     else:
         Electricity_OUT = results['el_scu_pump'] + results['el_chi_ht'] + \
-                          results['el_lcu_fan'] + results['el_chi_lt'] + \
+                          results['el_chi_lt'] + \
+                          results.filter(like='el_lcu').sum(axis=1) + \
                           results.filter(like='el_oau_out').sum(axis=1) + \
                           results.filter(like='el_oau_in').sum(axis=1) + \
                           results.filter(like='el_oau_chi').sum(axis=1) + results['el_ct']
@@ -213,6 +214,8 @@ def check_electricity_bal(results, building, building_result_path, tech):
     el_OUT_dict['SCU pump'] = results['el_scu_pump']
     el_OUT_dict['SCU chiller'] = results['el_chi_ht']
     el_OUT_dict['LCU fan'] = results['el_lcu_fan']
+    if 'el_lcu_reheat' in results.columns.values:
+        el_OUT_dict['LCU reheater'] = results['el_lcu_reheat']
     el_OUT_dict['LCU chiller'] = results['el_chi_lt']
     el_OUT_dict['OAU fan'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan']
     el_OUT_dict['OAU chiller'] = results.filter(like='el_oau_chi').sum(axis=1)
@@ -492,15 +495,21 @@ def set_up_electricity_df(tech, results):
     electricity_df = pd.DataFrame()
     # lcu
     electricity_df['el_chi_lt'] = results['el_chi_lt']
-    electricity_df['el_aux_lcu'] = results['el_lcu_fan']
+    if 'el_lcu_reheat' in results.columns.values:
+        electricity_df['el_fan_lcu'] = results['el_lcu_fan']
+        electricity_df['el_reheat_lcu'] = results['el_lcu_reheat']
+    else:
+        electricity_df['el_fan_lcu'] = results['el_lcu_fan']
+
     # oau
     if tech == 'HCS_LD':
-        electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan'] + \
+        electricity_df['el_fan_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results['el_oau_out_fan'] + \
                                        results['el_oau_out_by_fan']
         electricity_df['el_hp_oau'] = results['el_LDHP']
     else:
-        electricity_df['el_aux_oau'] = results.filter(like='el_oau_in').sum(axis=1) + results.filter(
+        electricity_df['el_fan_oau'] = results.filter(like='el_oau_in').filter(like='fan').sum(axis=1) + results.filter(
             like='el_oau_out').sum(axis=1)
+        electricity_df['el_reheat_oau'] = results.filter(like='el_oau_in').filter(like='reheat').sum(axis=1)
         electricity_df['el_chi_oau'] = results.filter(like='el_oau_chi').sum(axis=1)
 
     # scu
@@ -527,14 +536,14 @@ def output_el_usage_by_units(tech, electricity_df, results, building, building_r
     q_ct_oau = results.filter(like='q_oau_chi').sum(axis=1)
     q_ct_total = q_ct_lcu + q_ct_scu + q_ct_oau
 
-    el_per_unit_df['el_lcu'] = results['el_chi_lt'] + results['el_lcu_fan'] + \
+    el_per_unit_df['el_lcu'] = electricity_df['el_chi_lt'] + electricity_df['el_fan_lcu'] + electricity_df['el_reheat_lcu']+ \
                                results['el_ct'] * (q_ct_lcu / q_ct_total).fillna(0)
     el_per_unit_df['el_scu'] = results['el_chi_ht'] + results['el_scu_pump'] + \
                                results['el_ct'] * (q_ct_scu / q_ct_total).fillna(0) if 'status' not in tech else 0
     if tech == 'HCS_LD':
-        el_per_unit_df['el_oau'] = electricity_df['el_aux_oau'] + electricity_df['el_hp_oau']
+        el_per_unit_df['el_oau'] = electricity_df['el_fan_oau'] + electricity_df['el_hp_oau']
     else:
-        el_per_unit_df['el_oau'] = electricity_df['el_aux_oau'] + electricity_df['el_chi_oau'] + \
+        el_per_unit_df['el_oau'] = electricity_df['el_fan_oau'] + electricity_df['el_reheat_oau'] + electricity_df['el_chi_oau'] + \
                                    results['el_ct'] * (q_ct_oau / q_ct_total).fillna(0)
     el_per_unit_df['el_total'] = results['SU_elec']
     el_per_unit_df = el_per_unit_df * 1000 / Af_m2
@@ -576,11 +585,11 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     # calculate electricity used in each technology
     output_df['el_total'] = output_df.sum(axis=1)
     output_df['el_scu'] = output_df['el_aux_scu'] + output_df['el_chi_ht']
-    output_df['el_lcu'] = output_df['el_aux_lcu'] + output_df['el_chi_lt']
+    output_df['el_lcu'] = output_df['el_fan_lcu'] + output_df['el_reheat_lcu'] + output_df['el_chi_lt']
     if tech == 'HCS_LD':
-        output_df['el_oau'] = output_df['el_aux_oau'] + output_df['el_hp_oau']
+        output_df['el_oau'] = output_df['el_fan_oau'] + output_df['el_hp_oau']
     else:
-        output_df['el_oau'] = output_df['el_aux_oau'] + output_df['el_chi_oau']
+        output_df['el_oau'] = output_df['el_fan_oau'] + output_df['el_reheat_oau'] + output_df['el_chi_oau']
     if tech == 'HCS_ER0' or 'HCS_IEHX' or 'HCS_coil':
         output_df['el_oau_reheat'] = results['q_reheat']
     else:
@@ -680,13 +689,13 @@ def calc_el_stats(building, building_result_path, electricity_df, operation_df, 
     output_df['scu'] = output_df['el_chi_ht'] / output_df['el_total'] * 100
     output_df['scu_aux'] = output_df['el_aux_scu'] / output_df['el_total'] * 100
     output_df['lcu'] = output_df['el_chi_lt'] / output_df['el_total'] * 100
-    output_df['lcu_aux'] = output_df['el_aux_lcu'] / output_df['el_total'] * 100
+    output_df['lcu_aux'] = (output_df['el_fan_lcu'] + output_df['el_reheat_lcu']) / output_df['el_total'] * 100
     if tech == 'HCS_LD':
         output_df['oau'] = output_df['el_hp_oau'] / output_df['el_total'] * 100
-        output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
+        output_df['oau_aux'] = output_df['el_fan_oau'] / output_df['el_total'] * 100
     else:
         output_df['oau'] = output_df['el_chi_oau'] / output_df['el_total'] * 100
-        output_df['oau_aux'] = output_df['el_aux_oau'] / output_df['el_total'] * 100
+        output_df['oau_aux'] = (output_df['el_fan_oau'] + output_df['el_reheat_oau']) / output_df['el_total'] * 100
     output_df['ct'] = output_df['el_ct'] / output_df['el_total'] * 100
 
     ## export results
@@ -1119,13 +1128,16 @@ def plot_electricity_usages(building, building_result_path, electricity_df, resu
               (0.65098, 0.847059, 0.32941, 1), (0.8, 0.9, 0.32941, 1),
               (0.70196078, 0.70196078, 0.70196078, 1), (0.70196078, 0.73196078, 0.8, 1),
               (0.5, 0.5, 0.7, 1)]
+    colors = ['#fae57c', '#7d723e', '#ffc0cb', '#7f6065', '#ffc3a0', '#7f6150', '#b0e0e6', '#69868a',
+              '#90ce92', '#567b57']
     # initialize the vertical-offset for the stacked bar chart
     y_offset = np.zeros(electricity_per_area_df.shape[0])
     # plot bars
     for c in range(len(electricity_per_area_df.columns)):
         column = electricity_per_area_df.columns[c]
-        label_dict = {'el_chi_lt':'RAU chiller', 'el_aux_lcu':'RAU fan', 'el_aux_oau':'OAU fan', 'el_chi_oau':'OAU chiller',
-                      'el_chi_ht':'SCU chiller', 'el_aux_scu':'SCU pump', 'el_ct': 'Cooling Tower'}
+        label_dict = {'el_chi_lt':'RAU chiller', 'el_fan_lcu':'RAU fan', 'el_reheat_lcu': 'RAU reheat',
+                      'el_fan_oau':'OAU fan', 'el_reheat_oau':'OAU reheat', 'el_chi_oau':'OAU chiller',
+                      'el_chi_ht':'SCU chiller', 'el_aux_scu':'SCU aux', 'el_ct': 'Cooling Tower'}
         ax.bar(x_ticks, electricity_per_area_df[column], bar_width, bottom=y_offset, alpha=opacity, color=colors[c],
                label=label_dict[column])
         y_offset = y_offset + electricity_per_area_df[column]
