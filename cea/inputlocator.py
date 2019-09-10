@@ -515,6 +515,13 @@ class InputLocator(object):
             name = default_weather_name
         if os.path.exists(name) and name.endswith('.epw'):
             return name
+
+        if not name in self.get_weather_names():
+            # allow using an abbreviation like "Zug" for "Zug-inducity_1990_2010_TMY"
+            for n in self.get_weather_names():
+                if n.lower().startswith(name.lower()):
+                    name = n
+                    break
         weather_file = os.path.join(self.weather_path, name + '.epw')
         if not os.path.exists(weather_file):
             return os.path.join(self.weather_path, default_weather_name + '.epw')
