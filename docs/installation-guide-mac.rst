@@ -3,6 +3,9 @@
 Installation guide for macOS
 ============================
 
+.. note:: We don't support installing the CEA on a macOS system - there are currently a bunch of things that don't
+   work correctly. This guide shows how far we got. Use it if you're feeling adventurous and would like to help out.
+
 Follow these instructions to install the CityEnergyAnalyst (CEA) on a macOS system (tested with Mojave 10.14.5) from the source
 
 Prerequisites
