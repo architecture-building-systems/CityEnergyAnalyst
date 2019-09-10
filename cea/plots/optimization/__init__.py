@@ -49,7 +49,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
 
     @cea.plots.cache.cached
-    def process_generation_total_performance(self):
+    def process_generation_total_performance_pareto(self):
         # Import multi-criteria data
         if self.multi_criteria:
             try:
@@ -58,7 +58,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 raise IOError("Please run the multi-criteria analysis tool first or set multi-criteria = False")
 
         else:
-            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance(self.generation))
+            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
         return data_processed
 
 
