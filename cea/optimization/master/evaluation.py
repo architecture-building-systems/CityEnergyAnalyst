@@ -70,7 +70,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = master.export_data_to_master_to_slave_class(locator,
-                                                                       config,
                                                                        gen,
                                                                        ind_num,
                                                                        individual_with_name_dict,
@@ -172,6 +171,10 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                               district_cooling_generation_dispatch,
                                                                                               district_cooling_electricity_requirements_dispatch)
 
+    # print("DISTRICT NATURAL GAS / BIOMASS GRID OPERATION")
+    # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
+
+
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_connected_costs, \
     buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
@@ -180,6 +183,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                        district_electricity_dispatch,
                                                                                        district_heating_fuel_requirements_dispatch,
                                                                                        district_cooling_fuel_requirements_dispatch,
+                                                                                       district_electricity_demands,
                                                                                        prices,
                                                                                        lca)
 
