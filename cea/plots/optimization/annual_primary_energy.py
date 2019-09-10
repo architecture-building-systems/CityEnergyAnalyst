@@ -21,6 +21,7 @@ class AnnualPENPlot(cea.plots.optimization.GenerationPlotBase):
     name = "Annual primary energy"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
+        'normalization': 'plots-optimization:normalization',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -29,12 +30,29 @@ class AnnualPENPlot(cea.plots.optimization.GenerationPlotBase):
         self.analysis_fields = ["PEN_sys_connected_MJoil",
                                 "PEN_sys_disconnected_MJoil",
                                 ]
-
+        self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.titley = self.calc_titles()
+
+    def calc_titles(self):
+        if self.normalization == "gross floor area":
+            titley = 'Annual primary energy (non-renewable) [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "net floor area":
+            titley = 'Annual primary energy (non-renewable) [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "air conditioned floor area":
+            titley = 'Annual primary energy (non-renewable) [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "building occupancy":
+            titley = 'Annual primary energy (non-renewable) [MJ Oil-eq/pax.yr]'
+        else:
+            titley = 'Annual primary energy (non-renewable) [MJ Oil-eq/yr]'
+        return titley
 
     @property
     def title(self):
-        return "Annual primary energy for generation #%s" % self.generation
+        if self.normalization != "none":
+            return "Annual primary energy for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
+        else:
+            return "Annual primary energyfor generation {generation}".format(generation=self.generation)
 
     @property
     def output_path(self):
@@ -45,11 +63,12 @@ class AnnualPENPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Annual primary energy (non-renewable) [MJ oil-eq/year]'))
+                         yaxis=dict(title=self.titley))
 
     def calc_graph(self):
         self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance_pareto()
+        data = self.normalize_data(data, self.normalization, self.analysis_fields)
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -73,7 +92,9 @@ def main():
     AnnualPENPlot(config.project,
                   {'buildings': None,
                    'scenario-name': config.scenario_name,
-                   'generation': config.plots_optimization.generation},
+                   'generation': config.plots_optimization.generation,
+                   'normalization': config.plots_optimization.normalization
+                   },
                   cache).plot(auto_open=True)
 
 
