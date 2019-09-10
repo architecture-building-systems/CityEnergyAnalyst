@@ -33,12 +33,39 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                 'Capex_total_sys_USD',
                                 'Opex_a_sys_USD']
         self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'PEN_sys_MJoil']
+        self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         self.multi_criteria = self.parameters['multicriteria']
+        self.titlex, self.titley, self.titlez = self.calc_titles()
+
+    def calc_titles(self):
+        if self.normalization == "gross floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [ton CO2-eq/m2.yr]'
+            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "net floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [ton CO2-eq/m2.yr]'
+            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "air conditioned floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [ton CO2-eq/m2.yr]'
+            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+        elif self.normalization == "building occupancy":
+            titlex = 'Total annualized costs [USD$(2015)/pax.yr]'
+            titley = 'GHG emissions [ton CO2-eq/pax.yr]'
+            titlez = 'Primary Energy [MJ Oil-eq/pax.yr]'
+        else:
+            titlex = 'Total annualized costs [USD$(2015)/yr]'
+            titley = 'GHG emissions [ton CO2-eq/yr]'
+            titlez = 'Primary Energy [MJ Oil-eq/yr]'
+
+        return titlex, titley, titlez
 
     @property
     def layout(self):
         data = self.process_generation_total_performance_pareto()
+        data = self.normalize_data(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -51,15 +78,19 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
                                       [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
         return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7),
-                         xaxis=dict(title='Total annualized costs [USD$(2015)/yr]', domain=[0, 1],
+                         xaxis=dict(title=self.titlex, domain=[0, 1],
                                     range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title='GHG emissions [ton CO2-eq]', domain=[0.3, 1.0],
+                         yaxis=dict(title=self.titley, domain=[0.3, 1.0],
                                     range=ranges_some_room_for_graph[1]))
 
 
     @property
     def title(self):
-        return "Costs, emissions, and primary energy"
+        if self.normalization != "none":
+            return "Pareto curve for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
+        else:
+            return "Pareto curve for generation {generation}".format(generation=self.generation)
+
 
     @property
     def output_path(self):
@@ -68,6 +99,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     def calc_graph(self):
         data = self.process_generation_total_performance_pareto()
+        data = self.normalize_data(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -77,7 +109,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         graph = []
         trace = go.Scattergl(x=xs, y=ys, mode='markers', name='data', text=individual_names,
                            marker=dict(size='12', color=zs,
-                                       colorbar=go.ColorBar(title='Primary Energy [MJoil]', titleside='bottom'),
+                                       colorbar=go.ColorBar(title=self.titlez, titleside='bottom'),
                                        colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
 
@@ -163,9 +195,8 @@ def main():
                                     {'buildings': None,
                                      'scenario-name': config.scenario_name,
                                      'generation': config.plots_optimization.generation,
-                                     'multicriteria': config.plots_optimization.multicriteria},
+                                     'multicriteria': config.plots_optimization.multicriteria,
+                                     'normalization': config.plots_optimization.normalization},
                                     cache).plot(auto_open=True)
-
-
 if __name__ == '__main__':
     main()
