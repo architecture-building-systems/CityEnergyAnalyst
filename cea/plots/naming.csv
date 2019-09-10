@@ -316,6 +316,8 @@ Cost Analysis,Disconnected_costs_USD,$USD(2015),Disconnected costs,grey_light
 Cost Analysis,Capex_a_sys_disconnected_USD,$USD(2015)/yr,Annual CAPEX of decentralized energy systems,yellow_light
 Cost Analysis,Opex_a_sys_disconnected_USD,$USD(2015)/yr,Annual OPEX of decentralized energy systems,blue_light
 Cost Analysis,Capex_a_sys_connected_USD,$USD(2015)/yr,Annual CAPEX of central energy system,yellow
+Cost Analysis,Capex_total_sys_disconnected_USD,$USD(2015)/yr,total CAPEX of decentralized energy systems,yellow_light
+Cost Analysis,Capex_total_sys_connected_USD,$USD(2015)/yr,total CAPEX of central energy system,yellow
 Cost Analysis,Opex_a_sys_connected_USD,$USD(2015)/yr,Annual OPEX of central energy system,blue
 Cost Analysis,Capex_Decentralized_USD,$USD(2015),Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_USD,$USD(2015),OPEX of decentralized energy systems in buildings,blue
