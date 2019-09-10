@@ -57,16 +57,16 @@ REFERENCE_CASES = {
                                       "masterplan")}
 
 REFERENCE_CASES_DATA = {
-    'open': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'open': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
              'radiation': 'open.baseline.radiation.csv',
              'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
-    'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'zug/baseline': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'zug.baseline.radiation.csv',
                      'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
-    'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                         'radiation': 'hq.baseline.radiation.csv',
                         'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
-    'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                           'radiation': 'hq.masterplan.radiation.csv',
                           'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
