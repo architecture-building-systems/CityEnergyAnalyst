@@ -31,11 +31,6 @@ class GenerationPlotBase(cea.plots.PlotBase):
     category_name = "optimization"
 
     # default parameters for plots in this category - override if your plot differs
-    expected_parameters = {
-        'multicriteria': 'plots-optimization:multicriteria',
-        'generation': 'plots-optimization:generation',
-        'scenario-name': 'general:scenario-name',
-    }
 
     def __init__(self, project, parameters, cache):
         """
@@ -46,6 +41,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
         """
         super(GenerationPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
+
         self.generation = self.parameters['generation']
 
     @cea.plots.cache.cached
@@ -59,6 +55,26 @@ class GenerationPlotBase(cea.plots.PlotBase):
 
         else:
             data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
+        return data_processed
+
+    def normalize_data(self, data_processed, normalization, analysis_fields):
+        if normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['GFA_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['NFA_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Af_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['people0'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+
         return data_processed
 
 
