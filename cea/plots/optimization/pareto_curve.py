@@ -38,7 +38,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     @property
     def layout(self):
-        data = self.process_generation_total_performance()
+        data = self.process_generation_total_performance_pareto()
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
@@ -67,7 +67,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                                       self.category_name)
 
     def calc_graph(self):
-        data = self.process_generation_total_performance()
+        data = self.process_generation_total_performance_pareto()
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
