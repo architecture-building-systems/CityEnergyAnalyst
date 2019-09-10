@@ -189,7 +189,7 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
     Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.BG_PRICE
     Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.BG_PRICE
     Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
-    Opex_var_GRID_sell_sys_connected_USD = - sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
+    Opex_var_GRID_sell_sys_connected_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 
     district_variable_costs = {
         "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
@@ -248,7 +248,8 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
 
 def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                          district_heating_fuel_requirements_dispatch,
-                                         district_microgrid_requirements_dispatch):
+                                         district_microgrid_requirements_dispatch,
+                                         district_electricity_demands):
     # join in one dictionary to facilitate the iteration
     join1 = dict(district_microgrid_requirements_dispatch, **district_heating_fuel_requirements_dispatch)
     data = dict(join1, **district_cooling_fuel_requirements_dispatch)
@@ -263,7 +264,12 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
 
     sum_dry_biomass_imports_W = (data['DB_Furnace_req_W'])
 
-    sum_electricity_imports_W = (data['E_GRID_directload_W'])
+                                # discount those of disconnected buildings (which are part of the directload
+                                # dispatch, this is only for calculation of emissions purposes
+                                # it avoids double counting when calculating emissions due to decentralized buildings)
+    sum_electricity_imports_W = (data['E_GRID_directload_W'] -
+                                 district_electricity_demands['E_hs_ww_req_disconnected_W'] -
+                                 district_electricity_demands['E_cs_cre_cdata_req_disconnected_W'])
 
     sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
                                  data['E_Furnace_dry_gen_export_W'] +
@@ -285,6 +291,7 @@ def buildings_connected_costs_and_emissions(district_heating_costs,
                                             district_microgrid_requirements_dispatch,
                                             district_heating_fuel_requirements_dispatch,
                                             district_cooling_fuel_requirements_dispatch,
+                                            district_electricity_demands,
                                             prices,
                                             lca
                                             ):
@@ -295,7 +302,8 @@ def buildings_connected_costs_and_emissions(district_heating_costs,
     sum_electricity_imports_W, \
     sum_electricity_exports_W = summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                                                      district_heating_fuel_requirements_dispatch,
-                                                                     district_microgrid_requirements_dispatch)
+                                                                     district_microgrid_requirements_dispatch,
+                                                                     district_electricity_demands)
 
     # CALCULATE all_COSTS
     district_variable_costs = calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
@@ -615,8 +623,7 @@ def calc_generation_costs_heating(locator,
     :rtype: tuple
     """
 
-    thermal_network = pd.read_csv(
-        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    thermal_network = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
