@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
+from math import factorial
 
 from cea.optimization.constants import CXPB, MUTPB
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
@@ -87,6 +88,11 @@ def objective_function_wrapper(args):
     Wrap arguments because multiprocessing only accepts one argument for the function"""
     return objective_function(*args)
 
+def calc_dictionary_of_all_individuals_tested(dictionary_individuals, gen, invalid_ind):
+    dictionary_individuals['generation'].extend([gen] * len(invalid_ind))
+    dictionary_individuals['individual_id'].extend(range(len(invalid_ind)))
+    dictionary_individuals['individual_code'].extend(invalid_ind)
+    return dictionary_individuals
 
 def non_dominated_sorting_genetic_algorithm(locator,
                                             building_names_all,
@@ -103,27 +109,21 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # LOCAL VARIABLES
     NGEN = config.optimization.number_of_generations  # number of generations
-    NIND = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
+    MU = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
     RANDOM_SEED = config.optimization.random_seed
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
-    # during the warmp up period we make sure we explore a wide range of solutions so the scaler works
-    if NIND < 10:
-        NIND_GEN0 = 10
-    else:
-        NIND_GEN0 = NIND
     NOBJ = 3  # number of objectives
-    P = [2, 1]
-    SCALES = [1, 0.5]
+    P = 12
+    ref_points = tools.uniform_reference_points(NOBJ, P)
+    if MU == None:
+        H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
+        MU = int(H + (4 - H % 4))
     euclidean_distance = 0
     spread = 0
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
-    ref_points = [tools.uniform_reference_points(NOBJ, p, s) for p, s in zip(P, SCALES)]
-    ref_points = np.concatenate(ref_points)
-    _, uniques = np.unique(ref_points, axis=0, return_index=True)
-    ref_points = ref_points[uniques]
 
     # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLUM_NAMES)
     column_names, \
@@ -176,8 +176,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     toolbox.register("evaluate",
                      objective_function_wrapper)
     toolbox.register("select",
-                     tools.selNSGA3,
-                     ref_points=ref_points)
+                     tools.selNSGA3WithMemory(ref_points))
 
     # configure multiprocessing
     if config.multiprocessing:
@@ -185,6 +184,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
         toolbox.register("map", pool.map)
 
     # Initialize statistics object
+    paretofrontier = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
@@ -194,7 +194,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-    pop = toolbox.population(n=NIND_GEN0)
+    pop = toolbox.population(n=MU)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -226,6 +226,9 @@ def non_dominated_sorting_genetic_algorithm(locator,
     record = stats.compile(pop)
     logbook.record(gen=0, evals=len(invalid_ind), **record)
 
+    # create a dictionary to store which individuals that are being calculated
+    record_individuals_tested = {'generation' : [], "individual_id": [], "individual_code": []}
+    record_individuals_tested = calc_dictionary_of_all_individuals_tested(record_individuals_tested, gen=0, invalid_ind=invalid_ind)
     print(logbook.stream)
 
     # Begin the generational process
@@ -265,7 +268,12 @@ def non_dominated_sorting_genetic_algorithm(locator,
             ind.fitness.values = fit
 
         # Select the next generation population from parents and offspring
-        pop = toolbox.select(pop + offspring, NIND)
+        pop = toolbox.select(pop + offspring, MU)
+
+        # get paretofront and update dictionary of individuals evaluated
+        paretofrontier.update(pop)
+        record_individuals_tested = calc_dictionary_of_all_individuals_tested(record_individuals_tested, gen=gen, invalid_ind=invalid_ind)
+
 
         # Compile statistics about the new population
         record = stats.compile(pop)
@@ -288,6 +296,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
         print "Save population \n"
         save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
         save_generation_individuals(column_names, gen, invalid_ind, locator)
+        save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
 
         # Create Checkpoint if necessary
         print "Create CheckPoint", gen, "\n"
@@ -321,22 +330,41 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     return pop, logbook
 
+def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
+
+    performance_totals_pareto = pd.DataFrame()
+    individual_list = []
+    generation_list = []
+    for i, record in enumerate(record_individuals_tested['individual_code']):
+        if record in paretofrontier:
+            ind = record_individuals_tested['individual_id'][i]
+            gen = record_individuals_tested['generation'][i]
+            individual_list.append(ind)
+            generation_list.append(gen)
+            performance_totals_pareto = pd.concat([performance_totals_pareto,
+                                            pd.read_csv(
+                                                locator.get_optimization_slave_total_performance(ind, gen))],
+                                           ignore_index=True)
+
+    individual_name_list = ["Sys " + str(y)+"-"+str(x) for x,y in zip(individual_list,generation_list)]
+    performance_totals_pareto['individual'] = individual_list
+    performance_totals_pareto['individual_name'] = individual_name_list
+    performance_totals_pareto['generation'] = generation_list
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
 def save_generation_dataframes(generation,
                                slected_individuals,
                                locator,
                                DCN_network_list_selected,
                                DHN_network_list_selected):
-
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["System " + str(x) for x in individual_list]
+    individual_name_list = ["Sys " + str(generation)+"-"+str(x) for x in individual_list]
     performance_disconnected = pd.DataFrame()
     performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
     for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
         performance_connected = pd.concat([performance_connected,
-                                           pd.read_csv(locator.get_optimization_slave_connected_performance(ind,
-                                                                                                            generation))],
+                                           pd.read_csv(locator.get_optimization_slave_connected_performance(ind, generation))],
                                           ignore_index=True)
 
         performance_disconnected = pd.concat([performance_disconnected, pd.read_csv(
