@@ -58,9 +58,9 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     Capex_total_cooling_sys_disconnected_USD, \
     Capex_a_cooling_sys_disconnected_USD, \
     Opex_var_cooling_sys_disconnected, \
-    Opex_fixed_cooling_sys_disconnected_USD = calc_costs_emissions_decentralized_DC(
-        DCN_barcode,
-        column_names_buildings_cooling, locator)
+    Opex_fixed_cooling_sys_disconnected_USD = calc_costs_emissions_decentralized_DC(DCN_barcode,
+                                                                                    column_names_buildings_cooling,
+                                                                                    locator)
 
     disconnected_costs = {
         # heating
@@ -194,7 +194,7 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
     district_variable_costs = {
         "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
         "Opex_var_WB_connected_USD": Opex_var_WB_sys_connected_USD,
-        "Opex_var_DB_sconnected_USD": Opex_var_DB_sys_connected_USD,
+        "Opex_var_DB_connected_USD": Opex_var_DB_sys_connected_USD,
         "Opex_var_GRID_imports_connected_USD": Opex_var_GRID_buy_sys_connected_USD,
         "Opex_var_GRID_exports_connected_USD": Opex_var_GRID_sell_sys_connected_USD
     }
@@ -218,8 +218,10 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_TO_CO2_EQ)
     GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_CO2_EQ)
     GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_CO2_EQ)
-    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr, lca.EL_TO_CO2_EQ)
-    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr, lca.EL_TO_CO2_EQ)
+    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr,
+                                                                          lca.EL_TO_CO2_EQ)
+    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr,
+                                                                            lca.EL_TO_CO2_EQ)
 
     PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_EQ)
     PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_OIL_EQ)
