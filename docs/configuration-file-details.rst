@@ -99,7 +99,7 @@ The :py:meth:`cea.config.Parameter.get` method is called on that parameter and t
 Based on the default configuration file, this is defined as::
 
     [general]
-    weather = Zug
+    weather = Zug-inducity_1990_2010_TMY
     weather.type = WeatherPathParameter
     weather.help = either a full path to a weather file or the name of one of the weather files shipped with the CEA
 
