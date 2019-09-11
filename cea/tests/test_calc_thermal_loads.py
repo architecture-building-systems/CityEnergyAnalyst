@@ -27,7 +27,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.examples
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
         cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        weather_path = cls.locator.get_weather('Zug')
+        weather_path = cls.locator.get_weather('Zug-inducity_1990_2010_TMY')
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         year = cls.weather_data['year'][0]
@@ -37,7 +37,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(cls.locator, cls.config, True, True, True, True, True, True, True)
+        cea.datamanagement.data_helper.data_helper(cls.locator, 'CH', True, True, True, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
 

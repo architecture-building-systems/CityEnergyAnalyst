@@ -1,6 +1,7 @@
 """
 Trace the InputLocator calls in a selection of scripts.
 """
+
 import sys
 import os
 import cea.api
@@ -11,6 +12,15 @@ import cea.inputlocator
 import pandas
 import yaml
 from dateutil.parser import parse
+
+__author__ = "Daren Thomas & Jack Hawthorne"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jack Hawthorne", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "2.14"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def create_trace_function(results_set):
@@ -167,6 +177,7 @@ def is_date(data):
         except ValueError:
             return False
 
+
 def replace_repetitive_attr(attr):
     scenario = cea.config.Configuration().__getattr__('scenario')
     buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
@@ -242,6 +253,7 @@ def get_csv_schema(filename):
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
 
+
 def get_json_schema(filename):
     with open(filename, 'r') as f:
         import json
@@ -251,6 +263,7 @@ def get_json_schema(filename):
         attr = replace_repetitive_attr(attr)
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
+
 
 def get_epw_schema(filename):
     epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',

@@ -6,13 +6,6 @@ cea.plots.optimization package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.plots.optimization.old
-
 Submodules
 ----------
 

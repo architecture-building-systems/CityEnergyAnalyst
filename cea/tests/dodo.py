@@ -57,16 +57,16 @@ REFERENCE_CASES = {
                                       "masterplan")}
 
 REFERENCE_CASES_DATA = {
-    'open': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'open': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
              'radiation': 'open.baseline.radiation.csv',
              'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
-    'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'zug/baseline': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'zug.baseline.radiation.csv',
                      'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
-    'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                         'radiation': 'hq.baseline.radiation.csv',
                         'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
-    'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                           'radiation': 'hq.masterplan.radiation.csv',
                           'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
@@ -187,10 +187,15 @@ def task_run_demand():
     import cea.demand.demand_main
 
     def run_demand(scenario_path, weather):
-
+        import cea.config
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
+
+        # make sure weather file is copied to inputs first
+        import cea.datamanagement.weather_helper
+        config.weather_helper.weather = weather
+        cea.datamanagement.weather_helper.main(config)
+
         cea.demand.demand_main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
@@ -200,7 +205,7 @@ def task_run_demand():
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
 
         yield {
-            'name': 'run_demand:%(reference_case)s@%(weather)s' % locals(),
+            'name': 'run_demand:%(reference_case)s' % locals(),
             'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
             'actions': [(run_demand, [], {
                 'scenario_path': scenario_path,
@@ -234,24 +239,20 @@ def task_run_emissions_operation():
     """run the emissions operation script for each reference case"""
     import cea.analysis.lca.operation
 
-    def run_emissions_operation(scenario_path, weather):
+    def run_emissions_operation(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
         cea.analysis.lca.operation.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-
         yield {
             'name': 'run_emissions_operation:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
+            'task_dep': ['run_demand:%(reference_case)s' % locals()],
             'actions': [(run_emissions_operation, [], {
                 'scenario_path': scenario_path,
-                'weather': weather,
             })],
         }
 
@@ -260,24 +261,20 @@ def task_run_emissions_mobility():
     """run the emissions mobility script for each reference case"""
     import cea.analysis.lca.mobility
 
-    def run_emissions_mobility(scenario_path, weather):
+    def run_emissions_mobility(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
         cea.analysis.lca.mobility.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-
         yield {
             'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
+            'task_dep': ['run_demand:%(reference_case)s' % locals()],
             'actions': [(run_emissions_mobility, [], {
                 'scenario_path': scenario_path,
-                'weather': weather,
             })],
         }
 
@@ -374,7 +371,7 @@ def task_run_thermal_network():
 
     return {
         'name': 'run_thermal_network',
-        'task_dep': ['run_demand:open@Zug'],
+        'task_dep': ['run_demand:open'],
         'actions': [(run_thermal_network, [], {})],
     }
 

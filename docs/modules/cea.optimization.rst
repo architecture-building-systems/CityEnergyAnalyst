@@ -60,12 +60,4 @@ cea.optimization.slave\_data module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.supportFn module
----------------------------------
-
-.. automodule:: cea.optimization.supportFn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 

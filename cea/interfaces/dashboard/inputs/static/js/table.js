@@ -1,6 +1,8 @@
 var currentTable;
 var tempSelection;
 var editform = $('#cea-column-editor-form');
+const OCCUPANCY_ALERT = 'Remember to run data-helper after editing occupancy to reflect the changes to other building properties.';
+let executedAlert = false;
 
 // Add onclick function to tabs
 $("[id$=-tab]").each(function () {
@@ -58,6 +60,11 @@ function createTable(parent, name, values, columns, types) {
         placeholder = '<div>No matching records found.</div>';
     }
 
+    let editCallback = {};
+    if (name === 'occupancy') {
+        editCallback.dataEdited = showOccupancyAlert;
+    }
+
     $(`#${parent}`).append(`<div id="${name}-table"></div>`);
     currentTable = new Tabulator(`#${name}-table`, {
         index: 'Name',
@@ -70,6 +77,8 @@ function createTable(parent, name, values, columns, types) {
         cellClick: selectRow,
         cellEdited: updateData,
         rowSelectionChanged: addToSelection,
+
+        ...editCallback
     });
 
     createTooltip();
@@ -192,6 +201,13 @@ function createTooltip() {
     });
 }
 
+function showOccupancyAlert() {
+    if (!executedAlert) {
+        executedAlert = true;
+        alert(OCCUPANCY_ALERT);
+    }
+}
+
 $(window).load(function () {
     $('#cea-inputs').show();
 
@@ -211,6 +227,10 @@ $(window).load(function () {
         var columns = inputstore.getColumns(table);
 
         $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
+
+        if (table === 'occupancy') {
+            $('#cea-column-editor-form').on('submit', showOccupancyAlert);
+        }
 
         // TODO: Add input validation
         editform.empty();

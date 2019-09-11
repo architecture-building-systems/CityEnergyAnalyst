@@ -1,6 +1,5 @@
 """
-A collection of classes that write out the demand results files. The `cea.globalvar.GlobalVariables.demand_writer`
-variable references the `DemandWriter` to use. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
+A collection of classes that write out the demand results files. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
 that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_demand` module for an example of using
 the `MonthlyDemandWriter`.
 """
@@ -9,7 +8,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-# index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
 
@@ -17,7 +15,6 @@ class DemandWriter(object):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
     Subclasses are expected to:
-    - set the `gv` field to a `cea.globalvar.GlobalVariables` instance in the constructor
     - set the `vars_to_print` field in the constructor (FIXME: describe the `vars_to_print` structure.
     - implement the `write_to_csv` method
     """

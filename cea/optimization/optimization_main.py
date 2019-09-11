@@ -11,7 +11,6 @@ import warnings
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.master import master_main
@@ -53,10 +52,8 @@ def moo_optimization(locator, weather_file, config):
 
     :param locator: path to input locator
     :param weather_file: path to weather file
-    :param gv: global variables class
     :type locator: cea.inputlocator.InputLocator
     :type weather_file: string
-    :type gv: class
 
     :returns: None
     :rtype: Nonetype
@@ -64,7 +61,7 @@ def moo_optimization(locator, weather_file, config):
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = list(total_demand.Name.values)  # needs to be a list to avoid errors
+    building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     prices = Prices(locator, config)
 
@@ -87,7 +84,7 @@ def moo_optimization(locator, weather_file, config):
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
     master_main.non_dominated_sorting_genetic_algorithm(locator,
-                                                        building_names,
+                                                        building_names_all,
                                                         district_heating_network,
                                                         district_cooling_network,
                                                         buildings_heating_demand,
@@ -106,7 +103,7 @@ def main(config):
     run the whole optimization routine
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_file = config.weather
+    weather_file = locator.get_weather_file()
 
     try:
         check_input_files(config, locator)

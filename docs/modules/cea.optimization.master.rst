@@ -25,10 +25,10 @@ cea.optimization.master.cost\_model module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.master.crossover module
-----------------------------------------
+cea.optimization.master.emissions\_model module
+-----------------------------------------------
 
-.. automodule:: cea.optimization.master.crossover
+.. automodule:: cea.optimization.master.emissions_model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -57,6 +57,14 @@ cea.optimization.master.master\_main module
     :undoc-members:
     :show-inheritance:
 
+cea.optimization.master.master\_to\_slave module
+------------------------------------------------
+
+.. automodule:: cea.optimization.master.master_to_slave
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.master.mutations module
 ----------------------------------------
 
@@ -73,18 +81,10 @@ cea.optimization.master.performance\_aggregation module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.master.selection module
-----------------------------------------
+cea.optimization.master.performance\_aggregation module
+-------------------------------------------------------
 
-.. automodule:: cea.optimization.master.selection
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.optimization.master.summarize\_individual module
-----------------------------------------------------
-
-.. automodule:: cea.optimization.master.summarize_individual
+.. automodule:: cea.optimization.master.performance_aggregation
     :members:
     :undoc-members:
     :show-inheritance:
@@ -93,6 +93,14 @@ cea.optimization.master.summarize\_network module
 -------------------------------------------------
 
 .. automodule:: cea.optimization.master.summarize_network
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.master.validation module
+-----------------------------------------
+
+.. automodule:: cea.optimization.master.validation
     :members:
     :undoc-members:
     :show-inheritance:

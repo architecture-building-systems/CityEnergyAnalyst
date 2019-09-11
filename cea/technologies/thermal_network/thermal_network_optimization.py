@@ -4,7 +4,6 @@ hydraulic network
 
 from __future__ import division
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network as thermal_network
@@ -34,7 +33,7 @@ class Network_info(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, network_type):
         # sotre key variables
         self.locator = locator
         self.config = config
@@ -50,7 +49,6 @@ class Network_info(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -65,18 +63,22 @@ class Network_info(object):
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
-def thermal_network_optimization(config, gv, locator):
+
+def thermal_network_optimization(config, locator):
     # initialize timer
     start = time.time()
     # synchronize representative week method in network simulation
-    config.thermal_network.use_representative_week_per_month = config.thermal_network_optimization.use_representative_week_per_month
-    # read network type and ensure consistency in network layout and network_info
-    network_type = config.thermal_network.network_type
-    config.network_layout.network_type = network_type
+    with config.ignore_restrictions():
+        config.thermal_network.use_representative_week_per_month = (
+            config.thermal_network_optimization.use_representative_week_per_month
+        )
+        # read network type and ensure consistency in network layout and network_info
+        network_type = config.thermal_network.network_type
+        config.network_layout.network_type = network_type
     if network_type == 'DH':
         raise ValueError('This optimization procedure is not ready for district heating yet!')
-    ## initialize object
-    network_info = Network_info(locator, config, network_type, gv)
+    # initialize object
+    network_info = Network_info(locator, config, network_type)
     # write buildings names to object
     total_demand = pd.read_csv(locator.get_total_demand())
     network_info.building_names = total_demand.Name.values
@@ -86,7 +88,7 @@ def thermal_network_optimization(config, gv, locator):
         # if there is no input from the config file as to which sites are potential plant locations, set all as possible locations
         config.thermal_network_optimization.possible_plant_sites = network_info.building_names
 
-    ## create initial population
+    # create initial population
     print 'Creating initial population.'
     newMutadedGen = generateInitialPopulation(network_info)
     # iterate through number of generations
@@ -855,10 +857,9 @@ def main(config):
 
     ## initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
 
     ## start optimization
-    thermal_network_optimization(config, gv, locator)
+    thermal_network_optimization(config, locator)
 
     return np.nan
 

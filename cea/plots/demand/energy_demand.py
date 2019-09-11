@@ -32,7 +32,7 @@ class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='stack',
-                         yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                         yaxis=dict(title='Energy Demand [MWh/yr]'),
                          xaxis=dict(title='Building Name'), showlegend=True)
 
     def calc_graph(self):
