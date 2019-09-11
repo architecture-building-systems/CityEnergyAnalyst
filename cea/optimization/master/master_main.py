@@ -186,12 +186,12 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Initialize statistics object
     paretofrontier = tools.ParetoFront()
+    halloffame = tools.HallOfFame(MU)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
-    stats.register('pop', copy.deepcopy)
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
@@ -226,6 +226,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Compile statistics about the population
     record = stats.compile(pop)
+    paretofrontier.update(pop)
+    halloffame.update(pop)
     logbook.record(gen=0, evals=len(invalid_ind), **record)
 
     # create a dictionary to store which individuals that are being calculated
@@ -238,9 +240,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Initialization of variables
     DHN_network_list = []
     DCN_network_list = []
-    halloffame = []
-    halloffame_fitness = []
-    epsInd = []
     for gen in range(1, NGEN + 1):
         print ("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
         # Select and clone the next generation individuals
@@ -248,6 +247,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        invalid_ind = [ind for ind in invalid_ind if ind not in pop]
         fitnesses = toolbox.map(toolbox.evaluate,
                                 izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
                                      repeat(building_names_all, len(invalid_ind)),
@@ -271,10 +271,11 @@ def non_dominated_sorting_genetic_algorithm(locator,
             ind.fitness.values = fit
 
         # Select the next generation population from parents and offspring
-        pop = toolbox.select(pop + offspring, MU)
+        pop = toolbox.select(pop + invalid_ind, MU)
 
         # get paretofront and update dictionary of individuals evaluated
         paretofrontier.update(pop)
+        halloffame.update(pop)
         record_individuals_tested = calc_dictionary_of_all_individuals_tested(record_individuals_tested, gen=gen,
                                                                               invalid_ind=invalid_ind)
 
@@ -300,27 +301,13 @@ def non_dominated_sorting_genetic_algorithm(locator,
         save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
         save_generation_individuals(column_names, gen, invalid_ind, locator)
         save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
+        save_generation_halloffame_individuals(locator, gen, record_individuals_tested, halloffame)
 
         # Create Checkpoint if necessary
         print "Creating CheckPoint", gen, "\n"
         with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
             cp = dict(selected_population=pop,
-                      generation=gen,
-                      all_population_DHN_network_barcode=DHN_network_list,
-                      all_population_DCN_network_barcode=DCN_network_list,
-                      tested_population_DHN_network_barcode=DHN_network_list_tested,
-                      tested_population_DCN_network_barcode=DCN_network_list_tested,
-                      tested_population=invalid_ind,
-                      tested_population_fitness=fitnesses,
-                      epsIndicator=epsInd,
-                      halloffame=halloffame,
-                      halloffame_fitness=halloffame_fitness,
-                      euclidean_distance=euclidean_distance,
-                      spread=spread,
-                      detailed_electricity_pricing=config.optimization.detailed_electricity_pricing,
-                      district_heating_network=config.optimization.district_heating_network,
-                      district_cooling_network=config.optimization.district_cooling_network
-                      )
+                      tested_population=invalid_ind)
             json.dump(cp, fp)
     if config.multiprocessing:
         pool.close()
@@ -349,6 +336,26 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
     performance_totals_pareto['generation'] = generation_list
     performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
+def save_generation_halloffame_individuals(locator, generation, record_individuals_tested, hall_of_fame):
+    performance_totals_halloffame = pd.DataFrame()
+    individual_list = []
+    generation_list = []
+    for i, record in enumerate(record_individuals_tested['individual_code']):
+        if record in hall_of_fame:
+            ind = record_individuals_tested['individual_id'][i]
+            gen = record_individuals_tested['generation'][i]
+            individual_list.append(ind)
+            generation_list.append(gen)
+            performance_totals_halloffame = pd.concat([performance_totals_halloffame,
+                                                   pd.read_csv(
+                                                       locator.get_optimization_slave_total_performance(ind, gen))],
+                                                  ignore_index=True)
+
+    individual_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
+    performance_totals_halloffame['individual'] = individual_list
+    performance_totals_halloffame['individual_name'] = individual_name_list
+    performance_totals_halloffame['generation'] = generation_list
+    performance_totals_halloffame.to_csv(locator.get_optimization_generation_total_performance_halloffame(generation))
 
 def save_generation_dataframes(generation,
                                slected_individuals,
