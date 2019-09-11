@@ -8,7 +8,6 @@ from __future__ import print_function
 
 from flask import request, current_app
 from flask_restplus import Namespace, Resource, fields
-from cea.interfaces.dashboard.dashboard import socketio
 
 
 __author__ = "Daren Thomas"
@@ -42,5 +41,5 @@ class WriteStream(Resource):
         streams.setdefault(jobid, []).append(msg)
 
         # emit the message using socket.io
-        socketio.emit('cea-worker-message', {"message": msg, "jobid": jobid})
+        current_app.socketio.emit('cea-worker-message', {"message": msg, "jobid": jobid})
         print("\n/server/streams/write/<{jobid}>: {msg}".format(**locals()), end='')
