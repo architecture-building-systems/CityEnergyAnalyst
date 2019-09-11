@@ -141,7 +141,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     for schedule in ['people'] + occupant_schedules + electricity_schedules + water_schedules + process_schedules:
         schedules[schedule] = np.zeros(HOURS_IN_YEAR, dtype=float)
         normalizing_values[schedule] = 0.0
-    for num, use in enumerate(list_uses): # range(len(list_uses)):
+    for num, use in enumerate(list_uses):
         if bpr.occupancy[use] > 0:
             current_share_of_use = bpr.occupancy[use]
             if archetype_values.loc[use, 'people'] != 0:  # do not consider when the value is 0
@@ -231,7 +231,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
     len_mu_v = len(mu_v)
 
-    for num, use in enumerate(list_uses): # for num in range(len(list_uses)):
+    for num, use in enumerate(list_uses):
         current_share_of_use = bpr.occupancy[use]
         current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
         if current_share_of_use > 0:
@@ -409,7 +409,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
 
     current_schedule = np.zeros(HOURS_IN_YEAR)
     normalizing_value = 0.0
-    for num, use in enumerate(list_uses): # for num in range(len(list_uses)):
+    for num, use in enumerate(list_uses):
         if archetype_values[use] != 0:  # do not consider when the value is 0
             if occupancy[use] > 0:
                 current_share_of_use = occupancy[use]
