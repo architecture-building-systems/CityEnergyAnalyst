@@ -556,13 +556,11 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
     return occ, el, dhw, pro
 
 
-def read_schedules(use, archetypes_schedules):
+def read_schedules(archetypes_schedules):
     """
     This function reads the occupancy, electricity, domestic hot water, process electricity and monthly schedules for a
     given use type from the schedules database.
 
-    :param use: occupancy type (e.g. 'SCHOOL')
-    :type use: str
     :param archetypes_schedules: Excel worksheet containing the schedule database for a given occupancy type from the archetypes database
     :type archetypes_schedules: DataFrame
 
@@ -581,13 +579,22 @@ def read_schedules(use, archetypes_schedules):
     """
 
     # read schedules from excel file
-    occ = [archetypes_schedules['Weekday_1'].values[:24], archetypes_schedules['Saturday_1'].values[:24], archetypes_schedules['Sunday_1'].values[:24]]
-    el = [archetypes_schedules['Weekday_2'].values[:24], archetypes_schedules['Saturday_2'].values[:24], archetypes_schedules['Sunday_2'].values[:24]]
-    dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24], archetypes_schedules['Sunday_3'].values[:24]]
+    occ = [archetypes_schedules['Weekday_1'].values[:24],
+           archetypes_schedules['Saturday_1'].values[:24],
+           archetypes_schedules['Sunday_1'].values[:24]]
+    el = [archetypes_schedules['Weekday_2'].values[:24],
+          archetypes_schedules['Saturday_2'].values[:24],
+          archetypes_schedules['Sunday_2'].values[:24]]
+    dhw = [archetypes_schedules['Weekday_3'].values[:24],
+           archetypes_schedules['Saturday_3'].values[:24],
+           archetypes_schedules['Sunday_3'].values[:24]]
     month = archetypes_schedules['month'].values[:12]
 
-    if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
-        pro = [archetypes_schedules['Weekday_4'].values[:24], archetypes_schedules['Saturday_4'].values[:24], archetypes_schedules['Sunday_4'].values[:24]]
+    # if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
+    if 'Weekday_4' in archetypes_schedules.columns:
+        pro = [archetypes_schedules['Weekday_4'].values[:24],
+               archetypes_schedules['Saturday_4'].values[:24],
+               archetypes_schedules['Sunday_4'].values[:24]]
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
 
@@ -633,7 +640,7 @@ def schedule_maker(dates, locator, list_uses):
 
         # read lists of every daily profile
         occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
-            use, archetypes_schedules)
+            archetypes_schedules)
 
         # get occupancy density per schedule in a list
         if area_per_occupant != 0:
