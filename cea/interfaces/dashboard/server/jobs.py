@@ -5,9 +5,8 @@ from __future__ import division
 from __future__ import print_function
 
 from flask_restplus import Namespace, Resource, fields, reqparse
-from flask import request
+from flask import request, current_app
 
-from cea.interfaces.dashboard.dashboard import socketio
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -102,7 +101,7 @@ class JobStarted(Resource):
     def post(self, jobid):
         job = jobs[jobid]
         job.state = JOB_STATE_STARTED
-        socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
+        current_app.socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
         return job
 
 
@@ -113,7 +112,7 @@ class JobSuccess(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_SUCCESS
         job.error = None
-        socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
+        current_app.socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
         return job
 
 
@@ -124,5 +123,5 @@ class JobError(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
         job.error = request.data
-        socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
+        current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
         return job

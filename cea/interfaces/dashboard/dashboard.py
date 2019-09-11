@@ -12,6 +12,7 @@ import sys
 
 socketio = None
 
+
 def list_tools():
     """List the tools known to the CEA. The result is grouped by category.
     """
@@ -134,6 +135,7 @@ def main(config):
     # keep a copy of the configuration we're using
     app.cea_config = config
     app.plot_cache = plot_cache
+    app.socketio = socketio
 
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
