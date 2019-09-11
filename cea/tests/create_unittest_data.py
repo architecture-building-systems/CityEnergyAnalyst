@@ -30,13 +30,13 @@ def main(output_file):
     locator = InputLocator(reference_case)
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
-    weather_path = locator.get_weather('Zug')
+    weather_path = locator.get_weather('Zug-inducity_1990_2010_TMY')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # run properties script
     import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True, True)
+    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True)
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)

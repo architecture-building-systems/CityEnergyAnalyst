@@ -55,9 +55,9 @@ class AllTechYearlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPot
                      'Example: PV_walls_east_E + PVT_walls_south_E/Q + SC_FP_roofs_top_Q <br><br>'
                 , x=0.8, y=1.1,
                 xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
-        return go.Layout(title=self.title, barmode='stack', annotations=annotations,
-                       yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1], range=range),
-                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=range),
+        return go.Layout(barmode='stack', annotations=annotations,
+                       yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', range=range),
+                       yaxis2=dict(overlaying='y', anchor='x', range=range),
                        xaxis=dict(title='Building'), legend=dict(x=1, y=0.1, xanchor='left'))
 
     def calc_range(self, df):
@@ -379,17 +379,18 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
     # cache = cea.plots.cache.NullPlotCache()
+    weather_file = locator.get_weather_file()
     AllTechYearlyPlot(config.project, {'buildings': None,
                                        'scenario-name': config.scenario_name,
-                                       'weather': config.weather},
+                                       'weather': weather_file},
                       cache).plot(auto_open=True)
     AllTechYearlyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                        'scenario-name': config.scenario_name,
-                                       'weather': config.weather},
+                                       'weather': weather_file},
                       cache).plot(auto_open=True)
     AllTechYearlyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                        'scenario-name': config.scenario_name,
-                                       'weather': config.weather},
+                                       'weather': weather_file},
                       cache).plot(auto_open=True)
 
 

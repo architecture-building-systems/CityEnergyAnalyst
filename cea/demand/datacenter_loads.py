@@ -40,6 +40,17 @@ def calc_Edata(bpr, tsd, schedules):
 
     return tsd
 
+def calc_mcpcdata(Qcdata_sys):
+    if Qcdata_sys > 0.0:
+        Tcdata_sys_re = T_C_DATA_RE_0
+        Tcdata_sys_sup = T_C_DATA_SUP_0
+        mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
+    else:
+        Tcdata_sys_re = np.nan
+        Tcdata_sys_sup = np.nan
+        mcpcdata_sys = 0.0
+    return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
+
 def calc_Qcdata_sys(bpr, tsd):
     # calculate cooling loads for data center
     tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
@@ -50,20 +61,9 @@ def calc_Qcdata_sys(bpr, tsd):
     Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
                 Lv * Y)
     # calculate system loads for data center
-    tsd['Qcdata_sys'] = tsd['Qcdata'] + Qcdata_d_ls
-
-    def calc_mcpcdata(Qcdata_sys):
-        if Qcdata_sys > 0.0:
-            Tcdata_sys_re = T_C_DATA_RE_0
-            Tcdata_sys_sup = T_C_DATA_SUP_0
-            mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
-        else:
-            Tcdata_sys_re = np.nan
-            Tcdata_sys_sup = np.nan
-            mcpcdata_sys = 0.0
-        return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
-
-    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(tsd['Qcdata_sys'])
+    #WHATCHOUT! if we change it, then the optimization use of wasteheat breaks. mcpdata has to be positive and Qcdata_sys too!
+    tsd['Qcdata_sys'] = abs(tsd['Qcdata'] + Qcdata_d_ls) # convert to positive so we get the mcp in positive numbers
+    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(abs(tsd['Qcdata_sys']))
 
     return tsd
 

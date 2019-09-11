@@ -7,7 +7,6 @@ from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefil
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import cea.globalvar
 import cea.inputlocator
 from math import *
 import time
@@ -970,7 +969,7 @@ def main(config):
     panel_type = panel_properties['type']
 
     # weather data
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 

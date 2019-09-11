@@ -52,7 +52,7 @@ Analysis:
     description: Simulate demand for sensitivity analysis samples
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
                  'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
                  'sensitivity-demand:sample-index', 'demand']
@@ -105,6 +105,13 @@ Data Management:
       - [get_building_age]
       - [get_building_occupancy]
 
+  - name: weather-helper
+    label: Weather helper
+    description: Sets the weather file to use for simulation for a scenario
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.weather_helper
+    parameters: ['general:scenario', weather-helper]
+
 Demand forecasting:
 
   - name: demand
@@ -112,9 +119,10 @@ Demand forecasting:
     description: Calculate the Demand
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.demand_main
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', demand, 'general:debug']
     input-files:
+      - [get_weather_file]
       - [get_envelope_systems]
       - [get_building_comfort]
       - [get_archetypes_system_controls]
@@ -154,7 +162,6 @@ Energy potentials:
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
-                 'general:weather',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'solar:buildings',
@@ -170,13 +177,14 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: photovoltaic
     label: Photovoltaic panels
     description: Calculate electricity production from solar photovoltaic technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic
-    parameters: ['general:scenario', 'general:weather', 'solar:type-pvpanel',
+    parameters: ['general:scenario', 'solar:type-pvpanel',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice']
     input-files:
@@ -184,6 +192,7 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: sewage-potential
     label: Sewage heat potential
@@ -200,7 +209,7 @@ Energy potentials:
     description: Calculate heat production from solar collector technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.solar_collector
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings']
@@ -209,19 +218,21 @@ Energy potentials:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_supply_systems]
+      - [get_weather_file]
 
   - name: radiation-daysim
     label: Solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.resources.radiation_daysim.radiation_main
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', 'general:weather', radiation-daysim]
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', radiation-daysim]
     input-files:
       - [get_envelope_systems]
       - [get_district_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
+      - [get_weather_file]
 
 Optimization:
 
@@ -230,14 +241,14 @@ Optimization:
     description: Optimize network design variables (plant locations, layout,...)
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network_optimization
-    parameters: ['general:scenario', 'general:weather', thermal-network-optimization]
+    parameters: ['general:scenario', thermal-network-optimization]
 
   - name: optimization
     label: Central supply system
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'general:weather', 'thermal-network:network-type', 'thermal-network:network-names',
+    parameters: ['general:scenario', 'thermal-network:network-type', 'thermal-network:network-names',
                  'optimization', 'decentralized', 'general:multiprocessing']
 
   - name: decentralized
@@ -245,7 +256,7 @@ Optimization:
     description: Run decentralized building optimization
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'general:weather', 'decentralized']
+    parameters: ['general:scenario', 'decentralized']
 
 Networks:
 
@@ -265,14 +276,15 @@ Networks:
     description: Solve the thermal hydraulic network
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network
-    parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
                  'thermal-network-optimization:use-representative-week-per-month']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network_type", "thermal-network:network_name"]
+      - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
+      - [get_weather_file]
 
 Utilities:
 
@@ -307,7 +319,7 @@ default:
     description: Create plots for the default energy system of an urban scenario
     interfaces: [cli, arcgis]
     module: cea.plots.plots_main
-    parameters: ['general:scenario', 'general:weather', plots]
+    parameters: ['general:scenario', plots]
 #
 #  - name: plots-scenario-comparisons
 #    label: Plots comparison
@@ -404,7 +416,7 @@ default:
     lable: Workflow
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
-    module: cea.tests.workflow
+    module: cea.workflows.workflow
     parameters: [workflow]
 
 

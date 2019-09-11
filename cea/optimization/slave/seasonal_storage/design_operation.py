@@ -45,7 +45,6 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     :type STORE_DATA:
     :type master_to_slave_vars:
     :type P_HP_max_W:
-    :type gV:
     :return:
     :rtype:
     """
@@ -59,8 +58,9 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     mdot_heat_netw_total_kgpers = read_data_from_Network_summary(CSV_NAME, locator)
 
     # Get ground temperatures
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
-                                                         'windspd_ms', 'skytemp_C']]
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
+                                                       'windspd_ms', 'skytemp_C']]
     T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     # Calculate DH operation with on-site energy sources and storage

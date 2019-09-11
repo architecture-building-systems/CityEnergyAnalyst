@@ -116,11 +116,13 @@ def main(config):
     import plots.routes
     import inputs.routes
     import landing.routes
+    from api import blueprint as api_blueprint
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(landing.routes.blueprint)
+    app.register_blueprint(api_blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config
@@ -129,6 +131,7 @@ def main(config):
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
+    # jobid -> ScriptInfoObject
 
     # FIXME: this needs to be replaced with a better solution
     threading.Timer(0.5, lambda: webbrowser.open('http://localhost:5050')).start()
