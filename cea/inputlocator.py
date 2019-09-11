@@ -619,6 +619,10 @@ class InputLocator(object):
         """scenario/inputs/building-properties/"""
         return os.path.join(self.scenario, 'inputs', 'building-properties')
 
+    def get_building_schedules_folder(self):
+        """scenario/inputs/building-properties/"""
+        return os.path.join(self.scenario, 'inputs', 'building-schedules')
+
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
 
@@ -718,7 +722,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
+        return os.path.join(self.get_building_schedules_folder(), '{}_schedules.csv'.format(building_name))
 
     def get_building_schedules(self, building_name):
         """
@@ -728,7 +732,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_demand_results_folder(), '{}_schedules.csv'.format(building_name))
+        return os.path.join(self.get_schedule_results_folder(), '{}_schedules.csv'.format(building_name))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
@@ -1127,6 +1131,10 @@ class InputLocator(object):
     def get_predefined_hourly_setpoints(self, building_name, type_of_district_network):
         """scenario/outputs/data/demand/{building_name}_.csv"""
         return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.csv')
+
+    def get_schedule_results_folder(self):
+        """scenario/outputs/data/demand"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'schedules')
 
     # THERMAL NETWORK
 
