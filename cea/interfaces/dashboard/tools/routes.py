@@ -24,7 +24,7 @@ def route_index():
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {jobid}".format(**locals()))
-    subprocess.Popen(["cea-worker", jobid])
+    subprocess.Popen(["python", "-m", "cea.worker", jobid])
     return jsonify(jobid)
 
 
