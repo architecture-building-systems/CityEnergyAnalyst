@@ -8,6 +8,7 @@ import pandas as pd
 import geopandas
 import json
 
+import cea.config
 import cea.inputlocator
 import cea.plots.supply_system
 from cea.plots.variable_naming import get_color_array
@@ -23,10 +24,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-
-
 
 # Colors for the networks in the map
 COLORS = {
@@ -58,7 +55,10 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
     @property
     def title(self):
-        return "Supply system map for system #%s" % (self.individual)
+        if self.generation is not None:
+            return "Supply system map for system #{individual} of gen{generation}".format(individual=self.individual,
+                                                                                          generation=self.generation)
+        return "Supply system map for original system"
 
     @property
     def output_path(self):
@@ -75,17 +75,17 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         data = self.data_processing()
 
-        zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry())\
-            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
-        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()) \
-            .to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True)
-        dc = self.get_newtork_json(data['path_output_edges_DC'], data['path_output_nodes_DC'])
-        dh = self.get_newtork_json(data['path_output_edges_DH'], data['path_output_nodes_DH'])
+        zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
+            get_geographic_coordinate_system()).to_json(show_bbox=True)
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
+            get_geographic_coordinate_system()).to_json(show_bbox=True)
+        dc = self.get_newtork_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
+        dh = self.get_newtork_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
 
         # Generate div id using hash of parameters
-        div = Template(open(template).read())\
-            .render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(), data=json.dumps(data), colors=COLORS,
-                    zone=zone, district=district, dc=dc, dh=dh)
+        div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
+                                                     data=json.dumps(data), colors=COLORS,
+                                                     zone=zone, district=district, dc=dc, dh=dh)
         return div
 
     def get_newtork_json(self, edges, nodes):
@@ -94,12 +94,13 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         edges_df = geopandas.GeoDataFrame.from_file(edges)
         nodes_df = geopandas.GeoDataFrame.from_file(nodes)
         network_json = json.loads(edges_df.to_crs(get_geographic_coordinate_system()).to_json())
-        network_json['features']\
-            .extend(json.loads(nodes_df.to_crs(get_geographic_coordinate_system()).to_json())['features'])
+        network_json['features'].extend(
+            json.loads(nodes_df.to_crs(get_geographic_coordinate_system()).to_json())['features'])
         return json.dumps(network_json)
 
     def data_processing(self):
         building_connectivity = None
+        data_processed = {}
 
         if self.generation is not None:
             # get data from generation
@@ -117,51 +118,25 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                     supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)
             building_connectivity['DC_connectivity'] = (
                     supply_systems['type_cs'].map(cooling_infrastructure) == 'DISTRICT').astype(int)
-
             network_name = "base"
 
-        # FOR DISTRICT HEATING NETWORK
-        if building_connectivity[
-            'DH_connectivity'].sum() > 1:  # there are buildings connected and hence we can create the network
-            connected_buildings_DH = [x for x, y in zip(building_connectivity['Name'].values,
-                                                        building_connectivity['DH_connectivity'].values) if y == 1]
-            disconnected_buildings_DH = [x for x in building_connectivity['Name'].values if
-                                         x not in connected_buildings_DH]
-            network_type = "DH"
-            path_output_edges_DH, path_output_nodes_DH = self.create_network_layout(connected_buildings_DH,
-                                                                                    network_type, network_name)
-        else:
-            connected_buildings_DH = []
-            disconnected_buildings_DH = building_connectivity['Name'].values.tolist()
-            path_output_edges_DH = None
-            path_output_nodes_DH = None
-
-        # FOR DISTRICT COOLING NETWORK
-        if building_connectivity[
-            'DC_connectivity'].sum() > 1:  # there are buildings connected and hence we can create the network
-            connected_buildings_DC = [x for x, y in zip(building_connectivity['Name'].values,
-                                                        building_connectivity['DC_connectivity'].values) if y == 1]
-            disconnected_buildings_DC = [x for x in building_connectivity['Name'].values if
-                                         x not in connected_buildings_DC]
-            network_type = "DC"
-            path_output_edges_DC, path_output_nodes_DC = self.create_network_layout(connected_buildings_DC,
-                                                                                    network_type, network_name)
-        else:
-            connected_buildings_DC = []
-            disconnected_buildings_DC = building_connectivity['Name'].values.tolist()
-            path_output_edges_DC = None
-            path_output_nodes_DC = None
-
-        data_processed = {
-            'connected_buildings_DH': connected_buildings_DH,
-            'disconnected_buildings_DH': disconnected_buildings_DH,
-            'path_output_edges_DH': path_output_edges_DH,
-            'path_output_nodes_DH': path_output_nodes_DH,
-            'connected_buildings_DC': connected_buildings_DC,
-            'disconnected_buildings_DC': disconnected_buildings_DC,
-            'path_output_edges_DC': path_output_edges_DC,
-            'path_output_nodes_DC': path_output_nodes_DC,
-        }
+        for network in ['DH', 'DC']:
+            data_processed[network] = {}
+            connectivity = building_connectivity['{}_connectivity'.format(network)]
+            # there are buildings connected and hence we can create the network
+            if connectivity.sum() > 1:
+                data_processed[network]['connected_buildings'] = building_connectivity[connectivity == 1][
+                    'Name'].values.tolist()
+                data_processed[network]['disconnected_buildings'] = building_connectivity[connectivity == 0][
+                    'Name'].values.tolist()
+                data_processed[network]['path_output_edges'], data_processed[network][
+                    'path_output_nodes'] = self.create_network_layout(data_processed[network]['connected_buildings'],
+                                                                      network, network_name)
+            else:
+                data_processed[network]['connected_buildings'] = []
+                data_processed[network]['disconnected_buildings'] = building_connectivity['Name'].values.tolist()
+                data_processed[network]['path_output_edges'] = None
+                data_processed[network]['path_output_nodes'] = None
 
         return data_processed
 
