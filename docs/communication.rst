@@ -7,7 +7,7 @@ CEA website
 ------------
 
 Host: squarespace.com
-Credentials in `here <https://docs.google.com/document/d/19rHXlRvjB3dfZHjWvZ8GMd2tZ0aeGgznsiyd8FChGIg/edit?usp=sharing>`__.
+Credentials: Ask the Product Owner Jimeno A. Fonseca
 Administrator: Product Owner
 Access granted to: Scrum Master, Product Owner, Development team
 
@@ -15,7 +15,7 @@ CEA e-mail
 -------------
 
 Host: arch.ethz.ch
-Credentials in `here <https://docs.google.com/document/d/19rHXlRvjB3dfZHjWvZ8GMd2tZ0aeGgznsiyd8FChGIg/edit?usp=sharing>`__.
+Credentials: Ask the Product Owner Jimeno A. Fonseca
 Administrator: Product Owner
 Access granted to: Scrum Master, Product Owner
 
@@ -23,7 +23,7 @@ CEA messenger
 -------------
 
 Host: ceadev.slack.com
-Credentials in `here <https://docs.google.com/document/d/19rHXlRvjB3dfZHjWvZ8GMd2tZ0aeGgznsiyd8FChGIg/edit?usp=sharing>`__.
+Credential: Ask the Scrum Master Daren Thomas
 Administrator: Scrum Master
 Access granted to: Scrum Master, Product Owner, Development team
 
@@ -31,7 +31,7 @@ CEA newsletter
 --------------
 
 Host: mailchimp.com
-Credentials in `here <https://docs.google.com/document/d/19rHXlRvjB3dfZHjWvZ8GMd2tZ0aeGgznsiyd8FChGIg/edit?usp=sharing>`__.
+Credentials: Ask the Product Owner Jimeno A. Fonseca
 Administrator: Product Owner
 Access granted to: Scrum Master, Product Owner
 
@@ -39,7 +39,7 @@ CEA documents
 -------------
 
 Host: gmail.com
-Credentials in `here <https://docs.google.com/document/d/19rHXlRvjB3dfZHjWvZ8GMd2tZ0aeGgznsiyd8FChGIg/edit?usp=sharing>`__.
+Credentials: Ask the Scrum Master Daren Thomas
 Administrator: Scrum Master
 Access granted to: Scrum Master, Product Owner, Development team
 
