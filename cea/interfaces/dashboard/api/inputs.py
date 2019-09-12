@@ -4,6 +4,7 @@ import cea.config
 import cea.inputlocator
 import cea.utilities.dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.plots.variable_naming import get_color_array
 
 import pandas
 import geopandas
@@ -15,6 +16,12 @@ from collections import OrderedDict
 
 api = Namespace('Inputs', description='Input data for CEA')
 
+COLORS = {
+    'district': get_color_array('white'),
+    'dh': get_color_array('red'),
+    'dc': get_color_array('blue'),
+    'disconnected': get_color_array('grey')
+}
 
 def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
@@ -119,6 +126,7 @@ class AllInputs(Resource):
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network(), trigger_abort=False)
         store['geojsons']['dc'], store['crs']['dc'] = get_network(locator, 'dc', trigger_abort=False)
         store['geojsons']['dh'], store['crs']['dh'] = get_network(locator, 'dh', trigger_abort=False)
+        store['colors'] = COLORS
 
         return store
 
