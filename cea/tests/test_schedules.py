@@ -4,22 +4,24 @@ file `test_schedules.config` that can be created by running this file. Note, how
 test data - you should only do this if you are sure that the new data is correct.
 """
 
+import ConfigParser
+import json
 import os
 import unittest
-import pandas as pd
+
 import numpy as np
-import json
-import ConfigParser
-from cea.inputlocator import ReferenceCaseOpenLocator
+import pandas as pd
+
+import cea.config
+from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
-from cea.demand.occupancy_model import calc_schedules
-from cea.demand.occupancy_model import schedule_maker, get_building_schedules
-from cea.utilities import epwreader
-from cea.demand.demand_main import get_dates_from_year
-import cea.config
 from cea.demand.building_properties import BuildingProperties
-from cea.constants import HOURS_IN_YEAR
+from cea.demand.demand_main import get_dates_from_year
+from cea.demand.occupancy.occupancy_model import calc_schedules
+from cea.demand.occupancy.occupancy_model import schedule_maker, get_building_schedules
+from cea.inputlocator import ReferenceCaseOpenLocator
+from cea.utilities import epwreader
 
 REFERENCE_TIME = 3456
 

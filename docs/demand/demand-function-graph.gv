@@ -95,7 +95,7 @@ digraph demand_function_graph {
     "calc_Qcref";
     label="cea.demand.refrigeration_loads";
   }
-  subgraph "cluster_cea.demand.occupancy_model" {
+  subgraph "cluster_cea.demand.occupancy.occupancy_model" {
     "calc_average";
     "<module>";
     "calc_occ_schedule";
@@ -103,7 +103,7 @@ digraph demand_function_graph {
     "calc_occ";
     "get_yearly_vectors";
     "read_schedules";
-    label="cea.demand.occupancy_model";
+    label="cea.demand.occupancy.occupancy_model";
   }
   subgraph "cluster_cea.technologies.radiators" {
     "calc_radiator";

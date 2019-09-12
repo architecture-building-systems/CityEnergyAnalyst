@@ -3,16 +3,19 @@
 Demand model of thermal loads
 """
 from __future__ import division
+
 import numpy as np
+
+from cea.constants import HOURS_IN_YEAR
 from cea.demand import demand_writers
+from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import latent_loads
-from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-from cea.technologies import heatpumps
+from cea.demand.occupancy import occupancy_model
 from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
+from cea.technologies import heatpumps
 from cea.utilities import reporting
-from cea.constants import HOURS_IN_YEAR
 
 
 def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
