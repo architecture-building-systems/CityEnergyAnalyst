@@ -625,9 +625,13 @@ class InputLocator(object):
         """scenario/inputs/building-properties/"""
         return os.path.join(self.scenario, 'inputs', 'building-properties')
 
+    def get_building_schedules_folder_path(self):
+        """inputs/building-schedules"""
+        return os.path.join('inputs', 'building-schedules')
+
     def get_building_schedules_folder(self):
-        """scenario/inputs/building-properties/"""
-        return os.path.join(self.scenario, 'inputs', 'building-schedules')
+        """scenario/inputs/building-schedules/"""
+        return os.path.join(os.path.join(self.scenario, self.get_building_schedules_folder_path()))
 
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
@@ -1138,9 +1142,13 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building_name}_.csv"""
         return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),  str(building_name) + '_temperature.csv')
 
+    def get_schedule_results_folder_path(self):
+        """outputs/data/schedules"""
+        return os.path.join('outputs', 'data', 'schedules')
+
     def get_schedule_results_folder(self):
-        """scenario/outputs/data/demand"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', 'schedules')
+        """scenario/outputs/data/schedules"""
+        return self._ensure_folder(os.path.join(self.scenario, self.get_schedule_results_folder_path()))
 
     # THERMAL NETWORK
 
