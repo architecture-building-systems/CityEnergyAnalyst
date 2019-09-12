@@ -704,8 +704,10 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
     df_building_schedules.to_csv(schedules_csv_file, index=False)
-    print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
-    print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
+    print("Saving schedules for building {} to %s.".format(building_name) % locator.get_schedule_results_folder_path())
+    print("Please copy (custom) schedules to %s to use them in the next run." % locator.get_building_schedules_folder_path())
+    # print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
+    # print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
 
 
 def get_building_schedules(locator, bpr, date_range, config):
