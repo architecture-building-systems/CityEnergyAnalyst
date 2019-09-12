@@ -115,7 +115,7 @@ cea.demand.latent\_loads module
 cea.demand.occupancy\_model module
 ----------------------------------
 
-.. automodule:: cea.demand.occupancy_model
+.. automodule:: cea.demand.occupancy.occupancy_model
     :members:
     :undoc-members:
     :show-inheritance:

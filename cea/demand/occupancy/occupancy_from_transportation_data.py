@@ -1,19 +1,23 @@
 from __future__ import division
-from datetime import datetime
+
 import copy
+import os
 import xml.etree.ElementTree as ET
+from datetime import datetime
+
+import cea.globalvar
 import geopandas as gpd
 import numpy as np
-import os
 import pandas as pd
+
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.constants import HOURS_IN_DAY, HOURS_IN_YEAR
 from cea.demand.demand_main import get_dates_from_year
-from cea.demand.occupancy_model import calc_individual_occupant_schedule, save_schedules_to_file, schedule_maker
-from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand.occupancy.occupancy_model import calc_individual_occupant_schedule, save_schedules_to_file, \
+    schedule_maker
 from cea.utilities import epwreader
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Martin Mosteiro-Romero"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -31,7 +35,7 @@ FACILITY_TYPES = {'student': ['SCHOOL'], 'employee': ['OFFICE', 'LAB', 'HOSPITAL
 def calc_schedules_from_transportation_data(locator, dates, use_stochastic_occupancy):
     """
     Calculates the schedule for a building using MATSim data when available. When MATSim data is not available, the same
-    procedure from `cea.demand.occupancy_model.calc_schedules` is used.
+    procedure from `cea.occupancy.calc_schedules` is used.
 
     The schedules are normalized such that the final demands and internal gains are calculated from the specified
     building properties and not the archetype values. Depending on the value given to `stochastic_occupancy` either the
