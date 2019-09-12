@@ -223,10 +223,6 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         normalizing_values[schedule] = 0.0
 
-    # vector of mobility parameters
-    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
-    len_mu_v = len(mu_v)
-
     for num, use in enumerate(list_uses):
         current_share_of_use = bpr.occupancy[use]
         current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
@@ -235,8 +231,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 archetype_values.loc[use, 'people'] * current_share_of_use * bpr.rc_model['NFA_m2'])
             archetype_schedule = archetype_schedules[use]['people']
             for occupant in range(occupants_in_current_use):
-                mu = mu_v[int(len_mu_v * random.random())]
-                occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
+                occupant_pattern = calc_individual_occupant_schedule(archetype_schedule)
                 current_stochastic_schedule += occupant_pattern
                 schedules['people'] += occupant_pattern
                 for label in occupant_schedules:
@@ -290,12 +285,11 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     return schedules
 
 
-def calc_individual_occupant_schedule(mu, archetype_schedule):
+def calc_individual_occupant_schedule(archetype_schedule):
     """
-    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2007).
+    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2007). mu is the so-called
+    "parameter of mobility" used in their model and is assumed here to be a random float between 0 and 0.5.
 
-    :param mu: parameter of mobility
-    :type mu: float
     :param archetype_schedule: schedule of occupancy for the corresponding archetype
     :type archetype_schedule: list[float]
 
@@ -303,8 +297,14 @@ def calc_individual_occupant_schedule(mu, archetype_schedule):
     :rtype pattern: list[int]
     """
 
-    # assign initial state: assume equal to the archetypal occupancy schedule at t = 0
-    state = archetype_schedule[0]
+    # get a random mobility parameter mu between 0 and 0.5
+    mu = np.random.rand() / 2
+
+    # assign initial state by comparing a random number to the archetypal probability of occupant presence
+    if random.random() <= archetype_schedule[0]:
+        state = 1
+    else:
+        state = 0
 
     # start list of occupancy states throughout the year
     pattern = [state]
@@ -627,8 +627,6 @@ def schedule_maker(dates, locator, list_uses):
     archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index(
         'Code')
 
-    # create empty list of archetypal schedules
-    schedules = []
     # create empty dict of archetypal schedules
     archetype_schedules = {}
     # collect archetypal values for the list of uses in the project
@@ -653,7 +651,7 @@ def schedule_maker(dates, locator, list_uses):
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         archetype_schedules[use] = dict(zip(['people', 'electricity', 'water', 'processes'], schedule))
         archetype_schedules[use]['monthly'] = month_schedule
-        schedules.append(schedule)
+        archetype_schedules[use]['base_load'] = np.min(el_schedules)
 
     archetype_values.rename(columns={'Qs_Wp': 'Qs', 'X_ghp': 'X', 'Ea_Wm2': 'Ea', 'El_Wm2': 'El', 'Epro_Wm2': 'Epro',
                                      'Qcre_Wm2': 'Qcre', 'Ed_Wm2': 'Ed', 'Vww_lpd': 'Vww', 'Vw_lpd': 'Vw',
@@ -769,6 +767,7 @@ def main(config):
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     use_stochastic_occupancy = config.demand.use_stochastic_occupancy
+    print 'use_stochastic_occupancy: % s' % str(use_stochastic_occupancy)
 
     # calculate schedules
     archetype_schedules, archetype_values = schedule_maker(dates, locator, list_uses)
