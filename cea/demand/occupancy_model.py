@@ -87,7 +87,8 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
             schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         # electricity and process schedules may be greater than 0
         for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro']:
-            codes = {'Ea': 1, 'El': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3,'Qcre': 3}
+            codes = {'Ea': 'electricity', 'El': 'electricity', 'Ed': 'electricity', 'Epro': 'processes',
+                     'Qhpro': 'processes','Qcre': 'processes'}
             schedules[schedule] = bpr.rc_model['Aef'] * \
                                   calc_remaining_schedules_deterministic(archetype_schedules,
                                                                          archetype_values[schedule], list_uses,
@@ -132,9 +133,6 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
 
-    # schedule_codes define which archetypal schedule should be used for the given schedule
-    schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
-
     # start empty schedules
     schedules = {}
     normalizing_values = {}
@@ -145,11 +143,11 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
         if bpr.occupancy[use] > 0:
             current_share_of_use = bpr.occupancy[use]
             if archetype_values.loc[use, 'people'] != 0:  # do not consider when the value is 0
-                current_schedule = np.rint(np.array(archetype_schedules[num][0]) * archetype_values.loc[
+                current_schedule = np.rint(np.array(archetype_schedules[use]['people']) * archetype_values.loc[
                     use, 'people'] * current_share_of_use * bpr.rc_model['NFA_m2'])
                 # make sure there is at least one occupant per occupancy type in the building
                 if np.max(current_schedule) < 1.0:
-                    current_schedule = np.round(np.array(archetype_schedules[num][0]))
+                    current_schedule = np.round(np.array(archetype_schedules[use]['people']))
                 schedules['people'] += current_schedule
                 for label in occupant_schedules:
                     current_archetype_values = archetype_values[label]
@@ -168,18 +166,16 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     # create remaining schedules
     for schedule in electricity_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
-                                                                     schedule_codes['electricity'],
+                                                                     list_uses, bpr.occupancy, 'electricity',
                                                                      archetype_values['people']) * bpr.rc_model['Aef']
     for schedule in water_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy, schedule_codes['water'],
+                                                                     list_uses, bpr.occupancy, 'water',
                                                                      archetype_values['people']) * \
                               bpr.rc_model['NFA_m2'] * people_per_square_meter
     for schedule in process_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
-                                                                     schedule_codes['processes'],
+                                                                     list_uses, bpr.occupancy, 'processes',
                                                                      archetype_values['people']) * bpr.rc_model['Aef']
 
     return schedules
@@ -217,8 +213,8 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     electricity_schedules = ['Ea', 'El', 'Qcre', 'Ed']
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
-    # schedule_codes define which archetypal schedule should be used for the given schedule
-    schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
+    # # schedule_codes define which archetypal schedule should be used for the given schedule
+    # schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
 
     # start empty schedules
     schedules = {}
@@ -237,7 +233,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         if current_share_of_use > 0:
             occupants_in_current_use = int(
                 archetype_values.loc[use, 'people'] * current_share_of_use * bpr.rc_model['NFA_m2'])
-            archetype_schedule = archetype_schedules[num][0]
+            archetype_schedule = archetype_schedules[use]['people']
             for occupant in range(occupants_in_current_use):
                 mu = mu_v[int(len_mu_v * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
@@ -257,10 +253,9 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
             # multiplied by the number of people from the stochastic calculation
             if occupants_in_current_use > 0:
                 current_stochastic_schedule /= occupants_in_current_use
-            unoccupied_times = np.array([i == 0 for i in archetype_schedules[num][schedule_codes['people']]])
+            unoccupied_times = np.array([i == 0 for i in archetype_schedules[use]['people']])
             normalized_schedule = make_normalized_stochastic_schedule(current_stochastic_schedule,
-                                                                      archetype_schedules[num][
-                                                                          schedule_codes['people']],
+                                                                      archetype_schedules[use]['people'],
                                                                       unoccupied_times)
             # since electricity demand is != 0 when the number of occupants is 0,
             # share_time_occupancy_density = 1 if there are no occupants and equal to the normalized schedule otherwise
@@ -271,19 +266,19 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 if archetype_values.loc[use, label] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values.loc[use, label], current_share_of_use,
-                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[num][schedule_codes['electricity']],
+                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[use]['electricity'],
                         share_time_occupancy_density)
             for label in water_schedules:
                 if archetype_values.loc[use, label] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values.loc[use, label], current_share_of_use,
-                        bpr.rc_model['NFA_m2'], schedules[label], archetype_schedules[num][schedule_codes['water']],
+                        bpr.rc_model['NFA_m2'], schedules[label], archetype_schedules[use]['water'],
                         share_time_occupancy_density * archetype_values.loc[use, 'people'])
             for label in process_schedules:
                 if archetype_values.loc[use, label] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values.loc[use, label], current_share_of_use,
-                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[num][schedule_codes['processes']],
+                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[use]['processes'],
                         share_time_occupancy_density)
 
     for label in occupant_schedules + electricity_schedules + process_schedules + water_schedules:
@@ -413,7 +408,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
         if archetype_values[use] != 0:  # do not consider when the value is 0
             if occupancy[use] > 0:
                 current_share_of_use = occupancy[use]
-                if schedule_code == 2:
+                if schedule_code == 'water':
                     # for variables that depend on the number of people, the schedule needs to be calculated by number
                     # of people for each use at each time step, not the share of the occupancy for each
                     share_time_occupancy_density = \
@@ -423,7 +418,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
 
                 normalizing_value += share_time_occupancy_density
 
-                current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
+                current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[use][schedule_code],
                                                               share_time_occupancy_density)
 
     if normalizing_value == 0:
@@ -634,6 +629,8 @@ def schedule_maker(dates, locator, list_uses):
 
     # create empty list of archetypal schedules
     schedules = []
+    # create empty dict of archetypal schedules
+    archetype_schedules = {}
     # collect archetypal values for the list of uses in the project
     archetype_values = archetypes_internal_loads.loc[list_uses, ['Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd', 'Qhpro_Wm2',
                                                                  'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2']]
@@ -654,13 +651,15 @@ def schedule_maker(dates, locator, list_uses):
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
+        archetype_schedules[use] = dict(zip(['people', 'electricity', 'water', 'processes'], schedule))
+        archetype_schedules[use]['monthly'] = month_schedule
         schedules.append(schedule)
 
     archetype_values.rename(columns={'Qs_Wp': 'Qs', 'X_ghp': 'X', 'Ea_Wm2': 'Ea', 'El_Wm2': 'El', 'Epro_Wm2': 'Epro',
                                      'Qcre_Wm2': 'Qcre', 'Ed_Wm2': 'Ed', 'Vww_lpd': 'Vww', 'Vw_lpd': 'Vw',
                                      'Ve_lps': 've', 'Qhpro_Wm2': 'Qhpro'}, inplace=True)
 
-    return schedules, archetype_values
+    return archetype_schedules, archetype_values
 
 
 def calc_average(last, current, share_of_use):
