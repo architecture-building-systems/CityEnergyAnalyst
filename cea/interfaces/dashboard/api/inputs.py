@@ -5,6 +5,8 @@ import cea.inputlocator
 import cea.utilities.dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.plots.variable_naming import get_color_array
+from cea.plots.supply_system.supply_system_map import get_building_connectivity
+from cea.technologies.network_layout.main import network_layout
 
 import pandas
 import geopandas
@@ -101,7 +103,7 @@ class InputOthers(Resource):
         if kind == 'streets':
             return df_to_json(locator.get_street_network())[0]
         if kind in ['dc', 'dh']:
-            return get_network(locator, kind)[0]
+            return get_network(config, kind)[0]
         abort(400, 'Input file not found: %s' % kind, choices=['streets', 'dh', 'dc'])
 
 
@@ -124,8 +126,8 @@ class AllInputs(Resource):
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['district'], store['crs']['district'] = df_to_json(locator.get_district_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network(), trigger_abort=False)
-        store['geojsons']['dc'], store['crs']['dc'] = get_network(locator, 'dc', trigger_abort=False)
-        store['geojsons']['dh'], store['crs']['dh'] = get_network(locator, 'dh', trigger_abort=False)
+        store['geojsons']['dc'], store['crs']['dc'] = get_network(config, 'dc', trigger_abort=False)
+        store['geojsons']['dh'], store['crs']['dh'] = get_network(config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
 
         return store
@@ -182,14 +184,35 @@ def get_building_properties():
     return store
 
 
-def get_network(locator, kind, trigger_abort=True):
+def get_network(config, network_type, trigger_abort=True):
     # TODO: Get a list of names and send all in the json
-    name = ''
-    edges = locator.get_network_layout_edges_shapefile(kind, name)
-    nodes = locator.get_network_layout_nodes_shapefile(kind, name)
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    building_connectivity = get_building_connectivity(locator)
+    network_type = network_type.upper()
+    connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(network_type)] == 1]['Name'].values.tolist()
+    network_name = 'base'
+
+    # Do not calculate if no connected buildings
+    if len(connected_buildings) == 0:
+        return None, [], None
+
+    edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
+    nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+    supply_system = locator.get_building_supply()
+
+    no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
+    supply_system_modified = os.path.getmtime(supply_system) > os.path.getmtime(edges) or os.path.getmtime(supply_system) > os.path.getmtime(nodes)
+
+    # Generate network files
+    if no_network_file or supply_system_modified:
+        config.network_layout.network_type = network_type
+        config.network_layout.connected_buildings = connected_buildings
+        network_layout(config, locator, output_name_network=network_name)
+
     network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
     nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
     network_json['features'].extend(nodes_json['features'])
+    network_json['properties'] = {'connected_buildings': connected_buildings}
     return network_json, crs
 
 

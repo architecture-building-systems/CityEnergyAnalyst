@@ -108,16 +108,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                 (self.individual, self.generation))
             network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
         else:
-            supply_systems = dbf_to_dataframe(self.locator.get_building_supply())
-            heating_infrastructure = pd.read_excel(self.locator.get_life_cycle_inventory_supply_systems(),
-                                                   sheet_name='HEATING').set_index('code')['scale_hs']
-            cooling_infrastructure = pd.read_excel(self.locator.get_life_cycle_inventory_supply_systems(),
-                                                   sheet_name='COOLING').set_index('code')['scale_cs']
-            building_connectivity = supply_systems[['Name']].copy()
-            building_connectivity['DH_connectivity'] = (
-                    supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)
-            building_connectivity['DC_connectivity'] = (
-                    supply_systems['type_cs'].map(cooling_infrastructure) == 'DISTRICT').astype(int)
+            building_connectivity = self.get_building_connectivity(self.locator)
             network_name = "base"
 
         for network in ['DH', 'DC']:
@@ -152,6 +143,20 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         path_output_nodes = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
         return path_output_edges, path_output_nodes
+
+
+def get_building_connectivity(locator):
+    supply_systems = dbf_to_dataframe(locator.get_building_supply())
+    heating_infrastructure = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(),
+                                           sheet_name='HEATING').set_index('code')['scale_hs']
+    cooling_infrastructure = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(),
+                                           sheet_name='COOLING').set_index('code')['scale_cs']
+    building_connectivity = supply_systems[['Name']].copy()
+    building_connectivity['DH_connectivity'] = (
+            supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)
+    building_connectivity['DC_connectivity'] = (
+            supply_systems['type_cs'].map(cooling_infrastructure) == 'DISTRICT').astype(int)
+    return building_connectivity
 
 
 def main():
