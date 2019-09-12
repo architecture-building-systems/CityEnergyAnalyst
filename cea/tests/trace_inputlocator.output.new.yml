@@ -928,6 +928,9 @@ get_archetypes_properties:
             Qcre_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
+            Qcpro_Wm2:
+                sample_data: !!python/long '0'
+                types_found: [long]
             Qhpro_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
@@ -1812,6 +1815,9 @@ get_building_internal:
         Qcre_Wm2:
             sample_data: 0.0
             types_found: [float]
+        Qcpro_Wm2:
+            sample_data: 0.0
+            types_found: [float]
         Qhpro_Wm2:
             sample_data: 0.0
             types_found: [float]
@@ -2378,6 +2384,9 @@ get_demand_results_file:
             sample_data: 2543.288
             types_found: [float]
         Qcs_sys_scu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys_kWh:
             sample_data: 0.0
             types_found: [float]
         Qhpro_sys_kWh:
@@ -4900,6 +4909,12 @@ get_total_demand:
             sample_data: 0.0
             types_found: [float]
         Qcs_sys_scu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys_MWhyr:
             sample_data: 0.0
             types_found: [float]
         Qhpro_sys0_kW:

@@ -42,6 +42,7 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
     - ``Vww``: domestic hot water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
     - ``Vw``: total water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
     - ``Qhpro``: heating demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``Qcpro``: cooling demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -86,7 +87,7 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         # electricity and process schedules may be greater than 0
-        for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro']:
+        for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro', 'Qcpro']:
             codes = {'Ea': 'electricity', 'El': 'electricity', 'Ed': 'electricity', 'Epro': 'processes',
                      'Qhpro': 'processes','Qcre': 'processes'}
             schedules[schedule] = bpr.rc_model['Aef'] * \
@@ -131,7 +132,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Ed', 'Qcre']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
 
     # start empty schedules
     schedules = {}
@@ -212,9 +213,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Qcre', 'Ed']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
-    # # schedule_codes define which archetypal schedule should be used for the given schedule
-    # schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
 
     # start empty schedules
     schedules = {}
@@ -631,7 +630,8 @@ def schedule_maker(dates, locator, list_uses):
     archetype_schedules = {}
     # collect archetypal values for the list of uses in the project
     archetype_values = archetypes_internal_loads.loc[list_uses, ['Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd', 'Qhpro_Wm2',
-                                                                 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2']]
+                                                                 'Qcpro_Wm2', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2',
+                                                                 'Qcre_Wm2', 'Ed_Wm2']]
     archetype_values = archetype_values.merge(archetypes_indoor_comfort.loc[list_uses, 'Ve_lps'], on='Code')
     archetype_values['people'] = 0.0
 

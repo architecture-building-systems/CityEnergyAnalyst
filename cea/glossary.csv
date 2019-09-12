@@ -40,7 +40,8 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,TODO,TODO,TODO,TODO,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific due to process heat,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wp,TODO,TODO,TODO,TODO,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
@@ -804,7 +805,8 @@ data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcre_Wm2,TODO,TODO,TODO,TODO,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qhpro_Wm2,Peak specific due to process heat,[W/m2],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qs_Wp,TODO,TODO,TODO,TODO,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
@@ -880,7 +882,8 @@ demand,get_demand_results_file,outputs/data/demand/b001.csv,Qcs_sys_ahu_kWh,AHU 
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qcs_sys_aru_kWh,ARU system cool demand,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qcs_sys_kWh,End-use space cooling demand,kWh,{0.0...n},float,blue
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qcs_sys_scu_kWh,SCU system cool demand,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Qhpro_sys_kWh,Industrial process heat demand,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Qcpro_sys_kWh,Process cooling demand,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Qhpro_sys_kWh,Process heat demand,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qhs_dis_ls_kWh,Heating system distribution losses,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qhs_em_ls_kWh,Heating system emission losses,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Qhs_kWh,Sensible heating system demand,[kWh],{0.0...n},float,black
@@ -956,25 +959,25 @@ demand,get_total_demand,outputs/data/demand/total_demand.csv,DH_hs0_kW,Nominal e
 demand,get_total_demand,outputs/data/demand/total_demand.csv,DH_hs_MWhyr,Energy requirement by district heating (space heating supply),MWh/yr,{0.0...n},float,orange
 demand,get_total_demand,outputs/data/demand/total_demand.csv,DH_ww0_kW,Nominal Energy requirement by district heating (hotwater supply),kW,{0.0...n},float,orange_light
 demand,get_total_demand,outputs/data/demand/total_demand.csv,DH_ww_MWhyr,Energy requirement by district heating (hotwater supply),MWh/yr,{0.0...n},float,orange_light
-demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cdata0_kW,Nominal Data centre cooling specific electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cdata0_kW,Nominal Data centre cooling specific electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cdata_MWhyr,Electricity consumption due to data center cooling,MWh/yr,{0.0...n},float,yellow_light
-demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cre0_kW,Nominal Refrigeration system electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cre0_kW,Nominal Refrigeration system electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cre_MWhyr,Electricity consumption due to refrigeration,MWh/yr,{0.0...n},float,yellow_lighter
-demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cs0_kW,Nominal Cooling system electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cs0_kW,Nominal Cooling system electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_cs_MWhyr,Electricity consumption due to space cooling,MWh/yr,{0.0...n},float,blue_light
-demand,get_total_demand,outputs/data/demand/total_demand.csv,E_hs0_kW,Nominal Heating system electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,E_hs0_kW,Nominal Heating system electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_hs_MWhyr,Electricity consumption due to space heating,MWh/yr,{0.0...n},float,green_light
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_sys0_kW,Nominal end-use electricity demand,kW,{0.0...n},float,green
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_sys_MWhyr,End-use electricity demand,MWh/yr,{0.0...n},float,green
-demand,get_total_demand,outputs/data/demand/total_demand.csv,E_ww0_kW,Nominal Domestic hot water electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,E_ww0_kW,Nominal Domestic hot water electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,E_ww_MWhyr,Electricity consumption due to hot water,MWh/yr,{0.0...n},float,green_lighter
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Eal0_kW,Nominal Total net electricity for all sources and sinks.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Eal0_kW,Nominal Total net electricity for all sources and sinks.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Eal_MWhyr,Electricity consumption due to appliances and lighting,MWh/yr,{0.0...n},float,green
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Eaux0_kW,Nominal Auxiliary electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Eaux0_kW,Nominal Auxiliary electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Eaux_MWhyr,Electricity consumption due to auxiliary equipment,MWh/yr,{0.0...n},float,yellow
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Edata0_kW,Nominal Data centre electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Edata0_kW,Nominal Data centre electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Edata_MWhyr,Electricity consumption for data centers,MWh/yr,{0.0...n},float,blue_lighter
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Epro0_kW,Nominal Industrial processes electricity consumption.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Epro0_kW,Nominal Industrial processes electricity consumption.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Epro_MWhyr,Electricity supplied to industrial processes,MWh/yr,{0.0...n},float,brown_lighter
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GFA_m2,Gross floor area,[m2],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GRID0_kW,Nominal Grid electricity consumption,kW,{0.0...n},float,green
@@ -991,77 +994,79 @@ demand,get_total_demand,outputs/data/demand/total_demand.csv,OIL_ww0_kW,Nominal 
 demand,get_total_demand,outputs/data/demand/total_demand.csv,OIL_ww_MWhyr,OIL requirement for hotwater supply,MWh/yr,{0.0...n},float,orange_light
 demand,get_total_demand,outputs/data/demand/total_demand.csv,PV0_kW,Nominal PV electricity consumption,kW,{0.0...n},float,yellow
 demand,get_total_demand,outputs/data/demand/total_demand.csv,PV_MWhyr,PV electricity consumption,MWh/yr,{0.0...n},float,yellow
-demand,get_total_demand,outputs/data/demand/total_demand.csv,QC_sys0_kW,Nominal Total system cooling demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,QC_sys0_kW,Nominal Total system cooling demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,QC_sys_MWhyr,Total system cooling demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,QH_sys0_kW,Nominal total building heating demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,QH_sys0_kW,Nominal total building heating demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,QH_sys_MWhyr,Total building heating demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcdata0_kW,Nominal Data centre cooling demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcdata0_kW,Nominal Data centre cooling demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcdata_MWhyr,Data centre cooling demand,[MWh/year],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcdata_sys0_kW,Nominal end-use data center cooling demand,kW,{0.0...n},float,blue_light
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcdata_sys_MWhyr,End-use data center cooling demand,MWh/yr,{0.0...n},float,blue_light
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcre0_kW,Nominal Refrigeration cooling demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcre0_kW,Nominal Refrigeration cooling demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcre_MWhyr,Refrigeration cooling demand for the system,[MWh/year],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcre_sys0_kW, Nominal refrigeration cooling demand,kW,{0.0...n},float,blue_lighter
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcre_sys_MWhyr,End-use refrigeration demand,MWh/yr,{0.0...n},float,blue_lighter
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs0_kW,Nominal Total cooling demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs0_kW,Nominal Total cooling demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_MWhyr,Total cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_dis_ls0_kW,Nominal Cool distribution losses.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_dis_ls0_kW,Nominal Cool distribution losses.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_dis_ls_MWhyr,Cool distribution losses,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_em_ls0_kW,Nominal Cool emission losses.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_em_ls0_kW,Nominal Cool emission losses.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_em_ls_MWhyr,Cool emission losses,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_ahu0_kW,Nominal AHU latent cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_ahu0_kW,Nominal AHU latent cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_ahu_MWhyr,AHU latent cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_aru0_kW,Nominal ARU latent cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_aru0_kW,Nominal ARU latent cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_aru_MWhyr,ARU latent cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_sys0_kW,Nominal System latent cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_sys0_kW,Nominal System latent cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_lat_sys_MWhyr,System latent cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_ahu0_kW,Nominal AHU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_ahu0_kW,Nominal AHU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_ahu_MWhyr,AHU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_aru0_kW,Nominal ARU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_aru0_kW,Nominal ARU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_aru_MWhyr,ARU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_scu0_kW,Nominal SCU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_scu0_kW,Nominal SCU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_scu_MWhyr,SCU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_sys0_kW,Nominal Sensible system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_sys0_kW,Nominal Sensible system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sen_sys_MWhyr,Sensible system cool demand,[MWh/year],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys0_kW,Nominal end-use space cooling demand,kW,{0.0...n},float,blue
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_MWhyr,End-use space cooling demand,MWh/yr,{0.0...n},float,blue
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_ahu0_kW,Nominal AHU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_ahu0_kW,Nominal AHU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_ahu_MWhyr,AHU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_aru0_kW,Nominal ARU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_aru0_kW,Nominal ARU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_aru_MWhyr,ARU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_scu0_kW,Nominal SCU system cool demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_scu0_kW,Nominal SCU system cool demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcs_sys_scu_MWhyr,SCU system cool demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhpro_sys0_kW,Nominal process heat demand.,[kW/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhpro_sys_MWhyr,Yearly industrial processes heat demand.,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs0_kW,Nominal Total heating demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcpro_sys0_kW,Nominal process cooling demand.,[kW],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qcpro_sys_MWhyr,Yearly processes cooling demand.,[MWh/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhpro_sys0_kW,Nominal process heat demand.,[kW],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhpro_sys_MWhyr,Yearly processes heat demand.,[MWh/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs0_kW,Nominal Total heating demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_MWhyr,Total heating demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_dis_ls0_kW,Nominal Heating system distribution losses.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_dis_ls0_kW,Nominal Heating system distribution losses.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_dis_ls_MWhyr,Heating system distribution losses,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_em_ls0_kW,Nominal Heating emission losses.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_em_ls0_kW,Nominal Heating emission losses.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_em_ls_MWhyr,Heating system emission losses,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_ahu0_kW,Nominal AHU latent heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_ahu0_kW,Nominal AHU latent heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_ahu_MWhyr,AHU latent heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_aru0_kW,Nominal ARU latent heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_aru0_kW,Nominal ARU latent heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_aru_MWhyr,ARU latent heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_sys0_kW,Nominal System latent heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_sys0_kW,Nominal System latent heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_lat_sys_MWhyr,System latent heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_ahu0_kW,Nominal AHU sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_ahu0_kW,Nominal AHU sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_ahu_MWhyr,AHU sensible heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_aru0_kW,ARU sensible heat demand,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_aru0_kW,ARU sensible heat demand,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_aru_MWhyr,ARU sensible heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_shu0_kW,Nominal SHU sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_shu0_kW,Nominal SHU sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_shu_MWhyr,SHU sensible heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_sys0_kW,Nominal HVAC systems sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_sys0_kW,Nominal HVAC systems sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sen_sys_MWhyr,SHU sensible heat demand,[MWh/year],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys0_kW,Nominal end-use space heating demand,kW,{0.0...n},float,red
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_MWhyr,End-use space heating demand,MWh/yr,{0.0...n},float,red
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_ahu0_kW,Nominal AHU sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_ahu0_kW,Nominal AHU sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_ahu_MWhyr,AHU system heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_aru0_kW,Nominal ARU sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_aru0_kW,Nominal ARU sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_aru_MWhyr,ARU sensible heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_shu0_kW,Nominal SHU sensible heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_shu0_kW,Nominal SHU sensible heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qhs_sys_shu_MWhyr,SHU sensible heat demand,[MWh/year],{0.0...n},float,black
-demand,get_total_demand,outputs/data/demand/total_demand.csv,Qww0_kW,Nominal DHW heat demand.,[kW/year],{0.0...n},float,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Qww0_kW,Nominal DHW heat demand.,[kW],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qww_MWhyr,DHW heat demand,[MWh/year],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qww_sys0_kW,Nominal end-use hotwater demand,kW,{0.0...n},float,orange
 demand,get_total_demand,outputs/data/demand/total_demand.csv,Qww_sys_MWhyr,End-use hotwater demand,MWh/yr,{0.0...n},float,orange
