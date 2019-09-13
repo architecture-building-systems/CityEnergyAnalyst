@@ -6,20 +6,21 @@ map.init({data: {
     }});
 
 map.setLayerProps('zone', {
-    getFillColor: f => buildingColor(defaultColors.zone, f),
+    getFillColor: f => buildingColor(map.colors.zone, 'zone', f),
     updateTriggers: {
-        getFillColor: inputstore.getSelected()
+        getFillColor: [inputstore.getSelected.bind(inputstore), map.getNetworkType]
     },
     onClick: showProperties
 });
 
 map.setLayerProps('district', {
-    getFillColor: f => buildingColor(defaultColors.district, f),
+    getFillColor: f => buildingColor(map.colors.district,'district', f),
     updateTriggers: {
-        getFillColor: inputstore.getSelected()
+        getFillColor: inputstore.getSelected.bind(inputstore)
     },
     onClick: showProperties
 });
+
 
 function showProperties({object, layer}, event) {
     // console.log('object', object, layer);
@@ -57,30 +58,19 @@ function showProperties({object, layer}, event) {
     }
 }
 
-function buildingColor(color, object) {
-    let selected = inputstore.getSelected();
-    for(let i = 0; i < selected.length; i++){
-        if (object.properties['Name'] === selected[i]) {
-            return [255, 255, 0, 255]
-        }
+function buildingColor(color, layer, object) {
+    const buildingName = object.properties['Name'];
+    if(inputstore.getSelected().includes(buildingName)) return [255, 255, 0, 255];
+
+    const networkType = map.getNetworkType();
+    if(networkType && layer === 'zone') {
+        const connectedBuildings = map.data[networkType].properties.connected_buildings;
+        if(connectedBuildings.includes(buildingName)) return map.colors[networkType];
     }
+
     return color
 }
 
 function redrawBuildings() {
-    map.setLayerProps('zone', {
-        updateTriggers: {
-            getFillColor: inputstore.getSelected()
-        }
-    });
-    map.setLayerProps('district', {
-        updateTriggers: {
-            getFillColor: inputstore.getSelected()
-        }
-    });
-
-    map.redrawBuildings({
-        zone: inputstore.getGeojson('zone'),
-        district: inputstore.getGeojson('district')
-    });
+    map.redraw();
 }
