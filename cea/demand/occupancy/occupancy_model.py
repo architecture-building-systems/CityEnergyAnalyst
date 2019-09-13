@@ -632,7 +632,7 @@ def schedule_maker(dates, locator, list_uses):
     archetype_values = archetypes_internal_loads.loc[list_uses, ['Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd', 'Qhpro_Wm2',
                                                                  'Qcpro_Wm2', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2',
                                                                  'Qcre_Wm2', 'Ed_Wm2']]
-    archetype_values = archetype_values.merge(archetypes_indoor_comfort.loc[list_uses, 'Ve_lps'], on='Code')
+    archetype_values.loc[list_uses, 'Ve_lps'] = archetypes_indoor_comfort.loc[list_uses, 'Ve_lps']
     archetype_values['people'] = 0.0
 
     for use in list_uses:
