@@ -10,8 +10,8 @@ $(document).ready(function () {
         $ticker.text(`${data.jobid}: ${last_line.substr(0, 80)}`);
     });
 
-    socket.on("cea-worker-success", function (data) {
-        $ticker.text(`${data.jobid}: completed`);
+    socket.on("cea-worker-success", function (job_info) {
+        $ticker.text(`${job_info.id}: completed`);
     });
 
     socket.on("cea-worker-error", function (job_info) {
