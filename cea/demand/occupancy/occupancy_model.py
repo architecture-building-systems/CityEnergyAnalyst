@@ -655,7 +655,7 @@ def schedule_maker(dates, locator, list_uses):
 
     archetype_values.rename(columns={'Qs_Wp': 'Qs', 'X_ghp': 'X', 'Ea_Wm2': 'Ea', 'El_Wm2': 'El', 'Epro_Wm2': 'Epro',
                                      'Qcre_Wm2': 'Qcre', 'Ed_Wm2': 'Ed', 'Vww_lpd': 'Vww', 'Vw_lpd': 'Vw',
-                                     'Ve_lps': 've', 'Qhpro_Wm2': 'Qhpro'}, inplace=True)
+                                     'Ve_lps': 've', 'Qhpro_Wm2': 'Qhpro', 'Qcpro_Wm2': 'Qcpro'}, inplace=True)
 
     return archetype_schedules, archetype_values
 
