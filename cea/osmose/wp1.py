@@ -57,7 +57,7 @@ def main(case):
             old_name = run_folder
             if os.path.exists(os.path.join(result_path, old_name)):
                 new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(timesteps)
-                # os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
+                os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
             time_elapsed = time.clock() - t0
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
@@ -66,7 +66,7 @@ def main(case):
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
         # building_result_path = os.path.join(building_result_path, "reduced")
         plot_results.main(building, TECHS, building_result_path)
-        # compare_el.main(building, building_result_path)
+        compare_el.main(building, building_result_path, case)
         # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
 
