@@ -201,10 +201,10 @@ def get_network(config, network_type, trigger_abort=True):
     supply_system = locator.get_building_supply()
 
     no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
-    supply_system_modified = os.path.getmtime(supply_system) > os.path.getmtime(edges) or os.path.getmtime(supply_system) > os.path.getmtime(nodes)
+    supply_system_modified = os.path.getmtime(supply_system)
 
     # Generate network files
-    if no_network_file or supply_system_modified:
+    if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
         config.network_layout.network_type = network_type
         config.network_layout.connected_buildings = connected_buildings
         network_layout(config, locator, output_name_network=network_name)
