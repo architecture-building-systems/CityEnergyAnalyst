@@ -48,23 +48,23 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         if self.normalization == "gross floor area":
             titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [ton CO2-eq/m2.yr]'
-            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+            titlez = 'Primary Energy <br>[MJ Oil-eq/m2.yr]'
         elif self.normalization == "net floor area":
             titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [ton CO2-eq/m2.yr]'
-            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+            titlez = 'Primary Energy <br>[MJ Oil-eq/m2.yr]'
         elif self.normalization == "air conditioned floor area":
             titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [ton CO2-eq/m2.yr]'
-            titlez = 'Primary Energy [MJ Oil-eq/m2.yr]'
+            titlez = 'Primary Energy <br>[MJ Oil-eq/m2.yr]'
         elif self.normalization == "building occupancy":
             titlex = 'Total annualized costs [USD$(2015)/pax.yr]'
             titley = 'GHG emissions [ton CO2-eq/pax.yr]'
-            titlez = 'Primary Energy [MJ Oil-eq/pax.yr]'
+            titlez = 'Primary Energy <br>[MJ Oil-eq/pax.yr]'
         else:
             titlex = 'Total annualized costs [USD$(2015)/yr]'
             titley = 'GHG emissions [ton CO2-eq/yr]'
-            titlez = 'Primary Energy [MJ Oil-eq/yr]'
+            titlez = 'Primary Energy <br>[MJ Oil-eq/yr]'
 
         return titlex, titley, titlez
 
@@ -90,15 +90,15 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     def calc_graph(self):
         graph = []
-        #PUT THE HALL OF FAME INSIDE
-        data_HOF = self.process_generation_total_performance_halloffame()
-        data_HOF = self.normalize_data(data_HOF, self.normalization, self.objectives)
-        xs_HOF = data_HOF[self.objectives[0]].values
-        ys_HOF = data_HOF[self.objectives[1]].values
-        individual_names = data_HOF['individual_name'].values
-        trace = go.Scattergl(x=xs_HOF, y=ys_HOF, mode='markers', name='Hall of fame', text=individual_names,
-                           marker=dict(size='12', color='grey'))
-        graph.append(trace)
+        # #PUT THE HALL OF FAME INSIDE
+        # data_HOF = self.process_generation_total_performance_halloffame()
+        # data_HOF = self.normalize_data(data_HOF, self.normalization, self.objectives)
+        # xs_HOF = data_HOF[self.objectives[0]].values
+        # ys_HOF = data_HOF[self.objectives[1]].values
+        # individual_names = data_HOF['individual_name'].values
+        # trace = go.Scattergl(x=xs_HOF, y=ys_HOF, mode='markers', name='Hall of fame', text=individual_names,
+        #                    marker=dict(size='12', color='grey_light'))
+        # graph.append(trace)
 
         # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto()
