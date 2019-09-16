@@ -22,7 +22,13 @@ __status__ = "Production"
 
 class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Costs, emissions and primary energy"
+    name = "Pareto curve of costs, emissions and primary energy"
+    expected_parameters = {
+        'generation': 'plots-optimization:generation',
+        'normalization': 'plots-optimization:normalization',
+        'multicriteria': 'plots-optimization:multicriteria',
+        'scenario-name': 'general:scenario-name',
+    }
 
     def __init__(self, project, parameters, cache):
         super(ParetoCurveForOneGenerationPlot, self).__init__(project, parameters, cache)
