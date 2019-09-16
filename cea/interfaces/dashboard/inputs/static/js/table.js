@@ -321,6 +321,7 @@ $(window).load(function () {
                     inputstore.applyChanges(data);
                    // Recreate table based on new data pointer
                     $('.tab.active').click();
+                    map.fetchNetwork();
                    redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
