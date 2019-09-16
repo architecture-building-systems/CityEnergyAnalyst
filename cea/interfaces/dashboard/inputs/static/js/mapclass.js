@@ -80,6 +80,7 @@ class MapClass {
     };
 
     this.mapStyles = { light: lightMap, dark: darkMap };
+    this.jsonURLs = jsonURLs;
     this.colors = { ...defaultColors, ...colors };
     this.layers = [];
 
@@ -104,12 +105,11 @@ class MapClass {
       .append(
         `<div id="network-group" style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
           <span>Network Type:</span>
-          <div id="no-network-warning">No network found.</div>
         </div>`
       );
   }
 
-  init({ data = {}, urls = {}, extrude = false } = {}) {
+  init({ data = {}, extrude = false } = {}) {
     let _this = this;
     try {
       $.each(data, function(key, value) {
@@ -140,24 +140,55 @@ class MapClass {
 
       this.redraw();
 
-      let _jsonURLs = jsonURLs;
-      if (Object.keys(urls).length) {
-        _jsonURLs = urls;
-      }
-      $.each(_jsonURLs, function(key, value) {
-        $.getJSON(value, function(json) {
-          console.log(key, json);
-          if (json) {
-            _this.addLayer(key, json);
-            _this.redraw();
-          }
-        }).fail(function() {
-          console.log(`Get ${key} failed.`);
-        });
-      });
+      this.fetchStreets();
+      this.fetchNetwork();
     } catch (e) {
       console.error("Init method requires a zone geojson\n", e);
     }
+  }
+
+  fetchStreets() {
+    let _this = this;
+    $.getJSON(this.jsonURLs.streets, function(json) {
+      console.log("streets", json);
+      if (json) {
+        _this.addLayer("streets", json);
+        _this.redraw();
+      }
+    }).fail(function() {
+      console.log(`Get streets failed.`);
+    });
+  }
+
+  fetchNetwork() {
+    let _this = this;
+    $.each(["dc", "dh"], function(_, network) {
+      $(`#${network}-toggle-label`).length &&
+        $(`#${network}-toggle-label`).remove();
+      $("#network-group").append(`
+          <div id="${network}-network-loading">Fetching ${network.toUpperCase()} network...</div>
+        `);
+      $.getJSON(_this.jsonURLs[network], function(json) {
+        console.log(network, json);
+        if (json) {
+          _this.addLayer(network, json);
+          _this.redraw();
+        } else {
+          $(`#${network}-network-loading`).length &&
+            $(`#${network}-network-loading`).remove();
+          $("#network-group").append(`
+          <div id="${network}-network-warning">No ${network.toUpperCase()} network found</div>
+        `);
+        }
+      }).fail(function() {
+        $(`#${network}-network-loading`).length &&
+          $(`#${network}-network-loading`).remove();
+        $("#network-group").append(`
+          <div id="${network}-network-error">Error fetching ${network.toUpperCase()} network</div>
+        `);
+        console.log(`Get ${network} failed.`);
+      });
+    });
   }
 
   calculateCamera() {
@@ -222,12 +253,13 @@ class MapClass {
         break;
       case "dc":
       case "dh":
-        $(`#no-network-warning`).length && $(`#no-network-warning`).remove();
+        $(`#${layer}-network-loading`).length &&
+          $(`#${layer}-network-loading`).remove();
         !$(`#${layer}-toggle-label`).length &&
           networkGroup.append(`
             <label class="map-plot-label network-toggle-label" id="${layer}-toggle-label" style="display: block">
               <input type="radio" id="${layer}-rd" name="network-type" value="${layer}"
-              checked=${$(".network-toggle-label").length < 1}>
+              ${$(".network-toggle-label").length < 1 ? "checked" : ""}>
               ${layer === "dc" ? "District Cooling" : "District Heating"}
             </label>`);
         $(`#${layer}-rd`).click(_this.redraw.bind(_this));
