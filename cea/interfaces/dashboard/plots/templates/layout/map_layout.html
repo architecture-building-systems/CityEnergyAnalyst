@@ -1,0 +1,34 @@
+{% extends "layout/layout_container.html" %}
+
+{% import 'plot_widget_macros.html' as plot_widget_macros %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
+  <link rel="stylesheet" href="{{ url_for('plots_blueprint.static', filename='css/map_layout.css') }}">
+{% endblock stylesheets %}
+
+{% block layout %}
+  <div class="row display-flex">
+    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-12 plot-widget" id="map-container">
+      <div class="x_panel">
+        <div class="x_content" style="height: 500px">
+          <div id="map-div"></div>
+        </div>
+      </div>
+    </div>
+    {% for i in range(4) %}
+      {% if dashboard.plots[i] is defined%}
+        {{ plot_widget_macros.plot_widget(dashboard_index, i, dashboard.plots[i]) }}
+      {% else %}
+        {{ plot_widget_macros.plot_empty_widget() }}
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endblock layout %}
+
+{% block layout_javascripts %}
+  <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/mapclass.js') }}?u={{ last_updated }}"></script>
+  <script src="{{ url_for('plots_blueprint.static', filename='js/map_layout.js') }}?u={{ last_updated }}"></script>
+{% endblock layout_javascripts %}

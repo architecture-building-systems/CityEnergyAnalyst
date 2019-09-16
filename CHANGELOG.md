@@ -1,3 +1,49 @@
+2019-08-26 - 2.20.3 - #2253 Feature: Supply system map plot @daren-thomas merging as we need it to plan for the 30 sec video for Arno
+2019-08-23 - 2.20.3 - #2258 2117 weather as input file
+2019-08-23 - 2.20.3 - #2257 FEATURE: lazy loading of cea.api module
+2019-08-23 - 2.20.3 - #2252 Fix: Add alert when user changes occupancy @reyery thanks for this!
+2019-08-22 - 2.20.3 - #2250 753 global variables removal 2.21
+2019-08-22 - 2.20.3 - #2248 Add legend toggle drop down to plots
+2019-08-21 - 2.20.3 - #2265 FEATURE: allow user-specified region databases for the data-helper
+2019-08-13 - 2.20.1 - #2241 updating version, changelog and credits for v2.20
+2019-08-13 - 2.19 - #2239 Bugfix: Map not initializing if district data does not exist
+2019-08-13 - 2.19 - #2238 Feature: Grid Layout for Dashboard
+2019-08-08 - 2.19 - #2216 Bugfix: Add script input validation for dashboard
+2019-08-08 - 2.19 - #2225 I2224 optimization heating
+2019-08-08 - 2.19 - #2230 fix occupancy
+2019-08-05 - 2.19 - #2228 Bugfix: Calculate and save projected coordinate system
+2019-08-05 - 2.19 - #2226 I2146 decentralized cooling @shanshanhsieh great! thanks!
+2019-08-02 - 2.19 - #2222 I2120 fixing optimization cooling
+2019-07-31 - 2.19 - #2160 2150 Feature: cea rename-building
+2019-07-29 - 2.19 - #2217 Release 2.19
+2019-07-29 - 2.18.1 - #2215 Minor Fix: Add tooltips to plot buttons
+2019-07-25 - 2.18.1 - #2209 Add "change plot" button to row layout
+2019-07-24 - 2.18.1 - #2191 I2182 read occupancy schedules
+2019-07-24 - 2.18.1 - #2203 Closes #2202
+2019-07-24 - 2.18.1 - #2199 Heating case workflow
+2019-07-23 - 2.18.1 - #2193 2143 document and proof default config
+2019-07-23 - 2.18.1 - #2196 I2195 fix vectorized setpoint
+2019-07-23 - 2.18.1 - #2161 don't create the inputs folder when opening a project + scenario
+2019-07-23 - 2.18.1 - #2194 Fixed typos in error message
+2019-07-22 - 2.18.1 - #2159 added more uses to reference-case-cooling
+2019-07-22 - 2.18.1 - #2166 I2120 re(making)factor optimization
+2019-07-19 - 2.18.1 - #2178 Fix: Dashboard popup tables
+2019-07-19 - 2.18.1 - #2181 adding comfort to dashboard
+2019-07-18 - 2.18.1 - #2162 FEATURE: New Map Dashboard layout
+2019-07-17 - 2.18.1 - #2164 2095 FIXED "ArcGIS interface installation does not work anymore"
+2019-07-17 - 2.18.1 - #2090 1870 dashboard settings not working for capex vs opex
+2019-07-13 - 2.18.1 - #2158 Thanks @Jack-Hawthorne!
+2019-07-12 - 2.18 - #2157 Release 2.18
+2019-07-09 - 2.17.1 - #2137 Bugfix for input editor
+2019-07-08 - 2.17.1 - #2145 remove faulty input requests
+2019-07-05 - 2.17.1 - #2085 1971 check input files
+2019-07-03 - 2.17.1 - #2134 Bugfix: Allow decimal values for number inputs
+2019-07-03 - 2.17.1 - #2129 Fix to known issues
+2019-07-03 - 2.17.1 - #2133 FEATURE: New 500 status error page
+2019-07-03 - 2.17.1 - #2128 Minor bugfix for glossary frontend
+2019-07-02 - 2.17.1 - #2071 I2015 constant supply temperature at plants
+2019-07-02 - 2.17.1 - #2125 FEATURE: Add Glossary Search to Dashboard
+2019-07-01 - 2.17 - #2124 Release 2.17
 2019-07-01 - 2.17a1 - #2121 Bugfix: Maintain original coordinate system when saving new input files
 2019-07-01 - 2.17a1 - #2093 1978 create an uninstaller for the cea sure! @daren-thomas
 2019-07-01 - 2.17a0 - #2119 creating warning

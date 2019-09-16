@@ -30,61 +30,101 @@ class SlaveData(object):
         self.DHN_barcode = ""
         self.individual_number = ""
         self.generation_number = ""
-        self.total_buildings = 0
+        self.num_total_buildings = 0
+        self.date = 0
+        self.DHN_exists = False
+        self.DCN_exists = False
+        self.individual_with_names_dict= {}
+        self.building_names_all = []
+        self.building_names_heating = []
+        self.building_names_cooling = []
+        self.building_names_electricity = []
+        self.buildings_connected_to_district_heating = "nan"
+        self.buildings_connected_to_district_cooling = "nan"
 
-        # self.Network_Supply_Temp = 70 + 273.0
-        # Electricity_Type:
-        self.EL_TYPE = 'normal'  # type normal or green (=green power)
+        # HEATING TECHNOLOGIES
+        # NG fired cogen
+        self.CC_on = 0
+        self.CCGT_SIZE_W = 0.0
 
-        # Heating Technologies
-        # Geothermal Heat Pump,
-        # self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
-        self.GHP_number = 0.0  # number of probes
-        # self.GHP_max = self.GHP_number * self.GHP_max_i
-        self.GHP_SEASON_ON = 0  # Hour in Year, when to switch on GHP
-        self.GHP_SEASON_OFF = 8760  # Hour in Year, when to switch off GHP
+        # Wet biomass cogen
+        self.Furnace_wet_on = 0
+        self.WBFurnace_Q_max_W = 0.0
 
-        # Sewage Heat Pump
-        self.HPSew_maxSize_W = 0.0
+        # Dry biomass cogen
+        self.Furnace_dry_on = 0
+        self.DBFurnace_Q_max_W = 0.0
 
-        # Lake Heat Pump
+        # NG-fired Boilers
+        self.Boiler_on = 0
+        self.Boiler_Q_max_W = 0.0
+
+        self.BoilerPeak_on = 0
+        self.BoilerPeak_Q_max_W = 0.0
+
+        self.BackupBoiler_on = 0
+        self.BackupBoiler_size_W = 0.0
+
+        # water-source Heat Pump
+        self.HPLake_on = 0
         self.HPLake_maxSize_W = 0.0
 
-        # Furnace
-        self.Furnace_Q_max_W = 0.0
-        self.Furn_Moist_type = "wet"  # set the moisture content of wood chips, either "dry" or "wet"
+        # Sewage-source Heat Pump
+        self.HPSew_on = 0
+        self.HPSew_maxSize_W = 0.0
 
-        # GAS TURBINE VARIABLES
-        # self.gt_size = 1.0E6 # in Watt
-        self.CC_GT_SIZE_W = 0.0
-        self.gt_fuel = "NG"
+        # ground-source Heat Pump
+        self.GHP_on = 0
+        self.GHP_maxSize_W = 0.0  # number of probes
 
-        # Boiler - Thermal output power!
+        # data-centre source heat pump
+        self.WasteServersHeatRecovery = 0  # server heat
+        self.HPServer_maxSize_W = 0.0
 
-        # add BG / NG Story for both peak and normal boilers
-        self.Boiler_Q_max_W = 0.0
-        self.BoilerPeak_Q_max_W = 0.0
-        self.BoilerBackup_Q_max_W = 0.0
-        self.BoilerType = "NG"  # Choose "NG" or "BG"
-        self.BoilerPeakType = "NG"  # Choose "NG" or "BG"
-        self.BoilerBackupType = "NG"  # Choose "NG" or "BG"
+        # PVT
+        self.PVT_on = 0
+        self.PVT_share = 0.0 # share of available building area
+        self.A_PVT_m2 = 0.0 # area installed of building area connected
 
-        # Cooling Technologies
-        # Lake Cooling
-        self.Lake_cooling_size_W = 0.0
+        # PV
+        self.PV_on = 0
+        self.A_PV_m2 = 0.0
+        self.PV_share = 0.0
 
-        # Absorption Chiller
-        self.Absorption_chiller_size_W = 0.0
+        self.SC_ET_on   = 0
+        self.A_SC_ET_m2 = 0.0
+        self.SC_ET_share = 0.0
 
-        # VCC Cooling
-        self.VCC_cooling_size_W = 0.0
-        self.VCC_backup_cooling_size_W = 0.0
+        self.SC_FP_on  = 0
+        self.A_SC_FP_m2 = 0.0
+        self.SC_FP_share = 0.0
+
+        # COOLING TECHNOLOGIES
+        # NG-fired trigen
+        self.NG_Trigen_on = 0
+        self.NG_Trigen_ACH_size_W = 0.0
+        self.NG_Trigen_CCGT_size_W = 0.0
+
+        # Water-source vapour compression chillers
+        self.WS_BaseVCC_on = 0
+        self.WS_BaseVCC_size_W = 0.0
+
+        self.WS_PeakVCC_on = 0
+        self.WS_PeakVCC_size_W = 0.0
+
+        # Air-source vapour compression chiller
+        self.AS_BaseVCC_on = 0
+        self.AS_BaseVCC_size_W = 0.0
+
+        self.AS_PeakVCC_on = 0
+        self.AS_PeakVCC_size_W = 0.0
+
+        self.AS_BackupVCC_on = 0
+        self.AS_BackupVCC_size_W = 0.0
 
         # Storage Cooling
+        self.Storage_cooling_on = 0
         self.Storage_cooling_size_W = 0.0
-
-        # Cooling Tower :
-        # self.CT_Qdesign = 0
 
         # Storage
         self.STORAGE_SIZE = 1000000.0  # in m^3 - size of hot water storage tank (up to now a random variable)
@@ -105,36 +145,3 @@ class SlaveData(object):
 
         self.T_ST_MAX = 90 + 273.0  # Maximum Temperature of storage allowed
         self.T_ST_MIN = 10 + 273.0
-
-        # Solar
-        self.SOLCOL_TYPE_PVT     = "PVT_total.csv" # file used as PVT type of collectors
-        self.SOLCOL_TYPE_SC_ET   = "SC_ET_total.csv"
-        self.SOLCOL_TYPE_SC_FP   = "SC_FP_total.csv"
-        self.SOLCOL_TYPE_PV      = "PV_total.csv"
-        self.SOLAR_PART_PVT      = 0.0  # [%] How much of the total area is available for PVT
-        self.SOLAR_PART_SC_ET    = 0.0  # How much of the total area is available for Solar Collectors
-        self.SOLAR_PART_SC_FP    = 0.0  # How much of the total area is available for Solar Collectors
-        self.SOLAR_PART_PV       = 0.0  # How much of the total area is available for PV (no thermal output, selling electricity)
-        self.nPVT_installations  = 2    # number of PVT installations, required for PVT average size, which goes into KEV remuneration
-        self.nPV_installations   = 2    # number of PVT installations, required for PVT average size, which goes into KEV remuneration
-        
-        # declare, which power plants will be used : USED = 1  ; NOT USED = 0 
-        self.Boiler_on = 0
-        self.BoilerPeak_on = 0
-        self.Furnace_on = 0
-        self.GHP_on = 0
-        self.HP_Lake_on = 0
-        self.HP_Sew_on = 0
-        self.CC_on = 0
-        self.WasteServersHeatRecovery = 0  # server heat
-        self.WasteCompressorHeatRecovery = 0
-        self.storage_heating_on = 0
-        self.DHN_temperature = 0.0  # Supply temperature of the DHN in degree C
-        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
-
-        self.VCC_on = 0
-        self.Absorption_Chiller_on = 0
-        self.Lake_cooling_on = 0
-        self.storage_cooling_on = 0
-        self.DCN_temperature = 0.0  # Supply temperature of the DCN in degree C
-        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.

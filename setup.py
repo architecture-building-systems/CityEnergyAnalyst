@@ -19,8 +19,11 @@ with open('README.rst', 'r') as f:
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'ephem',
+                    'deap==1.3.0',
                     'doit==0.29.0',
+                    'flask-restplus',
                     'geopandas',
+                    'gevent',
                     'ipython',
                     'jupyter',
                     'mock',
@@ -33,6 +36,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'requests',
                     'seaborn',
                     'setuptools',
+                    'flask-socketio',
                     'staticmap',
                     'sphinx',
                     'timezonefinder==3.4.2',  # last version to work with python2
@@ -62,6 +66,7 @@ setup(name='cityenergyanalyst',
       entry_points={
           'console_scripts': ['cea=cea.interfaces.cli.cli:main',
                               'cea-config=cea.interfaces.cli.cea_config:main',
-                              'cea-doc=cea.interfaces.cli.cea_doc:main'],
+                              'cea-doc=cea.interfaces.cli.cea_doc:main',
+                              'cea-worker=cea.worker:main'],
       },
       )

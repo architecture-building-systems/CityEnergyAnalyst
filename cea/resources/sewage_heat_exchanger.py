@@ -6,9 +6,8 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import scipy
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_MPERS, T_MIN, AT_MIN_K
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, P_WATER_KGPERM3
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -40,6 +39,7 @@ def calc_sewage_heat_exchanger(locator, config):
     names = pd.read_csv(locator.get_total_demand()).Name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
+    V_lps_external = config.sewage.sewage_water_district
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
@@ -51,14 +51,20 @@ def calc_sewage_heat_exchanger(locator, config):
         counter = counter +1
     mcpwaste_zone = np.sum(mcpwaste, axis =0)
     mXt_zone = np.sum(mXt, axis =0)
-    twaste_zone = [ x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # lossess in the grid of 20%
+    twaste_zone = [x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # lossess in the grid of 20%
 
-    Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
-                                                                              VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_MPERS,
-                                                                              heat_exchanger_length, T_MIN, AT_MIN_K)
-    SW_gen = locator.get_sewage_heat_potential()
-    pd.DataFrame( { "Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
-                    "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv( SW_gen, index=False, float_format='%.3f')
+    Q_source, t_source, t_out, tin_e, tout_e, mcpwaste_total = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
+                                                                              VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_LPERS,
+                                                                              heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external)
+
+    #save to disk
+    pd.DataFrame({"Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : twaste_zone,
+                  "mww_zone_kWperC":mcpwaste_total,
+                    "T_out_HP_C" : tout_e, "T_in_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
+                                                                      index=False, float_format='%.3f')
+
+
+
 
 # Calc Sewage heat
 
@@ -100,28 +106,28 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
         mcp_combi = mcptw * SW_ratio  # in [kW_K]
     return mcp_combi, t_to_sewage # in lh or kgh and in C
 
-def calc_sewageheat( mcp, tin, w_HEX, Vf, h0, min_m, L_HEX, tmin, ATmin):
+def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, tmin_C, ATmin, V_lps_external):
     """
     Calculates the operation of sewage heat exchanger.
 
-    :param mcp: heat capacity of total sewage in a zone
-    :type mcp: float
-    :param tin: sewage inlet temperature of a zone
-    :type tin: float
-    :param w_HEX: width of the sewage HEX
-    :type w_HEX: float
-    :param Vf: sewage flow rate [m/s]
-    :type Vf: float
+    :param mcp_kWC_total: heat capacity of total sewage in a zone
+    :type mcp_kWC_total: float
+    :param tin_C: sewage inlet temperature of a zone
+    :type tin_C: float
+    :param w_HEX_m: width of the sewage HEX
+    :type w_HEX_m: float
+    :param Vf_ms: sewage flow rate [m/s]
+    :type Vf_ms: float
     :param cp: water specific heat capacity
     :type cp: float
     :param h0: sewage heat transfer coefficient
     :type h0: float
-    :param min_m: sewage minimum flow rate in [lps]
-    :type min_m: float
-    :param L_HEX: HEX length available
-    :type L_HEX: float
-    :param tmin: minimum temperature of extraction
-    :type tmin: float
+    :param min_lps: sewage minimum flow rate in [lps]
+    :type min_lps: float
+    :param L_HEX_m: HEX length available
+    :type L_HEX_m: float
+    :param tmin_C: minimum temperature of extraction
+    :type tmin_C: float
     :param ATmin: minimum area of heat exchange
     :type ATmin: float
 
@@ -140,32 +146,35 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, h0, min_m, L_HEX, tmin, ATmin):
     Analyst (CEA): Integrated framework for analysis and optimization of building energy systems in neighborhoods and
     city districts. Energy and Buildings.
     """
+    V_lps_zone = mcp_kWC_zone/ (HEAT_CAPACITY_OF_WATER_JPERKGK / 1E3)
+    V_lps_total = V_lps_zone + V_lps_external
+    mcp_kWC_total = mcp_kWC_zone + ((V_lps_external /1000) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK/1E3)) #kW_C
+    mcp_max = (Vf_ms * w_HEX_m * 0.20) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK /1E3)  # 20 cm is the depth of the active water in contact with the HEX
+    A_HEX = w_HEX_m * L_HEX_m   # area of heat exchange
 
-    mcp_min = min_m * (HEAT_CAPACITY_OF_WATER_JPERKGK/1000) # minimum sewage heat capacity in [kW/K]
-    mcp_max = Vf * w_HEX * 0.20 * 1000 * (HEAT_CAPACITY_OF_WATER_JPERKGK/1000)   # 20 cm is the depth of the active water in contact with the HEX
-    A_HEX = w_HEX * L_HEX   # area of heat exchange
-    if mcp > mcp_max:
-        mcp = mcp_max
-    if mcp_min < mcp <= mcp_max:
+    if min_lps < V_lps_total:
+        if mcp_kWC_total >= mcp_max:
+            mcp_kWC_total = mcp_max
+
         # B is the sewage, A is the heat pump
-        mcpa = mcp * 1.1 # the flow in the heat pumps slightly above the flow on the sewage side
-        tb1 = tin
-        ta1 = tin - ( ( tin - tmin ) + ATmin / 2 )
-        alpha = h0 * A_HEX * ( 1 / mcpa - 1 / mcp )
-        n = ( 1 - scipy.exp( -alpha ) ) / ( 1 - mcpa / mcp * scipy.exp( -alpha ) )
-        tb2 = tb1 + mcpa / mcp * n * ( ta1 - tb1 )
-        Q_source = mcp * ( tb1 - tb2 )
+        mcpa = mcp_kWC_total * 1.1 # the flow in the heat pumps slightly above the flow on the sewage side
+        tb1 = tin_C
+        ta1 = tin_C - ((tin_C - tmin_C) + ATmin / 2)
+        alpha = h0 * A_HEX * (1 / mcpa - 1 / mcp_kWC_total)
+        n = ( 1 - scipy.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * scipy.exp(-alpha))
+        tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
+        Q_source = mcp_kWC_total * (tb1 - tb2)
         ta2 = ta1 + Q_source / mcpa
-        t_source = ( tb2 + tb1 )
+        t_source = ( tb2 + tb1 ) / 2
     else:
-        tb1 = tin
-        tb2 = tin
-        ta1 = tin
-        ta2 = tin
+        tb1 = tin_C
+        tb2 = tin_C
+        ta1 = tin_C
+        ta2 = tin_C
         Q_source = 0
-        t_source = tin
+        t_source = tin_C
 
-    return Q_source, t_source, tb2, ta1, ta2
+    return Q_source, t_source, tb2, ta1, ta2, mcp_kWC_total
 
 
 def main(config):

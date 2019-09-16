@@ -114,6 +114,8 @@ internal-loads:
     type: float
   - name: Ed_Wm2
     type: float
+  - name: Qcpro_Wm2
+    type: float
   - name: Qhpro_Wm2
     type: float
   - name: Vww_lpd
@@ -183,7 +185,44 @@ restrictions:
     type: int
   - name: WATERBODY
     type: int
-
+indoor-comfort:
+  pk: Name
+  type: dbf
+  location: get_building_comfort
+  fields:
+  - name: Name
+    type: str
+  - name: Tcs_set_C
+    type: float
+  - name: Tcs_setb_C
+    type: float
+  - name: Ths_set_C
+    type: float
+  - name: Ths_setb_C
+    type: float
+  - name: Ve_lps
+    type: float
+  - name: rhum_max_pc
+    type: float
+  - name: rhum_min_pc
+    type: float
+technical-systems:
+  pk: Name
+  type: dbf
+  location: get_building_hvac
+  fields:
+    - name: Name
+      type: str
+    - name: type_cs
+      type: str
+    - name: type_hs
+      type: str
+    - name: type_dhw
+      type: str
+    - name: type_ctrl
+      type: str
+    - name: type_vent
+      type: str
 
 
 

@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices
@@ -32,7 +31,7 @@ class Thermal_Network(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, network_type):
         # sotre key variables
         self.locator = locator
         self.config = config
@@ -48,7 +47,6 @@ class Thermal_Network(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -104,7 +102,7 @@ def calc_Ctot_network_pump(network_info):
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var
@@ -193,8 +191,7 @@ def calc_Ctot_cooling_plants(network_info):
 
             Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                       network_info.config, 'CH1')
-            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
-                                               network_info.config, 'CT1')
+            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator, 'CT1')
         # sum over all plants
         Capex_a_chiller += Capex_a_chiller_USD
         Capex_a_CT += Capex_a_CT_USD
@@ -289,7 +286,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                                                               network_info.locator,
                                                               network_info.config, 'CH3')
                     Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                       network_info.config, 'CT1')
+                                                                            'CT1')
                     # sum up costs
                     dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                     dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -415,8 +412,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                 Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
                                                                              network_info.locator,
                                                                              network_info.config, 'CH3')
-                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                                 network_info.config, 'CT1')
+                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator, 'CT1')
                 # sum up costs
                 dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                 dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -449,7 +445,7 @@ def calc_Ctot_cs_district(network_info):
     detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
     lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
     network_info.prices = Prices(network_info.locator, network_info.config)
-    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
+    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
@@ -549,14 +545,12 @@ def main(config):
 
     # initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
-    network_info = Thermal_Network(locator, config, network_type, gv)
+    network_info = Thermal_Network(locator, config, network_type)
 
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
-    print('Running thermal network cost calculation with weather file %s' % config.weather)
     print('Network costs of %s:' % network_type)
 
 

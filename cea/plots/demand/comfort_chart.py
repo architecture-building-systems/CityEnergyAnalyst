@@ -29,8 +29,8 @@ VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]
 VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
 
 # layout of graph and table
-YAXIS_DOMAIN_GRAPH = [0, 0.8]
-XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
+YAXIS_DOMAIN_GRAPH = [0, 1]
+XAXIS_DOMAIN_GRAPH = [0, 1]
 
 
 class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
@@ -67,7 +67,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         traces_graph.extend(traces_relative_humidity)
 
         # add text for winter / summer comfort zones
-        trace_layout = go.Scatter(
+        trace_layout = go.Scattergl(
             x=[23, 26.5],
             y=[3, 3],
             text=['Winter comfort zone',
@@ -232,16 +232,16 @@ def calc_graph(dict_graph):
     traces = []
 
     # draw scatter of comfort conditions in building
-    trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
+    trace = go.Scattergl(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
                        name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
+    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
                        name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
+    trace = go.Scattergl(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
                        name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
+    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
                        name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
     traces.append(trace)
 
@@ -266,7 +266,7 @@ def create_relative_humidity_lines():
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+        trace = go.Scattergl(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
                            line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 

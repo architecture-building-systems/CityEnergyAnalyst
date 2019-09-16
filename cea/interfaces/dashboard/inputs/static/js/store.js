@@ -49,7 +49,6 @@ class InputStore {
         return features.findIndex(x => x['properties']['Name'] === building);
     }
 
-    // TODO: Process change here, remove change if same as default
     addChange(method, table, building, column, value) {
         var change = {[column]:value};
         if (method === 'update') {
@@ -113,7 +112,6 @@ class InputStore {
         });
     }
 
-    // TODO: Remove buidling from changes if being deleted
     deleteBuildings(layer, buildings) {
         this.changes['delete'][layer] = this.changes['delete'][layer] || [];
         this.changes['delete'][layer].push(...buildings);
@@ -128,6 +126,13 @@ class InputStore {
                     }
                 });
             }
+
+            // Remove buidling from changes if being deleted
+            if (_this.changes['update'][layer]) {
+                delete _this.changes['update'][layer][building];
+                if (!Object.keys(_this.changes['update'][layer]).length) delete _this.changes['update'][layer];
+            }
+
             _this.geojsondata[layer]['features'] = _this.geojsondata[layer]['features'].filter(x => x['properties']['Name'] !== building);
         });
         this.geojsondata = JSON.parse(JSON.stringify(this.geojsondata));

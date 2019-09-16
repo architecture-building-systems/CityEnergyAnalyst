@@ -19,10 +19,10 @@ Subpackages
     cea.optimization
     cea.plots
     cea.resources
-    cea.supply
     cea.technologies
     cea.tests
     cea.utilities
+    cea.workflows
 
 Submodules
 ----------
@@ -47,14 +47,6 @@ cea.constants module
 --------------------
 
 .. automodule:: cea.constants
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.globalvar module
---------------------
-
-.. automodule:: cea.globalvar
     :members:
     :undoc-members:
     :show-inheritance:

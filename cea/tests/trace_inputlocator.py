@@ -1,6 +1,7 @@
 """
 Trace the InputLocator calls in a selection of scripts.
 """
+
 import sys
 import os
 import cea.api
@@ -11,6 +12,15 @@ import cea.inputlocator
 import pandas
 import yaml
 from dateutil.parser import parse
+
+__author__ = "Daren Thomas & Jack Hawthorne"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jack Hawthorne", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "2.14"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def create_trace_function(results_set):
@@ -100,13 +110,17 @@ def meta_to_yaml(trace_data, meta_output_file):
         'json': get_json_schema,
         'epw': get_epw_schema,
         'dbf': get_dbf_schema,
-        'shp': get_shp_schema
+        'shp': get_shp_schema,
+        'html': get_html_schema,
+        '': get_html_schema,
     }
 
     for direction, script, locator_method, path, files in trace_data:
         filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
-        file_type = os.path.basename(files).split('.')[1]
-
+        try:
+            file_type = os.path.basename(files).split('.')[1]
+        except IndexError:
+            file_type = ''
 
 
         if os.path.isfile(filename):
@@ -162,6 +176,7 @@ def is_date(data):
             return True
         except ValueError:
             return False
+
 
 def replace_repetitive_attr(attr):
     scenario = cea.config.Configuration().__getattr__('scenario')
@@ -238,6 +253,7 @@ def get_csv_schema(filename):
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
 
+
 def get_json_schema(filename):
     with open(filename, 'r') as f:
         import json
@@ -247,6 +263,7 @@ def get_json_schema(filename):
         attr = replace_repetitive_attr(attr)
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
+
 
 def get_epw_schema(filename):
     epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
@@ -297,6 +314,12 @@ def get_shp_schema(filename):
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema[attr.encode('ascii', 'ignore')] = meta
     return schema
+
+
+def get_html_schema(_):
+    """We don't need to keep a schema of html files - these are outputs anyway"""
+    return None
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

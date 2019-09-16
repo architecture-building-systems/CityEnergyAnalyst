@@ -10,6 +10,8 @@ import pandas as pd
 
 from cea.optimization.constants import *
 from cea.constants import HOURS_IN_YEAR
+import warnings
+warnings.filterwarnings("ignore")
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -40,8 +42,7 @@ class LcaCalculations(object):
             'PEN']  # MJ_oil / MJ_useful
 
         # Boiler
-        self.NG_BOILER_TO_CO2_STD = (
-                resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
+        self.NG_BOILER_TO_CO2_STD = (resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
                     'CO2'] / self.ETA_FINAL_TO_USEFUL)  # kg_CO2 / MJ_useful
         self.NG_BOILER_TO_OIL_STD = (
                 resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
@@ -50,7 +51,7 @@ class LcaCalculations(object):
         self.SOLARCOLLECTORS_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
             'CO2']  # kg_CO2 / MJ_useful
         self.SOLARCOLLECTORS_TO_OIL = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'CO2']  # MJ_oil / MJ_useful
+            'PEN']  # MJ_oil / MJ_useful
 
         if pd.read_excel(locator.get_archetypes_system_controls())['has-heating-season'].item():
             # HEATING
@@ -78,9 +79,9 @@ class LcaCalculations(object):
                                           'PEN'] / self.ETA_FINAL_TO_USEFUL * (
                                               1 + self.CC_SIGMA)  # MJ_oil / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
+            if BIOGAS_FROM_AGRICULTURE_FLAG:
                 self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_CO2 / (
-                        1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                        1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
                 self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_EPRIM / (
                         1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
@@ -92,7 +93,13 @@ class LcaCalculations(object):
             self.LAKEHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                          'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
             self.LAKEHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
-                                         'PEN'] / self.ETA_FINAL_TO_USEFUL / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                                         'PEN'] / self.ETA_FINAL_TO_USEFUL   # MJ_oil / MJ_useful
+
+            #server
+            self.SERVERHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                         'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
+            self.SERVERHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                         'PEN'] / self.ETA_FINAL_TO_USEFUL   # MJ_oil / MJ_useful
 
             # HP Sewage
             self.SEWAGEHP_TO_CO2_STD = resources_lca[resources_lca['Description'] == 'Solid Waste'].iloc[0][
@@ -106,7 +113,7 @@ class LcaCalculations(object):
             self.GHP_TO_OIL_STD = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                       'PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
+            if BIOGAS_FROM_AGRICULTURE_FLAG:
                 self.BG_CC_TO_CO2_STD = (
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA))  # kg_CO2 / MJ_useful
@@ -122,7 +129,7 @@ class LcaCalculations(object):
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA))  # kg_CO2 / MJ_useful
 
-            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:  # Use Biogas from Agriculture
+            if BIOGAS_FROM_AGRICULTURE_FLAG:  # Use Biogas from Agriculture
                 self.EL_BGCC_TO_OIL_EQ_STD = (
                         resources_lca[resources_lca['Description'] == 'Bio Gas'].iloc[0][
                             'PEN'] * self.CC_EL_TO_TOTAL)  # kg_CO2 / MJ_final
@@ -141,24 +148,21 @@ class LcaCalculations(object):
         self.EL_PV_TO_CO2 = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0]['CO2']  # kg_CO2 / MJ_final
 
         if detailed_electricity_pricing:
-            self.ELEC_PRICE = electricity_costs['cost_kWh'].values/1000 # in USD_2015 per W
+            self.ELEC_PRICE = electricity_costs['cost_kWh'].values/1000 # in USD_2015 per Wh
+            self.ELEC_PRICE_EXPORT = electricity_costs['cost_sell_kWh'].values/1000 # in USD_2015 per Wh
         else:
             average_electricity_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
                                             'costs_kWh'] / 1000
-            self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price # in USD_2015 per W
+
+            average_electricity_selling_price = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
+                                            'costs_kWh'] / 1000
+            self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price # in USD_2015 per Wh
+            self.ELEC_PRICE_EXPORT = np.ones(HOURS_IN_YEAR) * average_electricity_selling_price # in USD_2015 per Wh
 
         self.EL_TO_OIL_EQ = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
             'PEN']  # MJ_oil / MJ_final
         self.EL_TO_CO2 = resources_lca[resources_lca['Description'] == 'Electricity'].iloc[0][
             'CO2']  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
-
-        average_green_electricity_cost = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'costs_kWh']  # MJ_oil / MJ_final
-        self.ELEC_PRICE_GREEN = np.ones(HOURS_IN_YEAR) * average_green_electricity_cost
-        self.EL_TO_OIL_EQ_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'PEN']  # MJ_oil / MJ_final
-        self.EL_TO_CO2_GREEN = resources_lca[resources_lca['Description'] == 'Solar'].iloc[0][
-            'CO2']  # kg_CO2 / MJ_final
 
         self.EL_NGCC_TO_OIL_EQ_STD = resources_lca[resources_lca['Description'] == 'Natural Gas'].iloc[0][
                                          'PEN'] * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final

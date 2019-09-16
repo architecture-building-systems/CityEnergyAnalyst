@@ -11,7 +11,6 @@ import time
 import numpy as np
 import pandas as pd
 from scipy import interpolate
-import cea.globalvar
 import cea.inputlocator
 from math import *
 from cea.utilities import epwreader
@@ -715,7 +714,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
     Capex_a_PV_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_PV_USD = Capex_a_PV_USD * Inv_OM
+    Opex_fixed_PV_USD = InvC * Inv_OM
     Capex_PV_USD = InvC
 
     return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD
@@ -766,11 +765,12 @@ def main(config):
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    weather_path = locator.get_weather_file()
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata,
-                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
+                latitude=latitude, longitude=longitude, weather_path=weather_path, building_name=building)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}

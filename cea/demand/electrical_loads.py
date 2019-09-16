@@ -67,7 +67,7 @@ def calc_E_sys(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro']  + tsd['Eaux'] #assuming a small loss
+    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] #assuming a small loss
 
     return tsd
 
@@ -297,7 +297,7 @@ def calc_Eauxf_ve(tsd):
 
     # m_ve_mech is
 
-    fan_power = P_FAN  # specific fan consumption in W/m3/h, see globalvar.py
+    fan_power = P_FAN  # specific fan consumption in W/m3/h, s
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
     q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \

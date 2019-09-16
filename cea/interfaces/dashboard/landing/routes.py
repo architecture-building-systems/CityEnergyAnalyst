@@ -142,11 +142,19 @@ def route_create_scenario_save():
         age = request.form.get('age')
         occupancy = request.form.get('occupancy')
 
+        # since we're creating a new scenario, go ahead and and make sure we have
+        # the folders _before_ we try copying to them
+        locator.ensure_parent_folder_exists(locator.get_zone_geometry())
+        locator.ensure_parent_folder_exists(locator.get_terrain())
+        locator.ensure_parent_folder_exists(locator.get_building_age())
+        locator.ensure_parent_folder_exists(locator.get_building_occupancy())
+        locator.ensure_parent_folder_exists(locator.get_street_network())
+
         if zone:
-            for filename in glob.glob(zone.split('.')[:-1][0]+'.*'):
+            for filename in glob_shapefile_auxilaries(zone):
                 shutil.copy(filename, locator.get_building_geometry_folder())
         if district:
-            for filename in glob.glob(district.split('.')[:-1][0]+'.*'):
+            for filename in glob_shapefile_auxilaries(district):
                 shutil.copy(filename, locator.get_building_geometry_folder())
         if terrain:
             shutil.copyfile(terrain, locator.get_terrain())
@@ -171,8 +179,8 @@ def route_create_scenario_save():
                 calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
 
     elif request.form.get('input-files') == 'copy':
-        scenario = os.path.join(cea_config.project, request.form.get('scenario'))
-        shutil.copytree(cea.inputlocator.InputLocator(scenario).get_input_folder(),
+        source_scenario = os.path.join(cea_config.project, request.form.get('scenario'))
+        shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                         locator.get_input_folder())
 
     elif request.form.get('input-files') == 'generate':
@@ -185,6 +193,7 @@ def route_create_scenario_save():
                     site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
                                                   geometry=[shape(data['geometry'])])
                     site_path = locator.get_site_polygon()
+                    locator.ensure_parent_folder_exists(site_path)
                     site.to_file(site_path)
                     print('site.shp file created at %s' % site_path)
                     cea.api.zone_helper(cea_config)
@@ -194,8 +203,16 @@ def route_create_scenario_save():
                     cea.api.streets_helper(cea_config)
                 elif tool == 'terrain-helper':
                     cea.api.terrain_helper(cea_config)
+                elif tool == 'weather-helper':
+                    cea.api.weather_helper(cea_config)
 
     return redirect(url_for('inputs_blueprint.route_get_building_properties'))
+
+
+def glob_shapefile_auxilaries(shapefile_path):
+    """Returns a list of files in the same folder as ``shapefile_path``, but allows for varying extensions.
+    This gets the .dbf, .shx, .prj, .shp and .cpg files"""
+    return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
 @blueprint.route('/open-project')
@@ -276,8 +293,10 @@ def route_get_images(scenario):
 def route_script_settings(script_name):
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_dict = {wn: locator.get_weather(wn) for wn in locator.get_weather_names()}
     script = cea.scripts.by_name(script_name)
-    return render_template('script_settings.html', script=script, parameters=parameters_for_script(script_name, config))
+    return render_template('script_settings.html', script=script, weather_dict=weather_dict,
+                           parameters=parameters_for_script(script_name, config))
 
 
 def parameters_for_script(script_name, config):
@@ -286,25 +305,14 @@ def parameters_for_script(script_name, config):
     return parameters
 
 
-@blueprint.route('/save-config/<script>', methods=['POST'])
-def route_save_config(script):
-    """Save the configuration for this tool to the configuration file"""
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        parameter.set(parameter.decode(request.form.get(parameter.name)))
-    current_app.cea_config.save()
-    return jsonify(True)
-
-
 @blueprint.route('/restore-defaults/<script_name>', methods=['POST'])
 def route_restore_defaults(script_name):
     """Restore the default configuration values for the CEA"""
     config = current_app.cea_config
-    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
         if parameter.name != 'scenario':
-            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+            parameter.set(parameter.default)
     config.save()
     return jsonify(True)
 

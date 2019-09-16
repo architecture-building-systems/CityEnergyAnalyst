@@ -3,6 +3,8 @@ Radiation engine and geometry handler for CEA
 """
 from __future__ import print_function
 from __future__ import division
+
+import os
 import pandas as pd
 import time
 import math
@@ -114,7 +116,7 @@ def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geome
         ## for the surrounding buildings only, walls and roofs
         id = 0
         for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2" , rad)
+            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
         for pypolygon in building_surfaces['roofs']:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
@@ -148,7 +150,8 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings):
+
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     if settings.buildings == []:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
@@ -162,7 +165,8 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, set
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, weather_path, settings)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings)
+
 
 def main(config):
     """
@@ -180,6 +184,9 @@ def main(config):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
     settings = config.radiation_daysim
+
+    # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
+    os.environ["PATH"] = settings.daysim_bin_directory + os.pathsep + os.environ["PATH"]
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
@@ -211,10 +218,10 @@ def main(config):
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, settings)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

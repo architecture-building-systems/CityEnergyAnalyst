@@ -31,6 +31,7 @@
               <h4 class="modal-title"></h4>
             </div>
             <div class="modal-body">
+              <h4>Selected Buildings</h4>
               <div id="selected-buildings"></div>
               <br>
               <h4>Properties</h4>
@@ -51,46 +52,14 @@
             <div class="x_panel">
               <div class="x_content">
                 <div>
-                  <div id='layers-group'>
-                  <span id="zone-cb" hidden>
-                  <input id='zone-toggle' type='checkbox' name='layer-toggle' value='zone' checked
-                         onchange='toggleLayer(this);'>
-                    <label for='zone-toggle'>Zone</label>
-                  </span>
-                    <span id="district-cb" hidden>
-                  <input id='district-toggle' type='checkbox' name='layer-toggle' value='district' checked
-                         onchange='toggleLayer(this);'>
-                    <label for='district-toggle'>District</label>
-                  </span>
-                    <span id="streets-cb" hidden>
-                  <input id='streets-toggle' type='checkbox' name='layer-toggle' value='streets' checked
-                         onchange='toggleLayer(this);'>
-                    <label for='streets-toggle'>Streets</label>
-                  </span>
-                    <span id="dh_networks-cb" hidden>
-                  <input id='dh_networks-toggle' type='checkbox' name='layer-toggle' value='dh_networks' checked
-                         onchange='toggleLayer(this);'>
-                    <label for='dh_networks-toggle'>DH Network</label>
-                  </span>
-                    <span id="dc_networks-cb" hidden>
-                  <input id='dc_networks-toggle' type='checkbox' name='layer-toggle' value='dc_networks' checked
-                         onchange='toggleLayer(this);'>
-                    <label for='dc_networks-toggle'>DC Network</label>
-                  </span>
-                  </div>
-                  <div id="map-tooltip"></div>
-                  <div id="mapid" style="height: 500px;" oncontextmenu="return false;"></div>
+                  <div id="mapid" style="height: 500px;"></div>
                 </div>
               </div>
               <div class="x_content" id="cea-inputs" style="display: none">
                   <div>
                     <ul class="nav nav-pills">
                       {% for tab in tabs %}
-                      {% if loop.index0 == 0 %}
                       <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
-                      {% else %}
-                      <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
-                      {% endif %}
                       {% endfor %}
                     </ul>
                   </div>
@@ -128,9 +97,11 @@
   </script>
 
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
   <script src="{{ url_for('inputs_blueprint.static', filename='vendor/turf.min.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/mapclass.js') }}?u={{ last_updated }}"></script>
+
 
   <script src="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.js') }}"></script>
 

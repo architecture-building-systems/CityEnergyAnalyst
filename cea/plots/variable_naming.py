@@ -53,6 +53,12 @@ COLORS_TO_RGB = {"red": "rgb(240,75,91)",
                  "orange_light": "rgb(248,159,109)",
                  "orange_lighter": "rgb(254,220,198)"}
 
+
+# GET COLORS IN ARRAY FORMAT
+def get_color_array(color):
+    return [int(x) for x in COLORS_TO_RGB[color].split('(')[1].split(')')[0].split(',')]
+
+
 # GET COLORS OF VARIABLES IN CEA
 with open(NAMING_FILE_PATH) as naming_file:
     COLOR = {row['VARIABLE']: COLORS_TO_RGB[row['COLOR']] for row in csv.DictReader(naming_file)}

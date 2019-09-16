@@ -13,12 +13,16 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
 from __future__ import division
 
-save_file = 1
+import os
 
 import numpy as np
 import pandas as pd
+
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
+import cea.technologies.heatpumps as hp
+import cea.technologies.thermal_storage as storage
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, WH_TO_J
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -34,165 +38,156 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
-    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
-    for each individual
-    :param gv: global variables class
+    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave
+    optimization for each individual
     :type locator: class
     :type master_to_slave_vars: class
-    :type gv: class
     :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
     :rtype: Nonetype
     """
     print "Storage Optimization Ready"
-    MS_Var = master_to_slave_vars
 
-    CSV_NAME = MS_Var.network_data_file_heating
+    CSV_NAME = master_to_slave_vars.network_data_file_heating
 
     # Initiating
-    costs_storage_USD = 0
-    GHG_storage_tonCO2 = 0
-    PEN_storage_MJoil = 0
 
-    # SOLCOL_TYPE = MS_Var.SOLCOL_TYPE
-    SOLCOL_TYPE = "NONE"
-    T_storage_old = MS_Var.T_storage_zero
-    Q_in_storage_old = MS_Var.Q_in_storage_zero
-    Tempplot = 0
-    Qplot = 0
+    T_storage_old_K = master_to_slave_vars.T_storage_zero
+    Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 
     # start with initial size:
-    T_ST_MAX = MS_Var.T_ST_MAX
-    T_ST_MIN = MS_Var.T_ST_MIN
+    T_ST_MAX = master_to_slave_vars.T_ST_MAX
+    T_ST_MIN = master_to_slave_vars.T_ST_MIN
 
-    # initial storage size
-    V_storage_initial = MS_Var.STORAGE_SIZE
-    V0 = V_storage_initial
-    STORE_DATA = "yes"
-    Q_stored_max0, Q_rejected_fin, Q_disc_seasonstart, T_st_max, T_st_min, Q_storage_content_fin, T_storage_fin, Q_loss0, mdot_DH_fin0, \
-    Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
-                                                  V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12, config)
+    # read solar technologies data
+    solar_technologies_data = read_solar_technologies_data(locator, master_to_slave_vars)
 
+    ## initial storage size
+    V_storage_initial_m3 = master_to_slave_vars.STORAGE_SIZE
+    V0 = V_storage_initial_m3
+    Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old, locator,
+                                                               V_storage_initial_m3, solar_technologies_data,
+                                                               master_to_slave_vars, 1e12,
+                                                               config)
+
+    Q_stored_max0_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, \
+    Q_storage_content_final_W, T_storage_final_K, Q_loss0_W, mdot_DH_fin0_kgpers, \
+    Q_uncontrollable_final_W = Optimized_Data0
+
+    # FIXME: constant 1e12 is used as maximum discharging rate, to confirm
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
     # --> Oral Recommandation of Antonio (former Leibundgut Group)
-    P_HP_max = np.sum(Q_uncontrollable_fin) / 2000.0
-    # second Round optimization
+    P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0  # W? TODO: CONFIRM
 
-    # Start optimizing the storage
+    ## Start optimizing the storage size
 
     # first Round optimization
-    V_storage_possible_needed = (Q_stored_max0 + Q_loss0) * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+    Q_required_in_storage_W = Q_loss0_W + Q_stored_max0_W
+    V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX, T_ST_MIN)
     V1 = V_storage_possible_needed
-    Q_initial = min(Q_stored_max0 / 2.0, Q_storage_content_fin[-1])
-    T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+    Q_initial_W = min(Q_stored_max0_W / 2.0, Q_storage_content_final_W[-1])
+    T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
-    STORE_DATA = "yes"
-    Optimized_Data = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
-    Q_stored_max_opt, Q_rejected_fin_opt, Q_disc_seasonstart_opt, T_st_max_op, T_st_min_op, Q_storage_content_fin_op, \
-    T_storage_fin_op, Q_loss1, mdot_DH_fin1, Q_uncontrollable_fin = Optimized_Data
+    Optimized_Data, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                              V_storage_possible_needed, solar_technologies_data,
+                                                              master_to_slave_vars, P_HP_max,
+                                                              config)
+    Q_stored_max_opt_W, Q_rejected_fin_opt_W, Q_disc_seasonstart_opt_W, T_st_max_op_K, T_st_min_op_K, \
+    Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
     # --> Oral Recommandation of Antonio (former Leibundgut Group)
-    P_HP_max = np.sum(Q_uncontrollable_fin) / 2000.0
+    P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0
 
-    InitialStorageContent = float(Q_storage_content_fin_op[0])
-    FinalStorageContent = float(Q_storage_content_fin_op[-1])
-    # second Round optimization
-    if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-        storageDeviation1 = 0
-    else:
-        storageDeviation1 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+    # Calculate if the initial and final storage levels are converged
+    storageDeviation1 = calc_temperature_convergence(Q_storage_content_fin_op_W)
 
     if storageDeviation1 > 0.0001:
 
-        Q_stored_max_needed = np.amax(Q_storage_content_fin_op) - np.amin(Q_storage_content_fin_op)
-        V_storage_possible_needed = Q_stored_max_needed * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+        Q_stored_max_needed_W = np.amax(Q_storage_content_fin_op_W) - np.amin(Q_storage_content_fin_op_W)
+        V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_W, T_ST_MAX, T_ST_MIN)
         V2 = V_storage_possible_needed
-        Q_initial = min(Q_disc_seasonstart_opt[0], Q_storage_content_fin_op[-1])
-        T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
-        Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
-        Q_stored_max_opt2, Q_rejected_fin_opt2, Q_disc_seasonstart_opt2, T_st_max_op2, T_st_min_op2, \
-        Q_storage_content_fin_op2, T_storage_fin_op2, Q_loss2, mdot_DH_fin2, \
-        Q_uncontrollable_fin = Optimized_Data2
+        Q_initial_W = min(Q_disc_seasonstart_opt_W[0], Q_storage_content_fin_op_W[-1])
+        T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_possible_needed)
+        Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                                   V_storage_possible_needed, solar_technologies_data,
+                                                                   master_to_slave_vars, P_HP_max,
+                                                                   config)
+        Q_stored_max_opt2_W, Q_rejected_fin_opt2_W, Q_disc_seasonstart_opt2_W, T_st_max_op2_K, T_st_min_op2_K, \
+        Q_storage_content_fin_op2_W, T_storage_fin_op2_K, Q_loss2_W, mdot_DH_fin2_kgpers, \
+        Q_uncontrollable_final_W = Optimized_Data2
 
-        InitialStorageContent = float(Q_storage_content_fin_op2[0])
-        FinalStorageContent = float(Q_storage_content_fin_op2[-1])
-        # second Round optimization
-        if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-            storageDeviation2 = 0
-        else:
-            storageDeviation2 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+        # Calculate if the initial and final storage levels are converged
+        storageDeviation2 = calc_temperature_convergence(Q_storage_content_fin_op2_W)
 
         if storageDeviation2 > 0.0001:
 
-            # third Round optimization
-            Q_stored_max_needed_3 = np.amax(Q_storage_content_fin_op2) - np.amin(Q_storage_content_fin_op2)
-            V_storage_possible_needed = Q_stored_max_needed_3 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+            # Third Round optimization
+            Q_stored_max_needed_3_W = np.amax(Q_storage_content_fin_op2_W) - np.amin(Q_storage_content_fin_op2_W)
+            V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_3_W, T_ST_MAX,
+                                                                                  T_ST_MIN)
             V3 = V_storage_possible_needed
 
-            Q_initial = min(Q_disc_seasonstart_opt2[0], Q_storage_content_fin_op2[-1])
+            Q_initial_W = min(Q_disc_seasonstart_opt2_W[0], Q_storage_content_fin_op2_W[-1])
+            T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-            T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+            Optimized_Data3, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                                       V_storage_possible_needed,
+                                                                       solar_technologies_data, master_to_slave_vars,
+                                                                       P_HP_max, config)
+            Q_stored_max_opt3_W, Q_rejected_fin_opt3_W, Q_disc_seasonstart_opt3_W, T_st_max_op3_K, T_st_min_op3_K, \
+            Q_storage_content_fin_op3_W, T_storage_fin_op3_K, Q_loss3_W, mdot_DH_fin3_kgpers, \
+            Q_uncontrollable_final_W = Optimized_Data3
 
-            Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
-            Q_stored_max_opt3, Q_rejected_fin_opt3, Q_disc_seasonstart_opt3, T_st_max_op3, T_st_min_op3, \
-            Q_storage_content_fin_op3, T_storage_fin_op3, Q_loss3, mdot_DH_fin3, Q_uncontrollable_fin = Optimized_Data3
-
-            InitialStorageContent = float(Q_storage_content_fin_op3[0])
-            FinalStorageContent = float(Q_storage_content_fin_op3[-1])
-            # second Round optimization
-            if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                storageDeviation3 = 0
-            else:
-                storageDeviation3 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+            storageDeviation3 = calc_temperature_convergence(Q_storage_content_fin_op3_W)
 
             if storageDeviation3 > 0.0001:
-
                 # fourth Round optimization - reduce end temperature by rejecting earlier (minimize volume)
-                Q_stored_max_needed_4 = Q_stored_max_needed_3 - (Q_storage_content_fin_op3[-1] - Q_storage_content_fin_op3[0])
-                V_storage_possible_needed = Q_stored_max_needed_4 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                Q_stored_max_needed_4_W = Q_stored_max_needed_3_W - (
+                        Q_storage_content_fin_op3_W[-1] - Q_storage_content_fin_op3_W[0])
+                V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_4_W, T_ST_MAX,
+                                                                                      T_ST_MIN)
                 V4 = V_storage_possible_needed
-                Q_initial = min(Q_disc_seasonstart_opt3[0], Q_storage_content_fin_op3[-1])
-                T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+                Q_initial_W = min(Q_disc_seasonstart_opt3_W[0], Q_storage_content_fin_op3_W[-1])
+                T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
-                Q_stored_max_opt4, Q_rejected_fin_opt4, Q_disc_seasonstart_opt4, T_st_max_op4, T_st_min_op4, \
-                Q_storage_content_fin_op4, T_storage_fin_op4, Q_loss4, mdot_DH_fin4, Q_uncontrollable_fin = Optimized_Data4
+                Optimized_Data4, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                                                                           V_storage_possible_needed,
+                                                                           solar_technologies_data,
+                                                                           master_to_slave_vars,
+                                                                           P_HP_max, config)
+                Q_stored_max_opt4_W, Q_rejected_fin_opt4_W, Q_disc_seasonstart_opt4_W, T_st_max_op4_K, T_st_min_op4_K, \
+                Q_storage_content_fin_op4_W, T_storage_fin_op4_K, Q_loss4_W, mdot_DH_fin4_kgpers, \
+                Q_uncontrollable_final_W = Optimized_Data4
 
-                InitialStorageContent = float(Q_storage_content_fin_op4[0])
-                FinalStorageContent = float(Q_storage_content_fin_op4[-1])
-                # second Round optimization
-                if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                    storageDeviation4 = 0
-                else:
-                    storageDeviation4 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                storageDeviation4 = calc_temperature_convergence(Q_storage_content_fin_op4_W)
 
                 if storageDeviation4 > 0.0001:
 
                     # fifth Round optimization - minimize volume more so the temperature reaches a T_min + dT_margin
-
-                    Q_stored_max_needed_5 = Q_stored_max_needed_4 - (Q_storage_content_fin_op4[-1] - Q_storage_content_fin_op4[0])
-                    V_storage_possible_needed = Q_stored_max_needed_5 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                    Q_stored_max_needed_5 = Q_stored_max_needed_4_W - (
+                            Q_storage_content_fin_op4_W[-1] - Q_storage_content_fin_op4_W[0])
+                    V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_5,
+                                                                                          T_ST_MAX, T_ST_MIN)
                     V5 = V_storage_possible_needed
-                    Q_initial = min(Q_disc_seasonstart_opt4[0], Q_storage_content_fin_op4[-1])
-                    if Q_initial != 0:
-                        Q_initial_min = Q_disc_seasonstart_opt4 - min(
-                            Q_storage_content_fin_op4)  # assuming the minimum at the end of the season
-                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * MS_Var.dT_buffer / WH_TO_J
-                        Q_initial = Q_initial_min + Q_buffer
-                        T_initial_real = T_ST_MIN + Q_initial_min * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
-                        T_initial = MS_Var.dT_buffer + T_initial_real
+                    Q_initial_W = min(Q_disc_seasonstart_opt4_W[0], Q_storage_content_fin_op4_W[-1])
+                    if Q_initial_W != 0:
+                        Q_initial_min = Q_disc_seasonstart_opt4_W - min(
+                            Q_storage_content_fin_op4_W)  # assuming the minimum at the end of the season
+                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * master_to_slave_vars.dT_buffer / WH_TO_J
+                        Q_initial_W = Q_initial_min + Q_buffer
+                        T_initial_real = calc_T_initial_from_Q_and_V(Q_initial_min, T_ST_MIN, V_storage_possible_needed)
+                        T_initial_K = master_to_slave_vars.dT_buffer + T_initial_real
                     else:
-                        T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+                        T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                    Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                             V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
+                    Optimized_Data5, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
+                                                                               locator,
+                                                                               V_storage_possible_needed,
+                                                                               solar_technologies_data,
+                                                                               master_to_slave_vars, P_HP_max, config)
                     Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
-                    Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_fin = Optimized_Data5
+                    Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_final_W = Optimized_Data5
 
                     # Attempt for debugging
                     #   Issue:    1 file showed miss-match of final to initial storage content of 30%, all others had deviations of 0.5 % max
@@ -203,188 +198,337 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                     #             the storage with a conventional boiler up to it's final value. As this re-filling can happen during hours of low
                     #             consumption, no extra machinery will be required.
 
-                    InitialStorageContent = float(Q_storage_content_fin_op5[0])
-                    FinalStorageContent = float(Q_storage_content_fin_op5[-1])
-
-                    if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                        storageDeviation5 = 0
-                    else:
-                        storageDeviation5 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                    storageDeviation5 = calc_temperature_convergence(Q_storage_content_fin_op5)
 
                     if storageDeviation5 > 0.0001:
-                        Q_initial = min(Q_disc_seasonstart_opt5[0], Q_storage_content_fin_op5[-1])
+                        Q_initial_W = min(Q_disc_seasonstart_opt5[0], Q_storage_content_fin_op5[-1])
 
                         Q_stored_max_needed_6 = float(
                             Q_stored_max_needed_5 - (Q_storage_content_fin_op5[-1] - Q_storage_content_fin_op5[0]))
-                        V_storage_possible_needed = Q_stored_max_needed_6 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                        V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_6,
+                                                                                              T_ST_MAX, T_ST_MIN)
                         V6 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                        Optimized_Data6 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
-                                                                 P_HP_max, config)
+                        Optimized_Data6, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
+                                                                                   locator,
+                                                                                   V_storage_possible_needed,
+                                                                                   solar_technologies_data,
+                                                                                   master_to_slave_vars,
+                                                                                   P_HP_max, config)
                         Q_stored_max_opt6, Q_rejected_fin_opt6, Q_disc_seasonstart_opt6, T_st_max_op6, T_st_min_op6, Q_storage_content_fin_op6, \
-                        T_storage_fin_op6, Q_loss6, mdot_DH_fin6, Q_uncontrollable_fin = Optimized_Data6
+                        T_storage_fin_op6, Q_loss6, mdot_DH_fin6, Q_uncontrollable_final_W = Optimized_Data6
 
-                        InitialStorageContent = float(Q_storage_content_fin_op6[0])
-                        FinalStorageContent = float(Q_storage_content_fin_op6[-1])
-
-                        if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                            storageDeviation6 = 0
-                        else:
-                            storageDeviation6 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                        storageDeviation6 = calc_temperature_convergence(Q_storage_content_fin_op6)
 
                         if storageDeviation6 > 0.0001:
-                            Q_initial = min(Q_disc_seasonstart_opt6[0], Q_storage_content_fin_op6[-1])
+                            Q_initial_W = min(Q_disc_seasonstart_opt6[0], Q_storage_content_fin_op6[-1])
 
                             Q_stored_max_needed_7 = float(
                                 Q_stored_max_needed_6 - (Q_storage_content_fin_op6[-1] - Q_storage_content_fin_op6[0]))
-                            V_storage_possible_needed = Q_stored_max_needed_7 * WH_TO_J / (
-                                    DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                            V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_7,
+                                                                                                  T_ST_MAX, T_ST_MIN)
                             V7 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                             # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                            Optimized_Data7 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial,
-                                                                     locator,
-                                                                     V_storage_possible_needed, STORE_DATA,
-                                                                     master_to_slave_vars,
-                                                                     P_HP_max, config)
+                            Optimized_Data7, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                                                                                       Q_initial_W,
+                                                                                       locator,
+                                                                                       V_storage_possible_needed,
+                                                                                       solar_technologies_data,
+                                                                                       master_to_slave_vars, P_HP_max,
+                                                                                       config)
                             Q_stored_max_opt7, Q_rejected_fin_opt7, Q_disc_seasonstart_opt7, T_st_max_op7, T_st_min_op7, Q_storage_content_fin_op7, \
-                            T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_fin = Optimized_Data7
+                            T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_final_W = Optimized_Data7
 
-                            InitialStorageContent = float(Q_storage_content_fin_op7[0])
-                            FinalStorageContent = float(Q_storage_content_fin_op7[-1])
-
-                            if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                                storageDeviation7 = 0
-                            else:
-                                storageDeviation7 = (
-                                        abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                            storageDeviation7 = calc_temperature_convergence(Q_storage_content_fin_op7)
 
                             if storageDeviation7 > 0.0001:
-                                Q_initial = min(Q_disc_seasonstart_opt7[0], Q_storage_content_fin_op7[-1])
+                                Q_initial_W = min(Q_disc_seasonstart_opt7[0], Q_storage_content_fin_op7[-1])
 
                                 Q_stored_max_needed_8 = float(
                                     Q_stored_max_needed_7 - (
                                             Q_storage_content_fin_op7[-1] - Q_storage_content_fin_op7[0]))
-                                V_storage_possible_needed = Q_stored_max_needed_8 * WH_TO_J / (
-                                        DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                                V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
+                                    Q_stored_max_needed_8, T_ST_MAX, T_ST_MIN)
                                 V8 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                 # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                Optimized_Data8 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial,
-                                                                         locator,
-                                                                         V_storage_possible_needed, STORE_DATA,
-                                                                         master_to_slave_vars,
-                                                                         P_HP_max, config)
+                                Optimized_Data8, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                                                                                           Q_initial_W,
+                                                                                           locator,
+                                                                                           V_storage_possible_needed,
+                                                                                           solar_technologies_data,
+                                                                                           master_to_slave_vars,
+                                                                                           P_HP_max, config)
                                 Q_stored_max_opt8, Q_rejected_fin_opt8, Q_disc_seasonstart_opt8, T_st_max_op8, T_st_min_op8, Q_storage_content_fin_op8, \
-                                T_storage_fin_op8, Q_loss8, mdot_DH_fin8, Q_uncontrollable_fin = Optimized_Data8
+                                T_storage_fin_op8, Q_loss8, mdot_DH_fin8, Q_uncontrollable_final_W = Optimized_Data8
 
-                                InitialStorageContent = float(Q_storage_content_fin_op8[0])
-                                FinalStorageContent = float(Q_storage_content_fin_op8[-1])
-
-                                if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                                    storageDeviation8 = 0
-                                else:
-                                    storageDeviation8 = (
-                                            abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                                storageDeviation8 = calc_temperature_convergence(Q_storage_content_fin_op8)
 
                                 if storageDeviation8 > 0.0001:
-                                    Q_initial = min(Q_disc_seasonstart_opt8[0], Q_storage_content_fin_op8[-1])
+                                    Q_initial_W = min(Q_disc_seasonstart_opt8[0], Q_storage_content_fin_op8[-1])
 
                                     Q_stored_max_needed_9 = float(
                                         Q_stored_max_needed_8 - (
                                                 Q_storage_content_fin_op8[-1] - Q_storage_content_fin_op8[0]))
-                                    V_storage_possible_needed = Q_stored_max_needed_9 * WH_TO_J / (
-                                            DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                                    V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
+                                        Q_stored_max_needed_9, T_ST_MAX, T_ST_MIN)
                                     V9 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                     # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                    Optimized_Data9 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial,
-                                                                             Q_initial,
-                                                                             locator,
-                                                                             V_storage_possible_needed, STORE_DATA,
-                                                                             master_to_slave_vars,
-                                                                             P_HP_max, config)
+                                    Optimized_Data9, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                                                                                               Q_initial_W,
+                                                                                               locator,
+                                                                                               V_storage_possible_needed,
+                                                                                               solar_technologies_data,
+                                                                                               master_to_slave_vars,
+                                                                                               P_HP_max, config)
                                     Q_stored_max_opt9, Q_rejected_fin_opt9, Q_disc_seasonstart_opt9, T_st_max_op9, T_st_min_op9, Q_storage_content_fin_op9, \
-                                    T_storage_fin_op9, Q_loss9, mdot_DH_fin9, Q_uncontrollable_fin = Optimized_Data9
+                                    T_storage_fin_op9, Q_loss9, mdot_DH_fin9, Q_uncontrollable_final_W = Optimized_Data9
 
-                                    InitialStorageContent = float(Q_storage_content_fin_op9[0])
-                                    FinalStorageContent = float(Q_storage_content_fin_op9[-1])
-
-                                    if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
-                                        storageDeviation9 = 0
-                                    else:
-                                        storageDeviation9 = (
-                                                abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+                                    storageDeviation9 = calc_temperature_convergence(Q_storage_content_fin_op9)
 
                                     if storageDeviation9 > 0.0001:
-                                        Q_initial = min(Q_disc_seasonstart_opt9[0], Q_storage_content_fin_op9[-1])
+                                        Q_initial_W = min(Q_disc_seasonstart_opt9[0], Q_storage_content_fin_op9[-1])
 
                                         Q_stored_max_needed_10 = float(
                                             Q_stored_max_needed_9 - (
                                                     Q_storage_content_fin_op9[-1] - Q_storage_content_fin_op9[0]))
-                                        V_storage_possible_needed = Q_stored_max_needed_10 * WH_TO_J / (
-                                                DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                                        V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
+                                            Q_stored_max_needed_10, T_ST_MAX, T_ST_MIN)
                                         V10 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                        Optimized_Data10 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial,
-                                                                                 Q_initial,
-                                                                                 locator,
-                                                                                 V_storage_possible_needed, STORE_DATA,
-                                                                                 master_to_slave_vars,
-                                                                                 P_HP_max, config)
+                                        Optimized_Data10, storage_dispatch = StDesOp.Storage_Design(CSV_NAME,
+                                                                                                    T_initial_K,
+                                                                                                    Q_initial_W,
+                                                                                                    locator,
+                                                                                                    V_storage_possible_needed,
+                                                                                                    solar_technologies_data,
+                                                                                                    master_to_slave_vars,
+                                                                                                    P_HP_max, config)
                                         Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
-                                        T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_fin = Optimized_Data10
+                                        T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_final_W = Optimized_Data10
 
-    storage_operation_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number, MS_Var.generation_number))
-    E_aux_ch_W = np.array(storage_operation_data['E_aux_ch_W'])
-    E_aux_dech_W = np.array(storage_operation_data['E_aux_dech_W'])
-    E_thermalstorage_W = np.add(E_aux_ch_W, E_aux_dech_W)
+    # Get results from storage operation
+    E_aux_ch_W = storage_dispatch['E_Storage_charging_req_W']
+    E_aux_dech_W = storage_dispatch['E_Storage_discharging_req_W']
+    E_thermalstorage_W = E_aux_ch_W + E_aux_dech_W
 
-    # costs, GHG and PEN corresponding to the operation of the heat pump associated with thermal storage
-    for hour in range(len(E_thermalstorage_W)):
-        costs_storage_USD = costs_storage_USD + E_thermalstorage_W[hour] * lca.ELEC_PRICE[hour]
-    GHG_storage_tonCO2 = GHG_storage_tonCO2 + (np.sum(E_thermalstorage_W) * lca.EL_TO_CO2 * WH_TO_J / 1.0E6)
-    PEN_storage_MJoil = PEN_storage_MJoil + (np.sum(E_thermalstorage_W) * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6)
+    # VARIABLE COSTS
+    Opex_var_storage_USDhr = [load * price for load, price in zip(E_thermalstorage_W, lca.ELEC_PRICE)]
+    Opex_var_storage_USD = sum(Opex_var_storage_USDhr)
 
-    Q_storage_content_W = np.array(storage_operation_data['Q_storage_content_W'])
+    # CAPEX AND FIXED COSTS
+    StorageVol_m3 = storage_dispatch["Storage_Size_m3"]  # take the first line
+    Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
+                                                                                               locator, config,
+                                                                                               'TES2')
+
+    # EMISSIONS AND PRIMARY ENERGY
+    GHG_storage_tonCO2 = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_CO2 / 1E3
+    PEN_storage_MJoil = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
+
+    # calculate electricity required to bring the temperature to convergence
+    Q_storage_content_W = np.array(storage_dispatch['Q_storage_content_W'])
     StorageContentEndOfYear = Q_storage_content_W[-1]
     StorageContentStartOfYear = Q_storage_content_W[0]
 
     if StorageContentEndOfYear < StorageContentStartOfYear:
-        QToCoverByStorageBoiler = float(StorageContentEndOfYear - StorageContentStartOfYear)
+        QToCoverByStorageBoiler_W = float(StorageContentEndOfYear - StorageContentStartOfYear)
         eta_fictive_Boiler = 0.8  # add rather low efficiency as a penalty
-        E_gasPrim_fictiveBoiler = QToCoverByStorageBoiler / eta_fictive_Boiler
-
+        E_gasPrim_fictiveBoiler_W = QToCoverByStorageBoiler_W / eta_fictive_Boiler
     else:
-        E_gasPrim_fictiveBoiler = 0
+        E_gasPrim_fictiveBoiler_W = 0
 
-    PEN_storage_MJoil = PEN_storage_MJoil + (E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6)
-    GHG_storage_tonCO2 = GHG_storage_tonCO2 + (E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6)
+    GHG_storage_tonCO2 += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_CO2_STD / 1E3
+    PEN_storage_MJoil += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
 
-
+    # FIXME: repeating line 291-309?
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
 
     if Q_Storage_SeasonEndReheat_W > 0:
-        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE  # efficiency is assumed to be 0.8
-        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = (float(Q_Storage_SeasonEndReheat_W) / 0.8) * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
-        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = (float(Q_Storage_SeasonEndReheat_W) / 0.8) * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
+        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(
+            Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE / 1E3  # efficiency is assumed to be 0.8
+        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = ((float(
+            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * (lca.NG_BOILER_TO_CO2_STD / 1E3)
+        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = ((float(
+            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
     else:
         cost_Boiler_for_Storage_reHeat_at_seasonend_USD = 0
         GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = 0
         PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = 0
 
-    costs_storage_USD = costs_storage_USD + cost_Boiler_for_Storage_reHeat_at_seasonend_USD
-    GHG_storage_tonCO2 = GHG_storage_tonCO2 + GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2
-    PEN_storage_MJoil = PEN_storage_MJoil + PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil
+    Opex_var_storage_USD += cost_Boiler_for_Storage_reHeat_at_seasonend_USD
+    GHG_storage_tonCO2 += GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2
+    PEN_storage_MJoil += PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil
+
+    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
+    storage_dispatch_df = pd.DataFrame(storage_dispatch)
+    array = np.array(storage_dispatch_df[["E_Storage_charging_req_W", "E_Storage_discharging_req_W", "Q_Storage_gen_W",
+                                          "Q_Storage_req_W"]])
+    Q_HP_max_storage_W = 0
+    for i in range(8760):
+        if array[i][0] > 0:
+            Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][3] + array[i][0])
+        elif array[i][1] > 0:
+            Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
+
+    Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W,
+                                                                                              locator,
+                                                                                              'HP2')
+
+    # SUMMARY OF COSTS AND EMISSIONS
+    performance = {
+        # annual costs
+        "Capex_a_Storage_connected_USD": Capex_a_storage_USD + Capex_a_HP_storage_USD,
+
+        # total costs
+        "Capex_total_Storage_connected_USD": Capex_storage_USD + Capex_HP_storage_USD,
+
+        # opex fixed costs
+        "Opex_fixed_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
+
+        # opex var costs
+        "Opex_var_Storage_connected_USD": Opex_var_storage_USD,
+
+        # opex annual costs
+        "Opex_a_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD,
+    }
+
+    return performance, storage_dispatch
 
 
-    return costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil
+def calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3):
+    T_initial_K = T_ST_MIN + Q_initial_W * WH_TO_J / (
+            DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial_m3)
+    return T_initial_K
+
+
+def calc_temperature_convergence(Q_storage_content_final_W):
+    InitialStorageContent = float(Q_storage_content_final_W[0])
+    FinalStorageContent = float(Q_storage_content_final_W[-1])
+    if InitialStorageContent == 0 or FinalStorageContent == 0:  # catch error in advance of having 0 / 0
+        storageDeviation = 0
+    else:
+        storageDeviation = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
+    return storageDeviation
+
+
+def calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX, T_ST_MIN):
+    V_storage_possible_needed = (Q_required_in_storage_W) * WH_TO_J / (
+            DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+    return V_storage_possible_needed
+
+
+def read_solar_technologies_data(locator, master_to_slave_vars):
+    # Import Solar Data
+    if master_to_slave_vars.SC_ET_on == 1 and master_to_slave_vars.SC_ET_share > 0.0:
+        share_allowed = master_to_slave_vars.SC_ET_share
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        Q_SC_ET_gen_Wh, Tscr_th_SC_ET_K, Area_SC_ET_m2, E_SC_ET_req_Wh = calc_available_generation_solar(locator,
+                                                                                                         buildings,
+                                                                                                         share_allowed,
+                                                                                                         type="SC_ET")
+    else:
+        Q_SC_ET_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_SC_ET_K = np.zeros(HOURS_IN_YEAR)
+        E_SC_ET_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    # SC_FP
+    if master_to_slave_vars.SC_FP_on == 1 and master_to_slave_vars.SC_FP_share > 0.0:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = master_to_slave_vars.SC_FP_share
+        Q_SC_FP_gen_Wh, Tscr_th_SC_FP_K, Area_SC_FP_m2, E_SC_FP_req_Wh = calc_available_generation_solar(locator,
+                                                                                                         buildings,
+                                                                                                         share_allowed,
+                                                                                                         type="SC_FP")
+    else:
+        Q_SC_FP_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_SC_FP_K = np.zeros(HOURS_IN_YEAR)
+        E_SC_FP_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    # PVT
+    if master_to_slave_vars.PVT_on == 1 and master_to_slave_vars.PVT_share > 0.0:
+        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        share_allowed = master_to_slave_vars.PVT_share
+        E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh = calc_available_generation_PVT(locator,
+                                                                                                             buildings,
+                                                                                                             share_allowed)
+    else:
+        E_PVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Q_PVT_gen_Wh = np.zeros(HOURS_IN_YEAR)
+        Tscr_th_PVT_K = np.zeros(HOURS_IN_YEAR)
+        E_PVT_req_Wh = np.zeros(HOURS_IN_YEAR)
+
+    Solar_E_aux_Wh = E_SC_ET_req_Wh + E_SC_FP_req_Wh + E_PVT_req_Wh
+
+    solar_technologies_data = {
+        'E_PVT_gen_W': E_PVT_gen_Wh,
+        'Q_PVT_gen_W': Q_PVT_gen_Wh,
+        "Q_SC_ET_gen_W": Q_SC_ET_gen_Wh,
+        "Q_SC_FP_gen_W": Q_SC_FP_gen_Wh,
+        "Solar_E_aux_W": Solar_E_aux_Wh,
+        "Tscr_th_PVT_K": Tscr_th_PVT_K,
+        "Tscr_th_SC_ET_K": Tscr_th_SC_ET_K,
+        "Tscr_th_SC_FP_K": Tscr_th_SC_FP_K
+    }
+
+    return solar_technologies_data
+
+
+def calc_available_generation_PVT(locator, buildings, share_allowed):
+    A_PVT_m2 = 0.0
+    E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    E_PVT_req_kWh = np.zeros(HOURS_IN_YEAR)
+    mcp_x_T = np.zeros(HOURS_IN_YEAR)
+    mcp = np.zeros(HOURS_IN_YEAR)
+    for building_name in buildings:
+        building_PVT = pd.read_csv(
+            os.path.join(locator.get_potentials_solar_folder(), building_name + '_PVT.csv')).fillna(value=0.0)
+        E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
+        Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
+        E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
+        A_PVT_m2 += building_PVT['Area_PVT_m2'][0]
+        mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C'] + 273)  # to K
+        mcp += building_PVT['mcp_PVT_kWperC']
+
+    Tscr_th_PVT_K = (mcp_x_T / mcp)
+
+    E_PVT_gen_Wh = E_PVT_gen_kWh * share_allowed * 1000
+    Q_PVT_gen_Wh = Q_PVT_gen_kWh * share_allowed * 1000
+    E_PVT_req_Wh = E_PVT_req_kWh * share_allowed * 1000
+    Area_PVT_m2 = A_PVT_m2 * share_allowed
+
+    return E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh
+
+
+def calc_available_generation_solar(locator, buildings, share_allowed, type):
+    A_PVT_m2 = 0.0
+    Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
+    E_SC_req_kWh = np.zeros(HOURS_IN_YEAR)
+    mcp_x_T = np.zeros(HOURS_IN_YEAR)
+    mcp = np.zeros(HOURS_IN_YEAR)
+    for building_name in buildings:
+        data = pd.read_csv(
+            os.path.join(locator.get_potentials_solar_folder(), building_name + '_' + type + '.csv')).fillna(value=0.0)
+        Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
+        E_SC_req_kWh += data['Eaux_SC_kWh']
+        A_PVT_m2 += data['Area_SC_m2'][0]
+        mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C'] + 273)  # to K
+        mcp += data['mcp_SC_kWperC']
+
+    Tscr_th_PVT_K = (mcp_x_T / mcp)
+    Q_PVT_gen_Wh = Q_PVT_gen_kWh * share_allowed * 1000
+    E_SC_req_Wh = E_SC_req_kWh * share_allowed * 1000
+    Area_PVT_m2 = A_PVT_m2 * share_allowed
+
+    return Q_PVT_gen_Wh, Tscr_th_PVT_K, Area_PVT_m2, E_SC_req_Wh

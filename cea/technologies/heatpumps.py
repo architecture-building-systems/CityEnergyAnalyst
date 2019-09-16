@@ -76,7 +76,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     return E_req_W
 
 
-def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
+def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -111,7 +111,7 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
         tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = ground_temp - HP_DELTA_T_EVAP
+    tevap_K = ground_temp_K - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -124,9 +124,9 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, lca, Q_therm_GHP_W, hour):
     """
-    Operation cost of GSHP supplying DHN
+    Operation cost of sewage water HP supplying DHN
 
     :type mdot_kgpers : float
     :param mdot_kgpers: supply mass flow rate to the DHN
@@ -134,13 +134,13 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
     :param t_re_K: return temeprature from the DHN (cold)
-    :type COP: float
-    :param COP: coefficient of performance of GSHP
-    :rtype C_GHP_el: float
-    :returns C_GHP_el: electricity cost of GSHP operation
+    :type t_sup_GHP_K : float
+    :param t_sup_GHP_K: sewage supply temperature
+    :rtype C_HPSew_el_pure: float
+    :returns C_HPSew_el_pure: electricity cost of sewage water HP operation
 
-    :rtype wdot: float
-    :returns wdot: electricty required for GSHP operation
+    :rtype C_HPSew_per_kWh_th_pure: float
+    :returns C_HPSew_per_kWh_th_pure: electricity cost per kWh thermal energy produced from sewage water HP
 
     :rtype qcoldot: float
     :returns qcoldot: cold power requirement
@@ -148,17 +148,37 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca, hour):
     :rtype q_therm: float
     :returns q_therm: thermal energy supplied to DHN
 
+    :rtype wdot: float
+    :returns wdot: electricty required for sewage water HP operation
+
+    ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
+    a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
+    Energy.
+
     """
 
-    q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K) # Thermal Energy generated
-    qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
-    E_GHP_req_W = q_therm_W / COP
+    if (t_sup_K + HP_DELTA_T_COND) == t_sup_GHP_K:
+        COP = 1
+    else:
+        COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_GHP_K)
 
-    C_GHP_el_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
+    if t_sup_K == t_re_K:
+        q_therm_W = 0
+        qcoldot_W = 0
+        E_GHP_req_W = 0
+        cost_GHP_USD = 0
+    else:
+        q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
+        if q_therm_W > Q_therm_GHP_W:
+            q_therm_W = Q_therm_GHP_W
+        qcoldot_W = q_therm_W * (1 - (1 / COP))
+        E_GHP_req_W = q_therm_W / COP
+        cost_GHP_USD = E_GHP_req_W * lca.ELEC_PRICE[hour]
 
-    return C_GHP_el_USD, E_GHP_req_W, qcoldot_W, q_therm_W
+    return cost_GHP_USD, E_GHP_req_W, qcoldot_W, q_therm_W
 
-def GHP_Op_max(tsup_K, tground_K, nProbes):
+
+def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
@@ -175,13 +195,12 @@ def GHP_Op_max(tsup_K, tground_K, nProbes):
 
     """
 
-    qcoldot_Wh = nProbes * GHP_CMAX_SIZE_TH   # maximum capacity from all probes
     COP = HP_ETA_EX * (tsup_K + HP_DELTA_T_COND) / ((tsup_K + HP_DELTA_T_COND) - tground_K)
-    qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
+    qhotdot_Wh = Q_max_GHP_W /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
+def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, lca, hour):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -206,6 +225,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca, hour):
     :returns Q_therm: thermal energy supplied to DHN
 
     """
+    mdot_kgpers = Q_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K))
 
     E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake)
 
@@ -300,25 +320,23 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W,
     else:
         COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_sew_K)
 
-    if t_sup_K == t_re_K:
-        q_therm_W = 0
-        qcoldot_W = 0
-        wdot_W = 0
-        C_HPSew_el_pure_USD = 0
-        C_HPSew_per_kWh_th_pure_USD = 0
+    if t_sup_sew_K >= t_sup_K + HP_DELTA_T_COND:
+        q_therm_W = Q_therm_Sew_W
+        qcoldot_W = Q_therm_Sew_W
+        E_HPSew_req_W = 0.0
+        cost_HPSew_USD = 0.0
     else:
         q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         if q_therm_W > Q_therm_Sew_W:
             q_therm_W = Q_therm_Sew_W
         qcoldot_W = q_therm_W * (1 - (1 / COP))
-        wdot_W = q_therm_W / COP
-        C_HPSew_el_pure_USD = wdot_W * lca.ELEC_PRICE[hour]
-        C_HPSew_per_kWh_th_pure_USD = C_HPSew_el_pure_USD / (q_therm_W)
+        E_HPSew_req_W = q_therm_W / COP
+        cost_HPSew_USD = E_HPSew_req_W * lca.ELEC_PRICE[hour]
 
-    return C_HPSew_el_pure_USD, C_HPSew_per_kWh_th_pure_USD, qcoldot_W, q_therm_W, wdot_W
+    return cost_HPSew_USD, qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology_type):
+def calc_Cinv_HP(HP_Size, locator, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -331,11 +349,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    Capex_a_HP_USD = 0
-    Opex_fixed_HP_USD = 0
-    Capex_HP_USD = 0
+    Capex_a_HP_USD = 0.0
+    Opex_fixed_HP_USD = 0.0
+    Capex_HP_USD = 0.0
 
-    if HP_Size > 0:
+    if HP_Size > 0.0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HP")
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -343,9 +361,9 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
         if HP_Size < HP_cost_data.iloc[0]['cap_min']:
             HP_Size = HP_cost_data.iloc[0]['cap_min']
 
-        max_chiller_size = max(HP_cost_data['cap_max'].values)
+        max_HP_size = max(HP_cost_data['cap_max'].values)
 
-        if HP_Size <= max_chiller_size:
+        if HP_Size <= max_HP_size:
 
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
@@ -362,11 +380,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
             InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
 
             Capex_a_HP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_HP_USD = Capex_a_HP_USD * Inv_OM
+            Opex_fixed_HP_USD = InvC * Inv_OM
             Capex_HP_USD = InvC
 
         else:
-            number_of_chillers = int(ceil(HP_Size / max_chiller_size))
+            number_of_chillers = int(ceil(HP_Size / max_HP_size))
             Q_nom_each_chiller = HP_Size / number_of_chillers
             HP_cost_data = HP_cost_data[
                 (HP_cost_data['cap_min'] <= Q_nom_each_chiller) & (HP_cost_data['cap_max'] > Q_nom_each_chiller)]
@@ -384,9 +402,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
 
-                Capex_a_HP_USD = Capex_a_HP_USD + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Opex_fixed_HP_USD = Opex_fixed_HP_USD + Capex_a_HP_USD * Inv_OM
-                Capex_HP_USD = InvC
+                Capex_a_HP_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed_HP_USD += InvC * Inv_OM
+                Capex_HP_USD += InvC
+    else:
+        Capex_a_HP_USD = Opex_fixed_HP_USD = Capex_HP_USD = 0.0
 
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
@@ -423,7 +443,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_GHP = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_GHP_USD = Capex_a_GHP_USD * Inv_OM
+    Opex_fixed_GHP_USD = InvC_GHP * Inv_OM
     
     BH_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="BH")
     technology_code = list(set(BH_cost_data['code']))
@@ -447,7 +467,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     InvC_BH = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
     Capex_a_BH_USD = InvC_BH * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_BH_USD = Capex_a_BH_USD * Inv_OM
+    Opex_fixed_BH_USD = InvC_BH * Inv_OM
 
     Capex_a_GHP_total_USD = Capex_a_BH_USD + Capex_a_GHP_USD
     Opex_fixed_GHP_total_USD = Opex_fixed_BH_USD + Opex_fixed_GHP_USD

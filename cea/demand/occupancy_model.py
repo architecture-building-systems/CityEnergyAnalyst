@@ -2,6 +2,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
+import os
 import cea.inputlocator
 import cea.config
 from cea.utilities import epwreader
@@ -15,6 +16,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+# local constants
+DECIMALS_FOR_SCHEDULE_ROUNDING = 5
 
 
 def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
@@ -38,6 +42,7 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
     - ``Vww``: domestic hot water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
     - ``Vw``: total water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
     - ``Qhpro``: heating demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``Qcpro``: cooling demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -80,13 +85,17 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(HOURS_IN_YEAR)
         # electricity and process schedules may be greater than 0
-        for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro']:
-            codes = {'Ea': 1, 'El': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3,'Qcre': 3}
+        for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro', 'Qcpro']:
+            codes = {'Ea': 1, 'El': 1, 'Ed': 1, 'Qcre': 1, 'Epro': 3, 'Qhpro': 3, 'Qcpro': 3}
             schedules[schedule] = bpr.rc_model['Aef'] * \
                                   calc_remaining_schedules_deterministic(archetype_schedules,
                                                                          archetype_values[schedule], list_uses,
                                                                          bpr.occupancy, codes[schedule],
                                                                          archetype_values['people'])
+
+    # round schedules to avoid rounding errors when saving and reading schedules from disk
+    for schedule_type in schedules.keys():
+        schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
     return schedules
 
@@ -120,7 +129,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Ed', 'Qcre']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
 
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
@@ -206,7 +215,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Qcre', 'Ed']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
 
@@ -616,8 +625,8 @@ def schedule_maker(dates, locator, list_uses):
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
-    Qcre_Wm2, Ed_Wm2 = ([] for i in range(13))
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Ea_Wm2, El_Wm2, Qcre_Wm2, Ed_Wm2, Epro_Wm2, \
+    Qhpro_Wm2, Qcpro_Wm2 = ([] for i in range(14))
 
     for use in list_uses:
         # read from archetypes_schedules and properties
@@ -645,6 +654,7 @@ def schedule_maker(dates, locator, list_uses):
         Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
         Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
         Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
+        Qcpro_Wm2.append(archetypes_internal_loads['Qcpro_Wm2'][use])
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
@@ -652,7 +662,7 @@ def schedule_maker(dates, locator, list_uses):
 
     archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
                         'Epro': Epro_Wm2, 'Qcre': Qcre_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
+                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2, 'Qcpro': Qcpro_Wm2}
 
     return schedules, archetype_values
 
@@ -664,10 +674,97 @@ def calc_average(last, current, share_of_use):
     return last + current * share_of_use
 
 
+def read_schedules_from_file(schedules_csv):
+    """
+    A function to read building schedules from a csv file to a dict.
+    :param schedules_csv: the file path to the csv file
+    :type schedules_csv: os.path
+    :return: building_schedules, the building schedules
+    :rtype: dict
+    """
+
+    # read csv into dataframe
+    df_schedules = pd.read_csv(schedules_csv)
+    # convert to dataframe to dict
+    building_schedules = df_schedules.to_dict(orient='list')
+    # convert lists to np.arrays
+    for key, value in building_schedules.items():
+        building_schedules[key] = np.round(np.array(value), DECIMALS_FOR_SCHEDULE_ROUNDING)
+        # round values to expected number of decimals of data created in calc_schedules()
+
+    return building_schedules
+
+
+def save_schedules_to_file(locator, building_schedules, building_name):
+    """
+    A function to save schedules to csv files in the inputs/building-properties directory
+
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param building_schedules: the building schedules
+    :type building_schedules: dict
+    :param building_name: the building name
+    :type building_name: str
+    :return: this function returns nothing
+    """
+    schedules_csv_file = locator.get_building_schedules(building_name)
+    # convert to DataFrame to use pandas csv writing method
+    df_building_schedules = pd.DataFrame.from_dict(building_schedules)
+    df_building_schedules.to_csv(schedules_csv_file, index=False)
+    print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
+    print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
+
+
+def get_building_schedules(locator, bpr, date_range, config):
+    """
+    Gets building schedules either from (user-defined) csv files or from creates them from the archetypes database.
+    Schedules that are created, are saved to disc.
+    This is the main function of this script.
+    It includes two functions that were previously called in demand_main and in thermal_loads:
+    - schedule_maker: it was reading the archetyp schedules database and other archetypal values
+    - calc_schedules: it was creating schedules of mixed use buildings from the archetype schedules
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param bpr: the building properties object
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :param date_range: the data range for the year of th calculation
+    :type: pd.data_range
+    :param config: the configuration
+    :type config: cea.config.Configuration
+    :return: building_schedules, a dict containing the building schedules in form of np.array with 8760 elements
+    :rtype: dict
+    """
+
+    # get the building name
+    building_name = bpr.name
+
+    # first the script checks if pre-defined schedules for the building exist
+
+    if os.path.isfile(locator.get_building_schedules_predefined(building_name)):
+        print("Schedules for building {} detected. Using these schedules.".format(building_name))
+        building_schedules = read_schedules_from_file(locator.get_building_schedules_predefined(building_name))
+    else:
+        print("No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
+        # get list of uses in building
+        list_uses = [key for (key, value) in bpr.occupancy.items() if value > 0.0]
+        # get occupancy schedule config
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
+        # read archetypes database
+        archetype_schedules, archetype_values = schedule_maker(date_range, locator, list_uses)
+        # calculate mixed-use building schedules
+        building_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
+        # write the building schedules to disc for the next simulation or manipulation by the user
+        save_schedules_to_file(locator, building_schedules, building_name)
+
+    return building_schedules
+
+
+
 def main(config):
     from cea.demand.building_properties import BuildingProperties
-
-    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year']]
     year = weather_data['year'][0]
     dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)

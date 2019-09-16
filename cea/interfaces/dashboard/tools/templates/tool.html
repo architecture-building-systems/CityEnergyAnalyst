@@ -13,28 +13,6 @@
 {% block content %}
   <div class="right_col" role="main">
 
-
-    <!-- show the dialog with the script output -->
-    <div class="modal fade" id="cea-console-output" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
-            </button>
-            <h4 class="modal-title" id="myModalLabel">{{ script }} - output</h4>
-          </div>
-          <div class="modal-body">
-            <pre id="cea-console-output-body"></pre>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default cea-modal-close" data-dismiss="modal" disabled>Close</button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
     <div class="modal fade" id="cea-save-config-modal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -91,7 +69,8 @@
 
                 <!-- show the parameters for running -->
                 <div id="div-parameters-{{ script.name }}" class="d-block">
-                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left">
+                  <form name="config_form" id="cea-tool-parameters" class="form-horizontal form-label-left"
+                  data-parsley-validate>
                     {% for parameter in parameters %}
                     {{ input_macros.input(parameter, weather_dict) }}
                     {% endfor %}
@@ -146,6 +125,7 @@
 
 {% block javascripts %}
     {{ super() }}
+    <script src="{{ url_for('base_blueprint.static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
     <script src="{{ url_for('.static', filename='tools.js') }}"></script>
 {% endblock javascripts %}

@@ -928,6 +928,9 @@ get_archetypes_properties:
       Qcre_Wm2:
         sample_data: !!python/long '0'
         types_found: [long]
+      Qcpro_Wm2:
+        sample_data: !!python/long '0'
+        types_found: [long]
       Qhpro_Wm2:
         sample_data: !!python/long '0'
         types_found: [long]
@@ -1811,6 +1814,9 @@ get_building_internal:
     Qcre_Wm2:
       sample_data: 0.0
       types_found: [float]
+    Qcpro_Wm2:
+      sample_data: 0.0
+      types_found: [float]
     Qhpro_Wm2:
       sample_data: 0.0
       types_found: [float]
@@ -2376,6 +2382,9 @@ get_demand_results_file:
       sample_data: 2543.288
       types_found: [float]
     Qcs_sys_scu_kWh:
+      sample_data: 0.0
+      types_found: [float]
+    Qcpro_sys_kWh:
       sample_data: 0.0
       types_found: [float]
     Qhpro_sys_kWh:
@@ -4935,6 +4944,12 @@ get_total_demand:
     Qcs_sys_scu_MWhyr:
       sample_data: 0.0
       types_found: [float]
+    Qcpro_sys0_kW:
+      sample_data: 0.0
+      types_found: [float]
+    Qcpro_sys_MWhyr:
+      sample_data: 0.0
+      types_found: [float]
     Qhpro_sys0_kW:
       sample_data: 0.0
       types_found: [float]
@@ -5065,13 +5080,10 @@ get_total_demand:
       sample_data: 5665.0
       types_found: [float]
   used_by: [sewage-potential, emissions, operation-costs, network-layout]
-get_weather:
-  created_by: []
-  description: "weather/{name}.epw Returns the path to a weather file with the name\
-    \ ``name``. This can either be one\n        of the pre-configured weather files\
-    \ (see ``get_weather_names``) or a path to an existing weather file.\n       \
-    \ Returns the default weather file if no other file can be resolved."
-  file_path: c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw
+get_weather_file:
+  created_by: [weather-helper]
+  description: "weather/weather.epw Returns the path to a weather file to use for simulations"
+  file_path: "{general:scenario}/inpusts/weather/weather.epw"
   file_type: epw
   schema:
     Albedo (index = 32):

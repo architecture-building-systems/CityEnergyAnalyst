@@ -98,6 +98,22 @@
             </div>
           </div>
 
+          {% elif parameter.typename == "RegionParameter" %}
+          <div class="input-group">
+            <input type="text" class="form-control cea-parameter" value="{{parameter.get()}}" placeholder="{{parameter.help}}"
+                   id="{{parameter.name}}" name="{{parameter.name}}" data-cea-parameter-typename="{{ parameter.typename }}">
+            <div class="input-group-btn">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+              <ul class="dropdown-menu dropdown-menu-right">
+                {% for region in parameter._choices|sort %}
+                <li><a href="#" onclick="$('#{{parameter.name}}').val('{{region|escapejs}}')">{{ region }}</a></li>
+                {% endfor %}
+                <li role="separator" class="divider"></li>
+                <li><a href="#" onclick="show_open_folder_dialog('{{parameter.fqname}}')">...</a></li>
+              </ul>
+            </div>
+          </div>
+
 
           {% elif parameter.typename == "PathParameter" %}
           <div class="input-group">
@@ -109,6 +125,26 @@
             </div>
           </div>
 
+          {% elif parameter.typename == "IntegerParameter" %}
+
+          <input id="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}"
+             name="{{parameter.name}}" type="text"
+             value="{{parameter.get_raw()|e}}"
+             data-parsley-type="integer"
+             data-parsley-trigger="keyup"
+             data-parsley-validation-threshold="0"
+             aria-describedby="{{parameter.name}}-help"/>
+
+          {% elif parameter.typename == "RealParameter" %}
+
+          <input id="{{parameter.name}}" class="form-control cea-parameter" data-cea-parameter-typename="{{ parameter.typename }}"
+             name="{{parameter.name}}" type="text"
+             value="{{parameter.get_raw()|e}}"
+             data-parsley-pattern="\d+(\.\d+)?"
+             data-parsley-trigger="keyup"
+             data-parsley-validation-threshold="0"
+             data-parsley-error-message="This value should be a valid float."
+             aria-describedby="{{parameter.name}}-help"/>
 
           {% else %}
 

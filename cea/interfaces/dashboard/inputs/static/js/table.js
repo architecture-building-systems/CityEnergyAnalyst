@@ -1,5 +1,8 @@
 var currentTable;
 var tempSelection;
+var editform = $('#cea-column-editor-form');
+const OCCUPANCY_ALERT = 'Remember to run data-helper after editing occupancy to reflect the changes to other building properties.';
+let executedAlert = false;
 
 // Add onclick function to tabs
 $("[id$=-tab]").each(function () {
@@ -57,6 +60,11 @@ function createTable(parent, name, values, columns, types) {
         placeholder = '<div>No matching records found.</div>';
     }
 
+    let editCallback = {};
+    if (name === 'occupancy') {
+        editCallback.dataEdited = showOccupancyAlert;
+    }
+
     $(`#${parent}`).append(`<div id="${name}-table"></div>`);
     currentTable = new Tabulator(`#${name}-table`, {
         index: 'Name',
@@ -69,6 +77,8 @@ function createTable(parent, name, values, columns, types) {
         cellClick: selectRow,
         cellEdited: updateData,
         rowSelectionChanged: addToSelection,
+
+        ...editCallback
     });
 
     createTooltip();
@@ -122,7 +132,7 @@ function updateData(data) {
         }
         if (column === 'height_ag') {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
     }
 
@@ -163,7 +173,7 @@ function addToSelection(data, row) {
         $('.tabulator-tableHolder').scrollTop(scroll);
     }
 
-    redrawBuildings();
+   redrawBuildings();
 }
 
 function filterSelection(selection) {
@@ -181,10 +191,21 @@ function createTooltip() {
         var glossary = inputstore.glossary[column];
         if (glossary) {
             $(`.tabulator-col-title:contains("${column}")`)
-                .prop('data-toggle', 'tooltip')
-                .prop('title', `UNIT: ${glossary['UNIT']}\nDESCRIPTION: ${glossary['DESCRIPTION']}`);
+                .attr('data-toggle', 'tooltip')
+                .attr('data-placement', 'top')
+                .attr('data-container', 'body')
+                .attr('data-html', true)
+                .prop('title', `DESCRIPTION: ${glossary['DESCRIPTION']}<br>UNIT: ${glossary['UNIT']}`)
+                .tooltip();
         }
     });
+}
+
+function showOccupancyAlert() {
+    if (!executedAlert) {
+        executedAlert = true;
+        alert(OCCUPANCY_ALERT);
+    }
 }
 
 $(window).load(function () {
@@ -206,33 +227,25 @@ $(window).load(function () {
         var columns = inputstore.getColumns(table);
 
         $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
-        $('#selected-buildings').text(`Buidlings selected:`);
-        $.each(inputstore.getSelected(), function (_, building) {
-            var row = currentTable.getRow(building).getData();
-            var out = {};
-            $.each(inputstore.getColumns(table), function (_, column) {
-                out[column] = row[column];
-            });
-            delete out['Name'];
-            delete out['REFERENCE'];
-            out = JSON.stringify(out);
-            $('#selected-buildings').append(`<div>${building}: ${out}</div>`);
-        });
+
+        if (table === 'occupancy') {
+            $('#cea-column-editor-form').on('submit', showOccupancyAlert);
+        }
 
         // TODO: Add input validation
-        $('#cea-column-editor-form').empty();
+        editform.empty();
         $.each(columns, function (_, column) {
             var type = (inputstore.getColumnTypes(table)[column] === 'str') ? 'text':'number';
             if (column !== 'Name' && column !== 'REFERENCE') {
                 var input =
-                    `<div class="form-group">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>
-                      <div class="col-md-6 col-sm-6 col-xs-12">
-                        <input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
-                               class="form-control col-md-7 col-xs-12">
-                      </div>
-                    </div>`;
-                $('#cea-column-editor-form').append(input);
+                    `<div class="form-group">` +
+                      `<label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>` +
+                      `<div class="col-md-6 col-sm-6 col-xs-12">` +
+                        `<input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
+                               class="form-control col-md-7 col-xs-12">` +
+                      `</div>` +
+                    `</div>`;
+                editform.append(input);
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
                         .prop('title', 'T[number]');
@@ -243,7 +256,14 @@ $(window).load(function () {
             }
         });
 
-        $('#cea-column-editor').modal({'show': true, 'backdrop': 'static'});
+        $('#cea-column-editor').on('shown.bs.modal', function () {
+            new Tabulator("#selected-buildings", {
+                data: currentTable.getSelectedData(),
+                columns: currentTable.getColumnDefinitions(),
+                layout:"fitColumns",
+                height: 200
+            });
+        }).modal({'show': true, 'backdrop': 'static'});
     });
 
     $('#delete-button').click(function () {
@@ -281,9 +301,8 @@ $(window).load(function () {
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
             alert('No changes detected');
         } else {
-            if (confirm("Save these changes?\n" +
-                "WARNING: Any buildings deleted this way cannot be recovered once saved!\n" +
-                inputstore.changesToString())) {
+            var deletemsg = Object.keys(changes['delete']).length ? "WARNING: Any buildings deleted this way cannot be recovered once saved!\n":"";
+            if (confirm("Save these changes?\n"+ deletemsg +inputstore.changesToString())) {
                 $('#saving-text').text('Saving Changes...');
                 $('#saving-popup').modal({'show': true, 'backdrop': 'static'});
 
@@ -300,7 +319,7 @@ $(window).load(function () {
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
-                    redrawBuildings();
+                   redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
                     setTimeout(function(){
@@ -318,11 +337,11 @@ $(window).load(function () {
         }
     });
 
-    $('#cea-column-editor-form').submit(function (e) {
+    editform.submit(function (e) {
         e.preventDefault();
         var table = $('.tab.active').data('name');
         var props = {};
-        var form = $('#cea-column-editor-form').serialize().split('&');
+        var form = editform.serialize().split('&');
         $.each(form, function (_, prop) {
             var temp = prop.split('=');
             if (temp[1] !== '') {
@@ -358,11 +377,21 @@ $(window).load(function () {
 
         if (props['height_ag']) {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
 
         currentTable.updateData(data);
 
         $('#cea-column-editor').modal('hide');
     });
+});
+
+window.addEventListener("beforeunload", function (e) {
+    var confirmationMessage = 'There are still some unsaved changes.' +
+        'Any unsaved changes will be discarded';
+
+    if (Object.keys(inputstore.changes['update']).length || Object.keys(inputstore.changes['delete']).length) {
+        e.returnValue = confirmationMessage;
+        return  confirmationMessage;
+    }
 });

@@ -1,0 +1,33 @@
+.row.display-flex {
+  display: flex;
+  flex-wrap: wrap;
+}
+.row.display-flex > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 5px;
+  flex-grow: 1;
+}
+
+@media (min-width: 1200px) {
+  #map-container {
+    min-width: 1000px;
+  }
+}
+
+.plot-widget {
+  min-width: 500px;
+}
+
+#map-container .x_panel{
+  padding: 15px;
+}
+
+#map-container .x_panel .x_content{
+  height: 100%;
+}
+
+#map-div {
+  height: 100%;
+}
+
