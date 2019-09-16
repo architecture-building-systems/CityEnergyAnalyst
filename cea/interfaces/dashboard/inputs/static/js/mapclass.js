@@ -163,26 +163,25 @@ class MapClass {
   fetchNetwork() {
     let _this = this;
     $.each(["dc", "dh"], function(_, network) {
-      $(`#${network}-toggle-label`).length &&
-        $(`#${network}-toggle-label`).remove();
+      $(`#${network}-toggle-label`).remove();
+      $(`#${network}-network-warning`).remove();
+      $(`#${network}-network-error`).remove();
       $("#network-group").append(`
           <div id="${network}-network-loading">Fetching ${network.toUpperCase()} network...</div>
         `);
       $.getJSON(_this.jsonURLs[network], function(json) {
         console.log(network, json);
+        $(`#${network}-network-loading`).remove();
         if (json) {
           _this.addLayer(network, json);
           _this.redraw();
         } else {
-          $(`#${network}-network-loading`).length &&
-            $(`#${network}-network-loading`).remove();
           $("#network-group").append(`
           <div id="${network}-network-warning">No ${network.toUpperCase()} network found</div>
         `);
         }
       }).fail(function() {
-        $(`#${network}-network-loading`).length &&
-          $(`#${network}-network-loading`).remove();
+        $(`#${network}-network-loading`).remove();
         $("#network-group").append(`
           <div id="${network}-network-error">Error fetching ${network.toUpperCase()} network</div>
         `);
@@ -253,8 +252,6 @@ class MapClass {
         break;
       case "dc":
       case "dh":
-        $(`#${layer}-network-loading`).length &&
-          $(`#${layer}-network-loading`).remove();
         !$(`#${layer}-toggle-label`).length &&
           networkGroup.append(`
             <label class="map-plot-label network-toggle-label" id="${layer}-toggle-label" style="display: block">
