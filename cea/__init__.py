@@ -1,3 +1,5 @@
+import logging
+
 __version__ = "2.21"
 
 
@@ -24,3 +26,11 @@ class MissingInputDataException(Exception):
 class InvalidOccupancyNameException(Exception):
     """Raised when the occupancy.dbf has an invalid / unknown occupancy column"""
     rc = 104
+
+
+def suppres_3rd_party_debug_loggers():
+    # set logging level to WARN for fiona and shapely and others
+    loggers_to_silence = ["shapely", "Fiona", "fiona", "urllib3.connectionpool"]
+    for log_name in loggers_to_silence:
+        log = logging.getLogger(log_name)
+        log.setLevel(logging.WARNING)
