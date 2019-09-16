@@ -319,6 +319,8 @@ $(window).load(function () {
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
+                   // Recreate table based on new data pointer
+                    $('.tab.active').click();
                    redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
