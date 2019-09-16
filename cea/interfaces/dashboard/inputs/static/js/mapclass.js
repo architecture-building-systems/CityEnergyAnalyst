@@ -377,12 +377,15 @@ class MapClass {
     this.deckgl.setProps({ layers });
   }
 
-  redrawBuildings(data = {}) {
-    this.data = {
-      ...this.data,
-      ...data
-    };
-    this.redraw();
+  updateData(layer, data) {
+    if (Object.keys(this.data).includes(layer)) {
+      this.data = {
+        ...this.data,
+        [layer]: data
+      };
+    } else {
+      console.log(`Layer ${layer} does not exist`);
+    }
   }
 
   getNetworkType() {

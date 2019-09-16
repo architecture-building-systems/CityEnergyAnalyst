@@ -72,5 +72,7 @@ function buildingColor(color, layer, object) {
 }
 
 function redrawBuildings() {
+    map.updateData('zone', inputstore.getGeojson('zone'));
+    map.updateData('district', inputstore.getGeojson('district'));
     map.redraw();
 }
