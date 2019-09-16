@@ -70,24 +70,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     @property
     def layout(self):
-        data = self.process_generation_total_performance_pareto()
-        data = self.normalize_data(data, self.normalization, self.objectives)
-        xs = data[self.objectives[0]].values
-        ys = data[self.objectives[1]].values
-        zs = data[self.objectives[2]].values
-        xmin = min(xs)
-        ymin = min(ys)
-        zmin = min(zs)
-        xmax = max(xs)
-        ymax = max(ys)
-        zmax = max(zs)
-        ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
-                                      [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
-        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.7),
-                         xaxis=dict(title=self.titlex, domain=[0, 1],
-                                    range=ranges_some_room_for_graph[0]),
-                         yaxis=dict(title=self.titley, domain=[0.3, 1.0],
-                                    range=ranges_some_room_for_graph[1]))
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.95),
+                         xaxis=dict(title=self.titlex),
+                         yaxis=dict(title=self.titley))
 
 
     @property
@@ -104,16 +89,27 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                                       self.category_name)
 
     def calc_graph(self):
+        graph = []
+        #PUT THE HALL OF FAME INSIDE
+        data_HOF = self.process_generation_total_performance_halloffame()
+        data_HOF = self.normalize_data(data_HOF, self.normalization, self.objectives)
+        xs_HOF = data_HOF[self.objectives[0]].values
+        ys_HOF = data_HOF[self.objectives[1]].values
+        individual_names = data_HOF['individual_name'].values
+        trace = go.Scattergl(x=xs_HOF, y=ys_HOF, mode='markers', name='Hall of fame', text=individual_names,
+                           marker=dict(size='12', color='grey'))
+        graph.append(trace)
+
+        # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
+
         individual_names = data['individual_name'].values
 
-
-        graph = []
-        trace = go.Scattergl(x=xs, y=ys, mode='markers', name='data', text=individual_names,
+        trace = go.Scattergl(x=xs, y=ys, mode='markers', name='Pareto curve', text=individual_names,
                            marker=dict(size='12', color=zs,
                                        colorbar=go.ColorBar(title=self.titlez, titleside='bottom'),
                                        colorscale='Jet', showscale=True, opacity=0.8))
@@ -126,12 +122,11 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
             xs = final_dataframe[self.objectives[0]].values
             ys = final_dataframe[self.objectives[1]].values
             name = final_dataframe["Attribute"].values
-            trace = go.Scattergl(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
+            trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Selected by Multi-criteria", text=name,
                                marker=dict(size='20', color='white', line=dict(
                                    color='black',
                                    width=2)))
             graph.append(trace)
-
         return graph
 
     # def calc_table(self):
