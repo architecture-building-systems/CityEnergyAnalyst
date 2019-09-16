@@ -830,7 +830,7 @@ class MultiChoiceParameter(ChoiceParameter):
     typename = 'MultiChoiceParameter'
 
     def encode(self, value):
-        assert not isinstance(value, basestring)
+        assert not isinstance(value, basestring), "Bad value for encode of parameter {pname}".format(pname=self.name)
         for choice in value:
             assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
                 value, self.name, self._choices)
