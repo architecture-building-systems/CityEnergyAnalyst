@@ -1,5 +1,6 @@
 <link href="{{ url_for('static', filename='vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/map.css') }}">
+<link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/table.css') }}">
 <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.css') }}">
 
 <div class="right_col" role="main">
@@ -52,7 +53,7 @@
             <div>
               <ul class="nav nav-pills">
                 {% for tab in tabs %}
-                <li class="tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
+                <li class="tab cea-input-table-tab" id="{{ tab }}-tab" data-name="{{ tab }}"><a>{{ tab }}</a></li>
                 {% endfor %}
               </ul>
             </div>
@@ -96,6 +97,5 @@
 
 <script src="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.js') }}"></script>
 
-<script src="{{ url_for('inputs_blueprint.static', filename='js/inputs.js') }}?u={{ last_updated }}"></script>
 <script src="{{ url_for('inputs_blueprint.static', filename='js/table.js') }}?u={{ last_updated }}"></script>
 <script src="{{ url_for('inputs_blueprint.static', filename='js/map.js') }}?u={{ last_updated }}"></script>
