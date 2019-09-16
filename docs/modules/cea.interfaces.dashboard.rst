@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cea.interfaces.dashboard.api
     cea.interfaces.dashboard.base
     cea.interfaces.dashboard.inputs
     cea.interfaces.dashboard.landing

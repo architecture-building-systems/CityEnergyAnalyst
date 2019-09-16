@@ -65,7 +65,8 @@ The following file is used by scripts: ['data-helper', 'demand']
      El_Wm2,Peak specific electrical load due to artificial lighting - Unit: [W/m2]
      Epro_Wm2,Peak specific electrical load due to industrial processes - Unit: [W/m2]
      Qcre_Wm2,TODO - Unit: TODO
-     Qhpro_Wm2,Peak specific due to process heat - Unit: [W/m2]
+     Qcpro_Wm2,Peak specific process heat load - Unit: [W/m2]
+     Qhpro_Wm2,Peak specific process cooling load - Unit: [W/m2]
      Qs_Wp,TODO - Unit: TODO
      Vw_lpd,Peak specific fresh water consumption (includes cold and hot water) - Unit: [lpd]
      Vww_lpd,Peak specific daily hot water consumption - Unit: [lpd]
