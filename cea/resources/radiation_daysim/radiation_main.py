@@ -114,7 +114,7 @@ def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geome
         ## for the surrounding buildings only, walls and roofs
         id = 0
         for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2" , rad)
+            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
         for pypolygon in building_surfaces['roofs']:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
@@ -148,6 +148,7 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
+
 def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     if settings.buildings == []:
         # get chunks of buildings to iterate
@@ -163,6 +164,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
 
     for chunk_n, building_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings)
+
 
 def main(config):
     """
@@ -215,6 +217,6 @@ def main(config):
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-
