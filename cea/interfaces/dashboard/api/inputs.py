@@ -193,7 +193,7 @@ def get_network(config, network_type, trigger_abort=True):
     network_name = 'base'
 
     # Do not calculate if no connected buildings
-    if len(connected_buildings) == 0:
+    if len(connected_buildings) < 2:
         return None, [], None
 
     edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
