@@ -1,12 +1,12 @@
 - config: default
   "general:multiprocessing": on
+  "general:project": "{cea_general_project}/../reference-case-cooling"
   "radiation-daysim:daysim-bin-directory": "${cea_radiation-daysim_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
     case: cooling
 - config: .
-  "general:project": "${cea_general_project}/../reference-case-cooling"
   "general:scenario-name": baseline
 - script: data-helper
 - script: radiation-daysim
