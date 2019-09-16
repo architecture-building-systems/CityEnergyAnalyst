@@ -5,6 +5,7 @@ import os
 from cea.utilities.physics import calc_rho_air
 from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 import cea.osmose.settings as settings
+from cea.osmose.auxiliary_functions import calc_h_from_T_w
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Qww_sys_kWh', 'Qcdata_sys_kWh',
                              'Qcs_sen_ahu_kWh', 'Qcs_sen_aru_kWh', 'Qcs_sen_scu_kWh', 'Qcs_sen_sys_kWh',
@@ -134,6 +135,12 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         calc_sensible_gains(output_df, reduced_tsd_df)
         output_df1['Q_gain_total_kWh'] = reduced_tsd_df['Q_gain_total_kWh']
         output_df1['Q_gain_occ_kWh'] = reduced_tsd_df['Q_gain_occ_kWh']
+        if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
+            w_RA = 10.29  # 24C with 55% RH
+        elif 'RES' in case:
+            w_RA = 13.1  # 28C with 55% RH
+        h_sen_inf = np.vectorize(calc_h_sen_inf)(reduced_tsd_df['T_ext'], reduced_tsd_df['T_int'], w_RA)
+        output_df1['Q_gain_inf_kWh'] = reduced_tsd_df['m_ve_inf'] * h_sen_inf
         ## humidity gain
         output_df1['w_gain_occ_kgpers'] = reduced_tsd_df['w_int']
         # output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['w_ext'] / 1000
@@ -148,10 +155,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_hcs['COND_TIN'] = reduced_tsd_df['T_ext_wetbulb'] + 5 + 273.15
         output_hcs['COND_TOUT'] = reduced_tsd_df['T_ext_wetbulb'] + 4.5 + 273.15
         output_hcs['T_RA'] = reduced_tsd_df['T_int']
-        if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
-            output_hcs['w_RA'] = 10.29  # 24C with 55% RH
-        elif 'RES' in case:
-            output_hcs['w_RA'] = 13.1  # 28C with 55% RH
+        output_hcs['w_RA'] = w_RA
         output_hcs['rh_ext'] = np.where((reduced_tsd_df['rh_ext'] / 100) >= 1, 0.99, reduced_tsd_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_tsd_df['rh_ext'],
                                                            reduced_tsd_df['T_ext'])  # g/kg d.a.
@@ -250,6 +254,13 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
         print 'wetbulb average: ', Twb_K
     return building_names, Tamb_K, int(timesteps), int(periods)
+
+
+def calc_h_sen_inf(T_ext, T_int, w_RA):
+    T = T_ext if T_ext <= T_int else T_int
+    h_sen_inf = calc_h_from_T_w(T, w_RA)
+    return h_sen_inf
+
 
 
 def calc_CO2_gains(output_hcs, reduced_tsd_df):
