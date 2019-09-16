@@ -93,11 +93,11 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         # calculate operating conditions at given input conditions
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
         # calculate chiller outputs
-        wdot_W = chiller_prop['el_W'].values[0] * number_of_chillers_activated
+        wdot_W = calc_power_demand(input_conditions['q_chw_W'], ACH_type) * number_of_chillers_activated
         q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers_activated
         q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers_activated
         T_hw_out_C = operating_conditions['T_hw_out_C']
-        EER = q_chw_total_W / q_hw_W
+        EER = q_chw_total_W / (q_hw_W + wdot_W)
 
         if T_hw_out_C < 0.0 :
             print ('T_hw_out_C = ', T_hw_out_C, ' incorrect condition, check absorption chiller script.')
@@ -162,6 +162,25 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     return {'T_hw_out_C': T_hw_out_C, 'T_cw_out_C': T_cw_out_C, 'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
             'q_cw_W': q_cw_kW * 1000}
 
+
+def calc_power_demand(q_chw_W, ACH_type):
+    """
+    Calculates the power demand of the solution and refrigeration pumps in absorption chillers.
+    Linear equations derived from manufacturer's catalog _[Broad Air Conditioning, 2018].
+    :param q_chw_W:
+    :param ACH_type:
+    :return:
+
+    ..[Broad Air Conditioning, 2018] BROAD XII NON-ELECTRIC CHILLER. (2018).
+    etrieved from https://www.broadusa.net/en/wp-content/uploads/2018/12/BROAD-XII-US-Catalog2018-12.pdf
+
+    """
+    if ACH_type == 'single':
+        w_dot_W = 0.0028 + 2941
+    else:
+        w_dot_W = 0.0021 * q_chw_W + 2757 # assuming the same for double and triple effect chillers
+
+    return w_dot_W
 
 # Investment costs
 
@@ -253,7 +272,7 @@ def main(config):
                    'ACH_type': 'triple'}
 
     # Unpack parameters
-    case_dict = case_3_dict
+    case_dict = case_1_dict
     mdot_chw_kgpers = case_dict['mdot_chw_kgpers']
     T_chw_sup_K = case_dict['T_chw_sup_K']
     T_chw_re_K = case_dict['T_chw_re_K']
