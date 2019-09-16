@@ -48,10 +48,12 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
         else:
             titley = 'Annualized cost [USD$(2015)/yr]'
         return titley
+
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual Costs for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
+            return "Annual Costs for generation {generation} normalized to {normalized}".format(
+                generation=self.generation, normalized=self.normalization)
         else:
             return "Annual Costs for generation {generation}".format(generation=self.generation)
 

@@ -41,7 +41,6 @@ class GenerationPlotBase(cea.plots.PlotBase):
         """
         super(GenerationPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
-
         self.generation = self.parameters['generation']
 
     @cea.plots.cache.cached
