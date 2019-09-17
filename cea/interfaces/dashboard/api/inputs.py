@@ -6,7 +6,7 @@ import cea.utilities.dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.plots.variable_naming import get_color_array
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
-from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.main import layout_network
 
 import pandas
 import geopandas
@@ -207,7 +207,7 @@ def get_network(config, network_type, trigger_abort=True):
     if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
         config.network_layout.network_type = network_type
         config.network_layout.connected_buildings = connected_buildings
-        network_layout(config, locator, output_name_network=network_name)
+        layout_network(config, locator, output_name_network=network_name)
 
     network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
     nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
