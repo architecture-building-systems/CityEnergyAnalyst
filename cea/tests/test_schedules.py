@@ -18,8 +18,8 @@ from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.demand_main import get_dates_from_year
-from cea.demand.occupancy.occupancy_model import calc_schedules
-from cea.demand.occupancy.occupancy_model import schedule_maker, get_building_schedules
+from cea.demand.occupancy.occupancy_model import calc_schedules, get_building_schedules, schedule_maker
+from cea.demand.occupancy.occupancy_from_transportation_data import calc_schedules_from_transportation_data
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 
@@ -118,6 +118,38 @@ class TestScheduleCreation(unittest.TestCase):
                 schedule, str(REFERENCE_TIME), calculated_schedules[schedule][
                     REFERENCE_TIME],
                 reference_results[schedule]))
+
+
+class TestTransportationScheduleCreation(unittest.TestCase):
+    def test_transportation_schedules(self):
+        locator = ReferenceCaseOpenLocator()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = locator.scenario
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
+
+        # get year from weather file
+        weather_path = locator.get_weather_file()
+        weather_data = epwreader.epw_reader(weather_path)[['year']]
+        year = weather_data['year'][0]
+        dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+
+        # calculate schedules
+        building_schedules = calc_schedules_from_transportation_data(locator, dates, stochastic_occupancy)
+
+        self.assertTrue(os.path.exists(locator.get_building_schedules('B04')),
+                        'Building schedule csv not produced')
+
+        calculated_schedules = pd.read_csv(locator.get_building_schedules('B04'))
+
+        config = ConfigParser.SafeConfigParser()
+        config.read(get_test_config_path())
+        reference_results = json.loads(config.get('test_transportation_schedules', 'reference_results'))
+
+        for schedule in reference_results:
+            self.assertAlmostEqual(calculated_schedules[schedule][calculated_schedules['people'].idxmax()],
+                                   reference_results[schedule], places=4, msg="Schedule '%s' at time %s, %f != %f" % (
+                schedule, str(calculated_schedules['people'].idxmax()),
+                calculated_schedules[schedule][calculated_schedules['people'].idxmax()], reference_results[schedule]))
 
 
 def get_test_config_path():
