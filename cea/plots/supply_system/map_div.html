@@ -497,7 +497,7 @@
         function buildingColor(object) {
             let type = getNetworkType();
             if (type) {
-                let connected = data[`connected_buildings_${type.toUpperCase()}`];
+                let connected = data[type.toUpperCase()]['connected_buildings'];
                 if (connected.includes(object.properties.Name)) return colors[type];
             }
             return colors.disconnected
@@ -520,7 +520,7 @@
                 if (connectedToggle.checked && !disconnectedToggle.checked) {
                     if (typeof(filtered[type].connected) === 'undefined') {
                         features = zone.features.filter(feature => {
-                            return data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                            return data[type.toUpperCase()]['connected_buildings'].includes(feature.properties.Name)
                         });
                         filtered[type].connected = features;
                     }
@@ -529,7 +529,7 @@
                 if (!connectedToggle.checked && disconnectedToggle.checked) {
                     if (typeof(filtered[type].disconnected) === 'undefined') {
                         features = zone.features.filter(feature => {
-                            return data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+                            return data[type.toUpperCase()]['disconnected_buildings'].includes(feature.properties.Name)
                         });
                         filtered[type].disconnected = features;
                     }
