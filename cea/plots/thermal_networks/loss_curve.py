@@ -32,7 +32,7 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     @property
     def layout(self):
-        return dict(title=self.title, yaxis=dict(title=self.yaxis_title),
+        return dict(yaxis=dict(title=self.yaxis_title),
                     yaxis2=dict(title='Demand [kWh]', overlaying='y',
                                 side='right'), xaxis=dict(rangeselector=dict(buttons=list([
                 dict(count=1, label='1d', step='day', stepmode='backward'),
@@ -145,7 +145,6 @@ def main():
     import cea.config
     import cea.plots.cache
     config = cea.config.Configuration()
-    cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
     LossCurvePlot(config.project, {'network-type': config.plots.network_type,
                                    'scenario-name': config.scenario_name,
