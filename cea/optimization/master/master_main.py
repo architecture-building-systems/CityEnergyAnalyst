@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
-
+from math import sqrt
 from cea.optimization.constants import CXPB, MUTPB
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
@@ -187,6 +187,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Initialize statistics object
     paretofrontier = tools.ParetoFront()
     halloffame = tools.HallOfFame(MU)
+    generational_distances = []
+    difference_generational_distances = []
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
@@ -228,6 +230,9 @@ def non_dominated_sorting_genetic_algorithm(locator,
     record = stats.compile(pop)
     paretofrontier.update(pop)
     halloffame.update(pop)
+    performance_metrics = calc_performance_metrics(0.0, paretofrontier)
+    generational_distances.append(performance_metrics[0])
+    difference_generational_distances.append(performance_metrics[1])
     logbook.record(gen=0, evals=len(invalid_ind), **record)
 
     # create a dictionary to store which individuals that are being calculated
@@ -238,8 +243,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Begin the generational process
     # Initialization of variables
-    DHN_network_list = []
-    DCN_network_list = []
     for gen in range(1, NGEN + 1):
         print ("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
         # Select and clone the next generation individuals
@@ -276,11 +279,15 @@ def non_dominated_sorting_genetic_algorithm(locator,
         # get paretofront and update dictionary of individuals evaluated
         paretofrontier.update(pop)
         halloffame.update(pop)
+
         record_individuals_tested = calc_dictionary_of_all_individuals_tested(record_individuals_tested, gen=gen,
                                                                               invalid_ind=invalid_ind)
 
         # Compile statistics about the new population
         record = stats.compile(pop)
+        performance_metrics = calc_performance_metrics(generational_distances[-1], paretofrontier)
+        generational_distances.append(performance_metrics[0])
+        difference_generational_distances.append(performance_metrics[1])
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
@@ -306,8 +313,11 @@ def non_dominated_sorting_genetic_algorithm(locator,
         # Create Checkpoint if necessary
         print "Creating CheckPoint", gen, "\n"
         with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
-            cp = dict(selected_population=pop,
-                      tested_population=invalid_ind)
+            cp = dict(generation = gen,
+                      selected_population=pop,
+                      tested_population=invalid_ind,
+                      generational_distances=generational_distances,
+                      difference_generational_distances = difference_generational_distances)
             json.dump(cp, fp)
     if config.multiprocessing:
         pool.close()
@@ -539,6 +549,25 @@ def get_column_names_individual(district_heating_network,
            column_names_buildings_heating, \
            column_names_buildings_cooling
 
+def calc_euclidean_distance(x2, y2, z2):
+    x1, y1, z1 = 0, 0, 0
+    euclidean_distance = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+    return euclidean_distance
+
+def calc_gd(n, X2, Y2, Z2):
+    gd = 1 / n * sqrt(sum([calc_euclidean_distance(x2, y2, z2) for x2, y2, z2 in zip(X2, Y2, Z2)]))
+    return gd
+
+def calc_performance_metrics(generational_distance_n_minus_1, paretofrontier):
+    number_of_individuals = len([paretofrontier])
+    X2 = [paretofrontier[x].fitness.values[0] for x in range(number_of_individuals)]
+    Y2 = [paretofrontier[x].fitness.values[1] for x in range(number_of_individuals)]
+    Z2 = [paretofrontier[x].fitness.values[2] for x in range(number_of_individuals)]
+
+    generational_distance = calc_gd(number_of_individuals, X2, Y2, Z2)
+    difference_generational_distance = abs(generational_distance_n_minus_1-generational_distance)
+
+    return generational_distance, difference_generational_distance,
 
 if __name__ == "__main__":
     x = 'no_testing_todo'
