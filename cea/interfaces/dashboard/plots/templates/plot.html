@@ -69,5 +69,13 @@
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
   <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
   <script src="{{ url_for('.static', filename='js/single-plots.js') }}"></script>
+  <script>
+    window.addEventListener("resize", function() {
+      console.log("resizing");
+      $.each($(".plotly-graph-div.js-plotly-plot"), function() {
+        Plotly.Plots.resize($(this).attr("id"));
+      });
+    });
+  </script>
 {% endblock javascripts %}
 
