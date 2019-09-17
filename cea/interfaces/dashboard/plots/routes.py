@@ -34,7 +34,7 @@ def route_react_dashboard():
 @blueprint.route('/dashboard/<int:dashboard_index>')
 def route_dashboard(dashboard_index):
     """
-    Route the i-th dashboard from the dashboard configuratino file.
+    Route the i-th dashboard from the dashboard configuration file.
     In case of an out-of-bounds error, show the 0-th dashboard (that is guaranteed to exist)
     """
     cea_config = current_app.cea_config
