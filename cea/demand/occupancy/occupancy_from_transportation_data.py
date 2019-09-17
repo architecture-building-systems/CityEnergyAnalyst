@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 OTHER_SCHEDULES = ['Epro_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2']
-FACILITY_TYPES = {'student': ['SCHOOL'], 'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
+FACILITY_TYPES = {'student': ['SCHOOL', 'UNIVERSITY'], 'employee': ['OFFICE', 'LAB', 'HOSPITAL', 'INDUSTRIAL']}
 
 
 def calc_schedules_from_transportation_data(locator, dates, use_stochastic_occupancy):
