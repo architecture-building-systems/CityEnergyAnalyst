@@ -7,9 +7,18 @@
 
 The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ includes two building occupancy models found in
 `occupancy_model.py`: a deterministic model based on standard schedules and a stochastic model based on the work of Page
-et al. (2008). Running the CEA demand script generates a set of schedules for each building that are exported to the
-folder `outputs\data\schedules`. Both of these models use the archetypal schedules in the CEA database found in the file
-`archetypes\occupancy_schedules.xlsx`.
+et al. (2008). Both of these models use the archetypal schedules in the CEA database found in the file
+`archetypes\occupancy_schedules.xlsx`. Running the CEA demand script generates a set of schedules for each building that
+are exported to the folder `outputs\data\schedules`. The schedules are csv files containing normalized hourly schedules
+for the following parameters:
+- `people`: number of occupants at each time step
+- `Ea`, `Ed`, `El`, `Epro`: electricity demand for appliances, data centers, lighting and processes, respectively [in W/(W/m2)]
+- `Qcpro`, `Qcre`: cooling demand for processes and refrigeration, respectively [in W/(W/m2)]
+- `Qhpro`: heating demand for processes [in W/(W/m2)]
+- `Qs`: sensible heat humidity gains from building occupants [in W/(Wp)]
+- `X`: humidity gains from building occupants [in (g/h)/(g/p/h)]
+- `Vw`, `Vww`: demand for fresh water and domestic hot water, respectively [in (l/h)/(l/p/d)]
+- `ve`: ventilation required at each time step [in (l/s)/(l/p/s)]
 
 Alternatively, users can input their own building schedules by placing these as csv files in the folder
 `inputs\building-schedules`. For a given building, if schedules are found in the input folder, CEA will override the
