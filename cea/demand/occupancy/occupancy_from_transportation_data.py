@@ -317,7 +317,7 @@ def get_normalizing_values(occupancy, archetype_values):
     :param building_properties:
     :return:
     '''
-    normalizing_values = pd.Series(data=0.0, index=archetype_values.columns)
+    normalizing_values = pd.Series(data=1.0, index=archetype_values.columns)
     for schedule in OCCUPANT_SCHEDULES + WATER_SCHEDULES:
         normalizing_values[schedule] = np.sum(
             occupancy.loc[archetype_values.index] * archetype_values['people'] * archetype_values[schedule]) / np.sum(
