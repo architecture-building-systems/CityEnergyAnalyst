@@ -1,0 +1,41 @@
+{% extends "base_site.html" %}
+
+{% block title %}Simulations{% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+  <div class="right_col" role="main">
+    <div id="cea-job-table"></div>
+
+    <!-- show the dialog with the script output -->
+    <div class="modal fade" id="cea-console-output" tabindex="-1" role="dialog" aria-hidden="true" data-jobid="0">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+            </button>
+            <h4 class="modal-title" id="cea-console-title"></h4>
+          </div>
+          <div class="modal-body">
+            <pre id="cea-console-output-body"></pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default cea-modal-close" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super() }}
+  <script src="{{ url_for('inputs_blueprint.static', filename='vendor/tabulator.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='cea-job-table.js') }}"></script>
+{% endblock javascripts %}
