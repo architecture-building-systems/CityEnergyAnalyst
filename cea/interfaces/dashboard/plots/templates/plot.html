@@ -9,6 +9,10 @@
     .nav-md .container.body .right_col {
       margin-left: 0;
     }
+    .x_content.cea-plot {
+      height: 50vh;
+      min-height: 450px;
+    }
   </style>
 {% endblock stylesheets %}
 
@@ -40,7 +44,7 @@
                 </select>
                 {% endif %}
               </div>
-              <div class="x_content" id="x_content-{{ dashboard_index }}-{{ plot_index }}">
+              <div class="x_content cea-plot" id="x_content-{{ dashboard_index }}-{{ plot_index }}">
                 <p>Loading plot...</p>
               </div>
               <div class="x_content" id="x_table-{{ dashboard_index }}-{{ plot_index }}">
