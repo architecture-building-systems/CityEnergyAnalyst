@@ -1,11 +1,6 @@
 /*jslint browser:true */
 /*global $, Tabulator, io, console */
 
-$(document).ready(function () {
-    "use strict";
-    load_plot();
-});
-
 function load_plot() {
     "use strict";
     $(".cea-plot").map(function () {
@@ -13,7 +8,6 @@ function load_plot() {
         let plot_index = this.dataset.ceaPlotIndex;
         let x_content_id = `#x_content-${dashboard_index}-${plot_index}`;
         let x_table_id = "#x_table-" + dashboard_index + "-" + plot_index;
-
 
         $.get(`../../div/${dashboard_index}/${plot_index}`, function (data) {
             $(x_content_id).children().replaceWith(data);
@@ -33,7 +27,12 @@ function load_plot() {
     });
 }
 
-$("#parameters-buildings").on("changed.bs.select", function (e) {
+$("#parameters-buildings").on("changed.bs.select", function () {
+    "use strict";
+    load_plot();
+});
+
+$(document).ready(function () {
     "use strict";
     load_plot();
 });
