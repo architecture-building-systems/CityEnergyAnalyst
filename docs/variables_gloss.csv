@@ -43,6 +43,7 @@ internal_loads.dbf;Ed_Wm2;float;[W/m2];Peak specific electrical load due to serv
 internal_loads.dbf;Vww_lpd;float;[lpd];Peak specific daily hot water consumption;{0.0...n}
 internal_loads.dbf;Vw_lpd;float;[lpd];Peak specific fresh water consumption (includes cold and hot water);{0.0...n}
 internal_loads.dbf;Qhpro_Wm2;float;[W/m2];Peak specific due to process heat;{0.0...n}
+internal_loads.dbf;Qcpro_Wm2;float;[W/m2];Peak specific due to process cooling;{0.0...n}
 occupancy.dbf;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 occupancy.dbf;HOTEL;float;[m2/m2];Share (fraction of gross floor area) of hospitality area;{0.0...1}
 occupancy.dbf;COOLROOM;float;[m2/m2];Share (fraction of gross floor area) of coolrooms;{0.0...1}
@@ -285,6 +286,7 @@ B001.csv;Q_loss_sen_ref_kWh;float;[kWh];Sensible heat loss from refrigeration sy
 B001.csv;QC_sys_kWh;float;[kWh];Total cool consumption;{0.0...n}
 B001.csv;Qcdata_kWh;float;[kWh];Data centre space cooling demand;{0.0...n}
 B001.csv;Qcdata_sys_kWh;float;[kWh];End-use data center cooling demand;{0.0...n}
+B001.csv;Qcpro_sys_kWh;float;[kWh];Industrial process cooling demand;{0.0...n}
 B001.csv;Qcre_kWh;float;[kWh];Refrigeration space cooling demand;{0.0...n}
 B001.csv;Qcre_sys_kWh;float;[kWh];End-use refrigeration demand;{0.0...n}
 B001.csv;Qcs_dis_ls_kWh;float;[kWh];Cooling system distribution losses;{0.0...n}
@@ -352,136 +354,138 @@ B001.csv;x_int;float;[kg/kg];Internal mass fraction of humidity (water/dry air);
 Total_demand.csv;Af_m2;float;[m2];Conditioned floor area (heated/cooled);{0.0...n}
 Total_demand.csv;Aroof_m2;float;[m2];Roof area;{0.0...n}
 Total_demand.csv;COAL_hs_MWhyr;float;[MWh/year];Coal consumption due to space heating;{0.0...n}
-Total_demand.csv;COAL_hs0_kW;float;[kW/year];Peak Coal consumption due to space heating;{0.0...n}
+Total_demand.csv;COAL_hs0_kW;float;[kW];Peak Coal consumption due to space heating;{0.0...n}
 Total_demand.csv;COAL_ww_MWhyr;float;[MWh/year];Coal consumption due to hotwater;{0.0...n}
-Total_demand.csv;COAL_ww0_kW;float;[kW/year];Peak Coal consumption due to hotwater;{0.0...n}
+Total_demand.csv;COAL_ww0_kW;float;[kW];Peak Coal consumption due to hotwater;{0.0...n}
 Total_demand.csv;DC_cdata_MWhyr;float;[MWh/year];District cooling for data center cooling demand;{0.0...n}
-Total_demand.csv;DC_cdata0_kW;float;[kW/year];Peak district cooling for final data center cooling demand;{0.0...n}
+Total_demand.csv;DC_cdata0_kW;float;[kW];Peak district cooling for final data center cooling demand;{0.0...n}
 Total_demand.csv;DC_cre_MWhyr;float;[MWh/year];District cooling for refrigeration demand;{0.0...n}
-Total_demand.csv;DC_cre0_kW;float;[kW/year];Peak district cooling for refrigeration demand;{0.0...n}
+Total_demand.csv;DC_cre0_kW;float;[kW];Peak district cooling for refrigeration demand;{0.0...n}
 Total_demand.csv;DC_cs_MWhyr;float;[MWh/year];District cooling for space cooling demand;{0.0...n}
-Total_demand.csv;DC_cs0_kW;float;[kW/year];Peak district cooling for space cooling demand;{0.0...n}
+Total_demand.csv;DC_cs0_kW;float;[kW];Peak district cooling for space cooling demand;{0.0...n}
 Total_demand.csv;DH_hs_MWhyr;float;[MWh/year];District heating for space heating demand;{0.0...n}
-Total_demand.csv;DH_hs0_kW;float;[kW/year];Peak district heating for space heating demand;{0.0...n}
+Total_demand.csv;DH_hs0_kW;float;[kW];Peak district heating for space heating demand;{0.0...n}
 Total_demand.csv;DH_ww_MWhyr;float;[MWh/year];District heating for hotwater demand;{0.0...n}
-Total_demand.csv;DH_ww0_kW;float;[kW/year];Nominal district heating for hotwater demand;{0.0...n}
+Total_demand.csv;DH_ww0_kW;float;[kW];Nominal district heating for hotwater demand;{0.0...n}
 Total_demand.csv;E_cdata_MWhyr;float;[MWh/year];Data centre cooling specific electricity consumption.;{0.0...n}
-Total_demand.csv;E_cdata0_kW;float;[kW/year];Nominal Data centre cooling specific electricity consumption.;{0.0...n}
+Total_demand.csv;E_cdata0_kW;float;[kW];Nominal Data centre cooling specific electricity consumption.;{0.0...n}
 Total_demand.csv;E_cre_MWhyr;float;[MWh/year];Refrigeration system electricity consumption.;{0.0...n}
-Total_demand.csv;E_cre0_kW;float;[kW/year];Nominal Refrigeration system electricity consumption.;{0.0...n}
+Total_demand.csv;E_cre0_kW;float;[kW];Nominal Refrigeration system electricity consumption.;{0.0...n}
 Total_demand.csv;E_cs_MWhyr;float;[MWh/year];Cooling system electricity consumption.;{0.0...n}
-Total_demand.csv;E_cs0_kW;float;[kW/year];Nominal Cooling system electricity consumption.;{0.0...n}
+Total_demand.csv;E_cs0_kW;float;[kW];Nominal Cooling system electricity consumption.;{0.0...n}
 Total_demand.csv;E_hs_MWhyr;float;[MWh/year];Heating system electricity consumption.;{0.0...n}
-Total_demand.csv;E_hs0_kW;float;[kW/year];Nominal Heating system electricity consumption.;{0.0...n}
+Total_demand.csv;E_hs0_kW;float;[kW];Nominal Heating system electricity consumption.;{0.0...n}
 Total_demand.csv;E_sys_MWhyr;float;[MWh/year];End-use electricity demand;{0.0...n}
-Total_demand.csv;E_sys0_kW;float;[kW/year];Nominal end-use electricity demand;{0.0...n}
+Total_demand.csv;E_sys0_kW;float;[kW];Nominal end-use electricity demand;{0.0...n}
 Total_demand.csv;E_ww_MWhyr;float;[MWh/year];Domestic hot water electricity consumption.;{0.0...n}
-Total_demand.csv;E_ww0_kW;float;[kW/year];Nominal Domestic hot water electricity consumption.;{0.0...n}
+Total_demand.csv;E_ww0_kW;float;[kW];Nominal Domestic hot water electricity consumption.;{0.0...n}
 Total_demand.csv;Eal_MWhyr;float;[MWh/year];Total net electricity for all sources and sinks;{0.0...n}
-Total_demand.csv;Eal0_kW;float;[kW/year];Nominal Total net electricity for all sources and sinks.;{0.0...n}
+Total_demand.csv;Eal0_kW;float;[kW];Nominal Total net electricity for all sources and sinks.;{0.0...n}
 Total_demand.csv;Eaux_MWhyr;float;[MWh/year];Auxiliary electricity consumption.;{0.0...n}
-Total_demand.csv;Eaux0_kW;float;[kW/year];Nominal Auxiliary electricity consumption.;{0.0...n}
+Total_demand.csv;Eaux0_kW;float;[kW];Nominal Auxiliary electricity consumption.;{0.0...n}
 Total_demand.csv;Edata_MWhyr;float;[MWh/year];Data centre electricity consumption.;{0.0...n}
-Total_demand.csv;Edata0_kW;float;[kW/year];Nominal Data centre electricity consumption.;{0.0...n}
+Total_demand.csv;Edata0_kW;float;[kW];Nominal Data centre electricity consumption.;{0.0...n}
 Total_demand.csv;Epro_MWhyr;float;[MWh/year];Yearly Industrial processes electricity consumption.;{0.0...n}
-Total_demand.csv;Epro0_kW;float;[kW/year];Nominal Industrial processes electricity consumption.;{0.0...n}
+Total_demand.csv;Epro0_kW;float;[kW];Nominal Industrial processes electricity consumption.;{0.0...n}
 Total_demand.csv;GFA_m2;float;[m2];Gross floor area;{0.0...n}
 Total_demand.csv;GRID_MWhyr;float;[MWh/year];Grid electricity consumption;{0.0...n}
-Total_demand.csv;GRID0_kW;float;[kW/year];Nominal Grid electricity consumption;{0.0...n}
+Total_demand.csv;GRID0_kW;float;[kW];Nominal Grid electricity consumption;{0.0...n}
 Total_demand.csv;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 Total_demand.csv;NG_hs_MWhyr;float;[MWh/year];NG consumption due to space heating;{0.0...n}
-Total_demand.csv;NG_hs0_kW;float;[kW/year];Nominal NG consumption due to space heating;{0.0...n}
+Total_demand.csv;NG_hs0_kW;float;[kW];Nominal NG consumption due to space heating;{0.0...n}
 Total_demand.csv;NG_ww_MWhyr;float;[MWh/year];NG consumption due to hotwater;{0.0...n}
-Total_demand.csv;NG_ww0_kW;float;[kW/year];Nominal NG consumption due to hotwater;{0.0...n}
+Total_demand.csv;NG_ww0_kW;float;[kW];Nominal NG consumption due to hotwater;{0.0...n}
 Total_demand.csv;OIL_hs_MWhyr;float;[MWh/year];OIL consumption due to space heating;{0.0...n}
-Total_demand.csv;OIL_hs0_kW;float;[kW/year];Nominal OIL consumption due to space heating;{0.0...n}
+Total_demand.csv;OIL_hs0_kW;float;[kW];Nominal OIL consumption due to space heating;{0.0...n}
 Total_demand.csv;OIL_ww_MWhyr;float;[MWh/year];OIL consumption due to hotwater;{0.0...n}
-Total_demand.csv;OIL_ww0_kW;float;[kW/year];Nominal OIL consumption due to hotwater;{0.0...n}
+Total_demand.csv;OIL_ww0_kW;float;[kW];Nominal OIL consumption due to hotwater;{0.0...n}
 Total_demand.csv;people0;int;[people];Nominal occupancy;{0...n}
 Total_demand.csv;PV_MWhyr;float;[MWh/year];PV electricity consumption;{0.0...n}
-Total_demand.csv;PV0_kW;float;[kW/year];Nominal PV electricity consumption;{0.0...n}
+Total_demand.csv;PV0_kW;float;[kW];Nominal PV electricity consumption;{0.0...n}
 Total_demand.csv;QC_sys_MWhyr;float;[MWh/year];Total system cooling demand;{0.0...n}
-Total_demand.csv;QC_sys0_kW;float;[kW/year];Nominal Total system cooling demand.;{0.0...n}
+Total_demand.csv;QC_sys0_kW;float;[kW];Nominal Total system cooling demand.;{0.0...n}
 Total_demand.csv;Qcdata_MWhyr;float;[MWh/year];Data centre cooling demand;{0.0...n}
 Total_demand.csv;Qcdata_sys_MWhyr;float;[MWh/year];End-use data center cooling demand;{0.0...n}
-Total_demand.csv;Qcdata_sys0_kW;float;[kW/year];Nominal end-use data center cooling demand;{0.0...n}
-Total_demand.csv;Qcdata0_kW;float;[kW/year];Nominal Data centre cooling demand.;{0.0...n}
+Total_demand.csv;Qcdata_sys0_kW;float;[kW];Nominal end-use data center cooling demand;{0.0...n}
+Total_demand.csv;Qcdata0_kW;float;[kW];Nominal Data centre cooling demand.;{0.0...n}
+Total_demand.csv;Qcpro_sys_MWhyr;float;[MWh/year];Yearly processes cooling demand.;{0.0...n}
+Total_demand.csv;Qcpro_sys0_kW;float;[kW];Nominal process cooling demand.;{0.0...n}
 Total_demand.csv;Qcre_MWhyr;float;[MWh/year];Refrigeration cooling demand for the system;{0.0...n}
 Total_demand.csv;Qcre_sys_MWhyr;float;[MWh/year];End-use refrigeration demand;{0.0...n}
-Total_demand.csv;Qcre_sys0_kW;float;[kW/year];Nominal refrigeration cooling demand;{0.0...n}
-Total_demand.csv;Qcre0_kW;float;[kW/year];Nominal Refrigeration cooling demand.;{0.0...n}
+Total_demand.csv;Qcre_sys0_kW;float;[kW];Nominal refrigeration cooling demand;{0.0...n}
+Total_demand.csv;Qcre0_kW;float;[kW];Nominal Refrigeration cooling demand.;{0.0...n}
 Total_demand.csv;Qcs_dis_ls_MWhyr;float;[MWh/year];Cool distribution losses;{0.0...n}
-Total_demand.csv;Qcs_dis_ls0_kW;float;[kW/year];Nominal Cool distribution losses.;{0.0...n}
+Total_demand.csv;Qcs_dis_ls0_kW;float;[kW];Nominal Cool distribution losses.;{0.0...n}
 Total_demand.csv;Qcs_em_ls_MWhyr;float;[MWh/year];Cool emission losses;{0.0...n}
-Total_demand.csv;Qcs_em_ls0_kW;float;[kW/year];Nominal Cool emission losses.;{0.0...n}
+Total_demand.csv;Qcs_em_ls0_kW;float;[kW];Nominal Cool emission losses.;{0.0...n}
 Total_demand.csv;Qcs_lat_ahu_MWhyr;float;[MWh/year];AHU latent cool demand;{0.0...n}
-Total_demand.csv;Qcs_lat_ahu0_kW;float;[kW/year];Nominal AHU latent cool demand.;{0.0...n}
+Total_demand.csv;Qcs_lat_ahu0_kW;float;[kW];Nominal AHU latent cool demand.;{0.0...n}
 Total_demand.csv;Qcs_lat_aru_MWhyr;float;[MWh/year];ARU latent cool demand;{0.0...n}
-Total_demand.csv;Qcs_lat_aru0_kW;float;[kW/year];Nominal ARU latent cool demand.;{0.0...n}
+Total_demand.csv;Qcs_lat_aru0_kW;float;[kW];Nominal ARU latent cool demand.;{0.0...n}
 Total_demand.csv;Qcs_lat_sys_MWhyr;float;[MWh/year];System latent cool demand;{0.0...n}
-Total_demand.csv;Qcs_lat_sys0_kW;float;[kW/year];Nominal System latent cool demand.;{0.0...n}
+Total_demand.csv;Qcs_lat_sys0_kW;float;[kW];Nominal System latent cool demand.;{0.0...n}
 Total_demand.csv;Qcs_MWhyr;float;[MWh/year];Total cool demand;{0.0...n}
 Total_demand.csv;Qcs_sen_ahu_MWhyr;float;[MWh/year];AHU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sen_ahu0_kW;float;[kW/year];Nominal AHU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sen_ahu0_kW;float;[kW];Nominal AHU system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sen_aru_MWhyr;float;[MWh/year];ARU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sen_aru0_kW;float;[kW/year];Nominal ARU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sen_aru0_kW;float;[kW];Nominal ARU system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sen_scu_MWhyr;float;[MWh/year];SCU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sen_scu0_kW;float;[kW/year];Nominal SCU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sen_scu0_kW;float;[kW];Nominal SCU system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sen_sys_MWhyr;float;[MWh/year];Sensible system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sen_sys0_kW;float;[kW/year];Nominal Sensible system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sen_sys0_kW;float;[kW];Nominal Sensible system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sys_ahu_MWhyr;float;[MWh/year];AHU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sys_ahu0_kW;float;[kW/year];Nominal AHU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sys_ahu0_kW;float;[kW];Nominal AHU system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sys_aru_MWhyr;float;[MWh/year];ARU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sys_aru0_kW;float;[kW/year];Nominal ARU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sys_aru0_kW;float;[kW];Nominal ARU system cool demand.;{0.0...n}
 Total_demand.csv;Qcs_sys_MWhyr;float;[MWh/year];End-use space cooling demand;{0.0...n}
 Total_demand.csv;Qcs_sys_scu_MWhyr;float;[MWh/year];SCU system cool demand;{0.0...n}
-Total_demand.csv;Qcs_sys_scu0_kW;float;[kW/year];Nominal SCU system cool demand.;{0.0...n}
-Total_demand.csv;Qcs_sys0_kW;float;[kW/year];Nominal end-use space cooling demand;{0.0...n}
-Total_demand.csv;Qcs0_kW;float;[kW/year];Nominal Total cooling demand.;{0.0...n}
+Total_demand.csv;Qcs_sys_scu0_kW;float;[kW];Nominal SCU system cool demand.;{0.0...n}
+Total_demand.csv;Qcs_sys0_kW;float;[kW];Nominal end-use space cooling demand;{0.0...n}
+Total_demand.csv;Qcs0_kW;float;[kW];Nominal Total cooling demand.;{0.0...n}
 Total_demand.csv;QH_sys_MWhyr;float;[MWh/year];Total building heating demand;{0.0...n}
-Total_demand.csv;QH_sys0_kW;float;[kW/year];Nominal total building heating demand.;{0.0...n}
-Total_demand.csv;Qhpro_sys_MWhyr;float;[MWh/year];Yearly industrial processes heat demand.;{0.0...n}
-Total_demand.csv;Qhpro_sys0_kW;float;[kW/year];Nominal process heat demand.;{0.0...n}
+Total_demand.csv;QH_sys0_kW;float;[kW];Nominal total building heating demand.;{0.0...n}
+Total_demand.csv;Qhpro_sys_MWhyr;float;[MWh/year];Yearly processes heat demand.;{0.0...n}
+Total_demand.csv;Qhpro_sys0_kW;float;[kW];Nominal process heat demand.;{0.0...n}
 Total_demand.csv;Qhs_dis_ls_MWhyr;float;[MWh/year];Heating system distribution losses;{0.0...n}
-Total_demand.csv;Qhs_dis_ls0_kW;float;[kW/year];Nominal Heating system distribution losses.;{0.0...n}
+Total_demand.csv;Qhs_dis_ls0_kW;float;[kW];Nominal Heating system distribution losses.;{0.0...n}
 Total_demand.csv;Qhs_em_ls_MWhyr;float;[MWh/year];Heating system emission losses;{0.0...n}
-Total_demand.csv;Qhs_em_ls0_kW;float;[kW/year];Nominal Heating emission losses.;{0.0...n}
+Total_demand.csv;Qhs_em_ls0_kW;float;[kW];Nominal Heating emission losses.;{0.0...n}
 Total_demand.csv;Qhs_lat_ahu_MWhyr;float;[MWh/year];AHU latent heat demand;{0.0...n}
-Total_demand.csv;Qhs_lat_ahu0_kW;float;[kW/year];Nominal AHU latent heat demand.;{0.0...n}
+Total_demand.csv;Qhs_lat_ahu0_kW;float;[kW];Nominal AHU latent heat demand.;{0.0...n}
 Total_demand.csv;Qhs_lat_aru_MWhyr;float;[MWh/year];ARU latent heat demand;{0.0...n}
-Total_demand.csv;Qhs_lat_aru0_kW;float;[kW/year];Nominal ARU latent heat demand.;{0.0...n}
+Total_demand.csv;Qhs_lat_aru0_kW;float;[kW];Nominal ARU latent heat demand.;{0.0...n}
 Total_demand.csv;Qhs_lat_sys_MWhyr;float;[MWh/year];System latent heat demand;{0.0...n}
-Total_demand.csv;Qhs_lat_sys0_kW;float;[kW/year];Nominal System latent heat demand.;{0.0...n}
+Total_demand.csv;Qhs_lat_sys0_kW;float;[kW];Nominal System latent heat demand.;{0.0...n}
 Total_demand.csv;Qhs_MWhyr;float;[MWh/year];Total heating demand;{0.0...n}
 Total_demand.csv;Qhs_sen_ahu_MWhyr;float;[MWh/year];AHU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sen_ahu0_kW;float;[kW/year];Nominal AHU sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sen_ahu0_kW;float;[kW];Nominal AHU sensible heat demand.;{0.0...n}
 Total_demand.csv;Qhs_sen_aru_MWhyr;float;[MWh/year];ARU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sen_aru0_kW;float;[kW/year];ARU sensible heat demand;{0.0...n}
+Total_demand.csv;Qhs_sen_aru0_kW;float;[kW];ARU sensible heat demand;{0.0...n}
 Total_demand.csv;Qhs_sen_shu_MWhyr;float;[MWh/year];SHU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sen_shu0_kW;float;[kW/year];Nominal SHU sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sen_shu0_kW;float;[kW];Nominal SHU sensible heat demand.;{0.0...n}
 Total_demand.csv;Qhs_sen_sys_MWhyr;float;[MWh/year];SHU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sen_sys0_kW;float;[kW/year];Nominal HVAC systems sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sen_sys0_kW;float;[kW];Nominal HVAC systems sensible heat demand.;{0.0...n}
 Total_demand.csv;Qhs_sys_ahu_MWhyr;float;[MWh/year];AHU system heat demand;{0.0...n}
-Total_demand.csv;Qhs_sys_ahu0_kW;float;[kW/year];Nominal AHU sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sys_ahu0_kW;float;[kW];Nominal AHU sensible heat demand.;{0.0...n}
 Total_demand.csv;Qhs_sys_aru_MWhyr;float;[MWh/year];ARU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sys_aru0_kW;float;[kW/year];Nominal ARU sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sys_aru0_kW;float;[kW];Nominal ARU sensible heat demand.;{0.0...n}
 Total_demand.csv;Qhs_sys_MWhyr;float;[MWh/year];End-use space heating demand;{0.0...n}
 Total_demand.csv;Qhs_sys_shu_MWhyr;float;[MWh/year];SHU sensible heat demand;{0.0...n}
-Total_demand.csv;Qhs_sys_shu0_kW;float;[kW/year];Nominal SHU sensible heat demand.;{0.0...n}
-Total_demand.csv;Qhs_sys0_kW;float;[kW/year];Nominal end-use space heating demand;{0.0...n}
-Total_demand.csv;Qhs0_kW;float;[kW/year];Nominal Total heating demand.;{0.0...n}
+Total_demand.csv;Qhs_sys_shu0_kW;float;[kW];Nominal SHU sensible heat demand.;{0.0...n}
+Total_demand.csv;Qhs_sys0_kW;float;[kW];Nominal end-use space heating demand;{0.0...n}
+Total_demand.csv;Qhs0_kW;float;[kW];Nominal Total heating demand.;{0.0...n}
 Total_demand.csv;Qww_MWhyr;float;[MWh/year];DHW heat demand;{0.0...n}
 Total_demand.csv;Qww_sys_MWhyr;float;[MWh/year];End-use hotwater demand;{0.0...n}
-Total_demand.csv;Qww_sys0_kW;float;[kW/year];Nominal end-use hotwater demand;{0.0...n}
-Total_demand.csv;Qww0_kW;float;[kW/year];Nominal DHW heat demand.;{0.0...n}
+Total_demand.csv;Qww_sys0_kW;float;[kW];Nominal end-use hotwater demand;{0.0...n}
+Total_demand.csv;Qww0_kW;float;[kW];Nominal DHW heat demand.;{0.0...n}
 Total_demand.csv;SOLAR_hs_MWhyr;float;[MWh/year];Solar energy consumption due to space heating;{0.0...n}
-Total_demand.csv;SOLAR_hs0_kW;float;[kW/year];Nominal solar energy consumption due to space heating;{0.0...n}
+Total_demand.csv;SOLAR_hs0_kW;float;[kW];Nominal solar energy consumption due to space heating;{0.0...n}
 Total_demand.csv;SOLAR_ww_MWhyr;float;[MWh/year];Solar energy consumption due to hotwater;{0.0...n}
-Total_demand.csv;SOLAR_ww0_kW;float;[kW/year];Nominal solar energy consumption due to hotwater;{0.0...n}
+Total_demand.csv;SOLAR_ww0_kW;float;[kW];Nominal solar energy consumption due to hotwater;{0.0...n}
 Total_demand.csv;WOOD_hs_MWhyr;float;[MWh/year];WOOD consumption due to space heating;{0.0...n}
-Total_demand.csv;WOOD_hs0_kW;float;[kW/year];Nominal WOOD consumption due to space heating;{0.0...n}
+Total_demand.csv;WOOD_hs0_kW;float;[kW];Nominal WOOD consumption due to space heating;{0.0...n}
 Total_demand.csv;WOOD_ww_MWhyr;float;[MWh/year];WOOD consumption due to hotwater;{0.0...n}
-Total_demand.csv;WOOD_ww0_kW;float;[kW/year];Nominal WOOD consumption due to hotwater;{0.0...n}
+Total_demand.csv;WOOD_ww0_kW;float;[kW];Nominal WOOD consumption due to hotwater;{0.0...n}
 Building_geometry.csv;AREA_m2;float;[m2];Surface area.;{0.0...n}
 Building_geometry.csv;BUILDING;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 Building_geometry.csv;SURFACE;string;[-];Unique surface ID for each building exterior surface.;{srf0...srfn}

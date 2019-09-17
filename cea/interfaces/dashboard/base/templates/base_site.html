@@ -101,9 +101,15 @@
         <script src="{{ url_for('static', filename='build/js/glossary_search.js') }}"></script>
         <!-- starrr -->
         <script src="{{ url_for('static', filename='vendors/starrr/dist/starrr.js') }}"></script>
+
+        <!-- socketio -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
       {% endblock %}
       <!-- Custom Theme Scripts -->
       <script src="{{ url_for('static', filename='build/js/custom.js') }}"></script>
+
+      <!-- cea-worker-ticker -->
+      <script src="{{ url_for('static', filename='cea-worker-ticker.js')}}"></script>
     {% endblock body %}
   </body>
 </html>
