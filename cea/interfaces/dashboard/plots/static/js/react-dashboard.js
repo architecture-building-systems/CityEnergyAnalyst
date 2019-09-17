@@ -919,13 +919,15 @@ const Plot = ({ index, dashIndex, data, style }) => {
     <Card
       title={
         <div>
-          <span style={{ fontWeight: "bold" }}>{data.title}</span>
-          {data.parameters["scenario-name"] && (
-            <React.Fragment>
-              <span> - </span>
-              <small>{data.parameters["scenario-name"]}</small>
-            </React.Fragment>
-          )}
+          <a href={`/plots/plot/${dashIndex}/${index}`} target={"_blank"}>
+            <span style={{ fontWeight: "bold" }}>{data.title}</span>
+            {data.parameters["scenario-name"] && (
+              <React.Fragment>
+                <span> - </span>
+                <small>{data.parameters["scenario-name"]}</small>
+              </React.Fragment>
+            )}
+          </a>
         </div>
       }
       extra={
