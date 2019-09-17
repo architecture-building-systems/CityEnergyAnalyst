@@ -31,8 +31,8 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                         yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
+        return go.Layout(xaxis=dict(title='Duration Normalized [%]'),
+                         yaxis=dict(title='Load [kW]'))
 
     def calc_graph(self):
         analysis_fields = ["P_loss_kWh"]  # data to plot
