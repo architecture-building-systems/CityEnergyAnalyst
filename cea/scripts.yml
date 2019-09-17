@@ -140,6 +140,23 @@ Demand forecasting:
       - [get_building_supply]
       - [get_life_cycle_inventory_supply_systems]
 
+  - name: occupancy-from-transportation-data
+    label: Occupant schedules from transportation
+    description: Create occupant schedules from modeled transportation data
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.demand.occupancy.occupancy_from_transportation_data
+    parameters: ['general:scenario', demand]
+    input-files:
+      - [get_zone_geometry]
+      - [get_building_comfort]
+      - [get_building_internal]
+      - [get_building_architecture]
+      - [get_building_occupancy]
+      - [get_archetypes_schedules]
+      - [get_archetypes_properties]
+      - [get_facilities]
+      - [get_population]
+      - [get_weather_folder]
 
 Energy potentials:
   - name: shallow-geothermal-potential
