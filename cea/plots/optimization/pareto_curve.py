@@ -193,8 +193,7 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     ParetoCurveForOneGenerationPlot(config.project,
-                                    {'buildings': None,
-                                     'scenario-name': config.scenario_name,
+                                    {'scenario-name': config.scenario_name,
                                      'generation': config.plots_optimization.generation,
                                      'multicriteria': config.plots_optimization.multicriteria,
                                      'normalization': config.plots_optimization.normalization},
