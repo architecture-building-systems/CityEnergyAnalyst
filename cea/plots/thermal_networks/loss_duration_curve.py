@@ -31,7 +31,8 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(xaxis=dict(title='Duration Normalized [%]'),
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.95),
+                         xaxis=dict(title='Duration Normalized [%]'),
                          yaxis=dict(title='Load [kW]'))
 
     def calc_graph(self):
