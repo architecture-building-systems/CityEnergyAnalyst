@@ -50,7 +50,7 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
 
     @property
     def layout(self):
-        return dict(yaxis=dict(title='Temperature [deg C]'),
+        return dict(legend=dict(orientation="v", x=0.8, y=0.95),yaxis=dict(title='Temperature [deg C]'),
                     xaxis=dict(title='Ambient Temperature [deg C]'))
 
     def calc_graph(self):
