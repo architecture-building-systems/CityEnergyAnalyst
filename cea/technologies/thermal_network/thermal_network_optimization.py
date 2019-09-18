@@ -658,7 +658,7 @@ def generate_initial_population(network_info, network_layout):
             new_plants = disconnect_buildings(network_info)
         else:
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
-            new_plants = [INDIVIDUAL_PLANT] * network_info.number_of_buildings_in_district
+            new_plants = [INDIVIDUAL_CONNECTED] * network_info.number_of_buildings_in_district
             # read in the list of disconnected buildings from config file, if any are given
             for building in network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
