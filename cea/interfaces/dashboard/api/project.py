@@ -78,7 +78,11 @@ class Scenario(Resource):
         if scenario in choices:
             scenario_path = os.path.join(config.project, scenario)
             try:
+                if config.scenario_name == scenario:
+                    config.scenario_name = ''
+                    config.save()
                 shutil.rmtree(scenario_path)
+
             except WindowsError:
                 abort(400, 'Make sure that the scenario you are trying to delete is not open in any application.<br>'
                            'Try and refresh the page again.')
