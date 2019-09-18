@@ -29,7 +29,7 @@ function read_value(element) {
     case "BuildingsParameter":
         value = $(element).val();
         if (value) {
-            value = value.join();
+            value = value;
         } else {
             value = [];
         }
