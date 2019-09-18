@@ -550,7 +550,7 @@ def get_column_names_individual(district_heating_network,
            column_names_buildings_cooling
 
 def calc_euclidean_distance(x2, y2, z2):
-    x1, y1, z1 = 0, 0, 0
+    x1, y1, z1 = 0.0, 0.0, 0.0
     euclidean_distance = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
     return euclidean_distance
 
