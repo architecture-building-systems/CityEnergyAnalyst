@@ -1,11 +1,12 @@
 import os
+import shutil
 
 import geopandas
+from flask import current_app
 from flask_restplus import Namespace, Resource, fields, abort
-import shutil
 from staticmap import StaticMap, Polygon
 
-import cea.config
+# import cea.config
 import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -30,14 +31,14 @@ PROJECT_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
 class Project(Resource):
     @api.marshal_with(PROJECT_MODEL)
     def get(self):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         name = os.path.basename(config.project)
         return {'name': name, 'path': config.project, 'scenario': config.scenario_name,
                 'scenarios': config.get_parameter('general:scenario-name')._choices}
 
     @api.doc(body=PROJECT_PATH_MODEL, responses={200: 'Success', 400: 'Invalid Path given'})
     def post(self):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         payload = api.payload
 
         if 'path' in payload:
@@ -65,7 +66,7 @@ class Project(Resource):
 @api.route('/<string:scenario>')
 class Scenario(Resource):
     def get(self, scenario):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         choices = config.get_parameter('general:scenario-name')._choices
         if scenario in choices:
             return {'name': scenario}
@@ -73,7 +74,7 @@ class Scenario(Resource):
             abort(400, 'Scenario does not exist', choices=choices)
 
     def delete(self, scenario):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         choices = config.get_parameter('general:scenario-name')._choices
         if scenario in choices:
             scenario_path = os.path.join(config.project, scenario)
@@ -94,7 +95,7 @@ class Scenario(Resource):
 @api.route('/<string:scenario>/image')
 class ScenarioImage(Resource):
     def get(self, scenario):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         choices = config.get_parameter('general:scenario-name')._choices
         if scenario in choices:
             locator = cea.inputlocator.InputLocator(os.path.join(config.project, scenario))

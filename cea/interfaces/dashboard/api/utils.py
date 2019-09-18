@@ -1,5 +1,7 @@
-import cea.config
+from flask import current_app
+
 import cea.inputlocator
+
 
 def deconstruct_parameters(p):
     params = {'name': p.name, 'type': p.typename,
@@ -9,7 +11,7 @@ def deconstruct_parameters(p):
     except AttributeError:
         pass
     if p.typename == 'WeatherPathParameter':
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         params['choices'] = {wn: locator.get_weather(
             wn) for wn in locator.get_weather_names()}

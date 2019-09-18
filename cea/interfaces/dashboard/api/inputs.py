@@ -1,20 +1,19 @@
-from flask_restplus import Namespace, Resource, fields, abort
+import json
+import os
+from collections import OrderedDict
 
-import cea.config
+import geopandas
+import pandas
+import yaml
+from flask import current_app
+from flask_restplus import Namespace, Resource, abort
+
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-from cea.plots.variable_naming import get_color_array
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
+from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import network_layout
-
-import pandas
-import geopandas
-import os
-import json
-import yaml
-
-from collections import OrderedDict
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Inputs', description='Input data for CEA')
 
@@ -86,7 +85,7 @@ class InputDatabases(Resource):
         if not (db in INPUT_KEYS and db in GEOJSON_KEYS):
             abort(400, 'Input file not found: %s' % db, choices=list(set(INPUT_KEYS) & set(GEOJSON_KEYS)))
         db_info = INPUTS[db]
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         location = getattr(locator, db_info['location'])()
         if db_info['type'] != 'shp':
@@ -97,7 +96,7 @@ class InputDatabases(Resource):
 @api.route('/others/<string:kind>/geojson')
 class InputOthers(Resource):
     def get(self, kind):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(
             config.scenario)
         if kind == 'streets':
@@ -116,7 +115,7 @@ class BuildingProperties(Resource):
 @api.route('/all-inputs')
 class AllInputs(Resource):
     def get(self):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
 
         # FIXME: Find a better way, current used to test for Input Editor
@@ -139,7 +138,7 @@ def get_building_properties():
     tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads',
             'supply-systems', 'indoor-comfort', 'district', 'restrictions']
 
-    config = cea.config.Configuration()
+    config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
     store = {'tables': {}, 'columns': {}, 'order': tabs}
     glossary = cea.glossary.read_glossary_df()
