@@ -655,16 +655,16 @@ def generate_initial_population(network_info, network_layout):
         if network_info.optimize_building_connections:
             # if this option is set, we are optimizing which buildings to connect,
             # so we need to disconnect some buildings
-            new_plants = disconnect_buildings(network_info)
+            buildings_connectivities = disconnect_buildings(network_info)
         else:
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
-            new_plants = [INDIVIDUAL_CONNECTED] * network_info.number_of_buildings_in_district
+            buildings_connectivities = [INDIVIDUAL_CONNECTED] * network_info.number_of_buildings_in_district
             # read in the list of disconnected buildings from config file, if any are given
             for building in network_layout.disconnected_buildings:
                 for index, building_name in enumerate(network_info.building_names):
                     if str(building) == str(building_name):
-                        new_plants[index] = INDIVIDUAL_DISCONNECTED
-        new_plants = generate_plants(network_info, new_plants)
+                        buildings_connectivities[index] = INDIVIDUAL_DISCONNECTED
+        buildings_connectivities = generate_plants(network_info, buildings_connectivities)
         # network layout: loop or branch
         if network_info.optimize_loop_branch:
             # we are optimizing if we have a loop or not, set randomly to eithre 0 or 1
@@ -687,7 +687,7 @@ def generate_initial_population(network_info, network_layout):
                 # apply rule based approximation: AHU and ARU supplied together if connected to networks
                 load_type[LOAD_INDEX_ARU] = load_type[LOAD_INDEX_AHU]  # supply both of ahu and aru or none of the two
         # create individual, put together the load type, network type (branch/loop) and plant locations / connected buildings
-        new_individual = load_type + [loop_no_loop_binary] + new_plants
+        new_individual = load_type + [loop_no_loop_binary] + buildings_connectivities
         # add individual to list, avoid duplicates
         if new_individual not in population:
             population.append(new_individual)
