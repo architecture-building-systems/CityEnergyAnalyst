@@ -102,6 +102,7 @@ class Configuration(object):
             with config.ignore_restrictions():
                 config.my_section.my_property = value
         """
+
         class RestrictionsIgnorer(object):
             def __init__(self, config):
                 self.config = config
@@ -277,7 +278,6 @@ class Section(object):
         return "[%s](%s)" % (self.name, ", ".join(self.parameters.keys()))
 
 
-
 def construct_parameter(parameter_name, section, config):
     """Create the approriate subtype of ``Parameter`` based on the .type option in the default.config file.
     :param parameter_name: The name of the parameter (as it appears in the configuration file, all lowercase)
@@ -287,7 +287,8 @@ def construct_parameter(parameter_name, section, config):
     :param config: The Configuration instance this parameter belongs to
     :type config: Configuration
     """
-    assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase: {}:{}'.format(parameter_name, section.name)
+    assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase: {}:{}'.format(parameter_name,
+                                                                                                       section.name)
     try:
         parameter_type = config.default_config.get(section.name, parameter_name + '.type')
     except ConfigParser.NoOptionError:
@@ -383,6 +384,7 @@ class Parameter(object):
 class PathParameter(Parameter):
     """Describes a folder in the system"""
     typename = 'PathParameter'
+
     def initialize(self, parser):
         try:
             self._direction = parser.get(self.section.name, self.name + '.direction')
@@ -399,6 +401,7 @@ class PathParameter(Parameter):
 class FileParameter(Parameter):
     """Describes a file in the system."""
     typename = 'FileParameter'
+
     def initialize(self, parser):
         self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
         try:
@@ -431,6 +434,7 @@ class FileParameter(Parameter):
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
     typename = 'JsonParameter'
+
     def encode(self, value):
         return json.dumps(value)
 
@@ -470,7 +474,8 @@ class WorkflowParameter(Parameter):
         elif os.path.exists(value) and value.endswith(".yml"):
             return value
         else:
-            print("ERROR: Workflow not found: {workflow} - using heating-case instead".format(workflow=value))
+            print("ERROR: Workflow not found: {workflow} - using {default}".format(
+                workflow=value, default=self.examples[self.examples.keys()[0]]))
             return self.examples[self.examples.keys()[0]]
 
 
@@ -567,6 +572,7 @@ class ListParameter(Parameter):
     def decode(self, value):
         return parse_string_to_list(value)
 
+
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
     typename = 'SubfoldersParameter'
@@ -662,7 +668,8 @@ class ChoiceParameter(Parameter):
         self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
+        assert str(
+            value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
             value=value,
             fqname=self.fqname,
             choices=', '.join(self._choices)
@@ -799,8 +806,8 @@ class ScenarioNameParameter(ChoiceParameter):
             fodler_path = os.path.join(self.config.project, folder_name)
             return all([
                 os.path.isdir(fodler_path),  # a scenario must be a valid path
-                not folder_name.startswith('.'), # a scenario can't start with a . like `.config`
-                ])
+                not folder_name.startswith('.'),  # a scenario can't start with a . like `.config`
+            ])
 
         return [folder_name for folder_name in os.listdir(self.config.project)
                 if is_valid_scenario(folder_name)]
