@@ -12,7 +12,7 @@ import cea.config
 import cea.inputlocator
 import cea.plots.supply_system
 from cea.plots.variable_naming import get_color_array
-from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.utilities.dbf import dbf_to_dataframe
 
@@ -136,7 +136,8 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         # Modify config inputs for this function
         self.config.network_layout.network_type = network_type
         self.config.network_layout.connected_buildings = connected_buildings
-        network_layout(self.config, self.locator, output_name_network=network_name)
+        network_layout = NetworkLayout(network_layout=self.config.network_layout)
+        layout_network(network_layout, self.locator, output_name_network=network_name)
 
         # Output paths
         path_output_edges = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
