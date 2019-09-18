@@ -38,7 +38,7 @@ def plots_main(locator, config):
     # local variables
     network_type = config.plots.network_type
     # read in names of thermal networks if various exist
-    network_names = config.plots.network_names
+    network_names = [config.plots.network_name]
     # if no network names are specified, keep empty
     if not network_names:
         network_names = ['']
