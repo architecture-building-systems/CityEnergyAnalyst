@@ -26,10 +26,10 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
-    This is an empiral model using characteristic equation method developed by _[Kuhn A. & Ziegler F., 2005].
+    This is an empirical model using characteristic equation method developed by _[Kuhn A. & Ziegler F., 2005].
     The parameters of each absorption chiller can be derived from experiments or performance curves from manufacturer's
     catalog, more details are described in _[Puig-Arnavat M. et al, 2010].
-    Assumptions: constant external flow rates (chilled water at the evaporator, cooling water at the condensor and
+    Assumptions: constant external flow rates (chilled water at the evaporator, cooling water at the condenser and
     absorber, hot water at the generator).
     :param mdot_chw_kgpers: required chilled water flow rate
     :type mdot_chw_kgpers: float
@@ -44,7 +44,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     :param locator: locator class
     :return:
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
-    equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+    equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
@@ -92,7 +92,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         # calculate operating conditions at given input conditions
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
         # calculate chiller outputs
-        wdot_W = chiller_prop['el_W'].values[0] * number_of_chillers_activated
+        wdot_W = calc_power_demand(input_conditions['q_chw_W'], ACH_type) * number_of_chillers_activated
         q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers_activated
         q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers_activated
         T_hw_out_C = operating_conditions['T_hw_out_C']
@@ -112,6 +112,8 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
+    The heat rejection to cooling tower is approximated with the energy balance:
+    Q(condenser) + Q(absorber) = Q(generator) + Q(evaporator)
     :param chiller_prop: parameters in the characteristic equations and the external flow rates.
     :type chiller_prop: dict
     :param input_conditions:
@@ -119,7 +121,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
     chiller.
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
-    equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+    equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
@@ -152,7 +154,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*sympy.linsolve(eq_sys, unknown_variables))
 
     # calculate results
-    q_cw_kW = q_hw_kW + q_chw_kW  # approximation
+    q_cw_kW = q_hw_kW + q_chw_kW # Q(condenser) + Q(absorber)
     T_hw_out_C = input_conditions['T_hw_in_C'] - q_hw_kW / mcp_hw_kWperK
     T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK  # TODO: set upper bound of the chiller operation
 
@@ -161,6 +163,25 @@ def calc_operating_conditions(chiller_prop, input_conditions):
             'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
             'q_cw_W': q_cw_kW * 1000}
 
+
+def calc_power_demand(q_chw_W, ACH_type):
+    """
+    Calculates the power demand of the solution and refrigeration pumps in absorption chillers.
+    Linear equations derived from manufacturer's catalog _[Broad Air Conditioning, 2018].
+    :param q_chw_W:
+    :param ACH_type:
+    :return:
+
+    ..[Broad Air Conditioning, 2018] BROAD XII NON-ELECTRIC CHILLER. (2018).
+    etrieved from https://www.broadusa.net/en/wp-content/uploads/2018/12/BROAD-XII-US-Catalog2018-12.pdf
+
+    """
+    if ACH_type == 'single':
+        w_dot_W = 0.0028 + 2941
+    else:
+        w_dot_W = 0.0021 * q_chw_W + 2757 # assuming the same for double and triple effect chillers
+
+    return w_dot_W
 
 # Investment costs
 
@@ -231,21 +252,40 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
 def main(config):
     """
     run the whole preprocessing routine
+    test case 1) q_hw_W = 24213, q_chw_W = 20088, EER = 0.829, T_hw_out_C = 67.22 _[Kuhn, 2011]
+    test case 2) q_hw_W = 824105, q_chw_W = 1163011, EER = 1.41, T_hw_out_C = 165.93 _[Shirazi, 2016]
+    test case 3) q_hw_W = 623379, q_chw_W = 1163430, EER = 1.87, T_hw_out_C = 195.10 _[Shirazi, 2016]
+
+    ..[Kuhn A., Ozgur-Popanda C., & Ziegler F., 2011] A 10kW Indirectly Fired Absorption Heat Pump: Concepts for a
+    reversible operation. 10th International Heat Pump Conference, 2011.
+    ..[Shirazi A., Taylor R.A., White S.D., Morrison G.L.] A systematic parametric study and feasibility assessment
+    of solar-assisted single-effect, double-effect, and triple-effect absorption chillers for heating and cooling
+    applications. Energy Conversion and Management, 2016
+
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    mdot_chw_kgpers = 35
-    T_chw_sup_K = 7 + 273.0
-    T_chw_re_K = 14 + 273.0
-    T_hw_in_C = 98
+
+    # Input parameters for test cases
+    case_1_dict = {'mdot_chw_kgpers':0.8, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 286.0, 'T_hw_in_C': 84.6, 'ACH_type': 'single'}
+    case_2_dict = {'mdot_chw_kgpers': 39.7, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 287.0, 'T_hw_in_C': 180,
+                   'ACH_type': 'double'}
+    case_3_dict = {'mdot_chw_kgpers': 55.6, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 285.0, 'T_hw_in_C': 210,
+                   'ACH_type': 'triple'}
+
+    # Unpack parameters
+    case_dict = case_1_dict
+    mdot_chw_kgpers = case_dict['mdot_chw_kgpers']
+    T_chw_sup_K = case_dict['T_chw_sup_K']
+    T_chw_re_K = case_dict['T_chw_re_K']
+    T_hw_in_C = case_dict['T_hw_in_C']
     T_ground_K = 300
-    ACH_type = 'single'
+    ACH_type = case_dict['ACH_type']
     chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop,
                                           ACH_type)
     print(chiller_operation)
-
-    print('test_decentralized_buildings_cooling() succeeded')
+    print('test_decentralized_buildings_cooling() succeeded. Please doubel check results in the description.')
 
 
 if __name__ == '__main__':
