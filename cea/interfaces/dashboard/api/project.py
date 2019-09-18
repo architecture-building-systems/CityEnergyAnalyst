@@ -17,7 +17,7 @@ api = Namespace('Project', description='Current project for CEA')
 
 PROJECT_PATH_MODEL = api.model('Project Path', {
     'path': fields.String(description='Path of Project'),
-    'scenario': fields.String(description='Path of Project')
+    'scenario': fields.String(description='Path of Scenario')
 })
 
 PROJECT_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
@@ -26,6 +26,10 @@ PROJECT_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
     'scenarios': fields.List(fields.String, description='Name of Current Scenario')
 })
 
+NEW_PROJECT_MODEL = api.model('New Project', {
+    'name': fields.String(description='Name of Project'),
+    'path': fields.String(description='Path of Project')
+})
 
 @api.route('/')
 class Project(Resource):
@@ -40,7 +44,8 @@ class Project(Resource):
                 'scenarios': config.get_parameter('general:scenario-name')._choices}
 
     @api.doc(body=PROJECT_PATH_MODEL, responses={200: 'Success', 400: 'Invalid Path given'})
-    def post(self):
+    def put(self):
+        """Update Project"""
         config = current_app.cea_config
         payload = api.payload
 
@@ -65,8 +70,29 @@ class Project(Resource):
             else:
                 abort(400, 'Scenario does not exist', choices=choices)
 
+    @api.doc(body=NEW_PROJECT_MODEL, responses={200: 'Success'})
+    def post(self):
+        """Create new project"""
+        config = current_app.cea_config
+        payload = api.payload
 
-@api.route('/<string:scenario>')
+        if 'path' in payload:
+            path = payload['path']
+            name = payload['name']
+            project_path = os.path.join(path, name)
+            try:
+                os.makedirs(project_path)
+            except OSError as e:
+                abort(400, e.message)
+
+            config.project = project_path
+            config.scenario_name = ''
+            config.save()
+
+            return {'message': 'Project created at {}'.format(project_path)}
+
+
+@api.route('/scenario/<string:scenario>')
 class Scenario(Resource):
     def get(self, scenario):
         config = current_app.cea_config
@@ -77,6 +103,7 @@ class Scenario(Resource):
             abort(400, 'Scenario does not exist', choices=choices)
 
     def delete(self, scenario):
+        """Delete scenario from project"""
         config = current_app.cea_config
         choices = config.get_parameter('general:scenario-name')._choices
         if scenario in choices:
@@ -95,7 +122,7 @@ class Scenario(Resource):
             abort(400, 'Scenario does not exist', choices=choices)
 
 
-@api.route('/<string:scenario>/image')
+@api.route('/scenario/<string:scenario>/image')
 class ScenarioImage(Resource):
     def get(self, scenario):
         config = current_app.cea_config
@@ -133,7 +160,7 @@ class ScenarioImage(Resource):
                         image = m.render()
                         image.save(image_path)
                     except Exception as e:
-                        abort(400, str(e))
+                        abort(400, e.message)
 
                 import base64
                 with open(image_path, 'rb') as imgFile:
