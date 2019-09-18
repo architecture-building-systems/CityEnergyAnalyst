@@ -1,0 +1,54 @@
+- config: default
+  "general:multiprocessing": on
+  "general:project": "{cea_general_project}/../reference-case-cooling"
+  "radiation-daysim:daysim-bin-directory": "${cea_radiation-daysim_daysim-bin-directory}"
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: cooling
+- config: .
+  "general:scenario-name": baseline
+- script: data-helper
+- script: radiation-daysim
+- script: demand
+- script: emissions
+- script: operation-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DC
+    allow-looped-networks: false
+    consider-only-buildings-with-demand: true
+- script: thermal-network
+  parameters:
+    network-type: DC
+    allow-looped-networks: false
+    consider-only-buildings-with-demand: true
+- script: decentralized
+  parameters:
+    detailed-electricity-pricing: false
+- script: optimization
+  parameters:
+    district-heating-network: false
+    district-cooling-network: true
+    detailed-electricity-pricing: false
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generations: 2

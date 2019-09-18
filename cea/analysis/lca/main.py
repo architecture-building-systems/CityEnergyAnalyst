@@ -12,7 +12,6 @@ from cea.analysis.lca.operation import lca_operation
 from cea.analysis.lca.mobility import lca_mobility
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -26,16 +25,16 @@ __status__ = "Production"
 
 
 def emissions_main(locator, config):
-
-    #embodied emissions
+    # embodied emissions
     year_to_calculate = config.emissions.year_to_calculate
     lca_embodied(year_to_calculate, locator, config)
 
-    #operation emissions
-    lca_operation(locator, config)
+    # operation emissions
+    lca_operation(locator)
 
-    #mobility emissions
+    # mobility emissions
     lca_mobility(locator, config)
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
@@ -44,6 +43,7 @@ def main(config):
     print('Running emissions with scenario = %s' % config.scenario)
 
     emissions_main(locator=locator, config=config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -3,7 +3,6 @@ Absorption chillers
 """
 from __future__ import division, print_function
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
@@ -23,7 +22,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -49,9 +48,11 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
-
+    chiller_prop = chiller_prop.chiller_prop #get data from the class
     # create a dict of input operating conditions
-    input_conditions = {'T_chw_sup_K': T_chw_sup_K, 'T_chw_re_K': T_chw_re_K, 'T_hw_in_C': T_hw_in_C,
+    input_conditions = {'T_chw_sup_K': T_chw_sup_K,
+                        'T_chw_re_K': T_chw_re_K,
+                        'T_hw_in_C': T_hw_in_C,
                         'T_ground_K': T_ground_K}
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     q_chw_total_W = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K)
@@ -64,8 +65,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0.0
         input_conditions['q_chw_W'] = 0.0
     else:
-        chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller") #TODO: move out from this function to save time
-        chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         min_chiller_size_W = min(chiller_prop['cap_min'].values)
         max_chiller_size_W = max(chiller_prop['cap_max'].values)
         # get chiller properties and input conditions according to load
@@ -159,7 +158,9 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     T_hw_out_C = input_conditions['T_hw_in_C'] - q_hw_kW / mcp_hw_kWperK
     T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK  # TODO: set upper bound of the chiller operation
 
-    return {'T_hw_out_C': T_hw_out_C, 'T_cw_out_C': T_cw_out_C, 'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
+    return {'T_hw_out_C': T_hw_out_C,
+            'T_cw_out_C': T_cw_out_C,
+            'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
             'q_cw_W': q_cw_kW * 1000}
 
 
@@ -279,8 +280,9 @@ def main(config):
     T_hw_in_C = case_dict['T_hw_in_C']
     T_ground_K = 300
     ACH_type = case_dict['ACH_type']
+    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
 
-    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator,
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop,
                                           ACH_type)
     print(chiller_operation)
     print('test_decentralized_buildings_cooling() succeeded. Please doubel check results in the description.')

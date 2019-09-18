@@ -50,7 +50,7 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
 
     @property
     def layout(self):
-        return dict(title=self.title, yaxis=dict(title='Temperature [deg C]'),
+        return dict(legend=dict(orientation="v", x=0.8, y=0.95),yaxis=dict(title='Temperature [deg C]'),
                     xaxis=dict(title='Ambient Temperature [deg C]'))
 
     def calc_graph(self):
@@ -66,7 +66,7 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
             y_new[0, :] = y_old[0, :][
                 y_old[0, :].argsort()]  # y_old[0, :] is the ambient temperature which we are sorting by
             y_new[1, :] = y_old[1, :][y_old[0, :].argsort()]
-            trace = go.Scatter(x=y_new[0], y=y_new[1], name=NAMING[field],
+            trace = go.Scattergl(x=y_new[0], y=y_new[1], name=NAMING[field],
                                marker=dict(color=COLOR[field]),
                                mode='markers')
             traces.append(trace)
@@ -123,7 +123,7 @@ def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, t
         y_new[0, :] = y_old[0, :][
             y_old[0, :].argsort()]  # y_old[0, :] is the ambient temperature which we are sorting by
         y_new[1, :] = y_old[1, :][y_old[0, :].argsort()]
-        trace = go.Scatter(x=y_new[0], y=y_new[1], name=NAMING[field],
+        trace = go.Scattergl(x=y_new[0], y=y_new[1], name=NAMING[field],
                            marker=dict(color=COLOR[field]),
                            mode='markers')
         traces.append(trace)

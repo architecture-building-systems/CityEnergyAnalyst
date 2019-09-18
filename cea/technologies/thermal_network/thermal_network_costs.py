@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices
@@ -32,7 +31,7 @@ class Thermal_Network(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
+    def __init__(self, locator, config, network_type):
         # sotre key variables
         self.locator = locator
         self.config = config
@@ -48,7 +47,6 @@ class Thermal_Network(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
@@ -445,9 +443,8 @@ def calc_Ctot_cs_district(network_info):
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
     detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
-    lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
-    network_info.prices = Prices(network_info.locator, network_info.config)
-    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
+    network_info.prices = Prices(network_info.locator, detailed_electricity_pricing)
+    network_info.prices.ELEC_PRICE = np.mean(network_info.prices.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
@@ -547,9 +544,8 @@ def main(config):
 
     # initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
-    network_info = Thermal_Network(locator, config, network_type, gv)
+    network_info = Thermal_Network(locator, config, network_type)
 
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')

@@ -5,7 +5,6 @@ This computes the close-to-optimal supply system for single buildings.
 
 """
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 from cea.optimization.prices import Prices as Prices
@@ -21,9 +20,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     This functions optimizes disconnected buildings individually
 
     :param locator: locator class
-    :param gv: global variables class
     :type locator: class
-    :type gv: class
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
@@ -32,8 +29,6 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
     buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
     buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-
-    # calculate substations
 
     if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
         decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand,
@@ -52,9 +47,9 @@ def main(config):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    prices = Prices(locator, config)
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
-    lca = LcaCalculations(locator, detailed_electricity_pricing)
+    prices = Prices(locator, detailed_electricity_pricing)
+    lca = LcaCalculations(locator)
 
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)

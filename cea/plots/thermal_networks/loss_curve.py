@@ -32,7 +32,7 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     @property
     def layout(self):
-        return dict(title=self.title, yaxis=dict(title=self.yaxis_title),
+        return dict(yaxis=dict(title=self.yaxis_title),
                     yaxis2=dict(title='Demand [kWh]', overlaying='y',
                                 side='right'), xaxis=dict(rangeselector=dict(buttons=list([
                 dict(count=1, label='1d', step='day', stepmode='backward'),
@@ -52,11 +52,11 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
             y = data_frame[field].values
             name = NAMING[field]
             if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]),
                                    yaxis='y2', opacity=0.6)
             else:  # primary y_axis
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]))
 
             traces.append(trace)
@@ -107,11 +107,11 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
         y = data_frame[field].values
         name = NAMING[field]
         if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]),
                                yaxis='y2', opacity=0.6)
         else:  # primary y_axis
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]))
 
         traces.append(trace)
@@ -145,7 +145,6 @@ def main():
     import cea.config
     import cea.plots.cache
     config = cea.config.Configuration()
-    cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
     LossCurvePlot(config.project, {'network-type': config.plots.network_type,
                                    'scenario-name': config.scenario_name,

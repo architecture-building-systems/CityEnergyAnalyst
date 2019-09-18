@@ -41,9 +41,7 @@ def generate_main(individual_with_names_dict,
     Cooling Network: Network of buildings connected to centralized cooling. Both these networks can be different, and will
     always have a fixed length corresponding to the total number of buildings in the neighborhood
     :param nBuildings: number of buildings
-    :param gv: global variables class
     :type nBuildings: int
-    :type gv: class
     :return: individual: representation of values taken by the individual
     :rtype: list
     """
@@ -88,7 +86,7 @@ def populate_individual(empty_individual_with_names_dict,
     for column, limits in name_share_conversion_technologies.iteritems():
         lim_inf = limits["liminf"]
         lim_sup = limits["limsup"]
-        empty_individual_with_names_dict[column] = random.uniform(lim_inf, lim_sup)
+        empty_individual_with_names_dict[column] = round(random.uniform(lim_inf, lim_sup),2)
 
     # do it for the buildings
     for column in columns_buildings_name:
