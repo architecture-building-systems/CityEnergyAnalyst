@@ -428,12 +428,9 @@ const ModalSetScenario = React.memo(({ dashIndex }) => {
 });
 
 const SetScenarioForm = Form.create()(({ form, scenarios }) => {
-  const { getFieldDecorator } = form;
   return (
     <Form layout="horizontal">
-      {scenarios
-        ? ceaParameter(scenarios, getFieldDecorator)
-        : "Fetching Data..."}
+      {scenarios ? ceaParameter(scenarios, form) : "Fetching Data..."}
     </Form>
   );
 });
