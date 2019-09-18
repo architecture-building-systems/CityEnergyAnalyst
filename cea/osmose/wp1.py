@@ -61,13 +61,13 @@ def main(case):
             time_elapsed = time.clock() - t0
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
-        # plot results
-        building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
-        building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
-        # building_result_path = os.path.join(building_result_path, "reduced")
-        plot_results.main(building, TECHS, building_result_path)
-        compare_el.main(building, building_result_path, case)
-        # start_ampl_license(ampl_lic_path, "stop")
+        # # plot results
+        # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
+        # building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
+        # # building_result_path = os.path.join(building_result_path, "reduced")
+        # plot_results.main(building, TECHS, building_result_path)
+        # compare_el.main(building, building_result_path, case)
+        # # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
 
 
