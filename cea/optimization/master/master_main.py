@@ -121,8 +121,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
     if MU == None:
         H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
         MU = int(H + (4 - H % 4))
-    euclidean_distance = 0
-    spread = 0
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
