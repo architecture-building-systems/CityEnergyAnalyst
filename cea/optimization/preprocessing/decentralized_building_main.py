@@ -50,7 +50,6 @@ def main(config):
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
     prices = Prices(locator, detailed_electricity_pricing)
     lca = LcaCalculations(locator)
-
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
 
