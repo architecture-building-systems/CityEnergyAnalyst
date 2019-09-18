@@ -17,7 +17,7 @@ __status__ = "Production"
 
 
 class Prices(object):
-    def __init__(self, locator, config):
+    def __init__(self, locator):
         pricing = pd.read_excel(locator.get_supply_systems(), sheet_name="Pricing")
         self.NG_PRICE = pricing[pricing['Description'] == 'ng_price'].iloc[0]['value'] # in USD/Wh
         self.BG_PRICE = pricing[pricing['Description'] == 'bg_price'].iloc[0]['value'] # in USD/Wh
