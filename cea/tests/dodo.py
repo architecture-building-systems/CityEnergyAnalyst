@@ -281,6 +281,11 @@ def task_run_emissions_mobility():
 
 def task_run_sensitivity():
     """Run the sensitivity analysis for the the reference-case-open"""
+
+    # make sure the random number generator is always set to the same value
+    import numpy as np
+    np.random.seed(int("CEA", 16))
+
     def run_sensitivity():
         import cea.analysis.sensitivity.sensitivity_demand_samples
         import cea.analysis.sensitivity.sensitivity_demand_simulate

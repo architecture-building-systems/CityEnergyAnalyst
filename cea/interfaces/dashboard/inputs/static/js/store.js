@@ -127,11 +127,13 @@ class InputStore {
                 });
             }
 
-            // Remove buidling from changes if being deleted
-            if (_this.changes['update'][layer]) {
-                delete _this.changes['update'][layer][building];
-                if (!Object.keys(_this.changes['update'][layer]).length) delete _this.changes['update'][layer];
-            }
+            // Remove building from changes if being deleted
+            $.each(Object.keys(_this.tables), function (_, table) {
+                if (_this.changes['update'][table]) {
+                    delete _this.changes['update'][table][building];
+                    if (!Object.keys(_this.changes['update'][table]).length) delete _this.changes['update'][table];
+                }
+            });
 
             _this.geojsondata[layer]['features'] = _this.geojsondata[layer]['features'].filter(x => x['properties']['Name'] !== building);
         });
