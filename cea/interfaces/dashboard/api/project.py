@@ -33,6 +33,9 @@ class Project(Resource):
     def get(self):
         config = current_app.cea_config
         name = os.path.basename(config.project)
+        if not os.path.exists(config.scenario):
+            config.scenario_name = ''
+            config.save()
         return {'name': name, 'path': config.project, 'scenario': config.scenario_name,
                 'scenarios': config.get_parameter('general:scenario-name')._choices}
 
