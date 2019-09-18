@@ -32,7 +32,6 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
     def __init__(self, project, parameters, cache):
         super(OptimizationPerformance, self).__init__(project, parameters, cache)
         self.analysis_fieldsy = ['Generational Distance']
-        self.analysis_fieldsy2 = ['Delta of Generational Distance']
         self.input_files = [(self.locator.get_optimization_checkpoint, [self.generation])]
 
     def calc_convergence_metrics(self):
@@ -48,7 +47,7 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
         return go.Layout(legend=dict(orientation="v", x=0.75, y=0.95),
                          xaxis=dict(title='Generation No. [-]'),
                          yaxis=dict(title='Generational Distance [-]'),
-                         yaxis2=dict(title='Delta of Generational Distance [-]', overlaying='y', side='right')
+                         yaxis2=dict(title='Cumulative Generational Distance [%]', overlaying='y', side='right')
                          )
 
     @property
@@ -70,11 +69,18 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
             trace = go.Scattergl(x=x, y=y, name=field)
             traces.append(trace)
 
-        for field in self.analysis_fieldsy2:
-            x = data['generation']
-            y = data[field]
-            trace = go.Scattergl(x=x, y=y, yaxis='y2', name=field)
-            traces.append(trace)
+        total_distance = sum(data['Delta of Generational Distance'])
+        y_cumulative = []
+        for i in range(len(data['generation'])):
+            if i == 0:
+                y_acum =  data['Delta of Generational Distance'][i]/total_distance *100
+            else:
+                y_acum += data['Delta of Generational Distance'][i]/total_distance *100
+            y_cumulative.append(y_acum)
+
+        x = data['generation']
+        trace = go.Scattergl(x=x, y=y_cumulative, yaxis='y2', name='Cumulative Generational Distance')
+        traces.append(trace)
 
         return traces
 
