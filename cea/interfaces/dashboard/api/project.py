@@ -2,6 +2,7 @@ import os
 
 import geopandas
 from flask_restplus import Namespace, Resource, fields, abort
+import shutil
 from staticmap import StaticMap, Polygon
 
 import cea.config
@@ -59,6 +60,31 @@ class Project(Resource):
                 return {'message': 'Scenario changed'}
             else:
                 abort(400, 'Scenario does not exist', choices=choices)
+
+
+@api.route('/<string:scenario>')
+class Scenario(Resource):
+    def get(self, scenario):
+        config = cea.config.Configuration()
+        choices = config.get_parameter('general:scenario-name')._choices
+        if scenario in choices:
+            return {'name': scenario}
+        else:
+            abort(400, 'Scenario does not exist', choices=choices)
+
+    def delete(self, scenario):
+        config = cea.config.Configuration()
+        choices = config.get_parameter('general:scenario-name')._choices
+        if scenario in choices:
+            scenario_path = os.path.join(config.project, scenario)
+            try:
+                shutil.rmtree(scenario_path)
+            except WindowsError:
+                abort(400, 'Make sure that the scenario you are trying to delete is not open in any application.<br>'
+                           'Try and refresh the page again.')
+            return {'scenarios': config.get_parameter('general:scenario-name')._choices}
+        else:
+            abort(400, 'Scenario does not exist', choices=choices)
 
 
 @api.route('/<string:scenario>/image')
