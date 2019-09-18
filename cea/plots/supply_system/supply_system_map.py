@@ -79,8 +79,8 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             get_geographic_coordinate_system()).to_json(show_bbox=True)
         district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
-        dc = self.get_newtork_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
-        dh = self.get_newtork_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
+        dc = self.get_network_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
+        dh = self.get_network_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
 
         # Generate div id using hash of parameters
         div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
@@ -88,7 +88,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                      zone=zone, district=district, dc=dc, dh=dh)
         return div
 
-    def get_newtork_json(self, edges, nodes):
+    def get_network_json(self, edges, nodes):
         if not edges or not nodes:
             return {}
         edges_df = geopandas.GeoDataFrame.from_file(edges)
