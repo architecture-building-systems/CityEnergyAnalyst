@@ -4,7 +4,11 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import geopandas
 import pandas as pd
+import json
+import cea.plots.thermal_networks
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -16,7 +20,44 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
+    """Implement the thermal network layout plot, """
+    name = "Network Layout"
+
+    def __init__(self, project, parameters, cache):
+        super(NetworkLayoutPlot, self).__init__(project, parameters, cache)
+        self.network_args = [self.network_type, self.network_name]
+
+        # FIXME: check the inputfiles necessary...
+        self.input_files = [(self.locator.get_zone_geometry, []),
+                            (self.locator.get_thermal_demand_csv_file, self.network_args),
+                            (self.locator.get_thermal_network_edge_list_file, self.network_args),
+                            (self.locator.get_thermal_network_qloss_system_file, self.network_args),
+                            (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
+
+    def _plot_div_producer(self):
+        import os
+        import hashlib
+        from jinja2 import Template
+        template = os.path.join(os.path.dirname(__file__), "map_div.html")
+
+        zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
+            get_geographic_coordinate_system()).to_json(show_bbox=True)
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
+            get_geographic_coordinate_system()).to_json(show_bbox=True)
+
+        hash = hashlib.md5(repr(sorted(data.items()))).hexdigest()
+        div = Template(open(template).read()).render(hash=hash,
+                                                     data=json.dumps(data), colors=COLORS,
+                                                     zone=zone, district=district, dc=dc, dh=dh)
+        return div
+
+
+
+
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
+    import ipdb
+    ipdb.set_trace()
     # iterate through all input data, make sure we have positive data. Except for edge node matrix which ahs to retain -1 values
     for key in data_frame.keys():
         if isinstance(data_frame[key], pd.DataFrame) and key != 'edge_node':  # use only absolute values
@@ -293,3 +334,18 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             plt.title(title, fontsize=18)
         plt.tight_layout()
         plt.savefig(output_path)
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.plots.cache
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    cache = cea.plots.cache.NullPlotCache()
+
+    NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
+                                       'scenario-name': config.scenario_name,
+                                       'network-name': config.plots.network_name},
+                      cache).plot(auto_open=True)
