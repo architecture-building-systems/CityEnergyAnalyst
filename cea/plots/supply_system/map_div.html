@@ -1,31 +1,37 @@
-<div id="{{ hash }}" style="height: 500px; position: relative;" oncontextmenu="return false;">
-  <div id="layers-group-{{ hash }}">
+<div id="{{ hash }}" style="height: 100%; position: relative;">
+  <div id="layers-group-{{ hash }}" style="visibility: hidden;">
     <span class="layer-toggle-{{ hash }}">
-      <label>
-        <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected' checked>
+      <label id='connected-{{ hash }}-label' class="map-plot-label">
+        <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected'>
         Connected Buildings
       </label>
     </span>
     <span class="layer-toggle-{{ hash }}">
-      <label>
-        <input id='disconnected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='disconnected' checked>
+      <label class="map-plot-label">
+        <input id='disconnected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='disconnected'>
         Disconnected Buildings
       </label>
     </span>
     <span class="layer-toggle-{{ hash }}">
-      <label>
-        <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network' checked>
+      <label class="map-plot-label">
+        <input id='district-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='district'>
+        District
+      </label>
+    </span>
+    <span class="layer-toggle-{{ hash }}">
+      <label id='network-{{ hash }}-label' class="map-plot-label">
+        <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network'>
         Network
       </label>
     </span>
   </div>
-  <div style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
-    <h4>Network Type: </h4>
-    <label id="dc-{{ hash }}-label" style="display: block">
+  <div id="network-radios-{{ hash }}" style="position: absolute; z-index: 5; background: #fff; padding: 5px;">
+    <span>Network Type:</span>
+    <label class="map-plot-label" id="dc-{{ hash }}-label" style="display: block">
       <input type="radio" id="dc-{{ hash }}" name="network-type-{{ hash }}" value="dc">
       District Cooling
     </label>
-    <label id="dh-{{ hash }}-label" style="display: block">
+    <label class="map-plot-label" id="dh-{{ hash }}-label" style="display: block">
       <input type="radio" id="dh-{{ hash }}" name="network-type-{{ hash }}" value="dh">
       District Heating
     </label>
@@ -42,10 +48,13 @@
     margin: 8px;
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
-    max-width: 300px;
+    width: 150px;
     font-size: 10px;
     z-index: 9;
     pointer-events: none;
+  }
+  .map-plot-label {
+    font-size: 12px;
   }
   #layers-group-{{ hash }} {
     display: inline-block;
@@ -58,7 +67,7 @@
     background: rgba(255,255,255,0.9);
   }
   .layer-toggle-{{ hash }} {
-    padding: 0 10px;
+    padding: 0 5px;
   }
   .mapboxgl-ctrl-3d {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjNEPC90ZXh0Pjwvc3ZnPg==);
@@ -74,49 +83,88 @@
     background-repeat: no-repeat;
   }
 
+  .mapboxgl-ctrl-map-style {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyBhcmlhLWhpZGRlbj0idHJ1ZSIgZm9jdXNhYmxlPSJmYWxzZSIgZGF0YS1wcmVmaXg9ImZhcyIgZGF0YS1pY29uPSJhZGp1c3QiIGNsYXNzPSJzdmctaW5saW5lLS1mYSBmYS1hZGp1c3QgZmEtdy0xNiIgcm9sZT0iaW1nIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik04IDI1NmMwIDEzNi45NjYgMTExLjAzMyAyNDggMjQ4IDI0OHMyNDgtMTExLjAzNCAyNDgtMjQ4UzM5Mi45NjYgOCAyNTYgOCA4IDExOS4wMzMgOCAyNTZ6bTI0OCAxODRWNzJjMTAxLjcwNSAwIDE4NCA4Mi4zMTEgMTg0IDE4NCAwIDEwMS43MDUtODIuMzExIDE4NC0xODQgMTg0eiI+PC9wYXRoPjwvc3ZnPg==);
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .mapboxgl-ctrl-layer-toggle {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAA4ElEQVQoz5XRPUuCcRQF8J+hoBI0amYUOUhbL0MvQyDk6ODg2vhsDQ7mA9nU1pA8c1l/wXLxE/jpGizsERs60+Ue7jncc/iNvFgs7w+0TF048eFGZpU8Ta1bpi6XZMWzhxXhnFsv9qAnKK21LAl67Ky5X2rsL8Zgrp2i2+aCHFwbu5LR8e4IHHoV2XAm6NA00QBFA0NDA0XQMNGErGCmBqqqoGYmyMKuxJ2SR0+2wKZ7iW2RNwd0jVVA3UgkMlL/zmesC2WJWAE0F64KYony8q1jk1TUn87/WdZP3X39dKpfwu4uajAKvysAAAAASUVORK5CYII=);
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
   .mapboxgl-ctrl-icon {
     margin: auto;
   }
 </style>
-
 <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
 <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
 <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
 <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script>
-    const lightMap = {
-        "version": 8,
-        "sources": {
-            "osm-tiles": {
+    render({{ data }}, {{ zone }}, {{ district }}, {{ dc }}, {{ dh }}, "{{ hash }}")
+
+    function render(data, zone, district, _dc, _dh, hash) {
+        const lightMap = {
+            "version": 8,
+            "sources": {
+                "osm-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256,
+                    "attribution": "Map data \u00A9 OpenStreetMap contributors"
+                }
+            },
+            "layers": [{
+                "id": "osm-tiles",
                 "type": "raster",
-                "tiles": [
-                    "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                ],
-                "tileSize": 256,
-                "attribution": "Map data \u00A9 OpenStreetMap contributors"
-            }
-        },
-        "layers": [{
-            "id": "osm-tiles",
-            "type": "raster",
-            "source": "osm-tiles",
-            "minzoom": 0,
-            "maxzoom": 22
-        }]
-    };
+                "source": "osm-tiles",
+                "minzoom": 0,
+                "maxzoom": 22
+            }]
+        };
+        const darkMap = {
+            "version": 8,
+            "sources": {
+                "carto-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                        "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                        "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256,
+                    "attribution": "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL."
+                }
+            },
+            "layers": [
+                {
+                    "id": "carto-tiles",
+                    "type": "raster",
+                    "source": "carto-tiles",
+                    "minzoom": 0,
+                    "maxzoom": 22
+                }
+            ]
+        }
+        const colors = {{ colors }};
 
-    const colors = {{ colors }};
-
-    render({{ data }}, {{ zone }}, {{ dc }}, {{ dh }}, "{{ hash }}")
-
-    function render(data, zone, _dc, _dh, hash) {
         const dc = checkEmpty(_dc, `dc-${hash}`);
-        const dh = checkEmpty(_dh, `$dh-${hash}`);
+        const dh = checkEmpty(_dh, `dh-${hash}`);
         const connectedToggle = document.getElementById(`connected-${ hash }`);
         const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
+        const districtToggle = document.getElementById(`district-${ hash }`);
         const networkToggle = document.getElementById(`network-${ hash }`);
+        const networkRadios = document.getElementsByName(`network-type-${ hash }`);
         let currentViewState = {
             latitude: 0,
             longitude: 0,
@@ -148,306 +196,411 @@
         };
         deckgl.setProps({viewState: currentViewState});
 
-        // Check first radio
-        document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
+        init();
 
-        init({deckgl, data, zone, dc, dh, hash, cameraOptions, currentViewState, connectedToggle, disconnectedToggle, networkToggle, filtered});
-    }
+        function init() {
+            // Disable context menu
+            document.getElementById(hash).oncontextmenu = function(){return false};
 
-    function redraw(obj) {
-        let extruded = document.getElementById(`3d-button-${ obj.hash }`).dataset.extruded === 'true';
-        // Add zone layer
-        let layers = [new GeoJsonLayer({
-            id: 'zone',
-            data: filterBuildings(obj),
-            opacity: 0.5,
-            wireframe: true,
-            filled: true,
-            extruded: extruded,
-
-            getElevation: f => f.properties['height_ag'],
-            getFillColor: f => buildingColor(f, obj),
-            updateTriggers: {
-                getFillColor: document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value
-            },
-
-            pickable: true,
-            autoHighlight: true,
-            highlightColor: [255, 255, 0, 128],
-
-            onHover: f => updateTooltip(f, obj)
-        })];
-
-        // Add DC network layer
-        if (obj.dc) layers.push(new GeoJsonLayer({
-            id:'dc',
-            data: obj.dc,
-            stroked: false,
-            filled: true,
-            visible: getNetworkVisibility('dc', obj),
-
-            getLineColor: colors.dc,
-            getFillColor: f => nodeFillColor(f.properties['Type']),
-            getLineWidth: 3,
-            getRadius: 3,
-
-            pickable: true,
-            autoHighlight: true,
-
-            onHover: f => updateTooltip(f, obj)
-        }));
-
-        // Add DH network layer
-        if (obj.dh) layers.push(new GeoJsonLayer({
-            id:'dh',
-            data: obj.dh,
-            stroked: false,
-            filled: true,
-            visible: getNetworkVisibility('dh', obj),
-
-            getLineColor: colors.dh,
-            getFillColor: f => nodeFillColor(f.properties['Type']),
-            getLineWidth: 3,
-            getRadius: 3,
-
-            pickable: true,
-            autoHighlight: true,
-
-            onHover: f => updateTooltip(f, obj)
-        }));
-
-        obj.deckgl.setProps({layers})
-    }
-
-    function buildingColor(object, obj) {
-        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
-        let connected = obj.data[`connected_buildings_${type.toUpperCase()}`];
-        if (connected.includes(object.properties.Name)) return colors[type];
-        return colors.disconnected
-    }
-
-    function nodeFillColor(type) {
-        if (type === 'NONE') {
-            return [100, 100, 100]
-        } else if (type === 'CONSUMER') {
-            return [255, 255, 255]
-        } else if (type === 'PLANT') {
-            return [0, 0, 0]
-        }
-    }
-
-    function filterBuildings(obj) {
-        let type = document.querySelector(`input[name="network-type-${ obj.hash }"]:checked`).value;
-        let features;
-        if (obj.connectedToggle.checked && !obj.disconnectedToggle.checked) {
-            if (typeof(obj.filtered[type].connected) === 'undefined') {
-                features = obj.zone.features.filter(feature => {
-                    return obj.data[`connected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
+            if (networkRadios.length){
+                // Check first radio
+                document.getElementsByName(`network-type-${ hash }`)[0].checked = true;
+                // Register onchange for network type
+                document.getElementsByName(`network-type-${ hash }`).forEach(function (element) {
+                    element.onchange = () => redraw()
                 });
-                obj.filtered[type].connected = features;
-            }
-            return obj.filtered[type].connected;
-        }
-        if (!obj.connectedToggle.checked && obj.disconnectedToggle.checked) {
-            if (typeof(obj.filtered[type].disconnected) === 'undefined') {
-                features = obj.zone.features.filter(feature => {
-                    return obj.data[`disconnected_buildings_${type.toUpperCase()}`].includes(feature.properties.Name)
-                });
-                obj.filtered[type].disconnected = features;
-            }
-            return obj.filtered[type].disconnected;
-        }
-        if (!obj.connectedToggle.checked && !obj.disconnectedToggle.checked) return [];
-        return obj.zone;
-    }
-
-    function setupButtons(obj) {
-        class dToggle {
-            constructor() {
-                this._extruded = false;
-            }
-            onAdd(map) {
-                this._map = map;
-
-                this._btn = document.createElement("button");
-                this._btn.id = `3d-button-${ obj.hash }`;
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
-                this._btn.type = "button";
-                this._btn.setAttribute("data-extruded", this._extruded);
-                this._btn.setAttribute("data-toggle", "tooltip");
-                this._btn.setAttribute("data-placement", "right");
-                this._btn.setAttribute("title", "Toggle 3D");
-                this._btn.onclick = function () {
-                    this._extruded = !this._extruded;
-                    this.setAttribute("data-extruded", this._extruded);
-                    let pitch;
-                    let bearing;
-                    if (this._extruded) {
-                        pitch = 45;
-                    } else {
-                        pitch = 0;
-                        bearing = 0;
-                    }
-
-                    let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
-                    document.getElementById('3d-button-{{ hash }}').setAttribute('class', className);
-                    obj.deckgl.setProps({ controller: {dragRotate: this._extruded},
-                        viewState:{...obj.currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
-                    redraw(obj);
-                };
-
-                this._container = document.createElement("div");
-                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-                this._container.appendChild(this._btn);
-
-                return this._container;
-            }
-
-            onRemove() {
-                this._container.parentNode.removeChild(this._container);
-                this._map = undefined;
-            }
-        }
-
-        // class darkToggle {
-        //     constructor() {
-        //         this._dark = false;
-        //     }
-        //     onAdd(map) {
-        //         this._map = map;
-        //
-        //         this._btn = document.createElement("button");
-        //         this._btn.id = "dark-button";
-        //         this._btn.className = "mapboxgl-ctrl-icon";
-        //         this._btn.type = "button";
-        //         this._btn.setAttribute("data-toggle", "tooltip");
-        //         this._btn.setAttribute("data-placement", "right");
-        //         this._btn.setAttribute("title", "Toggle Dark map");
-        //         this._btn.onclick = function() {
-        //             this._dark = !this._dark;
-        //             if (this._dark) {
-        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.dark);
-        //             } else {
-        //                 _this.deckgl.getMapboxMap().setStyle(_this.mapStyles.light);
-        //             }
-        //         };
-        //         this._btn.innerHTML = '<i class="fa fa-adjust"></i>';
-        //
-        //         this._container = document.createElement("div");
-        //         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-        //         this._container.appendChild(this._btn);
-        //
-        //         return this._container;
-        //     }
-        //
-        //     onRemove() {
-        //         this._container.parentNode.removeChild(this._container);
-        //         this._map = undefined;
-        //     }
-        // }
-
-        class recenterMap {
-            onAdd(map) {
-                this._map = map;
-
-                this._btn = document.createElement("button");
-                this._btn.id = `recenter-button-${ obj.hash }`;
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
-                this._btn.type = "button";
-                this._btn.setAttribute("data-toggle", "tooltip");
-                this._btn.setAttribute("data-placement", "right");
-                this._btn.setAttribute("title", "Center to location");
-                this._btn.onclick = function () {
-                    obj.deckgl.setProps({
-                        viewState:{
-                            ...obj.currentViewState,
-                            zoom: obj.cameraOptions.zoom,
-                            latitude: obj.cameraOptions.center.lat,
-                            longitude: obj.cameraOptions.center.lng,
-                            transitionDuration: 300
-                        }
-                    });
-                };
-
-                this._container = document.createElement("div");
-                this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-                this._container.appendChild(this._btn);
-
-                return this._container;
-            }
-
-            onRemove() {
-                this._container.parentNode.removeChild(this._container);
-                this._map = undefined;
-            }
-        }
-
-        obj.deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
-        // _this.deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
-        obj.deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
-        obj.deckgl.setProps({
-            onDragStart: (info, event) => {
-                let dToggleButton = document.getElementById(`3d-button-${ obj.hash }`);
-                if (event.rightButton && dToggleButton.dataset.extruded==='false') {
-                    dToggleButton.click();
-                }
-            }
-        });
-    }
-
-    function updateTooltip({x, y, object, layer}, obj) {
-        const tooltip = document.getElementById(`map-tooltip-${ obj.hash }`);
-        if (object) {
-            tooltip.style.top = `${y}px`;
-            tooltip.style.left = `${x}px`;
-            let innerHTML = '';
-
-            if (layer.id === 'zone' || layer.id === 'district') {
-                $.each(object.properties, function (key, value)  {
-                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
-                });
-                let area = turf.area(object);
-                innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
-                    `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
-            } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
-                if (!object.properties.hasOwnProperty("Building")) {
-                    let length = turf.length(object) * 1000;
-                    innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
-                }
             } else {
-                $.each(object.properties, function (key, value) {
-                    innerHTML += `<div><b>${key}</b>: ${value}</div>`;
-                });
+                let div = document.createElement("div");
+                div.innerText = "No networks found.";
+                document.getElementById(`network-radios-${ hash }`).appendChild(div);
+                document.getElementById(`network-${ hash }-label`).remove();
+                document.getElementById(`connected-${ hash }-label`).remove();
             }
 
-            tooltip.innerHTML = innerHTML;
-        } else {
-            tooltip.innerHTML = '';
+            // Register onchange for layer toggles
+            document.getElementsByName(`layer-toggle-${ hash }`).forEach(function (element) {
+                element.onchange = () => redraw()
+            });
+
+            // Check all layer toggle
+            document.getElementsByName(`layer-toggle-${ hash }`).forEach(node => {
+                node.checked = true;
+            });
+
+            setupButtons();
+            redraw();
+        }
+
+        function setupButtons() {
+            class dToggle {
+                constructor() {
+                    this._extruded = false;
+                }
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = `3d-button-${ hash }`;
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-extruded", this._extruded);
+                    this._btn.setAttribute("data-toggle", "tooltip");
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Toggle 3D");
+                    this._btn.onclick = function () {
+                        this._extruded = !this._extruded;
+                        this.setAttribute("data-extruded", this._extruded);
+                        let pitch;
+                        let bearing;
+                        if (this._extruded) {
+                            pitch = 45;
+                        } else {
+                            pitch = 0;
+                            bearing = 0;
+                        }
+
+                        let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                        document.getElementById(`3d-button-${ hash }`).setAttribute('class', className);
+                        deckgl.setProps({ controller: {dragRotate: this._extruded},
+                            viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
+                        redraw();
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            class darkToggle {
+                constructor() {
+                    this._dark = false;
+                }
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = "dark-button";
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-map-style";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-toggle", "tooltip");
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Toggle Dark map");
+                    this._btn.onclick = function() {
+                        this._dark = !this._dark;
+                        if (this._dark) {
+                            deckgl.getMapboxMap().setStyle(darkMap);
+                        } else {
+                            deckgl.getMapboxMap().setStyle(lightMap);
+                        }
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            class recenterMap {
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = `recenter-button-${ hash }`;
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-toggle", "tooltip");
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Center to location");
+                    this._btn.onclick = function () {
+                        deckgl.setProps({
+                            viewState:{
+                                ...currentViewState,
+                                zoom: cameraOptions.zoom,
+                                latitude: cameraOptions.center.lat,
+                                longitude: cameraOptions.center.lng,
+                                transitionDuration: 300
+                            }
+                        });
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            class showLayerToggle {
+                constructor() {
+                    this._show = false;
+                }
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = `layer-toggle-button-${ hash }`;
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-layer-toggle";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-toggle", "tooltip");
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Show layer toggle");
+                    this._btn.onclick = function () {
+                        this._show = !this._show;
+                        if (this._show) {
+                            document.getElementById(`layers-group-${ hash }`).style.visibility = "visible";
+                        } else {
+                            document.getElementById(`layers-group-${ hash }`).style.visibility = "hidden";
+                        }
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+            deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+            deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+            deckgl.getMapboxMap().addControl(new showLayerToggle(), 'top-right');
+            deckgl.setProps({
+                onDragStart: (info, event) => {
+                    let dToggleButton = document.getElementById(`3d-button-${ hash }`);
+                    if (event.rightButton && dToggleButton.dataset.extruded==='false') {
+                        dToggleButton.click();
+                    }
+                }
+            });
+        }
+
+        function redraw() {
+            let extruded = document.getElementById(`3d-button-${ hash }`).dataset.extruded === 'true';
+            let networkType = getNetworkType();
+            // Add zone layer
+            let layers = [new GeoJsonLayer({
+                id: 'zone',
+                data: filterBuildings(),
+                opacity: 0.5,
+                wireframe: true,
+                filled: true,
+                extruded: extruded,
+
+                getElevation: f => f.properties['height_ag'],
+                getFillColor: buildingColor,
+                updateTriggers: {
+                    getFillColor: networkType
+                },
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+
+                onHover: updateTooltip
+            })];
+
+            if (district) layers.push(new GeoJsonLayer({
+                id: 'district',
+                data: district,
+                opacity: 0.3,
+                wireframe: true,
+                filled: true,
+                extruded: extruded,
+                visible: districtToggle.checked,
+
+                getElevation: f => f.properties['height_ag'],
+                getFillColor: colors.district,
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+
+                onHover: updateTooltip
+            }));
+
+            // Add DC network layer
+            if (dc) layers.push(new GeoJsonLayer({
+                id:'dc',
+                data: dc,
+                stroked: false,
+                filled: true,
+                visible: getNetworkVisibility('dc'),
+
+                getLineColor: colors.dc,
+                getFillColor: f => nodeFillColor(f.properties['Type'], 'dc'),
+                getLineWidth: 3,
+                getRadius: 3,
+
+                pickable: true,
+                autoHighlight: true,
+
+                onHover: updateTooltip
+            }));
+
+            // Add DH network layer
+            if (dh) layers.push(new GeoJsonLayer({
+                id:'dh',
+                data: dh,
+                stroked: false,
+                filled: true,
+                visible: getNetworkVisibility('dh'),
+
+                getLineColor: colors.dh,
+                getFillColor: f => nodeFillColor(f.properties['Type'], 'dh'),
+                getLineWidth: 3,
+                getRadius: 3,
+
+                pickable: true,
+                autoHighlight: true,
+
+                onHover: updateTooltip
+            }));
+
+            deckgl.setProps({layers})
+        }
+
+        function buildingColor(object) {
+            let type = getNetworkType();
+            if (type) {
+                let connected = data[type.toUpperCase()]['connected_buildings'];
+                if (connected.includes(object.properties.Name)) return colors[type];
+            }
+            return colors.disconnected
+        }
+
+        function nodeFillColor(type, network) {
+            if (type === 'NONE') {
+                return network === 'dc' ? colors.dc : colors.dh
+            } else if (type === 'CONSUMER') {
+                return [255, 255, 255]
+            } else if (type === 'PLANT') {
+                return [0, 0, 0]
+            }
+        }
+
+        function filterBuildings() {
+            let type = getNetworkType();
+            if (type) {
+                let features;
+                if (connectedToggle.checked && !disconnectedToggle.checked) {
+                    if (typeof(filtered[type].connected) === 'undefined') {
+                        features = zone.features.filter(feature => {
+                            return data[type.toUpperCase()]['connected_buildings'].includes(feature.properties.Name)
+                        });
+                        filtered[type].connected = features;
+                    }
+                    return filtered[type].connected;
+                }
+                if (!connectedToggle.checked && disconnectedToggle.checked) {
+                    if (typeof(filtered[type].disconnected) === 'undefined') {
+                        features = zone.features.filter(feature => {
+                            return data[type.toUpperCase()]['disconnected_buildings'].includes(feature.properties.Name)
+                        });
+                        filtered[type].disconnected = features;
+                    }
+                    return filtered[type].disconnected;
+                }
+                if (!connectedToggle.checked && !disconnectedToggle.checked) return [];
+            } else {
+                if (!disconnectedToggle.checked) return []
+            }
+            return zone;
+        }
+
+        function updateTooltip({x, y, object, layer}) {
+            const tooltip = document.getElementById(`map-tooltip-${ hash }`);
+            if (object) {
+                tooltip.style.top = `${y}px`;
+                tooltip.style.left = `${x}px`;
+                let innerHTML = '';
+
+                if (layer.id === 'zone' || layer.id === 'district') {
+                    $.each(object.properties, function (key, value)  {
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
+                    let area = turf.area(object);
+                    innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
+                        `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+                } else if (layer.id === 'dc' || layer.id === 'dh') {
+                    $.each(object.properties, function (key, value) {
+                        if (key !== 'Building' &&  value === 'NONE') return null;
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
+                    if (!object.properties.hasOwnProperty("Building")) {
+                        let length = turf.length(object) * 1000;
+                        innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
+                    }
+                } else {
+                    $.each(object.properties, function (key, value) {
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
+                }
+
+                tooltip.innerHTML = innerHTML;
+            } else {
+                tooltip.innerHTML = '';
+            }
+        }
+
+        function checkEmpty(json, type) {
+            let empty = !Object.keys(json).length;
+            if (empty) {
+                document.getElementById(`${type}-label`).remove();
+            }
+            return empty ? null : json
+        }
+
+        function getNetworkVisibility(type) {
+            return document.getElementById(`${type}-${ hash }`).checked
+                && networkToggle.checked
+        }
+
+        function getNetworkType() {
+            const selected = document.querySelector(`input[name="network-type-${ hash }"]:checked`);
+            if (selected) return selected.value;
+            return null
         }
     }
 
-    function checkEmpty(json, type) {
-        let empty = !Object.keys(json).length;
-        if (empty) {
-            document.getElementById(`${type}-label`).remove();
-        }
-        return empty ? null : json
-    }
 
-    function getNetworkVisibility(type, obj) {
-        return document.getElementById(`${type}-${ obj.hash }`).checked
-            && obj.networkToggle.checked
-    }
 
-    function init(obj) {
-        setupButtons(obj);
-        redraw(obj);
-        document.getElementsByName(`network-type-${ obj.hash }`).forEach(function (element) {
-            element.onclick = () => redraw({...obj})
-        });
-        document.getElementsByName(`layer-toggle-${ obj.hash }`).forEach(function (element) {
-            element.onclick = () => redraw({...obj})
-        })
-    }
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
 
 </script>

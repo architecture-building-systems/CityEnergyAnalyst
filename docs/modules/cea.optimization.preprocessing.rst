@@ -33,14 +33,6 @@ cea.optimization.preprocessing.decentralized\_buildings\_heating module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.preprocessing.electricity module
--------------------------------------------------
-
-.. automodule:: cea.optimization.preprocessing.electricity
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.optimization.preprocessing.preprocessing\_main module
 ---------------------------------------------------------
 

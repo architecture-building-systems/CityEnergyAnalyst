@@ -103,27 +103,29 @@ still work on a new installation. This is important because it can find missing 
 Building the documentation
 --------------------------
 
-An important part of the release process is ensuring that the documentation for readthedocs_ site can be built. This can
-be tested locally by executing the following commands in the repository folder::
+Well documented code is an essential part of the release, allowing your code's legacy to only grow in glory and admiration.
+The documentation will be rendered via the readthedocs_ site, allowing future developers, practitioners, researchers and students
+to understand and build upon your work. CEA uses sphinx_ to document all module code, and GraphViz to render flow charts
+(please install Graphviz_ to view graphs).
 
-    cd docs
-    make clean
-    make html
 
-For this to run you will need to first ``pip install sphinx``. Also note that the command ``cea install-toolbox`` needs
-to be run at least once to set up some paths required for importing certain modules. You will also need to do
-``conda install numba``. You also need to install GraphViz_ to produce the graphs.
+First, launch the CEA Console created by the installer and call (please address any errors (red text) which appears during the sphinx build)::
 
-If any error messages show up, these need to be fixed before publishing the release. The readthedocs_ site uses
-these steps to produce the developer and API documentation.
+ cea-doc html
 
-The documentation will be build in the folder ``docs/_build/html`` and you can open the ``index.html`` file there to
-browse the documentation.
+This tool will:
+- Remove any outdated module rst files
+- Rebuild all module rst files
+- Render all rst files to html
+- Open any documentation html's for files identified by a Gitdiff.
 
-Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file.
+Finally, any changes to the conda environment need to be reflected in the ``CityEnergyAnalyst/environment.yml`` file and if your code writes any new output variables or files,
+the ``CityEnergyAnalyst/cea/schemas.yml`` should be updated accordingly.
 
+For more information, check out the :doc:`how-to-document-cea`.
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
+.. _sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html
 .. _GraphViz: http://www.graphviz.org/Download.php
 
 Uploading to PyPI
@@ -157,3 +159,22 @@ Uploading to PyPI
   - ask the repository admins for username and password
 
 .. _twine: https://pypi.python.org/pypi/twine
+
+
+Updating Link in www.cityenergyanalyst.com/tryit
+--------------------------------------------------
+
+- go to www.cityenergyanalyst.com
+- press Esc and try logging into squarespace (the credentials are here_)
+- go to Pages/Try CEA  (it is the last page in the list)
+- go to edit 'Page content'
+- go to edit 'Form'
+- Change 'Form Name' to the name of the new version of CEA you just released
+- go to the tab 'Advanced'
+- Change 'POST-SUBMIT REDIRECT' to the link where the .exe of CEA can be downloaded from
+- Change 'POST-SUBMIT MESSAGE'/here, to the link where the .exe of CEA can be downloaded from
+- Click 'Apply'
+- Click 'Save'
+
+.. _here: https://city-energy-analyst.readthedocs.io/en/latest/communication.html#cea-website
+

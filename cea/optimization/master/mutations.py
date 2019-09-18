@@ -33,8 +33,9 @@ def mutation_main(individual, indpb,
 
         # MUTATE SUPPLY SYSTEM UNITS SHARE
         heating_units_share = [individual_with_name_dict[column] for column in heating_unit_names_share]
+        NDIM = len(heating_unit_names_share)
         # apply mutations
-        heating_units_share_mutated = tools.mutShuffleIndexes(heating_units_share, indpb=indpb)[0]
+        heating_units_share_mutated = tools.mutPolynomialBounded(heating_units_share, eta=20.0, low=0.0, up=1.0, indpb=1.0/NDIM)[0]
         # takeback to teh individual
         for column, mutated_value in zip(heating_unit_names_share, heating_units_share_mutated):
             individual_with_name_dict[column] = mutated_value
@@ -51,8 +52,9 @@ def mutation_main(individual, indpb,
 
         # MUTATE SUPPLY SYSTEM UNITS SHARE
         cooling_units_share = [individual_with_name_dict[column] for column in cooling_unit_names_share]
+        NDIM = len(cooling_units_share)
         # apply mutations
-        cooling_units_share_mutated = tools.mutShuffleIndexes(cooling_units_share, indpb)[0]
+        cooling_units_share_mutated = tools.mutPolynomialBounded(cooling_units_share, eta=20.0, low=0.0, up=1.0, indpb=1.0/NDIM)[0]
         # takeback to teh individual
         for column, mutated_value in zip(cooling_unit_names_share, cooling_units_share_mutated):
             individual_with_name_dict[column] = mutated_value

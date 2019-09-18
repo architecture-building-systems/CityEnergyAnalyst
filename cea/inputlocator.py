@@ -271,6 +271,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance.csv' % locals())
 
+    def get_optimization_generation_total_performance_pareto(self,  gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'gen_%(gen_num)s_total_performance_pareto.csv' % locals())
+
+    def get_optimization_generation_total_performance_halloffame(self,  gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'gen_%(gen_num)s_total_performance_halloffame.csv' % locals())
 
     def get_preprocessing_costs(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -505,7 +514,6 @@ class InputLocator(object):
         path to the weather file to use for simulation - run weather-helper to set this"""
         return os.path.join(self.get_weather_folder(), "weather.epw")
 
-    # DATABASES
     def get_weather(self, name=None):
         """weather/{name}.epw Returns the path to a weather file with the name ``name``. This can either be one
         of the pre-configured weather files (see ``get_weather_names``) or a path to an existing weather file.
@@ -516,6 +524,13 @@ class InputLocator(object):
             name = default_weather_name
         if os.path.exists(name) and name.endswith('.epw'):
             return name
+
+        if not name in self.get_weather_names():
+            # allow using an abbreviation like "Zug" for "Zug-inducity_1990_2010_TMY"
+            for n in self.get_weather_names():
+                if n.lower().startswith(name.lower()):
+                    name = n
+                    break
         weather_file = os.path.join(self.weather_path, name + '.epw')
         if not os.path.exists(weather_file):
             return os.path.join(self.weather_path, default_weather_name + '.epw')
@@ -1480,4 +1495,4 @@ class ReferenceCaseOpenLocator(InputLocator):
 
     def get_default_weather(self):
         """The reference-case-open uses the Zug weather file..."""
-        return self.get_weather('Zug')
+        return self.get_weather('Zug-inducity_1990_2010_TMY')

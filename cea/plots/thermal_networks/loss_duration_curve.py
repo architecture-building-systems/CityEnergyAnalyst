@@ -31,8 +31,9 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                         yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
+        return go.Layout(legend=dict(orientation="v", x=0.8, y=0.95),
+                         xaxis=dict(title='Duration Normalized [%]'),
+                         yaxis=dict(title='Load [kW]'))
 
     def calc_graph(self):
         analysis_fields = ["P_loss_kWh"]  # data to plot
@@ -44,7 +45,7 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         for field in analysis_fields:
             data_frame = data_frame.sort_values(by=field, ascending=False)
             y = data_frame[field].values
-            trace = go.Scatter(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
+            trace = go.Scattergl(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
                                marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
@@ -126,7 +127,7 @@ def calc_graph(analysis_fields, data_frame):
     for field in analysis_fields:
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
-        trace = go.Scatter(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
+        trace = go.Scattergl(x=x, y=y, name=field, fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph

@@ -16,8 +16,6 @@ __status__ = "Production"
 # Length of entries of an individual and the name of every entry
 # this is the firts part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
-
-
 DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
 DH_CONVERSION_TECHNOLOGIES_WITH_SIZE_AGGREAGTION_NEEDED = ["NG_Cogen", "WB_Cogen", "DB_Cogen", "NG_BaseBoiler",
                                                            "NG_PeakBoiler", "WS_HP", "SS_HP", "GS_HP", "DS_HP"]
@@ -159,78 +157,29 @@ VCC_CODE_CENTRALIZED = 'CH1'
 VCC_CODE_DECENTRALIZED = 'CH3'
 
 # Absorption chiller
-ACH_T_IN_FROM_CHP = 150 + 273.0  # hot water from CHP to the generator of ACH
+ACH_T_IN_FROM_CHP_K = 150.0 + 273.0  # hot water from CHP to the generator of ACH
 ACH_TYPE_SINGLE = 'single'  # single effect absorption chiller
 ACH_TYPE_DOUBLE = 'double'  # double effect absorption chiller
 
 T_GENERATOR_FROM_FP_C = 75  # fixme: this number is set corresponding to the flat plate solar thermal collector operation
 T_GENERATOR_FROM_ET_C = 100  # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
-# Cooling tower
-CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
-
 ## Thermal Energy Storage
 # Fully mixed cold water tank
 T_TANK_FULLY_CHARGED_K = 4 + 273.0
 T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
-DT_CHARGING_BUFFER = 0.5
-TANK_SIZE_MULTIPLIER = 5  # TODO [issue]: assumption, need more research on tank sizing
-PEAK_LOAD_RATIO = 0.6  # TODO: assumption, threshold to discharge storage
 
 # Seasonal Storage
-T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
-Q_TO_STORAGE_MAX = 1e6  # 100kW maximum peak
-
-# Activation Order of Power Plants
-# solar sources are treated first
-ACT_FIRST = 'HP'  # accounts for all kind of HP's as only one will be in the system.
-ACT_SECOND = 'CHP'  # accounts for ORC and NG-RC (produce electricity!)
-ACT_THIRD = 'BoilerBase'  # all conventional boilers are considered to be backups.
-ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
-N_COOL = 4  # number of cooling technologies
-N_HEAT = 6  # number of heating technologies
-N_HR = 2  # number of heat recovery options
-N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
-
-INDICES_CORRESPONDING_TO_DHN = 2  # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
-DHN_temperature_lower_bound = 30  # Lower bound of the temperature that can be supplied by DHN
-DHN_temperature_upper_bound = 120  # Upper bound of the temperature that can be supplied by DHN
-INDICES_CORRESPONDING_TO_DCN = 2  # one index for temperature and one for the number of AHU/ARU/SCU the DCN is supplying
-DCN_temperature_lower_bound = 6  # Lower bound of the temperature that can be supplied by DCN
-DCN_temperature_upper_bound = 18  # Upper bound of the temperature that can be supplied by DCN
-
-#  variable corresponding to the consideration of DHN temperature in the optimization,
-# if this is True, the temperature of the DHN is generated between the lower and upper bounds and considered as the
-# operation temperature of the DHN. In this case, the excess temperature requirement is provided by installing
-# decentralised units. If it is False, it calculates the DHN supply temperature based on the demand of the buildings
-# connected in the network. The same goes for DCN temperature
-DHN_temperature_considered = False
-DCN_temperature_considered = False
-
-CXPB = 0.8
-MUTPB = 0.8
-EPS_MARGIN = 0.001
-
-# Heat Recovery
-
-# compressed Air recovery
-ETA_EL_TO_HEAT = 0.75  # [-]
-T_EL_TO_HEAT_SUP = 80 + 273.0  # K
-T_EL_TO_HEAT_RE = 70 + 273.0  # K
+CXPB = 0.5
+MUTPB = 0.5
 
 # Server Waste Heat recovery
 ETA_SERVER_TO_HEAT = 0.8  # [-]
 T_FROM_SERVER = 60 + 273.0  # K
 T_TO_SERVER = 55 + 273.0  # K
-
-# Solar Thermal: information of return temperature
-T_SUP_PVT_35 = 35 + 273.0  # K
-T_SUP_SC_75 = 75 + 273.0  # K
-T_SUP_SC_ET50 = 50 + 273.0  # K
-T_SUP_SC_ET80 = 80 + 273.0  # K
 
 # solar PV and PVT
 N_PV = 0.16
@@ -239,15 +188,4 @@ N_PVT = 0.16
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
 LHV_BG = 21.4E6  # [J/kg]
-
-# Values for the calculation of Delta P (from F. Muller network optimization code)
-# WARNING : current = values for Inducity SQ
-DELTA_P_COEFF = 104.81
-DELTA_P_ORIGIN = 59016
-
-PIPELIFETIME = 40.0  # years, Data from A&W
-PIPEINTERESTRATE = 0.05  # 5% interest rate
-
-SUBSTATION_N = 20  # Lifetime after A+W default 20
-
 ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C

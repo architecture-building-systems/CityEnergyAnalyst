@@ -2,18 +2,18 @@
 This script calculates the minimum spanning tree of a shapefile network
 """
 
-import networkx as nx
-from networkx.algorithms.approximation.steinertree import steiner_tree
-import cea.globalvar
-import cea.inputlocator
-from geopandas import GeoDataFrame as gdf
-import cea.config
-import os
-import pandas as pd
 import math
+import os
+
+import networkx as nx
 import numpy as np
-import shapely
-from shapely.geometry import Point, LineString
+import pandas as pd
+from geopandas import GeoDataFrame as gdf
+from networkx.algorithms.approximation.steinertree import steiner_tree
+from shapely.geometry import LineString
+
+import cea.config
+import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +29,6 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
                                weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location, create_plant, allow_looped_networks, optimization_flag,
                                plant_building_names, disconnected_building_names):
-
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -260,7 +259,6 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
                                   }, ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
-
 
 
 def main(config):

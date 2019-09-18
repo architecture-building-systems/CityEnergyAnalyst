@@ -61,7 +61,6 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     substations = []
     Qcdata_netw_total_kWh = np.zeros(HOURS_IN_YEAR)
     mcpdata_netw_total_kWperC = np.zeros(HOURS_IN_YEAR)
-    Electr_netw_total_W = np.zeros(HOURS_IN_YEAR)
     mdot_heat_netw_all_kgpers = np.zeros(HOURS_IN_YEAR)
     mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers = np.zeros(HOURS_IN_YEAR)
     mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers = np.zeros(HOURS_IN_YEAR)
@@ -82,13 +81,15 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
             buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
             substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key)))
             mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
-            Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
 
             Q_DH_building_netw_total_W += (substations[iteration].Q_heating_W.values +
                                            substations[iteration].Q_dhw_W.values)
 
             sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
                 iteration].mdot_DH_result_kgpers.values
+
+            Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
+            mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values
 
             # evaluate minimum flows
             mdot_heat_netw_min_kgpers = np.vectorize(calc_min_flow)(mdot_heat_netw_min_kgpers,
@@ -128,15 +129,11 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
         results = pd.DataFrame({"DATE": date,
                                 "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
-                                "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers": mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers,
-                                "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers": mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers,
                                 "Q_DHNf_W": Q_DHNf_W,
                                 "T_DHNf_re_K": T_DHN_re_K,
                                 "T_DHNf_sup_K": T_DHN_sup_K,
                                 "Qcdata_netw_total_kWh": Qcdata_netw_total_kWh,
-                                "day_of_max_heatmassflow": day_of_max_heatmassflow,
                                 "mcpdata_netw_total_kWperC": mcpdata_netw_total_kWperC,
-                                "Electr_netw_total_W": Electr_netw_total_W,
                                 "Q_DH_losses_W": Q_DH_losses_W})
 
     #RUN FOR COOLING NETWORKS
@@ -149,7 +146,6 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
             Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
             mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values
-            Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
 
             mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers += substations[
                 iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
@@ -256,7 +252,6 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                                 "T_DCNf_space_cooling_data_center_and_refrigeration_sup_K": T_DCN_space_cooling_data_center_and_refrigeration_sup_K,
                                 "Qcdata_netw_total_kWh": Qcdata_netw_total_kWh,
                                 "mcpdata_netw_total_kWperC": mcpdata_netw_total_kWperC,
-                                "Electr_netw_total_W": Electr_netw_total_W,
                                 "Q_DC_space_cooling_and_refrigeration_losses_W": Q_DC_space_cooling_and_refrigeration_losses_W,
                                 "Q_DC_space_cooling_data_center_and_refrigeration_losses_W": Q_DC_space_cooling_data_center_and_refrigeration_losses_W})
 
@@ -264,6 +259,8 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False)
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key
+
+    return results
 
 
 # ============================

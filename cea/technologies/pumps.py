@@ -49,7 +49,8 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network_type
+def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type,
+                   prices
                    ):
     """
     Computes the total pump investment cost
@@ -74,7 +75,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             P_motor_tot_W[i] = deltaP * mdotA_kgpers[i][0] / 1000 / PUMP_ETA
-            Opex_var_pumps += P_motor_tot_W[i] * lca.ELEC_PRICE[i]
+            Opex_var_pumps += P_motor_tot_W[i] * prices.ELEC_PRICE[i]
 
         deltaPmax = np.max((network_features.DeltaP_DHN) * master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings)
 
@@ -97,7 +98,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, lca, network
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             P_motor_tot_W[i] = deltaP * mdotA_kgpers[i][0] / 1000 / PUMP_ETA
-            Opex_var_pumps += P_motor_tot_W[i] * lca.ELEC_PRICE[i]
+            Opex_var_pumps += P_motor_tot_W[i] * prices.ELEC_PRICE[i]
 
         deltaPmax = np.max((network_features.DeltaP_DCN) * master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings)
 

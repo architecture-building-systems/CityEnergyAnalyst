@@ -23,7 +23,6 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
-from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import ACH_TYPE_DOUBLE
 from cea.optimization.constants import N_PVT
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
@@ -59,9 +58,9 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     Capex_total_cooling_sys_disconnected_USD, \
     Capex_a_cooling_sys_disconnected_USD, \
     Opex_var_cooling_sys_disconnected, \
-    Opex_fixed_cooling_sys_disconnected_USD = calc_costs_emissions_decentralized_DC(
-        DCN_barcode,
-        column_names_buildings_cooling, locator)
+    Opex_fixed_cooling_sys_disconnected_USD = calc_costs_emissions_decentralized_DC(DCN_barcode,
+                                                                                    column_names_buildings_cooling,
+                                                                                    locator)
 
     disconnected_costs = {
         # heating
@@ -89,7 +88,7 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     return disconnected_costs, disconnected_emissions
 
 
-def calc_network_costs_heating(locator, master_to_slave_vars, network_features, lca, network_type):
+def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type, prices):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
@@ -107,7 +106,7 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
 
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, network_type)
+        master_to_slave_vars, network_features, locator, network_type, prices)
 
     # summarize
     Capex_Network_USD += Capex_pump_USD
@@ -184,18 +183,18 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
                                             sum_electricity_imports_W,
                                             sum_electricity_exports_W,
                                             prices,
-                                            lca):
+                                            ):
     # COSTS
     Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W) * prices.NG_PRICE
     Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.BG_PRICE
     Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.BG_PRICE
-    Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * lca.ELEC_PRICE)
-    Opex_var_GRID_sell_sys_connected_USD = - sum(sum_electricity_exports_W * lca.ELEC_PRICE_EXPORT)
+    Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
+    Opex_var_GRID_sell_sys_connected_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 
     district_variable_costs = {
         "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
         "Opex_var_WB_connected_USD": Opex_var_WB_sys_connected_USD,
-        "Opex_var_DB_sconnected_USD": Opex_var_DB_sys_connected_USD,
+        "Opex_var_DB_connected_USD": Opex_var_DB_sys_connected_USD,
         "Opex_var_GRID_imports_connected_USD": Opex_var_GRID_buy_sys_connected_USD,
         "Opex_var_GRID_exports_connected_USD": Opex_var_GRID_sell_sys_connected_USD
     }
@@ -216,15 +215,17 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     sum_electricity_imports_Whyr = sum(sum_electricity_imports_W)
     sum_electricity_exports_Whyr = sum(sum_electricity_exports_W)
 
-    GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_BOILER_TO_CO2_STD)
-    GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.FURNACE_TO_CO2_STD)
-    GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.FURNACE_TO_CO2_STD)
-    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr, lca.EL_TO_CO2)
-    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr, lca.EL_TO_CO2)
+    GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_TO_CO2_EQ)
+    GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_CO2_EQ)
+    GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_CO2_EQ)
+    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr,
+                                                                          lca.EL_TO_CO2_EQ)
+    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr,
+                                                                            lca.EL_TO_CO2_EQ)
 
-    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_BOILER_TO_OIL_STD)
-    PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.FURNACE_TO_OIL_STD)
-    PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.FURNACE_TO_OIL_STD)
+    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_EQ)
+    PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_OIL_EQ)
+    PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_OIL_EQ)
     PEN_GRID_imports_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_electricity_imports_Whyr, lca.EL_TO_OIL_EQ)
     PEN_GRID_exports_connected_MJoilyr = - calc_pen_Whyr_to_MJoilyr(sum_electricity_exports_Whyr, lca.EL_TO_OIL_EQ)
 
@@ -245,31 +246,37 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     return buildings_connected_emissions_primary_energy
 
 
-def summary_fuel_electricity_consumption(master_to_slave_vars,
-                                         district_cooling_fuel_requirements_dispatch,
+def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                          district_heating_fuel_requirements_dispatch,
-                                         district_microgrid_requirements_dispatch):
+                                         district_microgrid_requirements_dispatch,
+                                         district_electricity_demands):
     # join in one dictionary to facilitate the iteration
     join1 = dict(district_microgrid_requirements_dispatch, **district_heating_fuel_requirements_dispatch)
-    joined_dict = dict(join1, **district_cooling_fuel_requirements_dispatch)
+    data = dict(join1, **district_cooling_fuel_requirements_dispatch)
     # Iterate over all the files
-    sum_natural_gas_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_wet_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_dry_biomass_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_electricity_imports_W = np.zeros(HOURS_IN_YEAR)
-    sum_electricity_exports_W = np.zeros(HOURS_IN_YEAR)
+    sum_natural_gas_imports_W = (data['NG_CHP_req_W'] +
+                                 data['NG_BaseBoiler_req_W'] +
+                                 data['NG_PeakBoiler_req_W'] +
+                                 data['NG_BackupBoiler_req_W'] +
+                                 data['NG_Trigen_req_W'])
 
-    for key, value in joined_dict.items():
-        if "NG_" in key and "req" in key:
-            sum_natural_gas_imports_W += value
-        elif "WB_" in key and "req" in key:
-            sum_wet_biomass_imports_W += value
-        elif "DB_" in key and "req" in key:
-            sum_dry_biomass_imports_W += value
-        elif "E_" in key and "GRID" in key and "directload" in key:
-            sum_electricity_imports_W += value
-        elif "E_" in key and "export" in key:
-            sum_electricity_exports_W += value
+    sum_wet_biomass_imports_W = data['WB_Furnace_req_W']
+
+    sum_dry_biomass_imports_W = (data['DB_Furnace_req_W'])
+
+                                # discount those of disconnected buildings (which are part of the directload
+                                # dispatch, this is only for calculation of emissions purposes
+                                # it avoids double counting when calculating emissions due to decentralized buildings)
+    sum_electricity_imports_W = (data['E_GRID_directload_W'] -
+                                 district_electricity_demands['E_hs_ww_req_disconnected_W'] -
+                                 district_electricity_demands['E_cs_cre_cdata_req_disconnected_W'])
+
+    sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
+                                 data['E_Furnace_dry_gen_export_W'] +
+                                 data['E_Furnace_wet_gen_export_W'] +
+                                 data['E_PV_gen_export_W'] +
+                                 data['E_PVT_gen_export_W'] +
+                                 data['E_Trigen_gen_export_W'])
 
     return sum_natural_gas_imports_W, \
            sum_wet_biomass_imports_W, \
@@ -278,13 +285,13 @@ def summary_fuel_electricity_consumption(master_to_slave_vars,
            sum_electricity_exports_W
 
 
-def buildings_connected_costs_and_emissions(master_to_slave_vars,
-                                            district_heating_costs,
+def buildings_connected_costs_and_emissions(district_heating_costs,
                                             district_cooling_costs,
                                             district_microgrid_costs,
                                             district_microgrid_requirements_dispatch,
                                             district_heating_fuel_requirements_dispatch,
                                             district_cooling_fuel_requirements_dispatch,
+                                            district_electricity_demands,
                                             prices,
                                             lca
                                             ):
@@ -293,10 +300,10 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
     sum_electricity_imports_W, \
-    sum_electricity_exports_W = summary_fuel_electricity_consumption(master_to_slave_vars,
-                                                                     district_cooling_fuel_requirements_dispatch,
+    sum_electricity_exports_W = summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                                                      district_heating_fuel_requirements_dispatch,
-                                                                     district_microgrid_requirements_dispatch)
+                                                                     district_microgrid_requirements_dispatch,
+                                                                     district_electricity_demands)
 
     # CALCULATE all_COSTS
     district_variable_costs = calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
@@ -305,7 +312,7 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
                                                                       sum_electricity_imports_W,
                                                                       sum_electricity_exports_W,
                                                                       prices,
-                                                                      lca)
+                                                                      )
     # join all the costs
     join1 = dict(district_heating_costs, **district_cooling_costs)
     join2 = dict(join1, **district_microgrid_costs)
@@ -321,7 +328,7 @@ def buildings_connected_costs_and_emissions(master_to_slave_vars,
     return connected_costs, connected_emissions
 
 
-def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, lca, network_type):
+def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
@@ -339,7 +346,7 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
 
     # costs of pumps
     Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, lca, network_type)
+        master_to_slave_vars, network_features, locator, network_type, prices)
 
     # COOLING SUBSTATIONS
     DCN_barcode = master_to_slave_vars.DCN_barcode
@@ -424,7 +431,7 @@ def calc_generation_costs_cooling_storage(locator,
                                           daily_storage):
     # STORAGE TANK
     if master_to_slave_variables.Storage_cooling_on == 1:
-        V_tank_m3 = daily_storage.V_tank_M3
+        V_tank_m3 = daily_storage.V_tank_m3
         Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
                                                                                                   config, 'TES2')
     else:
@@ -603,7 +610,6 @@ def calc_generation_costs_heating(locator,
     :param Q_uncovered_annual_W: total heating uncovered
     :param solar_features: solar features
     :param thermal_network: network features
-    :param gv: global variables
     :type indCombi: string
     :type buildList: list
     :type locator: string
@@ -612,14 +618,12 @@ def calc_generation_costs_heating(locator,
     :type Q_uncovered_annual_W: float
     :type solar_features: class
     :type thermal_network: class
-    :type gv: class
 
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
 
-    thermal_network = pd.read_csv(
-        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    thermal_network = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:

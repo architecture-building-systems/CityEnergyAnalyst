@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
 import cea.technologies.chiller_absorption as chiller_absorption
@@ -49,7 +49,6 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     with evacuated tube solar collectors.
     :param locator: locator class with paths to input/output files
     :param building_names: list with names of buildings
-    :param gv: global variable class
     :param config: cea.config
     :param prices: prices class
     :return: one .csv file with results of operations of disconnected buildings; one .csv file with operation of the
@@ -57,6 +56,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
+    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SENSIBLE COOLING UNIT
@@ -112,9 +112,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
         DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
         # add electricity costs, CO2, PE
-        operation_results[0][7] += sum(lca.ELEC_PRICE * el_DX_hourly_Wh)
-        operation_results[0][8] += sum(el_DX_hourly_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-        operation_results[0][9] += sum(el_DX_hourly_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ oil
+        operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
+        operation_results[0][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_DX_hourly_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[0][9] += calc_pen_Whyr_to_MJoilyr(sum(el_DX_hourly_Wh), lca.EL_TO_OIL_EQ)  # MJ oil
         # activation
         cooling_dispatch[0] = {'Q_DX_gen_directload_W': q_DX_chw_Wh,
                                'E_DX_req_W': el_DX_hourly_Wh,
@@ -133,9 +133,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
         # add costs
         el_total_Wh = el_VCC_Wh + el_CT_Wh
-        operation_results[1][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[1][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-        operation_results[1][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+        operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[1][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[1][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
                                'E_VCC_req_W': el_VCC_Wh,
                                'E_CT_req_W': el_CT_Wh,
@@ -151,7 +151,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_cw_single_ACH_Wh, \
         q_hw_single_ACH_Wh,\
         q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 locator, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
 
         ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
         # CT operation
@@ -167,14 +167,14 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                                                                  q_sc_gen_FP_Wh)
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-        operation_results[2][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[2][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-        operation_results[2][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+        operation_results[2][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
         q_gas_total_Wh = q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh
         operation_results[2][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
-        operation_results[2][8] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-        operation_results[2][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+        operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+        operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         cooling_dispatch[2] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
                                'ACH_Status': ACH_Status,
@@ -195,7 +195,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_cw_single_ACH_Wh, \
         q_hw_single_ACH_Wh,\
         q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_ET_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 locator, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
         # CT operation
         q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
@@ -205,15 +205,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         q_burner_load_Wh = calc_burner_operation(Qc_nom_AHU_ARU_SCU_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh)
         # add electricity costs
         el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
-        operation_results[3][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[3][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-        operation_results[3][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+        operation_results[3][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh),  lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
         operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
-        operation_results[3][8] += sum(
-            q_gas_for_burner_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-        operation_results[3][9] += sum(
-            q_gas_for_burner_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_for_burner_Wh),lca.NG_TO_CO2_EQ)  # ton CO2
+        operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_for_burner_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         cooling_dispatch[3] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
                                'ACH_Status': ACH_Status,
@@ -245,9 +243,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
             # add el costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
-            operation_results[4][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
-            operation_results[4][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-            operation_results[4][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+            operation_results[4][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+            operation_results[4][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+            operation_results[4][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
             cooling_dispatch[4] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
                                    'Q_VCC_HT_gen_directload_W': q_chw_VCC_to_SCU_Wh,
@@ -266,7 +264,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             el_FP_ACH_to_SCU_Wh, \
             q_cw_FP_ACH_to_SCU_Wh, \
             q_hw_FP_ACH_to_SCU_Wh,\
-            q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, locator,
+            q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, chiller_prop,
                                                         mdot_SCU_kgpers, ACH_TYPE_SINGLE)
             ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
             # boiler operation
@@ -281,15 +279,14 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
             # add electricity costs
             el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-            operation_results[5][7] += sum(lca.ELEC_PRICE * el_total_Wh)  # CHF
-            operation_results[5][8] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_CO2 / 1E3)  # ton CO2
-            operation_results[5][9] += sum(el_total_Wh * WH_TO_J / 1E6 * lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+            operation_results[5][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+            operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+            operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add gas costs
             q_gas_total_Wh = q_gas_for_boiler_Wh
             operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
-            operation_results[5][8] += sum(
-                q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3)  # ton CO2
-            operation_results[5][9] += sum(q_gas_total_Wh * WH_TO_J / 1E6 * lca.NG_BACKUPBOILER_TO_OIL_STD)  # MJ-oil-eq
+            operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+            operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
             cooling_dispatch[5] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
                                    'Q_ACH_HT_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
@@ -545,16 +542,18 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
         operation_results[5][6] = 1
     return operation_results
 
+class AbsorptionChiller(object):
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop =  chiller_prop[chiller_prop['type'] == ACH_type]
 
-def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, locator, mdot_chw_kgpers, ACH_type):
-
+def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, chiller_prop, mdot_chw_kgpers, ACH_type):
+    chiller_prop = AbsorptionChiller(chiller_prop, ACH_type)
     SC_to_single_ACH_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_chw_kgpers,
                                                                                     T_chw_sup_K,
                                                                                     T_chw_re_K,
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
-                                                                                    locator,
-                                                                                    ACH_type)
+                                                                                    chiller_prop)
 
 
     el_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_to_single_ACH_operation])
@@ -649,8 +648,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config)
-    lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
+    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
+    lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
     print 'test_decentralized_buildings_cooling() succeeded'
