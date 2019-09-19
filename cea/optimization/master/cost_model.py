@@ -483,7 +483,6 @@ def calc_generation_costs_cooling(locator,
         # VCC
         Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
                                                                                                          locator,
-                                                                                                         config,
                                                                                                          'CH3')
     else:
         Capex_a_BaseVCC_WS_USD = 0.0
@@ -496,7 +495,6 @@ def calc_generation_costs_cooling(locator,
         # VCC
         Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
                                                                                                          locator,
-                                                                                                         config,
                                                                                                          'CH3')
     else:
         Capex_a_PeakVCC_WS_USD = 0.0
@@ -507,8 +505,7 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.AS_BaseVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.AS_BaseVCC_size_W
         # VCC
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, 'CH3')
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
@@ -526,8 +523,7 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.AS_PeakVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, 'CH3')
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
@@ -546,8 +542,7 @@ def calc_generation_costs_cooling(locator,
     if master_to_slave_variables.AS_BackupVCC_on == 1:
         Qc_VCC_nom_W = master_to_slave_variables.AS_BackupVCC_size_W
         # VCC
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, config,
-                                                                                    'CH3')
+        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W, locator, 'CH3')
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Qc_VCC_nom_W, locator, 'CT1')
