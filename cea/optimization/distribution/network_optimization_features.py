@@ -15,6 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 class NetworkOptimizationFeatures(object):
     """
     This class just sets-ip constants of the linear model of the distribution.
@@ -36,11 +37,11 @@ class NetworkOptimizationFeatures(object):
         for network_name in self.network_names:
             if self.district_heating_network:
                 pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DH", network_name))
-                for i in range(HOURS_IN_YEAR):
+                for i in range(len(pressure_drop_Pa)):
                     self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
             if self.district_cooling_network:
                 pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DC", network_name))
-                for i in range(HOURS_IN_YEAR):
+                for i in range(len(pressure_drop_Pa)):
                     self.DeltaP_DCN[i] = self.DeltaP_DCN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
 
         for network_name in self.network_names:
