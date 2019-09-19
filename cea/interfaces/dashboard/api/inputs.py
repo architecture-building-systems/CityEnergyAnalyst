@@ -12,7 +12,7 @@ import cea.inputlocator
 import cea.utilities.dbf
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
-from cea.technologies.network_layout.main import network_layout
+from cea.technologies.network_layout.main import layout_network
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Inputs', description='Input data for CEA')
@@ -23,6 +23,7 @@ COLORS = {
     'dc': get_color_array('blue'),
     'disconnected': get_color_array('grey')
 }
+
 
 def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
@@ -83,7 +84,8 @@ class Input(Resource):
 class InputDatabases(Resource):
     def get(self, db):
         if not (db in INPUT_KEYS and db in GEOJSON_KEYS):
-            abort(400, 'Input file not found: %s' % db, choices=list(set(INPUT_KEYS) & set(GEOJSON_KEYS)))
+            abort(400, 'Input file not found: %s' %
+                  db, choices=list(set(INPUT_KEYS) & set(GEOJSON_KEYS)))
         db_info = INPUTS[db]
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
@@ -103,7 +105,8 @@ class InputOthers(Resource):
             return df_to_json(locator.get_street_network())[0]
         if kind in ['dc', 'dh']:
             return get_network(config, kind)[0]
-        abort(400, 'Input file not found: %s' % kind, choices=['streets', 'dh', 'dc'])
+        abort(400, 'Input file not found: %s' %
+              kind, choices=['streets', 'dh', 'dc'])
 
 
 @api.route('/building-properties')
@@ -122,11 +125,16 @@ class AllInputs(Resource):
         store = get_building_properties()
         store['geojsons'] = {}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True, trigger_abort=False)
-        store['geojsons']['district'], store['crs']['district'] = df_to_json(locator.get_district_geometry(), bbox=True, trigger_abort=False)
-        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network(), trigger_abort=False)
-        store['geojsons']['dc'], store['crs']['dc'] = get_network(config, 'dc', trigger_abort=False)
-        store['geojsons']['dh'], store['crs']['dh'] = get_network(config, 'dh', trigger_abort=False)
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(
+            locator.get_zone_geometry(), bbox=True, trigger_abort=False)
+        store['geojsons']['district'], store['crs']['district'] = df_to_json(
+            locator.get_district_geometry(), bbox=True, trigger_abort=False)
+        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(
+            locator.get_street_network(), trigger_abort=False)
+        store['geojsons']['dc'], store['crs']['dc'] = get_network(
+            config, 'dc', trigger_abort=False)
+        store['geojsons']['dh'], store['crs']['dh'] = get_network(
+            config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
 
         return store
@@ -165,7 +173,7 @@ def get_building_properties():
 
             columns = OrderedDict()
             db_glossary = json.loads(glossary[filenames == '%s.%s' % (db.replace('-', '_'), db_info['type'])]
-            [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
+                                     [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
 
             for column in db_info['fieldnames']:
                 if column == 'REFERENCE':
@@ -188,15 +196,18 @@ def get_network(config, network_type, trigger_abort=True):
     locator = cea.inputlocator.InputLocator(config.scenario)
     building_connectivity = get_building_connectivity(locator)
     network_type = network_type.upper()
-    connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(network_type)] == 1]['Name'].values.tolist()
+    connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
+        network_type)] == 1]['Name'].values.tolist()
     network_name = 'base'
 
     # Do not calculate if no connected buildings
     if len(connected_buildings) < 2:
         return None, [], None
 
-    edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
-    nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+    edges = locator.get_network_layout_edges_shapefile(
+        network_type, network_name)
+    nodes = locator.get_network_layout_nodes_shapefile(
+        network_type, network_name)
     supply_system = locator.get_building_supply()
 
     no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
@@ -206,7 +217,7 @@ def get_network(config, network_type, trigger_abort=True):
     if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
         config.network_layout.network_type = network_type
         config.network_layout.connected_buildings = connected_buildings
-        network_layout(config, locator, output_name_network=network_name)
+        layout_network(config, locator, output_name_network=network_name)
 
     network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
     nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
