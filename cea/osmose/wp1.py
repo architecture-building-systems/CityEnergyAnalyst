@@ -10,6 +10,7 @@ import cea.osmose.settings as settings
 import cea.osmose.extract_demand_outputs as extract_demand_outputs
 import cea.osmose.plot_osmose_result as plot_results
 import cea.osmose.compare_el_usages as compare_el
+import cea.osmose.post_process_osmose_results as post_processing
 
 # import from settings # TODO: add to config
 TECHS = settings.TECHS
@@ -39,14 +40,12 @@ def main(case):
     start_ampl_license(ampl_lic_path, "start")
 
     ## run osmose
-    write_string_to_txt(path_to_case_folder, osmose_project_data_path, "path_to_case_folder.txt")  # osmose input
-    write_value_to_csv(timesteps_calc, osmose_project_data_path, "timesteps.csv")  # osmose input
-    write_value_to_csv(periods, osmose_project_data_path, "periods.csv")  # osmose input
+    write_osmose_general_inputs(path_to_case_folder, periods, timesteps_calc)
     for building in building_names:
         print building, ' in ', case
-        write_value_to_csv(building, osmose_project_data_path, "building_name.csv")  # osmose input
-        write_value_to_csv(Tamb, osmose_project_data_path, "Tamb.csv")
+        write_osmose_building_inputs(Tamb, building)
         for tech in TECHS:
+            # run osmose
             t = time.localtime()
             print time.strftime("%H:%M", t)
             t0 = time.clock()
@@ -62,13 +61,28 @@ def main(case):
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
         # # plot results
-        # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
-        # building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
+        building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
+        building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
+        building_result_path = os.path.join(building_result_path, 'three_units')
+        file_name = 'outputs.csv'
+        post_processing.main(building, TECHS, file_name, building_result_path)
+
         # # building_result_path = os.path.join(building_result_path, "reduced")
         # plot_results.main(building, TECHS, building_result_path)
         # compare_el.main(building, building_result_path, case)
         # # start_ampl_license(ampl_lic_path, "stop")
     return np.nan
+
+
+def write_osmose_building_inputs(Tamb, building):
+    write_value_to_csv(building, osmose_project_data_path, "building_name.csv")  # osmose input
+    write_value_to_csv(Tamb, osmose_project_data_path, "Tamb.csv")
+
+
+def write_osmose_general_inputs(path_to_case_folder, periods, timesteps_calc):
+    write_string_to_txt(path_to_case_folder, osmose_project_data_path, "path_to_case_folder.txt")  # osmose input
+    write_value_to_csv(timesteps_calc, osmose_project_data_path, "timesteps.csv")  # osmose input
+    write_value_to_csv(periods, osmose_project_data_path, "periods.csv")  # osmose input
 
 
 def make_directory(dirName, new_calculation=True):
