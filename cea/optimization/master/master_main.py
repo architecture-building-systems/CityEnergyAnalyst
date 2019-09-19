@@ -175,7 +175,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     toolbox.register("evaluate",
                      objective_function_wrapper)
     toolbox.register("select",
-                     tools.selNSGA3WithMemory(ref_points))
+                     #tools.selNSGA3WithMemory(ref_points))
+                     tools.selNSGA2)
 
     # configure multiprocessing
     if config.multiprocessing:
