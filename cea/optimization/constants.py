@@ -173,8 +173,8 @@ T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
 
 # Data for Evolutionary algorithm
-CXPB = 0.5
-MUTPB = 0.5
+CXPB = 0.8
+MUTPB = 0.2
 
 # Server Waste Heat recovery
 ETA_SERVER_TO_HEAT = 0.8  # [-]
