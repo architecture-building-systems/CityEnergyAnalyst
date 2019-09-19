@@ -91,8 +91,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
 
         ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
-        T_ground_K = calculate_ground_temperature(locator,
-                                                  config)  # FIXME: change to outlet temperature from the cooling towers
+        T_ground_K = calculate_ground_temperature(locator)  # FIXME: change to outlet temperature from the cooling towers
 
         ## Initialize table to save results
         # save costs of all supply configurations
@@ -318,7 +317,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
         # 1: VCC + CT
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(
-            Qc_nom_AHU_ARU_SCU_W, locator, config, 'CH3')
+            Qc_nom_AHU_ARU_SCU_W, locator, 'CH3')
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, 'CT1')
         # add costs
@@ -354,9 +353,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         if Qc_nom_SCU_W > 0.0:
             # 4: VCC (AHU + ARU) + VCC (SCU) + CT
             Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_AHU_ARU_W, locator, config, 'CH3')
+                Qc_nom_AHU_ARU_W, locator, 'CH3')
             Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_SCU_W, locator, config, 'CH3')
+                Qc_nom_SCU_W, locator, 'CH3')
             Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
                 Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, locator, 'CT1')
             Capex_a_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
@@ -647,7 +646,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config)
+    prices = Prices(locator)
     lca = LcaCalculations(locator, config.optimization.detailed_electricity_pricing)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
