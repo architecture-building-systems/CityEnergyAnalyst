@@ -63,8 +63,8 @@ def calc_m_a(output_df, folder_path):
     else:
         print ('air flow balanced!')
     # plot air flow
-    m_a_in_OAU_vent = output_df.filter(like='m_a_in_OAU_vent').sum(axis=1)
-    m_a_in_OAU_bypass = output_df.filter(like='m_a_in_OAU_bypass').sum(axis=1)
+    m_a_in_OAU_vent = output_df.filter(like='m_OAU_vent').sum(axis=1)
+    m_a_in_OAU_bypass = output_df['m_a_in_OAU_bypass']
     data_dict = {'coil': m_a_in_OAU_vent.values, 'bypass': m_a_in_OAU_bypass.values}
     timesteps = len(output_df.index)
     plot_stacked_bars(data_dict, timesteps, 'OAU_air_flow', 'air flow [kg/s]', folder_path)
@@ -200,12 +200,12 @@ def draw_T_SA(output_df, folder_path):
 def draw_T_offcoil(output_df, folder_path):
     T_RAU_RA1_df = output_df.filter(like='T_RAU_RA1')
     T_RAU_chw_df = output_df.filter(like='T_rau_chw')
-    T_OAU_OA1_df = output_df.filter(like='T_OAU_OA1')
+    T_OAU_OA1_df = output_df.filter(like='T_OAU_offcoil')
     T_OAU_chw_df = output_df.filter(like='T_oau_chw')
     T_dict = {
-        'RAU T_RA1': [T_RAU_RA1_df.sum(axis=1), '#ffc071'],
+        'RAU T_offcoil': [T_RAU_RA1_df.sum(axis=1), '#ffc071'],
         'RAU T_chw': [T_RAU_chw_df.sum(axis=1), '#664215'],
-        'OAU T_OA1': [T_OAU_OA1_df.sum(axis=1), '#b770b4'],
+        'OAU T_offcoil': [T_OAU_OA1_df.sum(axis=1), '#b770b4'],
         'OAU T_chw': [T_OAU_chw_df.sum(axis=1), '#510a4e']
     }
     plot_temperatures(T_dict, output_df, folder_path, 'T_chw')
@@ -256,20 +256,30 @@ def draw_pie(any_dict, plt_name, folder_path):
     label = []
     fig, ax = plt.subplots()
     for key in any_dict.keys():
-        label.append(key)
-        size_of_groups.append(any_dict[key])
-        total += any_dict[key]
+        if any_dict[key] > 0.0:
+            label.append(key)
+            size_of_groups.append(any_dict[key])
+            total += any_dict[key]
     # Create a pieplot
-    ax.pie(size_of_groups, labels=label, autopct='%1.1f%%', textprops={'fontsize': 14})
+    patches, \
+    texts, \
+    autotexts = ax.pie(size_of_groups, labels=label, autopct='%1.1f%%', pctdistance=0.8, textprops={'fontsize': 14}, startangle=90)
+    for i in range(len(texts)):
+        texts[i].set_fontsize(14) # set label font size
     # plt.show()
 
     # add a circle at the center
-    my_circle = plt.Circle((0, 0), 0.05, color='white')
+    my_circle = plt.Circle((0, 0), 0.6, color='white')
     p = plt.gcf()
     p.gca().add_artist(my_circle)
+
     # Set chart title.
     plt.title(plt_name, fontsize=16)
-    plt.axis('scaled')
+
+    # other settings
+    plt.axis('equal') # Equal aspect ratio ensures that pie is drawn as a circle
+    plt.tight_layout()
+
     image_path = os.path.join(folder_path, plt_name + '.png')
     plt.savefig(image_path)
     plt.close(fig)
@@ -304,16 +314,16 @@ def plot_temperatures(T_dict, output_df, folder_path, title):
     return
 
 if __name__ == '__main__':
-    buildings = ["B003"]
+    buildings = ["B001"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     tech = ["HCS_coil"]
-    cases = ["WTP_CBD_m_WP1_OFF"]
+    cases = ["WTP_CBD_m_WP1_HOT"]
     result_path = "E:\\test_0805"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
             building_time = building + "_1_24"
-            building_result_path = 'E:\\HCS_results_0918\\WTP_CBD_m_WP1_OFF\\B001_24\\three_units'
+            building_result_path = 'E:\\HCS_results_0919\\WTP_CBD_m_WP1_HOT\\B001_1_24\\3for2_base'
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
             file_name = 'outputs.csv'
