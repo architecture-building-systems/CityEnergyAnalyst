@@ -146,7 +146,7 @@ def check_input_files(config, locator):
     if not os.path.exists(locator.get_sewage_heat_potential()):
         raise ValueError(
             "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first.")
-    if not os.path.exists(locator.get_lake_potential()):
+    if not os.path.exists(locator.get_water_body_potential()):
         raise ValueError("Missing water-body potential of the scenario. Consider running lake potential script first.")
     if not os.path.exists(locator.get_geothermal_potential()):
         raise ValueError("Missing geothermal potential of the scenario. Consider running lake potential script first.")
