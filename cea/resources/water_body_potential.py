@@ -7,7 +7,6 @@ from __future__ import division
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.resources.geothermal import calc_temperature_underground

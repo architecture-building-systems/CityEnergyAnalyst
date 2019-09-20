@@ -105,7 +105,6 @@ def simulate_demand_sample(locator, building_name, building_load, config):
     """
 
     # force simulation to be sequential, for only one building and to override variables
-    gv = cea.globalvar.GlobalVariables()
     config.demand.override_variables = True # true so it reads the overrides file created
     config.multiprocessing = False
     config.demand.buildings = [building_name]

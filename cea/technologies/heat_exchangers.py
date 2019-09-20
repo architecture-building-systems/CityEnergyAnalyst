@@ -28,8 +28,6 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
     :type Q_design_W : float
     :param Q_design_W: Design Load of Boiler
 
-    :param gv: globalvar.py
-
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost in [CHF]
 

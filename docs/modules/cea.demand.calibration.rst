@@ -12,7 +12,6 @@ Subpackages
 .. toctree::
 
     cea.demand.calibration.bayesian_calibrator
-    cea.demand.calibration.subset_calibrator
 
 Submodules
 ----------

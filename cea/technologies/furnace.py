@@ -199,8 +199,6 @@ def calc_Cinv_furnace(Q_design_W, locator, technology_type):
     :type Q_annual_W : float
     :param Q_annual_W: annual thermal Power output [Wh]
 
-    :param gv: globalvar.py
-
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost for building the plant
     

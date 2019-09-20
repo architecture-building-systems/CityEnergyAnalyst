@@ -18,7 +18,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# import from GV
 B_F = constants.B_F
 D = constants.D
 C_A = constants.C_A

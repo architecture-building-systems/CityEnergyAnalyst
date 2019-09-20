@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cea.optimization.slave.daily_storage
     cea.optimization.slave.seasonal_storage
 
 Submodules

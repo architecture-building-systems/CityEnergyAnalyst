@@ -60,7 +60,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_HEATING_LOADS:
             y = tsd[key][50:150]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -73,7 +73,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         keys.extend(TSD_KEYS_RC_TEMP)
         for key in keys:
             y = tsd[key][50:150]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -83,7 +83,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_COOLING_LOADS:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -93,7 +93,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_MOISTURE:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -103,7 +103,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         traces = []
         for key in TSD_KEYS_VENTILATION_FLOWS:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
@@ -116,7 +116,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
         keys.extend(TSD_KEYS_COOLING_SUPPLY_FLOWS)
         for key in keys:
             y = tsd[key]
-            trace = go.Scatter(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)

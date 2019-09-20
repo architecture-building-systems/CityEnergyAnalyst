@@ -818,7 +818,6 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope):
     :rtype: Dataframe
     """
 
-    # load gv
     thermal_resistance_surface = RSE
 
     # create result data frame
@@ -911,7 +910,6 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resist
 
     :param t: time of the year
     :param bpr: building properties object
-    :param gv: global variables class
     :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
     :rtype: np.array
 

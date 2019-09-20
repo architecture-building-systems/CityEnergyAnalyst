@@ -2,7 +2,7 @@ rem run the trace-inputlocator for as many tools as possible, collecting the dat
 
 rem set up the case study
 cea extract-reference-case --destination %temp% --case cooling
-cea-config demand --scenario %temp%\reference-case-cooling\baseline --weather Singapore
+cea-config demand --scenario %temp%\reference-case-cooling\baseline --weather Singapore-Changi_1990_2010_TMY
 mkdir %temp%\reference-case-cooling\baseline\outputs
 
 rem data-helper

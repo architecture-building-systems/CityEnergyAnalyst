@@ -9,7 +9,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -22,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_operation(locator, config):
+def lca_operation(locator):
     """
     Algorithm to calculate the primary energy and CO2 emissions of buildings according to the method used in the
     integrated model of [Fonseca-Schlueter-2015]_ and the performance factors of [ecobau.ch].
@@ -66,22 +65,22 @@ def lca_operation(locator, config):
 
     heating_factors = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
         ['code_x', 'source_hs', 'PEN', 'CO2']]
-    cooling_factors  = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
+    cooling_factors = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
         ['code_x', 'source_cs', 'PEN', 'CO2']]
-    dhw_factors  = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
+    dhw_factors = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
         ['code_x', 'source_dhw', 'PEN', 'CO2']]
-    electricity_factors  = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
+    electricity_factors = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
         ['code_x', 'source_el', 'PEN', 'CO2']]
-
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_factors, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')
     cooling = supply_systems.merge(demand, on='Name').merge(cooling_factors, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='Name').merge(electricity_factors, left_on='type_el', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='Name').merge(electricity_factors, left_on='type_el',
+                                                                right_on='code_x')
 
     ## calculate the operational primary energy and emissions for heating services
     heating_services = [(Qhs_flag, 'DH_hs_MWhyr', 'DH_hs', 'Af_m2'),
-                         (Qhs_flag, 'SOLAR_hs_MWhyr', 'SOLAR_hs', 'Af_m2'),
+                        (Qhs_flag, 'SOLAR_hs_MWhyr', 'SOLAR_hs', 'Af_m2'),
                         (Qhs_flag, 'NG_hs_MWhyr', 'NG_hs', 'Af_m2'),
                         (Qhs_flag, 'COAL_hs_MWhyr', 'COAL_hs', 'Af_m2'),
                         (Qhs_flag, 'OIL_hs_MWhyr', 'OIL_hs', 'Af_m2'),
@@ -154,11 +153,13 @@ def lca_operation(locator, config):
     result['O_ghg_ton'] = 0.0
     all_services = electrical_services + cooling_services + heating_services + dhw_services
     for service in all_services:
-        fields_to_plot += [service[2]+'_nre_pen_GJ', service[2]+'_ghg_ton', service[2]+'_nre_pen_MJm2', service[2]+'_ghg_kgm2']
-        result['O_nre_pen_GJ'] += result[service[2]+'_nre_pen_GJ']
-        result['O_ghg_ton'] += result[service[2]+'_ghg_ton']
-        result['O_nre_pen_MJm2'] += result[service[2]+'_nre_pen_MJm2']
-        result['O_ghg_kgm2'] += result[service[2]+'_ghg_kgm2']
+        fields_to_plot += [service[2] + '_nre_pen_GJ', service[2] + '_ghg_ton', service[2] + '_nre_pen_MJm2',
+                           service[2] + '_ghg_kgm2']
+        result['O_nre_pen_GJ'] += result[service[2] + '_nre_pen_GJ']
+        result['O_nre_pen_GJ'] += result[service[2] + '_nre_pen_GJ']
+        result['O_ghg_ton'] += result[service[2] + '_ghg_ton']
+        result['O_nre_pen_MJm2'] += result[service[2] + '_nre_pen_MJm2']
+        result['O_ghg_kgm2'] += result[service[2] + '_ghg_kgm2']
 
     # export the total operational non-renewable energy demand and emissions for each building
     fields_to_plot += ['Name', 'GFA_m2', 'O_ghg_ton', 'O_ghg_kgm2', 'O_nre_pen_GJ', 'O_nre_pen_MJm2']
@@ -171,7 +172,7 @@ def main(config):
 
     print('Running emissions with scenario = %s' % config.scenario)
 
-    lca_operation(locator=locator, config=config)
+    lca_operation(locator=locator)
 
 
 if __name__ == '__main__':

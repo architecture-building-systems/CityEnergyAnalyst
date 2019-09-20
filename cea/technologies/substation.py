@@ -448,6 +448,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
                              locator,
                              DHN_barcode=""):
     '''
+
     :param locator: path to locator function
     :param building_demand_df: dataframe with consumption data per building
     :param T_heating_sup_C: vector with hourly temperature of the district heating network without losses
@@ -455,10 +456,9 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
     :param T_DC_sup_C: vector with hourly temperature of the district coolig network with losses
     :param t_HS: maximum hourly temperature for all buildings connected due to space heating
     :param t_WW: maximum hourly temperature for all buildings connected due to domestic hot water
-    "param DHN_barcode: this iis default to "" which means that it is created for decentralized buildings " 0101011001" is acommont type used during optimization
+    :param DHN_barcode: this iis default to "" which means that it is created for decentralized buildings " 0101011001" is acommont type used during optimization
     :return:
         - Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
-            side in:
         - where fName_result: ID of the building accounting for the individual at which it belongs to.
 
     '''

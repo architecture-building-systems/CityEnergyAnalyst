@@ -1,6 +1,5 @@
 """
-A collection of classes that write out the demand results files. The `cea.globalvar.GlobalVariables.demand_writer`
-variable references the `DemandWriter` to use. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
+A collection of classes that write out the demand results files. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
 that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_demand` module for an example of using
 the `MonthlyDemandWriter`.
 """
@@ -50,7 +49,7 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qhpro_sys',
+                              'Qcs_dis_ls', 'Qhpro_sys', 'Qcpro_sys',
                               'QH_sys', 'QC_sys']
 
         else:

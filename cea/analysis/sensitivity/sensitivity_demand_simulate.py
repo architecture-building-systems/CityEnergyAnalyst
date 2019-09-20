@@ -12,18 +12,17 @@ out to the samples folder as files of the form `results.$i.csv` (with `$i` set t
 from __future__ import division
 
 import os
-import sys
-import shutil
 import pickle
+import shutil
+import sys
+
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
-import cea.demand.demand_writers
-import cea.globalvar
+import cea.config
 from cea.demand import demand_main
 from cea.inputlocator import InputLocator
-import cea.config
 
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -226,7 +225,6 @@ def main(config):
         config.sensitivity_demand.number_of_simulations = min(
             config.sensitivity_demand.number_of_simulations,
             len(samples) - config.sensitivity_demand.sample_index)
-
 
     simulate_demand_batch(sample_index=config.sensitivity_demand.sample_index,
                           batch_size=config.sensitivity_demand.number_of_simulations,

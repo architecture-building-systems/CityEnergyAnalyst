@@ -11,7 +11,6 @@ import time
 import pandas as pd
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 import demand_writers
 from cea.demand import thermal_loads
