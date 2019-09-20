@@ -8,6 +8,7 @@ import geopandas
 import pandas as pd
 import json
 import cea.plots.thermal_networks
+from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 __author__ = "Lennart Rogenhofer"
@@ -71,17 +72,27 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         import os
         import hashlib
         from jinja2 import Template
-        template = os.path.join(os.path.dirname(__file__), "map_div.html")
 
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
         district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
 
+        data = {}
+
+        colors = {
+            'zone': get_color_array('grey_light'),
+            'district': get_color_array('white'),
+            'dh': get_color_array('red'),
+            'dc': get_color_array('blue'),
+            'disconnected': get_color_array('grey')
+        }
+
         hash = hashlib.md5(repr(sorted(data.items()))).hexdigest()
+        template = os.path.join(os.path.dirname(__file__), "network_plot.html")
         div = Template(open(template).read()).render(hash=hash,
-                                                     data=json.dumps(data), colors=COLORS,
-                                                     zone=zone, district=district, dc=dc, dh=dh)
+                                                     data=json.dumps(data), colors=json.dumps(colors),
+                                                     zone=zone, district=district)
         return div
 
 
