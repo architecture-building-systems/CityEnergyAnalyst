@@ -108,7 +108,7 @@ Note, the following paths/modules are currently excluded by Sphinx::
 cea-doc naming-merge
 ^^^^^^^^^^^^^^^^^^^^
 
-This tool merges the ``schema.yml`` with the ``plots\naming.csv``, checking for undocumented variables and
+This tool merges the ``schemas.yml`` with the ``plots\naming.csv``, checking for undocumented variables and
 raising potentially outdated ones. The ``naming.csv`` should contain all relevant documentation for written
 data which can be accessed by the dashboard.
 
@@ -117,7 +117,7 @@ NOTE: PLEASE AVOID USING COMMAS IN ANY DESCRIPTIONS, TYPES etc... (as sphinx's c
 cea-doc glossary
 ^^^^^^^^^^^^^^^^
 
-This tool automatically updates the glossary based on the information found within the ``schema.yml``, generating
+This tool automatically updates the glossary based on the information found within the ``schemas.yml``, generating
 two .rst files:
 
 - **input_methods.rst**
@@ -128,7 +128,7 @@ two .rst files:
 cea-doc graphviz
 ^^^^^^^^^^^^^^^^
 
-This tool automatically creates the data flow digraphs for each script from the ``schema.yml``, stored in
+This tool automatically creates the data flow digraphs for each script from the ``schemas.yml``, stored in
 ``docs\graphviz\``. Then, it renders the ``script-data-flow.rst`` containing all the graphviz diagrams for
 documentation purposes.
 

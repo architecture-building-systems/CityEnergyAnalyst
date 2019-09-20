@@ -9,8 +9,6 @@ import os
 
 import pandas as pd
 import numpy as np
-
-import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gdf
 from cea.utilities import dbf

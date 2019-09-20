@@ -45,7 +45,7 @@ class HeatingResetSchedulePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         for field in self.analysis_fields:
             y = data[field].values
             name = NAMING[field]
-            trace = go.Scatter(x=x, y=y, name=name, mode='markers', marker=dict(color=COLOR[field]))
+            trace = go.Scattergl(x=x, y=y, name=name, mode='markers', marker=dict(color=COLOR[field]))
             traces.append(trace)
         return traces
 
@@ -57,7 +57,7 @@ def heating_reset_schedule(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         y = data_frame[field].values
         name = NAMING[field]
-        trace = go.Scatter(x=x, y=y, name=name, mode='markers',
+        trace = go.Scattergl(x=x, y=y, name=name, mode='markers',
                            marker=dict(color=COLOR[field]))
         traces.append(trace)
 

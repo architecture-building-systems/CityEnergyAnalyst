@@ -241,7 +241,7 @@ Optimization:
     description: Optimize network design variables (plant locations, layout,...)
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network_optimization
-    parameters: ['general:scenario', thermal-network-optimization]
+    parameters: ['general:scenario', 'general:multiprocessing', thermal-network-optimization]
 
   - name: optimization
     label: Central supply system
@@ -423,7 +423,7 @@ default:
     lable: Workflow
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
-    module: cea.tests.workflow
+    module: cea.workflows.workflow
     parameters: [workflow]
 
 

@@ -52,11 +52,11 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
             y = data_frame[field].values
             name = NAMING[field]
             if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]),
                                    yaxis='y2', opacity=0.6)
             else:  # primary y_axis
-                trace = go.Scatter(x=x, y=y, name=name,
+                trace = go.Scattergl(x=x, y=y, name=name,
                                    marker=dict(color=COLOR[field]))
 
             traces.append(trace)
@@ -107,11 +107,11 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
         y = data_frame[field].values
         name = NAMING[field]
         if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]),
                                yaxis='y2', opacity=0.6)
         else:  # primary y_axis
-            trace = go.Scatter(x=x, y=y, name=name,
+            trace = go.Scattergl(x=x, y=y, name=name,
                                marker=dict(color=COLOR[field]))
 
         traces.append(trace)

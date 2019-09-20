@@ -39,7 +39,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     :param locator: locator class
     :param solar_features: solar features call to class
     :param network_features: network features call to class
-    :param gv: global variables class
     :param optimization_constants: class containing constants used in optimization
     :param config: configuration file
     :param prices: class of prices used in optimization
@@ -48,7 +47,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     :type locator: string
     :type solar_features: class
     :type network_features: class
-    :type gv: class
     :type optimization_constants: class
     :type config: class
     :type prices: class

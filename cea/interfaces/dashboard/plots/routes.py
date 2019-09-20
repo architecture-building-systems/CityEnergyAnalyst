@@ -22,13 +22,19 @@ categories = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name
 
 @blueprint.route('/index')
 def index():
-    return redirect(url_for('plots_blueprint.route_dashboard', dashboard_index=0))
+    return redirect(url_for('plots_blueprint.route_react_dashboard'))
+
+
+@blueprint.route('/dashboard')
+def route_react_dashboard():
+    debug = current_app.cea_config.get('general:debug')
+    return render_template('react_dashboard.html', debug=debug, last_updated=dir_last_updated())
 
 
 @blueprint.route('/dashboard/<int:dashboard_index>')
 def route_dashboard(dashboard_index):
     """
-    Route the i-th dashboard from the dashboard configuratino file.
+    Route the i-th dashboard from the dashboard configuration file.
     In case of an out-of-bounds error, show the 0-th dashboard (that is guaranteed to exist)
     """
     cea_config = current_app.cea_config

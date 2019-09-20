@@ -81,6 +81,14 @@ cea.utilities.physics module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.rename\_building module
+-------------------------------------
+
+.. automodule:: cea.utilities.rename_building
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.reporting module
 ------------------------------
 

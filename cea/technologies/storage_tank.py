@@ -24,8 +24,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# CONSTANTS REFACTORED FROM GV
-U_DHWTANK = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+# tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+U_DHWTANK = 0.225
 
 
 def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, Area_tank_surface_m2, tank_type):

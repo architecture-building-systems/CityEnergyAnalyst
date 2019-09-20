@@ -912,9 +912,14 @@ a:focus {
 }
 footer {
     background: #fff;
-    padding: 15px 20px;
+    padding: 10px 20px;
     display: block
 }
+
+footer div {
+    font-size: 10px;
+}
+
 .nav-sm footer {
     margin-left: 70px
 }

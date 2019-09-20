@@ -7,7 +7,6 @@ from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefil
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import cea.globalvar
 import cea.inputlocator
 from math import *
 import time

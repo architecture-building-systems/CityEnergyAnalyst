@@ -43,11 +43,9 @@ def district_heating_network(locator,
     :param master_to_slave_variables: class MastertoSlaveVars containing the value of variables to be passed to the
         slave optimization for each individual
     :param solar_features: solar features class
-    :param gv: global variables class
     :type locator: class
     :type master_to_slave_variables: class
     :type solar_features: class
-    :type gv: class
     :return:
         - E_oil_eq_MJ: MJ oil Equivalent used during operation
         - CO2_kg_eq: kg of CO2-Equivalent emitted during operation
