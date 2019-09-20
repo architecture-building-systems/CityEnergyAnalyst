@@ -36,6 +36,38 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
                             (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
 
     def _plot_div_producer(self):
+        """
+        Since this plot doesn't use plotly to plot, we override _plot_div_producer to return a string containing
+        the html div to use for this plot. The template ``map_div.html`` expects some parameters:
+
+        Here is some example data (in a YAML-like format for documentation purposes)
+
+        data:
+          DH:
+            connected_buildings: ['B1010', 'B1017', 'B1003']
+            disconnected_buildings: ['B1000', 'B1009', 'B1016', ..., 'B1015']
+            path_output_nodes: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\nodes.shp"
+            path_output_edges: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\edges.shp"
+          DC: {}  # data does not necessarily contain information for both types of district networks
+        colors:
+          dc: [63, 192, 194]
+          dh: [240, 75, 91]
+          disconnected: [68, 76, 83]
+          district: [255, 255, 255]
+        zone: str serialization of the GeoJSON of the zone.shp
+        district: str serialization of the GeoJSON of the district.shp
+        dc: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district cooling network
+        dh: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district heating network
+
+        A note on the properties of the GeoJSON features in ``dc`` and ``dh``:
+
+        - edge features contain a "Pipe_DN" property which we use for the line width
+        - node features have a "Building" property - this is either "NONE" or a building name
+        - node features have a "Type" property - this is either "NONE", "CONSUMER" or "PLANT"
+
+        :return: a str containing a full html ``<div/>`` that includes the js code to display the map.
+        """
+
         import os
         import hashlib
         from jinja2 import Template
@@ -56,8 +88,6 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
-    import ipdb
-    ipdb.set_trace()
     # iterate through all input data, make sure we have positive data. Except for edge node matrix which ahs to retain -1 values
     for key in data_frame.keys():
         if isinstance(data_frame[key], pd.DataFrame) and key != 'edge_node':  # use only absolute values
