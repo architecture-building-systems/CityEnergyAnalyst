@@ -4,7 +4,7 @@
 ## GENERAL ##
 T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
-TECHS = ['HCS_coil']
+TECHS = ['HCS_base']
 timesteps = 168  # 168 (week)
 # timesteps = "typical days"  # 168 (week)
 typical_days_path = "E:\\WP2"
@@ -13,10 +13,12 @@ new_calculation = False
 
 # GENERAL INPUTS
 season = 'Summer'
-specified_buildings = ["B006"]
-#specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
-# cases = ['WTP_CBD_m_WP1_RET']
+# specified_buildings = ["B001"]
+# specified_buildings = ["B001","B002","B005","B006","B009"]
+specified_buildings = ["B003","B008"]
+# specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
+# cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
+cases = ['WTP_CBD_m_WP1_OFF']
 
 ## LAPTOP ##
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
@@ -30,7 +32,7 @@ osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
 osmose_outMsg_path = "\\scenario_1\\tmp\\OutMsg.txt"
 
 osmose_project_data_path = osmose_project_path + '\\data'
-result_destination = "E:\\HCS_results_0918"
+result_destination = "E:\\HCS_results_0922"
 
 ## WORK STATION ##
 # ampl_lic_path = "C:\\Users\\Zhongming\\Desktop\\SH\\ampl"

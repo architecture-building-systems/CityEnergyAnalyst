@@ -65,9 +65,10 @@ def calc_m_a(output_df, folder_path):
     # plot air flow
     m_a_in_OAU_vent = output_df.filter(like='m_OAU_vent').sum(axis=1)
     m_a_in_OAU_bypass = output_df['m_a_in_OAU_bypass']
-    data_dict = {'coil': m_a_in_OAU_vent.values, 'bypass': m_a_in_OAU_bypass.values}
+    Af_m2 = output_df['Af_m2']
+    data_dict = {'coil': m_a_in_OAU_vent.values/Af_m2, 'bypass': m_a_in_OAU_bypass.values/Af_m2}
     timesteps = len(output_df.index)
-    plot_stacked_bars(data_dict, timesteps, 'OAU_air_flow', 'air flow [kg/s]', folder_path)
+    plot_stacked_bars(data_dict, timesteps, 'OAU_air_flow', 'air flow [kg/s/m2]', folder_path)
     return m_a_in_df, m_a_out_df
 
 
@@ -323,7 +324,7 @@ if __name__ == '__main__':
         folder_path = os.path.join(result_path, case)
         for building in buildings:
             building_time = building + "_1_24"
-            building_result_path = 'E:\\HCS_results_0919\\WTP_CBD_m_WP1_HOT\\B001_1_24\\3for2_base'
+            building_result_path = 'E:\\HCS_results_0920\\WTP_CBD_m_WP1_HOT\\B001_1_168\\3for2_base'
             # building_result_path = os.path.join(building_result_path, "SU")
             print building_result_path
             file_name = 'outputs.csv'

@@ -63,7 +63,7 @@ def main(case):
         # # plot results
         building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
         building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
-        building_result_path = os.path.join(building_result_path, 'three_units')
+        building_result_path = os.path.join(building_result_path, '3for2_base')
         file_name = 'outputs.csv'
         post_processing.main(building, TECHS, file_name, building_result_path)
 
