@@ -113,7 +113,7 @@ def district_heating_network(locator,
 
     # Import Data - lake heat
     if master_to_slave_variables.HPLake_on == 1:
-        HPlake_Data = pd.read_csv(locator.get_lake_potential())
+        HPlake_Data = pd.read_csv(locator.get_water_body_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
         Q_therm_Lake_W = [
             x if x < master_to_slave_variables.HPLake_maxSize_W else master_to_slave_variables.HPLake_maxSize_W for x in

@@ -63,7 +63,7 @@ def register_scripts():
             return getattr(self._runner, item)
 
     for cea_script in sorted(cea.scripts.list_scripts()):
-        print("cea.api: loading cea_script: {script}".format(script=cea_script))
+        # print("cea.api: loading cea_script: {script}".format(script=cea_script))
         script_py_name = cea_script.name.replace('-', '_')
         globals()[script_py_name] = LazyLoader(cea_script)
 

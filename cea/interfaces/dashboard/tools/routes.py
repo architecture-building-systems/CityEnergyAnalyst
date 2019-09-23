@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, current_app, jsonify, request, redirect, url_for
-from . import worker
+import subprocess
 
 import cea.scripts
 import cea.inputlocator
@@ -15,23 +15,17 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route('/index')
-def index():
-    return render_template('index.html')
+@blueprint.route("/")
+def route_index():
+    return render_template("job_table.html")
 
 
-@blueprint.route('/start/<script>', methods=['POST'])
-def route_start(script):
-    """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
-    (this can be the process id)"""
-    kwargs = {}
-    print('/start/%s' % script)
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        kwargs[parameter.py_name] = parameter.decode(request.form.get(parameter.name))
-    print('/tools/start: kwargs=%s' % kwargs)
-    current_app.workers[script] = worker.main(script, **kwargs)
-    return jsonify(script)
+@blueprint.route('/start/<jobid>', methods=['POST'])
+def route_start(jobid):
+    """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+    print("tools/route_start: {jobid}".format(**locals()))
+    subprocess.Popen(["python", "-m", "cea.worker", jobid])
+    return jsonify(jobid)
 
 
 @blueprint.route('/save-config/<script>', methods=['POST'])
@@ -55,61 +49,6 @@ def route_restore_defaults(script_name):
     config.save()
 
     return redirect(url_for('tools_blueprint.route_tool', script_name=script_name))
-
-
-@blueprint.route('/echo', methods=['POST'])
-def route_echo():
-    """echo back the parameters"""
-    data = request.form
-    print(data)
-    return jsonify(data)
-
-
-@blueprint.route('/kill/<script>')
-def route_kill(script):
-    if not script in current_app.workers:
-        return jsonify(False)
-    worker, connection = current_app.workers[script]
-    worker.terminate()
-    return jsonify(True)
-
-
-@blueprint.route('/exitcode/<script>')
-def route_exitcode(script):
-    if not script in current_app.workers:
-        return jsonify(None)
-    worker, connection = current_app.workers[script]
-    return jsonify(worker.exitcode)
-
-
-@blueprint.route('/is-alive/<script>')
-def is_alive(script):
-    if not script in current_app.workers:
-        return jsonify(False)
-    worker, connection = current_app.workers[script]
-    return jsonify(worker.is_alive())
-
-
-@blueprint.route('/read/<script>')
-def read(script):
-    """Reads the next message as a json dict {stream: stdout|stderr, message: str}"""
-    if not script in current_app.workers:
-        return jsonify(None)
-    worker, connection = current_app.workers[script]
-    concatenated_message = ''
-    try:
-        while connection.poll(0):
-            stream, message = connection.recv()
-            concatenated_message += message
-        else:
-            if not len(concatenated_message):
-                # never got any data
-                return jsonify(None)
-    except (EOFError, IOError):
-        if len(concatenated_message):
-            return jsonify(dict(stream=stream, message=concatenated_message))
-        return jsonify(None)
-    return jsonify(dict(stream=stream, message=concatenated_message))
 
 
 @blueprint.route('/open-folder-dialog/<fqname>')
@@ -147,6 +86,7 @@ def route_open_folder_dialog(fqname):
     return render_template('folder_listing.html', current_folder=current_folder,
                            folders=folders, title=parameter.help, fqname=fqname,
                            parameter_name=parameter.name, breadcrumbs=breadcrumbs)
+
 
 @blueprint.route('/open-file-dialog/<fqname>')
 def route_open_file_dialog(fqname):
