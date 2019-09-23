@@ -96,9 +96,9 @@
 <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script>
-    render({{ data }}, {{ zone }}, {{ district }}, "{{ hash }}");
+    render({{ data }}, {{ edges }}, {{ nodes }}, {{ zone }}, {{ district }}, "{{ hash }}");
 
-    function render(data, zone, district, hash) {
+    function render(data, edges, nodes, zone, district, hash) {
         const lightMap = {
             "version": 8,
             "sources": {
@@ -421,32 +421,38 @@
 
                 onHover: updateTooltip
             }));
+            console.log("Colors:", colors);
+            if (edges) layers.push(new GeoJsonLayer({
+                id: 'edges',
+                data: edges,
+                lineWidthScale: 1,  // line width is scaled by the plot object
+
+                getFillColor: colors.edges,
+                getLineWidth: f => f.properties["_LineWidth"],
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+                onHover: updateTooltip
+            }));
+
+            if (nodes) layers.push(new GeoJsonLayer({
+                id: 'nodes',
+                data: nodes,
+                getRadius: f => f.properties["_Radius"],
+                getFillColor: f => f.properties["_FillColor"],
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+                onHover: updateTooltip
+            }));
 
             console.log("setting deckgl props...");
             deckgl.setProps({layers})
         }
 
-        function buildingColor(object) {
-            let type = getNetworkType();
-            if (type) {
-                let connected = data[type.toUpperCase()]['connected_buildings'];
-                if (connected.includes(object.properties.Name)) return colors[type];
-            }
-            return colors.disconnected
-        }
-
-        function nodeFillColor(type, network) {
-            if (type === 'NONE') {
-                return network === 'dc' ? colors.dc : colors.dh
-            } else if (type === 'CONSUMER') {
-                return [255, 255, 255]
-            } else if (type === 'PLANT') {
-                return [0, 0, 0]
-            }
-        }
-
-
         function updateTooltip({x, y, object, layer}) {
+            console.log("updateTooltip", object, layer);
             const tooltip = document.getElementById(`map-tooltip-${ hash }`);
             if (object) {
                 tooltip.style.top = `${y}px`;
@@ -460,15 +466,16 @@
                     let area = turf.area(object);
                     innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                         `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
-                } else if (layer.id === 'dc' || layer.id === 'dh') {
-                    $.each(object.properties, function (key, value) {
-                        if (key !== 'Building' &&  value === 'NONE') return null;
+                } else if (layer.id === 'edges') {
+                    $.each(object.properties, function(key, value) {
+                        if (key.startsWith("_")) { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
-                    if (!object.properties.hasOwnProperty("Building")) {
-                        let length = turf.length(object) * 1000;
-                        innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
-                    }
+                } else if (layer.id === 'nodes') {
+                    $.each(object.properties, function(key, value) {
+                        if (key.startsWith("_")) { return null; }
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
                 } else {
                     $.each(object.properties, function (key, value) {
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;

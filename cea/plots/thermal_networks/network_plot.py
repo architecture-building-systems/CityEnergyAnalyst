@@ -73,28 +73,64 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         import hashlib
         from jinja2 import Template
 
+        colors = {
+            "zone": get_color_array("grey_light"),
+            "district": get_color_array("white"),
+            "edges": get_color_array("blue") if self.network_type == "DC" else get_color_array("red"),
+            "building": get_color_array("orange"),
+            "plant": get_color_array("purple")
+        }
+
+        color_by_type = {
+            "NONE": colors["edges"],
+            "PLANT": colors["plant"],
+            "CONSUMER": colors["building"]
+        }
+
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
         district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
 
-        data = {}
+        edges_df = geopandas.GeoDataFrame.from_file(
+            self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
+            get_geographic_coordinate_system())
+        edges_df["_LineWidth"] = 0.05 * edges_df["Pipe_DN"]
+        edges_df = edges_df.drop("weight", axis=1)
+        edges = edges_df.to_json(show_bbox=True)
 
-        colors = {
-            'zone': get_color_array('grey_light'),
-            'district': get_color_array('white'),
-            'dh': get_color_array('red'),
-            'dc': get_color_array('blue'),
-            'disconnected': get_color_array('grey')
-        }
+        nodes_df = geopandas.GeoDataFrame.from_file(
+            self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
+            get_geographic_coordinate_system())
+        nodes_df["_Radius"] = self.get_radius(nodes_df)
+        nodes_df["_FillColor"] = nodes_df.apply(lambda row: color_by_type[row["Type"]], axis=1)
+        nodes = nodes_df.to_json(show_bbox=True)
+
+        data = {}
 
         hash = hashlib.md5(repr(sorted(data.items()))).hexdigest()
         template = os.path.join(os.path.dirname(__file__), "network_plot.html")
-        div = Template(open(template).read()).render(hash=hash,
+        div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
                                                      data=json.dumps(data), colors=json.dumps(colors),
                                                      zone=zone, district=district)
         return div
 
+    def get_radius(self, nodes_df):
+        """Figure out the radius for network nodes based on consumer consumption"""
+        SCALE = 10.0
+        demand = self.buildings_hourly.apply(pd.Series.max)
+        max_demand = demand.max()
+
+        def radius_from_demand(row):
+            if row["Type"] == "CONSUMER":
+                building = row["Building"]
+                return SCALE * demand[building] / max_demand
+            elif row["Type"] == "PLANT":
+                print("found a plant:", row)
+                return SCALE
+            else:
+                return SCALE * 0.1
+        return nodes_df.apply(radius_from_demand, axis=1)
 
 
 
