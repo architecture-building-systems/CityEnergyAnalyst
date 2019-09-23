@@ -1,15 +1,11 @@
 from __future__ import division
-
 import copy
-import os
-import xml.etree.ElementTree as ET
 from datetime import datetime
-
-import cea.globalvar
 import geopandas as gpd
 import numpy as np
+import os
 import pandas as pd
-
+import xml.etree.ElementTree as ET
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_DAY, HOURS_IN_YEAR
