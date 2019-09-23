@@ -9,7 +9,7 @@
            data-cea-plot-index="{{ loop.index0 }}"
            data-cea-dashboard-index="{{ dashboard_index }}">
         <div class="x_title">
-          <h2><a href="{{ url_for('plots_blueprint.route_plot', dashboard_index=dashboard_index, plot_index=loop.index0) }}">{{ plot.title }}</a></h2>
+          <h2><a href="{{ url_for('plots_blueprint.route_plot', dashboard_index=dashboard_index, plot_index=loop.index0) }}" target="_blank">{{ plot.title }}</a></h2>
           {% if plot.parameters['scenario-name'] %}
             <small>{{ plot.parameters['scenario-name'] }}</small>
           {% endif %}

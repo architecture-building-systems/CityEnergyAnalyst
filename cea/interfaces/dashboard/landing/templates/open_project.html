@@ -45,7 +45,7 @@
                         <div class="input-group">
                             <input type="text" class="form-control cea-parameter" placeholder="Select where the project is"
                                    id="project" name="projectPath" data-cea-parameter-typename="PathParameter" value="{{ project }}"
-                                   data-parsley-pattern="^[a-zA-Z]:\\[\\\S|*\S]?.*$" required>
+                                   data-parsley-pattern="(^[a-zA-Z]:\\[\\\S|*\S]?.*$)|(^(/[^/ ]*)+/?$)" required>
                             <span class="input-group-btn">
                                 <button class="btn btn-file-parameter" type="button"
                                         onclick="show_open_folder_dialog('general:project')">...</button>
