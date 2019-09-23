@@ -421,7 +421,6 @@
 
                 onHover: updateTooltip
             }));
-            console.log("Colors:", colors);
             if (edges) layers.push(new GeoJsonLayer({
                 id: 'edges',
                 data: edges,
@@ -447,12 +446,10 @@
                 onHover: updateTooltip
             }));
 
-            console.log("setting deckgl props...");
             deckgl.setProps({layers})
         }
 
         function updateTooltip({x, y, object, layer}) {
-            console.log("updateTooltip", object, layer);
             const tooltip = document.getElementById(`map-tooltip-${ hash }`);
             if (object) {
                 tooltip.style.top = `${y}px`;
