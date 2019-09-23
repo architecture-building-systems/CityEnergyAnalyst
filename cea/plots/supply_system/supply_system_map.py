@@ -109,7 +109,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         # Generate div id using hash of parameters
         div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
-                                                     data=json.dumps(data), colors=COLORS,
+                                                     data=json.dumps(data), colors=json.dumps(COLORS),
                                                      zone=zone, district=district, dc=dc, dh=dh)
         return div
 
