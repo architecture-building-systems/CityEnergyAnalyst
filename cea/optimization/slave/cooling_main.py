@@ -60,7 +60,7 @@ def district_cooling_network(locator,
     mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_variables)
 
     # Initialize daily storage calss
-    T_ground_K = calculate_ground_temperature(locator, config)
+    T_ground_K = calculate_ground_temperature(locator)
     daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
                                              master_to_slave_variables.Storage_cooling_size_W,
                                              min(T_district_cooling_supply_K) - DT_COOL,
