@@ -11,21 +11,21 @@ SINGLE_RES	: 1.2
 HOTEL		: 2.1 (Hotelzimmer)
 OFFICE		: 3.1 (Einzel-, Gruppenbüro)
 RETAIL		: 5.2 (Fachgeschäft)
-FOODSTORE	: 5.1 (Lebensmittelverkauf)
+FOODSTORE	: 5.1 (Lebensmittelverkauf)	< Ea_Wm2 from RETAIL assumed, negative internal gains assumed to correspond to refrigeration (i.e., Qcre_Wm2 = 10 W/m2) >
 RESTAURANT	: 6.1 
-INDUSTRIAL	: 9.1 (Grobe Arbeit)	< Epro_Wm2 and Qhpro_Wm2 from original CEA database >
+INDUSTRIAL	: 9.1 (Grobe Arbeit)		< Epro_Wm2 and Qhpro_Wm2 from original CEA database >
 SCHOOL		: 4.1 (Schulzimmer)
-GYM		: 11.2
+GYM		: 11.2 (Fitnessraum)
 SWIMMING	: 11.3
 SERVERROOM	: 12.12
 PARKING		: 12.9
 COOLROOM	: 12.11
-LAB		: 9.3			< Epro_Wm2 from CEA database value for INDUSTRIAL>
+LAB		: 9.3				< Epro_Wm2 from CEA database value for INDUSTRIAL>
 MUSEUM		: 7.3
 LIBRARY		: 4.3
 UNIVERSITY	: 4.4 (Hörsaal)
 HOSPITAL	: calculated as a combination of 43% Bettenzimmer (8.1), 1% Stationszimmer (8.2) and 56% Behandlungsraum (8.3) based on data on the floor areas of a hospital in Zurich
-					< Qhpro_Wm2 from old CEA database >
+						< Qhpro_Wm2 from old CEA database >
 
 
 #######INDOOR_COMFORT#######
@@ -54,7 +54,7 @@ FOODSTORE	: 5.1 (Lebensmittelverkauf)
 RESTAURANT	: 6.1 
 INDUSTRIAL	: 9.1 (Grobe Arbeit)
 SCHOOL		: 4.1 (Schulzimmer)
-GYM		: 11.2
+GYM		: 11.2 (Fitnessraum)
 SWIMMING	: 11.3
 SERVERROOM	: 12.12
 PARKING		: 12.9
