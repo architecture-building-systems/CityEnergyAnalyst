@@ -107,8 +107,6 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         dc = self.get_network_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
         dh = self.get_network_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
 
-        import ipdb; ipdb.set_trace()
-
         # Generate div id using hash of parameters
         div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
                                                      data=json.dumps(data), colors=COLORS,
