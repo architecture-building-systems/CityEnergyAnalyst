@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_socketio import SocketIO, emit
 
 import cea.config
 import cea.plots
@@ -8,6 +9,8 @@ import threading
 
 import os
 import sys
+
+socketio = None
 
 
 def list_tools():
@@ -52,6 +55,9 @@ def main(config):
     plot_cache = cea.plots.cache.PlotCache(config.project)
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'SECRET_KEY': 'secret'})
+
+    global socketio
+    socketio = SocketIO(app)
 
     # provide the list of tools
     @app.context_processor
@@ -116,6 +122,7 @@ def main(config):
     import plots.routes
     import inputs.routes
     import landing.routes
+    from server import blueprint as server_blueprint
     from api import blueprint as api_blueprint
     app.register_blueprint(base.routes.blueprint)
     app.register_blueprint(tools.routes.blueprint)
@@ -123,19 +130,24 @@ def main(config):
     app.register_blueprint(inputs.routes.blueprint)
     app.register_blueprint(landing.routes.blueprint)
     app.register_blueprint(api_blueprint)
+    app.register_blueprint(server_blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config
     app.plot_cache = plot_cache
+    app.socketio = socketio
 
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
-    # jobid -> ScriptInfoObject
 
     # FIXME: this needs to be replaced with a better solution
+    print("starting webbrowser timer")
     threading.Timer(0.5, lambda: webbrowser.open('http://localhost:5050')).start()
-    app.run(host='localhost', port=5050, threaded=False, debug=config.debug)
+    print("started webbrowser timer")
+    print("start socketio.run")
+    socketio.run(app, host='localhost', port=5050)
+    print("done socketio.run")
 
 
 if __name__ == '__main__':

@@ -319,7 +319,13 @@ $(window).load(function () {
                 }).done(function (data) {
                     // TODO: Either refresh page or do applyChanges()
                     inputstore.applyChanges(data);
-                   redrawBuildings();
+                    // Recreate table based on new data pointer
+                    $('.tab.active').click();
+                    // Only fetch networks if supply-system is updated or a building is deleted
+                    if (Object.keys(changes.update).includes('supply-systems') || Object.keys(changes.delete).includes('zone')) {
+                        map.fetchNetwork();
+                    }
+                    redrawBuildings();
 
                     $('#saving-text').text('✔ Changes Saved!');
                     setTimeout(function(){

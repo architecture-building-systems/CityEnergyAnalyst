@@ -170,7 +170,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_internal_df_merged = calculate_average_multiuse(prop_internal_df_merged, occupant_densities, list_uses,
                                                              internal_DB)
         fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
-                  'Qhpro_Wm2']
+                  'Qhpro_Wm2', 'Qcpro_Wm2']
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
     if update_supply_systems_dbf:
@@ -388,7 +388,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:

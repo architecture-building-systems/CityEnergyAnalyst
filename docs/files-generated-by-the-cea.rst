@@ -52,6 +52,7 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 - ``Qcsf_lat_kWh``
 - ``Qcdataf_kWh``
 - ``Qcref_kWh``
+- ``Qcprof_kWh``
 - ``Qhprof_kWh``
 - ``Edataf_kWh``
 - ``Ealf_kWh``
@@ -95,6 +96,7 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 - ``Eauxf_cs0_kW``
 - ``Eauxf_ve0_kW``
 - ``Edataf0_kW``
+- ``Qcprof_MWhyr``
 - ``Qhprof_MWhyr``
 - ``Ecaf0_kW``
 - ``Qhsf0_kW``
@@ -105,6 +107,7 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 - ``Eauxf_ve_MWhyr``
 - ``Qcs0_kW``
 - ``Qcsf_lat0_kW``
+- ``Qcprof0_kW``
 - ``Qhprof0_kW``
 - ``QEf_MWhyr``
 - ``Ef0_kW``
@@ -447,6 +450,7 @@ the following fields:
 - ``Eauxf_cs0_kW``
 - ``Eauxf_ve0_kW``
 - ``Edataf0_kW``
+- ``Qcprof_MWhyr``
 - ``Qhprof_MWhyr``
 - ``Ecaf0_kW``
 - ``Qhsf0_kW``
@@ -457,6 +461,7 @@ the following fields:
 - ``Eauxf_ve_MWhyr``
 - ``Qcs0_kW``
 - ``Qcsf_lat0_kW``
+- ``Qcprof0_kW``
 - ``Qhprof0_kW``
 - ``QEf_MWhyr``
 - ``Ef0_kW``
@@ -792,6 +797,7 @@ simulated year. It has 20 columns corresponding to the following fields:
 - ``Eauxf_cs0_kW``
 - ``Eauxf_ve0_kW``
 - ``Edataf0_kW``
+- ``Qcprof_MWhyr``
 - ``Qhprof_MWhyr``
 - ``Ecaf0_kW``
 - ``Qhsf0_kW``
@@ -802,6 +808,7 @@ simulated year. It has 20 columns corresponding to the following fields:
 - ``Eauxf_ve_MWhyr``
 - ``Qcs0_kW``
 - ``Qcsf_lat0_kW``
+- ``Qcprof0_kW``
 - ``Qhprof0_kW``
 - ``QEf_MWhyr``
 - ``Ef0_kW``
