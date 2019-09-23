@@ -76,6 +76,8 @@ def route_get_building_properties():
     import cea.plots
     import cea.glossary
 
+    div = request.args.get('div', default=False)
+
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'technical-systems',  'supply-systems', 'district','restrictions']
 
@@ -117,7 +119,8 @@ def route_get_building_properties():
         except IOError as e:
             print(e)
             store['tables'][db] = {}
-    return render_template('table.html', store=store, tabs=tabs, last_updated=dir_last_updated())
+    return render_template('table.html' if not div else 'input_editor_electron.html',
+                           store=store, tabs=tabs, last_updated=dir_last_updated())
 
 
 @blueprint.route('/building-properties', methods=['POST'])

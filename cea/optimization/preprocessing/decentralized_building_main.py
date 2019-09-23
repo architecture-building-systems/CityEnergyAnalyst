@@ -49,7 +49,7 @@ def main(config):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    prices = Prices(locator, config)
+    prices = Prices(locator)
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
     lca = LcaCalculations(locator, detailed_electricity_pricing)
 

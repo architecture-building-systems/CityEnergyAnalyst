@@ -281,6 +281,11 @@ def task_run_emissions_mobility():
 
 def task_run_sensitivity():
     """Run the sensitivity analysis for the the reference-case-open"""
+
+    # make sure the random number generator is always set to the same value
+    import numpy as np
+    np.random.seed(int("CEA", 16))
+
     def run_sensitivity():
         import cea.analysis.sensitivity.sensitivity_demand_samples
         import cea.analysis.sensitivity.sensitivity_demand_simulate
@@ -355,6 +360,7 @@ def task_run_thermal_network():
     def run_thermal_network():
         import cea.technologies.thermal_network.thermal_network as thermal_network
         import cea.technologies.network_layout.main as network_layout
+        from cea.technologies.network_layout.main import NetworkLayout, layout_network
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
@@ -366,7 +372,8 @@ def task_run_thermal_network():
         config.network_layout.network_type = 'DH'
 
         # first, create the network layout
-        network_layout.network_layout(config, locator, [])
+        network_layout = NetworkLayout(config.network_layout)
+        layout_network(network_layout, locator, [])
         thermal_network.main(config)
 
     return {
