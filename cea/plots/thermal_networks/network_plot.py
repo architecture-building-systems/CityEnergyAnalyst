@@ -71,6 +71,7 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
         import os
         import hashlib
+        import random
         from jinja2 import Template
 
         colors = {
@@ -108,7 +109,7 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
         data = {}
 
-        hash = hashlib.md5(repr(sorted(data.items()))).hexdigest()
+        hash = hashlib.md5(str(random.random()) + edges + nodes).hexdigest()
         template = os.path.join(os.path.dirname(__file__), "network_plot.html")
         div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
                                                      data=json.dumps(data), colors=json.dumps(colors),
@@ -126,7 +127,6 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
                 building = row["Building"]
                 return SCALE * demand[building] / max_demand
             elif row["Type"] == "PLANT":
-                print("found a plant:", row)
                 return SCALE
             else:
                 return SCALE * 0.1

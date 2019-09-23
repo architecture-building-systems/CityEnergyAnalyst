@@ -156,7 +156,8 @@
                 }
             ]
         };
-        const colors = JSON.parse("{{ colors }}");
+        <!-- {{ colors }} -->
+        const colors = JSON.parse('{{ colors }}');
 
         const dc = checkEmpty(_dc, `dc-${hash}`);
         const dh = checkEmpty(_dh, `dh-${hash}`);
