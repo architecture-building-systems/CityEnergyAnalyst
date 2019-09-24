@@ -71,7 +71,7 @@ def district_cooling_network(locator,
 
     # Import Data - potentials lake heat
     if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
-        HPlake_Data = pd.read_csv(locator.get_lake_potential())
+        HPlake_Data = pd.read_csv(locator.get_water_body_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
         total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
         Q_therm_Lake_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_Lake]
