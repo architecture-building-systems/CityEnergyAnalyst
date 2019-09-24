@@ -219,7 +219,7 @@ def calc_mainuse(uses_df, uses):
         mainuses = [use for use in uses if
                     (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
         if len(mainuses) > 1:
-            print '%s has equal share of %s; the construction properties and systems for %s will be used' % (
+            print '%s has equal share of %s; the construction properties and systems for %s will be used.' % (
             building, ' and '.join(mainuses), mainuses[0])
 
     # get array of main use for each building
