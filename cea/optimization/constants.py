@@ -172,10 +172,6 @@ T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
 # Seasonal Storage
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
 
-# Data for Evolutionary algorithm
-CXPB = 0.9
-MUTPB = 0.1
-
 # Server Waste Heat recovery
 ETA_SERVER_TO_HEAT = 0.8  # [-]
 T_FROM_SERVER = 60 + 273.0  # K
