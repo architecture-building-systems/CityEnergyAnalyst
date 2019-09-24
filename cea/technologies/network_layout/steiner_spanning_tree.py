@@ -253,6 +253,9 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
         field = "QH_sys_MWhyr"
     elif type_network == "DC":
         field = "QC_sys_MWhyr"
+    elif type_network == "EL":
+        field = "E_sys_MWhyr"
+
     max_value = nodes_names_demand[field].max()
     building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
 
