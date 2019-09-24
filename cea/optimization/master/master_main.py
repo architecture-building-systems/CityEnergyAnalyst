@@ -13,7 +13,7 @@ import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
 from math import sqrt
-from cea.optimization.constants import CXPB, MUTPB
+
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
 from cea.optimization.master import evaluation
@@ -112,6 +112,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     NGEN = config.optimization.number_of_generations  # number of generations
     MU = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
     RANDOM_SEED = config.optimization.random_seed
+    CXPB = config.optimization.crossover_prob
+    MUTPB = config.optimization.mutation_prob
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
