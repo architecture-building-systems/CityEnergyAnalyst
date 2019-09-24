@@ -54,9 +54,11 @@ class InputStore {
         if (method === 'update') {
             //Check if update is the same as default
             if (this.tables[table][building][column] === value) {
-                delete this.changes[method][table][building][column];
-                if (!Object.keys(this.changes[method][table][building]).length) {
-                    delete this.changes[method][table][building];
+                if (this._checkNestedProp(this.changes, method, table, building, column)) {
+                    delete this.changes[method][table][building][column];
+                    if (!Object.keys(this.changes[method][table][building]).length) {
+                        delete this.changes[method][table][building];
+                    }
                 }
             } else {
                 this.changes[method][table] = this.changes[method][table] || {};
@@ -167,5 +169,11 @@ class InputStore {
         }
 
         this.resetChanges();
+    }
+
+    _checkNestedProp(obj, level,  ...rest) {
+        if (obj === undefined) return false;
+        if (rest.length === 0 && obj.hasOwnProperty(level)) return true;
+        return this._checkNestedProp(obj[level], ...rest)
     }
 }
