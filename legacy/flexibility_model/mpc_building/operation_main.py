@@ -9,14 +9,14 @@ from pyomo.environ import *
 
 import cea.config
 import cea.inputlocator
-from cea.optimization.flexibility_model import model_building
-from cea.optimization.flexibility_model.mpc_building import operation_optimization
-from cea.optimization.flexibility_model.mpc_building import operation_preprocess_optimization
-from cea.optimization.flexibility_model.mpc_building import operation_write_results
-from cea.optimization.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA
-from cea.optimization.flexibility_model.model_building import building_main
-from cea.optimization.flexibility_model.model_building import building_utils
-from cea.optimization.flexibility_model.model_building.building import Building
+from legacy.flexibility_model import model_building
+from legacy.flexibility_model.mpc_building import operation_optimization
+from legacy.flexibility_model.mpc_building import operation_preprocess_optimization
+from legacy.flexibility_model.mpc_building import operation_write_results
+from legacy.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA
+from legacy.flexibility_model.model_building import building_main
+from legacy.flexibility_model.model_building import building_utils
+from legacy.flexibility_model.model_building import Building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

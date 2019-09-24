@@ -6,9 +6,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning import process_results
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
-    electrical_grid_calculations
+from legacy.flexibility_model.electric_and_thermal_grid_planning import process_results
 from cea.technologies.thermal_network import thermal_network
 from cea.technologies.thermal_network import thermal_network_costs
 # from cea.technologies.thermal_network.network_layout.main import network_layout

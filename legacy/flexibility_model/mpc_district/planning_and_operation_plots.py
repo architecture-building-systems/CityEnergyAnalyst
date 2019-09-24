@@ -2,7 +2,7 @@ from __future__ import division
 import matplotlib
 import matplotlib.pyplot as plt
 import re
-from cea.optimization.flexibility_model.mpc_district import planning_and_operation_preprocess_network
+from legacy.flexibility_model.mpc_district import planning_and_operation_preprocess_network
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

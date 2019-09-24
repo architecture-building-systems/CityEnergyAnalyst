@@ -27,11 +27,11 @@ import datetime
 
 import pandas as pd
 
-from cea.optimization.flexibility_model.model_building import building_extract_cea_data
-from cea.optimization.flexibility_model.model_building import building_process_hvac_efficiencies
-from cea.optimization.flexibility_model.model_building import building_setup_district
-from cea.optimization.flexibility_model.model_building import building_write_definitions
-from cea.optimization.flexibility_model.model_building.constants import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
+from legacy.flexibility_model.model_building import building_extract_cea_data
+from legacy.flexibility_model.model_building import building_process_hvac_efficiencies
+from legacy.flexibility_model.model_building import building_setup_district
+from legacy.flexibility_model.model_building import building_write_definitions
+from legacy.flexibility_model.model_building import DELTA_P_DIM, DENSITY_AIR, HEAT_CAPACITY_AIR, HE_E, H_I, \
     PHI_5_MAX, FB, HP_ETA_EX_COOL, HP_AUXRATIO
 from cea.constants import HOURS_IN_YEAR
 
