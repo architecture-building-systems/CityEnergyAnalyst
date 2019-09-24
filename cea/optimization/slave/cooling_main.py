@@ -37,7 +37,6 @@ def district_cooling_network(locator,
                              master_to_slave_variables,
                              config,
                              prices,
-                             lca,
                              network_features):
     """
     Computes the parameters for the cooling of the complete DCN

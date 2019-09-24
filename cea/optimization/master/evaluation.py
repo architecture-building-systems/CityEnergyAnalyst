@@ -142,7 +142,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                             master_to_slave_vars,
                                                                                             config,
                                                                                             prices,
-                                                                                            lca,
                                                                                             network_features)
     else:
         district_cooling_electricity_requirements_dispatch = {
