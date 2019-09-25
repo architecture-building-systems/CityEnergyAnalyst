@@ -96,9 +96,9 @@
 <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script>
-    render({{ data }}, {{ edges }}, {{ nodes }}, {{ zone }}, {{ district }}, "{{ hash }}");
+    render({{ edges }}, {{ nodes }}, {{ zone }}, {{ district }}, "{{ hash }}");
 
-    function render(data, edges, nodes, zone, district, hash) {
+    function render(edges, nodes, zone, district, hash) {
         const lightMap = {
             "version": 8,
             "sources": {
@@ -145,7 +145,6 @@
                 }
             ]
         };
-        const colors = JSON.parse('{{ colors }}');
 
         // the toggles that show up when the "show layer toggle" icon is clicked
         const connectedToggle = document.getElementById(`connected-${ hash }`);
@@ -394,7 +393,7 @@
                 extruded: extruded,
 
                 getElevation: f => f.properties['height_ag'],
-                getFillColor: colors.zone,
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
 
                 pickable: true,
                 autoHighlight: true,
@@ -413,7 +412,7 @@
                 visible: districtToggle.checked,
 
                 getElevation: f => f.properties['height_ag'],
-                getFillColor: colors.district,
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
 
                 pickable: true,
                 autoHighlight: true,
@@ -426,7 +425,7 @@
                 data: edges,
                 lineWidthScale: 1,  // line width is scaled by the plot object
 
-                getFillColor: colors.edges,
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
                 getLineWidth: f => f.properties["_LineWidth"],
 
                 pickable: true,
@@ -439,7 +438,7 @@
                 id: 'nodes',
                 data: nodes,
                 getRadius: f => f.properties["_Radius"],
-                getFillColor: f => f.properties["_FillColor"],
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
                 pickable: true,
                 autoHighlight: true,
                 highlightColor: [255, 255, 0, 128],
