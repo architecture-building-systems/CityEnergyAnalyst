@@ -196,3 +196,10 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))
         total_pipe_length = df['pipe length'].sum()
         return total_pipe_length
+
+
+class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
+    """
+    Some of the plots in the Thermal Networks category display their data on a map (using deck.gl)
+
+    """

@@ -21,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
+class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """Implement the thermal network layout plot, """
     name = "Network Layout"
 
