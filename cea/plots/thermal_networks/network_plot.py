@@ -4,12 +4,11 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import geopandas
 import pandas as pd
+import geopandas
 import json
-import cea.plots.thermal_networks
-from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+import cea.plots.thermal_networks
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -27,109 +26,39 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(NetworkLayoutPlot, self).__init__(project, parameters, cache)
-        self.network_args = [self.network_type, self.network_name]
 
-        # FIXME: check the inputfiles necessary...
-        self.input_files = [(self.locator.get_zone_geometry, []),
-                            (self.locator.get_thermal_demand_csv_file, self.network_args),
-                            (self.locator.get_thermal_network_edge_list_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args),
-                            (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
-
-    def _plot_div_producer(self):
-        """
-        Since this plot doesn't use plotly to plot, we override _plot_div_producer to return a string containing
-        the html div to use for this plot. The template ``map_div.html`` expects some parameters:
-
-        Here is some example data (in a YAML-like format for documentation purposes)
-
-        data:
-          DH:
-            connected_buildings: ['B1010', 'B1017', 'B1003']
-            disconnected_buildings: ['B1000', 'B1009', 'B1016', ..., 'B1015']
-            path_output_nodes: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\nodes.shp"
-            path_output_edges: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\edges.shp"
-          DC: {}  # data does not necessarily contain information for both types of district networks
-        colors:
-          dc: [63, 192, 194]
-          dh: [240, 75, 91]
-          disconnected: [68, 76, 83]
-          district: [255, 255, 255]
-        zone: str serialization of the GeoJSON of the zone.shp
-        district: str serialization of the GeoJSON of the district.shp
-        dc: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district cooling network
-        dh: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district heating network
-
-        A note on the properties of the GeoJSON features in ``dc`` and ``dh``:
-
-        - edge features contain a "Pipe_DN" property which we use for the line width
-        - node features have a "Building" property - this is either "NONE" or a building name
-        - node features have a "Type" property - this is either "NONE", "CONSUMER" or "PLANT"
-
-        :return: a str containing a full html ``<div/>`` that includes the js code to display the map.
-        """
-
-        import os
-        import hashlib
-        import random
-        from jinja2 import Template
-
-        colors = {
-            "zone": get_color_array("grey_light"),
-            "district": get_color_array("white"),
-            "edges": get_color_array("blue") if self.network_type == "DC" else get_color_array("red"),
-            "building": get_color_array("orange"),
-            "plant": get_color_array("purple")
-        }
-
-        color_by_type = {
-            "NONE": colors["edges"],
-            "PLANT": colors["plant"],
-            "CONSUMER": colors["building"]
-        }
-
-        zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
-            get_geographic_coordinate_system()).to_json(show_bbox=True)
-        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
-            get_geographic_coordinate_system()).to_json(show_bbox=True)
-
+    @property
+    def edges_df(self):
         edges_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
         edges_df["_LineWidth"] = 0.05 * edges_df["Pipe_DN"]
         edges_df = edges_df.drop("weight", axis=1)
-        edges = edges_df.to_json(show_bbox=True)
+        return edges_df
 
+    @property
+    def nodes_df(self):
         nodes_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
         nodes_df["_Radius"] = self.get_radius(nodes_df)
-        nodes_df["_FillColor"] = nodes_df.apply(lambda row: color_by_type[row["Type"]], axis=1)
-        nodes = nodes_df.to_json(show_bbox=True)
-
-        data = {}
-
-        hash = hashlib.md5(str(random.random()) + edges + nodes).hexdigest()
-        template = os.path.join(os.path.dirname(__file__), "network_plot.html")
-        div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
-                                                     data=json.dumps(data), colors=json.dumps(colors),
-                                                     zone=zone, district=district)
-        return div
+        nodes_df["_FillColor"] = nodes_df.apply(lambda row: json.dumps(self.color_by_type[row["Type"]]), axis=1)
+        return nodes_df
 
     def get_radius(self, nodes_df):
         """Figure out the radius for network nodes based on consumer consumption"""
-        SCALE = 10.0
+        scale = 10.0
         demand = self.buildings_hourly.apply(pd.Series.max)
         max_demand = demand.max()
 
         def radius_from_demand(row):
             if row["Type"] == "CONSUMER":
                 building = row["Building"]
-                return SCALE * demand[building] / max_demand
+                return scale * demand[building] / max_demand
             elif row["Type"] == "PLANT":
-                return SCALE
+                return scale
             else:
-                return SCALE * 0.1
+                return scale * 0.1
         return nodes_df.apply(radius_from_demand, axis=1)
 
 

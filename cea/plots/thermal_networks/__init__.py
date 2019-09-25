@@ -4,9 +4,13 @@ from __future__ import print_function
 import os
 import numpy as np
 import pandas as pd
-import cea.inputlocator
+import geopandas
+import json
 import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
+from cea.plots.variable_naming import get_color_array
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+
 
 """
 Implements py:class:`cea.plots.ThermalNetworksPlotBase` as a base class for all plots in the category 
@@ -202,4 +206,107 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
     """
     Some of the plots in the Thermal Networks category display their data on a map (using deck.gl)
 
+    This works by using the Jinja2 templating engine to create a html <div/> containing all the javascript
+    necessary to show the plot. The template used is ``network_plot.html``.
     """
+
+    def __init__(self, project, parameters, cache):
+        super(ThermalNetworksMapPlotBase, self).__init__(project, parameters, cache)
+        self.network_args = [self.network_type, self.network_name]
+
+        self.colors = {
+            "zone": get_color_array("grey_light"),
+            "district": get_color_array("white"),
+            "edges": get_color_array("blue") if self.network_type == "DC" else get_color_array("red"),
+            "building": get_color_array("orange"),
+            "plant": get_color_array("purple")
+        }
+
+        self.color_by_type = {
+            "NONE": self.colors["edges"],
+            "PLANT": self.colors["plant"],
+            "CONSUMER": self.colors["building"]
+        }
+
+        self.input_files = [(self.locator.get_zone_geometry, []),
+                            (self.locator.get_thermal_demand_csv_file, self.network_args),
+                            (self.locator.get_thermal_network_edge_list_file, self.network_args),
+                            (self.locator.get_thermal_network_qloss_system_file, self.network_args),
+                            (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
+
+    @property
+    def edges_df(self):
+        """
+        This property is expected to return a GeoDataFrame containing the edges of the network to display
+        including the data.
+
+        Any columns included will be shown in the Tooltip of the map, except for those starting with an underscore.
+
+        There are some special columns that must be added here, that are used for visualization purposes:
+
+        - _LineWidth: The line width to use for the edges. This can be a computed property based on edge data
+
+
+        :return:
+        :rtype: geopandas.GeoDataFrame
+        """
+        raise NotImplementedError("Please implement in subclass")
+
+    @property
+    def nodes_df(self):
+        """
+        This property is expected to return a GeoDataFrame containing the nodes of the network to display including
+        the data.
+
+        Any columns included will be shown in the Tooltip of the map, except for those starting with an underscore.
+
+        There are some special columns that must be added here, that are used for visualization purposes:
+
+        - _Radius: The radius of the node. This can be a computed property based on node data.
+        - _FillColor: The color ([R, G, B]) to use for the line, serialized as JSON. This can be a computed property
+                      based on node data.
+
+        :return:
+        :rtype: geopandas.GeoDataFrame
+        """
+        raise NotImplementedError("Please implement in subclass")
+
+    def _plot_div_producer(self):
+        """
+        Since this plot doesn't use plotly to plot, we override _plot_div_producer to return a string containing
+        the html div to use for this plot. The template ``network_plot.html`` expects some parameters:
+
+        - hash: this is used to make the html id's in the plot unique
+        - edges: a GeoJson serialization of the networks edges and data
+        - nodes: a GeoJson serialization of the networks nodes and data,
+        - colors: a JSON dictionary of [R, G, B] arrays for the colors to use
+        - zone: a GeoJson serialization of the zone's buildings
+        - district: a GeoJson serialization of the distrct's buildings
+
+        :return: a str containing a full html ``<div/>`` that includes the js code to display the map.
+        """
+
+        import os
+        import hashlib
+        import random
+        from jinja2 import Template
+
+        zone_df = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
+            get_geographic_coordinate_system())
+        zone_df["_FillColor"] = json.dumps(self.colors["zone"])
+        zone = zone_df.to_json(show_bbox=True)
+
+        district_df = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
+            get_geographic_coordinate_system())
+        district_df["_FillColor"] = json.dumps(self.colors["district"])
+        district = district_df.to_json(show_bbox=True)
+
+        edges = self.edges_df.to_json(show_bbox=True)
+        nodes = self.nodes_df.to_json(show_bbox=True)
+
+        hash = hashlib.md5(str(random.random()) + edges + nodes).hexdigest()
+        template = os.path.join(os.path.dirname(__file__), "network_plot.html")
+        div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
+                                                     zone=zone, district=district)
+        return div
+
