@@ -151,7 +151,7 @@ def route_tool(script_name):
             parameters.append(parameter)
 
     return render_template('tool.html', script=script, parameters=parameters, categories=categories,
-                           weather_dict=weather_dict)
+                           weather_dict=weather_dict, last_updated=dir_last_updated())
 
 
 def parameters_for_script(script_name, config):
@@ -159,3 +159,9 @@ def parameters_for_script(script_name, config):
     import cea.scripts
     parameters = [p for _, p in config.matching_parameters(cea.scripts.by_name(script_name).parameters)]
     return parameters
+
+
+def dir_last_updated():
+    return str(max(os.path.getmtime(os.path.join(root_path, f))
+               for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+               for f in files))
