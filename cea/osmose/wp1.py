@@ -61,11 +61,11 @@ def main(case):
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
         # # plot results
-        building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
-        building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
-        building_result_path = os.path.join(building_result_path, '3for2_base')
-        file_name = 'outputs.csv'
-        post_processing.main(building, TECHS, file_name, building_result_path)
+        # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
+        # building_result_path = os.path.join(path_to_case_folder, building_timestep_tag)
+        # # building_result_path = os.path.join(building_result_path, 'base')
+        # # file_name = 'outputs.csv'
+        # # post_processing.main(building, TECHS, file_name, building_result_path)
 
         # # building_result_path = os.path.join(building_result_path, "reduced")
         # plot_results.main(building, TECHS, building_result_path)
