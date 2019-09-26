@@ -682,7 +682,7 @@ def read_schedules_from_file(schedules_csv):
 
 def save_schedules_to_file(locator, building_schedules, building_name):
     """
-    A function to save schedules to csv files in the inputs/building-properties directory
+    A function to save schedules to csv files in the outputs/data/schedules directory
 
     :param locator: the input locator
     :type locator: cea.inputlocator.InputLocator
@@ -696,10 +696,8 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
     df_building_schedules.to_csv(schedules_csv_file, index=False)
-    print("Saving schedules for building {} to %s.".format(building_name) % locator.get_schedule_results_folder_path())
-    print("Please copy (custom) schedules to %s to use them in the next run." % locator.get_building_schedules_folder_path())
-    # print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
-    # print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
+    print("Saving schedules for building {} to {}.".format(building_name, locator.get_schedule_results_folder()))
+    print("Please copy (custom) schedules to {} to use them in the next run.".format(locator.get_building_schedules_folder()))
 
 
 def get_building_schedules(locator, bpr, date_range, config):
