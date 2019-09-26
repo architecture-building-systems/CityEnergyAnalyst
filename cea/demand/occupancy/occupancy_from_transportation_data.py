@@ -192,7 +192,8 @@ def calc_schedules_from_transportation_data(locator, dates, use_stochastic_occup
 
         normalizing_values = get_normalizing_values(occupancy.loc[building], archetype_values)
         for schedule in building_schedules.keys():
-            building_schedules[schedule] /= normalizing_values[schedule]
+            if not np.isclose(normalizing_values[schedule], 0.0):
+                building_schedules[schedule] /= normalizing_values[schedule]
         # write the building schedules to disc for the next simulation or manipulation by the user
         save_schedules_to_file(locator, building_schedules, building)
 
@@ -453,6 +454,7 @@ def get_yearly_occupancy_single_person(dates, daily_schedules, month_schedule):
 
     return occ, dhw
 
+
 def get_all_archetype_names(locator):
     '''
     This function gets the names of all occupancy types according to the archetype database.
@@ -463,6 +465,7 @@ def get_all_archetype_names(locator):
     archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
 
     return list(archetypes_internal_loads['Code'])
+
 
 def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
     """
