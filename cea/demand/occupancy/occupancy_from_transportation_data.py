@@ -10,7 +10,7 @@ import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_DAY, HOURS_IN_YEAR
 from cea.demand.demand_main import get_dates_from_year
-from cea.demand.occupancy.occupancy_model import calc_individual_occupant_schedule, save_schedules_to_file, \
+from cea.demand.occupancy.occupancy_model import calc_individual_occupant_schedule, \
     schedule_maker, OCCUPANT_SCHEDULES, ELECTRICITY_SCHEDULES, WATER_SCHEDULES, PROCESS_SCHEDULES
 from cea.utilities import epwreader
 from cea.utilities.dbf import dbf_to_dataframe
@@ -195,7 +195,7 @@ def calc_schedules_from_transportation_data(locator, dates, use_stochastic_occup
             if not np.isclose(normalizing_values[schedule], 0.0):
                 building_schedules[schedule] /= normalizing_values[schedule]
         # write the building schedules to disc for the next simulation or manipulation by the user
-        save_schedules_to_file(locator, building_schedules, building)
+        save_schedule_to_input(locator, building_schedules, building)
 
     return building_schedules
 
@@ -659,6 +659,25 @@ def get_facility_ids(locator):
             facilities[facility].append(building_name)
 
     return facilities
+
+
+def save_schedule_to_input(locator, building_schedules, building_name):
+    """
+    A function to save schedules to csv files in the inputs/building-schedules directory
+
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param building_schedules: the building schedules
+    :type building_schedules: dict
+    :param building_name: the building name
+    :type building_name: str
+    :return: this function returns nothing
+    """
+    schedule_path = locator.get_building_schedules_predefined(building_name)
+    # convert to DataFrame to use pandas csv writing method
+    df_building_schedules = pd.DataFrame.from_dict(building_schedules)
+    df_building_schedules.to_csv(schedule_path, index=False)
+    print("Saving schedules for building {} to %s.".format(building_name) % locator.get_building_schedules_folder())
 
 
 def main(config):
