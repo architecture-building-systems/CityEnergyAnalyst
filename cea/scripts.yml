@@ -145,7 +145,7 @@ Demand forecasting:
     description: Create occupant schedules from modeled transportation data
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.occupancy.occupancy_from_transportation_data
-    parameters: ['general:scenario', demand]
+    parameters: ['general:scenario', 'demand:use-stochastic-occupancy']
     input-files:
       - [get_zone_geometry]
       - [get_building_comfort]
