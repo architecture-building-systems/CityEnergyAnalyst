@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import matplotlib.patches
 
 
 
@@ -18,6 +19,7 @@ def main(building, TECHS, file_name, building_result_path):
         calc_Qh_reheat(output_df, building_result_path)
         calc_Qc_coil(output_df, building_result_path)
         Qsc_total = calc_Qsc(output_df, building_result_path)
+        calc_chiller_T(output_df, building_result_path)
         draw_T_SA(output_df, building_result_path)
         draw_T_offcoil(output_df, building_result_path)
         # write total.csv
@@ -89,6 +91,8 @@ def calc_m_w(output_df, folder_path):
     m_w_total_dict = {'RAU': m_w_out_RAU_df.sum(axis=1).sum(),
                       'OAU': m_w_out_OAU_df.sum(axis=1).sum() - m_w_in_OAU_df.sum(axis=1).sum()}
     draw_pie(m_w_total_dict, "Humidity Removal", folder_path)
+    m_w_total_df = pd.DataFrame.from_dict(m_w_total_dict, orient='index').T
+    draw_percent_stacked_bar(m_w_total_df, folder_path, title='Humidity Removal')
 
     return
 
@@ -125,6 +129,7 @@ def calc_el(output_df, folder_path):
     print ('total electricity consumption: ', el_total.sum())
     draw_pie(el_total_dict, "Electricity Usages", folder_path)
 
+
     return el_total
 
 def calc_Qh_reheat(output_df, folder_path):
@@ -148,6 +153,42 @@ def calc_Qc_coil(output_df, folder_path):
     draw_pie(pie_data_dict, "Qc per unit", folder_path)
     return
 
+def calc_chiller_T(output_df, folder_path):
+    Q_chiller_total_df = pd.DataFrame()
+
+    if output_df.filter(like='T_oau_chw').columns.size > 0:
+        Q_oau_chiller = output_df.filter(like='Q_oau_chiller')
+        Q_chiller_total_df = pd.concat([Q_chiller_total_df, Q_oau_chiller], axis=1, sort=False)
+        draw_T_chw_pie(Q_oau_chiller,'OAU chiller usages', folder_path)
+    if output_df.filter(like='T_rau_chw').columns.size > 0:
+        Q_rau_chiller = output_df.filter(like='Q_rau_chiller')
+        Q_chiller_total_df = pd.concat([Q_chiller_total_df, Q_rau_chiller], axis=1, sort=False)
+        draw_T_chw_pie(Q_rau_chiller, 'RAU chiller usages', folder_path)
+    if output_df.filter(like='T_chw').columns.size > 0:
+        Q_chiller = output_df.filter(like='Q_chiller')
+        Q_chiller_total_df = pd.concat([Q_chiller_total_df, Q_chiller], axis=1, sort=False)
+        draw_T_chw_pie(Q_chiller, 'LT chiller usages', folder_path)
+
+    file_name = os.path.join(folder_path, 'Q_chiller.csv')
+    Q_chiller_total_df.to_csv(file_name)
+    return
+
+
+def draw_T_chw_pie(Q_df, name, folder_path):
+    pie_data_dict = {}
+    for chiller in Q_df.columns:
+        if ('RAU' in name) or ('OAU' in name):
+            label = chiller.split('_')[3]  # find temperature
+        else:
+            label = chiller.split('_')[2]  # find temperature
+        T_values = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12.0, 12.65, 13.3, 13.95]
+        T = T_values[int(label) - 1]
+        pie_data_dict[T] = Q_df[chiller].sum()
+    # draw_pie(pie_data_dict, name, folder_path)
+    df = pd.DataFrame.from_dict(pie_data_dict, orient='index').sort_index().T
+    draw_percent_stacked_bar(df, folder_path, title=name)
+
+
 def calc_Qsc(output_df, folder_path):
     Qsc_OAU = output_df.filter(like='Qsc_OAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_OAU_IN').sum(axis=1)
     Qsc_RAU = output_df.filter(like='Qsc_RAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_RAU_IN').sum(axis=1)
@@ -159,6 +200,8 @@ def calc_Qsc(output_df, folder_path):
     # pie
     pie_data_dict = {'RAU': Qsc_RAU.sum(), 'OAU': Qsc_OAU.sum(), 'SCU': Qsc_SCU.sum()}
     draw_pie(pie_data_dict, "Qsc per unit", folder_path)
+    pie_data_df = pd.DataFrame.from_dict(pie_data_dict, orient='index').T
+    draw_percent_stacked_bar(pie_data_df, folder_path, title='Qsc per unit')
     return Qsc_total
 
 
@@ -256,17 +299,36 @@ def draw_pie(any_dict, plt_name, folder_path):
     size_of_groups = []
     label = []
     fig, ax = plt.subplots()
-    for key in any_dict.keys():
+
+    # rank values and sort
+    df_rank = pd.DataFrame.from_dict(any_dict, orient='index')
+    df_rank = df_rank.sort_values(by=[0])
+    ranked_index = df_rank.index
+    # create a list with alternating values
+    index_list = []
+    for i in range(len(ranked_index)):
+        if i == 0:
+            n = i
+        elif i % 2 != 0:
+            n = (n + 1)*(-1)
+        else:
+            n = n*(-1)
+        index_list.append(ranked_index[n])
+    # write area to pie
+    for key in index_list:
         if any_dict[key] > 0.0:
             label.append(key)
             size_of_groups.append(any_dict[key])
             total += any_dict[key]
+
     # Create a pieplot
     patches, \
     texts, \
-    autotexts = ax.pie(size_of_groups, labels=label, autopct='%1.1f%%', pctdistance=0.8, textprops={'fontsize': 14}, startangle=90)
+    autotexts = ax.pie(size_of_groups, labels=label, autopct='%1.1f%%', pctdistance=0.85, textprops={'fontsize': 14})
+
     for i in range(len(texts)):
         texts[i].set_fontsize(14) # set label font size
+
     # plt.show()
 
     # add a circle at the center
@@ -314,18 +376,67 @@ def plot_temperatures(T_dict, output_df, folder_path, title):
     plt.close(fig)
     return
 
+
+def draw_percent_stacked_bar(df, folder_path, title='stacked bar'):
+    """
+    df is a DataFrame with columns are the features, and the index is the building number
+    :param df:
+    :param folder_path:
+    :param title:
+    :return:
+    """
+    # Set figure size
+    fig, ax = plt.subplots(figsize=(5, 10))
+    # get raw data properties
+    x_numbers = np.arange(0, len(df.index.values), 1)
+    stack_names = df.columns
+    # From raw value to percentage
+    totals = df.sum(axis=1).values
+    percent_stacks = {}
+    for stack in stack_names:
+        percent_stacks[stack] = [i * 100 / j for i, j in zip(df[stack].values, totals)]
+    # plot
+    barWidth = 0.85
+    x_names = df.index.values
+    color_dict = {'OAU': '#f3c030', 'RAU': '#7bbbb5', 'SCU': '#544661',
+                  '8.1': '#011f4b', '8.75': '#1a355d', '9.4': '#334b6e',
+                  '10.05': '#4d6281', '10.7': '#667893', '11.35': '#808fa5',
+                  '12.0': '#99a5b7', '12.65': '#b2bbc9', '13.3': '#ccd2db', '13.95': '#e5e8ed'}
+    bottom = [0]*len(x_numbers)
+    for key in stack_names:
+        ax.bar(x_numbers, percent_stacks[key], color = color_dict[str(key)], width=barWidth, bottom=bottom, label=str(key))
+        bottom = [sum(i) for i in zip(bottom, percent_stacks[key])]
+
+    # Custom x axis
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    plt.xticks(x_numbers, x_names)
+    plt.ylim(0, 100)
+    plt.ylabel("[%]", fontsize=18)
+    plt.title(title, fontsize=18)
+    # plt.xlabel("group")
+    plt.legend(bbox_to_anchor=(1.01, 0.5), loc='center left', fontsize=18)
+    # Show graphic
+    plt.tight_layout()
+    # plt.show()
+    image_path = os.path.join(folder_path, title + '.png')
+    fig.savefig(image_path)
+    plt.close(fig)
+    return
+
 if __name__ == '__main__':
-    buildings = ["B001"]
+    buildings = ["B001", "B002", "B005", "B006", "B009"]
     # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
     tech = ["HCS_coil"]
-    cases = ["WTP_CBD_m_WP1_HOT"]
-    result_path = "E:\\test_0805"
+    cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    result_path = "E:\\HCS_results_0920"
     for case in cases:
         folder_path = os.path.join(result_path, case)
         for building in buildings:
-            building_time = building + "_1_24"
-            building_result_path = 'E:\\HCS_results_0920\\WTP_CBD_m_WP1_HOT\\B001_1_168\\3for2_base'
-            # building_result_path = os.path.join(building_result_path, "SU")
+            building_time = building + "_1_168"
+            # building_result_path = 'E:\\HCS_results_0920\\WTP_CBD_m_WP1_RET\\B005_1_168\\3for2_base'
+            building_result_path = os.path.join(folder_path, building_time)
+            sub_folder = 'three_units'
+            building_result_path = os.path.join(building_result_path, sub_folder)
             print building_result_path
             file_name = 'outputs.csv'
             main(building, tech, file_name, building_result_path)
