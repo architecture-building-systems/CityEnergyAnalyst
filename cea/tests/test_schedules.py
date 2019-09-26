@@ -136,10 +136,10 @@ class TestTransportationScheduleCreation(unittest.TestCase):
         # calculate schedules
         building_schedules = calc_schedules_from_transportation_data(locator, dates, stochastic_occupancy)
 
-        self.assertTrue(os.path.exists(locator.get_building_schedules('B04')),
+        self.assertTrue(os.path.exists(locator.get_building_schedules_predefined('B04')),
                         'Building schedule csv not produced')
 
-        calculated_schedules = pd.read_csv(locator.get_building_schedules('B04'))
+        calculated_schedules = pd.read_csv(locator.get_building_schedules_predefined('B04'))
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
