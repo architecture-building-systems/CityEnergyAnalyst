@@ -143,13 +143,13 @@ class Scenarios(Resource):
                     shutil.copyfile(files['streets'], locator.get_street_network())
 
                 from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
-                if 'age' in files:
+                if 'age' in files and files['age'] != '':
                     shutil.copyfile(files['age'], locator.get_building_age())
                 elif 'zone' in files:
                     zone_df = geopandas.read_file(files['zone'])
                     calculate_age_file(zone_df, None, locator.get_building_age())
 
-                if 'occupancy' in files:
+                if 'occupancy' in files and files['occupancy'] != '':
                     shutil.copyfile(files['occupancy'], locator.get_building_occupancy())
                 elif 'zone' in files:
                     zone_df = geopandas.read_file(files['zone'])
