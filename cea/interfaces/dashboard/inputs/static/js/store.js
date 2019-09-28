@@ -65,6 +65,7 @@ class InputStore {
             }
             console.log(this.changes);
         }
+        window.parent.postMessage(true, '*');
     }
 
     changesToString() {
@@ -143,6 +144,8 @@ class InputStore {
         this.changes = {update:{},delete:{}};
         this.generateData();
         this.generateGeojsonData();
+
+        window.parent.postMessage(false, '*');
     }
 
     applyChanges(data) {
