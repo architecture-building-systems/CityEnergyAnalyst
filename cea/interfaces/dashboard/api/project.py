@@ -203,7 +203,7 @@ def check_scenario_exists(func):
             return func(*args, **kwargs)
     return wrapper
 
-
+# FIXME: Potential Issue. Need to check if the scenario being deleted/renamed is running in scripts.
 @api.route('/scenario/<string:scenario>')
 class Scenario(Resource):
     method_decorators = [check_scenario_exists]
@@ -221,6 +221,9 @@ class Scenario(Resource):
             if 'name' in payload:
                 new_path = os.path.join(config.project, payload['name'])
                 os.rename(scenario_path, new_path)
+                if config.scenario_name == scenario:
+                    config.scenario_name = payload['name']
+                    config.save()
                 return {'name': payload['name']}
         except WindowsError:
             abort(400, 'Make sure that the scenario you are trying to rename is not open in any application. '
