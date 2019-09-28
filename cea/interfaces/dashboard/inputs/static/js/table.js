@@ -204,7 +204,11 @@ function createTooltip() {
 function showOccupancyAlert() {
     if (!executedAlert) {
         executedAlert = true;
-        alert(OCCUPANCY_ALERT);
+        $.alert({
+            title: '',
+            bgOpacity: 0,
+            content: OCCUPANCY_ALERT
+        });
     }
 }
 
@@ -263,20 +267,32 @@ $(window).load(function () {
                 layout:"fitColumns",
                 height: 200
             });
-        }).modal({'show': true, 'backdrop': 'static'});
+        }).modal({'show': true, 'backdrop': false});
     });
 
     $('#delete-button').click(function () {
         var selected = inputstore.getSelected();
         var layer = ($('.tab.active').data('name') !== 'district') ? 'zone':'district';
-        var out = '\n';
+        var out = '<br>';
         $.each(selected, function (_, building) {
-            out += `${building}\n`
+            out += `${building}<br>`
         });
-        if (confirm("This will delete the following buildings from every table:" + out)) {
-            inputstore.deleteBuildings(layer, selected);
-            $('.tab.active').trigger('click');
-        }
+        $.confirm({
+            title: '',
+            bgOpacity: 0,
+            content: `This will delete the following buildings from every table: ${out}`,
+            buttons: {
+                delete: {
+                    btnClass: 'btn-red',
+                    action: function () {
+                        inputstore.deleteBuildings(layer, selected);
+                        $('.tab.active').trigger('click');
+                    }
+                },
+                cancel: function () {
+                }
+            }
+        });
     });
 
     $('#clear-button').click(function () {
@@ -287,59 +303,91 @@ $(window).load(function () {
     $('#discard-button').click(function () {
         var changes = inputstore.changes;
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
-            alert('No changes detected');
+            $.alert({
+                title: '',
+                bgOpacity: 0,
+                content: 'No changes detected'
+            });
         } else {
-            if (confirm("This will discard all unsaved changes.\n" + inputstore.changesToString())) {
-                inputstore.resetChanges();
-                $('.tab.active').trigger('click');
-            }
+            $.confirm({
+                title: '',
+                bgOpacity: 0,
+                content: `This will discard all unsaved changes.<br>${inputstore.changesToString()}`,
+                buttons: {
+                    discard: {
+                        btnClass: 'btn-red',
+                        action: function () {
+                            inputstore.resetChanges();
+                            $('.tab.active').trigger('click');
+                        }
+                    },
+                    cancel: function () {
+                    }
+                }
+            });
         }
     });
 
     $('#save-button').click(function () {
         var changes = inputstore.changes;
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
-            alert('No changes detected');
+            $.alert({
+                title: '',
+                bgOpacity: 0,
+                content: 'No changes detected'
+            });
         } else {
-            var deletemsg = Object.keys(changes['delete']).length ? "WARNING: Any buildings deleted this way cannot be recovered once saved!\n":"";
-            if (confirm("Save these changes?\n"+ deletemsg +inputstore.changesToString())) {
-                $('#saving-text').text('Saving Changes...');
-                $('#saving-popup').modal({'show': true, 'backdrop': 'static'});
+            var deletemsg = Object.keys(changes['delete']).length ? "<i>WARNING: Any buildings deleted this way cannot be recovered once saved!</i><br>":"";
+            $.confirm({
+                title: '',
+                bgOpacity: 0,
+                content: `Save these changes?<br>${deletemsg}${inputstore.changesToString()}`,
+                buttons: {
+                    save: {
+                        btnClass: 'btn-blue',
+                        action: function () {
+                            $('#saving-text').text('Saving Changes...');
+                            $('#saving-popup').modal({'show': true, 'backdrop': false});
 
-                $.ajax({
-                    type: 'POST',
-                    url: '/inputs/building-properties',
-                    data: JSON.stringify({
-                        changes: changes,
-                        geojson: inputstore.geojsondata,
-                        tables: inputstore.data,
-                        crs: inputstore.crs
-                    }),
-                    contentType: 'application/json'
-                }).done(function (data) {
-                    // TODO: Either refresh page or do applyChanges()
-                    inputstore.applyChanges(data);
-                    // Recreate table based on new data pointer
-                    $('.tab.active').click();
-                    // Only fetch networks if supply-system is updated or a building is deleted
-                    if (Object.keys(changes.update).includes('supply-systems') || Object.keys(changes.delete).includes('zone')) {
-                        map.fetchNetwork();
+                            $.ajax({
+                                type: 'POST',
+                                url: '/inputs/building-properties',
+                                data: JSON.stringify({
+                                    changes: changes,
+                                    geojson: inputstore.geojsondata,
+                                    tables: inputstore.data,
+                                    crs: inputstore.crs
+                                }),
+                                contentType: 'application/json'
+                            }).done(function (data) {
+                                // TODO: Either refresh page or do applyChanges()
+                                inputstore.applyChanges(data);
+                                // Recreate table based on new data pointer
+                                $('.tab.active').click();
+                                // Only fetch networks if supply-system is updated or a building is deleted
+                                if (Object.keys(changes.update).includes('supply-systems') || Object.keys(changes.delete).includes('zone')) {
+                                    map.fetchNetwork();
+                                }
+                                redrawBuildings();
+
+                                $('#saving-text').text('✔ Changes Saved!');
+                                setTimeout(function(){
+                                    $('#saving-popup').modal('hide');
+                                }, 1500);
+                            }).fail(function () {
+                                var header =
+                                    '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
+                                    'Back' +
+                                    '</button>';
+                                $('#saving-text').text('Something went wrong')
+                                    .append(header);
+                            });
+                        }
+                    },
+                    cancel: function () {
                     }
-                    redrawBuildings();
-
-                    $('#saving-text').text('✔ Changes Saved!');
-                    setTimeout(function(){
-                        $('#saving-popup').modal('hide');
-                    }, 1500);
-                }).fail(function () {
-                    var header =
-                        '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
-                        'Back' +
-                        '</button>';
-                    $('#saving-text').text('Something went wrong')
-                        .append(header);
-                });
-            }
+                }
+            });
         }
     });
 
