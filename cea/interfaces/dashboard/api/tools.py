@@ -48,8 +48,9 @@ class Tool(Resource):
                 parameters.append(deconstruct_parameters(parameter))
 
         out = {
-            'label': script.label,
             'category': script.category,
+            'label': script.label,
+            'description': script.description,
             'parameters': parameters,
             'categorical_parameters': categories,
         }
