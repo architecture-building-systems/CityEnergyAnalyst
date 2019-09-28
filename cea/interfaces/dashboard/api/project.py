@@ -1,7 +1,7 @@
 import os
 import shutil
 import glob
-import json
+from functools import wraps
 
 import geopandas
 from flask import current_app
@@ -9,8 +9,6 @@ from flask_restplus import Namespace, Resource, fields, abort
 from staticmap import StaticMap, Polygon
 from shapely.geometry import shape
 
-# import cea.config
-import cea.api
 import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -194,34 +192,53 @@ def glob_shapefile_auxilaries(shapefile_path):
     return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
-@api.route('/scenario/<string:scenario>')
-class Scenario(Resource):
-    def get(self, scenario):
+def check_scenario_exists(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
         config = current_app.cea_config
         choices = config.get_parameter('general:scenario-name')._choices
-        if scenario in choices:
-            return {'name': scenario}
-        else:
+        if kwargs['scenario'] not in choices:
             abort(400, 'Scenario does not exist', choices=choices)
+        else:
+            return func(*args, **kwargs)
+    return wrapper
+
+
+@api.route('/scenario/<string:scenario>')
+class Scenario(Resource):
+    method_decorators = [check_scenario_exists]
+
+    def get(self, scenario):
+        """Scenario details"""
+        return {'name': scenario}
+
+    def put(self, scenario):
+        """Update scenario"""
+        config = current_app.cea_config
+        scenario_path = os.path.join(config.project, scenario)
+        payload = api.payload
+        try:
+            if 'name' in payload:
+                new_path = os.path.join(config.project, payload['name'])
+                os.rename(scenario_path, new_path)
+                return {'name': payload['name']}
+        except WindowsError:
+            abort(400, 'Make sure that the scenario you are trying to rename is not open in any application. '
+                       'Try and refresh the page again.')
 
     def delete(self, scenario):
         """Delete scenario from project"""
         config = current_app.cea_config
-        choices = config.get_parameter('general:scenario-name')._choices
-        if scenario in choices:
-            scenario_path = os.path.join(config.project, scenario)
-            try:
-                if config.scenario_name == scenario:
-                    config.scenario_name = ''
-                    config.save()
-                shutil.rmtree(scenario_path)
-
-            except WindowsError:
-                abort(400, 'Make sure that the scenario you are trying to delete is not open in any application.<br>'
-                           'Try and refresh the page again.')
+        scenario_path = os.path.join(config.project, scenario)
+        try:
+            if config.scenario_name == scenario:
+                config.scenario_name = ''
+                config.save()
+            shutil.rmtree(scenario_path)
             return {'scenarios': config.get_parameter('general:scenario-name')._choices}
-        else:
-            abort(400, 'Scenario does not exist', choices=choices)
+        except WindowsError:
+            abort(400, 'Make sure that the scenario you are trying to delete is not open in any application. '
+                       'Try and refresh the page again.')
 
 
 @api.route('/scenario/<string:scenario>/image')
