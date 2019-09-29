@@ -55,7 +55,7 @@ function createTable(parent, name, values, columns, types) {
             tool = 'data-helper';
         }
 
-        placeholder += `<div>You can create the file using the <a href="/tools/${tool}">${tool}</a> tool.</div>`;
+        placeholder += `<div>You can create the file using the <ins>${tool}</ins> tool.</div>`;
     } else {
         placeholder = '<div>No matching records found.</div>';
     }
