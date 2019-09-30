@@ -12,7 +12,7 @@ import cea.plots.thermal_networks
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Lennart Rogenhofer"]
+__credits__ = ["Lennart Rogenhofer", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -33,6 +33,7 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
             self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
         edges_df["_LineWidth"] = 0.05 * edges_df["Pipe_DN"]
+        edges_df["_FillColor"] = json.dumps(self.colors["edges"])
         edges_df = edges_df.drop("weight", axis=1)
         return edges_df
 
