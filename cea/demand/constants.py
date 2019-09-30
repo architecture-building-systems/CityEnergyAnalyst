@@ -49,7 +49,6 @@ N_VENT = 0.5  # volumetric flow rate exponential due for ventilation calculation
 DELTA_P_1 = 0.1  # delta of pressure
 F_SR = 0.3  # factor for pressure calculation
 HOURS_OP = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
-GR = 9.81  # m/s2 gravity
 EFFI = 0.6  # efficiency of pumps
 
 # WATER
@@ -59,6 +58,7 @@ TWW_SETPOINT = 60  # dhw tank set point temperature in C
 # PHYSICAL
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
+GR = 9.81  # m/s2 gravity
 
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
