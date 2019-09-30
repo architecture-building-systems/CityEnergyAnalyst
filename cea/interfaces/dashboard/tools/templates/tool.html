@@ -127,5 +127,5 @@
     {{ super() }}
     <script src="{{ url_for('base_blueprint.static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
-    <script src="{{ url_for('.static', filename='tools.js') }}"></script>
+    <script src="{{ url_for('.static', filename='tools.js') }}?u={{ last_updated }}"></script>
 {% endblock javascripts %}
