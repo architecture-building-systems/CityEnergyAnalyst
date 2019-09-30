@@ -250,7 +250,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         :return:
         :rtype: geopandas.GeoDataFrame
         """
-        raise NotImplementedError("Please implement in subclass")
+        raise NotImplementedError("Please implement edges_df in subclass")
 
     @property
     def nodes_df(self):
@@ -269,7 +269,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         :return:
         :rtype: geopandas.GeoDataFrame
         """
-        raise NotImplementedError("Please implement in subclass")
+        raise NotImplementedError("Please implement nodes_df in subclass")
 
     def _plot_div_producer(self):
         """

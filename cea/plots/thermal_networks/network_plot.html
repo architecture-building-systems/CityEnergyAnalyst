@@ -426,6 +426,7 @@
                 lineWidthScale: 1,  // line width is scaled by the plot object
 
                 getFillColor: f => JSON.parse(f.properties["_FillColor"]),
+                getLineColor: f => JSON.parse(f.properties["_FillColor"]),
                 getLineWidth: f => f.properties["_LineWidth"],
 
                 pickable: true,
@@ -433,6 +434,8 @@
                 highlightColor: [255, 255, 0, 128],
                 onHover: updateTooltip
             }));
+            console.log(layers);
+            console.log(edges);
 
             if (nodes) layers.push(new GeoJsonLayer({
                 id: 'nodes',
