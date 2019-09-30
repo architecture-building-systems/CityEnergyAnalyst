@@ -140,7 +140,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         elif 'RES' in case:
             w_RA = 13.1  # 28C with 55% RH
         h_sen_inf = np.vectorize(calc_h_sen_inf)(reduced_tsd_df['T_ext'], reduced_tsd_df['T_int'], w_RA)
-        output_df1['Q_gain_inf_kWh'] = reduced_tsd_df['m_ve_inf'] * h_sen_inf
+        output_df1['Q_gain_total_inf_kWh'] = reduced_tsd_df['Q_gain_total_kWh'] + reduced_tsd_df['m_ve_inf'] * h_sen_inf
         ## humidity gain
         output_df1['w_gain_occ_kgpers'] = reduced_tsd_df['w_int']
         # output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['w_ext'] / 1000
