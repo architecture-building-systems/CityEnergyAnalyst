@@ -15,6 +15,7 @@ import cea.inputlocator
 import demand_writers
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
+from cea.demand.occupancy.occupancy_from_transportation_data import calc_schedules_from_transportation_data
 from cea.utilities import epwreader
 import warnings
 from cea.constants import HOURS_IN_YEAR
@@ -111,6 +112,15 @@ def demand_calculation(locator, config):
         print('Running demand calculation for all buildings in the zone')
     else:
         print('Running demand calculation for the next buildings=%s' % list_building_names)
+
+    # CREATE SCHEDULES FROM TRANSPORTATION DATA IF USER SPECIFIED SO
+    if config.demand.use_transportation_data:
+        if os.path.isfile(locator.get_population()) and os.path.isfile(locator.get_facilities()):
+            calc_schedules_from_transportation_data(locator, date_range, config.use_stochastic_occupancy)
+        else:
+            print(
+            "No transportation data (population or facilities) found in (). Schedules from archetypes database will be used.").format(
+                locator.get_transportation_folder())
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
