@@ -201,6 +201,17 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         total_pipe_length = df['pipe length'].sum()
         return total_pipe_length
 
+    @property
+    @cea.plots.cache.cached
+    def T_sup_C(self):
+        """Node supply temperatures"""
+        supply_df = pd.read_csv(
+            self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
+        supply_df -= 273.15  # convert from Kelvin to C
+        return supply_df
+
+
+
 
 class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
     """

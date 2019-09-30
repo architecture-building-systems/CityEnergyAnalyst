@@ -59,7 +59,7 @@ class ThermalNetworkLossAggregated(cea.plots.thermal_networks.ThermalNetworksMap
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
-        min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("blue")]
+        min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
         edges_df["_FillColor"] = Q_loss_kWh_aggregated.apply(
@@ -73,8 +73,35 @@ class ThermalNetworkLossAggregated(cea.plots.thermal_networks.ThermalNetworksMap
         nodes_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
+        T_sup_C = self.T_sup_C.mean()
+        nodes_df["Average Supply Temperature [C]"] = T_sup_C
+
+        peak_demands = self.buildings_hourly.apply(pd.Series.max)
+
+        def get_peak_building_demand(row):
+            if row["Type"] == "CONSUMER":
+                return peak_demands[row["Building"]]
+            else:
+                return None
+
+        nodes_df["Peak Building Demand [kW]"] = nodes_df.apply(get_peak_building_demand, axis=1)
+
         nodes_df["_Radius"] = self.get_radius(nodes_df)
-        nodes_df["_FillColor"] = nodes_df.apply(lambda row: json.dumps(self.color_by_type[row["Type"]]), axis=1)
+
+        # Figure out the colors (based on the average supply temperatures)
+        T_sup_C_min = T_sup_C.min()
+        T_sup_C_max = T_sup_C.max()
+        scale_T_sup_C = lambda x: remap(x, T_sup_C_min, T_sup_C_max, 0.0, 1.0)
+
+        # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
+        # to web versions ([0, 255])
+        min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("green_lighter")]
+        max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
+
+        nodes_df["_FillColor"] = T_sup_C.apply(
+            lambda t: json.dumps(
+                [remap(c, 0.0, 1.0, 0.0, 255.0)
+                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_T_sup_C(t))])).values
         return nodes_df
 
     def get_radius(self, nodes_df):

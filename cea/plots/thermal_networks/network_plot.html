@@ -460,6 +460,7 @@
 
                 if (layer.id === 'zone' || layer.id === 'district') {
                     $.each(object.properties, function (key, value)  {
+                        if (key.startsWith("_")) { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
                     let area = turf.area(object);
@@ -468,11 +469,15 @@
                 } else if (layer.id === 'edges') {
                     $.each(object.properties, function(key, value) {
                         if (key.startsWith("_")) { return null; }
+                        if (value === null) { return null; }
+                        if (value === "NONE") { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
                 } else if (layer.id === 'nodes') {
                     $.each(object.properties, function(key, value) {
                         if (key.startsWith("_")) { return null; }
+                        if (value === null) { return null; }
+                        if (value === "NONE") { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
                 } else {
