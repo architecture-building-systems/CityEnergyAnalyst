@@ -397,7 +397,7 @@ def initialize_inputs(bpr, weather_data, date_range, locator, config):
     tsd['people'] = np.floor(schedules['people'])
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
     tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
-    # latent heat gains
+    # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
 
     return schedules, tsd
