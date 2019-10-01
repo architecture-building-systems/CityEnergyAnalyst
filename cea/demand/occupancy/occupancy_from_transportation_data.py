@@ -9,7 +9,6 @@ import xml.etree.ElementTree as ET
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_DAY, HOURS_IN_YEAR
-from cea.demand.demand_main import get_dates_from_year
 from cea.demand.occupancy.occupancy_model import calc_individual_occupant_schedule, \
     schedule_maker, OCCUPANT_SCHEDULES, ELECTRICITY_SCHEDULES, WATER_SCHEDULES, PROCESS_SCHEDULES
 from cea.utilities import epwreader
@@ -681,6 +680,7 @@ def save_schedule_to_input(locator, building_schedules, building_name):
 
 
 def main(config):
+    from cea.demand.demand_main import get_dates_from_year
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # TODO: figure out weather file issue
     weather_data = epwreader.epw_reader(os.path.join(locator.get_weather_folder(), 'weather.epw'))[
