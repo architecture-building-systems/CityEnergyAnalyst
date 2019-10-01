@@ -114,7 +114,7 @@ def demand_calculation(locator, config):
         print('Running demand calculation for the next buildings=%s' % list_building_names)
 
     # CREATE SCHEDULES FROM TRANSPORTATION DATA IF USER SPECIFIED SO
-    if config.demand.use_transportation_schedules:
+    if config.demand.use_transportation_data:
         if os.path.isfile(locator.get_population()) and os.path.isfile(locator.get_facilities()):
             calc_schedules_from_transportation_data(locator, date_range, config.use_stochastic_occupancy)
         else:
