@@ -11,6 +11,8 @@ from cea.plots.variable_naming import get_color_array
 import pandas as pd
 import geopandas
 import json
+
+from cea.utilities import remap
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.utilities.color_fader import color_fader_rgb
 import cea.plots.thermal_networks
@@ -25,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class ThermalNetworkLossAggregated(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
+class AggregatedNetworkThermalLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """
     Plot the aggregated thermal network losses. As with the NetworkLayoutPlot, edge widths are proportional to
     the pipe diameter and node radius' are proportional to the peak building demand.
@@ -39,7 +41,7 @@ class ThermalNetworkLossAggregated(cea.plots.thermal_networks.ThermalNetworksMap
     name = "Aggregated Network Thermal Loss"
 
     def __init__(self, project, parameters, cache):
-        super(ThermalNetworkLossAggregated, self).__init__(project, parameters, cache)
+        super(AggregatedNetworkThermalLossPlot, self).__init__(project, parameters, cache)
 
     @property
     def edges_df(self):
@@ -121,7 +123,7 @@ class ThermalNetworkLossAggregated(cea.plots.thermal_networks.ThermalNetworksMap
         return nodes_df.apply(radius_from_demand, axis=1)
 
 
-class ThermalNetworkLossPeak(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
+class PeakNetworkThermalLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """
     Plot the peak thermal network losses. As with the NetworkLayoutPlot, edge widths are proportional to
     the pipe diameter and node radius' are proportional to the peak building demand.
@@ -135,7 +137,7 @@ class ThermalNetworkLossPeak(cea.plots.thermal_networks.ThermalNetworksMapPlotBa
     name = "Peak Network Thermal Loss"
 
     def __init__(self, project, parameters, cache):
-        super(ThermalNetworkLossPeak, self).__init__(project, parameters, cache)
+        super(PeakNetworkThermalLossPlot, self).__init__(project, parameters, cache)
 
     @property
     def edges_df(self):
@@ -217,14 +219,6 @@ class ThermalNetworkLossPeak(cea.plots.thermal_networks.ThermalNetworksMapPlotBa
         return nodes_df.apply(radius_from_demand, axis=1)
 
 
-def remap(x, in_min, in_max, out_min, out_max):
-    """
-    Scale x from range [in_min, in_max] to [out_min, out_max]
-    Based on this StackOverflow answer: https://stackoverflow.com/a/43567380/2260
-    """
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-
 if __name__ == '__main__':
     import cea.config
     import cea.plots.cache
@@ -234,12 +228,12 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
 
-    ThermalNetworkLossAggregated(config.project, {'network-type': config.plots.network_type,
+    AggregatedNetworkThermalLossPlot(config.project, {'network-type': config.plots.network_type,
                                                   'scenario-name': config.scenario_name,
                                                   'network-name': config.plots.network_name},
-                                 cache).plot(auto_open=True)
+                                     cache).plot(auto_open=True)
 
-    ThermalNetworkLossPeak(config.project, {'network-type': config.plots.network_type,
+    PeakNetworkThermalLossPlot(config.project, {'network-type': config.plots.network_type,
                                             'scenario-name': config.scenario_name,
                                             'network-name': config.plots.network_name},
-                           cache).plot(auto_open=True)
+                               cache).plot(auto_open=True)
