@@ -417,17 +417,16 @@ class Plots(object):
         title = " Network Pressure Loss" + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network',
                                                            category)
-        analysis_fields = ['P_loss_substation_kWh', 'P_loss_kWh']
-
         all_nodes = pd.read_csv(
             self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
                 'edge_node': self.network_processed['edge_node'],  # read edge node matrix of node connections
-                analysis_fields[0]: self.network_data_processed[analysis_fields[0]],  # substation losses
-                analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}  # read edge pressure loss data
+                'P_loss_substation_kWh': self.network_data_processed['P_loss_substation_kWh'],  # substation losses
+                'P_loss_kWh': self.network_data_processed['P_loss_kWh']}  # read edge pressure loss data
         building_demand_data = self.demand_data['buildings_hourly']  # read building demands
-        plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
+        plot = network_plot(data, title, output_path, ['P_loss_substation_kWh', 'P_loss_kWh'], building_demand_data,
+                            all_nodes)
         return plot
 
     def network_layout_plot(self, category):
