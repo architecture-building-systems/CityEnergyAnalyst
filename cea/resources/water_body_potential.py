@@ -49,7 +49,7 @@ def calc_lake_potential(locator, config):
     Q_max_kwh = (V_max_m3h * P_WATER_KGPERM3 / 3600) * heat_capacity_water / 1000 * AT_max_K  # in kW
 
     # export
-    lake_gen = locator.get_lake_potential()
+    lake_gen = locator.get_water_body_potential()
     pd.DataFrame({"Ts_C": t_source_final, "QLake_kW": Q_max_kwh}).to_csv(lake_gen, index=False, float_format='%.3f')
 
 
