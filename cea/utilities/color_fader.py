@@ -14,7 +14,4 @@ def color_fader_rgb(c1, c2, mix=0):
     c1 = np.array(mpl.colors.to_rgb(c1))
     c2 = np.array(mpl.colors.to_rgb(c2))
     color_np_array = (1 - mix) * c1 + mix * c2
-    print("color_fader_rgb({c1}, {c2}, {mix}, {result}".format(
-        c1=c1, c2=c2, mix=mix, result=color_np_array.tolist()
-    ))
     return color_np_array.tolist()

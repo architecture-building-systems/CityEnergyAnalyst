@@ -49,24 +49,24 @@ class AggregatedNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetwor
             get_geographic_coordinate_system())
         edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
 
-        # color the edges based on aggregated pipe heat loss
-        Q_loss_kWh_aggregated = self.Q_loss_kWh.sum().round(2)
-        edges_df["Q_loss_kW (aggregated)"] = Q_loss_kWh_aggregated.values
+        # color the edges based on aggregated pipe pressure loss
+        P_loss_kWh_aggregated = self.P_loss_kWh.sum().round(2)
+        edges_df["Aggregated Pumping Energy Pipes [kWh]"] = P_loss_kWh_aggregated.values
 
         # figure out colors
-        q_loss_min = Q_loss_kWh_aggregated.min()
-        q_loss_max = Q_loss_kWh_aggregated.max()
-        scaled_q_loss = lambda x: remap(x, q_loss_min, q_loss_max, 0.0, 1.0)
+        p_loss_min = P_loss_kWh_aggregated.min()
+        p_loss_max = P_loss_kWh_aggregated.max()
+        scale_p_loss = lambda x: remap(x, p_loss_min, p_loss_max, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        edges_df["_FillColor"] = Q_loss_kWh_aggregated.apply(
-            lambda q_loss: json.dumps(
+        edges_df["_FillColor"] = P_loss_kWh_aggregated.apply(
+            lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
-                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scaled_q_loss(q_loss))])).values
+                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
         return edges_df
 
     @property
@@ -74,8 +74,8 @@ class AggregatedNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetwor
         nodes_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
-        T_sup_C = self.T_sup_C.mean()
-        nodes_df["Average Supply Temperature [C]"] = T_sup_C
+        P_loss_substation_kWh = self.P_loss_substation_kWh.sum().round(2)
+        nodes_df["Aggregated Pumping Energy Buildings [kWh]"] = P_loss_substation_kWh
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
 
@@ -90,19 +90,24 @@ class AggregatedNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetwor
         nodes_df["_Radius"] = self.get_radius(nodes_df)
 
         # Figure out the colors (based on the average supply temperatures)
-        T_sup_C_min = T_sup_C.min()
-        T_sup_C_max = T_sup_C.max()
-        scale_T_sup_C = lambda x: remap(x, T_sup_C_min, T_sup_C_max, 0.0, 1.0)
+        P_loss_min = P_loss_substation_kWh.min()
+        P_loss_max = P_loss_substation_kWh.max()
+        scale_p_loss = lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("green_lighter")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        nodes_df["_FillColor"] = T_sup_C.apply(
-            lambda t: json.dumps(
+        nodes_df["_FillColor"] = json.dumps(get_color_array("black"))
+        for building in P_loss_substation_kWh.index:
+            nodes_df.loc[nodes_df["Building"] == building,
+                         "Aggregated Pumping Energy Buildings [kWh]"] = P_loss_substation_kWh[building]
+            nodes_df.loc[nodes_df["Building"] == building, "_FillColor"] = json.dumps(
                 [remap(c, 0.0, 1.0, 0.0, 255.0)
-                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_T_sup_C(t))])).values
+                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
+                                          mix=scale_p_loss(P_loss_substation_kWh[building]))])
+
         return nodes_df
 
     def get_radius(self, nodes_df):
@@ -146,23 +151,23 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
 
         # color the edges based on aggregated pipe heat loss
-        Q_loss_kWh_peak = self.Q_loss_kWh.max().round(2)
-        edges_df["Q_loss_kW (peak)"] = Q_loss_kWh_peak.values
+        P_loss_kWh_peak = self.P_loss_kWh.max().round(2)
+        edges_df["Peak Pumping Energy Pipes [kWh]"] = P_loss_kWh_peak.values
 
         # figure out colors
-        q_loss_min = Q_loss_kWh_peak.min()
-        q_loss_max = Q_loss_kWh_peak.max()
-        scaled_q_loss = lambda x: remap(x, q_loss_min, q_loss_max, 0.0, 1.0)
+        p_loss_min = P_loss_kWh_peak.min()
+        p = P_loss_kWh_peak.max()
+        scale_p_loss = lambda x: remap(x, p_loss_min, p, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        edges_df["_FillColor"] = Q_loss_kWh_peak.apply(
-            lambda q_loss: json.dumps(
+        edges_df["_FillColor"] = P_loss_kWh_peak.apply(
+            lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
-                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scaled_q_loss(q_loss))])).values
+                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
         return edges_df
 
     @property
@@ -170,8 +175,8 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         nodes_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
-        T_sup_C = self.T_sup_C.max()
-        nodes_df["Peak Supply Temperature [C]"] = T_sup_C
+        P_loss_substation_peak = self.P_loss_substation_kWh.max().round(2)
+        nodes_df["Peak Pumping Energy Buildings [kWh]"] = P_loss_substation_peak
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
 
@@ -186,19 +191,24 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         nodes_df["_Radius"] = self.get_radius(nodes_df)
 
         # Figure out the colors (based on the average supply temperatures)
-        T_sup_C_min = T_sup_C.min()
-        T_sup_C_max = T_sup_C.max()
-        scale_T_sup_C = lambda x: remap(x, T_sup_C_min, T_sup_C_max, 0.0, 1.0)
+        P_loss_min = P_loss_substation_peak.min()
+        P_loss_max = P_loss_substation_peak.max()
+        scale_p_loss = lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("green_lighter")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        nodes_df["_FillColor"] = T_sup_C.apply(
-            lambda t: json.dumps(
+        nodes_df["_FillColor"] = json.dumps(get_color_array("black"))
+        for building in P_loss_substation_peak.index:
+            nodes_df.loc[nodes_df["Building"] == building,
+                         "Aggregated Pumping Energy Buildings [kWh]"] = P_loss_substation_peak[building]
+            nodes_df.loc[nodes_df["Building"] == building, "_FillColor"] = json.dumps(
                 [remap(c, 0.0, 1.0, 0.0, 255.0)
-                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_T_sup_C(t))])).values
+                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
+                                          mix=scale_p_loss(P_loss_substation_peak[building]))])
+
         return nodes_df
 
     def get_radius(self, nodes_df):
