@@ -1,3 +1,31 @@
+2019-09-24 - 2.21 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
+2019-09-24 - 2.21 - #2334 Show Es and Ns variable for architecture in dashboard
+2019-09-24 - 2.21 - #2320 BUG: fixed default value for workflow parameter
+2019-09-23 - 2.21 - #2303 CEA Occupancy-Schedule Updates
+2019-09-20 - 2.21 - #2286 Fix to #1271
+2019-09-18 - 2.21 - #2319 Bugfix: Dashboard set scenario function not working
+2019-09-18 - 2.21 - #2289 2255 thermal network optimization refactoring
+2019-09-17 - 2.21 - #2313 set seed for sensitivity analysis test
+2019-09-17 - 2.21 - #2299 2192 single plot view
+2019-09-17 - 2.21 - #2198 macOS installation guide
+2019-09-17 - 2.21 - #2305 2279 show baseline network in input editor
+2019-09-16 - 2.21 - #2306 2019.09.16 run radiation daysim from pycharm
+2019-09-16 - 2.21 - #2304 Renamed Zurich 2015 and 2016 files
+2019-09-13 - 2.21 - #2297 FEATURE: 1926 cea worker / non-blocking tools
+2019-09-12 - 2.21 - #2275 2063 process cooling
+2019-09-12 - 2.21 - #2301 hotfix for parameters changed in lca_operation
+2019-09-12 - 2.21 - #2292 steps for creating a release updated
+2019-09-10 - 2.21 - #2251 Change naming of weather files
+2019-09-10 - 2.21 - #2284 2277 update new release documentation
+2019-09-06 - 2.21 - #2294 Bugfix: BooleanParameter can now decode bool values
+2019-09-05 - 2.21 - #2266 Delete cooling_case_workflow.py
+2019-09-05 - 2.21 - #2288 FEATURE: New React Dashboard
+2019-09-05 - 2.21 - #2290 changing workflows structure
+2019-09-04 - 2.21 - #2287 I753 remove global vars last steps
+2019-09-03 - 2.21 - #2280 2279 generate network from building supply properties
+2019-09-03 - 2.21 - #2281 2256 update conditions to run disconnected_buildings_heating_main @shanshanhsieh elegant fix
+2019-08-30 - 2.21 - #2282 I2249 opt cooling
+2019-08-26 - 2.21 - #2278 Updated version number, changelog and credits for 2.21
 2019-08-26 - 2.20.3 - #2253 Feature: Supply system map plot @daren-thomas merging as we need it to plan for the 30 sec video for Arno
 2019-08-23 - 2.20.3 - #2258 2117 weather as input file
 2019-08-23 - 2.20.3 - #2257 FEATURE: lazy loading of cea.api module
