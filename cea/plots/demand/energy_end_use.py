@@ -21,7 +21,7 @@ __status__ = "Production"
 
 class EnergyDemandDistrictPlot(cea.plots.demand.DemandPlotBase):
     """Implement the energy-use plot"""
-    name = "Energy Demand"
+    name = "Energy End-use"
 
     def __init__(self, project, parameters, cache):
         super(EnergyDemandDistrictPlot, self).__init__(project, parameters, cache)
