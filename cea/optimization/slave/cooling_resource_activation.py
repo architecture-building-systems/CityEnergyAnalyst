@@ -5,8 +5,10 @@ import numpy as np
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as CTModel
+from cea.technologies.pumps import calc_water_body_uptake_pumping
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
+
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -192,8 +194,18 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     )
+
+            # Delta P from linearization after distribution optimization
+            E_BaseVCC_WS_req_W += calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                         T_district_cooling_return_K,
+                                                         T_district_cooling_supply_K)
+
+
+
         else:  # bypass, do not use chiller
-            E_BaseVCC_WS_req_W = 0.0
+            E_BaseVCC_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                         T_district_cooling_return_K,
+                                                         T_district_cooling_supply_K)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_BaseVCC_WS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
@@ -226,8 +238,13 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     )
+            E_PeakVCC_WS_req_W += calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                           T_district_cooling_return_K,
+                                           T_district_cooling_supply_K)
         else:  # bypass, do not use chiller
-            E_PeakVCC_WS_req_W = 0.0
+            E_PeakVCC_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                           T_district_cooling_return_K,
+                                           T_district_cooling_supply_K)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_PeakVCC_WS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
