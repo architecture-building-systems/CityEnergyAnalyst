@@ -253,8 +253,6 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
         field = "QH_sys_MWhyr"
     elif type_network == "DC":
         field = "QC_sys_MWhyr"
-    elif type_network == "EL":
-        field = "E_sys_MWhyr"
     else:
         raise ValueError("Invalid value for variable 'type_network': {type_network}".format(type_network=type_network))
 
