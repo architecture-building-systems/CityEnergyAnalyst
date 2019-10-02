@@ -8,6 +8,7 @@ from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.constants import BOILER_MIN
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost
+from cea.technologies.pumps import calc_water_body_uptake_pumping
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -55,7 +56,6 @@ def heating_source_activator(Q_therm_req_W,
         eta_elec_interpol = CC_op_cost_data['eta_el_fn_q_input']
 
         if Q_heat_unmet_W >= q_output_CC_min_W:
-            source_CHP = 1
             # operation Possible if above minimal load
             if Q_heat_unmet_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = Q_heat_unmet_W
@@ -66,20 +66,17 @@ def heating_source_activator(Q_therm_req_W,
                 NG_CHP_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
                 E_CHP_gen_W = np.float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
         else:
-            source_CHP = 0
             NG_CHP_req_W = 0.0
             E_CHP_gen_W = 0.0
             Q_CHP_gen_W = 0.0
         Q_heat_unmet_W = Q_heat_unmet_W - Q_CHP_gen_W
     else:
-        source_CHP = 0
         NG_CHP_req_W = 0.0
         E_CHP_gen_W = 0.0
         Q_CHP_gen_W = 0.0
 
     # WET FURNACE
     if master_to_slave_vars.Furnace_wet_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
-        source_Furnace_wet = 1
         # Operate only if its above minimal load
         if Q_heat_unmet_W > master_to_slave_vars.WBFurnace_Q_max_W:
             if Q_heat_unmet_W > master_to_slave_vars.WBFurnace_Q_max_W:
@@ -98,7 +95,6 @@ def heating_source_activator(Q_therm_req_W,
                                                                                 tdhret_req_K,
                                                                                 "wet")
         else:
-            source_Furnace_wet = 0
             E_Furnace_wet_gen_W = 0.0
             DryBiomass_Furnace_req_W = 0.0
             Q_Furnace_wet_gen_W = 0.0
@@ -106,14 +102,12 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_wet_gen_W
 
     else:
-        source_Furnace_wet = 0
         E_Furnace_wet_gen_W = 0.0
         DryBiomass_Furnace_req_W = 0.0
         Q_Furnace_wet_gen_W = 0.0
 
     # DRY FURNACE
     if master_to_slave_vars.Furnace_dry_on == 1 and Q_heat_unmet_W > 0.0:  # Activate Furnace if its there.
-        source_Furnace_dry = 1
         # Operate only if its above minimal load
         if Q_heat_unmet_W > master_to_slave_vars.DBFurnace_Q_max_W:
             if Q_heat_unmet_W > master_to_slave_vars.DBFurnace_Q_max_W:
@@ -131,14 +125,12 @@ def heating_source_activator(Q_therm_req_W,
                                                                                 tdhret_req_K,
                                                                                 "dry")
         else:
-            source_Furnace_dry = 0
             E_Furnace_dry_gen_W = 0.0
             WetBiomass_Furnace_req_W = 0.0
             Q_Furnace_dry_gen_W = 0.0
 
         Q_heat_unmet_W = Q_heat_unmet_W - Q_Furnace_dry_gen_W
     else:
-        source_Furnace_dry = 0
         E_Furnace_dry_gen_W = 0.0
         WetBiomass_Furnace_req_W = 0.0
         Q_Furnace_dry_gen_W = 0.0
@@ -146,7 +138,6 @@ def heating_source_activator(Q_therm_req_W,
     if (master_to_slave_vars.HPSew_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K,
                                                                                         tdhret_req_K):  # activate if its available
 
-        source_HP_Sewage = 1
         if Q_heat_unmet_W > Q_therm_Sew_W:
             Q_HPSew_gen_W = Q_therm_Sew_W
             mdot_DH_to_Sew_kgpers = Q_HPSew_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -166,12 +157,10 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPSew_gen_W
 
     else:
-        source_HP_Sewage = 0
         E_HPSew_req_W = 0.0
         Q_HPSew_gen_W = 0.0
 
     if (master_to_slave_vars.HPLake_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
-        source_HP_Lake = 1
         if Q_heat_unmet_W > Q_therm_Lake_W:  # Scale down Load, 100% load achieved
             Q_HPLake_gen_W = Q_therm_Lake_W
         else:  # regular operation possible
@@ -182,15 +171,20 @@ def heating_source_activator(Q_therm_req_W,
                                                                                tdhret_req_K,
                                                                                TretLakeArray_K
                                                                                )
+        E_pump_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_HPLake_gen_W,
+                                                         tdhret_req_K,
+                                                         tdhsup_K)
+
+        E_HPLake_req_W += E_pump_req_W
+
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
     else:
-        source_HP_Lake = 0
+        deltaP_water_body_network_Pa = 0.0
         E_HPLake_req_W = 0.0
         Q_HPLake_gen_W = 0.0
 
     if (master_to_slave_vars.GHP_on) == 1 and Q_heat_unmet_W > 0.0 and not np.isclose(tdhsup_K, tdhret_req_K):
-        source_GHP = 1
         if Q_heat_unmet_W > Q_therm_GHP_W:
             Q_GHP_gen_W = Q_therm_GHP_W
             mdot_DH_to_GHP_kgpers = Q_GHP_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -206,12 +200,10 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_GHP_gen_W
 
     else:
-        source_GHP = 0
         E_GHP_req_W = 0.0
         Q_GHP_gen_W = 0.0
 
     if (master_to_slave_vars.Boiler_on) == 1 and Q_heat_unmet_W > 0:
-        source_BaseBoiler = 1
         if Q_heat_unmet_W >= BOILER_MIN * master_to_slave_vars.Boiler_Q_max_W:  # Boiler can be activated?
             if Q_heat_unmet_W >= master_to_slave_vars.Boiler_Q_max_W:  # Boiler above maximum Load?
                 Q_BaseBoiler_gen_W = master_to_slave_vars.Boiler_Q_max_W
@@ -222,7 +214,6 @@ def heating_source_activator(Q_therm_req_W,
                                                                           master_to_slave_vars.Boiler_Q_max_W,
                                                                           tdhret_req_K)
         else:
-            source_BaseBoiler = 0
             Q_BaseBoiler_gen_W = 0.0
             NG_BaseBoiler_req_W = 0.0
             E_BaseBoiler_req_W = 0.0
@@ -230,13 +221,11 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_BaseBoiler_gen_W
 
     else:
-        source_BaseBoiler = 0
         Q_BaseBoiler_gen_W = 0.0
         NG_BaseBoiler_req_W = 0.0
         E_BaseBoiler_req_W = 0.0
 
     if master_to_slave_vars.BoilerPeak_on == 1 and Q_heat_unmet_W > 0:
-        source_PeakBoiler = 1
         if Q_heat_unmet_W >= BOILER_MIN * master_to_slave_vars.BoilerPeak_Q_max_W:  # Boiler can be activated?
             if Q_heat_unmet_W > master_to_slave_vars.BoilerPeak_Q_max_W:  # Boiler above maximum Load?
                 Q_PeakBoiler_gen_W = master_to_slave_vars.BoilerPeak_Q_max_W
@@ -247,7 +236,6 @@ def heating_source_activator(Q_therm_req_W,
                                                                           master_to_slave_vars.BoilerPeak_Q_max_W,
                                                                           tdhret_req_K)
         else:
-            source_PeakBoiler = 0
             Q_PeakBoiler_gen_W = 0.0
             NG_PeakBoiler_req_W = 0
             E_PeakBoiler_req_W = 0.0
@@ -255,7 +243,6 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_PeakBoiler_gen_W
 
     else:
-        source_PeakBoiler = 0
         Q_PeakBoiler_gen_W = 0.0
         NG_PeakBoiler_req_W = 0
         E_PeakBoiler_req_W = 0.0
@@ -264,7 +251,6 @@ def heating_source_activator(Q_therm_req_W,
         Q_uncovered_W = Q_heat_unmet_W  # this will become the back-up boiler
     else:
         Q_uncovered_W = 0.0
-
 
     return Q_HPSew_gen_W, \
            Q_HPLake_gen_W, \
@@ -287,4 +273,5 @@ def heating_source_activator(Q_therm_req_W,
            NG_BaseBoiler_req_W, \
            NG_PeakBoiler_req_W, \
            WetBiomass_Furnace_req_W, \
-           DryBiomass_Furnace_req_W
+           DryBiomass_Furnace_req_W, \
+           deltaP_water_body_network_Pa
