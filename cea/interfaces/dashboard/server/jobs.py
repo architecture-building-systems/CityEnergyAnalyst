@@ -85,6 +85,7 @@ class NewJob(Resource):
         print("NewJob: args={args}".format(**locals()))
         job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
         jobs[job.id] = job
+        current_app.socketio.emit("cea-job-created", api.marshal(job, job_info_model))
         return job
 
 
