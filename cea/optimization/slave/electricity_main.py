@@ -421,13 +421,10 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
     elif master_to_slave_vars.DCN_exists:
         for name in building_names:
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
+            E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
             if name in buildings_connected_to_district_cooling:
-                # if connected to the cooling network
-                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
                 E_cs_cre_cdata_req_W += 0.0
             else:
-                # if not then get electric boilers etc form baseline.
-                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
                 if name in building_names_cooling:
                     # if there is a decentralized cooling use it.
                     building_dencentralized_system = pd.read_csv(
