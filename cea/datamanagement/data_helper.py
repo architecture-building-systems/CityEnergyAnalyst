@@ -212,6 +212,17 @@ def calc_mainuse(uses_df, uses):
     :rtype mainuse: ndarray
 
     """
+
+    # print a warning if there are equal shares of more than one "main" use
+    indexed_df = uses_df.set_index('Name')
+    for building in indexed_df.index:
+        mainuses = [use for use in uses if
+                    (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
+        if len(mainuses) > 1:
+            print '%s has equal share of %s; the construction properties and systems for %s will be used.' % (
+            building, ' and '.join(mainuses), mainuses[0])
+
+    # get array of main use for each building
     databaseclean = uses_df[uses].transpose()
     array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
     for i in range(len(array_max)):
