@@ -222,8 +222,17 @@ Activation curve,Q_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to di
 Activation curve,Q_BaseBoiler_gen_directload_W,W,Base boiler generation,red
 Activation curve,Q_PeakBoiler_gen_directload_W,W,Peak boiler generation,black
 Activation curve,Q_BackupBoiler_gen_directload_W,W,Back-up boiler generation,grey
-Activation curve,Q_Storage_gen_directload_W,W,Thermal storage to direct load,red_light
+Activation curve,Q_Storage_gen_directload_W,W,Seasonal thermal storage to direct load,red_light
 Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
+
+Activation curve,Q_DailyStorage_gen_directload_W,W,Daily thermal storage to direct load,red_light
+Activation curve,Q_Trigen_NG_gen_directload_W,W,NG-fired trigeneration to direct load,blue
+Activation curve,Q_BaseVCC_WS_gen_directload_W,W,Water-source Base VCC to direct load,blue_light
+Activation curve,Q_PeakVCC_WS_gen_directload_W,W,Water-source Peak VCC to direct load,blue_lighter
+Activation curve,Q_BaseVCC_AS_gen_directload_W,W,Air-source Base VCC to direct load,green
+Activation curve,Q_PeakVCC_AS_gen_directload_W,W,Air-source Peak VCC to direct load,green_light
+Activation curve,Q_BackupVCC_AS_directload_W,W,Air-source Backup VCC to direct load,green_lighter
+Activation curve,Q_districtcooling_sys_req_W,W,Final cooling load the the district cooling plant,grey_light
 
 Activation curve,E_PV_gen_directload_W,W,PV generation to direct load,yellow
 Activation curve,E_PVT_gen_directload_W,W,PVT generation to direct load,red_light
