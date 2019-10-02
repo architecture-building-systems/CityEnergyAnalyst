@@ -15,6 +15,7 @@
 - script: operation-costs
 - script: water-body-potential
 - script: sewage-potential
+- script: shallow-geothermal-potential
 - script: photovoltaic
 - script: solar-collector
   parameters:
