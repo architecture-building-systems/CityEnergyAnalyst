@@ -8,11 +8,11 @@ from pyomo.environ import *
 
 import cea.config
 import cea.inputlocator
-from cea.optimization.flexibility_model.mpc_building import operation_write_results
-from cea.optimization.flexibility_model.mpc_district import planning_and_operation_plots
-from cea.optimization.flexibility_model.mpc_district import planning_and_operation_write_results, \
+from legacy.flexibility_model.mpc_building import operation_write_results
+from legacy.flexibility_model.mpc_district import planning_and_operation_plots
+from legacy.flexibility_model.mpc_district import planning_and_operation_write_results, \
     planning_and_operation_optimization
-from cea.optimization.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA, \
+from legacy.flexibility_model.constants import PARAMETER_SET, TIME_STEP_TS, SOLVER_NAME, TIME_LIMIT, ALPHA, BETA, \
     POWER_FACTOR, VOLTAGE_NOMINAL, INTEREST_RATE, LOAD_FACTOR, APPROX_LOSS_HOURS
 
 __author__ = "Sebastian Troitzsch"

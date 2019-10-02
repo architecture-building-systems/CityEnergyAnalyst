@@ -2,9 +2,9 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from pyomo.environ import *
-from cea.optimization.flexibility_model.mpc_district import planning_and_operation_preprocess_network
-from cea.optimization.flexibility_model.mpc_building import operation_main
-from cea.optimization.flexibility_model.mpc_building.operation_optimization import (  # Constraint rules for operation problem
+from legacy.flexibility_model.mpc_district import planning_and_operation_preprocess_network
+from legacy.flexibility_model.mpc_building import operation_main
+from legacy.flexibility_model.mpc_building import (  # Constraint rules for operation problem
     initial_state_condition_constraint_rule,
     minimal_maximal_output_constraint_rule,
     setback_controls_constraint_rule,
