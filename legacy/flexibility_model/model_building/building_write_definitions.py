@@ -30,7 +30,7 @@ import warnings
 import shutil
 import numpy as np
 import pandas as pd
-from cea.optimization.flexibility_model import model_building
+from legacy.flexibility_model import model_building
 
 __author__ = "Sebastian Troitzsch"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
