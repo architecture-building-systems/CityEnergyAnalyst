@@ -4,7 +4,7 @@ from pyomo.environ import *
 
 import cea.config
 import cea.inputlocator
-import cea.optimization.flexibility_model.electric_and_thermal_grid_planning.plot_functions as pf
+import legacy.flexibility_model.electric_and_thermal_grid_planning.plot_functions as pf
 import pyomo_multi_linetype
 from concept_parameters import *
 
