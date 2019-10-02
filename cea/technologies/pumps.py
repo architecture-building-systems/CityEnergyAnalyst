@@ -193,12 +193,17 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD
 
 
-def calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
-                                   T_district_cooling_return_K,
-                                   T_district_cooling_supply_K):
-    mdot_DCN_kgpers = Q_BaseVCC_WS_gen_W / (T_district_cooling_return_K - T_district_cooling_supply_K)
+def calc_water_body_uptake_pumping(Q_gen_W,
+                                   T_district_return_K,
+                                   T_district_supply_K):
 
+    # Values for the calculation of Delta P (from F. Muller network optimization code)
+    # WARNING : current = values for Inducity - Zug
+    DELTA_P_COEFF = 104.81
+    DELTA_P_ORIGIN = 59016
+
+    mdot_DCN_kgpers = Q_gen_W / abs((T_district_return_K - T_district_supply_K)) #since it is used for heating and cooling
     deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
     E_used_Lake_W = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
 
-    return E_used_Lake_W
+    return E_used_Lake_W, deltaP
