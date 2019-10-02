@@ -7,6 +7,7 @@ import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as CTModel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
+from cea.technologies.pumps import calc_water_body_uptake_pumping
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,7 +34,7 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K):
 def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_re_K,
                           T_DCN_sup_K,
-                          T_source_K ):
+                          T_source_K):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
@@ -49,7 +50,6 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
 
     return Qc_VCC_W, E_used_VCC_W
-
 
 
 def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop):
@@ -88,7 +88,6 @@ def cooling_resource_activator(Q_thermal_req,
                                master_to_slave_variables,
                                chiller_prop,
                                CCGT_operation_data):
-
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_W = 0.0
@@ -120,7 +119,6 @@ def cooling_resource_activator(Q_thermal_req,
 
         # TODO: CONFIRM THAT THIS WORKS AS INTENDED
         if Qh_CCGT_req_W >= q_output_CC_min_W:
-            source_Trigen_NG = 1
             if Q_cooling_unmet_W > size_trigen_W:
                 Qc_Trigen_gen_directload_W = size_trigen_W
                 Qc_Trigen_gen_storage_W = 0.0
@@ -163,7 +161,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_Trigen_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
-        source_Trigen_NG = 0
         Q_Trigen_gen_W = 0.0
         NG_Trigen_req_W = 0.0
         E_Trigen_NG_gen_W = 0.0
@@ -171,7 +168,6 @@ def cooling_resource_activator(Q_thermal_req,
     # Base VCC water-source
     if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
         # Free cooling possible from the lake
-        source_BaseVCC_WS = 1
         if Q_cooling_unmet_W > Q_therm_Lake_W:
             Qc_BaseVCC_WS_gen_directload_W = Q_therm_Lake_W
             Qc_BaseVCC_WS_gen_storage_W = 0.0
@@ -192,20 +188,29 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     )
+
+            # Delta P from linearization after distribution optimization
+            E_pump_WS_req_W, deltaP_water_body_network_Pa =  calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                                 T_district_cooling_return_K,
+                                                                 T_district_cooling_supply_K)
+            E_BaseVCC_WS_req_W += E_pump_WS_req_W
+
+
         else:  # bypass, do not use chiller
-            E_BaseVCC_WS_req_W = 0.0
+            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                                T_district_cooling_return_K,
+                                                                T_district_cooling_supply_K)
+            E_BaseVCC_WS_req_W = E_pump_WS_req_W
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_BaseVCC_WS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
-        source_BaseVCC_WS = 0
         Q_BaseVCC_WS_gen_W = 0.0
         E_BaseVCC_WS_req_W = 0.0
 
     # Peak VCC water-source
     if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
         # Free cooling possible from the lake
-        source_PeakVCC_WS = 1
         if Q_cooling_unmet_W > Q_therm_Lake_W:
             Qc_PeakVCC_WS_gen_directload_W = Q_therm_Lake_W
             Qc_PeakVCC_WS_gen_storage_W = 0.0
@@ -226,19 +231,27 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     )
+            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                                                T_district_cooling_return_K,
+                                                                T_district_cooling_supply_K)
+
+            E_PeakVCC_WS_req_W += E_pump_WS_req_W
+
         else:  # bypass, do not use chiller
-            E_PeakVCC_WS_req_W = 0.0
+            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                                                T_district_cooling_return_K,
+                                                                T_district_cooling_supply_K)
+            E_PeakVCC_WS_req_W = E_pump_WS_req_W
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_PeakVCC_WS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
-        source_PeakVCC_WS = 0
+        deltaP_water_body_network_Pa = 0.0
         Q_PeakVCC_WS_gen_W = 0.0
         E_PeakVCC_WS_req_W = 0.0
 
     # Base VCC air-source with a cooling tower
     if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
-        source_BaseVCC_AS = 1
         size_AS_BaseVCC_W = master_to_slave_variables.AS_BaseVCC_size_W
         if Q_cooling_unmet_W > size_AS_BaseVCC_W:
             Q_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
@@ -256,19 +269,17 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                  )
+                                                   )
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
-        source_BaseVCC_AS = 0
         Q_BaseVCC_AS_gen_W = 0.0
         E_BaseVCC_AS_req_W = 0.0
 
     # Peak VCC air-source with a cooling tower
     if master_to_slave_variables.AS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
         size_AS_PeakVCC_W = master_to_slave_variables.AS_PeakVCC_size_W
-        source_PeakVCC_AS = 1
         if Q_cooling_unmet_W > size_AS_PeakVCC_W:
             Q_PeakVCC_AS_gen_directload_W = size_AS_PeakVCC_W
             Q_PeakVCC_AS_gen_storage_W = 0.0
@@ -289,7 +300,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_W += Qc_from_storage_W
     else:
-        source_PeakVCC_AS = 0
         Q_PeakVCC_AS_gen_W = 0.0
         E_PeakVCC_AS_req_W = 0.0
 
@@ -317,15 +327,12 @@ def cooling_resource_activator(Q_thermal_req,
         'Q_DailyStorage_WS_gen_W': Q_DailyStorage_gen_W,
     }
 
-    activation_output = {
-        "source_Trigen_NG": source_Trigen_NG,
-        "source_BaseVCC_WS": source_BaseVCC_WS,
-        "source_PeakVCC_WS": source_PeakVCC_WS,
-        "source_BaseVCC_AS": source_BaseVCC_AS,
-        'source_PeakVCC_AS': source_PeakVCC_AS,
-
+    gas_output = {
+        'NG_Trigen_req_W': NG_Trigen_req_W
     }
 
-    gas_output = {'NG_Trigen_req_W': NG_Trigen_req_W}
+    other_useful_quantities = {
+        'deltaP_water_body_network_Pa': deltaP_water_body_network_Pa
+    }
 
-    return daily_storage_class, activation_output, thermal_output, electricity_output, gas_output
+    return daily_storage_class, thermal_output, electricity_output, gas_output, other_useful_quantities

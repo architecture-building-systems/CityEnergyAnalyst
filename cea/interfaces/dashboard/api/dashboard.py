@@ -1,9 +1,10 @@
-from flask_restplus import Namespace, Resource, fields, abort
-from utils import deconstruct_parameters
-
 import hashlib
-import cea.config
+
+from flask import current_app
+from flask_restplus import Namespace, Resource
+
 import cea.plots.cache
+from utils import deconstruct_parameters
 
 api = Namespace('Dashboard', description='Dashboard plots')
 
@@ -28,7 +29,7 @@ class Dashboard(Resource):
         """
         Get Dashboards from yaml file
         """
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -43,7 +44,7 @@ class Dashboard(Resource):
 class DashboardNew(Resource):
     def post(self):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
 
         if 'grid' in form['layout']:
@@ -61,7 +62,7 @@ class DashboardNew(Resource):
 class DashboardDuplicate(Resource):
     def post(self):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
 
         dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['dashboard_index'])
@@ -73,7 +74,7 @@ class DashboardDuplicate(Resource):
 class DashboardDelete(Resource):
     def post(self, dashboard_index):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         cea.plots.delete_dashboard(config, dashboard_index)
 
         return {'message': 'deleted dashboard'}
@@ -83,7 +84,7 @@ class DashboardDelete(Resource):
 class DashboardScenario(Resource):
     def post(self, dashboard_index):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -103,7 +104,7 @@ class DashboardPlotCategories(Resource):
 @api.route('/plot-parameters/<int:dashboard_index>/<int:plot_index>')
 class DashboardPlotParameters(Resource):
     def get(self, dashboard_index, plot_index):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -119,7 +120,7 @@ class DashboardPlotParameters(Resource):
 
     def post(self, dashboard_index, plot_index):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -142,7 +143,7 @@ class DashboardPlotParameters(Resource):
 class DashboardChangePlot(Resource):
     def post(self, dashboard_index, plot_index):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -157,7 +158,7 @@ class DashboardChangePlot(Resource):
 class DashboardAddPlot(Resource):
     def post(self, dashboard_index, plot_index):
         form = api.payload
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 
@@ -171,7 +172,7 @@ class DashboardAddPlot(Resource):
 @api.route('/delete-plot/<int:dashboard_index>/<int:plot_index>')
 class DashboardDeletePlot(Resource):
     def post(self, dashboard_index, plot_index):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
 

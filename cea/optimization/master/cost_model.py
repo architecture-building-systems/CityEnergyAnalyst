@@ -23,9 +23,9 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
-from cea.optimization.constants import ACH_TYPE_DOUBLE
-from cea.optimization.constants import N_PVT
+from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
+from cea.technologies.pumps import calc_Cinv_pump
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -264,9 +264,9 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
 
     sum_dry_biomass_imports_W = (data['DB_Furnace_req_W'])
 
-                                # discount those of disconnected buildings (which are part of the directload
-                                # dispatch, this is only for calculation of emissions purposes
-                                # it avoids double counting when calculating emissions due to decentralized buildings)
+    # discount those of disconnected buildings (which are part of the directload
+    # dispatch, this is only for calculation of emissions purposes
+    # it avoids double counting when calculating emissions due to decentralized buildings)
     sum_electricity_imports_W = (data['E_GRID_directload_W'] -
                                  district_electricity_demands['E_hs_ww_req_disconnected_W'] -
                                  district_electricity_demands['E_cs_cre_cdata_req_disconnected_W'])
@@ -457,6 +457,8 @@ def calc_generation_costs_cooling_storage(locator,
 def calc_generation_costs_cooling(locator,
                                   master_to_slave_variables,
                                   config,
+                                  deltaPmax,
+                                  mdotnMax_kgpers,
                                   ):
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
@@ -484,6 +486,16 @@ def calc_generation_costs_cooling(locator,
         Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
                                                                                                          locator,
                                                                                                          'CH3')
+        # Pump uptake from water body
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
+                                                                               mdotnMax_kgpers,
+                                                                               PUMP_ETA,
+                                                                               locator,
+                                                                               'PU1')
+
+        Capex_a_BaseVCC_WS_USD += Capex_a_pump_USD
+        Opex_fixed_BaseVCC_WS_USD += Opex_fixed_pump_USD
+        Capex_BaseVCC_WS_USD += Capex_pump_USD
     else:
         Capex_a_BaseVCC_WS_USD = 0.0
         Opex_fixed_BaseVCC_WS_USD = 0.0
@@ -496,6 +508,16 @@ def calc_generation_costs_cooling(locator,
         Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(Qc_VCC_nom_W,
                                                                                                          locator,
                                                                                                          'CH3')
+        # Pump uptake from water body
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
+                                                                               mdotnMax_kgpers,
+                                                                               PUMP_ETA,
+                                                                               locator,
+                                                                               'PU1')
+
+        Capex_a_PeakVCC_WS_USD += Capex_a_pump_USD
+        Opex_fixed_PeakVCC_WS_USD += Opex_fixed_pump_USD
+        Capex_PeakVCC_WS_USD += Capex_pump_USD
     else:
         Capex_a_PeakVCC_WS_USD = 0.0
         Opex_fixed_PeakVCC_WS_USD = 0.0
@@ -590,6 +612,8 @@ def calc_generation_costs_heating(locator,
                                   master_to_slave_vars,
                                   config,
                                   storage_activation_data,
+                                  deltaPmax,
+                                  mdotnMax_kgpers
                                   ):
     """
     Computes costs / GHG emisions / primary energy needs
@@ -618,7 +642,8 @@ def calc_generation_costs_heating(locator,
     :rtype: tuple
     """
 
-    thermal_network = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    thermal_network = pd.read_csv(
+        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
@@ -679,6 +704,17 @@ def calc_generation_costs_heating(locator,
         Capex_a_Lake_USD, \
         Opex_fixed_Lake_USD, \
         Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, 'HP2')
+
+        # Pump uptake from water body
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
+                                                                               mdotnMax_kgpers,
+                                                                               PUMP_ETA,
+                                                                               locator,
+                                                                               'PU1')
+        Capex_a_Lake_USD += Capex_a_pump_USD
+        Opex_fixed_Lake_USD += Opex_fixed_pump_USD
+        Capex_Lake_USD += Capex_pump_USD
+
     else:
         Capex_a_Lake_USD = 0.0
         Opex_fixed_Lake_USD = 0.0

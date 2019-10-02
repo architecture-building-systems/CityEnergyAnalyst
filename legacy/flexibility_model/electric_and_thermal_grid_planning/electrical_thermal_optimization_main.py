@@ -14,10 +14,10 @@ from deap import tools
 import cea
 import cea.config
 import cea.inputlocator
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.electrical_grid_calculations import \
+from legacy.flexibility_model.electric_and_thermal_grid_planning import \
     electric_network_optimization
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.optimization_generation import generate_main
-from cea.optimization.flexibility_model.electric_and_thermal_grid_planning.thermal_network_calculations import \
+from legacy.flexibility_model.electric_and_thermal_grid_planning import generate_main
+from legacy.flexibility_model.electric_and_thermal_grid_planning.thermal_network_calculations import \
     thermal_network_calculations
 
 __author__ = "Sreepathi Bhargava Krishna"
