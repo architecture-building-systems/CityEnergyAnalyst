@@ -4,14 +4,13 @@ Implements the Energy Supply pot.
 from __future__ import division
 from __future__ import print_function
 
-import cea.plots.demand
-import cea.plots.demand.energy_demand
+import cea.plots.demand.energy_end_use
 import plotly.graph_objs as go
 
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-class EnergySupplyPlot(cea.plots.demand.energy_demand.EnergyDemandDistrictPlot):
+class EnergySupplyPlot(cea.plots.demand.energy_end_use.EnergyDemandDistrictPlot):
     """Implement the energy-supply plot, inherits most of it's functionality from EnergyDemandDistrictPlot"""
     name = "Energy Use"
 
