@@ -105,14 +105,18 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, network_type, prices)
+    Capex_a_pump_USD, \
+    Opex_fixed_pump_USD, \
+    Capex_pump_USD,\
+    P_motor_tot_W = PumpModel.calc_Ctot_pump(master_to_slave_vars,
+                                             network_features,
+                                             locator,
+                                             network_type)
 
     # summarize
     Capex_Network_USD += Capex_pump_USD
     Capex_a_Network_USD += Capex_a_pump_USD
     Opex_fixed_Network_USD += Opex_fixed_pump_USD
-    Opex_var_Network_USD = Opex_var_pump_USD
 
     # CAPEX AND OPEX OF HEATING SUBSTATIONS
     DHN_barcode = master_to_slave_vars.DHN_barcode
@@ -139,7 +143,6 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
     Capex_Substations_USD = 0.0
     Capex_a_Substations_USD = 0.0
     Opex_fixed_Substations_USD = 0.0
-    Opex_var_Substations_USD = 0.0  # it is asssumed as 0 in substations
     for (index, building_name) in zip(district_network_barcode, building_names):
         if index == "1":
             df = pd.read_csv(
@@ -345,8 +348,14 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
-    Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var_pump_USD, Capex_pump_USD, P_motor_tot_W = PumpModel.calc_Ctot_pump(
-        master_to_slave_vars, network_features, locator, network_type, prices)
+    Capex_a_pump_USD, \
+    Opex_fixed_pump_USD, \
+    Capex_pump_USD, \
+    P_motor_tot_W = PumpModel.calc_Ctot_pump(master_to_slave_vars,
+                                             network_features,
+                                             locator,
+                                             network_type
+                                             )
 
     # COOLING SUBSTATIONS
     DCN_barcode = master_to_slave_vars.DCN_barcode
@@ -361,7 +370,6 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
     Capex_Network_USD += Capex_pump_USD
     Capex_a_Network_USD += Capex_a_pump_USD
     Opex_fixed_Network_USD += Opex_fixed_pump_USD
-    Opex_var_Network_USD = Opex_var_pump_USD
 
     performance = {
         'Capex_a_DCN_connected_USD': Capex_a_Network_USD,
@@ -490,7 +498,7 @@ def calc_generation_costs_cooling(locator,
         # WARNING : current = values for Inducity - Zug
         DELTA_P_COEFF = 104.81
         DELTA_P_ORIGIN = 59016
-        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W/master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W / master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
@@ -518,7 +526,7 @@ def calc_generation_costs_cooling(locator,
         # WARNING : current = values for Inducity - Zug
         DELTA_P_COEFF = 104.81
         DELTA_P_ORIGIN = 59016
-        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_PeakVCC_size_W/master_to_slave_variables.Q_cooling_nom_W # weighted do the max installed
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_PeakVCC_size_W / master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
@@ -720,7 +728,7 @@ def calc_generation_costs_heating(locator,
         # WARNING : current = values for Inducity - Zug
         DELTA_P_COEFF = 104.81
         DELTA_P_ORIGIN = 59016
-        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_vars.HPLake_maxSize_W/master_to_slave_vars.Q_heating_nom_W  # weighted do the max installed
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_vars.HPLake_maxSize_W / master_to_slave_vars.Q_heating_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
