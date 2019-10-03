@@ -60,21 +60,19 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
     """
 
     if network_type == "DH":
-        mdotA_kgpers = pd.read_csv(locator.get_optimization_thermal_network_data_file(
-            master_to_slave_vars.network_data_file_heating),
-            usecols=["mdot_DH_netw_total_kgpers"]).values
+        data = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+        mdotA_kgpers = data["mdot_DH_netw_total_kgpers"].values
         mdotnMax_kgpers = np.max(mdotA_kgpers)
         deltaPmax = np.max(network_features.DeltaP_DHN) * master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
         P_motor_tot_W = 2* network_features.DeltaP_DHN * (mdotA_kgpers / 1000) / PUMP_ETA
 
     if network_type == "DC":
+        data = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_cooling))
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
-            mdotA_kgpers = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_cooling),
-                             usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"]).values
+            mdotA_kgpers = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
         else:
-            mdotA_kgpers = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_cooling),
-                             usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"]).values
+            mdotA_kgpers = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
 
         mdotnMax_kgpers = np.max(mdotA_kgpers)
         deltaPmax = np.max(network_features.DeltaP_DCN) * master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings
