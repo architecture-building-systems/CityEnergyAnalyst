@@ -284,13 +284,18 @@ class BuildingProperties(object):
         df['Am'] = df['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
-        df['Htr_w'] = df['Aw'] * df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
+        # Thermal transmission coefficient for windows and glazing in [W/K]
+        # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
+        df['Htr_w'] = df['Aw'] * df['U_win'] * np.sqrt(df['Hs'])
 
         # direct thermal transmission coefficient to the external environment in [W/K]
-        df['HD'] = df['Aop_sup'] * df['U_wall'] + df['footprint'] * df['U_roof']
+        # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
+        df['HD'] = df['Aop_sup'] * df['U_wall'] * np.sqrt(df['Hs']) + df['footprint'] * df['U_roof'] * df['Hs']
 
-        df['Hg'] = B_F * df['Aop_bel'] * df[
-            'U_base']  # steady-state Thermal transmission coefficient to the ground. in W/K
+        # steady-state Thermal transmission coefficient to the ground. in W/K
+        df['Hg'] = B_F * df['Aop_bel'] * df['U_base'] * df['Hs']
+
+        # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
         df['Htr_ms'] = H_MS * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
