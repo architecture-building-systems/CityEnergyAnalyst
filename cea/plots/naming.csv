@@ -289,11 +289,11 @@ Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey
 Activation curve,E_BackupBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
 
 
-Activation curve,E_BaseVCC_WS_req_W,W,Demand of Water-source base VCC,green_light
+Activation curve,E_BaseVCC_WS_req_W,W,Demand of Water-source base VCC,green
 Activation curve,E_PeakVCC_WS_req_W,W,Demand of Water-source peak VCC,green_light
-Activation curve,E_BaseVCC_AS_req_W,W,Demand of Air-source base VCC,green_light
-Activation curve,E_PeakVCC_AS_req_W,W,Demand of Air-source peak VCC,green_light
-Activation curve,E_BackupVCC_AS_req_W,W,Demand of Air-source backup VCC,green_light
+Activation curve,E_BaseVCC_AS_req_W,W,Demand of Air-source base VCC,blue
+Activation curve,E_PeakVCC_AS_req_W,W,Demand of Air-source peak VCC,blue_light
+Activation curve,E_BackupVCC_AS_req_W,W,Demand of Air-source backup VCC,blue_lighter
 
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity of thermal storage,green
 Activation curve,E_total_req_W,W,Electricity required by the district energy system,black
