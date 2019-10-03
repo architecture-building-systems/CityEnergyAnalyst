@@ -93,7 +93,8 @@ def cooling_resource_activator(Q_thermal_req,
     Q_DailyStorage_gen_W = 0.0
 
     ## ACTIVATE THE TRIGEN
-    if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0:
+    if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(T_district_cooling_supply_K,
+                                                                                        T_district_cooling_return_K):
         size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size_W
         if Q_cooling_unmet_W > size_trigen_W:
             Q_Trigen_gen_W = size_trigen_W
@@ -165,7 +166,8 @@ def cooling_resource_activator(Q_thermal_req,
         E_Trigen_NG_gen_W = 0.0
 
     # Base VCC water-source
-    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(T_district_cooling_supply_K,
+                                                                                        T_district_cooling_return_K):
         # Free cooling possible from the lake
         if Q_cooling_unmet_W > Q_therm_Lake_W:
             Qc_BaseVCC_WS_gen_directload_W = Q_therm_Lake_W
@@ -209,7 +211,8 @@ def cooling_resource_activator(Q_thermal_req,
         E_BaseVCC_WS_req_W = 0.0
 
     # Peak VCC water-source
-    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(T_district_cooling_supply_K,
+                                                                                        T_district_cooling_return_K):
         # Free cooling possible from the lake
         if Q_cooling_unmet_W > Q_therm_Lake_W:
             Qc_PeakVCC_WS_gen_directload_W = Q_therm_Lake_W
@@ -251,7 +254,8 @@ def cooling_resource_activator(Q_thermal_req,
         E_PeakVCC_WS_req_W = 0.0
 
     # Base VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(T_district_cooling_supply_K,
+                                                                                        T_district_cooling_return_K):
         size_AS_BaseVCC_W = master_to_slave_variables.AS_BaseVCC_size_W
         if Q_cooling_unmet_W > size_AS_BaseVCC_W:
             Q_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
@@ -278,7 +282,8 @@ def cooling_resource_activator(Q_thermal_req,
         E_BaseVCC_AS_req_W = 0.0
 
     # Peak VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0:
+    if master_to_slave_variables.AS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0and not np.isclose(T_district_cooling_supply_K,
+                                                                                        T_district_cooling_return_K):
         size_AS_PeakVCC_W = master_to_slave_variables.AS_PeakVCC_size_W
         if Q_cooling_unmet_W > size_AS_PeakVCC_W:
             Q_PeakVCC_AS_gen_directload_W = size_AS_PeakVCC_W
