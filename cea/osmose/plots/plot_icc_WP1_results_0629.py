@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# In[2]:
+
 
 def main():
     # get all file paths
@@ -169,13 +163,6 @@ def plot_icc(x_heat, y_carnot, tech, line_types, parts_of_data, data_df, folder_
     fig.savefig(os.path.join(folder_path, str(t) + '_hourly_carnot_' + line_type + '_' + part_of_data + '.png'))
     return
 
-
-# In[9]:
-
-
-
-
-# In[ ]:
 
 if __name__ == '__main__':
     main()
