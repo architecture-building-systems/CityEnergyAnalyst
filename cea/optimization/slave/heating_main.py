@@ -155,18 +155,17 @@ def district_heating_network(locator,
     NG_BaseBoiler_req_W, \
     NG_PeakBoiler_req_W, \
     WetBiomass_Furnace_req_W, \
-    DryBiomass_Furnace_req_W, \
-    deltaP_water_body_network_Pa = np.vectorize(heating_source_activator)(Q_thermal_req_W,
-                                                                          master_to_slave_variables,
-                                                                          Q_therm_GHP_W,
-                                                                          T_source_average_GHP_W,
-                                                                          T_source_average_Lake_K,
-                                                                          Q_therm_Lake_W,
-                                                                          Q_therm_Sew_W,
-                                                                          T_source_average_sewage_K,
-                                                                          T_district_heating_supply_K,
-                                                                          T_district_heating_return_K
-                                                                          )
+    DryBiomass_Furnace_req_W = np.vectorize(heating_source_activator)(Q_thermal_req_W,
+                                                                      master_to_slave_variables,
+                                                                      Q_therm_GHP_W,
+                                                                      T_source_average_GHP_W,
+                                                                      T_source_average_Lake_K,
+                                                                      Q_therm_Lake_W,
+                                                                      Q_therm_Sew_W,
+                                                                      T_source_average_sewage_K,
+                                                                      T_district_heating_supply_K,
+                                                                      T_district_heating_return_K
+                                                                      )
 
     # BACK-UP BOILER
     master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_BackupBoiler_gen_W)
@@ -180,13 +179,11 @@ def district_heating_network(locator,
         NG_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
-    deltaPmax = np.amax(deltaP_water_body_network_Pa)
     mdotnMax_kgpers = np.amax(mdot_DH_kgpers)
     performance_costs_generation = cost_model.calc_generation_costs_heating(locator,
                                                                             master_to_slave_variables,
                                                                             config,
                                                                             storage_dispatch,
-                                                                            deltaPmax,
                                                                             mdotnMax_kgpers
                                                                             )
 
