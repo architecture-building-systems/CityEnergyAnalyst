@@ -150,7 +150,6 @@ def cooling_resource_activator(Q_thermal_req,
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
                 E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
         else:
-            source_Trigen_NG = 0
             Q_Trigen_gen_W = 0.0
             NG_Trigen_req_W = 0.0
             E_Trigen_NG_gen_W = 0.0
@@ -190,16 +189,17 @@ def cooling_resource_activator(Q_thermal_req,
                                                     )
 
             # Delta P from linearization after distribution optimization
-            E_pump_WS_req_W, deltaP_water_body_network_Pa =  calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
-                                                                 T_district_cooling_return_K,
-                                                                 T_district_cooling_supply_K)
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
+
             E_BaseVCC_WS_req_W += E_pump_WS_req_W
 
 
         else:  # bypass, do not use chiller
-            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
-                                                                T_district_cooling_return_K,
-                                                                T_district_cooling_supply_K)
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
             E_BaseVCC_WS_req_W = E_pump_WS_req_W
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_BaseVCC_WS_gen_directload_W - Qc_from_storage_W
@@ -231,16 +231,16 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     )
-            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
-                                                                T_district_cooling_return_K,
-                                                                T_district_cooling_supply_K)
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
 
             E_PeakVCC_WS_req_W += E_pump_WS_req_W
 
         else:  # bypass, do not use chiller
-            E_pump_WS_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
-                                                                T_district_cooling_return_K,
-                                                                T_district_cooling_supply_K)
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
             E_PeakVCC_WS_req_W = E_pump_WS_req_W
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_PeakVCC_WS_gen_directload_W - Qc_from_storage_W
@@ -331,8 +331,4 @@ def cooling_resource_activator(Q_thermal_req,
         'NG_Trigen_req_W': NG_Trigen_req_W
     }
 
-    other_useful_quantities = {
-        'deltaP_water_body_network_Pa': deltaP_water_body_network_Pa
-    }
-
-    return daily_storage_class, thermal_output, electricity_output, gas_output, other_useful_quantities
+    return daily_storage_class, thermal_output, electricity_output, gas_output
