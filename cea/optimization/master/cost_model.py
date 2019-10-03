@@ -457,7 +457,6 @@ def calc_generation_costs_cooling_storage(locator,
 def calc_generation_costs_cooling(locator,
                                   master_to_slave_variables,
                                   config,
-                                  deltaPmax,
                                   mdotnMax_kgpers,
                                   ):
     # TRIGENERATION
@@ -487,6 +486,12 @@ def calc_generation_costs_cooling(locator,
                                                                                                          locator,
                                                                                                          'CH3')
         # Pump uptake from water body
+        # Values for the calculation of Delta P (from F. Muller network optimization code)
+        # WARNING : current = values for Inducity - Zug
+        DELTA_P_COEFF = 104.81
+        DELTA_P_ORIGIN = 59016
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W//master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
+        deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
                                                                                PUMP_ETA,
@@ -509,6 +514,12 @@ def calc_generation_costs_cooling(locator,
                                                                                                          locator,
                                                                                                          'CH3')
         # Pump uptake from water body
+        # Values for the calculation of Delta P (from F. Muller network optimization code)
+        # WARNING : current = values for Inducity - Zug
+        DELTA_P_COEFF = 104.81
+        DELTA_P_ORIGIN = 59016
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_PeakVCC_size_W/master_to_slave_variables.Q_cooling_nom_W # weighted do the max installed
+        deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
                                                                                PUMP_ETA,
@@ -612,7 +623,6 @@ def calc_generation_costs_heating(locator,
                                   master_to_slave_vars,
                                   config,
                                   storage_activation_data,
-                                  deltaPmax,
                                   mdotnMax_kgpers
                                   ):
     """
@@ -706,6 +716,12 @@ def calc_generation_costs_heating(locator,
         Capex_Lake_USD = hp.calc_Cinv_HP(HP_Size_W, locator, 'HP2')
 
         # Pump uptake from water body
+        # Values for the calculation of Delta P (from F. Muller network optimization code)
+        # WARNING : current = values for Inducity - Zug
+        DELTA_P_COEFF = 104.81
+        DELTA_P_ORIGIN = 59016
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_vars.HPLake_maxSize_W/master_to_slave_vars.Q_heating_nom_W  # weighted do the max installed
+        deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
                                                                                PUMP_ETA,
