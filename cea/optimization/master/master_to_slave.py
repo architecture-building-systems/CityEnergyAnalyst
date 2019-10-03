@@ -228,20 +228,22 @@ def calc_master_to_slave_variables(locator, gen,
                                                                    master_to_slave_vars)
 
     if master_to_slave_vars.DHN_exists:
+        master_to_slave_vars.Q_heating_nom_W = Q_heating_nom_W
         master_to_slave_vars = master_to_slave_district_heating_technologies(Q_heating_nom_W,
                                                                              Q_wasteheat_datacentre_nom_W,
                                                                              individual_with_names_dict, locator,
                                                                              master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
-        master_to_slave_vars = master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W,
+        master_to_slave_vars.Q_cooling_nom_W = Q_cooling_nom_W
+        master_to_slave_vars = master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                                              individual_with_names_dict,
                                                                              master_to_slave_vars)
 
     return master_to_slave_vars
 
 
-def master_to_slave_district_cooling_technologies(locator, Q_cooling_nom_W, individual_with_names_dict,
+def master_to_slave_district_cooling_technologies(Q_cooling_nom_W, individual_with_names_dict,
                                                   master_to_slave_vars):
     # COOLING SYSTEMS
     # NG-Fired Trigen with Absorption Chiller
