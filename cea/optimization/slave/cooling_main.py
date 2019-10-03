@@ -100,24 +100,22 @@ def district_cooling_network(locator,
     E_PeakVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
     E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     NG_Trigen_req_W = np.zeros(HOURS_IN_YEAR)
-    deltaP_water_body_network_Pa = np.zeros(HOURS_IN_YEAR)
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
             thermal_output, \
             electricity_output, \
-            gas_output, \
-            other_useful_quantities = cooling_resource_activator(Q_thermal_req_W[hour],
-                                                                 T_district_cooling_supply_K[hour],
-                                                                 T_district_cooling_return_K[hour],
-                                                                 Q_therm_Lake_W[hour],
-                                                                 T_source_average_Lake_K[hour],
-                                                                 daily_storage,
-                                                                 T_ground_K[hour],
-                                                                 master_to_slave_variables,
-                                                                 ACH_prop,
-                                                                 CCGT_prop)
+            gas_output = cooling_resource_activator(Q_thermal_req_W[hour],
+                                                    T_district_cooling_supply_K[hour],
+                                                    T_district_cooling_return_K[hour],
+                                                    Q_therm_Lake_W[hour],
+                                                    T_source_average_Lake_K[hour],
+                                                    daily_storage,
+                                                    T_ground_K[hour],
+                                                    master_to_slave_variables,
+                                                    ACH_prop,
+                                                    CCGT_prop)
 
             Q_Trigen_NG_gen_W[hour] = thermal_output['Q_Trigen_NG_gen_W']
             Q_BaseVCC_WS_gen_W[hour] = thermal_output['Q_BaseVCC_WS_gen_W']
@@ -134,13 +132,11 @@ def district_cooling_network(locator,
             E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
             NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
-            deltaP_water_body_network_Pa[hour] = other_useful_quantities['deltaP_water_body_network_Pa']
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0:
         master_to_slave_variables.AS_BackupVCC_on = 1
-
         for hour in range(HOURS_IN_YEAR):
             Q_BackupVCC_AS_gen_W[hour], \
             E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
@@ -149,12 +145,10 @@ def district_cooling_network(locator,
                                                                VCC_T_COOL_IN)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
-    deltaPmax = np.amax(deltaP_water_body_network_Pa)
     mdotnMax_kgpers = np.amax(mdot_kgpers)
     performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
                                                                             master_to_slave_variables,
                                                                             config,
-                                                                            deltaPmax,
                                                                             mdotnMax_kgpers
                                                                             )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
