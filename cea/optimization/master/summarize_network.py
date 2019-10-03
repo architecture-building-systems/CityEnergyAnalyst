@@ -256,7 +256,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                                 "Q_DC_space_cooling_data_center_and_refrigeration_losses_W": Q_DC_space_cooling_data_center_and_refrigeration_losses_W})
 
 
-    results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False)
+    results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False, float_format='%.3f')
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key
 
