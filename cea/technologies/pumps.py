@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from math import log
 import numpy as np
 from cea.optimization.constants import PUMP_ETA
-from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
+from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -132,27 +132,12 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
     E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
-    x = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220,
-         260, 315, 335, 375]  # Nominal load in kW
-    y = [630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170,
-         169, 168, 167, 165, 162, 161.9]  # efficiency in %
-    # do the interpolation
-    x1 = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200,
-          220, 260, 315, 335, 375]  # Nominal load in kW
-    y1 = [720, 680, 585, 425, 330, 275, 220, 195, 180, 150, 145, 143, 135, 120, 115, 114, 110, 100, 90, 88, 85, 80, 75,
-          74, 74, 73, 72, 71.9]  # efficiency in %
-    InvC_mot = interp1d(x, y, kind='cubic')
-    InvC_VFC = interp1d(x1, y1, kind='cubic')
-
     Pump_max_kW = 375.0
     Pump_min_kW = 0.5
     nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
     # if the nominal load (electric) > 375kW, a new pump is installed
     Pump_Array_W = np.zeros((nPumps))
     Pump_Remain_W = P_motor_tot_W
-
-    # if PpumpRemain < PpumpMinkW * 1000:
-    #   PpumpRemain = PpumpMinkW * 1000
 
     Capex_a_pump_USD = 0.0
     Opex_fixed_pump_USD = 0.0
@@ -202,8 +187,8 @@ def calc_water_body_uptake_pumping(Q_gen_W,
     DELTA_P_COEFF = 104.81
     DELTA_P_ORIGIN = 59016
 
-    mdot_DCN_kgpers = Q_gen_W / abs((T_district_return_K - T_district_supply_K)) #since it is used for heating and cooling
+    mdot_DCN_kgpers = Q_gen_W / abs((T_district_return_K - T_district_supply_K)*HEAT_CAPACITY_OF_WATER_JPERKGK) #since it is used for heating and cooling
     deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
     E_used_Lake_W = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
 
-    return E_used_Lake_W, deltaP
+    return E_used_Lake_W
