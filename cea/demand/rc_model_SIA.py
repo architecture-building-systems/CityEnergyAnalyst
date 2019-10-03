@@ -590,11 +590,10 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     m_ve_mech = tsd['m_ve_mech'][t]
     m_ve_window = tsd['m_ve_window'][t]
     m_ve_inf = tsd['m_ve_inf'][t]
-    El = tsd['El'][t]
-    Ea = tsd['Ea'][t]
+    El = tsd['El'][t] * (bpr.architecture.Hs / bpr.architecture.Es)  # account for a proportion of internal gains
+    Ea = tsd['Ea'][t] * (bpr.architecture.Hs / bpr.architecture.Es)  # account for a proportion of internal gains
     Epro = tsd['Epro'][t]
-    people = tsd['people'][t]
-    I_sol = tsd['I_sol_and_I_rad'][t]
+    I_sol = tsd['I_sol_and_I_rad'][t] * np.sqrt(bpr.architecture.Hs)  # account for a proportion of solar gains
     T_ext = tsd['T_ext'][t]
     theta_ve_mech = tsd['theta_ve_mech'][t]
 
