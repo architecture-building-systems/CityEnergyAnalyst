@@ -164,5 +164,7 @@ def calc_water_body_uptake_pumping(Q_gen_W,
     mdot_DCN_kgpers = Q_gen_W / abs((T_district_return_K - T_district_supply_K)*HEAT_CAPACITY_OF_WATER_JPERKGK) #since it is used for heating and cooling
     deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
     E_used_Lake_W = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
+    if E_used_Lake_W == float("inf"):
+        print(mdot_DCN_kgpers, deltaP, E_used_Lake_W, Q_gen_W, T_district_return_K, T_district_supply_K)
 
     return E_used_Lake_W
