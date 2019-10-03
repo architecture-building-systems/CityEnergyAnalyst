@@ -11,7 +11,6 @@ import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.master import cost_model
-from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.technologies.boiler import cond_boiler_op_cost
@@ -156,18 +155,18 @@ def district_heating_network(locator,
     NG_BaseBoiler_req_W, \
     NG_PeakBoiler_req_W, \
     WetBiomass_Furnace_req_W, \
-    DryBiomass_Furnace_req_W,\
+    DryBiomass_Furnace_req_W, \
     deltaP_water_body_network_Pa = np.vectorize(heating_source_activator)(Q_thermal_req_W,
-                                              master_to_slave_variables,
-                                              Q_therm_GHP_W,
-                                              T_source_average_GHP_W,
-                                              T_source_average_Lake_K,
-                                              Q_therm_Lake_W,
-                                              Q_therm_Sew_W,
-                                              T_source_average_sewage_K,
-                                              T_district_heating_supply_K,
-                                              T_district_heating_return_K
-                                              )
+                                                                          master_to_slave_variables,
+                                                                          Q_therm_GHP_W,
+                                                                          T_source_average_GHP_W,
+                                                                          T_source_average_Lake_K,
+                                                                          Q_therm_Lake_W,
+                                                                          Q_therm_Sew_W,
+                                                                          T_source_average_sewage_K,
+                                                                          T_district_heating_supply_K,
+                                                                          T_district_heating_return_K
+                                                                          )
 
     # BACK-UP BOILER
     master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_BackupBoiler_gen_W)
@@ -198,7 +197,6 @@ def district_heating_network(locator,
                                                                               network_features,
                                                                               "DH",
                                                                               prices)
-
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
     district_heating_costs = dict(performance_costs_generation, **performance_costs_network)
@@ -269,7 +267,7 @@ def district_heating_network(locator,
 
     return district_heating_costs, \
            district_heating_generation_dispatch, \
-           district_heating_electricity_requirements_dispatch,\
+           district_heating_electricity_requirements_dispatch, \
            district_heating_fuel_requirements_dispatch
 
 
