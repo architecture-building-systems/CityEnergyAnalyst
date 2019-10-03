@@ -171,7 +171,7 @@ def heating_source_activator(Q_therm_req_W,
                                                                                tdhret_req_K,
                                                                                TretLakeArray_K
                                                                                )
-        E_pump_req_W, deltaP_water_body_network_Pa = calc_water_body_uptake_pumping(Q_HPLake_gen_W,
+        E_pump_req_W = calc_water_body_uptake_pumping(Q_HPLake_gen_W,
                                                          tdhret_req_K,
                                                          tdhsup_K)
 
@@ -180,7 +180,6 @@ def heating_source_activator(Q_therm_req_W,
         Q_heat_unmet_W = Q_heat_unmet_W - Q_HPLake_gen_W
 
     else:
-        deltaP_water_body_network_Pa = 0.0
         E_HPLake_req_W = 0.0
         Q_HPLake_gen_W = 0.0
 
@@ -273,5 +272,4 @@ def heating_source_activator(Q_therm_req_W,
            NG_BaseBoiler_req_W, \
            NG_PeakBoiler_req_W, \
            WetBiomass_Furnace_req_W, \
-           DryBiomass_Furnace_req_W, \
-           deltaP_water_body_network_Pa
+           DryBiomass_Furnace_req_W
