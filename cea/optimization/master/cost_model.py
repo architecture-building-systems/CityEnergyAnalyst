@@ -490,7 +490,7 @@ def calc_generation_costs_cooling(locator,
         # WARNING : current = values for Inducity - Zug
         DELTA_P_COEFF = 104.81
         DELTA_P_ORIGIN = 59016
-        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W//master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
+        mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W/master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
         Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
                                                                                mdotnMax_kgpers,
