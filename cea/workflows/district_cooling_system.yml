@@ -52,4 +52,4 @@
     random-seed: 100
 - script: multi-criteria-analysis
   parameters:
-    generations: 2
+    generation: 2
