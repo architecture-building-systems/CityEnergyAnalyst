@@ -21,28 +21,28 @@ DH_CONVERSION_TECHNOLOGIES_WITH_SIZE_AGGREAGTION_NEEDED = ["NG_Cogen", "WB_Cogen
                                                            "NG_PeakBoiler", "WS_HP", "SS_HP", "GS_HP", "DS_HP"]
 DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = []
 
-DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "WB_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "DB_Cogen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "NG_BaseBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "NG_PeakBoiler": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "WS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "SS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "GS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "DS_HP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "PVT": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
-                                    "SC_ET": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
-                                    "SC_FP": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05},
-                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}
+DH_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Cogen": {"minimum": 0.2},
+                                    "WB_Cogen": {"minimum": 0.2},
+                                    "DB_Cogen": {"minimum": 0.2},
+                                    "NG_BaseBoiler": {"minimum": 0.1},
+                                    "NG_PeakBoiler": {"minimum": 0.1},
+                                    "WS_HP": {"minimum": 0.1},
+                                    "SS_HP": {"minimum": 0.1},
+                                    "GS_HP": {"minimum": 0.1},
+                                    "DS_HP": {"minimum": 0.1},
+                                    "PVT": {"minimum": 0.05},
+                                    "SC_ET": {"minimum": 0.05},
+                                    "SC_FP": {"minimum": 0.05},
+                                    "PV": {"minimum": 0.05}
                                     }
 
-DC_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Trigen": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "WS_BaseVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "WS_PeakVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "AS_BaseVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "AS_PeakVCC": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.1},
-                                    "Storage": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.2},
-                                    "PV": {"liminf": 0.0, "limsup": 1.0, "minimum": 0.05}
+DC_CONVERSION_TECHNOLOGIES_SHARE = {"NG_Trigen": {"minimum": 0.2},
+                                    "WS_BaseVCC": {"minimum": 0.1},
+                                    "WS_PeakVCC": {"minimum": 0.1},
+                                    "AS_BaseVCC": {"minimum": 0.1},
+                                    "AS_PeakVCC": {"minimum": 0.1},
+                                    "Storage": {"minimum": 0.2},
+                                    "PV": {"minimum": 0.05}
                                     }
 DC_TECHNOLOGIES_SHARING_SPACE = []
 
