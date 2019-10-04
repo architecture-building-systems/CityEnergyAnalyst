@@ -24,16 +24,23 @@ OCCUPANT_SCHEDULES = ['ve', 'Qs', 'X']
 ELECTRICITY_SCHEDULES = ['Ea', 'El', 'Ed', 'Qcre']
 WATER_SCHEDULES = ['Vww', 'Vw']
 PROCESS_SCHEDULES = ['Epro', 'Qhpro', 'Qcpro']
+TEMPERATURE_SCHEDULES = ['Ths_set', 'Tcs_set']
 # map specific schedules to archetype schedules
-SCHEDULE_CODE_MAP = {'Ea': 'appliance_light',
+SCHEDULE_CODE_MAP = {'people': 'people',
+                     've': 'people',
+                     'Qs': 'people',
+                     'X': 'people',
+                     'Vww': 'hotwater',
+                     'Vw': 'hotwater',
+                     'Ea': 'appliance_light',
                      'El': 'appliance_light',
                      'Ed': 'appliance_light',
                      'Qcre': 'appliance_light',
                      'Epro': 'process',
                      'Qhpro': 'process',
                      'Qcpro': 'process',
-                     'Ths_set' : 'heating_setpoint',
-                     'Tcs_set' : 'cooling_setpoint'}
+                     'Ths_set': 'heating_setpoint',
+                     'Tcs_set': 'cooling_setpoint'}
 
 
 def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
@@ -107,10 +114,8 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
                                                                          bpr.occupancy, SCHEDULE_CODE_MAP[schedule],
                                                                          archetype_values['people'])
 
-    for schedule in ['Ths_set']:
-        # use schedule of mainuse directly
-        schedules[schedule] = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule]]
-    for schedule in ['Tcs_set']:
+    # temperature set points are not mixed in mix-use buildings
+    for schedule in TEMPERATURE_SCHEDULES:
         # use schedule of mainuse directly
         schedules[schedule] = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule]]
 
@@ -240,7 +245,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         if current_share_of_use > 0:
             occupants_in_current_use = int(
                 archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
-            archetype_schedule = archetype_schedules[num][0]
+            archetype_schedule = archetype_schedules[num]['people']
             for occupant in range(occupants_in_current_use):
                 mu = mu_v[int(len_mu_v * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
