@@ -333,7 +333,7 @@ def is_cooling_season(t, bpr):
 # temperature controllers
 
 
-def calc_simple_temp_control(tsd, bpr, weekday, schedules):
+def calc_simple_temp_control(tsd, bpr, schedules):
     """
 
     :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
