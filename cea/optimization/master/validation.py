@@ -28,13 +28,13 @@ def validation_main(individual_with_name_dict,
         # FOR BUILDINGS CONNECTIONS - constrains that at least 2 buildings should be connected to the network
         lim_inf = 0
         lim_sup = 1
-        candidate = ''
+        candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
+                            column_names_buildings_heating)
         while candidate.count('1') < 2:
-            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in column_names_buildings_heating)
-            if candidate.count('1') < 2:  #there are at least two buildings connected
-                for building_name in column_names_buildings_heating:
-                        individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
-
+            for building_name in column_names_buildings_heating:
+                    individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
+            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
+                                column_names_buildings_heating)
 
         # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
         for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
@@ -69,12 +69,13 @@ def validation_main(individual_with_name_dict,
         #FOR BUILDINGS CONNECTIONS - constrains that at least 2 buildings should be connected to the network
         lim_inf = 0
         lim_sup = 1
-        candidate = ''
+        candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
+                            column_names_buildings_cooling)
         while candidate.count('1') < 2:
-            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in column_names_buildings_cooling)
-            if candidate.count('1') < 2:  #there are at least two buildings connected
-                for building_name in column_names_buildings_cooling:
-                        individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
+            for building_name in column_names_buildings_cooling:
+                    individual_with_name_dict[building_name] = random.randint(lim_inf, lim_sup)
+            candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
+                                column_names_buildings_cooling)
 
         # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
