@@ -325,7 +325,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     if config.demand.predefined_hourly_setpoints:
         tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name, locator)
     else:
-        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek, schedules)
+        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, schedules)
 
     t_prev = get_hours(bpr).next() - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
