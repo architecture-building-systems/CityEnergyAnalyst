@@ -20,6 +20,7 @@ from cea.optimization.master import evaluation
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
+from cea.optimization.master.crossover import crossover_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -162,8 +163,15 @@ def non_dominated_sorting_genetic_algorithm(locator,
                      list,
                      toolbox.individual)
     toolbox.register("mate",
-                     tools.cxUniform,
-                     indpb=CXPB)
+                     crossover_main,
+                     indpb=CXPB,
+                     column_names=column_names,
+                     heating_unit_names_share=heating_unit_names_share,
+                     cooling_unit_names_share=cooling_unit_names_share,
+                     column_names_buildings_heating=column_names_buildings_heating,
+                     column_names_buildings_cooling=column_names_buildings_cooling,
+                     district_heating_network=district_heating_network,
+                     district_cooling_network=district_cooling_network)
     toolbox.register("mutate",
                      mutation_main,
                      indpb=MUTPB,
