@@ -100,6 +100,7 @@ class TestScheduleCreation(unittest.TestCase):
         bpr = building_properties['B01']
         list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+        bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
         archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
