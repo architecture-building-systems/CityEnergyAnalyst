@@ -141,14 +141,8 @@ def main(config):
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
     app.workers = {}  # script-name -> (Process, Connection)
 
-    # FIXME: this needs to be replaced with a better solution
-    print("starting webbrowser timer")
-    threading.Timer(0.5, lambda: webbrowser.open('http://localhost:5050')).start()
-    print("started webbrowser timer")
     print("start socketio.run")
     socketio.run(app, host='localhost', port=5050)
-    print("done socketio.run")
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
