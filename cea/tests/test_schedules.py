@@ -49,8 +49,11 @@ class TestSavingLoadingSchedules(unittest.TestCase):
             for i in range(len(fresh_schedules[schedule])):
                 fresh = fresh_schedules[schedule][i]
                 frozen = frozen_schedules[schedule][i]
-                self.assertEqual(fresh, frozen)
-            self.assertTrue(np.array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
+                if np.isnan(fresh) and np.isnan(frozen):
+                    pass
+                else:
+                    self.assertEqual(fresh, frozen)
+            self.assertIsNone(np.testing.assert_array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
 
 
 class TestBuildingPreprocessing(unittest.TestCase):
