@@ -145,7 +145,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in
                            zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x <= 1.0 else x for x in data_floors_sum]
+        data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
