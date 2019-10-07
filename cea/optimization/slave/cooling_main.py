@@ -85,21 +85,28 @@ def district_cooling_network(locator,
     CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
     # intitalize variables
-    Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_BackupVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_DailyStorage_gen_W = np.zeros(HOURS_IN_YEAR)
+    Q_Trigen_NG_gen_W = []
+    Q_BaseVCC_WS_gen_W = []
+    Q_PeakVCC_WS_gen_W = []
+    Q_BaseVCC_AS_gen_W  = []
+    Q_PeakVCC_AS_gen_W  = []
+    Q_BackupVCC_AS_gen_W  = []
+    Q_DailyStorage_gen_directload_W  = []
 
-    E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
-    E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
-    E_PeakVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
-    E_BaseVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
-    E_PeakVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
-    E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
-    NG_Trigen_req_W = np.zeros(HOURS_IN_YEAR)
+    E_Trigen_NG_gen_W  = []
+    E_BaseVCC_AS_req_W  = []
+    E_PeakVCC_AS_req_W  = []
+    E_BaseVCC_WS_req_W  = []
+    E_PeakVCC_WS_req_W  = []
+    E_BackupVCC_AS_req_W = []
+    NG_Trigen_req_W  = []
+
+    Q_Trigen_NG_gen_directload_W  = []
+    Q_BaseVCC_WS_gen_directload_W  = []
+    Q_PeakVCC_WS_gen_directload_W  = []
+    Q_BaseVCC_AS_gen_directload_W  = []
+    Q_PeakVCC_AS_gen_directload_W = []
+    Q_BackupVCC_AS_directload_W  = []
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
@@ -117,21 +124,29 @@ def district_cooling_network(locator,
                                                     ACH_prop,
                                                     CCGT_prop)
 
-            Q_Trigen_NG_gen_W[hour] = thermal_output['Q_Trigen_NG_gen_W']
-            Q_BaseVCC_WS_gen_W[hour] = thermal_output['Q_BaseVCC_WS_gen_W']
-            Q_PeakVCC_WS_gen_W[hour] = thermal_output['Q_PeakVCC_WS_gen_W']
-            Q_BaseVCC_AS_gen_W[hour] = thermal_output['Q_BaseVCC_AS_gen_W']
-            Q_PeakVCC_AS_gen_W[hour] = thermal_output['Q_PeakVCC_AS_gen_W']
-            Q_BackupVCC_AS_gen_W[hour] = thermal_output['Q_BackupVCC_AS_gen_W']
-            Q_DailyStorage_gen_W[hour] = thermal_output['Q_DailyStorage_WS_gen_W']
+            Q_DailyStorage_gen_directload_W.append(thermal_output['Q_DailyStorage_gen_directload_W'])
+            Q_Trigen_NG_gen_directload_W.append(thermal_output['Q_Trigen_NG_gen_directload_W'])
+            Q_BaseVCC_WS_gen_directload_W.append(thermal_output['Q_BaseVCC_WS_gen_directload_W'])
+            Q_PeakVCC_WS_gen_directload_W.append(thermal_output['Q_PeakVCC_WS_gen_directload_W'])
+            Q_BaseVCC_AS_gen_directload_W.append(thermal_output['Q_BaseVCC_AS_gen_directload_W'])
+            Q_PeakVCC_AS_gen_directload_W.append(thermal_output['Q_PeakVCC_AS_gen_directload_W'])
+            Q_BackupVCC_AS_directload_W.append(thermal_output['Q_BackupVCC_AS_directload_W'])
 
-            E_BaseVCC_WS_req_W[hour] = electricity_output['E_BaseVCC_WS_req_W']
-            E_PeakVCC_WS_req_W[hour] = electricity_output['E_PeakVCC_WS_req_W']
-            E_BaseVCC_AS_req_W[hour] = electricity_output['E_BaseVCC_AS_req_W']
-            E_PeakVCC_AS_req_W[hour] = electricity_output['E_PeakVCC_AS_req_W']
-            E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
+            Q_Trigen_NG_gen_W.append(thermal_output['Q_Trigen_NG_gen_W'])
+            Q_BaseVCC_WS_gen_W.append(thermal_output['Q_BaseVCC_WS_gen_W'])
+            Q_PeakVCC_WS_gen_W.append(thermal_output['Q_PeakVCC_WS_gen_W'])
+            Q_BaseVCC_AS_gen_W.append(thermal_output['Q_BaseVCC_AS_gen_W'])
+            Q_PeakVCC_AS_gen_W.append(thermal_output['Q_PeakVCC_AS_gen_W'])
+            Q_BackupVCC_AS_gen_W.append(thermal_output['Q_BackupVCC_AS_gen_W'])
 
-            NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
+
+            E_BaseVCC_WS_req_W.append(electricity_output['E_BaseVCC_WS_req_W'])
+            E_PeakVCC_WS_req_W.append(electricity_output['E_PeakVCC_WS_req_W'])
+            E_BaseVCC_AS_req_W.append(electricity_output['E_BaseVCC_AS_req_W'])
+            E_PeakVCC_AS_req_W.append(electricity_output['E_PeakVCC_AS_req_W'])
+            E_Trigen_NG_gen_W.append(electricity_output['E_Trigen_NG_gen_W'])
+
+            NG_Trigen_req_W.append(gas_output['NG_Trigen_req_W'])
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
@@ -175,16 +190,26 @@ def district_cooling_network(locator,
         # demand of the network
         "Q_districtcooling_sys_req_W": Q_thermal_req_W,
 
-        # ENERGY GENERATION
+        # ENERGY GENERATION TO DIRECT LOAD
         # from storage
-        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_W,
+        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_directload_W,
         # cooling
-        "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_W,
-        "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_W,
-        "Q_PeakVCC_WS_gen_directload_W": Q_PeakVCC_WS_gen_W,
-        "Q_BaseVCC_AS_gen_directload_W": Q_BaseVCC_AS_gen_W,
-        "Q_PeakVCC_AS_gen_directload_W": Q_PeakVCC_AS_gen_W,
-        "Q_BackupVCC_AS_directload_W": Q_BackupVCC_AS_gen_W,
+        "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
+        "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_directload_W,
+        "Q_PeakVCC_WS_gen_directload_W": Q_PeakVCC_WS_gen_directload_W,
+        "Q_BaseVCC_AS_gen_directload_W": Q_BaseVCC_AS_gen_directload_W,
+        "Q_PeakVCC_AS_gen_directload_W": Q_PeakVCC_AS_gen_directload_W,
+        "Q_BackupVCC_AS_directload_W": Q_BackupVCC_AS_directload_W,
+
+        # ENERGY GENERATION TOTAL
+        # cooling
+        "Q_Trigen_NG_gen_W": Q_Trigen_NG_gen_W,
+        "Q_BaseVCC_WS_gen_W": Q_BaseVCC_WS_gen_W,
+        "Q_PeakVCC_WS_gen_W": Q_PeakVCC_WS_gen_W,
+        "Q_BaseVCC_AS_gen_W": Q_BaseVCC_AS_gen_W,
+        "Q_PeakVCC_AS_gen_W": Q_PeakVCC_AS_gen_W,
+        "Q_BackupVCC_AS_W": Q_BackupVCC_AS_gen_W,
+
         # electricity
         "E_Trigen_NG_gen_W": E_Trigen_NG_gen_W
     }
