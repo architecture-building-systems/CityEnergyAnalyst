@@ -5,6 +5,7 @@ Crossover routines
 from __future__ import division
 
 from deap import tools
+from cea.optimization.master.validation import validation_main
 
 
 def crossover_main(ind1, ind2, indpb,
@@ -77,10 +78,20 @@ def crossover_main(ind1, ind2, indpb,
             ind2_with_name_dict[column] = cross_over_value
 
     # now validate individual
-    #THIS CROSSOVER (UNIFORM DOES NOT NEED VALIDATION BECAUSE NO DATA IS CHANGED.
-    #IF THE CROSSOVER FUNCTION IS CHANGED WE MIGHT NEED SOME VALIDATION
-    # from cea.optimization.master.validation import validation_main
+    # now validate individual
+    ind1_with_name_dict = validation_main(ind1_with_name_dict,
+                                                column_names_buildings_heating,
+                                                column_names_buildings_cooling,
+                                                district_heating_network,
+                                                district_cooling_network
+                                                )
 
+    ind2_with_name_dict = validation_main(ind2_with_name_dict,
+                                                column_names_buildings_heating,
+                                                column_names_buildings_cooling,
+                                                district_heating_network,
+                                                district_cooling_network
+                                                )
 
     # now pass all the values mutated to the original individual
     for i, column in enumerate(column_names):
