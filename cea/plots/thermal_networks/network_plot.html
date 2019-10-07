@@ -1,31 +1,4 @@
-<div id="{{ hash }}" style="height: 100%; position: relative;">
-  <div id="layers-group-{{ hash }}" style="visibility: hidden;">
-    <span class="layer-toggle-{{ hash }}">
-      <label id='connected-{{ hash }}-label' class="map-plot-label">
-        <input id='connected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='connected'>
-        Connected Buildings
-      </label>
-    </span>
-    <span class="layer-toggle-{{ hash }}">
-      <label class="map-plot-label">
-        <input id='disconnected-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='disconnected'>
-        Disconnected Buildings
-      </label>
-    </span>
-    <span class="layer-toggle-{{ hash }}">
-      <label class="map-plot-label">
-        <input id='district-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='district'>
-        District
-      </label>
-    </span>
-    <span class="layer-toggle-{{ hash }}">
-      <label id='network-{{ hash }}-label' class="map-plot-label">
-        <input id='network-{{ hash }}' type='checkbox' name='layer-toggle-{{ hash }}' value='network'>
-        Network
-      </label>
-    </span>
-  </div>
-</div>
+<div id="{{ hash }}" style="height: 100%; position: relative;"></div>
 <div id="map-tooltip-{{ hash }}"></div>
 
 <style>
@@ -55,9 +28,7 @@
     z-index: 1;
     background: rgba(255,255,255,0.9);
   }
-  .layer-toggle-{{ hash }} {
-    padding: 0 5px;
-  }
+
   .mapboxgl-ctrl-3d {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjNEPC90ZXh0Pjwvc3ZnPg==);
   }
@@ -77,12 +48,6 @@
     background-size: 50%;
     background-repeat: no-repeat;
     background-position: center;
-  }
-
-  .mapboxgl-ctrl-layer-toggle {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAA4ElEQVQoz5XRPUuCcRQF8J+hoBI0amYUOUhbL0MvQyDk6ODg2vhsDQ7mA9nU1pA8c1l/wXLxE/jpGizsERs60+Ue7jncc/iNvFgs7w+0TF048eFGZpU8Ta1bpi6XZMWzhxXhnFsv9qAnKK21LAl67Ky5X2rsL8Zgrp2i2+aCHFwbu5LR8e4IHHoV2XAm6NA00QBFA0NDA0XQMNGErGCmBqqqoGYmyMKuxJ2SR0+2wKZ7iW2RNwd0jVVA3UgkMlL/zmesC2WJWAE0F64KYony8q1jk1TUn87/WdZP3X39dKpfwu4uajAKvysAAAAASUVORK5CYII=);
-    background-position: center;
-    background-repeat: no-repeat;
   }
 
   .mapboxgl-ctrl-icon {
@@ -146,12 +111,6 @@
             ]
         };
 
-        // the toggles that show up when the "show layer toggle" icon is clicked
-        const connectedToggle = document.getElementById(`connected-${ hash }`);
-        const disconnectedToggle = document.getElementById(`disconnected-${ hash }`);
-        const districtToggle = document.getElementById(`district-${ hash }`);
-        const networkToggle = document.getElementById(`network-${ hash }`);
-
         let currentViewState = {
             latitude: 0,
             longitude: 0,
@@ -187,16 +146,6 @@
         function init() {
             // Disable context menu
             document.getElementById(hash).oncontextmenu = function(){return false};
-
-            // Register onchange for layer toggles
-            document.getElementsByName(`layer-toggle-${ hash }`).forEach(function (element) {
-                element.onchange = () => redraw()
-            });
-
-            // Check all layer toggle
-            document.getElementsByName(`layer-toggle-${ hash }`).forEach(node => {
-                node.checked = true;
-            });
 
             setupButtons();
             redraw();
@@ -328,48 +277,9 @@
                 }
             }
 
-            class showLayerToggle {
-                constructor() {
-                    this._show = false;
-                }
-                onAdd(map) {
-                    this._map = map;
-
-                    this._btn = document.createElement("button");
-                    this._btn.id = `layer-toggle-button-${ hash }`;
-                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-layer-toggle";
-                    this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
-                    this._btn.setAttribute("data-placement", "left");
-                    this._btn.setAttribute("data-container", "body");
-                    this._btn.setAttribute("data-trigger", "hover");
-                    this._btn.setAttribute("title", "Show layer toggle");
-                    this._btn.onclick = function () {
-                        this._show = !this._show;
-                        if (this._show) {
-                            document.getElementById(`layers-group-${ hash }`).style.visibility = "visible";
-                        } else {
-                            document.getElementById(`layers-group-${ hash }`).style.visibility = "hidden";
-                        }
-                    };
-
-                    this._container = document.createElement("div");
-                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
-                    this._container.appendChild(this._btn);
-
-                    return this._container;
-                }
-
-                onRemove() {
-                    this._container.parentNode.removeChild(this._container);
-                    this._map = undefined;
-                }
-            }
-
             deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
             deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
             deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
-            deckgl.getMapboxMap().addControl(new showLayerToggle(), 'top-right');
             deckgl.setProps({
                 onDragStart: (info, event) => {
                     let dToggleButton = document.getElementById(`3d-button-${ hash }`);
@@ -409,7 +319,7 @@
                 wireframe: true,
                 filled: true,
                 extruded: extruded,
-                visible: districtToggle.checked,
+                visible: true,
 
                 getElevation: f => f.properties['height_ag'],
                 getFillColor: f => JSON.parse(f.properties["_FillColor"]),
