@@ -111,7 +111,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -m cea.interfaces.cli.cli dashboard"
+    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
     FileClose $0
 
 
