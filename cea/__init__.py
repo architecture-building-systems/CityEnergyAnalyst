@@ -1,6 +1,6 @@
 import logging
 
-__version__ = "2.22"
+__version__ = "2.23"
 
 
 class ConfigError(Exception):
