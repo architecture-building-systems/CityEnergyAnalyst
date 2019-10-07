@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import math
 import os
+from cea.utilities.dbf import dbf_to_dataframe
 
 import pandas as pd
 
@@ -27,7 +28,7 @@ def schedule_helper(locator, config):
 
     #local variables
     model = config.schedule_helper.model
-    buildings = config.schedule_helper.model
+    buildings = config.schedule_helper.buildings
 
     #select which model to run and run it
     if model == 'matsim':
@@ -48,17 +49,19 @@ def schedule_helper(locator, config):
         Exception('There is no valid model for schedule helper')
 
 
+def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_file_required2):
+    return 'TEST'
+
+
 def model_with_standard_database(locator, buildings, path_to_standard_schedule_database):
 
-    use = 'MULTI'
-    schedule_data = pd.read_csv(locator.get_database_standard_schedules_use(path_to_standard_schedule_database, use))
+    metadata = path_to_standard_schedule_database
+    schedule_data_all_uses = ScheduleData(locator, path_to_standard_schedule_database)
+    building_uses_weights = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')[buildings]
 
     for name in buildings:
 
 
-
-
-        metadata = path_to_standard_schedule_database
         occupancy_density_m2p = TODO
         monthly_multiplier = TODO
         occupancy_weekday = TODO
@@ -106,8 +109,32 @@ def model_with_standard_database(locator, buildings, path_to_standard_schedule_d
         path_to_building_schedule = locator.get_building_schedules(name)
         save_cea_schedule(schedule_data, path_to_building_schedule)
 
+
+class ScheduleData(object):
+
+    def __init__(self, locator, path_to_standard_schedule_database):
+        self.locator = locator
+        self.path_database = path_to_standard_schedule_database
+        self.schedule = self.fill_in_data()
+
+    def fill_in_data(self):
+        get_list_uses_in_database = []
+        for file in os.listdir(self.path_database):
+            if file.endswith(".ceaschedule"):
+                get_list_uses_in_database.append(file.split('.')[0])
+
+        data_schedules = []
+        for use in get_list_uses_in_database:
+            path_to_schedule = self.locator.get_database_standard_schedules_use(self.path_database, use)
+            data_schedule = read_cea_schedule(path_to_schedule)
+
+        data_schedules.append(data_schedule)
+        return dict(zip(get_list_uses_in_database, data_schedules))
+
+
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    config.schedule_helper.model = 'sia-switzerland'
     schedule_helper(locator, config)
 
 if __name__ == '__main__':
