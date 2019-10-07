@@ -18,11 +18,6 @@ def route_default():
     return redirect(url_for('landing_blueprint.index'))
 
 
-@blueprint.route('/alive')
-def route_alive():
-    return jsonify({'success': True})
-
-
 @blueprint.route('/glossary_search')
 def route_glossary_search():
     query = request.args.get('query')
