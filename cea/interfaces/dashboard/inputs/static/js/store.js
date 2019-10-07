@@ -67,33 +67,33 @@ class InputStore {
             }
             console.log(this.changes);
         }
-
+        window.parent.postMessage(true, '*');
     }
 
     changesToString() {
         var out = '';
 
         if (!$.isEmptyObject(this.changes['update'])) {
-            out += '\nUPDATED:\n';
+            out += '<br>UPDATED:<br>';
             $.each(this.changes['update'], function (table, buildings) {
-                out += `${table}:\n`;
+                out += `${table}:<br>`;
                 $.each(buildings, function (name, properties) {
                     out += `${name}: `;
                     $.each(properties, function (property, value) {
                         out += `${property}:${value} `;
                     });
-                    out += '\n';
+                    out += '<br>';
                 });
-                out += '\n';
+                out += '<br>';
             });
         }
 
         if (!$.isEmptyObject(this.changes['delete'])) {
-            out += '\nDELETED:\n';
+            out += '<br>DELETED:<br>';
             $.each(this.changes['delete'], function (layer, buildings) {
-                out += `${layer}:\n${buildings}\n\n`;
+                out += `${layer}:<br>${buildings}<br>`;
             });
-            out += '\n';
+            out += '<br>';
         }
 
         return out;
@@ -146,6 +146,8 @@ class InputStore {
         this.changes = {update:{},delete:{}};
         this.generateData();
         this.generateGeojsonData();
+
+        window.parent.postMessage(false, '*');
     }
 
     applyChanges(data) {
