@@ -463,6 +463,11 @@ class WeatherPathParameter(Parameter):
             raise cea.ConfigError("Invalid weather path: {}".format(value))
         return weather_path
 
+    @property
+    def default(self):
+        # override base default, since in decode we've banned empty weather file parameters
+        return ""
+
 
 class WorkflowParameter(Parameter):
     typename = "WorkflowParameter"
