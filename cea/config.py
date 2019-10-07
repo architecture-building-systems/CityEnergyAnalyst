@@ -465,7 +465,7 @@ class WeatherPathParameter(Parameter):
 
     @property
     def default(self):
-        # override base default, since in decode we've banned empty weather file parameters
+        """override base default, since in decode we've banned empty weather file parameters"""
         return ""
 
 
