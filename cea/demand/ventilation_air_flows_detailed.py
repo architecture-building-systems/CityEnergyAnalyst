@@ -32,7 +32,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 SHIELDING_CLASS = constants.SHIELDING_CLASS
 
 
@@ -54,6 +53,7 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     slope_roof = slope_roof_default
 
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
+
 
 def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     """
@@ -109,29 +109,23 @@ def get_properties_natural_ventilation(bpr):
     n50 = bpr.architecture.n50
     vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
-    area_facade_zone,\
-    area_roof_zone,\
-    height_zone,\
-    slope_roof = get_building_geometry_ventilation(bpr.geometry)
+    area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(bpr.geometry)
     class_shielding = SHIELDING_CLASS
-#    factor_cros = bpr.architecture.f_cros
+    #    factor_cros = bpr.architecture.f_cros
     factor_cros = 0  # TODO write dict function to look up, ZERO is for office and industrial functions
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
     # (a) LEAKAGES
-    coeff_lea_path,\
-    height_lea_path,\
-    orientation_lea_path = allocate_default_leakage_paths(calc_coeff_lea_zone(qv_delta_p_lea_ref_zone),
-                                                          area_facade_zone, area_roof_zone, height_zone)
+    coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(
+        calc_coeff_lea_zone(qv_delta_p_lea_ref_zone), area_facade_zone, area_roof_zone, height_zone)
 
     coeff_wind_pressure_path_lea = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path,
                                                               slope_roof, factor_cros)
 
     # (b) VENTILATION OPENINGS
-    coeff_vent_path,\
-    height_vent_path,\
-    orientation_vent_path = allocate_default_ventilation_openings(calc_coeff_vent_zone(area_vent_zone), height_zone)
+    coeff_vent_path, height_vent_path, orientation_vent_path = allocate_default_ventilation_openings(
+        calc_coeff_vent_zone(area_vent_zone), height_zone)
     coeff_wind_pressure_path_vent = lookup_coeff_wind_pressure(height_vent_path, class_shielding, orientation_vent_path,
                                                                slope_roof, factor_cros)
 
@@ -148,7 +142,6 @@ def get_properties_natural_ventilation(bpr):
 
 
 # Wind pressure calculation
-
 def calc_u_wind_site(u_wind_10):
     """
     Adjusts meteorological wind velocity to site surroundings according to 6.4.2.2 in [1]
@@ -162,7 +155,7 @@ def calc_u_wind_site(u_wind_10):
     # 0 = open
     # 1 = rural
     # 2 = urban
-    ter_class = 2  # TODO: move to globalvars
+    ter_class = constants.TER_CLASS
 
     # factors from Table B.11 in B.1.4.1 in [1]
     f_wnd = np.array([1.0, 0.9, 0.8])
@@ -280,10 +273,9 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     """
 
     # constants from Table 12 in [1]
-    # TODO import from global variables
-    g = 9.81  # (m/s2)
-    rho_air_ref = 1.23  # (kg/m3)
-    temp_ext_ref = 283  # (K)
+    g = constants.GR  # (m/s2)
+    rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
+    temp_ext_ref = constants.TEMP_EXT_REF  # (K)
 
     temp_zone += 273  # conversion to (K)
     temp_ext += 273  # conversion to (K)
@@ -327,11 +319,11 @@ def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
     :returns: qv_lea_path : volume flow rate across leakage path (m3/h)
     """
     # default values in [1]
-    # TODO reference global variables
-    n_lea = 0.667  # (-), B.1.3.15 in [1]
+    n_lea = constants.N_LEA  # (-), B.1.3.15 in [1]
 
     # Equation (64) in [1]
     qv_lea_path = coeff_lea_path * np.sign(delta_p_lea_path) * np.abs(delta_p_lea_path) ** n_lea
+
     return qv_lea_path
 
 
@@ -344,9 +336,8 @@ def calc_coeff_lea_zone(qv_delta_p_lea_ref):
     :returns: coeff_lea_zone : leakage coefficient of zone
     """
     # default values in [1]
-    # TODO reference global variables
-    delta_p_lea_ref = 50  # (Pa), B.1.3.14 in [1]
-    n_lea = 0.667  # (-), B.1.3.15 in [1]
+    delta_p_lea_ref = constants.DELTA_P_LEA_REF  # (Pa), B.1.3.14 in [1]
+    n_lea = constants.N_LEA  # (-), B.1.3.15 in [1]
 
     # Eq. (B.5) in [1] # TODO: Formula assumed to be wrong in [1], corrected to match Eq. (8) in [2]
     coeff_lea_zone = qv_delta_p_lea_ref / (delta_p_lea_ref ** n_lea)
@@ -446,8 +437,6 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ven
     # Eq. (68) in [1]
     qm_lea_out = qv_lea_out * calc_rho_air(temp_zone)
 
-    # print (qm_lea_in, qm_lea_out)
-
     return qm_lea_in, qm_lea_out
 
 
@@ -463,11 +452,11 @@ def calc_qv_vent_path(coeff_vent_path, delta_p_vent_path):
     :returns: qv_vent_path : air volume flow rate across air path (m3/h)
     """
     # default values in [1]
-    # TODO reference global variables
-    n_vent = 0.5  # (-), B.1.2.2 in [1]
+    n_vent = constants.N_VENT  # (-), B.1.2.2 in [1]
 
     # Equation (60) in [1]
     qv_vent_path = coeff_vent_path * np.sign(delta_p_vent_path) * np.abs(delta_p_vent_path) ** n_vent
+
     return qv_vent_path
 
 
@@ -481,12 +470,11 @@ def calc_coeff_vent_zone(area_vent_zone):
     """
 
     # default values in [1]
-    # TODO reference global variables
-    n_vent = 0.5  # (-), B.1.2.2 in [1]
-    coeff_d_vent = 0.6  # (-), B.1.2.1 in [1]
-    delta_p_vent_ref = 50  # (Pa) FIXME no default value specified in standard
+    n_vent = constants.N_VENT  # (-), B.1.2.2 in [1]
+    coeff_d_vent = constants.COEFF_D_VENT  # (-), B.1.2.1 in [1]
+    delta_p_vent_ref = constants.DELTA_P_VENT_REF  # (Pa) FIXME no default value specified in standard
     # constants from Table 12 in [1]
-    rho_air_ref = 1.23  # (kg/m3)
+    rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
 
     # Eq. (61) in [1]
     coeff_vent_zone = 3600 / 10000 * coeff_d_vent * area_vent_zone * (2 / rho_air_ref) ** 0.5 * \
@@ -574,8 +562,6 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ve
     # Eq. (68) in [1]
     qm_vent_out = qv_vent_out * calc_rho_air(temp_zone)
 
-    # print (qm_lea_in, qm_lea_out)
-
     return qm_vent_in, qm_vent_out
 
 
@@ -629,11 +615,11 @@ def calc_effective_stack_height(dict_windows_building):
     # TODO: maybe this formula is wrong --> check final edition of standard as soon as possible
 
     # first part of Eq. (46) in [1]
-    height_window_stack_1 = dict_windows_building['height_window_in_zone'] + np.array(dict_windows_building[
-                                                                                          'height_window_above_ground']) / 2
+    height_window_stack_1 = dict_windows_building['height_window_in_zone'] + np.array(
+        dict_windows_building['height_window_above_ground']) / 2
     # second part of Eq. (46) in [1]
-    height_window_stack_2 = dict_windows_building['height_window_in_zone'] - np.array(dict_windows_building[
-                                                                                          'height_window_above_ground']) / 2
+    height_window_stack_2 = dict_windows_building['height_window_in_zone'] - np.array(
+        dict_windows_building['height_window_above_ground']) / 2
     # Eq. (46) in [1]
     height_window_stack = max(height_window_stack_1) - min(height_window_stack_2)
 
@@ -704,15 +690,14 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
     if dict_windows_building:
 
         # constants from Table 12 in [1]
-        # TODO import from global variables
-        rho_air_ref = 1.23  # (kg/m3)
-        coeff_turb = 0.01  # (m/s)
-        coeff_wind = 0.001  # (1/(m/s))
-        coeff_stack = 0.0035  # ((m/s)/(mK))
+        rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
+        coeff_turb = constants.COEFF_TURB  # (m/s)
+        coeff_wind = constants.COEFF_WIND  # (1/(m/s))
+        coeff_stack = constants.COEFF_STACK  # ((m/s)/(mK))
 
         # default values from annex B in [1]
-        coeff_d_window = 0.67  # (-), B.1.2.1 in [1]
-        delta_c_p = 0.75  # (-), option 2 in B.1.3.4 in [1]
+        coeff_d_window = constants.COEFF_D_WINDOW  # (-), B.1.2.1 in [1]
+        delta_c_p = constants.DELTA_C_P  # (-), option 2 in B.1.3.4 in [1]
 
         # get necessary inputs
         rho_air_ext = calc_rho_air(temp_ext)
@@ -754,11 +739,10 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
             # TODO this formula was changed from the standard to use the air density in the zone
             # TODO adjusted from the standard to have consistent units
             # TODO check final edition of standard as soon as possible
-            q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * ((
-                                                                    coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
-                                                                    area_window_tot / 2 * (
-                                                                        coeff_stack * h_window_stack * abs(
-                                                                            temp_zone - temp_ext))) ** 2) ** 0.5
+            q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * \
+                          ((coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 +
+                           (area_window_tot / 2 * (coeff_stack * h_window_stack *
+                                                   abs(temp_zone - temp_ext))) ** 2) ** 0.5
 
         # conversion to air mass flows according to 6.4.3.8 in [1]
         # Eq. (67) in [1]
@@ -798,20 +782,15 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
     qm_pdu_out = 0
 
     qm_arg_in = 0  # removed to speed up code, as window ventilation is always balanced
-    #  with the currently implemented method
+    #  with the method currently implemented
     qm_arg_out = 0  #
 
     qm_vent_in, qm_vent_out = calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent)
     qm_lea_in, qm_lea_out = calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent)
 
-    # print('iterate air flows')
-    # print(qm_arg_in, qm_arg_out)
-    # print(qm_vent_in, qm_vent_out)
-    # print(qm_lea_in, qm_lea_out)
-
     # mass balance, Eq. (69) in [1]
-    qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + \
-                 qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
+    qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + \
+                 qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
     qm_sum_in = qm_sup_dis + qm_lea_sup_dis + qm_comb_in + qm_pdu_in + qm_arg_in + qm_vent_in + qm_lea_in
     qm_sum_out = qm_eta_dis + qm_lea_eta_dis + qm_comb_out + qm_pdu_out + qm_arg_out + qm_vent_out + qm_lea_out
 
@@ -820,6 +799,7 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return abs(qm_balance)  # for minimization the mass balance is the output
     elif option == 'calculate':
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
+
 
 def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
@@ -875,8 +855,8 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
 
     # calculate number of exposed floors per facade
     num_floors_free_height = (free_height / 3).astype('int')  # floor height is 3 m
-    num_windows = num_floors_free_height.sum()  # total number of windows in model, not used
-
+    # num_windows = num_floors_free_height.sum()  # total number of windows in model, not used
+    #
     # *** experiment with structured array
     # initialize numpy structured array for results
     # array_windows = np.zeros(num_windows,
@@ -897,7 +877,6 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
 
         # generate orientation
         # TODO in the future get real orientation
-        # FIXME
         if i % 4 == 0:
             orientation_default = 0
         elif i % 4 == 1:
@@ -917,8 +896,9 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
         for j in range(num_floors_free_height[i]):
             window_area = length_shape[
                               i] * 3 * win_wall_ratio * win_op_ratio  # 3m = average floor height
+            #  TODO: make heights dynamic
             window_height_above_ground = height_ag[i] - free_height[
-                i] + j * 3 + 1.5  # 1.5m = window is placed in the middle of the floor height # TODO: make heights dynamic
+                i] + j * 3 + 1.5  # 1.5m = window is placed in the middle of the floor height
             window_height_in_zone = window_height_above_ground  # for now the building is one ventilation zone
 
             col_name_building.append(name[i])

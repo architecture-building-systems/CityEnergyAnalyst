@@ -456,9 +456,17 @@ class WeatherPathParameter(Parameter):
             weather_path = self.locator.get_weather(value)
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
+        elif any(w.lower().startswith(value.lower()) for w in self.locator.get_weather_names()) and value.strip():
+            # allow using shortcuts
+            weather_path = self.locator.get_weather([w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
         else:
-            weather_path = self.locator.get_weather(self.locator.get_weather_names()[0])
+            raise cea.ConfigError("Invalid weather path: {}".format(value))
         return weather_path
+
+    @property
+    def default(self):
+        """override base default, since in decode we've banned empty weather file parameters"""
+        return ""
 
 
 class WorkflowParameter(Parameter):
