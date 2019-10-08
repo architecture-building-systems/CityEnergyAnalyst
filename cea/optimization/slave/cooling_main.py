@@ -88,25 +88,24 @@ def district_cooling_network(locator,
     Q_Trigen_NG_gen_W = []
     Q_BaseVCC_WS_gen_W = []
     Q_PeakVCC_WS_gen_W = []
-    Q_BaseVCC_AS_gen_W  = []
-    Q_PeakVCC_AS_gen_W  = []
-    Q_BackupVCC_AS_gen_W  = []
-    Q_DailyStorage_gen_directload_W  = []
+    Q_BaseVCC_AS_gen_W = []
+    Q_PeakVCC_AS_gen_W = []
+    Q_DailyStorage_gen_directload_W = []
 
-    E_Trigen_NG_gen_W  = []
-    E_BaseVCC_AS_req_W  = []
-    E_PeakVCC_AS_req_W  = []
-    E_BaseVCC_WS_req_W  = []
-    E_PeakVCC_WS_req_W  = []
-    E_BackupVCC_AS_req_W = []
-    NG_Trigen_req_W  = []
+    E_Trigen_NG_gen_W = []
+    E_BaseVCC_AS_req_W = []
+    E_PeakVCC_AS_req_W = []
+    E_BaseVCC_WS_req_W = []
+    E_PeakVCC_WS_req_W = []
+    NG_Trigen_req_W = []
+    Q_BackupVCC_AS_gen_W = []
 
-    Q_Trigen_NG_gen_directload_W  = []
-    Q_BaseVCC_WS_gen_directload_W  = []
-    Q_PeakVCC_WS_gen_directload_W  = []
-    Q_BaseVCC_AS_gen_directload_W  = []
+    Q_Trigen_NG_gen_directload_W = []
+    Q_BaseVCC_WS_gen_directload_W = []
+    Q_PeakVCC_WS_gen_directload_W = []
+    Q_BaseVCC_AS_gen_directload_W = []
     Q_PeakVCC_AS_gen_directload_W = []
-    Q_BackupVCC_AS_directload_W  = []
+    Q_BackupVCC_AS_directload_W = []
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
@@ -139,7 +138,6 @@ def district_cooling_network(locator,
             Q_PeakVCC_AS_gen_W.append(thermal_output['Q_PeakVCC_AS_gen_W'])
             Q_BackupVCC_AS_gen_W.append(thermal_output['Q_BackupVCC_AS_gen_W'])
 
-
             E_BaseVCC_WS_req_W.append(electricity_output['E_BaseVCC_WS_req_W'])
             E_PeakVCC_WS_req_W.append(electricity_output['E_PeakVCC_WS_req_W'])
             E_BaseVCC_AS_req_W.append(electricity_output['E_BaseVCC_AS_req_W'])
@@ -152,12 +150,12 @@ def district_cooling_network(locator,
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0:
         master_to_slave_variables.AS_BackupVCC_on = 1
-        for hour in range(HOURS_IN_YEAR):
-            Q_BackupVCC_AS_gen_W[hour], \
-            E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
-                                                               T_district_cooling_return_K[hour],
-                                                               T_district_cooling_supply_K[hour],
-                                                               VCC_T_COOL_IN)
+        Q_BackupVCC_AS_gen_W, E_BackupVCC_AS_req_W = np.vectorize(calc_vcc_CT_operation)(Q_BackupVCC_AS_gen_W,
+                                                                                         T_district_cooling_return_K,
+                                                                                         T_district_cooling_supply_K,
+                                                                                         VCC_T_COOL_IN)
+    else:
+        E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     mdotnMax_kgpers = np.amax(mdot_kgpers)
