@@ -84,13 +84,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     district_heating_fixed_costs = {}
     district_heating_generation_dispatch = {}
-    district_heating_electricity_requirements_dispatch = {}
-    district_heating_fuel_requirements_dispatch = {}
     district_cooling_fixed_costs = {}
     district_cooling_generation_dispatch = {}
-    district_cooling_electricity_requirements_dispatch = {}
-    district_cooling_fuel_requirements_dispatch = {}
-
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         print("DISTRICT HEATING OPERATION")
