@@ -135,12 +135,12 @@ def exec_osmose(tech, osmose_project_path):
     print "running: ", frontend_file
     output, err = p.communicate()
 
-    if err.decode('utf-8') is not '':
-        print(err.decode('utf-8'))
-        if err.decode('utf-8').startswith('WARNING:'):
-            print 'warning ', err
-        if err.decode('utf-8').startswith('pandoc: Could not find image'):
-            print 'warning ', err
+    # if err.decode('utf-8') is not '':
+    #     print(err.decode('utf-8'))
+    #     if err.decode('utf-8').startswith('WARNING:'):
+    #         print 'warning ', err
+    #     if err.decode('utf-8').startswith('pandoc: Could not find image'):
+    #         print 'warning ', err
 
     # print(output.decode('utf-8'))
 
