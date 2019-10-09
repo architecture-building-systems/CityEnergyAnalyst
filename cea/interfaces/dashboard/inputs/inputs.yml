@@ -198,8 +198,6 @@ indoor-comfort:
     type: str
   - name: Ve_lps
     type: float
-  - name: mainuse
-    type: str
   - name: rhum_max_pc
     type: float
   - name: rhum_min_pc
