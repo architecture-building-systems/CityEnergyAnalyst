@@ -5219,3 +5219,19 @@ get_zone_geometry:
       types_found: [long]
   used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation-daysim,
     demand, solar-collector]
+get_geothermal_potential:
+    created_by: [shallow-geothermal-potential]
+    description: scenario/outputs/data/potentials/geothermal/geothermal.csv
+    file_path: C:\Users\darthoma\Documents\CityEnergyAnalyst\projects\reference-case-open\baseline\outputs/data/potentials\Shallow_geothermal_potential.csv
+    file_type: csv
+    schema:
+        Area_avail_m2:
+            sample_data: 5621.908
+            types_found: [float]
+        QGHP_kW:
+            sample_data: 450.0
+            types_found: [float]
+        Ts_C:
+            sample_data: 10.156
+            types_found: [float]
+    used_by: [optimization]

@@ -58,6 +58,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_heating.index = pd.to_datetime(data_heating.index)
             data_heating = data_heating.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_heating.index = pd.to_datetime(data_heating.index)
+            data_heating = data_heating.resample('Y').sum()
         return data_heating
 
     @cea.plots.cache.cached
@@ -74,6 +77,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_cooling.index = pd.to_datetime(data_cooling.index)
             data_cooling = data_cooling.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_cooling.index = pd.to_datetime(data_cooling.index)
+            data_cooling = data_cooling.resample('Y').sum()
         return data_cooling
 
     @cea.plots.cache.cached
@@ -90,6 +96,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_electricity.index = pd.to_datetime(data_electricity.index)
             data_electricity = data_electricity.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_electricity.index = pd.to_datetime(data_electricity.index)
+            data_electricity = data_electricity.resample('Y').sum()
         return data_electricity
 
     @cea.plots.cache.cached
@@ -106,6 +115,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
             data_el_requirements = data_el_requirements.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_el_requirements.index = pd.to_datetime(data_el_requirements.index)
+            data_el_requirements = data_el_requirements.resample('Y').sum()
         return data_el_requirements
 
     @cea.plots.cache.cached

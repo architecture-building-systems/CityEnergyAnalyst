@@ -72,7 +72,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     return boiler_eff
 
 
-def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, prices, lca, hour):
+def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K):
     """
     Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
@@ -97,25 +97,19 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     :rtype E_aux_Boiler: float
     :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
+    if Q_therm_W > 0.0:
 
-    # boiler efficiency
-    eta_boiler = cond_boiler_operation(Q_therm_W, Q_design_W, T_return_to_boiler_K)
+        # boiler efficiency
+        eta_boiler = cond_boiler_operation(Q_therm_W, Q_design_W, T_return_to_boiler_K)
 
-    if BoilerFuelType == 'BG':
-        GAS_PRICE = prices.BG_PRICE
+        E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
+
+        Q_primary_W = Q_therm_W / eta_boiler
     else:
-        GAS_PRICE = prices.NG_PRICE
+        Q_primary_W = 0.0
+        E_aux_Boiler_req_W = 0.0
 
-    ELEC_PRICE = lca.ELEC_PRICE[hour]
-
-
-    Opex_var_Boiler_USD = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  USD-2015 / Wh - cost of thermal energy
-    Opex_var_Boiler_per_Wh_USD = 1 / eta_boiler * GAS_PRICE + BOILER_P_AUX * ELEC_PRICE
-    E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
-
-    Q_primary_W = Q_therm_W / eta_boiler
-
-    return Opex_var_Boiler_USD, Opex_var_Boiler_per_Wh_USD, Q_primary_W, E_aux_Boiler_req_W
+    return Q_primary_W, E_aux_Boiler_req_W
 
 
 def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):

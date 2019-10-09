@@ -53,8 +53,9 @@ def layout_network(network_layout, locator, plant_building_names=[], input_path_
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
 
-    if connected_buildings:
-        disconnected_building_names = [x for x in connected_buildings if x not in total_demand_location['Name']]
+    if connected_buildings != []:
+        building_names = locator.get_zone_building_names()
+        disconnected_building_names = [x for x in connected_buildings if x not in building_names]
     else:
         # if connected_buildings is left blank, we assume all buildings are connected (no disconnected buildings)
         disconnected_building_names = []

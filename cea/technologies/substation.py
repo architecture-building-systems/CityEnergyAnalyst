@@ -294,8 +294,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         Qcre_sys_W = abs(building.Qcre_sys_kWh.values) * 1000  # in W
         Qnom_W = max(Qcre_sys_W)
         if Qnom_W > 0:
-            tho = building.Tcref_sup_C + 273  # in K
-            thi = building.Tcref_re_C + 273  # in K
+            tho = building.Tcre_sys_sup_C + 273  # in K
+            thi = building.Tcre_sys_re_C + 273  # in K
             ch = abs(building.mcpcre_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcre_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K

@@ -287,12 +287,12 @@ def script_suggestions(locator_names):
     return [cea.scripts.by_name(n) for n in sorted(set(script_names))]
 
 
-def load_plot(dashboard_index, plot_index):
+def load_plot(dashboard, plot_index):
     """Load a plot from the dashboard_yml"""
     cea_config = current_app.cea_config
     dashboards = cea.plots.read_dashboards(cea_config, current_app.plot_cache)
-    dashboard_index = dashboards[dashboard_index]
-    plot = dashboard_index.plots[plot_index]
+    dashboard = dashboards[dashboard]
+    plot = dashboard.plots[plot_index]
     return plot
 
 
