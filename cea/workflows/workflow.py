@@ -54,7 +54,7 @@ def set_up_environment_variables(config):
     create some environment variables to be used when configuring stuff. this includes the variable NOW, plus
     one variable for each config parameter, named "CEA_{SECTION}_{PARAMETER}".
 
-    This is useful for referring to the "user" config, when basing a workflow of the default config.
+    This is useful for referring to the "user" config, when basing a workflow off the default config.
     """
     os.environ["NOW"] = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     for section in config.sections.values():
@@ -88,16 +88,13 @@ def do_config_step(config, step):
 
 def set_parameter(config, parameter, value):
     """Set a parameter to a value (expand with environment vars) without tripping the restricted_to part of config"""
-    original_restricted_to = config.restricted_to
-    try:
+    with config.ignore_restrictions():
         config.restricted_to = None
         print("Setting {parameter}={value}".format(parameter=parameter.fqname, value=value))
         if not isinstance(value, basestring):
             value = str(value)
         expanded_value = os.path.expandvars(value)
         parameter.set(parameter.decode(expanded_value))
-    finally:
-        config.restricted_to = original_restricted_to
 
 
 def do_script_step(config, step):
