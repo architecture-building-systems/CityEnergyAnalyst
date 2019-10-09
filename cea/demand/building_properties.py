@@ -14,6 +14,7 @@ from geopandas import GeoDataFrame as Gdf
 
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.datamanagement.data_helper import get_list_of_uses_in_case_study, calc_mainuse
 
 # import constants
 H_F = constants.H_F
@@ -92,6 +93,12 @@ class BuildingProperties(object):
 
         # get solar properties
         solar = get_prop_solar(locator, prop_rc_model, prop_envelope).set_index('Name')
+
+        # calculate mainuse of buildings -> used in occupancy model to look up temperature set-point schedules
+        list_uses = get_list_of_uses_in_case_study(prop_occupancy_df)
+        mainuse = calc_mainuse(prop_occupancy_df, list_uses)
+        prop_comfort['mainuse'] = mainuse
+
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
