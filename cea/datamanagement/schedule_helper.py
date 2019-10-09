@@ -120,7 +120,7 @@ class ScheduleData(object):
     def fill_in_data(self):
         get_list_uses_in_database = []
         for file in os.listdir(self.path_database):
-            if file.endswith(".ceaschedule"):
+            if file.endswith(".cea"):
                 get_list_uses_in_database.append(file.split('.')[0])
 
         data_schedules = []
