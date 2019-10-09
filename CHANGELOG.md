@@ -1,3 +1,6 @@
+2019-10-02 - 2.22 - #2338 Moving flexibility (concept project) to legacy
+2019-10-02 - 2.22 - #2353 Project api for electron application
+2019-10-02 - 2.22 - #2337 fix to network layout script (EL is not implemented yet) @daren-thomas thanks for checking this out
 2019-09-24 - 2.21 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
 2019-09-24 - 2.21 - #2334 Show Es and Ns variable for architecture in dashboard
 2019-09-24 - 2.21 - #2320 BUG: fixed default value for workflow parameter
