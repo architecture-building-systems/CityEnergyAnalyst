@@ -14,7 +14,6 @@ import time
 
 import pandas as pd
 
-
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
 
