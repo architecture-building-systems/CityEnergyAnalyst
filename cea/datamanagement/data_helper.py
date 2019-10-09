@@ -112,8 +112,21 @@ def data_helper(locator, region, overwrite_technology_folder,
         # write to dbf file
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
 
-        fields = ['Name', 'Hs', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                  'type_cons', 'type_leak', 'type_roof', 'type_wall', 'type_win', 'type_shade']
+        fields = ['Name',
+                  'Hs',
+                  'Ns',
+                  'Es',
+                  'void_deck',
+                  'wwr_north',
+                  'wwr_west',
+                  'wwr_east',
+                  'wwr_south',
+                  'type_cons',
+                  'type_leak',
+                  'type_roof',
+                  'type_wall',
+                  'type_win',
+                  'type_shade']
 
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
@@ -130,8 +143,13 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_HVAC_df = categories_df.merge(construction_properties_hvac, left_on='cat_HVAC', right_on='Code')
 
         # write to shapefile
+        fields = ['Name',
+                  'type_cs',
+                  'type_hs',
+                  'type_dhw',
+                  'type_ctrl',
+                  'type_vent']
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
         dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
     if update_indoor_comfort_dbf:
@@ -193,6 +211,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         # define comfort
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
+        
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
@@ -206,7 +225,11 @@ def data_helper(locator, region, overwrite_technology_folder,
 
         # write to shapefile
         prop_supply_df_merged = names_df.merge(prop_supply_df, on="Name")
-        fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_el']
+        fields = ['Name',
+                  'type_cs',
+                  'type_hs',
+                  'type_dhw',
+                  'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
 

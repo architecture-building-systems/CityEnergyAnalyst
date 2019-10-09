@@ -115,15 +115,61 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stocha
                                                                          archetype_values['people'])
 
     # temperature set points are not mixed in mix-use buildings
-    for schedule in TEMPERATURE_SCHEDULES:
+    for schedule_type in TEMPERATURE_SCHEDULES:
         # use schedule of mainuse directly
-        schedules[schedule] = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule]]
+        schedule_string = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule_type]]
+        # convert schedule to building-specific temperatures
+        schedules[schedule_type] = convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr)
 
     # round schedules to avoid rounding errors when saving and reading schedules from disk
     for schedule_type in schedules.keys():
         schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
     return schedules
+
+
+def convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr):
+    """
+    converts an archetypal temperature schedule consisting of strings to building-specific temperatures
+    :param schedule_string: list of strings containing codes : 'OFF', 'SETPOINT', 'SETBACK'
+    :type schedule_string: list of strings
+    :param schedule_type: type of the schedule, either 'Ths_set' or 'Tcs_set'
+    :type schedule_type: str
+    :param bpr: BuildingPropertiesRow object, from here the setpoint and setback temperatures are extracted
+    :type bpr: BuildingPropoertiesRow
+    :return: an array of temperatures containing np.nan when the system is OFF
+    :rtype: numpy.array
+    """
+
+    schedule_float = []
+
+    if schedule_type in ['Ths_set']:
+
+        for code in schedule_string:
+            if code in ['OFF']:
+                schedule_float.append(np.nan)
+            elif code in ['SETPOINT']:
+                schedule_float.append(float(bpr.comfort['Ths_set_C']))
+            elif code in ['SETBACK']:
+                schedule_float.append(float(bpr.comfort['Ths_setb_C']))
+            else:
+                print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
+                schedule_float.append(float(bpr.comfort['Ths_set_C']))
+
+    elif schedule_type in ['Tcs_set']:
+
+        for code in schedule_string:
+            if code in ['OFF']:
+                schedule_float.append(np.nan)
+            elif code in ['SETPOINT']:
+                schedule_float.append(float(bpr.comfort['Tcs_set_C']))
+            elif code in ['SETBACK']:
+                schedule_float.append(float(bpr.comfort['Tcs_setb_C']))
+            else:
+                print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
+                schedule_float.append(float(bpr.comfort['Tcs_set_C']))
+
+    return np.array(schedule_float)
 
 
 def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
@@ -605,14 +651,14 @@ def read_schedules(use, archetypes_schedules):
           archetypes_schedules['Sunday_2'].values[:24]]
     dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24],
            archetypes_schedules['Sunday_3'].values[:24]]
-    heating_setpoint_xlsx = [archetypes_schedules['Weekday_5'].values[:24],
+    heating_setpoint = [archetypes_schedules['Weekday_5'].values[:24],
                              archetypes_schedules['Saturday_5'].values[:24],
                              archetypes_schedules['Sunday_5'].values[:24]]
-    cooling_setpoint_xlsx = [archetypes_schedules['Weekday_4'].values[:24],
+    cooling_setpoint = [archetypes_schedules['Weekday_4'].values[:24],
                              archetypes_schedules['Saturday_4'].values[:24],
                              archetypes_schedules['Sunday_4'].values[:24]]
-    heating_setpoint = parse_setpoints(heating_setpoint_xlsx)
-    cooling_setpoint = parse_setpoints(cooling_setpoint_xlsx)
+    #heating_setpoint = parse_setpoints(heating_setpoint_xlsx)
+    #cooling_setpoint = parse_setpoints(cooling_setpoint_xlsx)
 
     month = archetypes_schedules['month'].values[:12]
 
@@ -626,42 +672,6 @@ def read_schedules(use, archetypes_schedules):
     area_per_occupant = archetypes_schedules['density'].values[:1][0]
 
     return occ, el, dhw, pro, month, area_per_occupant, heating_setpoint, cooling_setpoint
-
-
-def parse_setpoints(setpoints_from_xlsx):
-    """
-    A parser to convert heating and cooling setpoint schedules, containing numbers (temperatures) and strings (OFF)
-     from the occupancy database to numpy arrays of type float with 'OFF' converted to 'np.nan'
-    :param setpoints_from_xlsx: a list of numpy arrays of various types, most likely 'object'
-    :type setpoints_from_xlsx: list of numpy arrays
-    :return: the same list of numpy arrays with all float data type
-    """
-
-    # create the new list for output
-    setpoints_float = []
-
-    # iterate through the list
-    for setpoint_array in setpoints_from_xlsx:
-
-        # try to convert the whole array at once
-        try:
-            setpoint_array_float = setpoint_array.astype('f')
-        except ValueError:
-            # if it does not work, create an array containing np.nan and fill temperatures one-by-one
-            setpoint_array_float = np.zeros_like(setpoint_array, dtype='f') + np.nan
-            # go through each element
-            for i in range(len(setpoint_array)):
-                try:
-                    # try to add the temperature
-                    setpoint_array_float[i] = float(setpoint_array[i])
-                except ValueError:
-                    # if string value can not be converted to float, it is considered "OFF", "off"
-                    # not necessary to do anything, because the array already contains np.nan
-                    pass
-        # append the array to the list
-        setpoints_float.append(setpoint_array_float)
-
-    return setpoints_float
 
 
 # read schedules and archetypal values from excel file
