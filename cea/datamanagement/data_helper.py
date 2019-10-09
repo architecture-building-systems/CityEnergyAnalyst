@@ -40,7 +40,7 @@ def get_technology_related_databases(locator, region):
 
 def data_helper(locator, region, overwrite_technology_folder,
                 update_architecture_dbf, update_technical_systems_dbf, update_indoor_comfort_dbf,
-                update_internal_loads_dbf, update_supply_systems_dbf, update_restrictions_dbf):
+                update_internal_loads_dbf, update_supply_systems_dbf):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -187,13 +187,6 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_supply_df_merged = names_df.merge(prop_supply_df, on="Name")
         fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
-
-    if update_restrictions_dbf:
-        new_names_df = names_df.copy() #this to avoid that the dataframe is reused
-        COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
-        for field in COLUMNS_ZONE_RESTRICTIONS:
-            new_names_df[field] = 0
-        dataframe_to_dbf(new_names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
 
 
 def calc_code(code1, code2, code3, code4):
@@ -423,7 +416,6 @@ def main(config):
     update_indoor_comfort_dbf = 'comfort' in config.data_helper.databases
     update_internal_loads_dbf = 'internal-loads' in config.data_helper.databases
     update_supply_systems_dbf = 'supply' in config.data_helper.databases
-    update_restrictions_dbf = 'restrictions' in config.data_helper.databases
 
     overwrite_technology_folder = config.data_helper.overwrite_technology_folder
 
@@ -435,8 +427,7 @@ def main(config):
                 update_technical_systems_dbf=update_technical_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
-                update_supply_systems_dbf=update_supply_systems_dbf,
-                update_restrictions_dbf=update_restrictions_dbf)
+                update_supply_systems_dbf=update_supply_systems_dbf)
 
 
 if __name__ == '__main__':
