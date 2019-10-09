@@ -16,9 +16,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
+class InvestmentCostsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annual costs"
+    name = "Investment costs"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
         'normalization': 'plots-optimization:normalization',
@@ -26,11 +26,9 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     }
 
     def __init__(self, project, parameters, cache):
-        super(AnnualCostsPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Capex_a_sys_connected_USD",
-                                "Capex_a_sys_disconnected_USD",
-                                "Opex_a_sys_connected_USD",
-                                "Opex_a_sys_disconnected_USD"
+        super(InvestmentCostsPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ["Capex_total_sys_connected_USD",
+                                "Capex_total_sys_disconnected_USD",
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
@@ -38,29 +36,28 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "net floor area":
-            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "air conditioned floor area":
-            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'Annualized cost [USD$(2015)/pax.yr]'
+            titley = 'Investment cost [USD$(2015)/pax]'
         else:
-            titley = 'Annualized cost [USD$(2015)/yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         return titley
 
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual Costs for generation {generation} normalized to {normalized}".format(
-                generation=self.generation, normalized=self.normalization)
+            return "Investment Costs for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
         else:
-            return "Annual Costs for generation {generation}".format(generation=self.generation)
+            return "Investment Costs for generation {generation}".format(generation=self.generation)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_annualized_costs'.format(generation=self.generation),
+            'gen{generation}_investment_costs'.format(generation=self.generation),
             self.category_name)
 
     @property
@@ -92,13 +89,12 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
-    AnnualCostsPlot(config.project,
-                    {'buildings': None,
-                     'scenario-name': config.scenario_name,
-                     'generation': config.plots_optimization.generation,
-                     'normalization': config.plots_optimization.normalization
-                     },
-                    cache).plot(auto_open=True)
+    InvestmentCostsPlot(config.project,
+                        {'buildings': None,
+                         'scenario-name': config.scenario_name,
+                         'generation': config.plots_optimization.generation,
+                         'normalization': config.plots_optimization.normalization},
+                        cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
