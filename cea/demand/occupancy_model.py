@@ -674,42 +674,6 @@ def read_schedules(use, archetypes_schedules):
     return occ, el, dhw, pro, month, area_per_occupant, heating_setpoint, cooling_setpoint
 
 
-def parse_setpoints(setpoints_from_xlsx):
-    """
-    A parser to convert heating and cooling setpoint schedules, containing numbers (temperatures) and strings (OFF)
-     from the occupancy database to numpy arrays of type float with 'OFF' converted to 'np.nan'
-    :param setpoints_from_xlsx: a list of numpy arrays of various types, most likely 'object'
-    :type setpoints_from_xlsx: list of numpy arrays
-    :return: the same list of numpy arrays with all float data type
-    """
-
-    # create the new list for output
-    setpoints_float = []
-
-    # iterate through the list
-    for setpoint_array in setpoints_from_xlsx:
-
-        # try to convert the whole array at once
-        try:
-            setpoint_array_float = setpoint_array.astype('f')
-        except ValueError:
-            # if it does not work, create an array containing np.nan and fill temperatures one-by-one
-            setpoint_array_float = np.zeros_like(setpoint_array, dtype='f') + np.nan
-            # go through each element
-            for i in range(len(setpoint_array)):
-                try:
-                    # try to add the temperature
-                    setpoint_array_float[i] = float(setpoint_array[i])
-                except ValueError:
-                    # if string value can not be converted to float, it is considered "OFF", "off"
-                    # not necessary to do anything, because the array already contains np.nan
-                    pass
-        # append the array to the list
-        setpoints_float.append(setpoint_array_float)
-
-    return setpoints_float
-
-
 # read schedules and archetypal values from excel file
 def schedule_maker(dates, locator, list_uses):
     """
