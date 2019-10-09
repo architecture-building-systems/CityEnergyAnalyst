@@ -25,17 +25,30 @@ RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
 ETA_REC = 0.75  # constant efficiency of Heat recovery
 DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
                  # according to DIN 1946-6
-SHIELDING_CLASS = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
-        #  2 = fully shielded from wind
 P_FAN = 0.55  # specific fan consumption in W/m3/h
 MIN_VENTILATION_RATE = 0.6  # l/s/m2 [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
+SHIELDING_CLASS = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
+        #  2 = fully shielded from wind
+TER_CLASS = 2  # terrain class of surroundings according to ISO 16798-7: 0 = open, 1 = rural,  2 = urban
+RHO_AIR_REF = 1.23  # (kg/m3) constant from Table 12 in DIN 16798-7
+TEMP_EXT_REF = 283  # (K) constant from Table 12 in DIN 16798-7
+COEFF_TURB = 0.01  # (m/s) constant from Table 12 in DIN 16798-7
+COEFF_WIND = 0.001  # (1/(m/s)) constant from Table 12 in DIN 16798-7
+COEFF_STACK = 0.0035  # ((m/s)/(mK)) constant from Table 12 in DIN 16798-7
+COEFF_D_WINDOW = 0.67  # (-), B.1.2.1 from annex B in DIN 16798-7 [1]
+COEFF_D_VENT = 0.6  # flow coefficient for ventilation openings, B.1.2.1 in [1]
+DELTA_C_P = 0.75  # (-), option 2 in B.1.3.4 from annex B in DIN 16798-7 [1]
+DELTA_P_LEA_REF = 50  # air tightness index of the building envelope at reference pressure (Pa), B.1.3.14 in DIN 16798-7
+DELTA_P_VENT_REF = 50  # air tightness index of the building envelope at reference pressure (Pa)
+                       # FIXME no default value specified in standard
+N_LEA = 0.667    # volumetric flow rate exponential due for leakage calculation, B.1.3.15 in DIN 16798-7
+N_VENT = 0.5  # volumetric flow rate exponential due for ventilation calculation, B.1.2.2 in DIN 16798-7
 
 # pumps ?
 # TODO: Document
 DELTA_P_1 = 0.1  # delta of pressure
 F_SR = 0.3  # factor for pressure calculation
 HOURS_OP = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
-GR = 9.81  # m/s2 gravity
 EFFI = 0.6  # efficiency of pumps
 
 # WATER
@@ -45,6 +58,7 @@ TWW_SETPOINT = 60  # dhw tank set point temperature in C
 # PHYSICAL
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
+GR = 9.81  # m/s2 gravity
 
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
