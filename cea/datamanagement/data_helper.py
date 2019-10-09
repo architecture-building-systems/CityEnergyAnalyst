@@ -73,21 +73,10 @@ def data_helper(locator, region, overwrite_technology_folder,
 
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    columns = building_occupancy_df.columns
-
-    #validate list of uses
-    list_uses = []
-    for name in columns:
-        if name in COLUMNS_ZONE_OCCUPANCY:
-            list_uses.append(name)  # append valid uses
-        elif name in {'Name', 'REFERENCE'}:
-            pass  # do nothing with 'Name' and 'Reference'
-        else:
-            raise InvalidOccupancyNameException(
-                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
-                ' or customize archetypes database AND databases_verification.py.'.format(name))
-
     building_age_df = dbf_to_dataframe(locator.get_building_age())
+
+    # validate list of uses in case study
+    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
 
 
     # get occupant densities from archetypes schedules
@@ -156,7 +145,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
         fields = ['Name', 'Ve_lps', 'rhum_min_pc',
-                  'rhum_max_pc', 'mainuse']
+                  'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if update_internal_loads_dbf:
@@ -189,6 +178,31 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
 
+def get_list_of_uses_in_case_study(building_occupancy_df):
+    """
+    validates lists of uses in case study.
+    refactored from data_helper function
+
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :type building_occupancy_df: pandas.DataFrame
+    :return: list of uses in case study
+    :rtype: pandas.DataFrame.Index
+    """
+    columns = building_occupancy_df.columns
+    # validate list of uses
+    list_uses = []
+    for name in columns:
+        if name in COLUMNS_ZONE_OCCUPANCY:
+            list_uses.append(name)  # append valid uses
+        elif name in {'Name', 'REFERENCE'}:
+            pass  # do nothing with 'Name' and 'Reference'
+        else:
+            raise InvalidOccupancyNameException(
+                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
+                ' or customize archetypes database AND databases_verification.py.'.format(name))
+    return list_uses
+
+
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
@@ -207,7 +221,16 @@ def calc_mainuse(uses_df, uses):
     """
 
     # print a warning if there are equal shares of more than one "main" use
-    indexed_df = uses_df.set_index('Name')
+    # check if 'Name' is already the index, this is necessary because the function is used in data-helper
+    #  and in building properties
+    if uses_df.index.name not in ['Name']:
+        # this is the behavior in data-helper
+        indexed_df = uses_df.set_index('Name')
+    else:
+        # this is the behavior in building-properties
+        indexed_df = uses_df.copy()
+        uses_df = uses_df.reset_index()
+
     for building in indexed_df.index:
         mainuses = [use for use in uses if
                     (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
