@@ -452,7 +452,9 @@ class WeatherPathParameter(Parameter):
         self._extensions = ['epw']
 
     def decode(self, value):
-        if value in self.locator.get_weather_names():
+        if value == '':
+            return ''
+        elif value in self.locator.get_weather_names():
             weather_path = self.locator.get_weather(value)
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value

@@ -30,8 +30,6 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
     buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
 
-    # calculate substations
-
     if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
         decentralized_buildings_heating.disconnected_buildings_heating_main(locator, total_demand,
                                                                             buildings_name_with_heating,
@@ -49,10 +47,9 @@ def main(config):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    prices = Prices(locator)
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
-    lca = LcaCalculations(locator, detailed_electricity_pricing)
-
+    prices = Prices(locator, detailed_electricity_pricing)
+    lca = LcaCalculations(locator)
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
 

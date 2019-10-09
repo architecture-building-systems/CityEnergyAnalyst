@@ -23,7 +23,7 @@ def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generation
 
-    compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance(generation))
+    compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
