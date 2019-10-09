@@ -39,7 +39,7 @@ def get_technology_related_databases(locator, region):
 
 
 def data_helper(locator, region, overwrite_technology_folder,
-                update_architecture_dbf, update_technical_systems_dbf, update_indoor_comfort_dbf,
+                update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
                 update_internal_loads_dbf, update_supply_systems_dbf):
     """
     algorithm to query building properties from statistical database
@@ -49,7 +49,7 @@ def data_helper(locator, region, overwrite_technology_folder,
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
     :param boolean update_architecture_dbf: if True, update the construction and architecture properties.
     :param boolean update_indoor_comfort_dbf: if True, get properties about thermal comfort.
-    :param boolean update_technical_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
+    :param boolean update_HVAC_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
     :param boolean update_internal_loads_dbf: if True, get properties about internal loads, otherwise False.
 
     The following files are created by this script, depending on which flags were set:
@@ -77,6 +77,15 @@ def data_helper(locator, region, overwrite_technology_folder,
 
     # validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
+
+    # get occupant densities from archetypes schedules
+    occupant_densities = {}
+    occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+    for use in list_uses:
+        if occ_densities.ix[use,'Occ_m2pax'] > 0.0:
+            occupant_densities[use] = 1 / occ_densities.ix[use,'Occ_m2pax']
+        else:
+            occupant_densities[use] = 0.0
 
     # prepare shapefile to store results (a shapefile with only names of buildings
     names_df = building_age_df[['Name']]
@@ -108,7 +117,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
-    if update_technical_systems_dbf:
+    if update_HVAC_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                             x['year_end'], x['standard']), axis=1)
@@ -130,11 +139,14 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
+        fields = ['Name', 'Ve_lps', 'rhum_min_pc','rhum_max_pc']
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
-        prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, list_uses,
+        prop_comfort_df_merged = calculate_average_multiuse(fields,
+                                                            prop_comfort_df_merged,
+                                                            occupant_densities,
+                                                            list_uses,
                                                             comfort_DB)
-        fields = ['Name', 'Ve_lps', 'rhum_min_pc',
-                  'rhum_max_pc']
+
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if update_internal_loads_dbf:
@@ -144,11 +156,15 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
-        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-        prop_internal_df_merged = calculate_average_multiuse(prop_internal_df_merged, occupant_densities, list_uses,
-                                                             internal_DB)
         fields = ['Name', 'Occ_m2pax', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
                   'Qhpro_Wm2', 'Qcpro_Wm2']
+        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
+        prop_internal_df_merged = calculate_average_multiuse(fields,
+                                                             prop_internal_df_merged,
+                                                             occupant_densities,
+                                                             list_uses,
+                                                             internal_DB)
+
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
     if update_supply_systems_dbf:
@@ -366,7 +382,7 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     return prop_architecture_df
 
 
-def calculate_average_multiuse(properties_df, occupant_densities, list_uses, properties_DB):
+def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB):
     """
     This script calculates the average internal loads and ventilation properties for multiuse buildings.
 
@@ -386,7 +402,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
         buildings
     """
     properties_DB = properties_DB.set_index('Code')
-    for column in properties_df.columns:
+    for column in fields:
         if column in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
             # some properties are imported from the Excel files as int instead of float
             properties_df[column] = properties_df[column].astype(float)
@@ -436,7 +452,7 @@ def main(config):
     data_helper(locator=locator, region=config.data_helper.region,
                 overwrite_technology_folder=overwrite_technology_folder,
                 update_architecture_dbf=update_architecture_dbf,
-                update_technical_systems_dbf=update_technical_systems_dbf,
+                update_HVAC_systems_dbf=update_technical_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
                 update_supply_systems_dbf=update_supply_systems_dbf)
