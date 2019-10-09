@@ -16,8 +16,8 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -40,7 +40,8 @@ def get_technology_related_databases(locator, region):
 
 def data_helper(locator, region, overwrite_technology_folder,
                 update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
-                update_internal_loads_dbf, update_supply_systems_dbf):
+                update_internal_loads_dbf, update_supply_systems_dbf,
+                update_schedule_operation_cea):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -82,8 +83,8 @@ def data_helper(locator, region, overwrite_technology_folder,
     occupant_densities = {}
     occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
     for use in list_uses:
-        if occ_densities.ix[use,'Occ_m2pax'] > 0.0:
-            occupant_densities[use] = 1 / occ_densities.ix[use,'Occ_m2pax']
+        if occ_densities.ix[use, 'Occ_m2pax'] > 0.0:
+            occupant_densities[use] = 1 / occ_densities.ix[use, 'Occ_m2pax']
         else:
             occupant_densities[use] = 0.0
 
@@ -119,8 +120,9 @@ def data_helper(locator, region, overwrite_technology_folder,
     # get properties about types of HVAC systems
     if update_HVAC_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
-        construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                            x['year_end'], x['standard']), axis=1)
+        construction_properties_hvac['Code'] = construction_properties_hvac.apply(
+            lambda x: calc_code(x['building_use'], x['year_start'],
+                                x['year_end'], x['standard']), axis=1)
 
         categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
 
@@ -139,7 +141,14 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
-        fields = ['Name', 'Ve_lps', 'rhum_min_pc','rhum_max_pc']
+        fields = ['Name',
+                  'Tcs_set_C',
+                  'Ths_set_C',
+                  'Tcs_setb_C',
+                  'Ths_setb_C',
+                  'Ve_lps',
+                  'rhum_min_pc',
+                  'rhum_max_pc']
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(fields,
                                                             prop_comfort_df_merged,
@@ -147,8 +156,6 @@ def data_helper(locator, region, overwrite_technology_folder,
                                                             list_uses,
                                                             comfort_DB)
 
-        fields = ['Name', 'Tcs_set_C', 'Ths_set_C',	'Tcs_setb_C',	'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
-                  'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if update_internal_loads_dbf:
@@ -158,8 +165,19 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
-        fields = ['Name', 'Occ_m2pax', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
-                  'Qhpro_Wm2', 'Qcpro_Wm2']
+        fields = ['Name',
+                  'Occ_m2pax',
+                  'Qs_Wp',
+                  'X_ghp',
+                  'Ea_Wm2',
+                  'El_Wm2',
+                  'Ed_Wm2',
+                  'Qcre_Wm2',
+                  'Vww_lpd',
+                  'Vw_lpd',
+                  'Qhpro_Wm2',
+                  'Qcpro_Wm2',
+                  'Epro_Wm2']
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
         prop_internal_df_merged = calculate_average_multiuse(fields,
                                                              prop_internal_df_merged,
@@ -168,6 +186,13 @@ def data_helper(locator, region, overwrite_technology_folder,
                                                              internal_DB)
 
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+
+    if update_schedule_operation_cea:
+        internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
+
+        # define comfort
+        prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
+        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
@@ -243,7 +268,7 @@ def calc_mainuse(uses_df, uses):
                     (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
         if len(mainuses) > 1:
             print '%s has equal share of %s; the construction properties and systems for %s will be used.' % (
-            building, ' and '.join(mainuses), mainuses[0])
+                building, ' and '.join(mainuses), mainuses[0])
 
     # get array of main use for each building
     databaseclean = uses_df[uses].transpose()
@@ -446,6 +471,7 @@ def main(config):
     update_indoor_comfort_dbf = 'comfort' in config.data_helper.databases
     update_internal_loads_dbf = 'internal-loads' in config.data_helper.databases
     update_supply_systems_dbf = 'supply' in config.data_helper.databases
+    update_schedule_operation_cea = 'schedules' in config.data_helper.databases
 
     overwrite_technology_folder = config.data_helper.overwrite_technology_folder
 
@@ -457,7 +483,8 @@ def main(config):
                 update_HVAC_systems_dbf=update_technical_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
-                update_supply_systems_dbf=update_supply_systems_dbf)
+                update_supply_systems_dbf=update_supply_systems_dbf,
+                update_schedule_operation_cea=update_schedule_operation_cea)
 
 
 if __name__ == '__main__':
