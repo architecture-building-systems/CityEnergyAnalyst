@@ -147,6 +147,8 @@ def data_helper(locator, region, overwrite_technology_folder,
                                                             list_uses,
                                                             comfort_DB)
 
+        fields = ['Name', 'Tcs_set_C', 'Ths_set_C',	'Tcs_setb_C',	'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
+                  'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if update_internal_loads_dbf:
