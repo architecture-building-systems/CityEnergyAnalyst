@@ -211,7 +211,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         # define comfort
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-        
+
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
