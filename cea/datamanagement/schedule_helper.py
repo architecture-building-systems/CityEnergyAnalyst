@@ -4,15 +4,14 @@ This script creates schedules per building in CEA
 from __future__ import division
 from __future__ import print_function
 
-import math
 import os
-from cea.utilities.dbf import dbf_to_dataframe
-from cea.datamanagement.data_helper import get_list_of_uses_in_case_study
-
-import pandas as pd
 
 import cea.config
+import pandas as pd
+import numpy as np
 import cea.inputlocator
+from cea.datamanagement.data_helper import get_list_of_uses_in_case_study
+from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 
 __author__ = "Jimeno Fonseca"
@@ -26,15 +25,14 @@ __status__ = "Production"
 
 
 def schedule_helper(locator, config):
+    # local variables
+    model = config.data_helper.model_schedule
+    buildings = config.data_helper.buildings
 
-    #local variables
-    model = config.schedule_helper.model
-    buildings = config.schedule_helper.buildings
-
-    #select which model to run and run it
+    # select which model to run and run it
     if model == 'matsim':
-        path_matsim_file_required1 = config.schedule_helper.matsim_file1
-        path_matsim_file_required2 = config.schedule_helper.matsim_file2
+        path_matsim_file_required1 = config.data_helper.matsim_file1
+        path_matsim_file_required2 = config.data_helper.matsim_file2
         if path_matsim_file_required1 == None or path_matsim_file_required2 == None:
             Exception('There are not valid inputs to run the MATSIM model, please make sure to include the correct'
                       'path to each file')
@@ -56,39 +54,64 @@ def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_fil
 
 def model_with_standard_database(locator, buildings, path_to_standard_schedule_database):
 
+    variable_schedule_map = {'Occ_m2pax': 'OCCUPANCY',
+                             'Qs_Wp': 'OCCUPANCY',
+                             'X_ghp': 'OCCUPANCY',
+                             'Ve_lps': 'OCCUPANCY',
+                             'Ea_Wm2': 'ELECTRICITY',
+                             'El_Wm2': 'ELECTRICITY',
+                             'Ed_Wm2': 'ELECTRICITY',
+                             'Vww_lpd': 'WATER',
+                             'Vw_lpd': 'WATER',
+                             'Ths_set_C': 'HEATING',
+                             'Ths_setb_C': 'HEATING',
+                             'Tcs_set_C': 'COOLING',
+                             'Tcs_setb_C': 'COOLING',
+                             'Qcre_Wm2': 'PROCESSES',
+                             'Qhpro_Wm2': 'PROCESSES',
+                             'Qcpro_Wm2': 'PROCESSES',
+                             'Epro_Wm2': 'PROCESSES',
+                             }
 
     metadata = path_to_standard_schedule_database
     schedule_data_all_uses = ScheduleData(locator, path_to_standard_schedule_database)
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
     building_occupancy_df = building_occupancy_df.ix[buildings]
 
+    internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+
     # validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
+    for building in buildings:
+        schedule_mixed = {}
+        for variable, schedule_type in variable_schedule_map.items():
+            current_schedule = np.zeros(len(schedule_data_all_uses.schedule['HOTEL'][schedule_type]))
+            normalizing_value = 0.0
+            if variable in ['Ths_set_C', 'Tcs_set_C']:
+                main_use_this_building #TODO: CONTINUE HERE WITH THE MAIN USE AND SELECT SCHEDULE
+                schedule_mixed[variable] = schedule_data_all_uses.schedule[main_use][schedule_type]
+            else:
+                for use in list_uses:
+                    if building_occupancy_df[use][building] > 0.0:
+                        current_share_of_use = building_occupancy_df[use][building]
+                        if variable in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd', 'Occ_m2pax']:
+                            # for variables that depend on the number of people, the schedule needs to be calculated by number
+                            # of people for each use at each time step, not the share of the occupancy for each
+                            share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \
+                                                           (1/internal_DB.ix[use, 'Occ_m2pax'])
 
-    for name in buildings:
+                        elif variable in ['Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']:
+                            share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use
 
+                        normalizing_value += share_time_occupancy_density
+                        current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                      schedule_data_all_uses.schedule[use][schedule_type],
+                                                                      share_time_occupancy_density)
 
-
-        occupancy_density_m2p = TODO
-        monthly_multiplier = TODO
-        occupancy_weekday = TODO
-        occupancy_saturday = TODO
-        occupancy_sunday = TODO
-        appliances_weekday = TODO
-        appliances_saturday = TODO
-        appliances_sunday = TODO
-        domestic_hot_water_weekday = TODO
-        domestic_hot_water_saturday = TODO
-        domestic_hot_water_sunday = TODO
-        setpoint_heating_weekday = TODO
-        setpoint_heating_saturday = TODO
-        setpoint_heating_sunday = TODO
-        setpoint_cooling_weekday = TODO
-        setpoint_cooling_saturday = TODO
-        setpoint_cooling_sunday = TODO
-        processes_weekday = TODO
-        processes_saturday = TODO
-        processes_sunday = TODO
+                if normalizing_value == 0:
+                    schedule_mixed[variable] = current_schedule * 0
+                else:
+                    schedule_mixed[variable] = current_schedule / normalizing_value
 
         schedule_data = {
             'metadata': metadata,
@@ -117,6 +140,12 @@ def model_with_standard_database(locator, buildings, path_to_standard_schedule_d
         save_cea_schedule(schedule_data, path_to_building_schedule)
 
 
+def calc_average(last, current, share_of_use):
+    """
+    function to calculate the weighted average of schedules
+    """
+    return last + current * share_of_use
+
 class ScheduleData(object):
 
     def __init__(self, locator, path_to_standard_schedule_database):
@@ -134,16 +163,16 @@ class ScheduleData(object):
         for use in get_list_uses_in_database:
             path_to_schedule = self.locator.get_database_standard_schedules_use(self.path_database, use)
             data_schedule = read_cea_schedule(path_to_schedule)
-
-        data_schedules.append(data_schedule)
+            data_schedules.append(data_schedule)
         return dict(zip(get_list_uses_in_database, data_schedules))
 
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    config.schedule_helper.model = 'SG-ASHRAE-2009'
-    config.schedule_helper.buildings = locator.get_zone_building_names()
+    config.data_helper.model_schedule = 'SG-ASHRAE-2009'
+    config.data_helper.buildings = locator.get_zone_building_names()
     schedule_helper(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
