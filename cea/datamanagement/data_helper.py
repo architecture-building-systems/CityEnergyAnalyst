@@ -16,8 +16,8 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -78,7 +78,6 @@ def data_helper(locator, region, overwrite_technology_folder,
     # validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
 
-
     # get occupant densities from archetypes schedules
     occupant_densities = {}
     for use in list_uses:
@@ -121,8 +120,9 @@ def data_helper(locator, region, overwrite_technology_folder,
     # get properties about types of HVAC systems
     if update_technical_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
-        construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                            x['year_end'], x['standard']), axis=1)
+        construction_properties_hvac['Code'] = construction_properties_hvac.apply(
+            lambda x: calc_code(x['building_use'], x['year_start'],
+                                x['year_end'], x['standard']), axis=1)
 
         categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
 
@@ -144,7 +144,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
-        fields = ['Name', 'Tcs_set_C', 'Ths_set_C',	'Tcs_setb_C',	'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
+        fields = ['Name', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
                   'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
@@ -178,7 +178,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
     if update_restrictions_dbf:
-        new_names_df = names_df.copy() #this to avoid that the dataframe is reused
+        new_names_df = names_df.copy()  # this to avoid that the dataframe is reused
         COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
         for field in COLUMNS_ZONE_RESTRICTIONS:
             new_names_df[field] = 0
@@ -243,7 +243,7 @@ def calc_mainuse(uses_df, uses):
                     (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
         if len(mainuses) > 1:
             print '%s has equal share of %s; the construction properties and systems for %s will be used.' % (
-            building, ' and '.join(mainuses), mainuses[0])
+                building, ' and '.join(mainuses), mainuses[0])
 
     # get array of main use for each building
     databaseclean = uses_df[uses].transpose()
