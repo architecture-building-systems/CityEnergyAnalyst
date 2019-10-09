@@ -21,7 +21,7 @@ __status__ = "Production"
 
 class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Dispatch curve heating"
+    name = "Dispatch curve heating plant"
     expected_parameters = {
         'generation': 'plots-supply-system:generation',
         'individual': 'plots-supply-system:individual',
@@ -55,12 +55,12 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     @property
     def title(self):
-        return "Dispatch curve for heating system #%s (%s)" % (self.individual, self.timeframe)
+        return "Dispatch curve for heating plant in system #%s (%s)" % (self.individual, self.timeframe)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}dispatch_curve_heating'.format(individual=self.individual,
+            'gen{generation}_ind{individual}dispatch_curve_heating_plant'.format(individual=self.individual,
                                                                            generation=self.generation),
             self.category_name)
 

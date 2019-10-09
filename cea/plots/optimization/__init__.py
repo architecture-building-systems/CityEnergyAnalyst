@@ -31,11 +31,6 @@ class GenerationPlotBase(cea.plots.PlotBase):
     category_name = "optimization"
 
     # default parameters for plots in this category - override if your plot differs
-    expected_parameters = {
-        'multicriteria': 'plots-optimization:multicriteria',
-        'generation': 'plots-optimization:generation',
-        'scenario-name': 'general:scenario-name',
-    }
 
     def __init__(self, project, parameters, cache):
         """
@@ -49,7 +44,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
 
     @cea.plots.cache.cached
-    def process_generation_total_performance(self):
+    def process_generation_total_performance_pareto(self):
         # Import multi-criteria data
         if self.multi_criteria:
             try:
@@ -58,7 +53,33 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 raise IOError("Please run the multi-criteria analysis tool first or set multi-criteria = False")
 
         else:
-            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance(self.generation))
+            data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
+        return data_processed
+
+    @cea.plots.cache.cached
+    def process_generation_total_performance_halloffame(self):
+
+        data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_halloffame(self.generation))
+        return data_processed
+
+    def normalize_data(self, data_processed, normalization, analysis_fields):
+        if normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['GFA_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['NFA_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Af_m2'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['people0'])
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+
         return data_processed
 
 

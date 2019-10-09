@@ -7,19 +7,15 @@ If Lake exhausted, then use other supply technologies
 """
 from __future__ import division
 
-
-
 import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K
-from cea.optimization.constants import VCC_T_COOL_IN
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
-from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation
-from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
+from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
-from cea.technologies.constants import DT_COOL
+from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -33,12 +29,15 @@ __status__ = "Production"
 
 
 # technical model
+class AbsorptionChiller(object):
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+
 
 def district_cooling_network(locator,
                              master_to_slave_variables,
                              config,
                              prices,
-                             lca,
                              network_features):
     """
     Computes the parameters for the cooling of the complete DCN
@@ -57,12 +56,11 @@ def district_cooling_network(locator,
     # Import Temperatures from Network Summary:
     Q_thermal_req_W, \
     T_district_cooling_return_K, \
-    T_district_cooling_supply_K,\
+    T_district_cooling_supply_K, \
     mdot_kgpers = calc_network_summary_DCN(locator, master_to_slave_variables)
 
-    print("CALCULATING ECOLOGICAL COSTS OF DAILY COOLING STORAGE - DUE TO OPERATION (IF ANY)")
     # Initialize daily storage calss
-    T_ground_K = calculate_ground_temperature(locator, config)
+    T_ground_K = calculate_ground_temperature(locator)
     daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
                                              master_to_slave_variables.Storage_cooling_size_W,
                                              min(T_district_cooling_supply_K) - DT_COOL,
@@ -73,7 +71,7 @@ def district_cooling_network(locator,
 
     # Import Data - potentials lake heat
     if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
-        HPlake_Data = pd.read_csv(locator.get_lake_potential())
+        HPlake_Data = pd.read_csv(locator.get_water_body_potential())
         Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
         total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
         Q_therm_Lake_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_Lake]
@@ -82,40 +80,36 @@ def district_cooling_network(locator,
         Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
+    # get properties of technology used in this script
+    ACH_prop = AbsorptionChiller(pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller"), 'double')
+    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
+
+    # intitalize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_BackupVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-    Q_DailyStorage_gen_W = np.zeros(HOURS_IN_YEAR)
-
-    opex_var_Trigen_NG_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BaseVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_PeakVCC_WS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BaseVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_PeakVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
-    opex_var_BackupVCC_AS_USDhr = np.zeros(HOURS_IN_YEAR)
+    Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
 
     E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
     E_BaseVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
     E_PeakVCC_WS_req_W = np.zeros(HOURS_IN_YEAR)
-    E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
-
     NG_Trigen_req_W = np.zeros(HOURS_IN_YEAR)
+    Q_BackupVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
 
-    source_Trigen_NG = np.zeros(HOURS_IN_YEAR)
-    source_BaseVCC_WS = np.zeros(HOURS_IN_YEAR)
-    source_PeakVCC_WS = np.zeros(HOURS_IN_YEAR)
-    source_BaseVCC_AS = np.zeros(HOURS_IN_YEAR)
-    source_PeakVCC_AS = np.zeros(HOURS_IN_YEAR)
+    Q_Trigen_NG_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    Q_BaseVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    Q_PeakVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    Q_BaseVCC_AS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    Q_PeakVCC_AS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+    Q_BackupVCC_AS_directload_W = np.zeros(HOURS_IN_YEAR)
 
     for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
         if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
             daily_storage, \
-            activation_output, \
             thermal_output, \
             electricity_output, \
             gas_output = cooling_resource_activator(Q_thermal_req_W[hour],
@@ -125,17 +119,17 @@ def district_cooling_network(locator,
                                                     T_source_average_Lake_K[hour],
                                                     daily_storage,
                                                     T_ground_K[hour],
-                                                    lca,
                                                     master_to_slave_variables,
-                                                    hour,
-                                                    prices,
-                                                    locator)
+                                                    ACH_prop,
+                                                    CCGT_prop)
 
-            source_Trigen_NG[hour] = activation_output["source_Trigen_NG"]
-            source_BaseVCC_WS[hour] = activation_output["source_BaseVCC_WS"]
-            source_PeakVCC_WS[hour] = activation_output["source_PeakVCC_WS"]
-            source_BaseVCC_AS[hour] = activation_output["source_BaseVCC_AS"]
-            source_PeakVCC_AS[hour] = activation_output["source_PeakVCC_AS"]
+            Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
+            Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
+            Q_BaseVCC_WS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_WS_gen_directload_W']
+            Q_PeakVCC_WS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_WS_gen_directload_W']
+            Q_BaseVCC_AS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_AS_gen_directload_W']
+            Q_PeakVCC_AS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_AS_gen_directload_W']
+            Q_BackupVCC_AS_directload_W[hour] = thermal_output['Q_BackupVCC_AS_directload_W']
 
             Q_Trigen_NG_gen_W[hour] = thermal_output['Q_Trigen_NG_gen_W']
             Q_BaseVCC_WS_gen_W[hour] = thermal_output['Q_BaseVCC_WS_gen_W']
@@ -143,34 +137,32 @@ def district_cooling_network(locator,
             Q_BaseVCC_AS_gen_W[hour] = thermal_output['Q_BaseVCC_AS_gen_W']
             Q_PeakVCC_AS_gen_W[hour] = thermal_output['Q_PeakVCC_AS_gen_W']
             Q_BackupVCC_AS_gen_W[hour] = thermal_output['Q_BackupVCC_AS_gen_W']
-            Q_DailyStorage_gen_W[hour] = thermal_output['Q_DailyStorage_WS_gen_W']
 
             E_BaseVCC_WS_req_W[hour] = electricity_output['E_BaseVCC_WS_req_W']
             E_PeakVCC_WS_req_W[hour] = electricity_output['E_PeakVCC_WS_req_W']
             E_BaseVCC_AS_req_W[hour] = electricity_output['E_BaseVCC_AS_req_W']
             E_PeakVCC_AS_req_W[hour] = electricity_output['E_PeakVCC_AS_req_W']
-            E_BackupVCC_AS_req_W[hour] = electricity_output['E_BackupVCC_AS_req_W']
             E_Trigen_NG_gen_W[hour] = electricity_output['E_Trigen_NG_gen_W']
 
-            NG_Trigen_req_W = gas_output['NG_Trigen_req_W']
+            NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
-    if master_to_slave_variables.AS_BackupVCC_size_W != 0:
+    if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
         master_to_slave_variables.AS_BackupVCC_on = 1
-        for hour in range(HOURS_IN_YEAR):
-            opex_var_BackupVCC_AS_USDhr[hour], \
-            Q_BackupVCC_AS_gen_W[hour], \
-            E_BackupVCC_AS_req_W[hour] = calc_vcc_CT_operation(Q_BackupVCC_AS_gen_W[hour],
-                                                               T_district_cooling_return_K[hour],
-                                                               T_district_cooling_supply_K[hour],
-                                                               VCC_T_COOL_IN,
-                                                               lca)
+        Q_BackupVCC_AS_gen_W, E_BackupVCC_AS_req_W = np.vectorize(calc_vcc_CT_operation)(Q_BackupVCC_AS_gen_W,
+                                                                                         T_district_cooling_return_K,
+                                                                                         T_district_cooling_supply_K,
+                                                                                         VCC_T_COOL_IN)
+    else:
+        E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
+    mdotnMax_kgpers = np.amax(mdot_kgpers)
     performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
                                                                             master_to_slave_variables,
-                                                                            config
+                                                                            config,
+                                                                            mdotnMax_kgpers
                                                                             )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
     performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
@@ -184,9 +176,8 @@ def district_cooling_network(locator,
     E_used_district_cooling_network_W = cost_model.calc_network_costs_cooling(locator,
                                                                               master_to_slave_variables,
                                                                               network_features,
-                                                                              lca,
-                                                                              "DC")
-
+                                                                              "DC",
+                                                                              prices)
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
     performance = dict(performance_costs_generation, **performance_costs_storage)
@@ -197,23 +188,26 @@ def district_cooling_network(locator,
         # demand of the network
         "Q_districtcooling_sys_req_W": Q_thermal_req_W,
 
-        # Status of each technology 1 = on, 0 = off in every hour
-        "Trigen_NG_Status": source_Trigen_NG,
-        "BaseVCC_WS_Status": source_BaseVCC_WS,
-        "PeakVCC_WS_Status": source_PeakVCC_WS,
-        "BaseVCC_AS_Status": source_BaseVCC_AS,
-        "PeakVCC_AS_Status": source_PeakVCC_AS,
-
-        # ENERGY GENERATION
+        # ENERGY GENERATION TO DIRECT LOAD
         # from storage
-        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_W,
+        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_directload_W,
         # cooling
-        "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_W,
-        "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_W,
-        "Q_PeakVCC_WS_gen_directload_W": Q_PeakVCC_WS_gen_W,
-        "Q_BaseVCC_AS_gen_directload_W": Q_BaseVCC_AS_gen_W,
-        "Q_PeakVCC_AS_gen_directload_W": Q_PeakVCC_AS_gen_W,
-        "Q_BackupVCC_AS_directload_W": Q_BackupVCC_AS_gen_W,
+        "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
+        "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_directload_W,
+        "Q_PeakVCC_WS_gen_directload_W": Q_PeakVCC_WS_gen_directload_W,
+        "Q_BaseVCC_AS_gen_directload_W": Q_BaseVCC_AS_gen_directload_W,
+        "Q_PeakVCC_AS_gen_directload_W": Q_PeakVCC_AS_gen_directload_W,
+        "Q_BackupVCC_AS_directload_W": Q_BackupVCC_AS_directload_W,
+
+        # ENERGY GENERATION TOTAL
+        # cooling
+        "Q_Trigen_NG_gen_W": Q_Trigen_NG_gen_W,
+        "Q_BaseVCC_WS_gen_W": Q_BaseVCC_WS_gen_W,
+        "Q_PeakVCC_WS_gen_W": Q_PeakVCC_WS_gen_W,
+        "Q_BaseVCC_AS_gen_W": Q_BaseVCC_AS_gen_W,
+        "Q_PeakVCC_AS_gen_W": Q_PeakVCC_AS_gen_W,
+        "Q_BackupVCC_AS_W": Q_BackupVCC_AS_gen_W,
+
         # electricity
         "E_Trigen_NG_gen_W": E_Trigen_NG_gen_W
     }
@@ -238,9 +232,8 @@ def district_cooling_network(locator,
 
     return district_cooling_costs, \
            district_cooling_generation_dispatch, \
-           district_cooling_electricity_requirements_dispatch,\
+           district_cooling_electricity_requirements_dispatch, \
            district_cooling_fuel_requirements_dispatch
-
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
@@ -264,6 +257,3 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
         Q_cooling_req_W = df['Q_DCNf_space_cooling_data_center_and_refrigeration_W'].values
 
     return Q_cooling_req_W, T_re_K, T_sup_K, mdot_kgpers
-
-
-
