@@ -144,7 +144,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
-        fields = ['Name', 'Ve_lps', 'rhum_min_pc',
+        fields = ['Name', 'Tcs_set_C', 'Ths_set_C',	'Tcs_setb_C',	'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
                   'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
