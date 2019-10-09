@@ -6,8 +6,14 @@ import pandas as pd
 DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
 HOUR = range(1, 25) + range(1, 25) + range(1, 25)
 
-COLUMN_NAMES = ['DAY', 'HOUR', 'OCCUPANCY', 'APPLIANCES_LIGHTING', 'DOMESTIC_HOT_WATER', 'SETPOINT_HEATING',
-                'SETPOINT_COOLING', 'PROCESSES']
+COLUMN_NAMES = ['DAY',
+                'HOUR',
+                'OCCUPANCY',
+                'ELECTRICITY',
+                'WATER',
+                'HEATING',
+                'COOLING',
+                'PROCESSES']
 
 path = r'C:\Users\JimenoF\Documents\CityEnergyAnalyst\CityEnergyAnalyst\cea\databases'
 
