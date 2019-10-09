@@ -46,7 +46,7 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'schedules', name_database)
 
     def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.ceaschedule')
+        return os.path.join(path_to_database, use + '.cea')
 
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""

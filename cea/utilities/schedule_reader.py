@@ -41,35 +41,32 @@ def read_cea_schedule(path_to_building_schedule):
         reader = csv.reader(f)
         for i, row in enumerate(reader):
             if i == 0:
-                occupancy_density_m2p = round(float(row[1]), 2)
-            elif i == 1:
                 metadata = row[1]
-            elif i == 2:
+            elif i == 1:
                 monthly_multiplier = [round(float(x), 2) for x in row[1:]]
 
-    schedule = pd.read_csv(path_to_building_schedule, skiprows=3)
+    schedule = pd.read_csv(path_to_building_schedule, skiprows=2)
     occupancy_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['OCCUPANCY'].values
     occupancy_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['OCCUPANCY'].values
     occupancy_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['OCCUPANCY'].values
-    appliances_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['APPLIANCES_LIGHTING'].values
-    appliances_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['APPLIANCES_LIGHTING'].values
-    appliances_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['APPLIANCES_LIGHTING'].values
-    domestic_hot_water_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['DOMESTIC_HOT_WATER'].values
-    domestic_hot_water_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['DOMESTIC_HOT_WATER'].values
-    domestic_hot_water_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['DOMESTIC_HOT_WATER'].values
-    setpoint_heating_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['SETPOINT_HEATING'].values
-    setpoint_heating_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['SETPOINT_HEATING'].values
-    setpoint_heating_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['SETPOINT_HEATING'].values
-    setpoint_cooling_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['SETPOINT_COOLING'].values
-    setpoint_cooling_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['SETPOINT_COOLING'].values
-    setpoint_cooling_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['SETPOINT_COOLING'].values
+    appliances_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['ELECTRICITY'].values
+    appliances_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['ELECTRICITY'].values
+    appliances_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['ELECTRICITY'].values
+    domestic_hot_water_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['WATER'].values
+    domestic_hot_water_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['WATER'].values
+    domestic_hot_water_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['WATER'].values
+    setpoint_heating_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['HEATING'].values
+    setpoint_heating_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['HEATING'].values
+    setpoint_heating_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['HEATING'].values
+    setpoint_cooling_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['COOLING'].values
+    setpoint_cooling_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['COOLING'].values
+    setpoint_cooling_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['COOLING'].values
     processes_weekday = schedule.loc[schedule['DAY'] == 'WEEKDAY']['PROCESSES'].values
     processes_saturday = schedule.loc[schedule['DAY'] == 'SATURDAY']['PROCESSES'].values
     processes_sunday = schedule.loc[schedule['DAY'] == 'SUNDAY']['PROCESSES'].values
 
     schedule_data = {
         'metadata': metadata,
-        'occupancy_density_m2p': occupancy_density_m2p,
         'monthly_multiplier': monthly_multiplier,
         'occupancy_weekday': occupancy_weekday,
         'occupancy_saturday': occupancy_saturday,
@@ -97,7 +94,6 @@ def save_cea_schedule(schedule_data, path_to_building_schedule):
 
     # unpack variables
     metadata = schedule_data['metadata']
-    occupancy_density_m2p = schedule_data['occupancy_density_m2p']
     monthly_multiplier = schedule_data['monthly_multiplier']
     occupancy_weekday = schedule_data['occupancy_weekday']
     occupancy_saturday = schedule_data['occupancy_saturday']
@@ -150,7 +146,6 @@ def save_cea_schedule(schedule_data, path_to_building_schedule):
     processes_72h.append(processes_saturday)
     processes_72h.append(processes_sunday)
 
-    OCCUPANCY_DENSITY_m2pax = ['OCCUPANCY_DENSITY_m2pax'] + [round(float(occupancy_density_m2p), 2)]
     METADATA = ['METADATA', str(metadata)]
     MULTIPLIER = ['MONTHLY_MULTIPLIER'] + [str(round(float(x), 2)) for x in monthly_multiplier]
 
@@ -160,7 +155,6 @@ def save_cea_schedule(schedule_data, path_to_building_schedule):
 
     with open(path_to_building_schedule, "wb") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
-        csvwriter.writerow(OCCUPANCY_DENSITY_m2pax)
         csvwriter.writerow(METADATA)
         csvwriter.writerow(MULTIPLIER)
         csvwriter.writerow(COLUMNS_SCHEDULES)

@@ -78,17 +78,6 @@ def data_helper(locator, region, overwrite_technology_folder,
     # validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
 
-
-    # get occupant densities from archetypes schedules
-    occupant_densities = {}
-    for use in list_uses:
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use, index_col=0).T
-        area_per_occupant = archetypes_schedules['density'].values[:1][0]
-        if area_per_occupant > 0:
-            occupant_densities[use] = 1 / area_per_occupant
-        else:
-            occupant_densities[use] = 0
-
     # prepare shapefile to store results (a shapefile with only names of buildings
     names_df = building_age_df[['Name']]
 
@@ -142,7 +131,7 @@ def data_helper(locator, region, overwrite_technology_folder,
 
         # write to shapefile
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
-        prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
+        prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, list_uses,
                                                             comfort_DB)
         fields = ['Name', 'Ve_lps', 'rhum_min_pc',
                   'rhum_max_pc']
@@ -415,7 +404,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Occ_m2pax']:
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
