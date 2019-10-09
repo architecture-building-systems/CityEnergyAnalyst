@@ -17,7 +17,7 @@ COLUMN_NAMES = ['DAY',
 
 path = r'C:\Users\JimenoF\Documents\CityEnergyAnalyst\CityEnergyAnalyst\cea\databases'
 
-for region, standard in zip(['CH', 'SG'], ['SIA2016', 'ASHRAE+SINGAPORE']):
+for region, standard in zip(['CH', 'SG'], ['CH-SIA-2014', 'SG-ASHRAE-2009']):
     path_to_database = os.path.join(path, region, 'archetypes/occupancy_schedules.xlsx')
     xls = pd.ExcelFile(path_to_database)
     uses = xls.sheet_names
@@ -66,17 +66,14 @@ for region, standard in zip(['CH', 'SG'], ['SIA2016', 'ASHRAE+SINGAPORE']):
             pro.extend([str(0.0) for x in range(24)])
             pro.extend([str(0.0) for x in range(24)])
 
-        OCCUPANCY_DENSITY_m2pax = ['OCCUPANCY_DENSITY_m2pax'] + [
-            str(round(float(archetypes_schedules['density'].values[:1][0]), 2))]
-        METADATA = ['METADATA', standard]
+        METADATA = ['METADATA', standard, use]
         MULTIPLIER = ['MONTHLY_MULTIPLIER'] + [str(round(float(x), 2)) for x in archetypes_schedules['month'].values[:12]]
         PROFILE = [DAY, HOUR, occ, el, dhw, hset, cset, pro]
         PROFILE_NEW = map(list, zip(*PROFILE))
 
-        filename = os.path.join(path, region, 'schedules', use + '.ceaschedule')
+        filename = os.path.join(path, 'schedules', standard, use + '.cea')
         with open(filename, "wb") as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
-            csvwriter.writerow(OCCUPANCY_DENSITY_m2pax)
             csvwriter.writerow(METADATA)
             csvwriter.writerow(MULTIPLIER)
             csvwriter.writerow(COLUMN_NAMES)
