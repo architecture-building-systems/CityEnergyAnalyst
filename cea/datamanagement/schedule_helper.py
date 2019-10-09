@@ -7,6 +7,7 @@ from __future__ import print_function
 import math
 import os
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.datamanagement.data_helper import get_list_of_uses_in_case_study
 
 import pandas as pd
 
@@ -39,10 +40,10 @@ def schedule_helper(locator, config):
                       'path to each file')
         else:
             matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_file_required2)
-    elif model == 'sia-switzerland':
+    elif model == 'CH-SIA-2014':
         path_to_standard_schedule_database = locator.get_database_standard_schedules(model)
         model_with_standard_database(locator, buildings, path_to_standard_schedule_database)
-    elif model == 'ashrae-singapore':
+    elif model == 'SG-ASHRAE-2009':
         path_to_standard_schedule_database = locator.get_database_standard_schedules(model)
         model_with_standard_database(locator, buildings, path_to_standard_schedule_database)
     else:
@@ -55,11 +56,17 @@ def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_fil
 
 def model_with_standard_database(locator, buildings, path_to_standard_schedule_database):
 
+
     metadata = path_to_standard_schedule_database
     schedule_data_all_uses = ScheduleData(locator, path_to_standard_schedule_database)
-    building_uses_weights = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')[buildings]
+    building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
+    building_occupancy_df = building_occupancy_df.ix[buildings]
+
+    # validate list of uses in case study
+    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
 
     for name in buildings:
+
 
 
         occupancy_density_m2p = TODO
@@ -134,7 +141,8 @@ class ScheduleData(object):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    config.schedule_helper.model = 'sia-switzerland'
+    config.schedule_helper.model = 'SG-ASHRAE-2009'
+    config.schedule_helper.buildings = locator.get_zone_building_names()
     schedule_helper(locator, config)
 
 if __name__ == '__main__':
