@@ -66,7 +66,7 @@ def occupancy_main(locator, config):
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
-    date_range =
+    date_range = 
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
