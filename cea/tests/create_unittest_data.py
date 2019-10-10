@@ -36,7 +36,7 @@ def main(output_file):
 
     # run properties script
     import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True)
+    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True, 'CH-SIA-2014')
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)
