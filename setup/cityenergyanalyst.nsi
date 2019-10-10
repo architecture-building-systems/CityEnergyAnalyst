@@ -193,7 +193,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
@@ -219,8 +219,8 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
