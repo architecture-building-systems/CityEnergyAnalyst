@@ -527,7 +527,7 @@ The following file is used by scripts: []
      DH_ww_cost_yr,Operation costs due to hotwater - Unit: $USD(2015)/yr
      GRID_cost_m2yr,Electricity supply from the grid - Unit: $USD(2015)/m2.yr
      GRID_cost_yr,Electricity supply from the grid - Unit: $USD(2015)/yr
-     NFA_m2,TODO - Unit: TODO
+     Aocc_m2,TODO - Unit: TODO
      NG_hs_cost_m2yr,TODO - Unit: TODO
      NG_hs_cost_yr,Operation costs of NG due to space heating - Unit: $USD(2015)/yr
      NG_ww_cost_m2yr,TODO - Unit: TODO
@@ -1224,7 +1224,7 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      GFA_m2,Gross floor area - Unit: [m2]
      GRID0_kW,Nominal Grid electricity consumption - Unit: kW
      GRID_MWhyr,Grid electricity consumption - Unit: MWh/yr
-     NFA_m2,TODO - Unit: TODO
+     Aocc_m2,TODO - Unit: TODO
      NG_hs0_kW,Nominal NG requirement for space heating supply - Unit: kW
      NG_hs_MWhyr,NG requirement for space heating supply - Unit: MWh/yr
      NG_ww0_kW,Nominal NG requirement for hotwater supply - Unit: kW
