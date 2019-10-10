@@ -395,11 +395,30 @@ def initialize_inputs(bpr, weather_data, date_range, locator, config):
     occupancy_yearly_schedules = locator.get_occupancy_model_file(building_name)
 
     # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = occupancy_yearly_schedules['people']
-    tsd['ve'] = occupancy_yearly_schedules['ve_m3h']
+    # 'DATE': date_range,
+    # 'Ths_set_C': deterministic_schedule['Ths_set_C'],
+    # 'Tcs_set_C': deterministic_schedule['Tcs_set_C'],
+    # 'people_pax': deterministic_schedule['Occ_m2pax'],
+    # 'Ve_lps': deterministic_schedule['Ve_lps'],
+    # 'Qs_W': deterministic_schedule['Qs_Wp'],
+    # 'X_gh': deterministic_schedule['X_ghp'],
+    # 'Vww_l': deterministic_schedule['Vww_lpd'],
+    # 'Vw_l': deterministic_schedule['Vw_lpd'],
+    # 'Ea_W': deterministic_schedule['Ea_Wm2'],
+    # 'El_W': deterministic_schedule['El_Wm2'],
+    # 'Ed_W': deterministic_schedule['Ed_Wm2'],
+    # 'Epro_W': deterministic_schedule['Epro_Wm2'],
+    # 'Qcre_W': deterministic_schedule['Qcre_Wm2'],
+    # 'Qhpro_W': deterministic_schedule['Qhpro_Wm2'],
+    # 'Qcpro_W': deterministic_schedule['Qcpro_Wm2'],
+
+
+    tsd['people'] = occupancy_yearly_schedules['people_pax']
+    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #to m3/h
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
+    tsd['X'] = occupancy_yearly_schedules['X_gh']
     # # latent heat gains
-    tsd['w_int'] = sensible_loads.calc_Qgain_lat(occupancy_yearly_schedules, bpr)
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['X'])
 
     return occupancy_yearly_schedules, tsd
 

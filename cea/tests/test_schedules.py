@@ -16,7 +16,7 @@ from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.occupancy_model import occupancy_main
 from cea.demand.occupancy_model import schedule_maker, get_building_schedules
 from cea.utilities import epwreader
-from cea.demand.demand_main import get_dates_from_year
+from cea.utilities.date import get_dates_from_year
 import cea.config
 from cea.demand.building_properties import BuildingProperties
 from cea.constants import HOURS_IN_YEAR
