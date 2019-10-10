@@ -41,7 +41,7 @@ def get_technology_related_databases(locator, region):
 def data_helper(locator, region, overwrite_technology_folder,
                 update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
                 update_internal_loads_dbf, update_supply_systems_dbf,
-                update_schedule_operation_cea):
+                update_schedule_operation_cea, model_schedule):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -208,10 +208,14 @@ def data_helper(locator, region, overwrite_technology_folder,
     if update_schedule_operation_cea:
         internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
 
-        # define comfort
-        prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
-        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-
+        if model_schedule == 'CH-SIA-2014':
+            path_to_standard_schedule_database = locator.get_database_standard_schedules(model_schedule)
+            model_with_standard_database(locator, building_occupancy_df, path_to_standard_schedule_database)
+        elif model_schedule == 'SG-ASHRAE-2009':
+            path_to_standard_schedule_database = locator.get_database_standard_schedules(model_schedule)
+            model_with_standard_database(locator, building_occupancy_df, path_to_standard_schedule_database)
+        else:
+            Exception('There is no valid model for schedule helper')
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
@@ -248,7 +252,7 @@ def get_list_of_uses_in_case_study(building_occupancy_df):
     list_uses = []
     for name in columns:
         if name in COLUMNS_ZONE_OCCUPANCY:
-            if building_occupancy_df[name].sum()>0.0:
+            if building_occupancy_df[name].sum() > 0.0:
                 list_uses.append(name)  # append valid uses
         elif name in {'Name', 'REFERENCE'}:
             pass  # do nothing with 'Name' and 'Reference'
@@ -256,6 +260,26 @@ def get_list_of_uses_in_case_study(building_occupancy_df):
             raise InvalidOccupancyNameException(
                 'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
                 ' or customize archetypes database AND databases_verification.py.'.format(name))
+    return list_uses
+
+
+def get_short_list_of_uses_in_case_study(building_occupancy_df):
+    """
+    gets only the list of land uses that all the building occupnacy dataset has
+    It avoids multiple iterations, when these landuises are not even selected in the database
+
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :type building_occupancy_df: pandas.DataFrame
+    :return: list of uses in case study
+    :rtype: pandas.DataFrame.Index
+    """
+    columns = building_occupancy_df.columns
+    # validate list of uses
+    list_uses = []
+    for name in columns:
+        if name in COLUMNS_ZONE_OCCUPANCY:
+            if building_occupancy_df[name].sum() > 0.0:
+                list_uses.append(name)  # append valid uses
     return list_uses
 
 
@@ -498,6 +522,7 @@ def main(config):
     update_schedule_operation_cea = 'schedules' in config.data_helper.databases
 
     overwrite_technology_folder = config.data_helper.overwrite_technology_folder
+    model_schedule = config.data_helper.model_schedule
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
@@ -508,7 +533,10 @@ def main(config):
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
                 update_supply_systems_dbf=update_supply_systems_dbf,
-                update_schedule_operation_cea=update_schedule_operation_cea)
+                update_schedule_operation_cea=update_schedule_operation_cea,
+                model_schedule=model_schedule)
+
+)
 
 
 if __name__ == '__main__':
