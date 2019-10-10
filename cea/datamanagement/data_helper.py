@@ -248,7 +248,8 @@ def get_list_of_uses_in_case_study(building_occupancy_df):
     list_uses = []
     for name in columns:
         if name in COLUMNS_ZONE_OCCUPANCY:
-            list_uses.append(name)  # append valid uses
+            if building_occupancy_df[name].sum()>0.0:
+                list_uses.append(name)  # append valid uses
         elif name in {'Name', 'REFERENCE'}:
             pass  # do nothing with 'Name' and 'Reference'
         else:
