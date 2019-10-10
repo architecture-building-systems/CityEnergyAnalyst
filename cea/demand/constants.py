@@ -95,10 +95,6 @@ VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
                                   'Epro_Wm2': 'PROCESSES',
                                   }
 
-TEMPERATURE_VARIABLES = ['Ths_set_C',
-                         'Tcs_set_C']
-
+TEMPERATURE_VARIABLES = ['Ths_set_C', 'Tcs_set_C']
 PEOPLE_DEPENDENT_VARIABLES = ['Occ_m2pax', 'Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']
-
-AREA_DEPENDENT_VARIABLES = ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2',
-                                          'Epro_Wm2']
+AREA_DEPENDENT_VARIABLES = ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
