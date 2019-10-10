@@ -14,7 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
-from cea.datamanagement.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES
+from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -72,8 +72,7 @@ def calc_mixed_schedule(locator,
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \
                                                            occupant_densities[use]
 
-                        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2',
-                                          'Epro_Wm2']:
+                        elif variable in AREA_DEPENDENT_VARIABLES:
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use
 
                         normalizing_value += share_time_occupancy_density
