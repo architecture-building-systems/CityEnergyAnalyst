@@ -208,6 +208,8 @@ def data_helper(locator, region, overwrite_technology_folder,
     if update_schedule_operation_cea:
         internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
 
+
+        from
         if model_schedule == 'CH-SIA-2014':
             path_to_standard_schedule_database = locator.get_database_standard_schedules(model_schedule)
             model_with_standard_database(locator, building_occupancy_df, path_to_standard_schedule_database)
