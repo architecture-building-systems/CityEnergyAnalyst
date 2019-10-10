@@ -174,7 +174,11 @@ def calc_deterministic_schedules(locator,
                                               normalize_first_daily_profile=True)
             deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                                prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
-        elif variable in ['Ve_lps', 'Qs_Wp', 'X_ghp']:
+        elif variable in ['Ve_lps']:
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            deterministic_schedule[variable] = yearly_array * indoor_comfort_building[variable] * \
+                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+        elif variable in ['Qs_Wp', 'X_ghp']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
             deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                                prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']

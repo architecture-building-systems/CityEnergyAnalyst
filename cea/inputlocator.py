@@ -743,7 +743,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/slave`
         Slave results folder (storage + operation pattern)
         """
-        return self._ensure_folder(self.get_output_folder(),'occupancy')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
 
     def get_occupancy_model_file(self, building_name):
         """
